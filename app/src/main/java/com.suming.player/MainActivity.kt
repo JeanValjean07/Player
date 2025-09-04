@@ -50,7 +50,6 @@ class MainActivity: AppCompatActivity() {
         }
     }
 
-
     //旧机型兼容判断
     object DeviceCompatUtil {
         /*
