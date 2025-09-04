@@ -1,0 +1,52 @@
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+
+
+    <TextView
+        android:id="@+id/dialog_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="设置距离"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="6dp" />
+
+    <TextView
+        android:id="@+id/dialog_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="参照物距离定位点正向距离"
+        android:textSize="10sp"
+        android:padding="4dp" />
+
+
+    <EditText
+        android:id="@+id/dialog_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="(单位:比例尺格数丨最多1位小数)"
+        android:textSize="14sp"
+        android:inputType="numberDecimal"
+        android:maxLength="5"
+        android:maxLines="1"
+        />
+
+
+    <Button
+        android:id="@+id/dialog_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/ButtonBg"
+        android:textColor="@color/ButtonText"
+        android:layout_gravity="center"
+        android:text="确定"
+        />
+
+
+</LinearLayout>
