@@ -1,6 +1,6 @@
 player
 
-基于https://github.com/JeanValjean07/SpeedSpy删减和重做界面所得到的一个播放器
+基于https://github.com/JeanValjean07/SpeedSpy 删减和重做界面所得到的一个播放器
 
 自带视频列表，但未优化，视频过多时要加载完才显示东西
 
