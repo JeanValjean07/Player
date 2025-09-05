@@ -9,17 +9,12 @@ android {
     compileSdk = 36
 
 
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 29
-    }
-
     defaultConfig {
         applicationId = "com.suming.player"
         minSdk = 29
         targetSdk = 36
         versionCode = 1
-        versionName = "1.1.2"
+        versionName = "1.1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -34,6 +29,7 @@ android {
             )
         }
     }
+    
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
