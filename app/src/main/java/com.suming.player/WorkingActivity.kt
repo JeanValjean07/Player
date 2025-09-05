@@ -16,7 +16,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.util.Log
 import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -59,6 +58,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.appcompat.widget.Toolbar
 import java.io.File
 
 @UnstableApi
@@ -70,6 +70,7 @@ class WorkingActivity: AppCompatActivity()  {
     private var absolutePath = ""       //视频绝对路径,多个成员要读取
     //播放器状态标识
     private lateinit var player: ExoPlayer
+    private lateinit var videoUri: Uri
     private var playerEnd = false     //上一次是否播放到末尾了
     private var wasPlaying = true     //上一次暂停时是否在播放
     //音量配置参数
@@ -108,10 +109,6 @@ class WorkingActivity: AppCompatActivity()  {
     //点击隐藏
     private var widgetsShowing = true
 
-    private var fromRecovery = false
-
-    private lateinit var videoUri: Uri
-    private lateinit var videoUriRec: Uri
 
     //以下几个可能跟上面的功能有重复
     private var lastScrollerPositionSeek = 0
@@ -232,7 +229,6 @@ class WorkingActivity: AppCompatActivity()  {
         if (savedInstanceState != null) {
             player.seekTo(currentTime)
         }
-        Log.e("SuMing","$wasPlaying")
         if (wasPlaying) {
             playVideo()
         }
@@ -618,6 +614,26 @@ class WorkingActivity: AppCompatActivity()  {
                     buttonExit.visibility = View.VISIBLE
                     playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
                 }
+            }else{
+                val toolbar = findViewById<Toolbar>(R.id.toolbar)
+                val root = findViewById<ConstraintLayout>(R.id.root)
+                if (widgetsShowing){
+                    widgetsShowing = false
+                    bottomCard.visibility = View.GONE
+                    mediumActions.visibility = View.GONE
+                    buttonExit.visibility = View.GONE
+                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
+                    toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
+                    root.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
+                }else{
+                    widgetsShowing = true
+                    bottomCard.visibility = View.VISIBLE
+                    mediumActions.visibility = View.VISIBLE
+                    buttonExit.visibility = View.VISIBLE
+                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+                    toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadBackground))
+                    root.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+                }
             }
         }
 
@@ -847,7 +863,6 @@ class WorkingActivity: AppCompatActivity()  {
         outState.putBoolean("wasPlaying", wasPlaying)
         outState.putString("uri", videoUri.toString())
         outState.putLong("currentTime", player.currentPosition)
-        Log.e("SuMing","保存状态：$wasPlaying")
     }
 
     override fun onPause() {
