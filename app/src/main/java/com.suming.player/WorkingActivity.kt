@@ -16,7 +16,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.util.Log
 import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -31,6 +30,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
@@ -59,7 +59,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.appcompat.widget.Toolbar
 import java.io.File
 
 @UnstableApi
@@ -336,14 +335,12 @@ class WorkingActivity: AppCompatActivity()  {
                 return true
             }
             override fun onDown(e: MotionEvent): Boolean {
-                //Log.e("SuMing", "按下进度条")
                 if (!linkScrollEnabled) return false
                 //播放状态记录
                 wasPlaying = false
                 if (player.isPlaying){
                     player.pause()
                     wasPlaying = true
-                    //Log.e("SuMing", "onDown读取wasPlaying:$wasPlaying")
                 }
                 stopVideoSeek()
                 if (!linkScrollEnabled) return false
@@ -390,11 +387,9 @@ class WorkingActivity: AppCompatActivity()  {
                     val percent = recyclerView.computeHorizontalScrollOffset().toFloat() / rvThumbnails.computeHorizontalScrollRange()
                     val seekToMs = (percent * player.duration).toLong()
                     currentTime = seekToMs
-                    //Log.e("SuMing", "显示时间：$seekToMs，视频实际时间：${player.currentPosition}")
                     tvCurrentTime.text = formatTime(seekToMs)
                 } else {return}
                 if (!scrolling && !dragging) { //此状态说明进度条是在随视频滚动,用户没有操作
-                    //Log.e("SuMing", "进度条是在随视频滚动,用户没有操作")
                     return
                 }
                 thisScrollerPosition = recyclerView.computeHorizontalScrollOffset()
@@ -402,7 +397,6 @@ class WorkingActivity: AppCompatActivity()  {
                 lastScrollerPosition = thisScrollerPosition
                 stopScrollerSync()  //进度条变成上级控制层,关闭所有将进度条作为下级被控层的函数
                 if (scrollerPositionGap > 0 && scrollerPositionGap < 100){
-                    //Log.e("SuMing", "用户在正向拖动进度条")
                     if(alwaysSeekEnabled){
                         lastSeekExecuted = false
                         stopVideoSmartScroll()
@@ -413,7 +407,6 @@ class WorkingActivity: AppCompatActivity()  {
                     }
                 }
                 else if(scrollerPositionGap < 0 && scrollerPositionGap > -100){
-                    //Log.e("SuMing", "用户在反向拖动进度条")
                     lastSeekExecuted = false
                     stopVideoTimeSync()
                     val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
@@ -685,10 +678,7 @@ class WorkingActivity: AppCompatActivity()  {
                         speed5 = 1.0f
                     }
                 }
-
                 if (speed5 > 0f){
-
-                    Log.e("SuMing", "设置倍速：$speed5")
                     player.setPlaybackSpeed(speed5)
                 }else{
                     player.play()
@@ -717,7 +707,6 @@ class WorkingActivity: AppCompatActivity()  {
     private val videoSeekHandler = Handler(Looper.getMainLooper())
     private var videoSeek = object : Runnable{
         override fun run() {
-            //Log.e("SuMing", "进入一次seek")
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
             val currentScrollerPositionSeek = recyclerView.computeHorizontalScrollOffset()
             if (currentScrollerPositionSeek != lastScrollerPositionSeek){
@@ -756,7 +745,6 @@ class WorkingActivity: AppCompatActivity()  {
     private fun seekJob() {
         seekJob?.cancel()
         seekJob = lifecycleScope.launch {
-            //Log.e("SuMing", "视频Seek")
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
             val totalWidth = recyclerView.computeHorizontalScrollRange()
             val offset     = recyclerView.computeHorizontalScrollOffset()
@@ -851,7 +839,6 @@ class WorkingActivity: AppCompatActivity()  {
     private fun playerReady(){
         isSeekReady = true
         if (firstEntry) {
-            Log.e("SuMing", "首次启动,显示动画并播放")
             firstEntry = false
             player.play()
             val cover = findViewById<View>(R.id.cover)
@@ -866,7 +853,6 @@ class WorkingActivity: AppCompatActivity()  {
         if (scrolling) return
         if (!lastSeekExecuted) {
             lastSeekExecuted = true
-            //Log.e("SuMing", "进度条滚动停止,执行一次lastSeek")
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
             val totalWidthForLastSeek = recyclerView.computeHorizontalScrollRange()
             val offsetForLastSeek     = recyclerView.computeHorizontalScrollOffset()
@@ -875,7 +861,6 @@ class WorkingActivity: AppCompatActivity()  {
             seekJob?.cancel()
             player.seekTo(seekToMsForLastSeek)
         }
-        //Log.e("SuMing", "wasPlaying:$wasPlaying")
         if (wasPlaying) {
             playVideo()
         }
@@ -885,7 +870,6 @@ class WorkingActivity: AppCompatActivity()  {
 
 
     private fun pauseVideo(){
-        //Log.e("SuMing", "视频暂停")
         stopVideoTimeSync()
         stopScrollerSync()
         player.pause()
