@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.media.AudioManager
 import android.media.MediaCodec
 import android.media.MediaMetadataRetriever
@@ -16,13 +17,17 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.provider.Settings
+import android.util.Log
 import android.view.GestureDetector
+import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsetsController
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -37,6 +42,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.core.os.HandlerCompat.postDelayed
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -143,7 +149,7 @@ class WorkingActivity: AppCompatActivity()  {
     }
 
     @OptIn(UnstableApi::class)
-    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams")
+    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -249,14 +255,14 @@ class WorkingActivity: AppCompatActivity()  {
         }
 
         //控件：缩略图滚动条初始化
-        val rvThumbnails = findViewById<RecyclerView>(R.id.rvThumbnails)
+        val thumbScroller = findViewById<RecyclerView>(R.id.rvThumbnails)
         val displayMetrics = resources.displayMetrics
         val screenWidth = displayMetrics.widthPixels
         val sidePadding = screenWidth / 2
-        rvThumbnails.setPadding(sidePadding, 0, sidePadding-1, 0) //右边需要减一，否则滑动区域会超出
+        thumbScroller.setPadding(sidePadding, 0, sidePadding-1, 0) //右边需要减一，否则滑动区域会超出
         var videoUri = videoItem.uri
         absolutePath = getAbsoluteFilePath(this@WorkingActivity, videoUri).toString()
-        rvThumbnails.layoutManager = LinearLayoutManager(this@WorkingActivity, LinearLayoutManager.HORIZONTAL, false)
+        thumbScroller.layoutManager = LinearLayoutManager(this@WorkingActivity, LinearLayoutManager.HORIZONTAL, false)
         val retriever = MediaMetadataRetriever()
         try {
             retriever.setDataSource(this@WorkingActivity, videoUri)
@@ -268,8 +274,8 @@ class WorkingActivity: AppCompatActivity()  {
             finish()
             return
         }
-        rvThumbnails.itemAnimator = null
-        rvThumbnails.layoutParams.width = 0
+        thumbScroller.itemAnimator = null
+        thumbScroller.layoutParams.width = 0
         val videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt()
         if (videoDuration != null) {
             if (videoDuration/1000 > maxPicNumber){  //用47dp计算,做成长方形一点的
@@ -288,8 +294,8 @@ class WorkingActivity: AppCompatActivity()  {
         retriever.release()
 
 
-        //RecyclerView-事件监听器 -onSingleTap -onDown
-        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+        //gestureDetectorScroller -onSingleTap -onDown
+        val gestureDetectorScroller = GestureDetector(this, object : SimpleOnGestureListener() {
             @SuppressLint("SetTextI18n")
             override fun onSingleTapUp(e: MotionEvent): Boolean {
                 singleTap = true
@@ -304,9 +310,9 @@ class WorkingActivity: AppCompatActivity()  {
                     }
                 }
                 //根据百分比计算具体跳转时间点
-                val totalContentWidth = rvThumbnails.computeHorizontalScrollRange()
-                val scrolled = rvThumbnails.computeHorizontalScrollOffset()
-                val leftPadding = rvThumbnails.paddingLeft
+                val totalContentWidth = thumbScroller.computeHorizontalScrollRange()
+                val scrolled = thumbScroller.computeHorizontalScrollOffset()
+                val leftPadding = thumbScroller.paddingLeft
                 val xInContent = e.x + scrolled - leftPadding
                 if (totalContentWidth <= 0) return false
                 val percent = xInContent / totalContentWidth
@@ -355,16 +361,16 @@ class WorkingActivity: AppCompatActivity()  {
             }
         })
         //RecyclerView-事件监听器 (中间层)
-        rvThumbnails.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+        thumbScroller.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean =
-                gestureDetector.onTouchEvent(e)
+                gestureDetectorScroller.onTouchEvent(e)
             override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
-                gestureDetector.onTouchEvent(e)
+                gestureDetectorScroller.onTouchEvent(e)
             }
             override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
         })
         //RecyclerView-事件监听器 -onScrollStateChanged -onScrolled
-        rvThumbnails.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        thumbScroller.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (newState == RecyclerView.SCROLL_STATE_DRAGGING){
                     dragging = true
@@ -384,7 +390,7 @@ class WorkingActivity: AppCompatActivity()  {
             }
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 if (linkScrollEnabled){
-                    val percent = recyclerView.computeHorizontalScrollOffset().toFloat() / rvThumbnails.computeHorizontalScrollRange()
+                    val percent = recyclerView.computeHorizontalScrollOffset().toFloat() / thumbScroller.computeHorizontalScrollRange()
                     val seekToMs = (percent * player.duration).toLong()
                     currentTime = seekToMs
                     tvCurrentTime.text = formatTime(seekToMs)
@@ -448,7 +454,7 @@ class WorkingActivity: AppCompatActivity()  {
                 fling = false
                 notice("继续播放",1000)
                 lifecycleScope.launch {
-                    rvThumbnails.stopScroll()
+                    thumbScroller.stopScroll()
                     player.volume = currentVolume.toFloat()
                     player.setPlaybackSpeed(1.0f)
                     delay(20)
@@ -528,46 +534,98 @@ class WorkingActivity: AppCompatActivity()  {
             }
         }
         //点击隐藏控件
-        val bottomCard = findViewById<View>(R.id.bottomCardContainer)
-        val playArea = findViewById<View>(R.id.playerView)
-        val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
-        playArea.setOnClickListener {
-            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-                if (widgetsShowing){
-                    widgetsShowing = false
-                    bottomCard.visibility = View.GONE
-                    mediumActions.visibility = View.GONE
-                    buttonExit.visibility = View.GONE
-                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
-                }else{
-                    widgetsShowing = true
-                    bottomCard.visibility = View.VISIBLE
-                    mediumActions.visibility = View.VISIBLE
-                    buttonExit.visibility = View.VISIBLE
-                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+        var longPress = false
+        var touchLeft = false
+        var touchRight = false
+        var scrollDistance = 0
+        val gestureDetectorPlayArea = GestureDetector(this, object : SimpleOnGestureListener() {
+                override fun onDoubleTap(e: MotionEvent): Boolean {
+                    if (player.isPlaying){
+                        pauseVideo()
+                        stopScrollerSync()
+                        notice("暂停播放",1000)
+                        buttonRefresh()
+                    } else {
+                        playVideo()
+                        startScrollerSync()
+                        notice("继续播放",1000)
+                        buttonRefresh()
+                    }
+                    return true
                 }
-            }else{
-                val toolbar = findViewById<Toolbar>(R.id.toolbar)
-                val root = findViewById<ConstraintLayout>(R.id.root)
-                if (widgetsShowing){
-                    widgetsShowing = false
-                    bottomCard.visibility = View.GONE
-                    mediumActions.visibility = View.GONE
-                    buttonExit.visibility = View.GONE
-                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
-                    toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
-                    root.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
-                }else{
-                    widgetsShowing = true
-                    bottomCard.visibility = View.VISIBLE
-                    mediumActions.visibility = View.VISIBLE
-                    buttonExit.visibility = View.VISIBLE
-                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
-                    toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadBackground))
-                    root.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                    changeBackgroundColor()
+                    return true
+                }
+                override fun onLongPress(e: MotionEvent) {
+                    if (!player.isPlaying){
+                        return
+                    }
+                    player.setPlaybackSpeed(2.0f)
+                    notice("倍速播放中",114514)
+                    longPress = true
+                    super.onLongPress(e)
+                }
+                override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+                    if (touchLeft){
+                        scrollDistance += distanceY.toInt()
+                        val windowInfo = window.attributes
+                        var initBrightness = windowInfo.screenBrightness
+                        if (initBrightness < 0) {
+                            initBrightness = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f
+                            windowInfo.screenBrightness = initBrightness
+                            window.attributes = windowInfo
+                        }
+                        val newBrightness = windowInfo.screenBrightness + scrollDistance.toFloat()/10000
+                        if (newBrightness <= 1.0 && newBrightness >= 0.0){
+                            windowInfo.screenBrightness = newBrightness
+                            window.attributes = windowInfo
+                            Log.e("SuMing", "touchLeft:newBrightness:${newBrightness}")
+                        }else{
+                            Log.e("SuMing", "touchLeft:newBrightness:${newBrightness}")
+                        }
+                    }
+                    if (touchRight){
+                        scrollDistance += distanceY.toInt()
+                        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+                        currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                        player.volume = player.volume + scrollDistance.toFloat()/10000
+                        Log.e("SuMing", "touchLeft:scrollDistance:${scrollDistance}player.volume:${player.volume}")
+                    }
+                    return super.onScroll(e1, e2, distanceX, distanceY)
+                }
+            })
+        val playArea = findViewById<View>(R.id.playerView)
+        playArea.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                val screenWidth = Resources.getSystem().displayMetrics.widthPixels
+                val x = event.x
+                if (x < screenWidth / 2) {
+                    touchLeft = true
+                } else {
+                    touchRight = true
                 }
             }
+            if (event.action == MotionEvent.ACTION_UP) {
+                scrollDistance = 0
+                touchLeft = false
+                touchRight = false
+                if(longPress){
+                    longPress = false
+                    player.setPlaybackSpeed(1.0f)
+                    val noticeCard = findViewById<CardView>(R.id.noticeCard)
+                    noticeCard.visibility = View.GONE
+                }
+            }
+
+
+            gestureDetectorPlayArea.onTouchEvent(event)
+
         }
+
+
+
+
 
 
 
@@ -586,7 +644,7 @@ class WorkingActivity: AppCompatActivity()  {
                 delay(800)
             }
             withContext(Dispatchers.Main) {
-                rvThumbnails.adapter = WorkingActivityAdapter(this@WorkingActivity,
+                thumbScroller.adapter = WorkingActivityAdapter(this@WorkingActivity,
                     absolutePath, thumbs,eachPicWidth,picNumber,eachPicDuration)
             }
 
@@ -768,7 +826,20 @@ class WorkingActivity: AppCompatActivity()  {
             noticeCard.visibility = View.GONE
         }
     }
+    private var showNoticeJobLong: Job? = null
+    private fun showNoticeJobLong(text: String) {
+        showNoticeJobLong?.cancel()
+        showNoticeJobLong = lifecycleScope.launch {
+            val notice = findViewById<TextView>(R.id.notice)
+            val noticeCard = findViewById<CardView>(R.id.noticeCard)
+            noticeCard.visibility = View.VISIBLE
+            notice.text = text
+        }
+    }
     private fun notice(text: String, duration: Long) {
+        if (duration > 114513){
+            showNoticeJobLong(text)
+        }
         showNoticeJob(text, duration)
     }
 
@@ -835,6 +906,58 @@ class WorkingActivity: AppCompatActivity()  {
 
 
     //Functions
+    //点击时隐藏控件并设为黑色背景
+    private fun changeBackgroundColor(){
+        val bottomCard = findViewById<View>(R.id.bottomCardContainer)
+        val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
+        val playerView = findViewById<View>(R.id.playerView)
+        val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            if (widgetsShowing){
+                widgetsShowing = false
+                bottomCard.visibility = View.GONE
+                mediumActions.visibility = View.GONE
+                buttonExit.visibility = View.GONE
+                if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
+                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
+                }
+            }else{
+                widgetsShowing = true
+                bottomCard.visibility = View.VISIBLE
+                mediumActions.visibility = View.VISIBLE
+                buttonExit.visibility = View.VISIBLE
+                if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
+                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+                }
+            }
+        }else{
+            val toolbar = findViewById<Toolbar>(R.id.toolbar)
+            val root = findViewById<ConstraintLayout>(R.id.root)
+            if (widgetsShowing){
+                widgetsShowing = false
+                bottomCard.visibility = View.GONE
+                mediumActions.visibility = View.GONE
+                buttonExit.visibility = View.GONE
+                if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
+                    toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
+                    root.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
+                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
+                }
+            }else{
+                widgetsShowing = true
+                bottomCard.visibility = View.VISIBLE
+                mediumActions.visibility = View.VISIBLE
+                buttonExit.visibility = View.VISIBLE
+                if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
+                    toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadBackground))
+                    root.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+                }
+            }
+        }
+
+
+    }
 
     private fun playerReady(){
         isSeekReady = true
