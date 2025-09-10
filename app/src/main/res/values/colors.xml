@@ -24,6 +24,9 @@
     <color name="CardView1">#FFFFFF</color>
     <color name="CardViewRV">#FAFAFA</color>
     <color name="WarningText">#FF5252</color>
+    <color name="CardViewBottom">#FFFFFF</color>
+    <color name="switchTrackColor">#FF9E9E9E</color>
+    <color name="switchThumbColor">#FF000000</color>
 
 
     <color name="HeadText111">#000000</color>

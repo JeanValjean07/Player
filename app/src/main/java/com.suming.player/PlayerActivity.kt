@@ -1,5 +1,6 @@
 package com.suming.player
 
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
@@ -26,6 +27,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsetsController
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AnticipateInterpolator
+import android.view.animation.DecelerateInterpolator
+import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -48,6 +52,7 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.MediaItem
@@ -169,13 +174,32 @@ class PlayerActivity: AppCompatActivity()  {
             val buttonExit=findViewById<View>(R.id.buttonExit)
             ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
                 val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-                (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight+5)
+                (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight + 8)
                 insets
             }
+            buttonExit.alpha = 0f
+            buttonExit.animate()
+                .alpha(1f)
+                .setDuration(500)
+                .setInterpolator(LinearInterpolator())
+                .start()
         }
 
 
         val prefs = getSharedPreferences("PlayerPrefs", MODE_PRIVATE)
+        val sharedPref = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        var generateThumbSYNC = 0
+        var seekSYNC = 0
+        if(sharedPref.contains("generateThumbSYNC")){
+            generateThumbSYNC = sharedPref.getInt("generateThumbSYNC", 1)
+        }else{
+            sharedPref.edit { putInt("generateThumbSYNC", 1) }
+        }
+        if(sharedPref.contains("seekSYNC")){
+            seekSYNC = sharedPref.getInt("seekSYNC", 1)
+        }else{
+            sharedPref.edit { putInt("seekSYNC", 1) }
+        }
         preCheck()
 
         //反序列化item + 支持用分享打开和用其他应用打开，暂不支持批量打开
@@ -211,17 +235,35 @@ class PlayerActivity: AppCompatActivity()  {
             }
         }
 
-
         val playerView = findViewById<PlayerView>(R.id.playerView)
-        player = ExoPlayer.Builder(this)
-            .setSeekParameters(SeekParameters.EXACT)
-            .setWakeMode(WAKE_MODE_NETWORK)
-            .build()
-            .apply {
-                setMediaItem(MediaItem.fromUri(videoUri))
-                prepare()
-                playWhenReady = false
-            }
+
+        if (seekSYNC == 1){
+            player = ExoPlayer.Builder(this)
+                .setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                .setWakeMode(WAKE_MODE_NETWORK)
+                .build()
+                .apply {
+                    setMediaItem(MediaItem.fromUri(videoUri))
+                    prepare()
+                    playWhenReady = false
+                }
+        }else{
+            player = ExoPlayer.Builder(this)
+                .setSeekParameters(SeekParameters.EXACT)
+                .setWakeMode(WAKE_MODE_NETWORK)
+                .build()
+                .apply {
+                    setMediaItem(MediaItem.fromUri(videoUri))
+                    prepare()
+                    playWhenReady = false
+                }
+        }
+
+
+
+
+
+
         playerView.player = player
 
         if (savedInstanceState != null) {
@@ -636,16 +678,14 @@ class PlayerActivity: AppCompatActivity()  {
 
 
 
-
-
         lifecycleScope.launch(Dispatchers.IO) {
             videoUri = videoItem.uri
 
-            val vm by viewModels<PlayerScrollerViewModel>()
 
+            val vm by viewModels<PlayerScrollerViewModel>()
             withContext(Dispatchers.Main) {
                 thumbScroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
-                    absolutePath,vm.thumbItems,eachPicWidth,picNumber,eachPicDuration)
+                    absolutePath,vm.thumbItems,eachPicWidth,picNumber,eachPicDuration,generateThumbSYNC)
             }
             if(linkScrollEnabled){ startScrollerSync() }
             delay(100)
@@ -679,10 +719,8 @@ class PlayerActivity: AppCompatActivity()  {
                 scrollParam1 = scrollParam1 - 1
                 scrollParam2 = 150
                 lm.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
-                Log.d("SuMing","ScrollerSyncEnd:scrollParam1:$scrollParam1,scrollParam2:$scrollParam2")
             }else{
                 lm.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
-                Log.d("SuMing","ScrollerSync:scrollParam1:$scrollParam1,scrollParam2:$scrollParam2")
                 syncScrollTaskHandler.postDelayed(this, gap)
             }
         }
@@ -810,7 +848,6 @@ class PlayerActivity: AppCompatActivity()  {
             lifecycleScope.launch {
                 delay(500)
                 if (lastScrollerParam1 == scrollParam1 && lastScrollerParam2 == scrollParam2){
-                    Log.d("SuMing","检测到进度条未移动")
                     stopScrollerSync()
                 }
             }

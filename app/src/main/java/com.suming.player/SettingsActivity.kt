@@ -1,6 +1,7 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -8,6 +9,8 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -15,6 +18,13 @@ import androidx.core.view.WindowInsetsCompat
 
 
 class SettingsActivity: AppCompatActivity() {
+
+    private lateinit var Switch1: SwitchCompat
+    private lateinit var Switch2: SwitchCompat
+    private var generateThumbSYNC = 1
+    private var seekSYNC = 1
+
+
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,5 +75,58 @@ class SettingsActivity: AppCompatActivity() {
 
 
 
+        Switch1 = findViewById(R.id.generateThumbSYNC)
+        Switch2 = findViewById(R.id.seekSYNC)
+        Switch1.setOnCheckedChangeListener { _, isChecked ->
+            saveSwitchState("generateThumbSYNC", isChecked)
+        }
+        restoreSwitchState("generateThumbSYNC")
+        Switch2.setOnCheckedChangeListener { _, isChecked ->
+            saveSwitchState("seekSYNC", isChecked)
+        }
+        restoreSwitchState("seekSYNC")
+
+
+
+
+
+
+
+    }
+
+
+    private val settingsPrefs = mapOf(
+        "generateThumbSYNC"          to ::generateThumbSYNC,
+        "seekSYNC"                   to ::seekSYNC,
+    )
+
+    private fun saveSwitchState(key: String, isChecked: Boolean) {
+        val prop = settingsPrefs[key] ?: return
+        val value = if (isChecked) 1 else 0
+        prop.set(value)
+        getSharedPreferences("app_prefs", MODE_PRIVATE)
+            .edit { putInt(key, value).apply() }
+    }
+
+    private fun restoreSwitchState(key: String) {
+        val sharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        if (key == "generateThumbSYNC"){
+            generateThumbSYNC = sharedPreferences.getInt("generateThumbSYNC", 1)
+            if (generateThumbSYNC == 1){
+                Switch1.isChecked = true
+            }
+            else{
+                Switch1.isChecked = false
+            }
+        }
+        if (key == "seekSYNC"){
+            seekSYNC = sharedPreferences.getInt("seekSYNC", 1)
+            if (seekSYNC == 1){
+                Switch2.isChecked = true
+            }
+            else{
+                Switch2.isChecked = false
+            }
+        }
     }
 }

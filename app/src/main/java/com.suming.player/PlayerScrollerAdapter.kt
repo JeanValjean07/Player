@@ -31,6 +31,7 @@ class PlayerScrollerAdapter(
     private val eachPicWidth: Int,
     private val picNumber: Int,
     private val eachPicDuration: Int,
+    private val generateThumbSYNC: Int,
 ) : RecyclerView.Adapter<PlayerScrollerAdapter.ThumbViewHolder>() {
 
     //初始化—协程作用域
@@ -96,17 +97,18 @@ class PlayerScrollerAdapter(
 
     //Functions
     //截取实际缩略图
+    val retrieverMap = mutableMapOf<Int, MediaMetadataRetriever>()
     private suspend fun generateThumb(position: Int) {
         val item = thumbItems[position]
         if (item.thumbGeneratingRunning) return
         item.thumbGeneratingRunning = true
-        val retriever = MediaMetadataRetriever()
+        retrieverMap[position] = MediaMetadataRetriever()
         try {
-            retriever.setDataSource(videoPath)
+            retrieverMap[position]?.setDataSource(videoPath)
             coroutineContext.ensureActive()
-            var wStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-            var hStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-            val rotateStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+            var wStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+            var hStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+            val rotateStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
             if (rotateStr == "90"){
                 val temp = wStr
                 wStr = hStr
@@ -116,20 +118,32 @@ class PlayerScrollerAdapter(
             val videoHeight = hStr?.toFloat() ?: 0f
             val ratio = videoHeight.div(videoWidth)
             coroutineContext.ensureActive()
-            val frame = retriever.getFrameAtTime(
-                (position * eachPicDuration * 1000L),
-                MediaMetadataRetriever.OPTION_CLOSEST
-            )
-            coroutineContext.ensureActive()
-            retriever.release()
-            saveThumb(ratio, position, frame)
-            coroutineContext.ensureActive()
+            if (generateThumbSYNC == 1){
+                val frame = retrieverMap[position]?.getFrameAtTime(
+                    (position * eachPicDuration * 1000L),
+                    MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+                )
+                coroutineContext.ensureActive()
+                retrieverMap[position]?.release()
+                saveThumb(ratio, position, frame)
+                coroutineContext.ensureActive()
+            }
+            else{
+                val frame = retrieverMap[position]?.getFrameAtTime(
+                    (position * eachPicDuration * 1000L),
+                    MediaMetadataRetriever.OPTION_CLOSEST
+                )
+                coroutineContext.ensureActive()
+                retrieverMap[position]?.release()
+                saveThumb(ratio, position, frame)
+                coroutineContext.ensureActive()
+            }
             item.thumbGeneratingRunning = false
         }
         catch (_: Exception) {
         } finally {
             item.thumbGeneratingRunning = false
-            retriever.release()
+            retrieverMap[position]?.release()
         }
     }
     //压缩和保存缩略图

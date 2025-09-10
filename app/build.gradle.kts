@@ -14,7 +14,7 @@ android {
         minSdk = 29
         targetSdk = 36
         versionCode = 1
-        versionName = "1.1.4"
+        versionName = "1.1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -44,7 +44,6 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.8.0")
     implementation("androidx.media3:media3-ui:1.8.0")
     implementation("io.coil-kt:coil:2.4.0")
-    implementation("com.github.chrisbanes:PhotoView:2.3.0")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
 
     implementation(libs.androidx.core.ktx)
