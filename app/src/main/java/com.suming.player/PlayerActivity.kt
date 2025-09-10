@@ -192,6 +192,11 @@ class PlayerActivity: AppCompatActivity()  {
             videoUri = videoUriRec
             wasPlaying = savedInstanceState.getBoolean("wasPlaying")
             currentTime = savedInstanceState.getLong("currentTime")
+            firstEntry = savedInstanceState.getBoolean("firstEntry")
+            if (!firstEntry){
+                val cover = findViewById<View>(R.id.cover)
+                cover.visibility = View.GONE
+            }
         }
 
 
@@ -840,6 +845,7 @@ class PlayerActivity: AppCompatActivity()  {
         outState.putBoolean("wasPlaying", wasPlaying)
         outState.putString("uri", videoUri.toString())
         outState.putLong("currentTime", player.currentPosition)
+        outState.putBoolean("firstEntry", firstEntry)
     }
 
     override fun onPause() {
@@ -900,6 +906,8 @@ class PlayerActivity: AppCompatActivity()  {
                 if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
                     playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
                 }
+                stopScrollerSync()
+                stopVideoTimeSync()
             }else{
                 widgetsShowing = true
                 bottomCard.visibility = View.VISIBLE
@@ -908,6 +916,8 @@ class PlayerActivity: AppCompatActivity()  {
                 if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
                     playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
                 }
+                startScrollerSync()
+                startVideoTimeSync()
             }
         }else{
             val toolbar = findViewById<Toolbar>(R.id.toolbar)
@@ -922,6 +932,8 @@ class PlayerActivity: AppCompatActivity()  {
                     root.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
                     playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
                 }
+                stopScrollerSync()
+                stopVideoTimeSync()
             }else{
                 widgetsShowing = true
                 bottomCard.visibility = View.VISIBLE
@@ -932,10 +944,10 @@ class PlayerActivity: AppCompatActivity()  {
                     root.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
                     playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
                 }
+                startScrollerSync()
+                startVideoTimeSync()
             }
         }
-
-
     }
 
     private fun playerReady(){
