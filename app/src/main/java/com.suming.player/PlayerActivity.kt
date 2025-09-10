@@ -23,6 +23,7 @@ import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowInsetsController
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
@@ -34,9 +35,11 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
@@ -49,10 +52,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.PlayerView
+import androidx.paging.LOG_TAG
+import androidx.privacysandbox.tools.core.model.Type
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
@@ -64,6 +70,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.math.max
 
 @UnstableApi
 class PlayerActivity: AppCompatActivity()  {
@@ -116,6 +123,7 @@ class PlayerActivity: AppCompatActivity()  {
 
     private var lastSeekExecuted = false
 
+    private var playEnd = false
 
 
     //旧机型兼容判断
@@ -147,21 +155,25 @@ class PlayerActivity: AppCompatActivity()  {
         }
     }
 
+
     @OptIn(UnstableApi::class)
     @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            hideStatusBar()
-        }
         enableEdgeToEdge()
         setContentView(R.layout.activity_working)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+        //横屏:完全隐藏状态栏,竖屏:显示到状态栏下并动态更改退出按钮位置
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            hideStatusBar()
+        }else{
+            val buttonExit=findViewById<View>(R.id.buttonExit)
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
+                val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+                (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight+5)
+                insets
+            }
         }
+
 
         val prefs = getSharedPreferences("PlayerPrefs", MODE_PRIVATE)
         preCheck()
@@ -229,6 +241,7 @@ class PlayerActivity: AppCompatActivity()  {
                         playerReady()
                     }
                     Player.STATE_ENDED -> {
+                        playEnd = true
                         pauseVideo()
                         notice("视频结束",1000)
                     }
@@ -502,6 +515,7 @@ class PlayerActivity: AppCompatActivity()  {
                 linkScrollEnabled = true
                 sharedPref.edit { putBoolean("linkScrolling", true) }
                 notice("已将进度条与视频进度同步",1000)
+                startCheckStatus()
                 startScrollerSync()
                 buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
                 stopVideoSeek()
@@ -650,20 +664,27 @@ class PlayerActivity: AppCompatActivity()  {
 
 
     //runnable-1 - 根据视频时间更新进度条位置: 主控：视频时间  被控：进度条位置
+    var scrollParam1 = 0
+    var scrollParam2 = 0
     private val syncScrollTaskHandler = Handler(Looper.getMainLooper())
     private val syncScrollTask = object : Runnable {
         override fun run() {
-            //基于实时读取视频当前时间的图片滚动，模拟连续刷新
-
             val gap = 16L
-
-            val scrollParam1 = (player.currentPosition / eachPicDuration).toInt()
-            val scrollParam2 = ((player.currentPosition - scrollParam1*eachPicDuration)*eachPicWidth/eachPicDuration).toInt()
-
+            scrollParam1 = (player.currentPosition / eachPicDuration).toInt()
+            scrollParam2 = ((player.currentPosition - scrollParam1*eachPicDuration)*eachPicWidth/eachPicDuration).toInt()
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
             val lm = recyclerView.layoutManager as LinearLayoutManager
-            lm.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
-            syncScrollTaskHandler.postDelayed(this, gap)
+            if (playEnd && !player.isPlaying){
+                playEnd = false
+                scrollParam1 = scrollParam1 - 1
+                scrollParam2 = 150
+                lm.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
+                Log.d("SuMing","ScrollerSyncEnd:scrollParam1:$scrollParam1,scrollParam2:$scrollParam2")
+            }else{
+                lm.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
+                Log.d("SuMing","ScrollerSync:scrollParam1:$scrollParam1,scrollParam2:$scrollParam2")
+                syncScrollTaskHandler.postDelayed(this, gap)
+            }
         }
     }
     private fun startScrollerSync() {
@@ -780,6 +801,28 @@ class PlayerActivity: AppCompatActivity()  {
     private fun stopVideoSeek() {
         videoSeekHandler.removeCallbacks(videoSeek)
     }
+    //runnable-5 - 状态检查
+    private val checkStatusHandler = Handler(Looper.getMainLooper())
+    private var checkStatus = object : Runnable {
+        override fun run(){
+            val lastScrollerParam1 = scrollParam1
+            val lastScrollerParam2 = scrollParam2
+            lifecycleScope.launch {
+                delay(500)
+                if (lastScrollerParam1 == scrollParam1 && lastScrollerParam2 == scrollParam2){
+                    Log.d("SuMing","检测到进度条未移动")
+                    stopScrollerSync()
+                }
+            }
+            checkStatusHandler.postDelayed(this,1000)
+        }
+    }
+    private fun startCheckStatus() {
+        checkStatusHandler.post(checkStatus)
+    }
+    private fun stopCheckStatus() {
+        checkStatusHandler.removeCallbacks(checkStatus)
+    }
 
 
     //job-1 -seek
@@ -873,6 +916,7 @@ class PlayerActivity: AppCompatActivity()  {
         stopVideoSmartScroll()
         stopVideoTimeSync()
         stopScrollerSync()
+        stopCheckStatus()
         if (!cannotOpen){
             player.release()
         }
@@ -909,6 +953,8 @@ class PlayerActivity: AppCompatActivity()  {
                 stopScrollerSync()
                 stopVideoTimeSync()
             }else{
+                if(linkScrollEnabled) { startScrollerSync() }
+                startVideoTimeSync()
                 widgetsShowing = true
                 bottomCard.visibility = View.VISIBLE
                 mediumActions.visibility = View.VISIBLE
@@ -916,8 +962,6 @@ class PlayerActivity: AppCompatActivity()  {
                 if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
                     playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
                 }
-                startScrollerSync()
-                startVideoTimeSync()
             }
         }else{
             val toolbar = findViewById<Toolbar>(R.id.toolbar)
@@ -935,6 +979,8 @@ class PlayerActivity: AppCompatActivity()  {
                 stopScrollerSync()
                 stopVideoTimeSync()
             }else{
+                if(linkScrollEnabled) { startScrollerSync() }
+                startVideoTimeSync()
                 widgetsShowing = true
                 bottomCard.visibility = View.VISIBLE
                 mediumActions.visibility = View.VISIBLE
@@ -944,8 +990,6 @@ class PlayerActivity: AppCompatActivity()  {
                     root.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
                     playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
                 }
-                startScrollerSync()
-                startVideoTimeSync()
             }
         }
     }
@@ -992,6 +1036,7 @@ class PlayerActivity: AppCompatActivity()  {
         player.play()
         player.volume = currentVolume.toFloat()
         player.setPlaybackSpeed(1f)
+        stopCheckStatus()
         if (linkScrollEnabled){ startScrollerSync() }
         lifecycleScope.launch {
                 delay(100)
@@ -1002,10 +1047,15 @@ class PlayerActivity: AppCompatActivity()  {
 
     private fun hideStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.setDecorFitsSystemWindows(false)
-            window.insetsController?.let {
-                it.hide(WindowInsetsCompat.Type.statusBars())
-                it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
+                WindowInsetsCompat.CONSUMED
+            }
+            window.decorView.post {
+                window.insetsController?.let { controller ->
+                    controller.hide(android.view.WindowInsets.Type.statusBars())
+                    controller.systemBarsBehavior =
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
             }
         } else {
             @Suppress("DEPRECATION")

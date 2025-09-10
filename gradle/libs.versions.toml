@@ -14,6 +14,7 @@ ui = "1.9.0"
 media3Transformer = "1.8.0"
 foundationLayout = "1.9.0"
 runtimeSavedInstanceState = "1.0.0-alpha11"
+toolsCore = "1.0.0-alpha13"
 
 
 [libraries]
@@ -30,6 +31,7 @@ androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-media3-transformer = { group = "androidx.media3", name = "media3-transformer", version.ref = "media3Transformer" }
 androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-runtime-saved-instance-state = { group = "androidx.compose.runtime", name = "runtime-saved-instance-state", version.ref = "runtimeSavedInstanceState" }
+androidx-tools-core = { group = "androidx.privacysandbox.tools", name = "tools-core", version.ref = "toolsCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
