@@ -18,7 +18,6 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
-import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.KeyEvent
@@ -33,6 +32,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -42,7 +42,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
-import androidx.core.os.HandlerCompat.postDelayed
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -57,8 +56,7 @@ import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
-import com.suming.player.WorkingActivity.DeviceCompatUtil.isCompatibleDevice
-import com.suming.player.data.model.ThumbItem
+import com.suming.player.PlayerActivity.DeviceCompatUtil.isCompatibleDevice
 import data.model.VideoItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -68,7 +66,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 @UnstableApi
-class WorkingActivity: AppCompatActivity()  {
+class PlayerActivity: AppCompatActivity()  {
 
     //时间戳信息显示位
     private lateinit var tvCurrentTime: TextView
@@ -117,6 +115,7 @@ class WorkingActivity: AppCompatActivity()  {
     private var firstEntry = true
 
     private var lastSeekExecuted = false
+
 
 
     //旧机型兼容判断
@@ -196,7 +195,6 @@ class WorkingActivity: AppCompatActivity()  {
         }
 
 
-
         val playerView = findViewById<PlayerView>(R.id.playerView)
         player = ExoPlayer.Builder(this)
             .setSeekParameters(SeekParameters.EXACT)
@@ -261,11 +259,11 @@ class WorkingActivity: AppCompatActivity()  {
         val sidePadding = screenWidth / 2
         thumbScroller.setPadding(sidePadding, 0, sidePadding-1, 0) //右边需要减一，否则滑动区域会超出
         var videoUri = videoItem.uri
-        absolutePath = getAbsoluteFilePath(this@WorkingActivity, videoUri).toString()
-        thumbScroller.layoutManager = LinearLayoutManager(this@WorkingActivity, LinearLayoutManager.HORIZONTAL, false)
+        absolutePath = getAbsoluteFilePath(this@PlayerActivity, videoUri).toString()
+        thumbScroller.layoutManager = LinearLayoutManager(this@PlayerActivity, LinearLayoutManager.HORIZONTAL, false)
         val retriever = MediaMetadataRetriever()
         try {
-            retriever.setDataSource(this@WorkingActivity, videoUri)
+            retriever.setDataSource(this@PlayerActivity, videoUri)
         } catch (_: Exception) {
             val data = Intent().apply {
                 putExtra("key", "needRefresh")
@@ -580,9 +578,6 @@ class WorkingActivity: AppCompatActivity()  {
                         if (newBrightness <= 1.0 && newBrightness >= 0.0){
                             windowInfo.screenBrightness = newBrightness
                             window.attributes = windowInfo
-                            Log.e("SuMing", "touchLeft:newBrightness:${newBrightness}")
-                        }else{
-                            Log.e("SuMing", "touchLeft:newBrightness:${newBrightness}")
                         }
                     }
                     if (touchRight){
@@ -590,7 +585,6 @@ class WorkingActivity: AppCompatActivity()  {
                         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
                         currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         player.volume = player.volume + scrollDistance.toFloat()/10000
-                        Log.e("SuMing", "touchLeft:scrollDistance:${scrollDistance}player.volume:${player.volume}")
                     }
                     return super.onScroll(e1, e2, distanceX, distanceY)
                 }
@@ -618,40 +612,25 @@ class WorkingActivity: AppCompatActivity()  {
                 }
             }
 
-
             gestureDetectorPlayArea.onTouchEvent(event)
-
         }
 
 
 
 
 
-
-
-
-        //发起adapter联动
         lifecycleScope.launch(Dispatchers.IO) {
             videoUri = videoItem.uri
-            val thumbs = MutableList(picNumber) { sec ->
-                val file = File(
-                    filesDir,
-                    "thumbs/${File(videoUri.path!!).nameWithoutExtension}/$sec.jpg"
-                )
-                ThumbItem(videoUri.toString(), file, picNumber.toLong())
-            }
-            if (savedInstanceState == null) {
-                delay(800)
-            }
-            withContext(Dispatchers.Main) {
-                thumbScroller.adapter = WorkingActivityAdapter(this@WorkingActivity,
-                    absolutePath, thumbs,eachPicWidth,picNumber,eachPicDuration)
-            }
 
+            val vm by viewModels<PlayerScrollerViewModel>()
+
+            withContext(Dispatchers.Main) {
+                thumbScroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
+                    absolutePath,vm.thumbItems,eachPicWidth,picNumber,eachPicDuration)
+            }
             if(linkScrollEnabled){ startScrollerSync() }
             delay(100)
             startVideoTimeSync()
-
         }
 
         //系统手势监听：返回键重写

@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity: AppCompatActivity() {
 
-    private lateinit var adapter: VideoPagingAdapter
+    private lateinit var adapter: MainAdapter
     //无法打开视频时的接收器
     private val detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
     { result: ActivityResult ->
@@ -173,8 +173,8 @@ class MainActivity: AppCompatActivity() {
 
         val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
         recyclerview1.layoutManager = LinearLayoutManager(this)
-        adapter = VideoPagingAdapter { item ->  //点击事件
-            val intent = Intent(this, WorkingActivity::class.java).apply {
+        adapter = MainAdapter { item ->  //点击事件
+            val intent = Intent(this, PlayerActivity::class.java).apply {
                 putExtra("video", item)
             }
             detailLauncher.launch(intent)

@@ -36,7 +36,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".WorkingActivity"
+        <activity android:name=".PlayerActivity"
             android:theme="@style/MainTheme"
             android:exported="true">
             <intent-filter>

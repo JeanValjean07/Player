@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +13,6 @@ import android.widget.ImageView
 import androidx.core.graphics.scale
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.data.model.ThumbItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,35 +20,24 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.coroutines.coroutineContext
 
-
-class WorkingActivityAdapter(
+class PlayerScrollerAdapter(
     private val context: Context,
     private val videoPath: String,
-    private val thumbItems: MutableList<ThumbItem>,
+    private val thumbItems: MutableList<PlayerScrollerViewModel.ThumbScrollerItem>,
     private val eachPicWidth: Int,
     private val picNumber: Int,
     private val eachPicDuration: Int,
-) : RecyclerView.Adapter<WorkingActivityAdapter.ThumbViewHolder>() {
+) : RecyclerView.Adapter<PlayerScrollerAdapter.ThumbViewHolder>() {
 
     //初始化—协程作用域
-    private val coroutineScope_generateThumb = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val onBindViewHolder = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    //初始化-作用域并发数量
-    private val decodeLimiter = Semaphore(20)
-
-
-    //判断流程参量
+    private val coroutineScopeGenerateThumb = CoroutineScope(Dispatchers.IO + SupervisorJob())
     @Volatile
-    private var isCoverPlaced = false
+    private var generateCoverWorking = false   //防止重复发起多次占位图生成任务
 
-    //函数运行状态
-    @Volatile
-    private var generateCoverWorking = false
 
     inner class ThumbViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var generateThumbJob: Job? = null
@@ -67,41 +56,24 @@ class WorkingActivityAdapter(
     override fun onBindViewHolder(holder: ThumbViewHolder, position: Int) {
         val item = thumbItems[position]
         holder.itemView.updateLayoutParams<ViewGroup.LayoutParams> { this.width = eachPicWidth }
-        holder.onBindViewHolderJob = onBindViewHolder.launch(Dispatchers.IO) {
-            decodeLimiter.withPermit {
-                item.coverPath?.let { file ->
-                    if (!item.currentThumbType){
-                        if (!item.coverThumbBinded){
-                            val bmp = BitmapFactory.decodeFile(file.absolutePath)
-                            withContext(Dispatchers.Main) { holder.ivThumbnail.setImageBitmap(bmp) }
-                            item.coverThumbBinded = true
-                            return@launch
-                        }
-                        else{
-                            return@launch
-                        }
-                    }
-                    else{
-                        val bmp = BitmapFactory.decodeFile(file.absolutePath)
-                        withContext(Dispatchers.Main) { holder.ivThumbnail.setImageBitmap(bmp) }
-                        return@launch
-                    }
-                }
-            }
+        item.thumbPath?.let { file ->
+            val bmp = BitmapFactory.decodeFile(file.absolutePath)
+            holder.ivThumbnail.setImageBitmap(bmp)
         }
     }
 
     override fun onViewAttachedToWindow(holder: ThumbViewHolder) {
         super.onViewAttachedToWindow(holder)
-        if (isCoverPlaced){
-            val position = holder.bindingAdapterPosition
-            val item = thumbItems[position]
+        val position = holder.bindingAdapterPosition
+        val item = thumbItems[position]
+
+        if (item.isCoverPlaced){
             if (item.currentThumbType){
                 return
             }
             else{
                 holder.generateThumbJob?.cancel()
-                holder.generateThumbJob = coroutineScope_generateThumb.launch(Dispatchers.IO) { generateThumb(position) }
+                holder.generateThumbJob = coroutineScopeGenerateThumb.launch(Dispatchers.IO) { generateThumb(position) }
             }
         }
         else{
@@ -113,19 +85,21 @@ class WorkingActivityAdapter(
         super.onViewDetachedFromWindow(holder)
         if (holder.bindingAdapterPosition == RecyclerView.NO_POSITION) return
         val item = thumbItems[holder.bindingAdapterPosition]
-        if (item.running) {
-            item.running = false
+        if (item.thumbGeneratingRunning) {
+            holder.generateThumbJob?.cancel()
+            item.thumbGeneratingRunning = false
         }
-        holder.generateThumbJob?.cancel()
-        holder.onBindViewHolderJob?.cancel()
     }
+
+
+
 
     //Functions
     //截取实际缩略图
     private suspend fun generateThumb(position: Int) {
         val item = thumbItems[position]
-        if (item.running) return
-        item.running = true
+        if (item.thumbGeneratingRunning) return
+        item.thumbGeneratingRunning = true
         val retriever = MediaMetadataRetriever()
         try {
             retriever.setDataSource(videoPath)
@@ -137,13 +111,11 @@ class WorkingActivityAdapter(
                 val temp = wStr
                 wStr = hStr
                 hStr = temp
-            }  //注意视频的旋转角
+            }
             val videoWidth = wStr?.toFloat() ?: 0f
             val videoHeight = hStr?.toFloat() ?: 0f
             val ratio = videoHeight.div(videoWidth)
-
             coroutineContext.ensureActive()
-            //截图：截取缩略图
             val frame = retriever.getFrameAtTime(
                 (position * eachPicDuration * 1000L),
                 MediaMetadataRetriever.OPTION_CLOSEST
@@ -152,11 +124,11 @@ class WorkingActivityAdapter(
             retriever.release()
             saveThumb(ratio, position, frame)
             coroutineContext.ensureActive()
-            item.running = false
+            item.thumbGeneratingRunning = false
         }
         catch (_: Exception) {
         } finally {
-            item.running = false
+            item.thumbGeneratingRunning = false
             retriever.release()
         }
     }
@@ -175,8 +147,8 @@ class WorkingActivityAdapter(
                 frame.recycle()
             }
             //修改item中的缩略图链接
-            item.coverPath=outFile
-            item.running = false
+            item.thumbPath=outFile
+            item.thumbGeneratingRunning = false
             item.currentThumbType = true
             withContext(Dispatchers.Main) { notifyItemChanged(position) }
         }
@@ -195,11 +167,10 @@ class WorkingActivityAdapter(
                 val temp = wStr
                 wStr = hStr
                 hStr = temp
-            }  //注意视频的旋转角
+            }
             val videoWidth = wStr?.toFloat() ?: 0f
             val videoHeight = hStr?.toFloat() ?: 0f
             val ratio = videoHeight.div(videoWidth)
-
             val frame = retriever.getFrameAtTime(500000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
             retriever.release()
             if (frame != null) {
@@ -213,9 +184,8 @@ class WorkingActivityAdapter(
                     scaledBitmap.recycle()
                     frame.recycle()
                 }
-                val newItem = item.copy(coverPath = outFile, isSaved = true)
+                val newItem = item.copy(thumbPath = outFile)
                 thumbItems[0] = newItem
-                item.coverThumbBinded = true
                 placeCover()
             }
         }
@@ -224,8 +194,8 @@ class WorkingActivityAdapter(
     @SuppressLint("NotifyDataSetChanged")
     private suspend fun placeCover(){
         val cover = File(context.cacheDir, "thumb_${videoPath.hashCode()}_cover.jpg")
-        thumbItems.replaceAll { it.copy(coverPath = cover) }
-        isCoverPlaced = true
+        thumbItems.replaceAll { it.copy(thumbPath = cover) }
+        thumbItems.replaceAll { it.copy(isCoverPlaced = true) }
         withContext(Dispatchers.Main) { notifyDataSetChanged() }
         return
     }

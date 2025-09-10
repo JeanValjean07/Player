@@ -12,8 +12,8 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import data.model.VideoItem
 
-class VideoPagingAdapter(private val onItemClick: (VideoItem) -> Unit):
-    PagingDataAdapter<VideoItem, VideoPagingAdapter.ViewHolder>(diffCallback) {
+class MainAdapter(private val onItemClick: (VideoItem) -> Unit):
+    PagingDataAdapter<VideoItem, MainAdapter.ViewHolder>(diffCallback) {
 
     //DiffUtil
     companion object {
