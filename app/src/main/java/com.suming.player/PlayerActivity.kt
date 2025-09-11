@@ -1,6 +1,5 @@
 package com.suming.player
 
-import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
@@ -27,8 +26,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsetsController
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.AnticipateInterpolator
-import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
@@ -39,31 +36,24 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.PlayerView
-import androidx.paging.LOG_TAG
-import androidx.privacysandbox.tools.core.model.Type
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
@@ -75,7 +65,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.math.max
 
 @UnstableApi
 class PlayerActivity: AppCompatActivity()  {
@@ -103,7 +92,6 @@ class PlayerActivity: AppCompatActivity()  {
     private var singleTap = false
     private var scrolling = false
     //设置
-    private lateinit var sharedPref: SharedPreferences
     private var tapScrollEnabled = false
     private var linkScrollEnabled = false
     private var alwaysSeekEnabled = false
@@ -186,19 +174,18 @@ class PlayerActivity: AppCompatActivity()  {
         }
 
 
-        val prefs = getSharedPreferences("PlayerPrefs", MODE_PRIVATE)
-        val sharedPref = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
         var generateThumbSYNC = 0
         var seekSYNC = 0
-        if(sharedPref.contains("generateThumbSYNC")){
-            generateThumbSYNC = sharedPref.getInt("generateThumbSYNC", 1)
+        if(prefs.contains("generateThumbSYNC")){
+            generateThumbSYNC = prefs.getInt("generateThumbSYNC", 1)
         }else{
-            sharedPref.edit { putInt("generateThumbSYNC", 1) }
+            prefs.edit { putInt("generateThumbSYNC", 1) }
         }
-        if(sharedPref.contains("seekSYNC")){
-            seekSYNC = sharedPref.getInt("seekSYNC", 1)
+        if(prefs.contains("seekSYNC")){
+            seekSYNC = prefs.getInt("seekSYNC", 1)
         }else{
-            sharedPref.edit { putInt("seekSYNC", 1) }
+            prefs.edit { putInt("seekSYNC", 1) }
         }
         preCheck()
 
@@ -533,13 +520,13 @@ class PlayerActivity: AppCompatActivity()  {
         buttonTap.setOnClickListener {
             if (!prefs.getBoolean("tapScrolling",false)){
                 tapScrollEnabled = true
-                sharedPref.edit { putBoolean("tapScrolling", true) }
+                prefs.edit { putBoolean("tapScrolling", true) }
                 buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
                 notice("已开启单击跳转",1000)
             }
             else{
                 tapScrollEnabled = false
-                sharedPref.edit { putBoolean("tapScrolling", false) }
+                prefs.edit { putBoolean("tapScrolling", false) }
                 buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
                 notice("已关闭单击跳转",1000)
             }
@@ -553,9 +540,9 @@ class PlayerActivity: AppCompatActivity()  {
             buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
         }
         buttonLink.setOnClickListener {
-            if (!prefs.getBoolean("linkScrolling",false)){ //启用链接滚动条与视频进度
+            if (!prefs.getBoolean("linkScrolling",false)){
                 linkScrollEnabled = true
-                sharedPref.edit { putBoolean("linkScrolling", true) }
+                prefs.edit { putBoolean("linkScrolling", true) }
                 notice("已将进度条与视频进度同步",1000)
                 startCheckStatus()
                 startScrollerSync()
@@ -564,7 +551,7 @@ class PlayerActivity: AppCompatActivity()  {
             }
             else{  //关闭链接滚动条与视频进度
                 linkScrollEnabled = false
-                sharedPref.edit { putBoolean("linkScrolling", false) }
+                prefs.edit { putBoolean("linkScrolling", false) }
                 stopScrollerSync()
                 buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
                 notice("已关闭链接滚动条与视频进度",2500)
@@ -581,15 +568,15 @@ class PlayerActivity: AppCompatActivity()  {
         buttonAlwaysSeek.setOnClickListener {
             if (!prefs.getBoolean("alwaysSeek",false)){
                 alwaysSeekEnabled = true
-                sharedPref.edit { putBoolean("alwaysSeek", true) }
+                prefs.edit { putBoolean("alwaysSeek", true) }
                 buttonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
                 notice("已开启AlwaysSeek",1000)
             }
             else{
                 alwaysSeekEnabled = false
-                sharedPref.edit { putBoolean("alwaysSeek", false) }
+                prefs.edit { putBoolean("alwaysSeek", false) }
                 buttonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
-                notice("已关闭AlwaysSeek,正向拖动进度条时将启用倍速算法",3000)
+                notice("已关闭AlwaysSeek,正向拖动进度条时将使用倍速播放",3000)
             }
         }
         //点击隐藏控件
@@ -908,6 +895,7 @@ class PlayerActivity: AppCompatActivity()  {
     }
 
 
+
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
         player.prepare()
@@ -917,7 +905,6 @@ class PlayerActivity: AppCompatActivity()  {
         }else{
             wasPlaying = false
         }
-
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -1063,7 +1050,6 @@ class PlayerActivity: AppCompatActivity()  {
         startVideoTimeSync()
     }
 
-
     private fun pauseVideo(){
         stopVideoTimeSync()
         stopScrollerSync()
@@ -1076,10 +1062,9 @@ class PlayerActivity: AppCompatActivity()  {
         stopCheckStatus()
         if (linkScrollEnabled){ startScrollerSync() }
         lifecycleScope.launch {
-                delay(100)
-                startVideoTimeSync()
-            }
-
+            delay(100)
+            startVideoTimeSync()
+        }
     }
 
     private fun hideStatusBar() {
@@ -1146,8 +1131,7 @@ class PlayerActivity: AppCompatActivity()  {
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         //设置项读取,检查和预置
-        sharedPref = getSharedPreferences("PlayerPrefs", MODE_PRIVATE)
-        val prefs = getSharedPreferences("PlayerPrefs", MODE_PRIVATE)
+        val prefs = getSharedPreferences("app_Prefs", MODE_PRIVATE)
         if (!prefs.contains("tapScrolling")){
             prefs.edit { putBoolean("tapScrolling", false) }
             tapScrollEnabled = prefs.getBoolean("tapScrolling", false)
@@ -1157,7 +1141,7 @@ class PlayerActivity: AppCompatActivity()  {
         if (!prefs.contains("linkScrolling")){
             prefs.edit { putBoolean("linkScrolling", true) }
             linkScrollEnabled = prefs.getBoolean("linkScrolling", false)
-        } else{
+        } else {
             linkScrollEnabled = prefs.getBoolean("linkScrolling", false) }
         if (!prefs.contains("alwaysSeek")){
             prefs.edit { putBoolean("alwaysSeek", false) }
