@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.runtime.saved.instance.state)
     implementation(libs.androidx.tools.core)
+    implementation(libs.androidx.media3.session)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

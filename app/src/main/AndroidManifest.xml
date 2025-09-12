@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
 
 
@@ -22,7 +23,8 @@
         android:supportsRtl="true"
         android:hardwareAccelerated="true"
         tools:replace="android:allowBackup"
-        android:theme="@style/Theme.SpeedSpy">
+        android:theme="@style/Theme.SpeedSpy"
+        tools:ignore="ForegroundServicePermission">
 
         <activity
             android:name=".MainActivity"
@@ -38,6 +40,7 @@
 
         <activity android:name=".PlayerActivity"
             android:theme="@style/MainTheme"
+            android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -49,9 +52,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="video/*" />
             </intent-filter>
-
-
-
         </activity>
 
         <activity android:name=".SettingsActivity"
@@ -65,6 +65,24 @@
             android:screenOrientation="portrait"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
+
+
+        <service
+            android:name=".PlayerForegroundServices"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService"/>
+            </intent-filter>
+        </service>
+
+        <receiver android:name=".PlayerActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="PLAYER_PLAY"/>
+                <action android:name="PLAYER_PAUSE"/>
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

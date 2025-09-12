@@ -249,6 +249,84 @@
 
                     </FrameLayout>
                 </FrameLayout>
+                <!-- 按钮：后台播放 -->
+                <FrameLayout
+                    android:id="@+id/buttonBackgroundPlay"
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/buttonTapContainer"
+                    app:layout_constraintTop_toTopOf="parent">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonMaterialBackgroundPlay"
+                        android:layout_width="37dp"
+                        android:layout_height="37dp"
+                        android:layout_margin="5dp"
+                        android:elevation="10dp"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:padding="0dp"
+                        app:cornerRadius="100dp" />
+                    <FrameLayout
+                        android:id="@+id/buttonActualBackgroundPlay"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="5dp"
+                        android:elevation="11dp"
+                        android:padding="5dp">
+                        <ImageView
+                            android:id="@+id/buttonImgBackgroundPlay"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="0dp"
+                            android:layout_marginTop="1dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_controller_background_play"
+                            tools:ignore="ContentDescription" />
+                    </FrameLayout>
+                </FrameLayout>
+                <!-- 按钮：回到起始点 -->
+                <FrameLayout
+                    android:id="@+id/buttonBackToStart"
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/buttonBackgroundPlay"
+                    app:layout_constraintTop_toTopOf="parent">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/buttonMaterialBackToStart"
+                        android:layout_width="37dp"
+                        android:layout_height="37dp"
+                        android:layout_margin="5dp"
+                        android:backgroundTint="@color/ButtonBg"
+                        android:elevation="10dp"
+                        android:insetLeft="0dp"
+                        android:insetTop="0dp"
+                        android:insetRight="0dp"
+                        android:insetBottom="0dp"
+                        android:padding="0dp"
+                        app:cornerRadius="100dp" />
+                    <FrameLayout
+                        android:id="@+id/buttonActualBackToStart"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="5dp"
+                        android:elevation="11dp"
+                        android:padding="5dp">
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginTop="1dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_controller_backtostart"
+                            tools:ignore="ContentDescription" />
+                    </FrameLayout>
+                </FrameLayout>
                 <!-- 当前时间 -->
                 <TextView
                     android:id="@+id/tvCurrentTime"

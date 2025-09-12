@@ -94,7 +94,6 @@ class PlayerScrollerAdapter(
 
 
 
-
     //Functions
     //截取实际缩略图
     val retrieverMap = mutableMapOf<Int, MediaMetadataRetriever>()
