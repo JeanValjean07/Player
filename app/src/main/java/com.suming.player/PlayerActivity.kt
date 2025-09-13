@@ -19,7 +19,6 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
-import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.KeyEvent
@@ -30,9 +29,11 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.LinearInterpolator
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -55,7 +56,6 @@ import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
@@ -93,7 +93,6 @@ class PlayerActivity: AppCompatActivity(){
     private var eachPicDuration: Int = 0  //单张缩略图对应时长(现场计算)
     //点击和滑动状态标识
     private var onDown = false
-    private var onScrolling = false
     private var dragging = false
     private var fling =false
     private var singleTap = false
@@ -104,17 +103,13 @@ class PlayerActivity: AppCompatActivity(){
     private var alwaysSeekEnabled = false
     private var BackgroundPlay = false
     //Seek程序用到的参数
-    private var isSeekReady = false  //seek进入锁
-    private var lastScrollerPositionSeek = 0
+    private var isSeekReady = false
+
     //倍速程序用到的参数
-    private var currentTime = 0L     //进度条对应时间,用于和当前播放器返回时间比较,防止反向
-    private var lastPlaySpeed = 0f   //速度没变时,不发送给ExoPlayer
+    private var currentTime = 0L
+    private var lastPlaySpeed = 0f
     //进度条随视频进度滚动程序用到的参数
     private var syncScrollTaskRunning = false
-    //onScrolled回调中用来判断滚动方向
-    private var thisScrollerPosition = 0
-    private var lastScrollerPosition = 0
-    private var scrollerPositionGap = 0
     //旧机型标识
     private var isCompatibleDevice = false
     private var cannotOpen = false
@@ -124,7 +119,10 @@ class PlayerActivity: AppCompatActivity(){
 
     private var lastSeekExecuted = false
 
-    private var playEnd = false
+    private var loopPlay = false
+    private var SETTING_loopPlay = false
+    private var exitWhenEnd = 0
+    private var SETTING_exitWhenEnd = false
 
     private var videoTimeSyncGap = 50L
 
@@ -132,6 +130,19 @@ class PlayerActivity: AppCompatActivity(){
 
     private lateinit var trackSelector: DefaultTrackSelector
 
+    //消耗变量
+    private var playerReady = false
+    private var playerReadyFromFirst = false
+    private var playEnd = false
+    private var readyFromSeek = false
+
+    private var scrollerTouching = false
+
+    private var backSeek = false
+
+    private var videoTimeTo = 0L
+
+    private var seekRunnableRunning = false
 
 
     //旧机型兼容判断
@@ -169,7 +180,7 @@ class PlayerActivity: AppCompatActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_working)
+        setContentView(R.layout.activity_player)
 
         //横屏:完全隐藏状态栏,竖屏:显示到状态栏下并动态更改退出按钮位置
         fun orientationDecide(){
@@ -229,7 +240,27 @@ class PlayerActivity: AppCompatActivity(){
             BackgroundPlay = prefs.getBoolean("backgroundPlay", false)
         } else{
             BackgroundPlay = prefs.getBoolean("backgroundPlay", false) }
+        if (!prefs.contains("loopPlay")){
+            prefs.edit { putBoolean("loopPlay", false) }
+            loopPlay = prefs.getBoolean("loopPlay", false)
+        } else{
+            loopPlay = prefs.getBoolean("loopPlay", false) }
+        if (!prefs.contains("exitWhenEnd")){
+            prefs.edit { putInt("exitWhenEnd", 1) }
+            exitWhenEnd = prefs.getInt("exitWhenEnd", 1)
+            SETTING_exitWhenEnd = when (exitWhenEnd) {
+                1 -> true
+                else -> false
+            }
+        } else{
+            exitWhenEnd = prefs.getInt("exitWhenEnd", 1)
+            SETTING_exitWhenEnd = when (exitWhenEnd) {
+                1 -> true
+                else -> false
+            }
+        }
 
+        //内部广播接收
         val localBroadcastManager = LocalBroadcastManager.getInstance(this)
         val filter = IntentFilter("114514")
         val receiver = object : BroadcastReceiver() {
@@ -251,14 +282,17 @@ class PlayerActivity: AppCompatActivity(){
         //区分打开方式并反序列化
         val videoItem: VideoItem? = when (intent?.action) {
             Intent.ACTION_SEND -> {
+                SETTING_exitWhenEnd = true
                 val uri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java) ?: return finish()
                 VideoItem(0, uri, "" , 0)
             }
             Intent.ACTION_VIEW -> {
+                SETTING_exitWhenEnd = true
                 val uri = intent.data ?: return finish()
                 VideoItem(0, uri, "", 0)
             }
             else -> {
+                SETTING_exitWhenEnd = false
                 IntentCompat.getParcelableExtra(intent, "video", VideoItem::class.java)}
         }
         if (videoItem == null) {
@@ -284,8 +318,8 @@ class PlayerActivity: AppCompatActivity(){
         }
 
 
+        //初始化ExoPlayer
         trackSelector = DefaultTrackSelector(this)
-        //根据不同设置初始化不同的ExoPlayer
         val playerView = findViewById<PlayerView>(R.id.playerView)
         if (seekSYNC == 1){
             player = ExoPlayer.Builder(this)
@@ -313,7 +347,6 @@ class PlayerActivity: AppCompatActivity(){
         playerView.player = player
 
 
-
         if (savedInstanceState != null) {
             player.seekTo(currentTime)
         }
@@ -328,12 +361,12 @@ class PlayerActivity: AppCompatActivity(){
             override fun onPlaybackStateChanged(state: Int) {
                 when (state) {
                     Player.STATE_READY -> {
+                        playerReadyFromFirst = true
+                        playerReady = true
                         playerReady()
                     }
                     Player.STATE_ENDED -> {
-                        playEnd = true
-                        pauseVideo()
-                        notice("视频结束",1000)
+                        playerEnd()
                     }
                     Player.STATE_IDLE -> {
                         stopVideoTimeSync()
@@ -448,10 +481,12 @@ class PlayerActivity: AppCompatActivity(){
             override fun onDown(e: MotionEvent): Boolean {
                 if (!linkScrollEnabled) return false
                 //播放状态记录
-                wasPlaying = false
-                if (player.isPlaying){
-                    player.pause()
-                    wasPlaying = true
+                if (!videoSmartScrollRunning){
+                    wasPlaying = false
+                    if (player.isPlaying){
+                        player.pause()
+                        wasPlaying = true
+                    }
                 }
                 stopVideoSeek()
                 if (!linkScrollEnabled) return false
@@ -467,8 +502,14 @@ class PlayerActivity: AppCompatActivity(){
         })
         //RecyclerView-事件监听器 (中间层)
         thumbScroller.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
-            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean =
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                scrollerTouching = true
+                if (e.action == MotionEvent.ACTION_UP){
+                    scrollerTouching = false
+                }
                 gestureDetectorScroller.onTouchEvent(e)
+                return false
+            }
             override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
                 gestureDetectorScroller.onTouchEvent(e)
             }
@@ -484,7 +525,7 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 if (newState == RecyclerView.SCROLL_STATE_SETTLING){
                     dragging = false
-                    onScrolling = true
+                    scrolling = true
                     return
                 }
                 if (newState == RecyclerView.SCROLL_STATE_IDLE){
@@ -494,49 +535,37 @@ class PlayerActivity: AppCompatActivity(){
                 }
             }
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (linkScrollEnabled){
-                    val percent = recyclerView.computeHorizontalScrollOffset().toFloat() / thumbScroller.computeHorizontalScrollRange()
-                    val seekToMs = (percent * player.duration).toLong()
-                    currentTime = seekToMs
-                    if (videoTimeSyncGap >= 500L){
-                        tvCurrentTime.text = formatTime1(seekToMs)
-                    }else{
-                        tvCurrentTime.text = formatTime(seekToMs)
-                    }
-                } else {return}
-                if (!scrolling && !dragging) { //此状态说明进度条是在随视频滚动,用户没有操作
+                if (!scrolling && !dragging) {
                     return
-                }
-                thisScrollerPosition = recyclerView.computeHorizontalScrollOffset()
-                scrollerPositionGap = thisScrollerPosition - lastScrollerPosition
-                lastScrollerPosition = thisScrollerPosition
-                stopScrollerSync()  //进度条变成上级控制层,关闭所有将进度条作为下级被控层的函数
-                if (scrollerPositionGap > 0 && scrollerPositionGap < 100){
-                    if(alwaysSeekEnabled){
-                        lastSeekExecuted = false
-                        stopVideoSmartScroll()
-                        startVideoSeek()
+                }  //此状态说明进度条是在随视频滚动,用户没有操作
+                if (linkScrollEnabled){
+                    val percentScroll = recyclerView.computeHorizontalScrollOffset().toFloat() / thumbScroller.computeHorizontalScrollRange()
+                    videoTimeTo = (percentScroll * player.duration).toLong()
+                    currentTime = videoTimeTo
+                    if (videoTimeSyncGap >= 500L){
+                        tvCurrentTime.text = formatTime1(videoTimeTo)
                     }else{
+                        tvCurrentTime.text = formatTime(videoTimeTo)
+                    }
+                } else {return} //时间戳跟随进度条
+                stopVideoTimeSync()
+                stopScrollerSync()
+                if (dx > 0){
+                    if (alwaysSeekEnabled){
+                        backSeek = false
+                        startVideoSeek()
+                    } else {
                         stopVideoSeek()
                         startVideoSmartScroll()
                     }
-                }
-                else if(scrollerPositionGap < 0 && scrollerPositionGap > -100){
-                    lastSeekExecuted = false
-                    stopVideoTimeSync()
-                    val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-                    val totalWidth2 = recyclerView.computeHorizontalScrollRange()
-                    val offset2 = recyclerView.computeHorizontalScrollOffset()
-                    val percent2 = offset2.toFloat() / totalWidth2
-                    val seekToMs2 = (percent2 * player.duration).toLong()
-                    if (seekToMs2 > player.currentPosition){
-                        return
-                    }
-                    stopVideoSmartScroll()
+                } else if (dx < 0){
+                    //notice("反向滚动",500)
+                    backSeek = true
                     startVideoSeek()
                 }
             }
         })
+
 
 
         //固定控件初始化：退出按钮
@@ -549,6 +578,25 @@ class PlayerActivity: AppCompatActivity(){
         val noticeCard = findViewById<CardView>(R.id.noticeCard)
         noticeCard.setOnClickListener {
             noticeCard.visibility = View.GONE
+        }
+        //按钮：循环播放
+        val buttonLoopPlay = findViewById<FrameLayout>(R.id.buttonActualLoopPlay)
+        val buttonLoopPlayMaterial = findViewById<MaterialButton>(R.id.buttonMaterialLoopPlay)
+        if (player.repeatMode == Player.REPEAT_MODE_ONE){
+            buttonLoopPlayMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
+        }else if(player.repeatMode == Player.REPEAT_MODE_OFF){
+            buttonLoopPlayMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
+        }
+        buttonLoopPlay.setOnClickListener {
+            if (player.repeatMode == Player.REPEAT_MODE_OFF){
+                player.repeatMode = Player.REPEAT_MODE_ONE
+                buttonLoopPlayMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
+                notice("已开启单集循环",1000)
+            }else{
+                player.repeatMode = Player.REPEAT_MODE_OFF
+                buttonLoopPlayMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
+                notice("已关闭单集循环",1000)
+            }
         }
         //按钮：返回视频开头
         val buttonBackToStart = findViewById<FrameLayout>(R.id.buttonActualBackToStart)
@@ -637,6 +685,7 @@ class PlayerActivity: AppCompatActivity(){
                 linkScrollEnabled = true
                 prefs.edit { putBoolean("linkScrolling", true) }
                 notice("已将进度条与视频进度同步",1000)
+                thumbScroller.stopScroll()
                 startCheckStatus()
                 startScrollerSync()
                 buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
@@ -646,6 +695,7 @@ class PlayerActivity: AppCompatActivity(){
                 linkScrollEnabled = false
                 prefs.edit { putBoolean("linkScrolling", false) }
                 stopScrollerSync()
+                thumbScroller.stopScroll()
                 buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
                 notice("已关闭链接滚动条与视频进度",2500)
             }
@@ -672,7 +722,7 @@ class PlayerActivity: AppCompatActivity(){
                 notice("已关闭AlwaysSeek,正向拖动进度条时将使用倍速播放",3000)
             }
         }
-        //点击事件
+        //播放区域点击事件
         var longPress = false
         var touchLeft = false
         var touchRight = false
@@ -755,7 +805,48 @@ class PlayerActivity: AppCompatActivity(){
 
             gestureDetectorPlayArea.onTouchEvent(event)
         }
-
+        //按钮：关闭错误提示
+        val buttonCloseErrorNotice = findViewById<TextView>(R.id.buttonCloseErrorNotice)
+        buttonCloseErrorNotice.setOnClickListener {
+            val playerError = findViewById<LinearLayout>(R.id.playerError)
+            playerError.visibility = View.GONE
+        }
+        //按钮：重新加载
+        val buttonReload = findViewById<Button>(R.id.buttonReload)
+        buttonReload.setOnClickListener {
+            val playerError = findViewById<LinearLayout>(R.id.playerError)
+            playerError.visibility = View.GONE
+            player.release()
+            lifecycleScope.launch(Dispatchers.Main ){
+                delay(500)
+                if (seekSYNC == 1){
+                    player = ExoPlayer.Builder(applicationContext)
+                        .setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                        .setWakeMode(WAKE_MODE_NETWORK)
+                        .setTrackSelector(trackSelector)
+                        .build()
+                        .apply {
+                            setMediaItem(MediaItem.fromUri(videoUri))
+                            prepare()
+                            playWhenReady = false
+                        }
+                    player.play()
+                }else{
+                    player = ExoPlayer.Builder(applicationContext)
+                        .setSeekParameters(SeekParameters.EXACT)
+                        .setWakeMode(WAKE_MODE_NETWORK)
+                        .setTrackSelector(trackSelector)
+                        .build()
+                        .apply {
+                            setMediaItem(MediaItem.fromUri(videoUri))
+                            prepare()
+                            playWhenReady = false
+                        }
+                    player.play()
+                }
+                playerView.player = player
+            }
+        }
 
 
         lifecycleScope.launch(Dispatchers.IO) {
@@ -775,6 +866,18 @@ class PlayerActivity: AppCompatActivity(){
             startVideoTimeSync()
         }
 
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            delay(1000)
+            if (!playerReadyFromFirst){
+                withContext(Dispatchers.Main){
+                    val playerError = findViewById<LinearLayout>(R.id.playerError)
+                    playerError.visibility = View.VISIBLE
+                }
+            }
+        }
+
+
         //系统手势监听：返回键重写
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -786,7 +889,7 @@ class PlayerActivity: AppCompatActivity(){
     }//onCreate END
 
 
-    //runnable-1 - 根据视频时间更新进度条位置: 主控：视频时间  被控：进度条位置
+    //runnable-1 - 根据视频时间更新进度条位置
     var scrollParam1 = 0
     var scrollParam2 = 0
     private val syncScrollTaskHandler = Handler(Looper.getMainLooper())
@@ -816,7 +919,7 @@ class PlayerActivity: AppCompatActivity(){
         syncScrollTaskRunning = false
         syncScrollTaskHandler.removeCallbacks(syncScrollTask)
     }
-    //runnable-2 - 根据视频时间更新时间戳: 主控：视频时间  被控：时间戳
+    //runnable-2 - 根据视频时间更新时间戳
     private val videoTimeSyncHandler = Handler(Looper.getMainLooper())
     private var videoTimeSync = object : Runnable{
         override fun run() {
@@ -840,15 +943,22 @@ class PlayerActivity: AppCompatActivity(){
     private val videoSmartScrollHandler = Handler(Looper.getMainLooper())
     private var videoSmartScroll = object : Runnable{
         override fun run() {
+            videoSmartScrollRunning = true
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
             var delayGap = if (dragging){ 30L } else{ 30L }
-            val videoPosition = (player.currentPosition)
+            val videoPosition = player.currentPosition
             val scrollerPosition =  player.duration * (recyclerView.computeHorizontalScrollOffset().toFloat()/recyclerView.computeHorizontalScrollRange())
             if (scrollerPosition < videoPosition +100) {
-                if (!dragging && wasPlaying){
-                    playVideo()
-                }else{
+                if (scrollerTouching){
                     player.pause()
+                }else{
+                    if (wasPlaying){
+                        videoSmartScrollRunning = false
+                        playVideo()
+                    } else {
+                        videoSmartScrollRunning = false
+                        player.pause()
+                    }
                 }
             }else{
                 val positionGap = scrollerPosition - videoPosition
@@ -861,17 +971,18 @@ class PlayerActivity: AppCompatActivity(){
                 }else if(speed5 < lastPlaySpeed){
                     speed5 = speed5 - 0.1f
                 }
-                if (wasPlaying){
+
+                if (wasPlaying && !scrollerTouching){
                     if (speed5 <= 1.0){
                         speed5 = 1.0f
                     }
                 }
+
                 if (speed5 > 0f){
                     player.setPlaybackSpeed(speed5)
                 }else{
                     player.play()
                 }
-
                 videoSmartScrollHandler.postDelayed(this,delayGap)
             }
         }
@@ -896,34 +1007,57 @@ class PlayerActivity: AppCompatActivity(){
     private var videoSeek = object : Runnable{
         override fun run() {
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-            val currentScrollerPositionSeek = recyclerView.computeHorizontalScrollOffset()
-            if (currentScrollerPositionSeek != lastScrollerPositionSeek){
-                lastScrollerPositionSeek = currentScrollerPositionSeek
-                if (currentTime != 0L && currentTime < (player.duration/1000*1000) - 200) {
-                    if (isSeekReady) {
-                        isSeekReady = false
-                        seekJob()
-                    }
-                } else if (currentTime < 100){
-                    player.seekTo(0)
-                } else if (currentTime > (player.duration/1000*1000) - 200) {
-                    lifecycleScope.launch {
-                        player.pause()
-                        player.seekTo(player.duration - 500)
-                        delay(200)
-                        player.seekTo(player.duration)
+            val totalWidth = recyclerView.computeHorizontalScrollRange()
+            val offset     = recyclerView.computeHorizontalScrollOffset()
+            val percent    = offset.toFloat() / totalWidth
+            val seekToMs   = (percent * player.duration).toLong()
+
+
+            if (backSeek){
+                backSeek = false
+                if (seekToMs < player.currentPosition){
+                    if (seekToMs < 200){
+                        player.seekTo(0)
+                        readyFromSeek = true
+                    }else if (seekToMs > player.duration - 300){
+                        player.seekTo(player.duration - 300)
+                        readyFromSeek = true
+                    }else{
+                        if (isSeekReady){
+                            isSeekReady = false
+                            seekJob(seekToMs)
+                        }
                     }
                 }
-                videoSeekHandler.post(this)
             }else{
-                return
+                if (seekToMs < 200){
+                    player.seekTo(0)
+                    readyFromSeek = true
+                }else if (seekToMs > player.duration - 300){
+                    player.seekTo(player.duration - 300)
+                    readyFromSeek = true
+                }else{
+                    if (isSeekReady){
+                        isSeekReady = false
+                        seekJob(seekToMs)
+                    }
+                }
             }
+
+
+            if (scrollerTouching || scrolling) {
+                videoSeekHandler.postDelayed(this, 100)
+            }
+
         }
     }
     private fun startVideoSeek() {
+        if (seekRunnableRunning) return
+        seekRunnableRunning = true
         videoSeekHandler.post(videoSeek)
     }
     private fun stopVideoSeek() {
+        seekRunnableRunning = false
         videoSeekHandler.removeCallbacks(videoSeek)
     }
     //runnable-5 - 状态检查
@@ -952,17 +1086,10 @@ class PlayerActivity: AppCompatActivity(){
 
     //job-1 -seek
     private var seekJob: Job? = null
-    private fun seekJob() {
-        seekJob?.cancel()
+    private fun seekJob(seekToMs: Long) {
         seekJob = lifecycleScope.launch {
-            val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-            val totalWidth = recyclerView.computeHorizontalScrollRange()
-            val offset     = recyclerView.computeHorizontalScrollOffset()
-            val percent    = offset.toFloat() / totalWidth
-            val seekToMs   = (percent * player.duration).toLong()
             player.seekTo(seekToMs)
-            isSeekReady = false
-            //isSeekReady需在播放器状态监听器中更改
+            readyFromSeek = true
         }
     }
     //job-2 -showNotice
@@ -1067,24 +1194,23 @@ class PlayerActivity: AppCompatActivity(){
             else -> super.onKeyDown(keyCode, event)
         }
     }
-    /*
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        if (intent?.action == "play"){
-            Log.d("SuMing", "onNewIntent: play")
-        }
-        if (intent?.action == "pause"){
-            Log.d("SuMing", "onNewIntent: pause")
+
+    @SuppressLint("UnsafeIntentLaunch")
+    override fun onNewIntent(newIntent: Intent?) {
+        super.onNewIntent(newIntent)
+        intent = newIntent
+        if (intent?.action != null){
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            finish()
+            startActivity(intent)
         }
     }
-    */
 
     //Functions
     //点击时隐藏控件并设为黑色背景
     private fun changeBackgroundColor(){
         val bottomCard = findViewById<View>(R.id.bottomCardContainer)
         val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
-        val mediumActions2 = findViewById<ConstraintLayout>(R.id.MediumActionsContainer2)
         val playerView = findViewById<View>(R.id.playerView)
         val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
@@ -1093,7 +1219,6 @@ class PlayerActivity: AppCompatActivity(){
                 bottomCard.visibility = View.GONE
                 mediumActions.visibility = View.GONE
                 buttonExit.visibility = View.GONE
-                mediumActions2.visibility = View.GONE
                 if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
                     playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
                 }
@@ -1106,12 +1231,12 @@ class PlayerActivity: AppCompatActivity(){
                 bottomCard.visibility = View.VISIBLE
                 mediumActions.visibility = View.VISIBLE
                 buttonExit.visibility = View.VISIBLE
-                mediumActions2.visibility = View.VISIBLE
                 if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
                     playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
                 }
             }
         }else{
+            val mediumActions2 = findViewById<ConstraintLayout>(R.id.MediumActionsContainer2)
             val toolbar = findViewById<Toolbar>(R.id.toolbar)
             val root = findViewById<ConstraintLayout>(R.id.root)
             if (widgetsShowing){
@@ -1143,22 +1268,22 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
     }
-
+    //开启后台播放服务
     private fun startForegroundServices(){
         startService(Intent(this, PlayerForegroundServices::class.java))
     }
-
+    //关闭后台播放服务
     private fun stopForegroundServices(){
         stopService(Intent(this, PlayerForegroundServices::class.java))
     }
-
+    //后台播放只播音轨
     private fun playerSelectSoundTrack(){
         trackSelector.parameters = trackSelector
             .buildUponParameters()
             .setMaxVideoSize(0, 0)
             .build()
     }
-
+    //回到前台恢复所有轨道
     private fun playerRecoveryAllTrack(){
         trackSelector.parameters = trackSelector
             .buildUponParameters()
@@ -1167,20 +1292,33 @@ class PlayerActivity: AppCompatActivity(){
     }
 
     private fun playerReady(){
-        isSeekReady = true
         if (firstEntry) {
             firstEntry = false
-            player.play()
+            playVideo()
+            val playerError = findViewById<LinearLayout>(R.id.playerError)
+            playerError.visibility = View.GONE
             val cover = findViewById<View>(R.id.cover)
-            cover.animate()
-                .alpha(0f)
-                .setDuration(100)
+            cover.animate().alpha(0f).setDuration(100)
                 .setInterpolator(AccelerateDecelerateInterpolator())
                 .withEndAction { cover.visibility = View.GONE }
                 .start()
+        } //首次打开显示遮罩动画
+        if (loopPlay) {
+            loopPlay = false
+            playVideo()
             return
+        } //循环播放操作
+        if (readyFromSeek){
+            readyFromSeek = false
+            isSeekReady = true
+            if (scrolling) return
+            if (wasPlaying) {
+                playVideo()
+                return
+            }
         }
-        if (scrolling) return
+        isSeekReady = true
+
         if (!lastSeekExecuted) {
             lastSeekExecuted = true
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
@@ -1194,38 +1332,47 @@ class PlayerActivity: AppCompatActivity(){
         if (wasPlaying) {
             playVideo()
         }
-        if (linkScrollEnabled) startScrollerSync()
-        startVideoTimeSync()
+    }
+
+    private fun playerEnd(){
+        notice("视频结束",1000)
+        player.pause()
+        playEnd = true
+        stopVideoTimeSync()
+        stopScrollerSync()
+        loopPlay = SETTING_loopPlay
+        if (SETTING_exitWhenEnd){
+            finish()
+        }
+        if (loopPlay){
+            player.seekTo(0)
+        }
     }
 
     private fun pauseVideo(){
+        player.pause()
         stopVideoTimeSync()
         stopScrollerSync()
-        player.pause()
     }
 
     private fun playVideo(){
-        player.play()
         player.volume = currentVolume.toFloat()
         player.setPlaybackSpeed(1f)
-        stopCheckStatus()
-        if (linkScrollEnabled){ startScrollerSync() }
+        player.play()
+        if (linkScrollEnabled && !scrollerTouching){ startScrollerSync() }
         lifecycleScope.launch {
             delay(100)
             startVideoTimeSync()
         }
     }
 
-    private fun simplePause(){
-        player.pause()
-    }
 
-    private fun simplePlay(){
-        player.play()
-    }
-
-
-
+    //真全屏需添加以下元数据到活动清单文件
+    /*
+    <meta-data
+    android:name="android.notch_support"
+    android:value="true"/>
+    */
     private fun hideStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
@@ -1317,7 +1464,5 @@ class PlayerActivity: AppCompatActivity(){
         val sec  = totalSec % 60
         return "%02d:%02d.%03d".format(min, sec, cent)
     }
-
-
 
 }

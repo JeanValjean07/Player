@@ -233,16 +233,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="14dp"
-                    >
-
+                    android:padding="14dp">
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="通用"
                         android:textColor="@color/HeadText"
-                        android:textSize="17sp"
-                        />
+                        android:textSize="17sp"/>
                     <!--  开关1  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -300,10 +297,63 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+
                         android:text="使用就近关键帧将大幅提高截取和Seek速度，但是可能会导致截图出现连续两张一样和低速滑动进度条时无法seek等情况。使用精确帧可以精确截图和seek任意时间的帧，但速度显著更慢。如有精确到任意帧的需求，请关闭以上开关。"
-                        android:textSize="12sp"
-                        />
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            <!--  卡片：从其他应用打开  -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                app:cardElevation="3dp"
+                app:cardCornerRadius="15dp"
+                >
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="从其他应用打开"
+                        android:textColor="@color/HeadText"
+                        android:textSize="17sp"/>
+                    <!--  开关1  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="播放结束后自动退出"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/exitWhenEnd"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"/>
+                    </LinearLayout>
+                    <!--  从其他应用打开描述  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="开启后，从其他应用打开视频时，视频播放结束后会自动退出。如果开启循环播放将不会退出"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 

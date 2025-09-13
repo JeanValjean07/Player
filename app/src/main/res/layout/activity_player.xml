@@ -145,6 +145,45 @@
                     tools:ignore="ContentDescription" />
             </FrameLayout>
         </FrameLayout>
+        <!-- 按钮：循环播放 -->
+        <FrameLayout
+            android:id="@+id/buttonLoopPlay"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonBackToStart"
+            app:layout_constraintTop_toTopOf="parent">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMaterialLoopPlay"
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:backgroundTint="@color/ButtonBg"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+            <FrameLayout
+                android:id="@+id/buttonActualLoopPlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:elevation="11dp"
+                android:padding="5dp">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="1dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_loop_play"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+        </FrameLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
     <!-- 缩略图上方按钮区1 -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -393,6 +432,41 @@
                 android:layout_height="match_parent"
                 android:background="@color/Background"
                 android:visibility="visible" />
+            <LinearLayout
+                android:id="@+id/playerError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_gravity="center">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="播放器似乎出现了一些问题"
+                    android:layout_marginBottom="30dp"
+                    android:textColor="@color/HeadText"
+                    android:textSize="15sp" />
+                <Button
+                    android:id="@+id/buttonReload"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="重新加载"
+                    android:backgroundTint="@color/ButtonBg"
+                    android:layout_gravity="center"
+                    android:textColor="@color/HeadText"
+                    android:textSize="15sp" />
+                <TextView
+                    android:id="@+id/buttonCloseErrorNotice"
+                    android:clickable="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="关闭提示"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="10dp"
+                    android:textColor="@color/HeadText"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
         </androidx.media3.ui.PlayerView>
         <!-- Notice卡片 -->
         <androidx.cardview.widget.CardView

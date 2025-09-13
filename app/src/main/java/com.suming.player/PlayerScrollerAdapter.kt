@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,7 +18,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.coroutines.coroutineContext
@@ -50,7 +48,7 @@ class PlayerScrollerAdapter(
     override fun getItemCount() = (picNumber)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThumbViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.recycler_bar, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_scrolleritem, parent, false)
         return ThumbViewHolder(view)
     }
 

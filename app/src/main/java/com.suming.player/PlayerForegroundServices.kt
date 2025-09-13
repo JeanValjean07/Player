@@ -18,6 +18,8 @@ class PlayerForegroundServices: MediaLibraryService() {
 
     override fun onCreate() {
         super.onCreate()
+
+
         player = ExoPlayer.Builder(this@PlayerForegroundServices).build()
         val notification = buildNotification()
         createNotificationChannel()

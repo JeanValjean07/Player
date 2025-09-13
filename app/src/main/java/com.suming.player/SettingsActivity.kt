@@ -21,8 +21,10 @@ class SettingsActivity: AppCompatActivity() {
 
     private lateinit var Switch1: SwitchCompat
     private lateinit var Switch2: SwitchCompat
+    private lateinit var Switch3: SwitchCompat
     private var generateThumbSYNC = 1
     private var seekSYNC = 1
+    private var exitWhenEnd = 1
 
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
@@ -77,6 +79,7 @@ class SettingsActivity: AppCompatActivity() {
 
         Switch1 = findViewById(R.id.generateThumbSYNC)
         Switch2 = findViewById(R.id.seekSYNC)
+        Switch3 = findViewById(R.id.exitWhenEnd)
         Switch1.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("generateThumbSYNC", isChecked)
         }
@@ -85,6 +88,10 @@ class SettingsActivity: AppCompatActivity() {
             saveSwitchState("seekSYNC", isChecked)
         }
         restoreSwitchState("seekSYNC")
+        Switch3.setOnCheckedChangeListener { _, isChecked ->
+            saveSwitchState("exitWhenEnd", isChecked)
+        }
+        restoreSwitchState("exitWhenEnd")
 
 
 
@@ -98,6 +105,7 @@ class SettingsActivity: AppCompatActivity() {
     private val settingsPrefs = mapOf(
         "generateThumbSYNC"          to ::generateThumbSYNC,
         "seekSYNC"                   to ::seekSYNC,
+        "exitWhenEnd"                to ::exitWhenEnd,
     )
 
     private fun saveSwitchState(key: String, isChecked: Boolean) {
@@ -126,6 +134,15 @@ class SettingsActivity: AppCompatActivity() {
             }
             else{
                 Switch2.isChecked = false
+            }
+        }
+        if (key == "exitWhenEnd"){
+            exitWhenEnd = sharedPreferences.getInt("exitWhenEnd", 1)
+            if (exitWhenEnd == 1){
+                Switch3.isChecked = true
+            }
+            else{
+                Switch3.isChecked = false
             }
         }
     }

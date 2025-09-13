@@ -1,6 +1,8 @@
 package com.suming.player
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -16,6 +18,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
@@ -156,6 +159,22 @@ class MainActivity: AppCompatActivity() {
             )
             notice("需要访问媒体权限来读取视频,授权后请手动刷新", 5000)
         }
+
+        //申请通知权限
+        val channelId = "BackgroundPlay"
+        val channelName = "后台播放"
+        val channelDescription = "用于在后台播放音频"
+        val importance = NotificationManager.IMPORTANCE_HIGH
+
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = channelDescription
+        }
+        val notificationManager: NotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+
+
+
+
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q){
             isCompatibleDevice = isCompatibleDevice()
             if (isCompatibleDevice){
@@ -185,6 +204,9 @@ class MainActivity: AppCompatActivity() {
             pager.flow.collect { adapter.submitData(it) }
         }
     }
+
+
+
 
     private var showNoticeJob: Job? = null
     private fun showNoticeJob(text: String, duration: Long) {
