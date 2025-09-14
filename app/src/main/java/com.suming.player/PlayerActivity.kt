@@ -1,6 +1,9 @@
 package com.suming.player
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
@@ -19,6 +22,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.KeyEvent
@@ -38,6 +42,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
@@ -55,7 +60,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
@@ -560,7 +564,6 @@ class PlayerActivity: AppCompatActivity(){
                         startVideoSmartScroll()
                     }
                 } else if (dx < 0){
-                    //notice("反向滚动",500)
                     backSeek = true
                     startVideoSeek()
                 }
@@ -965,6 +968,7 @@ class PlayerActivity: AppCompatActivity(){
                     if (wasPlaying){
                         videoSmartScrollRunning = false
                         playVideo()
+
                     } else {
                         videoSmartScrollRunning = false
                         player.pause()
@@ -1369,13 +1373,30 @@ class PlayerActivity: AppCompatActivity(){
         player.volume = currentVolume.toFloat()
         player.setPlaybackSpeed(1f)
         player.play()
-        if (linkScrollEnabled && !scrollerTouching){ startScrollerSync() }
+        if (linkScrollEnabled && !scrollerTouching && !scrolling){ startScrollerSync() }
         lifecycleScope.launch {
             delay(100)
             startVideoTimeSync()
         }
     }
 
+    //检查通知权限
+    private fun checkNotificationPermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            val requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean -> }
+            requestPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            val channelId = "BackgroundPlay"
+            val channelName = "后台播放"
+            val channelDescription = "用于在后台播放音频"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(channelId, channelName, importance).apply {
+                description = channelDescription
+            }
+            val notificationManager: NotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
 
     //真全屏需添加以下元数据到活动清单文件
     /*
@@ -1446,7 +1467,8 @@ class PlayerActivity: AppCompatActivity(){
         //音量
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-
+        //通知权限
+        checkNotificationPermission()
     }
 
     //格式化时间显示

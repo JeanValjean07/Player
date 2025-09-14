@@ -160,25 +160,6 @@ class MainActivity: AppCompatActivity() {
             )
             notice("需要访问媒体权限来读取视频,授权后请手动刷新", 5000)
         }
-        //申请通知权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            val requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-                if (!isGranted) {
-                    notice("通知权限未授予", 3000)
-                }
-            }
-            requestPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            val channelId = "BackgroundPlay"
-            val channelName = "后台播放"
-            val channelDescription = "用于在后台播放音频"
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(channelId, channelName, importance).apply {
-                description = channelDescription
-            }
-            val notificationManager: NotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
         //兼容性检查
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q){
             isCompatibleDevice = isCompatibleDevice()
