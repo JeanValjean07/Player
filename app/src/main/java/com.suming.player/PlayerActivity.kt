@@ -55,6 +55,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
@@ -592,6 +593,11 @@ class PlayerActivity: AppCompatActivity(){
                 player.repeatMode = Player.REPEAT_MODE_ONE
                 buttonLoopPlayMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
                 notice("已开启单集循环",1000)
+                if (playEnd){
+                    playEnd = false
+                    player.seekTo(0)
+                    player.play()
+                }
             }else{
                 player.repeatMode = Player.REPEAT_MODE_OFF
                 buttonLoopPlayMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
@@ -619,13 +625,17 @@ class PlayerActivity: AppCompatActivity(){
                 notice("继续播放",1000)
                 lifecycleScope.launch {
                     thumbScroller.stopScroll()
-                    player.volume = currentVolume.toFloat()
-                    player.setPlaybackSpeed(1.0f)
                     delay(20)
-                    playVideo()
+                    if (playEnd){
+                        playEnd = false
+                        player.seekTo(0)
+                        buttonRefresh()
+                        return@launch
+                    }else{
+                        playVideo()
+                        return@launch
+                    }
                 }
-                if (linkScrollEnabled){ startScrollerSync() }
-                buttonRefresh()
             }
         }
         //按钮：后台播放
