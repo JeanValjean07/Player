@@ -149,6 +149,9 @@ class PlayerActivity: AppCompatActivity(){
 
     private var seekRunnableRunning = false
 
+    private var wasPlayingForSave = false
+    private var seekFromSave = false
+
 
     //旧机型兼容判断
     object DeviceCompatUtil {
@@ -313,7 +316,7 @@ class PlayerActivity: AppCompatActivity(){
             val uri = savedInstanceState.getString("uri")?.toUri()
             val videoUriRec = uri!!
             videoUri = videoUriRec
-            wasPlaying = savedInstanceState.getBoolean("wasPlaying")
+            wasPlayingForSave = savedInstanceState.getBoolean("wasPlayingForSave")
             currentTime = savedInstanceState.getLong("currentTime")
             firstEntry = savedInstanceState.getBoolean("firstEntry")
             if (!firstEntry){
@@ -354,9 +357,7 @@ class PlayerActivity: AppCompatActivity(){
 
         if (savedInstanceState != null) {
             player.seekTo(currentTime)
-        }
-        if (wasPlaying) {
-            playVideo()
+            seekFromSave = true
         }
 
         //动态控件初始化：时间戳 + 总时长 + 遮罩淡出
@@ -909,6 +910,9 @@ class PlayerActivity: AppCompatActivity(){
     private val syncScrollTask = object : Runnable {
         override fun run() {
             val gap = 16L
+            if (eachPicDuration == 0){
+                return
+            }
             scrollParam1 = (player.currentPosition / eachPicDuration).toInt()
             scrollParam2 = ((player.currentPosition - scrollParam1*eachPicDuration)*eachPicWidth/eachPicDuration).toInt()
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
@@ -1151,7 +1155,8 @@ class PlayerActivity: AppCompatActivity(){
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean("wasPlaying", wasPlaying)
+        val wasPlayingForSave = player.isPlaying
+        outState.putBoolean("wasPlayingForSave", wasPlayingForSave)
         outState.putString("uri", videoUri.toString())
         outState.putLong("currentTime", player.currentPosition)
         outState.putBoolean("firstEntry", firstEntry)
@@ -1330,6 +1335,15 @@ class PlayerActivity: AppCompatActivity(){
                 playVideo()
                 return
             }
+        }
+        if (seekFromSave){
+            seekFromSave = false
+            if (wasPlayingForSave){
+                playVideo()
+            }else{
+                player.pause()
+            }
+            return
         }
         isSeekReady = true
 
