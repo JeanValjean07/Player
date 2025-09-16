@@ -29,7 +29,7 @@ class PlayerScrollerAdapter(
     private val eachPicWidth: Int,
     private val picNumber: Int,
     private val eachPicDuration: Int,
-    private val generateThumbSYNC: Int,
+    private val PREFS_RC_GenerateThumbSYNC: Boolean,
 ) : RecyclerView.Adapter<PlayerScrollerAdapter.ThumbViewHolder>() {
 
     //初始化—协程作用域
@@ -40,10 +40,8 @@ class PlayerScrollerAdapter(
 
     inner class ThumbViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var generateThumbJob: Job? = null
-        var onBindViewHolderJob: Job? = null
         val ivThumbnail: ImageView = itemView.findViewById(R.id.iv_thumbnail)
     }
-
 
     override fun getItemCount() = (picNumber)
 
@@ -115,7 +113,7 @@ class PlayerScrollerAdapter(
             val videoHeight = hStr?.toFloat() ?: 0f
             val ratio = videoHeight.div(videoWidth)
             coroutineContext.ensureActive()
-            if (generateThumbSYNC == 1){
+            if (PREFS_RC_GenerateThumbSYNC){
                 val frame = retrieverMap[position]?.getFrameAtTime(
                     (position * eachPicDuration * 1000L),
                     MediaMetadataRetriever.OPTION_CLOSEST_SYNC

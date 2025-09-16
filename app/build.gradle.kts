@@ -14,7 +14,7 @@ android {
         minSdk = 29
         targetSdk = 36
         versionCode = 1
-        versionName = "1.2.0"
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -58,6 +58,8 @@ dependencies {
     implementation(libs.androidx.runtime.saved.instance.state)
     implementation(libs.androidx.tools.core)
     implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.lifecycle.process)
+    implementation(libs.androidx.lifecycle.service)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

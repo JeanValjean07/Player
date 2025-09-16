@@ -43,6 +43,7 @@
         <activity android:name=".PlayerActivity"
             android:theme="@style/MainTheme"
             android:launchMode="singleTask"
+            android:label="播放器(普通)"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -55,6 +56,28 @@
                 <data android:mimeType="video/*" />
             </intent-filter>
         </activity>
+
+
+        <activity android:name=".PlayerActivityMVVM"
+            android:theme="@style/MainTheme"
+            android:label="播放器(MVVM)"
+            android:launchMode="singleTask"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <meta-data
+                android:name="android.notch_support"
+                android:value="true"/>
+        </activity>
+
 
         <activity android:name=".SettingsActivity"
             android:theme="@style/MainTheme"

@@ -26,13 +26,13 @@
             android:background="@color/Background"
             android:clickable="true"
             app:surface_type="surface_view">
-
             <View
                 android:id="@+id/cover"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@color/Background"
                 android:visibility="visible" />
+
             <LinearLayout
                 android:id="@+id/playerError"
                 android:layout_width="wrap_content"

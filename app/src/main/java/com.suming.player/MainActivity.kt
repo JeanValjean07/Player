@@ -1,8 +1,6 @@
 package com.suming.player
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -10,7 +8,9 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
+import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
@@ -18,11 +18,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -41,7 +41,15 @@ import kotlinx.coroutines.launch
 
 class MainActivity: AppCompatActivity() {
 
-    private lateinit var adapter: MainAdapter
+    //注册adapter
+    private lateinit var adapter: MainActivityAdapter
+    //设置
+    private var PREFS_S_UseMVVMPlayer = false
+    //兼容性1检查
+    private var isCompatibleDevice = false
+    //权限检查
+    private val REQUEST_STORAGE_PERMISSION = 1001
+
     //无法打开视频时的接收器
     private val detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
     { result: ActivityResult ->
@@ -87,11 +95,34 @@ class MainActivity: AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_main)) { v, insets ->
+
+        //读取设置
+        val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
+        if (!prefs.contains("PREFS_UseMVVMPlayer")){
+            prefs.edit { putBoolean("PREFS_UseMVVMPlayer", true) }
+            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
+        } else{
+            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
+        }
+
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+
+            if (!prefs.contains("INFO_STATUSBAR_HEIGHT")){
+                ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
+                    val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+                    Log.d("SuMing", "读取状态栏高度: $statusBarHeight")
+                    prefs.edit { putInt("INFO_STATUSBAR_HEIGHT", statusBarHeight) }
+                    insets
+                }
+            }
+
             insets
         }
+
+
         //准备工作
         preCheck()
         load()
@@ -143,23 +174,40 @@ class MainActivity: AppCompatActivity() {
 
     }//onCreate END
 
-    private var isCompatibleDevice = false
-    private val REQUEST_STORAGE_PERMISSION = 1001
+
+    override fun onResume() {
+        super.onResume()
+        //重读设置
+        val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
+        if (!prefs.contains("PREFS_UseMVVCPlayer")){
+            prefs.edit { putBoolean("PREFS_UseMVVCPlayer", true) }
+            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
+        } else{
+            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
+        }
+    }
+
+
+
     private fun preCheck(){
         //申请媒体权限
-        val requiredPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_VIDEO
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
+        lifecycleScope.launch {
+            delay(2000)
+            val requiredPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Manifest.permission.READ_MEDIA_VIDEO
+            } else {
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            }
+            if (ContextCompat.checkSelfPermission(this@MainActivity, requiredPermission) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    this@MainActivity,
+                    arrayOf(requiredPermission),
+                    REQUEST_STORAGE_PERMISSION
+                )
+                notice("需要访问媒体权限来读取视频,授权后请手动刷新", 5000)
+            }
         }
-        if (ContextCompat.checkSelfPermission(this, requiredPermission) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(requiredPermission),
-                REQUEST_STORAGE_PERMISSION
-            )
-            notice("需要访问媒体权限来读取视频,授权后请手动刷新", 5000)
-        }
+
         //兼容性检查
         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q){
             isCompatibleDevice = isCompatibleDevice()
@@ -178,11 +226,15 @@ class MainActivity: AppCompatActivity() {
 
         val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
         recyclerview1.layoutManager = LinearLayoutManager(this)
-        adapter = MainAdapter { item ->  //点击事件
-            val intent = Intent(this, PlayerActivity::class.java).apply {
-                putExtra("video", item)
+        adapter = MainActivityAdapter { item ->  //点击事件
+            if (PREFS_S_UseMVVMPlayer){
+                val intent = Intent(this, PlayerActivityMVVM::class.java).apply { putExtra("video", item) }
+                detailLauncher.launch(intent)
             }
-            detailLauncher.launch(intent)
+            else{
+                val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
+                detailLauncher.launch(intent)
+            }
         }
         recyclerview1.adapter = adapter
 

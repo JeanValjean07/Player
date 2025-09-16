@@ -27,6 +27,11 @@
     <color name="CardViewBottom">#FFFFFF</color>
     <color name="switchTrackColor">#FF9E9E9E</color>
     <color name="switchThumbColor">#FF000000</color>
+    <color name="Black">#000000</color>
+    <color name="BlackGrey">#101010</color>
+    <color name="White">#FFFFFF</color>
+    <color name="WhiteGrey2">#F5F5F5</color>
+    <color name="BlackGrey2">#212121</color>
 
 
     <color name="HeadText111">#000000</color>

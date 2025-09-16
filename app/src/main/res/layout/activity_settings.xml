@@ -297,8 +297,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-
-                        android:text="使用就近关键帧将大幅提高截取和Seek速度，但是可能会导致截图出现连续两张一样和低速滑动进度条时无法seek等情况。使用精确帧可以精确截图和seek任意时间的帧，但速度显著更慢。如有精确到任意帧的需求，请关闭以上开关。"
+                        android:text="精确Seek选项已弃用，改为跟随滚动速度动态切换。精确关键帧截取仅在低于20秒的视频上生效。"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -352,7 +351,247 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="开启后，从其他应用打开视频时，视频播放结束后会自动退出。如果开启循环播放将不会退出"
+                        android:text="开启后，从其他应用打开视频时，视频播放结束后会自动退出。如果开启循环播放将不会退出。"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            <!--  卡片：进度条绘制参数  -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                app:cardElevation="3dp"
+                app:cardCornerRadius="15dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="进度条绘制"
+                        android:textColor="@color/HeadText"
+                        android:textSize="17sp"/>
+                    <!--  开关1  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="使用超长进度条"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/useLongScroller"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"/>
+                    </LinearLayout>
+                    <!--  开关2  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="提高强制Seek时间差"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/useLongSeekGap"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"/>
+                    </LinearLayout>
+                    <!--  描述  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="默认状态进度条只绘制20张图。开启此开关后，进度条最高图片数量提升至500张。请注意，图数过多时，快速滚动进度条将导致高CPU负载和温度，易虚焊机型谨慎开启。若开启提高强制Seek时间差，视频处于倍速滚动时将花费更长时间追逐进度条目标位置，导致更晚开启声音。"
+                        android:textSize="12sp" />
+                    <!--  开关3  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="进度条绘制使用兼容模式"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/useCompatScroller"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"/>
+                    </LinearLayout>
+                    <!--  描述  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="如果您的进度条两端无法与中央竖线对齐，请打开兼容模式。目前兼容模式仅对MVVM架构生效，建议开启底部“使用MVVM架构播放器”。"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            <!--  卡片：界面显示  -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                app:cardElevation="3dp"
+                app:cardCornerRadius="15dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="界面显示"
+                        android:textColor="@color/HeadText"
+                        android:textSize="17sp"/>
+                    <!--  开关1: 横屏时始终使用黑色界面  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="横屏时始终使用黑色界面"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/useBlackScreenInLandscape"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"/>
+                    </LinearLayout>
+                    <!--  开关2:尝试强制使用高刷新率  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="尝试强制使用高刷新率"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/useHighRefreshRate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"/>
+                    </LinearLayout>
+                    <!--  界面显示:提示信息  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="如果您的设备在播放时被系统限制刷新率，可开启此开关以尝试使用高刷新率，仅尝试，不能保证一定有效。仅支持安卓11及以上版本"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            <!--  卡片：调试  -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                app:cardElevation="3dp"
+                app:cardCornerRadius="15dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="调试"
+                        android:textColor="@color/HeadText"
+                        android:textSize="17sp"/>
+                    <!--  开关1  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="启用MVVM架构播放器"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/useMVVMPlayer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"/>
+                    </LinearLayout>
+                    <!--  描述  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="MVVM架构播放器正在测试中，如果出现未知问题，请关闭此开关以使用基础架构播放器。但基于基础架构的播放器以后将较少引入新特性，主要开发重心仍在MVVM架构播放器。"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

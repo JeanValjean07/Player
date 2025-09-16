@@ -12,13 +12,13 @@ class PlayerActionReceiver:BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         when (intent.action) {
             "PLAYER_PLAY"  -> {
-                val intent2 = Intent("114514").apply {
+                val intent2 = Intent("LOCAL_RECEIVER").apply {
                     putExtra("key", "PLAYER_PLAY")
                 }
                 LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
             }
             "PLAYER_PAUSE" -> {
-                val intent2 = Intent("114514").apply {
+                val intent2 = Intent("LOCAL_RECEIVER").apply {
                     putExtra("key", "PLAYER_PAUSE")
                 }
                 LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)

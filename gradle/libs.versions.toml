@@ -16,6 +16,8 @@ foundationLayout = "1.9.0"
 runtimeSavedInstanceState = "1.0.0-alpha11"
 toolsCore = "1.0.0-alpha13"
 media3Session = "1.8.0"
+lifecycleProcess = "2.9.3"
+lifecycleService = "2.9.3"
 
 
 [libraries]
@@ -34,6 +36,8 @@ androidx-foundation-layout = { group = "androidx.compose.foundation", name = "fo
 androidx-runtime-saved-instance-state = { group = "androidx.compose.runtime", name = "runtime-saved-instance-state", version.ref = "runtimeSavedInstanceState" }
 androidx-tools-core = { group = "androidx.privacysandbox.tools", name = "tools-core", version.ref = "toolsCore" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3Session" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
+androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

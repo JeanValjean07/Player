@@ -1,6 +1,7 @@
 <component name="ProjectDictionaryState">
   <dictionary name="project">
     <words>
+      <w>audiofocus</w>
       <w>avfilter</w>
       <w>backtostart</w>
       <w>binded</w>
@@ -15,8 +16,11 @@
       <w>libavutil</w>
       <w>libswresample</w>
       <w>libswscale</w>
+      <w>savedinstance</w>
+      <w>statusbar</w>
       <w>suming</w>
       <w>swresample</w>
+      <w>valjean</w>
     </words>
   </dictionary>
 </component>
