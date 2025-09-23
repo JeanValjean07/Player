@@ -93,11 +93,11 @@
 
 
         <service
-            android:name=".PlayerForegroundServices"
+            android:name=".PlayerBackgroundServices"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
-                <action android:name="androidx.media3.session.MediaLibraryService"/>
+                <action android:name="androidx.media3.session.MediaSessionService"/>
             </intent-filter>
         </service>
 

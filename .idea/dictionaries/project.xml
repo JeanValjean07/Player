@@ -8,6 +8,7 @@
       <w>coolapk</w>
       <w>coolmarket</w>
       <w>dont</w>
+      <w>fingerup</w>
       <w>fmpeg</w>
       <w>lateinit</w>
       <w>libavcodec</w>
@@ -16,7 +17,12 @@
       <w>libavutil</w>
       <w>libswresample</w>
       <w>libswscale</w>
+      <w>ondown</w>
+      <w>safegap</w>
       <w>savedinstance</w>
+      <w>secureinterval</w>
+      <w>seekonce</w>
+      <w>setfulluser</w>
       <w>statusbar</w>
       <w>suming</w>
       <w>swresample</w>

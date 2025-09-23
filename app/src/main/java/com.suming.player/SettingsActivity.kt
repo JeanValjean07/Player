@@ -26,6 +26,7 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch7: SwitchCompat
     private lateinit var Switch8: SwitchCompat
     private lateinit var Switch9: SwitchCompat
+    private lateinit var Switch10: SwitchCompat
 
     private var generateThumbSYNC = true
     private var seekSYNC = true
@@ -36,6 +37,7 @@ class SettingsActivity: AppCompatActivity() {
     private var useMVVMPlayer = false
     private var useHighRefreshRate = false
     private var useCompatScroller = false
+    private var closeVideoTrack = false
 
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
@@ -133,6 +135,11 @@ class SettingsActivity: AppCompatActivity() {
             saveSwitchState("PREFS_UseCompatScroller", isChecked)
         }
         restoreSwitchState("PREFS_UseCompatScroller")
+        Switch10 = findViewById(R.id.closeVideoTrack)
+        Switch10.setOnCheckedChangeListener { _, isChecked ->
+            saveSwitchState("PREFS_CloseVideoTrack", isChecked)
+        }
+        restoreSwitchState("PREFS_CloseVideoTrack")
 
 
     } //onCreate END
@@ -148,6 +155,7 @@ class SettingsActivity: AppCompatActivity() {
         "PREFS_UseMVVMPlayer"             to ::useMVVMPlayer,
         "PREFS_UseHighRefreshRate"        to ::useHighRefreshRate,
         "PREFS_UseCompatScroller"         to ::useCompatScroller,
+        "PREFS_CloseVideoTrack"           to ::closeVideoTrack,
     )
 
     private fun saveSwitchState(key: String, isChecked: Boolean) {
@@ -155,7 +163,7 @@ class SettingsActivity: AppCompatActivity() {
         if (isChecked) 1 else 0
         prop.set(isChecked)
         getSharedPreferences("PREFS_Player", MODE_PRIVATE)
-            .edit { putBoolean(key, isChecked).apply() }
+            .edit { putBoolean(key, isChecked).commit() }
     }
 
     private fun restoreSwitchState(key: String) {
@@ -239,6 +247,15 @@ class SettingsActivity: AppCompatActivity() {
             }
             else{
                 Switch9.isChecked = false
+            }
+        }
+        if (key == "PREFS_CloseVideoTrack"){
+            closeVideoTrack = sharedPreferences.getBoolean("PREFS_CloseVideoTrack", false)
+            if (closeVideoTrack){
+                Switch10.isChecked = true
+            }
+            else{
+                Switch10.isChecked = false
             }
         }
     }

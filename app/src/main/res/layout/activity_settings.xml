@@ -299,6 +299,38 @@
                         android:layout_height="wrap_content"
                         android:text="精确Seek选项已弃用，改为跟随滚动速度动态切换。精确关键帧截取仅在低于20秒的视频上生效。"
                         android:textSize="12sp" />
+                    <!--  开关3  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="后台播放时关闭视频轨道"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/closeVideoTrack"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"
+                            />
+                    </LinearLayout>
+                    <!--  关闭视频轨道描述  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="传统后台播放模式会禁用视频轨道并在回到前台时恢复，这会导致回到前台时音频短暂停止。若选择不关闭视频轨道，回到前台时则不会停止。此外，仍会通过一些操作来尽量减少后台播放时的电量消耗。存在玄学BUG，导致此开关变更后的第一次功能触发一定会不生效，敬请谅解。"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  卡片：从其他应用打开  -->

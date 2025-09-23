@@ -1292,11 +1292,11 @@ class PlayerActivity: AppCompatActivity(){
 
     //开启后台播放服务
     private fun startForegroundServices(){
-        startService(Intent(this, PlayerForegroundServices::class.java))
+        startService(Intent(this, PlayerBackgroundServices::class.java))
     }
     //关闭后台播放服务
     private fun stopForegroundServices(){
-        stopService(Intent(this, PlayerForegroundServices::class.java))
+        stopService(Intent(this, PlayerBackgroundServices::class.java))
     }
     //后台播放只播音轨
     private fun playerSelectSoundTrack(){

@@ -185,6 +185,45 @@
                     tools:ignore="ContentDescription" />
             </FrameLayout>
         </FrameLayout>
+        <!-- 按钮：切换横屏 -->
+        <FrameLayout
+            android:id="@+id/buttonSwitchLandscape"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonLoopPlay"
+            app:layout_constraintTop_toTopOf="parent">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMaterialSwitchLandscape"
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:backgroundTint="@color/ButtonBg"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+            <FrameLayout
+                android:id="@+id/buttonActualSwitchLandscape"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:elevation="11dp"
+                android:padding="5dp">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="1dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_landscape"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+        </FrameLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
     <!-- 缩略图上方按钮区1 -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -561,4 +600,3 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>
-    <!-- ALL END -->
