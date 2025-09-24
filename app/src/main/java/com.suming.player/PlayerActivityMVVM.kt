@@ -1,6 +1,7 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.app.ComponentCaller
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentResolver
@@ -124,7 +125,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var syncScrollRunnableGap = 16L
     //SavedInstanceState
     private var SAVEDINSTANCE_SETFULLUSER = true
-    private var SAVEDINSTANCE_EXIST = false
     private var SAVEDINSTANCE_ORIGINAL_INTENT_SAVED = false
     //功能:倍速滚动
     private var currentTime = 0L
@@ -159,14 +159,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var smartScrollRunnableRunning = false
     private var syncScrollRunnableRunning = false
 
-
+    //手动旋转
+    private var ManualOrientation = false
 
     //LastSeek保底Seek机制
     private var LastSeekLaunched = false
 
     //初始Intent保存和继承
     private var originalIntent: Intent? = null
-    private var intentSaved = false
 
     //传递给通知或播控中心的视频信息字段
     private var STRING_VideoTitle = ""
@@ -178,9 +178,10 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var SECUREINTERVAL_ONDOWN = false
     private var SECUREINTERVAL_FINGERUP = false
 
+    private var OriginalOrientationValue = 0
+    private var OrientationValue = 0
 
-
-    private var SavedInstance = false
+    private var DESTROY_FromSavedInstance = false
 
     private var observerOnStoped = false
     private var observerOnStarted = false
@@ -232,19 +233,65 @@ class PlayerActivityMVVM: AppCompatActivity(){
     }
 
     @OptIn(UnstableApi::class)
-    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi",
-        "SourceLockedOrientationActivity"
-    )
+    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_player)
 
+        //恢复暂存数据
         if (savedInstanceState == null) {
+            //初次打开:关闭后台播放服务和播放器实例
             PlayerExoSingleton.releasePlayer()
             stopBackgroundServices()
+        }else{
+            //取出Intent
+            intent = savedInstanceState.getParcelable("CONTENT_INTENT")
+            //取出其他标记
+            playEnd = savedInstanceState.getBoolean("SAVEDSTATE_playEnd", false)  //是否播放结束
+            ManualOrientation = savedInstanceState.getBoolean("SAVEDSTATE_ManualOrientation", false) //旋转数据
         }
+
+
+        //启动监听屏幕旋转程序
+        OrientationEventListener = object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientation: Int) {
+                //把方向角数值映射为状态量
+                if (orientation > 260 && orientation < 280) {
+                    OrientationValue = 1
+                }else if (orientation > 80 && orientation < 100) {
+                    OrientationValue = 2
+                }else if (orientation > 1 && orientation < 10) {
+                    OrientationValue = 0
+                }
+                //主要旋转逻辑
+                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) return
+                //标准横屏ORIENTATION_LANDSCAPE
+                if (orientation > 260 && orientation < 280) {
+                    //移动控件
+                    val buttonExit = findViewById<View>(R.id.buttonExit)
+                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (150)
+                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (25)
+                    val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
+                    (CONTROLLER_CurrentTime.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (200)
+                    //发起旋转
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                }
+                //反向横屏ORIENTATION_REVERSE_LANDSCAPE
+                else if (orientation > 80 && orientation < 100) {
+                    //移动控件
+                    val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
+                    (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
+                    //发起旋转
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                }
+            }
+        }.apply {
+            enable()
+        }
+
+
 
         //设置项读取,检查和预置
         val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
@@ -392,31 +439,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         lifecycleScope.launch {
             ProcessLifecycleOwner.get().lifecycle.addObserver(AppForegroundObserver)
         }
-        //监听屏幕旋转
-        OrientationEventListener = object : OrientationEventListener(this) {
-            override fun onOrientationChanged(orientation: Int) {
-                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) return
-                val rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
-                if (orientation > 260 && orientation < 280) {
-                    val buttonExit = findViewById<View>(R.id.buttonExit)
-                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (150)
-                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (25)
-                    val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
-                    (CONTROLLER_CurrentTime.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (200)
-                    if (ManualLandscape && rotationSetting == 0){
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-                    }
-                } else if (orientation > 80 && orientation < 100) {
-                    val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
-                    (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
-                    if (ManualLandscape && rotationSetting == 0){
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-                    }
-                }
-            }
-        }.apply {
-            enable()
-        }
+
         //音频设备监听
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         audioManager.registerAudioDeviceCallback(DeviceCallback, null)
@@ -447,21 +470,11 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //其他预设
         preCheck()
 
-        //状态恢复
-        if (savedInstanceState != null) {
-            intentSaved = savedInstanceState.getBoolean("SAVEDINSTANCE_INTENT_SAVED", false)
-            intent = savedInstanceState.getParcelable("CONTENT_ORIGINAL_INTENT")
-            SAVEDINSTANCE_SETFULLUSER = savedInstanceState.getBoolean("SAVEDINSTANCE_SETFULLUSER", false)
-        } //来自恢复:取出保存的intent
-        SAVEDINSTANCE_ORIGINAL_INTENT_SAVED = true
-        originalIntent = intent
-        if (SAVEDINSTANCE_SETFULLUSER){
-            Log.d("SuMing", "恢复自由旋转")
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER)
-        }
+
 
         //区分打开方式并反序列化
         val videoItem: VideoItem? = when (intent?.action) {
+
             Intent.ACTION_SEND -> {
                 PREFS_S_ExitWhenEnd = true
                 val uri =
@@ -496,7 +509,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         if (savedInstanceState == null) {
             vm.setVideoUri(videoUri)
         } else {
-            SAVEDINSTANCE_EXIST = true
             buttonRefresh()
             val cover = findViewById<View>(R.id.cover)
             cover.animate().alpha(0f).setDuration(100)
@@ -700,21 +712,17 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 return true
             }
             override fun onDown(e: MotionEvent): Boolean {
-                //Log.d("SuMing", "onDown: 原本的wasPlaying = $wasPlaying")
                 //更改按压状态
                 STATE_FingerTouching = true
                 //未开启链接滚动时驳回
                 if (!PREFS_RC_LinkScrollEnabled) return false
                 //播放状态记录
-                //Log.i("SuMing", "onDown:本次点击时,wasPlaying = $wasPlaying")
                 if (!smartScrollRunnableRunning && !seekRunnableRunning && !scrolling && !SECUREINTERVAL_SEEKONCE && !SECUREINTERVAL_ONDOWN && !SECUREINTERVAL_FINGERUP) {
-                    //Log.d("SuMing", "onDown: wasPlaying被修改为 = $wasPlaying")
                     wasPlaying = vm.player.isPlaying
                     //ONDOWN安全期开启
                     lifecycleScope.launch {
                         SecureIntervalJob()
                     }
-                    //Log.i("SuMing", "onDown:本次点击时,wasPlaying = $wasPlaying")
                 }
                 return false
             }
@@ -845,8 +853,15 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
         //按钮：返回视频开头
         val buttonBackToStart = findViewById<FrameLayout>(R.id.buttonActualBackToStart)
+        val buttonBackToStartMaterial = findViewById<MaterialButton>(R.id.buttonMaterialBackToStart)
+        buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
         buttonBackToStart.setOnClickListener {
             stopVideoSmartScroll()
+            lifecycleScope.launch {
+                buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityMVVM, R.color.ButtonBg))
+                delay(200)
+                buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityMVVM, R.color.ButtonBgClosed))
+            }
             stopVideoSeek()
             CONTROLLER_ThumbScroller.stopScroll()
             if (PREFS_RC_LinkScrollEnabled) startScrollerSync()
@@ -994,26 +1009,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //按钮：切换横屏
         val buttonSwitchLandscape = findViewById<FrameLayout>(R.id.buttonActualSwitchLandscape)
         buttonSwitchLandscape.setOnClickListener {
-            val rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
-            if (rotationSetting == 1) {
-                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                    ManualAutoLandscape = true
-                    SAVEDINSTANCE_SETFULLUSER = false
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-                } else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-                    ManualAutoLandscape = true
-                    SAVEDINSTANCE_SETFULLUSER = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-                }
-            }else if(rotationSetting == 0){
-                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                    ManualLandscape = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-                } else {
-                    ManualLandscape = false
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-                }
-            }
+            ButtonChangeOrientation()
         }
         //播放区域点击事件
         var longPress = false
@@ -1216,26 +1212,12 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //系统手势监听：返回键重写
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                val rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
-                if (rotationSetting == 1) {
-                    if (resources.configuration.orientation != Configuration.ORIENTATION_PORTRAIT){
-                        ManualAutoLandscape = true
-                        SAVEDINSTANCE_SETFULLUSER = true
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-                    }else{
-                        MediaCodec.createDecoderByType("video/avc").release()
-                        vm.player.release()
-                        finish()
-                    }
-                }else{
-                    if (resources.configuration.orientation != Configuration.ORIENTATION_PORTRAIT){
-                        ManualLandscape = false
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-                    }else{
-                        MediaCodec.createDecoderByType("video/avc").release()
-                        vm.player.release()
-                        finish()
-                    }
+                if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                    ExitChangeOrientation()
+                }else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+                    MediaCodec.createDecoderByType("video/avc").release()
+                    vm.player.release()
+                    finish()
                 }
             }
         })
@@ -1374,7 +1356,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
             seekRunnableRunning = true
             if (backSeek){
                 if (seekToMs < vm.player.currentPosition){
-                    //Log.d("SuMing", "pause")
                     vm.player.pause()
                     if (seekToMs < 200){
                         READY_FromSeek = true
@@ -1384,12 +1365,10 @@ class PlayerActivityMVVM: AppCompatActivity(){
                         vm.player.seekTo(vm.player.duration - 300)
                     }else{
                         if (isSeekReady){
-                            //Log.d("SuMing", "pause分支3")
                             isSeekReady = false
                             READY_FromSeek = true
                             vm.player.seekTo(seekToMs)
                         }else{
-                            //Log.d("SuMing", "pause分支4")
                             if (SECUREINTERVAL_FINGERUP){
                                 vm.player.play()
                             }
@@ -1410,7 +1389,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
                         READY_FromSeek = true
                         vm.player.seekTo(seekToMs)
                     }else{
-                        //Log.d("SuMing", "pause分支4")
                         if (SECUREINTERVAL_FINGERUP){
                             vm.player.play()
                         }
@@ -1468,10 +1446,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun SecureIntervalJob() {
         secureIntervalJob?.cancel()
         secureIntervalJob = lifecycleScope.launch {
-            //Log.e("SuMing", "onDown安全期开启")
             SECUREINTERVAL_ONDOWN = true
             delay(200)
-            //Log.e("SuMing", "onDown安全期结束")
             SECUREINTERVAL_ONDOWN = false
         }
     }
@@ -1480,36 +1456,24 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun SecureIntervalJobFingerUp() {
         secureIntervalJobFingerUp?.cancel()
         secureIntervalJobFingerUp = lifecycleScope.launch {
-            //Log.e("SuMing", "onFingerUp安全期开启")
             SECUREINTERVAL_FINGERUP = true
             delay(200)
-            //Log.e("SuMing", "onFingerUp安全期结束")
             SECUREINTERVAL_FINGERUP = false
         }
     }
 
 
-    //动画播完才开始准备播放器
-    override fun onEnterAnimationComplete() {
-        super.onEnterAnimationComplete()
-        if(!SAVEDINSTANCE_EXIST) {
-            if (wasPlaying){
-                vm.player.play()
-                wasPlaying = false
-            }
-        }
-    }
+
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        SavedInstance = true
-        outState.putBoolean("SAVEDINSTANCE_EXIST", SAVEDINSTANCE_EXIST)
-        outState.putBoolean("SAVEDINSTANCE_ORIGINAL_INTENT_SAVED", SAVEDINSTANCE_ORIGINAL_INTENT_SAVED)
-        outState.putParcelable("CONTENT_ORIGINAL_INTENT", originalIntent)
-        if (ManualAutoLandscape){
-            outState.putBoolean("SAVEDINSTANCE_SETFULLUSER", SAVEDINSTANCE_SETFULLUSER)
-        }
-        if (playEnd) vm.player.seekTo(0)
+        //数值计算
+        DESTROY_FromSavedInstance = true  //给onDestroy判断是否真的退出
+        //保存原始Intent
+        outState.putParcelable("CONTENT_INTENT", intent)
+        //其他数据
+        outState.putBoolean("SAVEDSTATE_playEnd", playEnd)  //是否播放结束
+        outState.putBoolean("SAVEDSTATE_ManualOrientation", ManualOrientation) //旋转数据
     }
 
     override fun onPause() {
@@ -1547,11 +1511,12 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
     override fun onDestroy() {
         super.onDestroy()
-        stopVideoSeek()
-        stopVideoSmartScroll()
-        stopVideoTimeSync()
-        stopScrollerSync()
-        if (!SavedInstance){
+        if (DESTROY_FromSavedInstance){
+            stopVideoSeek()
+            stopVideoSmartScroll()
+            stopVideoTimeSync()
+            stopScrollerSync()
+        }else{ //真正退出
             stopBackgroundServices()
             PlayerExoSingleton.releasePlayer()
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0)
@@ -1570,9 +1535,40 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
     }
 
+    @SuppressLint("UnsafeIntentLaunch")
+    override fun onNewIntent(newIntent: Intent?) {
+        super.onNewIntent(newIntent)
+        intent = newIntent
+        if (intent?.action != null){
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            finish()
+            startActivity(intent)
+        }
+    }
 
 
     //Functions
+    //切换横屏
+    @SuppressLint("SourceLockedOrientationActivity")
+    private fun ButtonChangeOrientation(){
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            if (OrientationValue == 1){
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+            }else if (OrientationValue == 2){
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+            }else{
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+            }
+        }else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+        }
+    }
+    @SuppressLint("SourceLockedOrientationActivity")
+    private fun ExitChangeOrientation(){
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+        }
+    }
     //点击时隐藏控件并设为黑色背景
     private fun changeBackgroundColor(){
         val bottomCard = findViewById<View>(R.id.bottomCardContainer)
@@ -1740,16 +1736,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 }
             }
         }
-        val result = audioManager.requestAudioFocus(
-            AudioFocusChangeListener,
-            AudioManager.STREAM_MUSIC,
-            AudioManager.AUDIOFOCUS_GAIN
-        )
-        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            //Log.e("INFO", "成功获取音频焦点")
-        } else {
-            //Log.e("INFO", "无法获取音频焦点")
-        }
+        audioManager.requestAudioFocus(AudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
     }
     //音量恢复
     private fun volumeRec(){
@@ -1770,14 +1757,11 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun LastSeek(){
         if (LastSeekLaunched) return
         lifecycleScope.launch {
-            //Log.e("SuMing", "seek安全期结束")
             SECUREINTERVAL_SEEKONCE = true
             delay(200)
-            //Log.e("SuMing", "seek安全期结束")
             SECUREINTERVAL_SEEKONCE = false
         }
 
-        //Log.d("SuMing", "执行seekOnce")
         LastSeekLaunched = true
         READY_FromSeek = false
         val thumbScroller = findViewById<RecyclerView>(R.id.rvThumbnails)
@@ -1798,7 +1782,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
     }
     //手指抬起事件
     private fun scrollerStoppingTapUp(){
-        //Log.e("SuMing", "scrollerStoppingTapUp")
         STATE_FingerTouching = false
         //开启安全期倒计时
         lifecycleScope.launch {
@@ -1826,37 +1809,27 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 .start()
         }
         if (READY_FromSeek){
-            //Log.d("SuMing", "playerReady: readyFromSeek")
             READY_FromSeek = false
             isSeekReady = true
             if (!scrolling){
-                //Log.d("SuMing", "playerReady: 直接触发, seekOnceUp: $seekOnceUp")
                 if (!LastSeekLaunched){ LastSeek() } //直接触发
                 return
             } else {
-                //Log.d("SuMing", "playerReady: 开始保底触发")
                 lifecycleScope.launch {
                     delay(100)
                     if (!scrolling){
-                        //Log.d("SuMing", "playerReady: 开始第一次保底")
                         if (!LastSeekLaunched){ LastSeek() }  //第一次保底
                         return@launch
                     }else{
-                        //Log.d("SuMing", "playerReady: 第一次保底失败")
                         delay(200)
                         if (!scrolling){
-                            //Log.d("SuMing", "playerReady: 开始第二次保底")
                             if (!LastSeekLaunched){ LastSeek() } //第二次保底
                             return@launch
                         }else{
-                            //Log.d("SuMing", "playerReady: 第二次保底失败")
                             delay(200)
                             if (!scrolling){
-                                //Log.d("SuMing", "playerReady: 开始第三次保底")
                                 if (!LastSeekLaunched){ LastSeek() } //第三次保底
                                 return@launch
-                            }else{
-                                //Log.d("SuMing", "playerReady: 保底失败")
                             }
                         }
                     }
@@ -1865,17 +1838,13 @@ class PlayerActivityMVVM: AppCompatActivity(){
             return
         }
         if (READY_FromLastSeek){
-            //Log.d("SuMing", "playerReady: READY_FromLastSeek, wasPlaying: $wasPlaying")
-            //LastSeekLaunched = false
             lifecycleScope.launch(Dispatchers.Main) {
                 delay(200)
-                //Log.d("SuMing", "seekOnceUp变更为false")
                 LastSeekLaunched = false
             }
             READY_FromLastSeek = false
             isSeekReady = true
             if (wasPlaying) {
-                //Log.d("SuMing", "LastSeek发起 视频播放")
                 playVideo()
             }
             return
@@ -1903,7 +1872,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
     }
 
     private fun playVideo(){
-        //Log.e("SuMing", "playVideo")
         requestAudioFocus()
         vm.player.setPlaybackSpeed(1f)
         vm.player.play()
@@ -1989,6 +1957,15 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun preCheck(){
         //兼容性检查
         isCompatibleDevice = isCompatibleDevice()
+        //屏幕方向检查
+        val buttonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            OriginalOrientationValue = 1
+            buttonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
+        }else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            OriginalOrientationValue = 0
+            buttonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
+        }
         //音量
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
