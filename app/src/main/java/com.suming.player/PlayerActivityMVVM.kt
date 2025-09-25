@@ -1,7 +1,6 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
-import android.app.ComponentCaller
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentResolver
@@ -24,7 +23,6 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
-import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.KeyEvent
@@ -159,14 +157,20 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var smartScrollRunnableRunning = false
     private var syncScrollRunnableRunning = false
 
-    //手动旋转
-    private var ManualOrientation = false
+    //旋转状态
+    private var FromAutoOrientation = false
+    private var FromManualOrientation = false
+
+
+
+
+    private var ManualOrientationPortrait = false
 
     //LastSeek保底Seek机制
     private var LastSeekLaunched = false
 
-    //初始Intent保存和继承
-    private var originalIntent: Intent? = null
+
+
 
     //传递给通知或播控中心的视频信息字段
     private var STRING_VideoTitle = ""
@@ -178,10 +182,12 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var SECUREINTERVAL_ONDOWN = false
     private var SECUREINTERVAL_FINGERUP = false
 
-    private var OriginalOrientationValue = 0
-    private var OrientationValue = 0
 
     private var DESTROY_FromSavedInstance = false
+
+
+    //自动旋转状态
+    private var rotationSetting = 0
 
     private var observerOnStoped = false
     private var observerOnStarted = false
@@ -190,8 +196,11 @@ class PlayerActivityMVVM: AppCompatActivity(){
     //PlayerReady
     private var STATE_PlayerReady = false
 
-    private var ManualLandscape = false
-    private var ManualAutoLandscape = false
+
+
+    //方向回调
+    private var orientationChangeTime = 0L
+    private var LastOrientationChangeTime = 0L
 
     //音量恢复
     private var volumeRecExecuted = false
@@ -233,118 +242,88 @@ class PlayerActivityMVVM: AppCompatActivity(){
     }
 
     @OptIn(UnstableApi::class)
-    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity")
+    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity",
+        "UseKtx"
+    )
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_player)
 
+
+        //其他预设
+        preCheck()
+
+
+
         //恢复暂存数据
         if (savedInstanceState == null) {
-            //初次打开:关闭后台播放服务和播放器实例
-            PlayerExoSingleton.releasePlayer()
-            stopBackgroundServices()
+            PlayerExoSingleton.releasePlayer() //初次打开:关闭播放器实例
+            stopBackgroundServices()           //初次打开:关闭后台播放服务
         }else{
             //取出Intent
             intent = savedInstanceState.getParcelable("CONTENT_INTENT")
             //取出其他标记
-            playEnd = savedInstanceState.getBoolean("SAVEDSTATE_playEnd", false)  //是否播放结束
-            ManualOrientation = savedInstanceState.getBoolean("SAVEDSTATE_ManualOrientation", false) //旋转数据
+            playEnd = savedInstanceState.getBoolean("SAVEDSTATE_playEnd", false)    //是否播放结束
         }
 
-
-        //启动监听屏幕旋转程序
-        OrientationEventListener = object : OrientationEventListener(this) {
-            override fun onOrientationChanged(orientation: Int) {
-                //把方向角数值映射为状态量
-                if (orientation > 260 && orientation < 280) {
-                    OrientationValue = 1
-                }else if (orientation > 80 && orientation < 100) {
-                    OrientationValue = 2
-                }else if (orientation > 1 && orientation < 10) {
-                    OrientationValue = 0
-                }
-                //主要旋转逻辑
-                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) return
-                //标准横屏ORIENTATION_LANDSCAPE
-                if (orientation > 260 && orientation < 280) {
-                    //移动控件
-                    val buttonExit = findViewById<View>(R.id.buttonExit)
-                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (150)
-                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (25)
-                    val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
-                    (CONTROLLER_CurrentTime.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (200)
-                    //发起旋转
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-                }
-                //反向横屏ORIENTATION_REVERSE_LANDSCAPE
-                else if (orientation > 80 && orientation < 100) {
-                    //移动控件
-                    val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
-                    (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
-                    //发起旋转
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-                }
-            }
-        }.apply {
-            enable()
-        }
 
 
 
         //设置项读取,检查和预置
         val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
+        val prefsEditor = prefs.edit()
         if (!prefs.contains("PREFS_GenerateThumbSYNC")) {
-            prefs.edit { putBoolean("PREFS_GenerateThumbSYNC", true).commit() }
+            prefsEditor.putBoolean("PREFS_GenerateThumbSYNC", true)
             PREFS_RC_GenerateThumbSYNC = prefs.getBoolean("PREFS_GenerateThumbSYNC", true)
         } else {
             PREFS_RC_GenerateThumbSYNC = prefs.getBoolean("PREFS_GenerateThumbSYNC", true)
         }
         if (!prefs.contains("PREFS_TapScrolling")) {
-            prefs.edit { putBoolean("PREFS_TapScrolling", false).commit() }
+            prefsEditor.putBoolean("PREFS_TapScrolling", false)
             PREFS_RC_TapScrollEnabled = prefs.getBoolean("PREFS_TapScrolling", false)
         } else {
             PREFS_RC_TapScrollEnabled = prefs.getBoolean("PREFS_TapScrolling", false)
         }
         if (!prefs.contains("PREFS_LinkScrolling")) {
-            prefs.edit { putBoolean("PREFS_LinkScrolling", true).commit() }
+            prefsEditor.putBoolean("PREFS_LinkScrolling", true)
             PREFS_RC_LinkScrollEnabled = prefs.getBoolean("PREFS_LinkScrolling", false)
         } else {
             PREFS_RC_LinkScrollEnabled = prefs.getBoolean("PREFS_LinkScrolling", false)
         }
         if (!prefs.contains("PREFS_AlwaysSeek")) {
-            prefs.edit { putBoolean("PREFS_AlwaysSeek", true).commit() }
+            prefsEditor.putBoolean("PREFS_AlwaysSeek", true)
             PREFS_RC_AlwaysSeekEnabled = prefs.getBoolean("PREFS_AlwaysSeek", false)
         } else {
             PREFS_RC_AlwaysSeekEnabled = prefs.getBoolean("PREFS_AlwaysSeek", false)
         }
         if (!prefs.contains("PREFS_BackgroundPlay")) {
-            prefs.edit { putBoolean("PREFS_BackgroundPlay", false).commit() }
+            prefsEditor.putBoolean("PREFS_BackgroundPlay", false)
             PREFS_RC_BackgroundPlay = prefs.getBoolean("PREFS_BackgroundPlay", false)
         } else {
             PREFS_RC_BackgroundPlay = prefs.getBoolean("PREFS_BackgroundPlay", false)
         }
         if (!prefs.contains("PREFS_LoopPlay")) {
-            prefs.edit { putBoolean("PREFS_LoopPlay", false).commit() }
+            prefsEditor.putBoolean("PREFS_LoopPlay", false)
             PREFS_RC_LoopPlay = prefs.getBoolean("PREFS_LoopPlay", false)
         } else {
             PREFS_RC_LoopPlay = prefs.getBoolean("PREFS_LoopPlay", false)
         }
         if (!prefs.contains("PREFS_ExitWhenEnd")) {
-            prefs.edit { putBoolean("PREFS_ExitWhenEnd", false).commit() }
+            prefsEditor.putBoolean("PREFS_ExitWhenEnd", false)
             PREFS_S_ExitWhenEnd = prefs.getBoolean("PREFS_ExitWhenEnd", false)
         } else {
             PREFS_S_ExitWhenEnd = prefs.getBoolean("PREFS_ExitWhenEnd", false)
         }
         if (!prefs.contains("PREFS_UseLongScroller")) {
-            prefs.edit { putBoolean("PREFS_UseLongScroller", false).commit() }
+            prefsEditor.putBoolean("PREFS_UseLongScroller", false)
             PREFS_S_UseLongScroller = prefs.getBoolean("PREFS_UseLongScroller", false)
         } else {
             PREFS_S_UseLongScroller = prefs.getBoolean("PREFS_UseLongScroller", false)
         }
         if (!prefs.contains("PREFS_UseLongSeekGap")) {
-            prefs.edit { putBoolean("PREFS_UseLongSeekGap", false).commit() }
+            prefsEditor.putBoolean("PREFS_UseLongSeekGap", false)
             PREFS_S_UseLongSeekGap = prefs.getBoolean("PREFS_UseLongSeekGap", false)
             if (PREFS_S_UseLongSeekGap) {
                 forceSeekGap = 20000L
@@ -356,31 +335,32 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
         }
         if (!prefs.contains("PREFS_UseBlackScreenInLandscape")) {
-            prefs.edit { putBoolean("PREFS_UseBlackScreenInLandscape", false).commit() }
-            PREFS_S_UseBlackScreenInLandscape =
-                prefs.getBoolean("PREFS_UseBlackScreenInLandscape", false)
+            prefsEditor.putBoolean("PREFS_UseBlackScreenInLandscape", false)
+            PREFS_S_UseBlackScreenInLandscape = prefs.getBoolean("PREFS_UseBlackScreenInLandscape", false)
         } else {
             PREFS_S_UseBlackScreenInLandscape =
                 prefs.getBoolean("PREFS_UseBlackScreenInLandscape", false)
         }
         if (!prefs.contains("PREFS_UseHighRefreshRate")) {
-            prefs.edit { putBoolean("PREFS_UseHighRefreshRate", false).commit() }
+            prefsEditor.putBoolean("PREFS_UseHighRefreshRate", false)
             PREFS_S_UseHighRefreshRate = prefs.getBoolean("PREFS_UseHighRefreshRate", false)
         } else {
             PREFS_S_UseHighRefreshRate = prefs.getBoolean("PREFS_UseHighRefreshRate", false)
         }
         if (!prefs.contains("PREFS_UseCompatScroller")) {
-            prefs.edit { putBoolean("PREFS_UseCompatScroller", false).commit() }
+            prefsEditor.putBoolean("PREFS_UseCompatScroller", false)
             PREFS_S_UseCompatScroller = prefs.getBoolean("PREFS_UseCompatScroller", false)
         } else {
             PREFS_S_UseCompatScroller = prefs.getBoolean("PREFS_UseCompatScroller", false)
         }
         if (!prefs.contains("PREFS_CloseVideoTrack")) {
-            prefs.edit { putBoolean("PREFS_CloseVideoTrack", true).commit() }
+            prefsEditor.putBoolean("PREFS_CloseVideoTrack", true)
             PREFS_S_CloseVideoTrack = prefs.getBoolean("PREFS_CloseVideoTrack", false)
         } else {
             PREFS_S_CloseVideoTrack = prefs.getBoolean("PREFS_CloseVideoTrack", false)
         }
+        prefsEditor.apply()
+
 
 
         //界面初始化:默认颜色设置+控件动态变位
@@ -466,9 +446,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
         }
         localBroadcastManager.registerReceiver(receiver, filter)
-
-        //其他预设
-        preCheck()
 
 
 
@@ -665,6 +642,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
         }
         retriever.release()
+
 
 
         //gestureDetectorScroller -onSingleTap -onDown
@@ -1076,7 +1054,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
                         notice("快速静音", 1000)
                     }
-                    if (scrollDistance>30){
+                    if (scrollDistance>50){
                         var currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         currentVolume = currentVolume + 1
                         if (currentVolume <= maxVolume){
@@ -1100,7 +1078,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                             notice("音量 -1 ($currentVolume/$maxVolume)", 1000)
                         }
                     }
-                    if (scrollDistance>30 || scrollDistance< -10) {
+                    if (scrollDistance>50 || scrollDistance< -10) {
                         scrollDistance = 0
                     }
                 }
@@ -1212,16 +1190,12 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //系统手势监听：返回键重写
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-                    ExitChangeOrientation()
-                }else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-                    MediaCodec.createDecoderByType("video/avc").release()
-                    vm.player.release()
-                    finish()
-                }
+                ExitByOrientation()
             }
         })
     } //onCreate END
+
+
 
 
     //Runnable:根据视频时间更新进度条位置
@@ -1463,7 +1437,17 @@ class PlayerActivityMVVM: AppCompatActivity(){
     }
 
 
-
+    override fun onEnterAnimationComplete() {
+        super.onEnterAnimationComplete()
+        //启动监听屏幕旋转程序
+        OrientationEventListener = object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientation: Int) {
+                orientationChange(orientation)
+            }
+        }.apply {
+            enable()
+        }
+    }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -1473,7 +1457,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         outState.putParcelable("CONTENT_INTENT", intent)
         //其他数据
         outState.putBoolean("SAVEDSTATE_playEnd", playEnd)  //是否播放结束
-        outState.putBoolean("SAVEDSTATE_ManualOrientation", ManualOrientation) //旋转数据
     }
 
     override fun onPause() {
@@ -1538,35 +1521,188 @@ class PlayerActivityMVVM: AppCompatActivity(){
     @SuppressLint("UnsafeIntentLaunch")
     override fun onNewIntent(newIntent: Intent?) {
         super.onNewIntent(newIntent)
-        intent = newIntent
-        if (intent?.action != null){
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        if (newIntent?.action != null){
+            newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             finish()
-            startActivity(intent)
+            startActivity(newIntent)
         }
     }
 
 
     //Functions
+    //方向回调
+    @SuppressLint("SourceLockedOrientationActivity")
+    private fun orientationChange(orientation: Int){
+        //把方向角数值映射为状态量
+        if (orientation > 260 && orientation < 280) { vm.OrientationValue = 1 }
+        else if (orientation > 80 && orientation < 100) { vm.OrientationValue = 2 }
+        else if (orientation > 340 && orientation < 360) { vm.OrientationValue = 0 }
+        //进入锁
+        orientationChangeTime = System.currentTimeMillis()
+        if (orientationChangeTime - LastOrientationChangeTime < 1) { return }
+        LastOrientationChangeTime = orientationChangeTime
+        //读取自动旋转状态
+        rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
+        //自动旋转开启
+        if (rotationSetting == 1){
+            //当前为竖屏
+            if (vm.currentOrientation == 0){
+                //标准横屏ORIENTATION_LANDSCAPE
+                if (vm.OrientationValue == 1) {
+                    if (vm.Manual && vm.LastLandscapeOrientation == 1) return
+                    //移动控件
+                    val buttonExit = findViewById<View>(R.id.buttonExit)
+                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (150)
+                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (25)
+                    val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
+                    (CONTROLLER_CurrentTime.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (200)
+                    //发起旋转
+                    vm.currentOrientation = 1
+                    vm.LastLandscapeOrientation = 1
+                    vm.setAuto()
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                }
+                //反向横屏ORIENTATION_REVERSE_LANDSCAPE
+                else if (vm.OrientationValue == 2) {
+                    if (vm.Manual && vm.LastLandscapeOrientation == 2) return
+                    //移动控件
+                    val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
+                    (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
+                    //发起旋转
+                    vm.currentOrientation = 2
+                    vm.LastLandscapeOrientation = 2
+                    vm.setAuto()
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                }
+            }
+            //当前为正向横屏
+            else if (vm.currentOrientation == 1){
+                //反向横屏ORIENTATION_REVERSE_LANDSCAPE
+                if (vm.OrientationValue == 2) {
+                    //移动控件
+                    val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
+                    (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
+
+                    vm.currentOrientation = 2
+                    vm.LastLandscapeOrientation = 2
+                    vm.setAuto()
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                }
+                //竖屏ORIENTATION_PORTRAIT
+                else if (vm.OrientationValue == 0) {
+                    if (vm.Manual) return
+                    vm.currentOrientation = 0
+                    vm.setAuto()
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                }
+            }
+            //当前为反向横屏
+            else if (vm.currentOrientation == 2){
+                //标准横屏ORIENTATION_LANDSCAPE
+                if (vm.OrientationValue == 1) {
+                    //移动控件
+                    val buttonExit = findViewById<View>(R.id.buttonExit)
+                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (150)
+                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (25)
+                    val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
+                    (CONTROLLER_CurrentTime.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (200)
+                    //发起旋转
+                    vm.currentOrientation = 1
+                    vm.LastLandscapeOrientation = 1
+                    vm.setAuto()
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                }
+                //竖屏ORIENTATION_PORTRAIT
+                else if (vm.OrientationValue == 0) {
+                    if (vm.Manual) return
+                    vm.currentOrientation = 0
+                    vm.setAuto()
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                }
+            }
+        }
+        //自动旋转关闭
+        else if (rotationSetting == 0){
+            if (!vm.FromManualPortrait){
+                if (vm.OrientationValue == 1) {
+                    //移动控件
+                    val buttonExit = findViewById<View>(R.id.buttonExit)
+                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (150)
+                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (25)
+                    val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
+                    (CONTROLLER_CurrentTime.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (200)
+                    //发起旋转
+                    FromAutoOrientation = true
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                } else if (vm.OrientationValue == 2) { //反向横屏ORIENTATION_REVERSE_LANDSCAPE
+                    //移动控件
+                    val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
+                    (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
+                    //发起旋转
+                    FromAutoOrientation = true
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                }
+            }
+        }
+    }
     //切换横屏
     @SuppressLint("SourceLockedOrientationActivity")
     private fun ButtonChangeOrientation(){
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            if (OrientationValue == 1){
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-            }else if (OrientationValue == 2){
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-            }else{
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        //自动旋转关闭
+        if (rotationSetting == 0){
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+                if (vm.OrientationValue == 1){
+                    vm.FromManualPortrait = false
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                }else if (vm.OrientationValue == 2){
+                    vm.FromManualPortrait = false
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                }else{
+                    vm.FromManualPortrait = false
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                }
             }
-        }else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+            else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                vm.FromManualPortrait = true
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+            }
+        }
+        //自动旋转开启
+        else if (rotationSetting == 1){
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+                if (vm.OrientationValue == 1){
+                    vm.currentOrientation = 1
+                    vm.LastLandscapeOrientation = 1
+                    vm.setManual()
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                }else if (vm.OrientationValue == 2){
+                    vm.currentOrientation = 2
+                    vm.LastLandscapeOrientation = 2
+                    vm.setManual()
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                }else{
+                    vm.currentOrientation = 1
+                    vm.LastLandscapeOrientation = 1
+                    vm.setManual()
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                }
+            }else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                vm.currentOrientation = 0
+                vm.setManual()
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+            }
         }
     }
     @SuppressLint("SourceLockedOrientationActivity")
-    private fun ExitChangeOrientation(){
+    private fun ExitByOrientation(){
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            vm.setManual()
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+        }
+        else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            MediaCodec.createDecoderByType("video/avc").release()
+            vm.player.release()
+            finish()
         }
     }
     //点击时隐藏控件并设为黑色背景
@@ -1679,6 +1815,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         override fun onStop(owner: LifecycleOwner) {
             if (observerOnStoped){ return }
             observerOnStoped = true
+            OrientationEventListener?.disable()
             LIFE_ONSTOP_WasPlaying = vm.player.isPlaying
             if (PREFS_RC_BackgroundPlay) {
                 playerSelectSoundTrack()
@@ -1709,6 +1846,12 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
             if (relevant.isNotEmpty()) {
                 headSet = true
+                val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+                currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                if (currentVolume >= (maxVolume*0.6).toInt()){
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume, 0)
+                    notice("检测到耳机插入,音量已限制为${(maxVolume*0.6).toInt()}", 1000)
+                }
             }
         }
     }
@@ -1738,7 +1881,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
         audioManager.requestAudioFocus(AudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
     }
-    //音量恢复
+    //音量淡入淡出
     private fun volumeRec(){
         volumeRecExecuted = true
         lifecycleScope.launch(Dispatchers.Main) {
@@ -1955,15 +2098,20 @@ class PlayerActivityMVVM: AppCompatActivity(){
     }
 
     private fun preCheck(){
+        //获取自动旋转状态
+        rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
         //兼容性检查
         isCompatibleDevice = isCompatibleDevice()
         //屏幕方向检查
         val buttonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-            OriginalOrientationValue = 1
+            vm.FromManualPortrait = false
+            vm.currentOrientation = 1
             buttonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
-        }else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            OriginalOrientationValue = 0
+        }
+        else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            vm.FromManualPortrait = true
+            vm.currentOrientation = 0
             buttonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
         }
         //音量
@@ -1971,7 +2119,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
         maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-        if (originalVolume == 0 ) {
+        if (originalVolume == 0 && !vm.NoVolumeNoticed) {
+            vm.NoVolumeNoticed = true
             notice("当前音量为0", 3000)
         }
         //检查是否有耳机连接

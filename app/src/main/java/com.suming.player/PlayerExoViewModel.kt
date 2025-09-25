@@ -2,6 +2,7 @@ package com.suming.player
 
 import android.app.Application
 import android.net.Uri
+import android.widget.FrameLayout
 import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -14,6 +15,7 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 @UnstableApi
 class PlayerExoViewModel(application: Application) : AndroidViewModel(application) {
 
+    //播放器数据连接
     private val app = application
 
     val player: ExoPlayer
@@ -21,10 +23,6 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
 
     val trackSelector: DefaultTrackSelector
         get() = PlayerExoSingleton.getTrackSelector(app)
-
-    val rendererFactory: RenderersFactory
-        get() = PlayerExoSingleton.getRendererFactory(app)
-
 
     fun setVideoUri(videoUri: Uri) {
         player.setMediaItem(MediaItem.fromUri(videoUri))
@@ -45,6 +43,42 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
 
+    //屏幕旋转状态
+    var FromManualPortrait: Boolean = true
+    var OrientationValue = 0
+    var LandscapeOrientation = 0
+    var ManualSetPortrait: Boolean = true
 
+    //手动旋转
+    var Manual: Boolean = false
+
+    var Auto: Boolean = false
+
+
+
+
+    fun setManual() {
+        Manual = true
+        Auto = false
+    }
+
+    fun setAuto() {
+        Auto = true
+        Manual = false
+    }
+
+    var currentOrientation: Int = 0
+    var LastLandscapeOrientation: Int = 0
+
+    var NoVolumeNoticed: Boolean = false
+    
+
+
+
+
+
+
+
+    //ViewModel级别通用
     override fun onCleared() {}
 }

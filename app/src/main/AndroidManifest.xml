@@ -61,10 +61,8 @@
         <activity android:name=".PlayerActivityMVVM"
             android:theme="@style/MainTheme"
             android:label="播放器(MVVM)"
-            android:screenOrientation="portrait"
             android:launchMode="singleTask"
-            android:exported="true"
-            tools:ignore="DiscouragedApi,LockedOrientationActivity">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
