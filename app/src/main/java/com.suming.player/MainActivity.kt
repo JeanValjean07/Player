@@ -1,6 +1,7 @@
 package com.suming.player
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -10,7 +11,6 @@ import android.os.Looper
 import android.os.Process
 import android.util.Log
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
@@ -19,6 +19,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -60,7 +61,6 @@ class MainActivity: AppCompatActivity() {
             }
         }
     }
-
     //旧机型兼容判断
     object DeviceCompatUtil {
         /*
@@ -90,6 +90,9 @@ class MainActivity: AppCompatActivity() {
         }
     }
 
+
+
+    //生命周期
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -99,13 +102,12 @@ class MainActivity: AppCompatActivity() {
         //读取设置
         val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
         if (!prefs.contains("PREFS_UseMVVMPlayer")){
-            prefs.edit { putBoolean("PREFS_UseMVVMPlayer", true) }
+            prefs.edit { putBoolean("PREFS_UseMVVMPlayer", true).apply() }
             PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
         } else{
             PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
         }
-
-
+        //预读取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -114,7 +116,7 @@ class MainActivity: AppCompatActivity() {
                 ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
                     val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
                     Log.d("SuMing", "读取状态栏高度: $statusBarHeight")
-                    prefs.edit { putInt("INFO_STATUSBAR_HEIGHT", statusBarHeight) }
+                    prefs.edit { putInt("INFO_STATUSBAR_HEIGHT", statusBarHeight).apply() }
                     insets
                 }
             }
@@ -122,8 +124,7 @@ class MainActivity: AppCompatActivity() {
             insets
         }
 
-
-        //准备工作
+        //准备工作+加载视频
         preCheck()
         load()
 
@@ -174,13 +175,12 @@ class MainActivity: AppCompatActivity() {
 
     }//onCreate END
 
-
     override fun onResume() {
         super.onResume()
         //重读设置
         val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
         if (!prefs.contains("PREFS_UseMVVCPlayer")){
-            prefs.edit { putBoolean("PREFS_UseMVVCPlayer", true) }
+            prefs.edit { putBoolean("PREFS_UseMVVCPlayer", true).apply() }
             PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
         } else{
             PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
@@ -189,6 +189,9 @@ class MainActivity: AppCompatActivity() {
 
 
 
+
+
+    //Functions
     private fun preCheck(){
         //申请媒体权限
         lifecycleScope.launch {
@@ -216,8 +219,8 @@ class MainActivity: AppCompatActivity() {
             }
         }
     }
-
     @OptIn(UnstableApi::class)
+    //加载视频列表+点击事件处理
     private fun load(){
         val pager = Pager(
             config = PagingConfig(pageSize = 20),
@@ -226,16 +229,32 @@ class MainActivity: AppCompatActivity() {
 
         val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
         recyclerview1.layoutManager = LinearLayoutManager(this)
-        adapter = MainActivityAdapter { item ->  //点击事件
-            if (PREFS_S_UseMVVMPlayer){
-                val intent = Intent(this, PlayerActivityMVVM::class.java).apply { putExtra("video", item) }
-                detailLauncher.launch(intent)
+
+
+        //注册点击事件
+        adapter = MainActivityAdapter(
+            onItemClick = { item ->
+                if (PREFS_S_UseMVVMPlayer){
+                    val intent = Intent(this, PlayerActivityMVVM::class.java).apply { putExtra("video", item) }
+                    detailLauncher.launch(intent)
+                }
+                else{
+                    val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
+                    detailLauncher.launch(intent)
+                }
+            },
+            onDurationClick = { item ->
+                notice("视频时长:${formatTime1(item.durationMs)}", 2000)
+            },
+            onOptionClick = { item ->
+                val popup = PopupMenu(this, recyclerview1)
+                popup.menuInflater.inflate(R.menu.activity_main_menu, popup.menu)
+                popup.setOnMenuItemClickListener { /*handle*/; true }
+                popup.show()
             }
-            else{
-                val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
-                detailLauncher.launch(intent)
-            }
-        }
+        )
+
+
         recyclerview1.adapter = adapter
 
         lifecycleScope.launch {
@@ -243,9 +262,7 @@ class MainActivity: AppCompatActivity() {
         }
     }
 
-
-
-
+    //显示通知
     private var showNoticeJob: Job? = null
     private fun showNoticeJob(text: String, duration: Long) {
         showNoticeJob?.cancel()
@@ -260,6 +277,18 @@ class MainActivity: AppCompatActivity() {
     }
     private fun notice(text: String, duration: Long) {
         showNoticeJob(text, duration)
+    }
+    @SuppressLint("DefaultLocale")
+    private fun formatTime1(milliseconds: Long): String {
+        val totalSeconds = milliseconds / 1000
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+        return if (hours == 0L){
+            String.format("%02d分%02d秒",  minutes, seconds)
+        }else{
+            String.format("%02d时%02d分%02d秒",  hours, minutes, seconds)
+        }
     }
 
 

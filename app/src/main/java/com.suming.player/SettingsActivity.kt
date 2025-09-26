@@ -163,7 +163,7 @@ class SettingsActivity: AppCompatActivity() {
         if (isChecked) 1 else 0
         prop.set(isChecked)
         getSharedPreferences("PREFS_Player", MODE_PRIVATE)
-            .edit { putBoolean(key, isChecked).commit() }
+            .edit { putBoolean(key, isChecked).apply() }
     }
 
     private fun restoreSwitchState(key: String) {

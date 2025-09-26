@@ -1,6 +1,7 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.app.PictureInPictureParams
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentResolver
@@ -23,6 +24,8 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
+import android.util.Rational
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.KeyEvent
@@ -82,6 +85,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.math.RoundingMode
 import kotlin.math.max
 import kotlin.math.min
 
@@ -132,9 +136,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var isSeekReady = true  //Seek结束标记
     private var backSeek = false    //滚动方向标记
     //判断体:PlayerReady(播放状态)
-    private var playEnd = false
     private var READY_FromFirstEntry = true
-    private var READY_FromSavedInstanceState = true
     private var READY_FromSeek = false
     private var READY_FromLastSeek = false
     //设置:PREFS_RC
@@ -264,8 +266,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }else{
             //取出Intent
             intent = savedInstanceState.getParcelable("CONTENT_INTENT")
-            //取出其他标记
-            playEnd = savedInstanceState.getBoolean("SAVEDSTATE_playEnd", false)    //是否播放结束
         }
 
 
@@ -380,20 +380,17 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
                 }
 
-
                 statusBarsSetting()
 
                 if (PREFS_S_UseBlackScreenInLandscape) {
                     setBlackScreenInLandscape()
                 }
 
-
             } else {
                 val buttonExit = findViewById<View>(R.id.buttonExit)
                 ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
                     val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin =
-                        (statusBarHeight + 8)
+                    (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight + 8)
                     insets
                 }
             }
@@ -431,13 +428,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 val data = intent.getStringExtra("key")
                 if (data == "PLAYER_PLAY") {
                     requestAudioFocus()
-                    if (playEnd) {
-                        playEnd = false
+                    if (vm.playEnd) {
+                        vm.playEnd = false
                         vm.player.seekTo(0)
                         vm.player.play()
                     } else {
                         vm.player.play()
                     }
+                    if (PREFS_RC_LinkScrollEnabled) startScrollerSync()
                 }
                 if (data == "PLAYER_PAUSE") {
                     INTERUPT_WasPlaying = vm.player.isPlaying
@@ -812,18 +810,18 @@ class PlayerActivityMVVM: AppCompatActivity(){
         buttonLoopPlay.setOnClickListener {
             if (vm.player.repeatMode == Player.REPEAT_MODE_OFF) {
                 vm.player.repeatMode = Player.REPEAT_MODE_ONE
-                prefs.edit { putBoolean("PREFS_LoopPlay", true) }
+                prefs.edit { putBoolean("PREFS_LoopPlay", true).apply() }
                 buttonLoopPlayMaterial.backgroundTintList =
                     ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
                 notice("已开启单集循环", 1000)
-                if (playEnd) {
-                    playEnd = false
+                if (vm.playEnd) {
+                    vm.playEnd = false
                     vm.player.seekTo(0)
                     vm.player.play()
                 }
             } else {
                 vm.player.repeatMode = Player.REPEAT_MODE_OFF
-                prefs.edit { putBoolean("PREFS_LoopPlay", false) }
+                prefs.edit { putBoolean("PREFS_LoopPlay", false).apply() }
                 buttonLoopPlayMaterial.backgroundTintList =
                     ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
                 notice("已关闭单集循环", 1000)
@@ -863,8 +861,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 lifecycleScope.launch {
                     CONTROLLER_ThumbScroller.stopScroll()
                     delay(20)
-                    if (playEnd) {
-                        playEnd = false
+                    if (vm.playEnd) {
+                        vm.playEnd = false
                         vm.player.seekTo(0)
                         playVideo()
                         notice("视频已结束,开始重播", 1000)
@@ -891,13 +889,13 @@ class PlayerActivityMVVM: AppCompatActivity(){
             checkNotificationPermission()
             if (!prefs.getBoolean("PREFS_BackgroundPlay", false)) {
                 PREFS_RC_BackgroundPlay = true
-                prefs.edit { putBoolean("PREFS_BackgroundPlay", true) }
+                prefs.edit { putBoolean("PREFS_BackgroundPlay", true).apply() }
                 notice("已开启后台播放", 1000)
                 buttonBackgroundPlayMaterial.backgroundTintList =
                     ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
             } else {
                 PREFS_RC_BackgroundPlay = false
-                prefs.edit { putBoolean("PREFS_BackgroundPlay", false) }
+                prefs.edit { putBoolean("PREFS_BackgroundPlay", false).apply() }
                 notice("已关闭后台播放", 1000)
                 buttonBackgroundPlayMaterial.backgroundTintList =
                     ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
@@ -916,13 +914,13 @@ class PlayerActivityMVVM: AppCompatActivity(){
         buttonTap.setOnClickListener {
             if (!prefs.getBoolean("PREFS_TapScrolling", false)) {
                 PREFS_RC_TapScrollEnabled = true
-                prefs.edit { putBoolean("PREFS_TapScrolling", true) }
+                prefs.edit { putBoolean("PREFS_TapScrolling", true).apply() }
                 buttonTapMaterial.backgroundTintList =
                     ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
                 notice("已开启单击跳转", 1000)
             } else {
                 PREFS_RC_TapScrollEnabled = false
-                prefs.edit { putBoolean("PREFS_TapScrolling", false) }
+                prefs.edit { putBoolean("PREFS_TapScrolling", false).apply() }
                 buttonTapMaterial.backgroundTintList =
                     ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
                 notice("已关闭单击跳转", 1000)
@@ -941,7 +939,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         buttonLink.setOnClickListener {
             if (!prefs.getBoolean("PREFS_LinkScrolling", false)) {
                 PREFS_RC_LinkScrollEnabled = true
-                prefs.edit { putBoolean("PREFS_LinkScrolling", true) }
+                prefs.edit { putBoolean("PREFS_LinkScrolling", true).apply() }
                 notice("已将进度条与视频进度同步", 1000)
                 isSeekReady = true
                 CONTROLLER_ThumbScroller.stopScroll()
@@ -951,7 +949,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 stopVideoSeek()
             } else {
                 PREFS_RC_LinkScrollEnabled = false
-                prefs.edit { putBoolean("PREFS_LinkScrolling", false) }
+                prefs.edit { putBoolean("PREFS_LinkScrolling", false).apply() }
                 stopScrollerSync()
                 CONTROLLER_ThumbScroller.stopScroll()
                 buttonLinkMaterial.backgroundTintList =
@@ -972,13 +970,13 @@ class PlayerActivityMVVM: AppCompatActivity(){
         buttonAlwaysSeek.setOnClickListener {
             if (!prefs.getBoolean("PREFS_AlwaysSeek", false)) {
                 PREFS_RC_AlwaysSeekEnabled = true
-                prefs.edit { putBoolean("PREFS_AlwaysSeek", true) }
+                prefs.edit { putBoolean("PREFS_AlwaysSeek", true).apply() }
                 buttonAlwaysMaterial.backgroundTintList =
                     ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
                 notice("已开启AlwaysSeek", 1000)
             } else {
                 PREFS_RC_AlwaysSeekEnabled = false
-                prefs.edit { putBoolean("PREFS_AlwaysSeek", false) }
+                prefs.edit { putBoolean("PREFS_AlwaysSeek", false).apply() }
                 buttonAlwaysMaterial.backgroundTintList =
                     ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
                 notice("已关闭AlwaysSeek", 3000)
@@ -989,6 +987,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
         buttonSwitchLandscape.setOnClickListener {
             ButtonChangeOrientation()
         }
+
+
         //播放区域点击事件
         var longPress = false
         var touchLeft = false
@@ -1002,8 +1002,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     notice("暂停播放", 1000)
                     buttonRefresh()
                 } else {
-                    if (playEnd) {
-                        playEnd = false
+                    if (vm.playEnd) {
+                        vm.playEnd = false
                         vm.player.seekTo(0)
                         playVideo()
                         notice("视频已结束,开始重播", 1000)
@@ -1033,19 +1033,33 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 if (touchLeft) {
                     scrollDistance += distanceY.toInt()
                     val windowInfo = window.attributes
-                    var initBrightness = windowInfo.screenBrightness
-                    if (initBrightness < 0) {
-                        initBrightness = Settings.System.getInt(
-                            contentResolver,
-                            Settings.System.SCREEN_BRIGHTNESS
-                        ) / 255f
-                        windowInfo.screenBrightness = initBrightness
-                        window.attributes = windowInfo
+
+                    if (scrollDistance > 50) {
+                        val newBrightness = (windowInfo.screenBrightness + 0.1f).toBigDecimal().setScale(1, RoundingMode.HALF_UP).toFloat()
+                        if (newBrightness <= 1.0 && newBrightness >= 0.0) {
+                            windowInfo.screenBrightness = newBrightness
+                            window.attributes = windowInfo
+                            vm.BrightnessValue = newBrightness
+                            notice("亮度 +1 (${newBrightness}/1)", 1000)
+                        }else{
+                            notice("亮度已到上限", 1000)
+                        }
+                    }else if (scrollDistance < -50){
+                        val newBrightness = (windowInfo.screenBrightness - 0.1f).toBigDecimal().setScale(1, RoundingMode.HALF_UP).toFloat()
+                        if (newBrightness <= 1.0 && newBrightness >= 0.0) {
+                            windowInfo.screenBrightness = newBrightness
+                            window.attributes = windowInfo
+                            vm.BrightnessValue = newBrightness
+                            notice("亮度 -1 (${newBrightness}/1)", 1000)
+                        }else{
+                            notice("亮度已到下限", 1000)
+                        }
                     }
-                    val newBrightness = windowInfo.screenBrightness + scrollDistance.toFloat() / 10000
-                    if (newBrightness <= 1.0 && newBrightness >= 0.0) {
-                        windowInfo.screenBrightness = newBrightness
-                        window.attributes = windowInfo
+
+
+
+                    if (scrollDistance > 50 || scrollDistance < -50) {
+                        scrollDistance = 0
                     }
                 }
                 if (touchRight) {
@@ -1054,7 +1068,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
                         notice("快速静音", 1000)
                     }
-                    if (scrollDistance>50){
+                    if (scrollDistance > 50){
                         var currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         currentVolume = currentVolume + 1
                         if (currentVolume <= maxVolume){
@@ -1070,7 +1084,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                                 notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
                             }
                         }
-                    }else if (scrollDistance< -10){
+                    }else if (scrollDistance< -50){
                         var currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         currentVolume = currentVolume - 1
                         if (currentVolume >= 0){
@@ -1078,7 +1092,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                             notice("音量 -1 ($currentVolume/$maxVolume)", 1000)
                         }
                     }
-                    if (scrollDistance>50 || scrollDistance< -10) {
+                    if (scrollDistance>50 || scrollDistance< -50) {
                         scrollDistance = 0
                     }
                 }
@@ -1130,8 +1144,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         if (savedInstanceState == null) {
             if (Build.BRAND == "Xiaomi" || Build.BRAND == "samsung") {
                 val outFile = File(cacheDir, "thumb_${absolutePath.hashCode()}_cover.jpg")
-                val SessionToken =
-                    SessionToken(this, ComponentName(this, PlayerBackgroundServices::class.java))
+                val SessionToken = SessionToken(this, ComponentName(this, PlayerBackgroundServices::class.java))
                 val MediaSessionController = MediaController.Builder(this, SessionToken).buildAsync()
                 MediaSessionController.addListener({
                     val controller = MediaSessionController.get()
@@ -1210,8 +1223,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
             scrollParam2 = ((vm.player.currentPosition - scrollParam1*SCROLLERINFO_EachPicDuration)*SCROLLERINFO_EachPicWidth/SCROLLERINFO_EachPicDuration).toInt()
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
             val lm = recyclerView.layoutManager as LinearLayoutManager
-            if (playEnd && !vm.player.isPlaying){
-                playEnd = false
+            if (vm.playEnd && !vm.player.isPlaying){
+                //vm.playEnd = false
                 scrollParam1 = scrollParam1 - 1
                 scrollParam2 = 150
                 lm.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
@@ -1378,7 +1391,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
     }
     private fun startVideoSeek() {
-        playEnd = false
+        vm.playEnd = false
         if (seekRunnableRunning) return
         videoSeekHandler.post(videoSeek)
     }
@@ -1455,8 +1468,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         DESTROY_FromSavedInstance = true  //给onDestroy判断是否真的退出
         //保存原始Intent
         outState.putParcelable("CONTENT_INTENT", intent)
-        //其他数据
-        outState.putBoolean("SAVEDSTATE_playEnd", playEnd)  //是否播放结束
     }
 
     override fun onPause() {
@@ -1811,6 +1822,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             if (PREFS_RC_BackgroundPlay) {
                 playerRecoveryAllTrack()
             }
+            if (PREFS_RC_LinkScrollEnabled && vm.player.isPlaying) startScrollerSync()
         }
         override fun onStop(owner: LifecycleOwner) {
             if (observerOnStoped){ return }
@@ -1997,7 +2009,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun playerEnd(){
         notice("视频结束",1000)
         vm.player.pause()
-        playEnd = true
+        vm.playEnd = true
         stopVideoTimeSync()
         stopScrollerSync()
         if (PREFS_S_ExitWhenEnd){
@@ -2047,8 +2059,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             window.decorView.post {
                 window.insetsController?.let { controller ->
                     controller.hide(WindowInsets.Type.statusBars())
-                    controller.systemBarsBehavior =
-                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 }
 
             }
@@ -2113,6 +2124,23 @@ class PlayerActivityMVVM: AppCompatActivity(){
             vm.FromManualPortrait = true
             vm.currentOrientation = 0
             buttonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
+        }
+        //亮度
+        val windowInfo = window.attributes
+        if (!vm.BrightnessChanged) {
+            vm.BrightnessChanged = true
+            var initBrightness = windowInfo.screenBrightness
+            if (initBrightness < 0) {
+                initBrightness = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f
+                vm.BrightnessValue = initBrightness
+                windowInfo.screenBrightness = initBrightness
+                Log.i("SuMing", "未设置亮度 initBrightness: $initBrightness")
+                window.attributes = windowInfo
+            }
+        }else{
+            windowInfo.screenBrightness = vm.BrightnessValue
+            window.attributes = windowInfo
+            Log.i("SuMing", "已设置亮度 vm.BrightnessValue: ${vm.BrightnessValue}")
         }
         //音量
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager

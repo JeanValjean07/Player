@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -14,8 +15,11 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import data.model.VideoItem
 
-class MainActivityAdapter(private val onItemClick: (VideoItem) -> Unit):
-    PagingDataAdapter<VideoItem, MainActivityAdapter.ViewHolder>(diffCallback) {
+class MainActivityAdapter(
+    private val onItemClick: (VideoItem) -> Unit,
+    private val onDurationClick: (VideoItem) -> Unit,
+    private val onOptionClick: (VideoItem) -> Unit
+):PagingDataAdapter<VideoItem, MainActivityAdapter.ViewHolder>(diffCallback) {
 
     //DiffUtil
     companion object {
@@ -50,11 +54,26 @@ class MainActivityAdapter(private val onItemClick: (VideoItem) -> Unit):
         holder.tvThumb.load(item.thumbnailUri)
         //点击事件
         holder.tvThumb.setOnClickListener { onItemClick(item) }
-        holder.tvDuration.setOnClickListener {
-            Toast.makeText(holder.itemView.context, "视频时长: ${holder.tvDuration.text}", Toast.LENGTH_SHORT).show()
-        }
+        holder.tvDuration.setOnClickListener { onDurationClick(item) }
         holder.tvOption.setOnClickListener {
-            Toast.makeText(holder.itemView.context, "功能开发中", Toast.LENGTH_SHORT).show()
+             val popup = PopupMenu(holder.itemView.context, holder.tvOption)
+            popup.menuInflater.inflate(R.menu.activity_main_menu, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when(item.itemId){
+                    R.id.MenuAction_Repic -> {
+                        Toast.makeText(holder.itemView.context, "截取功能开发中", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    R.id.MenuAction_Hide -> {
+                        Toast.makeText(holder.itemView.context, "隐藏功能开发中", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    else -> true
+                }
+            }
+
+            popup.show()
+            //onOptionClick(item)
         }
 
 

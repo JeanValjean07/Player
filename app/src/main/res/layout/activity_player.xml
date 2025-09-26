@@ -32,16 +32,16 @@
                 android:layout_height="40dp"
                 android:layout_gravity="center"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="退出"
                 android:padding="6dp"
                 android:layout_marginStart="0dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_go_back_2"
-                android:layout_weight="0"
-                tools:ignore="MissingConstraints"/>
+                android:layout_weight="0" />
             <View
                 android:layout_width="wrap_content"
                 android:layout_height="1dp"
-                android:layout_weight="1"/>
+                android:layout_weight="0"/>
         </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
     <!-- 悬浮返回键 -->
@@ -56,8 +56,7 @@
         android:src="@drawable/ic_go_back_2"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="8dp"
-        />
+        android:layout_marginStart="8dp" />
     <!-- 缩略图上方按钮区2 -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/MediumActionsContainer2"
@@ -506,7 +505,6 @@
                     android:textColor="@color/HeadText"
                     android:textSize="13sp" />
             </LinearLayout>
-
         </androidx.media3.ui.PlayerView>
         <!-- Notice卡片 -->
         <androidx.cardview.widget.CardView

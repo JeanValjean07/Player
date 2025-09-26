@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.Brightness
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
@@ -54,7 +55,8 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
 
     var Auto: Boolean = false
 
-
+    //视频播放状态
+    var playEnd: Boolean = false
 
 
     fun setManual() {
@@ -71,6 +73,9 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
     var LastLandscapeOrientation: Int = 0
 
     var NoVolumeNoticed: Boolean = false
+
+    var BrightnessChanged: Boolean = false
+    var BrightnessValue: Float = 0f
     
 
 
