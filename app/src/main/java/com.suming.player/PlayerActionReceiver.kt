@@ -3,6 +3,7 @@ package com.suming.player
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.util.UnstableApi
@@ -20,6 +21,12 @@ class PlayerActionReceiver:BroadcastReceiver() {
             "PLAYER_PAUSE" -> {
                 val intent2 = Intent("LOCAL_RECEIVER").apply {
                     putExtra("key", "PLAYER_PAUSE")
+                }
+                LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
+            }
+            "PLAYER_FINISH" -> {
+                val intent2 = Intent("LOCAL_RECEIVER").apply {
+                    putExtra("key", "PLAYER_FINISH")
                 }
                 LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
             }

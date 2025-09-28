@@ -44,7 +44,6 @@
         <activity android:name=".PlayerActivity"
             android:theme="@style/MainTheme"
             android:launchMode="singleTask"
-            android:supportsPictureInPicture="true"
             android:label="播放器(普通)"
             android:exported="true">
             <intent-filter>
@@ -59,12 +58,13 @@
             </intent-filter>
         </activity>
 
-
-        <activity android:name=".PlayerActivityMVVM"
+        <activity android:name=".PlayerActivityV2"
             android:theme="@style/MainTheme"
-            android:label="播放器(MVVM)"
+            android:label="播放器(V2)"
             android:launchMode="singleTask"
-            android:exported="true">
+            android:configChanges="orientation"
+            android:exported="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -80,6 +80,27 @@
                 android:value="true"/>
         </activity>
 
+        <activity android:name=".PlayerActivityMVVM"
+            android:theme="@style/MainTheme"
+            android:label="播放器(MVVM)"
+            android:screenOrientation="portrait"
+            android:launchMode="singleTask"
+            android:exported="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="video/*" />
+            </intent-filter>
+            <meta-data
+                android:name="android.notch_support"
+                android:value="true"/>
+        </activity>
 
         <activity android:name=".SettingsActivity"
             android:theme="@style/MainTheme"
@@ -92,7 +113,6 @@
             android:screenOrientation="portrait"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
-
 
         <service
             android:name=".PlayerBackgroundServices"

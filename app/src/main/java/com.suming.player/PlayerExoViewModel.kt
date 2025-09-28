@@ -2,8 +2,10 @@ package com.suming.player
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import android.widget.FrameLayout
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
@@ -11,7 +13,8 @@ import androidx.media3.effect.Brightness
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @UnstableApi
 class PlayerExoViewModel(application: Application) : AndroidViewModel(application) {
@@ -47,8 +50,7 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
     //屏幕旋转状态
     var FromManualPortrait: Boolean = true
     var OrientationValue = 0
-    var LandscapeOrientation = 0
-    var ManualSetPortrait: Boolean = true
+
 
     //手动旋转
     var Manual: Boolean = false
@@ -76,7 +78,7 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
 
     var BrightnessChanged: Boolean = false
     var BrightnessValue: Float = 0f
-    
+
 
 
 

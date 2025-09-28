@@ -12,11 +12,8 @@ import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.content.res.Resources
-import android.hardware.display.DisplayManager
-import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
-import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaCodec
 import android.media.MediaMetadataRetriever
@@ -29,7 +26,6 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import android.util.Rational
-import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.KeyEvent
@@ -96,28 +92,24 @@ import kotlin.math.max
 import kotlin.math.min
 
 @UnstableApi
-@Suppress("unused")
-class PlayerActivityMVVM: AppCompatActivity(){
-    //变量初始化
-    //<editor-fold desc="DI fields">
+class PlayerActivityV2: AppCompatActivity(){
     //视频信息预读
-    private var videoDuration = 0
-    private var absolutePath = ""
+    private var videoDuration = 0         //多成员使用:视频时长
+    private var absolutePath = ""        //多成员使用:视频绝对路径
     private lateinit var videoUri: Uri
     //播放状态
     private var wasPlaying = true
     private var ONSTOP_WasPlaying = false
     private var LIFE_ONSTOP_WasPlaying = false
-    private var INTERUPT_WasPlaying = false
     //音量配置参数
     private var maxVolume = 0
     private var currentVolume = 0
     private var originalVolume = 0
     //缩略图绘制参数
-    private var SCROLLERINFO_MaxPicNumber = 20
-    private var SCROLLERINFO_EachPicWidth = 0
-    private var SCROLLERINFO_PicNumber = 0
-    private var SCROLLERINFO_EachPicDuration: Int = 0
+    private var SCROLLERINFO_MaxPicNumber = 20         //缩略图最大数量(写死)
+    private var SCROLLERINFO_EachPicWidth = 0          //单张缩略图最大宽度(现场计算),高度45dp布局写死
+    private var SCROLLERINFO_PicNumber = 0             //缩略图数量(现场计算)
+    private var SCROLLERINFO_EachPicDuration: Int = 0  //单张缩略图对应时长(现场计算)
     //点击和滑动状态标识 + onScrolled回调参数
     private var onDown = false
     private var dragging = false
@@ -126,7 +118,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var scrolling = false
     private var scrollerTouching = false
     private var videoTimeTo = 0L
-    private var STATE_FingerTouching = false
     //旧机型标识
     private var isCompatibleDevice = false
     //点击隐藏控件
@@ -136,13 +127,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var scrollParam1 = 0
     private var scrollParam2 = 0
     private var syncScrollRunnableGap = 16L
+
     //功能:倍速滚动
     private var currentTime = 0L
     private var lastPlaySpeed = 0f
     private var forceSeekGap = 5000L
     //功能:VideoSeek
-    private var isSeekReady = true
-    private var backSeek = false
+    private var isSeekReady = true  //Seek结束标记
+    private var backSeek = false    //滚动方向标记
     //判断体:PlayerReady(播放状态)
     private var READY_FromFirstEntry = true
     private var READY_FromSeek = false
@@ -166,48 +158,60 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var seekRunnableRunning = false
     private var smartScrollRunnableRunning = false
     private var syncScrollRunnableRunning = false
+
+
+
     //LastSeek保底Seek机制
     private var LastSeekLaunched = false
+
+
     //传递给通知或播控中心的视频信息字段
     private var STRING_VideoTitle = ""
     private var STRING_VideoArtist = ""
     private var STRING_FileName = ""
+
     //安全期
     private var SECUREINTERVAL_SEEKONCE = false
     private var SECUREINTERVAL_ONDOWN = false
     private var SECUREINTERVAL_FINGERUP = false
-    //销毁状态判断
+
+
     private var DESTROY_FromSavedInstance = false
+
+
     //自动旋转状态
     private var rotationSetting = 0
-    //生命周期进入锁
+
     private var observerOnStoped = false
     private var observerOnStarted = false
+
+    private var STATE_FingerTouching = false
     //PlayerReady
     private var STATE_PlayerReady = false
-    //音量变化步长
-    private var volumeChangeGap = 1
-    //滑动手势
-    private var longPress = false
-    private var touchLeft = false
-    private var touchRight = false
-    private var scrollDistance = 0
-    //状态栏高度
+
+
+        //音量变化步长
+        private var volumnChangeGap = 1
+
+
+
+        //状态栏高度
     private var statusBarHeight = 0
     //方向回调
     private var orientationChangeTime = 0L
     private var LastOrientationChangeTime = 0L
+
     //音量恢复
     private var volumeRecExecuted = false
     //耳机链接状态
     private var headSet = false
-    //方向监听器初始化
+
     private var OrientationEventListener: OrientationEventListener? = null
     private var OrientationEventListener2: OrientationEventListener? = null
-    //ViewModel
-    private val vm: PlayerExoViewModel by viewModels { PlayerExoFactory.getInstance(application) }
-    //</editor-fold>
 
+    private val vm: PlayerExoViewModel by viewModels { PlayerExoFactory.getInstance(application) }
+
+    private var INTERUPT_WasPlaying = false
     //旧机型兼容判断
     object DeviceCompatUtil {
         /*
@@ -238,8 +242,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     }
 
     @OptIn(UnstableApi::class)
-    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION")
-    @Suppress("DEPRECATION")
+    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -251,7 +254,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
         //恢复暂存数据
         if (savedInstanceState == null) {
-            PlayerExoSingleton.releasePlayer()    //初次打开:关闭播放器实例
+            PlayerExoSingleton.releasePlayer() //初次打开:关闭播放器实例
             stopBackgroundServices()           //初次打开:关闭后台播放服务
         }else{
             //取出Intent
@@ -455,6 +458,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }.apply { enable() }
 
 
+
         //界面初始化:默认颜色设置+控件动态变位
         AppBarSetting()
 
@@ -506,6 +510,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
         }
         localBroadcastManager.registerReceiver(receiver, filter)
+
 
 
         //区分打开方式并反序列化
@@ -608,7 +613,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             CONTROLLER_ThumbScroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
         } else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            var scrollerMarginType: Int
+            var scrollerMarginType = 0
             if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor") {
                 scrollerMarginType = 2
                 val statusBarHeight = prefs.getInt("INFO_STATUSBAR_HEIGHT", 0)
@@ -640,8 +645,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
         }
         val videoUri = videoItem.uri
-        absolutePath = getAbsoluteFilePath(this@PlayerActivityMVVM, videoUri).toString()
-        CONTROLLER_ThumbScroller.layoutManager = LinearLayoutManager(this@PlayerActivityMVVM, LinearLayoutManager.HORIZONTAL, false)
+        absolutePath = getAbsoluteFilePath(this@PlayerActivityV2, videoUri).toString()
+        CONTROLLER_ThumbScroller.layoutManager = LinearLayoutManager(this@PlayerActivityV2, LinearLayoutManager.HORIZONTAL, false)
         val retriever = MediaMetadataRetriever()
         //信息读取
         STRING_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
@@ -650,7 +655,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         STRING_FileName = file.name
         //视频无法打开时的处理
         try {
-            retriever.setDataSource(this@PlayerActivityMVVM, videoUri)
+            retriever.setDataSource(this@PlayerActivityV2, videoUri)
         } catch (_: Exception) {
             val data = Intent().apply {
                 putExtra("key", "needRefresh")
@@ -848,7 +853,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //固定控件初始化：退出按钮
         val buttonExit = findViewById<View>(R.id.buttonExit)
         buttonExit.setOnClickListener {
-            PlayerExoSingleton.stopPlayer()
+            vm.player.playWhenReady = false
             finish()
         }
         //提示卡点击时关闭
@@ -895,9 +900,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
         buttonBackToStart.setOnClickListener {
             stopVideoSmartScroll()
             lifecycleScope.launch {
-                buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityMVVM, R.color.ButtonBg))
+                buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityV2, R.color.ButtonBg))
                 delay(200)
-                buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityMVVM, R.color.ButtonBgClosed))
+                buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityV2, R.color.ButtonBgClosed))
             }
             stopVideoSeek()
             CONTROLLER_ThumbScroller.stopScroll()
@@ -1049,6 +1054,10 @@ class PlayerActivityMVVM: AppCompatActivity(){
             ButtonChangeOrientation()
         }
         //播放区域点击事件
+        var longPress = false
+        var touchLeft = false
+        var touchRight = false
+        var scrollDistance = 0
         val gestureDetectorPlayArea = GestureDetector(this, object : SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 if (vm.player.isPlaying) {
@@ -1090,7 +1099,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     val windowInfo = window.attributes
                     //亮度修改操作
                     if (scrollDistance > 50) {
-                        val newBrightness = (vm.BrightnessValue + 0.1f).toBigDecimal().setScale(1, RoundingMode.HALF_UP).toFloat()
+                        val newBrightness = (windowInfo.screenBrightness + 0.1f).toBigDecimal().setScale(1, RoundingMode.HALF_UP).toFloat()
                         if (newBrightness <= 1.0 && newBrightness >= 0.0) {
                             windowInfo.screenBrightness = newBrightness
                             window.attributes = windowInfo
@@ -1100,7 +1109,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                             notice("亮度已到上限", 1000)
                         }
                     }else if (scrollDistance < -50){
-                        val newBrightness = (vm.BrightnessValue - 0.1f).toBigDecimal().setScale(1, RoundingMode.HALF_UP).toFloat()
+                        val newBrightness = (windowInfo.screenBrightness - 0.1f).toBigDecimal().setScale(1, RoundingMode.HALF_UP).toFloat()
                         if (newBrightness <= 1.0 && newBrightness >= 0.0) {
                             windowInfo.screenBrightness = newBrightness
                             window.attributes = windowInfo
@@ -1123,7 +1132,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                         notice("快速静音", 1000)
                     }
                     //音量修改操作
-                    if (scrollDistance > volumeChangeGap){
+                    if (scrollDistance > volumnChangeGap){
                         var currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         currentVolume = currentVolume + 1
                         if (currentVolume <= maxVolume){
@@ -1139,7 +1148,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                                 notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
                             }
                         }
-                    }else if (scrollDistance< -volumeChangeGap){
+                    }else if (scrollDistance< -volumnChangeGap){
                         var currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         currentVolume = currentVolume - 1
                         if (currentVolume >= 0){
@@ -1183,13 +1192,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
             gestureDetectorPlayArea.onTouchEvent(event)
         }
-        //悬浮窗
-        val buttonFloatingWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
-        buttonFloatingWindow.setOnClickListener {
-            notice("悬浮窗功能暂未实现", 1000)
-        }
-        //播放失败控件(暂时关闭)
-        /*
         //按钮：关闭错误提示
         val buttonCloseErrorNotice = findViewById<TextView>(R.id.buttonCloseErrorNotice)
         buttonCloseErrorNotice.setOnClickListener {
@@ -1201,8 +1203,11 @@ class PlayerActivityMVVM: AppCompatActivity(){
         buttonReload.setOnClickListener {
             finish()
         }
-        */
-
+        //悬浮窗
+        val buttonFloatingWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
+        buttonFloatingWindow.setOnClickListener {
+            notice("悬浮窗功能暂未实现", 1000)
+        }
 
 
 
@@ -1247,7 +1252,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
 
             withContext(Dispatchers.Main) {
-                CONTROLLER_ThumbScroller.adapter = PlayerScrollerAdapter(this@PlayerActivityMVVM,
+                CONTROLLER_ThumbScroller.adapter = PlayerScrollerAdapter(this@PlayerActivityV2,
                     absolutePath,playerScrollerViewModel.thumbItems,SCROLLERINFO_EachPicWidth,SCROLLERINFO_PicNumber,SCROLLERINFO_EachPicDuration,PREFS_RC_GenerateThumbSYNC)
             }
 
@@ -1255,8 +1260,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             delay(100)
             startVideoTimeSync()
         }
-        //播放失败检查(暂时关闭,开启前需先调整布局)
-        /*
+        //播放失败检查
         if (savedInstanceState == null){
             lifecycleScope.launch(Dispatchers.IO) {
                 delay(1000)
@@ -1268,7 +1272,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 }
             }
         }
-        */
         //系统手势监听：返回键重写
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -1276,6 +1279,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
         })
     } //onCreate END
+
 
 
     //Runnable:根据视频时间更新进度条位置
@@ -1582,6 +1586,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //真正退出
         else{
             stopBackgroundServices()
+            PlayerExoSingleton.releasePlayer()
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0)
         }
     }
@@ -1631,10 +1636,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
                             )
                 }
 
+
             //控件位置动态调整
-            //val display = windowManager.defaultDisplay
-            val displayManager = this.getSystemService(DISPLAY_SERVICE) as DisplayManager
-            val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
+            val display = windowManager.defaultDisplay
             val rotation = display?.rotation
             //控件位置动态调整:正向横屏
             if (rotation == Surface.ROTATION_90) {
@@ -1650,6 +1654,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 (buttonFloatWindow.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
                 (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
             }
+
 
             //始终使用深色横屏页
             if (PREFS_S_UseBlackScreenInLandscape) {
@@ -1802,7 +1807,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            PlayerExoSingleton.stopPlayer()
+            //vm.player.release()
             finish()
         }
     }
@@ -1961,39 +1966,30 @@ class PlayerActivityMVVM: AppCompatActivity(){
     //音频焦点
     private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
     private fun requestAudioFocus(){
-        val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            .setOnAudioFocusChangeListener { focusChange ->
-                when (focusChange) {
-                    AudioManager.AUDIOFOCUS_LOSS -> {
-                        INTERUPT_WasPlaying = vm.player.isPlaying
+        val AudioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+            when (focusChange) {
+                AudioManager.AUDIOFOCUS_LOSS -> {
+                    INTERUPT_WasPlaying = vm.player.isPlaying
+                }
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                    INTERUPT_WasPlaying = vm.player.isPlaying
+                    vm.player.pause()
                     }
-                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                        INTERUPT_WasPlaying = vm.player.isPlaying
-                        vm.player.pause()
-                    }
-                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                        INTERUPT_WasPlaying = vm.player.isPlaying
-                        vm.player.pause()
-                    }
-                    AudioManager.AUDIOFOCUS_GAIN -> {
-                        if (INTERUPT_WasPlaying){
-                            INTERUPT_WasPlaying = false
-                            vm.player.play()
-                        }
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                    INTERUPT_WasPlaying = vm.player.isPlaying
+                    vm.player.pause()
+                }
+                AudioManager.AUDIOFOCUS_GAIN -> {
+                    if (INTERUPT_WasPlaying){
+                        INTERUPT_WasPlaying = false
+                        vm.player.play()
                     }
                 }
             }
-            .build()
-
-        audioManager.requestAudioFocus(focusRequest)
+        }
+        audioManager.requestAudioFocus(AudioFocusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
     }
-    //音量淡入淡出(未做完)
+    //音量淡入淡出
     private fun volumeRec(){
         volumeRecExecuted = true
         lifecycleScope.launch(Dispatchers.Main) {
@@ -2208,17 +2204,20 @@ class PlayerActivityMVVM: AppCompatActivity(){
             if (initBrightness < 0) {
                 initBrightness = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f
                 vm.BrightnessValue = initBrightness
+                windowInfo.screenBrightness = initBrightness
+                window.attributes = windowInfo
             }
         }else{
             windowInfo.screenBrightness = vm.BrightnessValue
             window.attributes = windowInfo
+            Log.i("SuMing", "已设置亮度 vm.BrightnessValue: ${vm.BrightnessValue}")
         }
         //音量
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-        volumeChangeGap = 750/maxVolume
+        volumnChangeGap = 750/maxVolume
         if (originalVolume == 0 && !vm.NoVolumeNoticed) {
             vm.NoVolumeNoticed = true
             notice("当前音量为0", 3000)

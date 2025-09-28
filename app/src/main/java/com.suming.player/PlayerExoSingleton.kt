@@ -27,7 +27,6 @@ object PlayerExoSingleton {
         val rendererFactory = getRendererFactory(app)
 
 
-
         return ExoPlayer.Builder(app)
             .setSeekParameters(SeekParameters.CLOSEST_SYNC)
             .setWakeMode(WAKE_MODE_NETWORK)
@@ -59,5 +58,13 @@ object PlayerExoSingleton {
         _player?.release()
         _player = null
         _trackSelector = null
+    }
+
+    fun stopPlayer() {
+        _player?.stop()
+    }
+
+    fun pausePlayer() {
+        _player?.pause()
     }
 }

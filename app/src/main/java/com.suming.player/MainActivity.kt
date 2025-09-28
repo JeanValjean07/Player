@@ -2,6 +2,7 @@ package com.suming.player
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -35,10 +36,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.suming.player.MainActivity.DeviceCompatUtil.isCompatibleDevice
+import data.model.VideoItem
 import data.source.LocalVideoSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.system.exitProcess
 
 class MainActivity: AppCompatActivity() {
 
@@ -50,6 +53,11 @@ class MainActivity: AppCompatActivity() {
     private var isCompatibleDevice = false
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
+
+    //PIP状态
+    private var NowPIP = false
+
+    var statusBarHeight = 0
 
     //无法打开视频时的接收器
     private val detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
@@ -99,6 +107,7 @@ class MainActivity: AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
+
         //读取设置
         val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
         if (!prefs.contains("PREFS_UseMVVMPlayer")){
@@ -107,22 +116,17 @@ class MainActivity: AppCompatActivity() {
         } else{
             PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
         }
-        //预读取状态栏高度
+        //内容避让状态栏并预读取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-
             if (!prefs.contains("INFO_STATUSBAR_HEIGHT")){
-                ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
-                    val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-                    Log.d("SuMing", "读取状态栏高度: $statusBarHeight")
-                    prefs.edit { putInt("INFO_STATUSBAR_HEIGHT", statusBarHeight).apply() }
-                    insets
-                }
+                statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+                prefs.edit { putInt("INFO_STATUSBAR_HEIGHT", statusBarHeight).apply() }
             }
-
             insets
         }
+
 
         //准备工作+加载视频
         preCheck()
@@ -161,6 +165,8 @@ class MainActivity: AppCompatActivity() {
         //监听返回手势
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                finish()
+                /*
                 val intent = Intent(Intent.ACTION_MAIN).apply {
                     addCategory(Intent.CATEGORY_HOME)
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -170,6 +176,7 @@ class MainActivity: AppCompatActivity() {
                     val pid = Process.myPid()
                     Process.killProcess(pid)
                 }, 500)
+                */
             }
         })
 
@@ -179,6 +186,7 @@ class MainActivity: AppCompatActivity() {
         super.onResume()
         //重读设置
         val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
+
         if (!prefs.contains("PREFS_UseMVVCPlayer")){
             prefs.edit { putBoolean("PREFS_UseMVVCPlayer", true).apply() }
             PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
@@ -234,14 +242,7 @@ class MainActivity: AppCompatActivity() {
         //注册点击事件
         adapter = MainActivityAdapter(
             onItemClick = { item ->
-                if (PREFS_S_UseMVVMPlayer){
-                    val intent = Intent(this, PlayerActivityMVVM::class.java).apply { putExtra("video", item) }
-                    detailLauncher.launch(intent)
-                }
-                else{
-                    val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
-                    detailLauncher.launch(intent)
-                }
+                startPlayer(item)
             },
             onDurationClick = { item ->
                 notice("视频时长:${formatTime1(item.durationMs)}", 2000)
@@ -260,6 +261,26 @@ class MainActivity: AppCompatActivity() {
         lifecycleScope.launch {
             pager.flow.collect { adapter.submitData(it) }
         }
+    }
+
+    private fun BroadcastFinish(): Intent {
+        val intent = Intent(this, PlayerActionReceiver::class.java).apply {
+            action = "PLAYER_FINISH"
+        }
+        return intent
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun startPlayer(item: VideoItem){
+        if (PREFS_S_UseMVVMPlayer){
+            val intent = Intent(this, PlayerActivityMVVM::class.java).apply { putExtra("video", item) }
+            detailLauncher.launch(intent)
+        }
+        else{
+            val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
+            detailLauncher.launch(intent)
+        }
+
     }
 
     //显示通知
