@@ -50,6 +50,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="返回上一级页面"
         android:padding="6dp"
         android:elevation="10dp"
         android:scaleType="fitCenter"
@@ -57,20 +58,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginStart="8dp" />
-    <!-- 开启浮窗 -->
-    <ImageButton
-        android:id="@+id/buttonFloatingWindow"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="6dp"
-        android:elevation="10dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_controller_floatingwindow"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="5dp"
-        android:layout_marginEnd="8dp" />
     <!-- 缩略图上方按钮区2 -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/MediumActionsContainer2"
@@ -458,13 +445,45 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- 播放器错误提示 -->
+    <LinearLayout
+        android:id="@+id/playerError"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:elevation="21dp"
+        android:layout_gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+        <TextView
+            android:id="@+id/playerText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Player_Text"
+            android:layout_gravity="center"
+            android:layout_marginBottom="30dp"
+            android:textColor="@color/HeadText"
+            android:textSize="20sp" />
+        <Button
+            android:id="@+id/playerButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Player_Button"
+            android:backgroundTint="@color/ButtonBg"
+            android:layout_gravity="center"
+            android:textColor="@color/HeadText"
+            android:textSize="15sp" />
+    </LinearLayout>
     <!-- 根2 - 视频播放区 -->
     <FrameLayout
         android:id="@+id/playerContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@color/Background"
-        android:elevation="0dp"
+        android:elevation="1dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -475,50 +494,18 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:resize_mode="fit"
+            android:elevation="2dp"
             app:use_controller="false"
             android:clickable="true"
             android:background="@color/Background"
             app:surface_type="surface_view">
+            <!-- 播放器遮罩 -->
             <View
                 android:id="@+id/cover"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@color/Background"
                 android:visibility="visible" />
-            <LinearLayout
-                android:id="@+id/playerError"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                android:layout_gravity="center">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="似乎发生了错误"
-                    android:layout_marginBottom="30dp"
-                    android:textColor="@color/HeadText"
-                    android:textSize="15sp" />
-                <Button
-                    android:id="@+id/buttonReload"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="退出"
-                    android:backgroundTint="@color/ButtonBg"
-                    android:layout_gravity="center"
-                    android:textColor="@color/HeadText"
-                    android:textSize="15sp" />
-                <TextView
-                    android:id="@+id/buttonCloseErrorNotice"
-                    android:clickable="true"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="关闭提示"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="10dp"
-                    android:textColor="@color/HeadText"
-                    android:textSize="13sp" />
-            </LinearLayout>
         </androidx.media3.ui.PlayerView>
         <!-- Notice卡片 -->
         <androidx.cardview.widget.CardView

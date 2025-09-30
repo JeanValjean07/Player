@@ -80,19 +80,6 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_go_back_2"
                 />
-            <!-- 开启浮窗 -->
-            <ImageButton
-                android:id="@+id/buttonFloatingWindow"
-                android:layout_width="35dp"
-                android:layout_height="35dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="6dp"
-                android:layout_gravity="end"
-                android:elevation="20dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_controller_floatingwindow"
-                android:layout_marginTop="5dp"
-                android:layout_marginEnd="15dp" />
             <!-- 缩略图上方按钮区 -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/MediumActionsContainer"

@@ -1,7 +1,6 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
-import android.app.PictureInPictureParams
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentResolver
@@ -18,7 +17,6 @@ import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
-import android.media.MediaCodec
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
@@ -28,7 +26,6 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
-import android.util.Rational
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -55,8 +52,6 @@ import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -74,6 +69,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.session.MediaController
@@ -206,6 +202,13 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var OrientationEventListener2: OrientationEventListener? = null
     //ViewModel
     private val vm: PlayerExoViewModel by viewModels { PlayerExoFactory.getInstance(application) }
+    //视频尺寸
+    private var videoSizeWidth = 0
+    private var videoSizeHeight = 0
+
+    private lateinit var playerView: PlayerView
+
+
     //</editor-fold>
 
     //旧机型兼容判断
@@ -392,9 +395,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                         //反向横屏ORIENTATION_REVERSE_LANDSCAPE
                         if (vm.OrientationValue == 2) {
                             val buttonLinkContainer = findViewById<FrameLayout>(R.id.buttonLinkContainer)
-                            val buttonFloatWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
                             buttonLinkContainer.layoutParams = (buttonLinkContainer.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
-                            buttonFloatWindow.layoutParams = (buttonFloatWindow.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
                             vm.currentOrientation = 2
                             vm.LastLandscapeOrientation = 2
                             vm.setAuto()
@@ -444,9 +445,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                         //转动到反向横屏ORIENTATION_REVERSE_LANDSCAPE
                         else if (vm.OrientationValue == 2) {
                             val buttonLinkContainer = findViewById<FrameLayout>(R.id.buttonLinkContainer)
-                            val buttonFloatWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
                             buttonLinkContainer.layoutParams = (buttonLinkContainer.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
-                            buttonFloatWindow.layoutParams = (buttonFloatWindow.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
                         }
                     }
@@ -538,7 +537,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         videoUri = videoItem.uri
 
         //绑定播放器输出
-        val playerView = findViewById<PlayerView>(R.id.playerView)
+        playerView = findViewById(R.id.playerView)
         playerView.player = vm.player
 
         //初次打开时传递视频链接
@@ -573,6 +572,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 buttonRefresh()
+            }
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                super.onVideoSizeChanged(videoSize)
+                if (videoSize.width > 0 && videoSize.height > 0) {
+                    videoSizeWidth = videoSize.width
+                    videoSizeHeight = videoSize.height
+                }
+
             }
         })
 
@@ -845,11 +852,22 @@ class PlayerActivityMVVM: AppCompatActivity(){
         })
 
 
-        //固定控件初始化：退出按钮
+        //固定控件初始化：退出按钮:短按退出,长按开小窗
+        val gestureDetectorExitButton = GestureDetector(this, object : SimpleOnGestureListener() {
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                PlayerExoSingleton.stopPlayer()
+                stopFloatingWindow()
+                finish()
+                return true
+            }
+            override fun onLongPress(e: MotionEvent) {
+                startFloatingWindow()
+                super.onLongPress(e)
+            }
+        })
         val buttonExit = findViewById<View>(R.id.buttonExit)
-        buttonExit.setOnClickListener {
-            PlayerExoSingleton.stopPlayer()
-            finish()
+        buttonExit.setOnTouchListener { _, event ->
+            gestureDetectorExitButton.onTouchEvent(event)
         }
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.noticeCard)
@@ -872,13 +890,13 @@ class PlayerActivityMVVM: AppCompatActivity(){
             if (vm.player.repeatMode == Player.REPEAT_MODE_OFF) {
                 vm.player.repeatMode = Player.REPEAT_MODE_ONE
                 prefs.edit { putBoolean("PREFS_LoopPlay", true).apply() }
-                buttonLoopPlayMaterial.backgroundTintList =
-                    ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
+                buttonLoopPlayMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
                 notice("已开启单集循环", 1000)
                 if (vm.playEnd) {
                     vm.playEnd = false
                     vm.player.seekTo(0)
                     vm.player.play()
+                    if (PREFS_RC_LinkScrollEnabled) startScrollerSync()
                 }
             } else {
                 vm.player.repeatMode = Player.REPEAT_MODE_OFF
@@ -1183,11 +1201,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
             gestureDetectorPlayArea.onTouchEvent(event)
         }
-        //悬浮窗
-        val buttonFloatingWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
-        buttonFloatingWindow.setOnClickListener {
-            notice("悬浮窗功能暂未实现", 1000)
-        }
+
         //播放失败控件(暂时关闭)
         /*
         //按钮：关闭错误提示
@@ -1205,10 +1219,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
 
 
-
-
         //根据机型选择启用播控中心或自定义通知
         if (savedInstanceState == null) {
+            //三星小米可直接使用播控中心
             if (Build.BRAND == "Xiaomi" || Build.BRAND == "samsung") {
                 val outFile = File(cacheDir, "thumb_${absolutePath.hashCode()}_cover.jpg")
                 val SessionToken = SessionToken(this, ComponentName(this, PlayerBackgroundServices::class.java))
@@ -1227,17 +1240,25 @@ class PlayerActivityMVVM: AppCompatActivity(){
                             )
                             .build()
                     )
-
                     controller.prepare()
                 }, MoreExecutors.directExecutor())
             }
+            //华为播控中心为白名单,启用自定义控制通知
             else if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor"){
                 lifecycleScope.launch {
                     delay(1000)
                     startBackgroundServices()
                 }
             }
+            //其他机型,默认启用自定义通知
+            else{
+                lifecycleScope.launch {
+                    delay(1000)
+                    startBackgroundServices()
+                }
+            }
         }
+
         //绑定Adapter
         lifecycleScope.launch(Dispatchers.IO) {
             val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
@@ -1568,6 +1589,12 @@ class PlayerActivityMVVM: AppCompatActivity(){
             startVideoTimeSync()
             vm.player.play()
         }
+        if (vm.inFloatingWindow){
+            vm.inFloatingWindow = false
+            stopFloatingWindow()
+            playerView.player = null
+            playerView.player = vm.player
+        }
     }
 
     override fun onDestroy() {
@@ -1597,7 +1624,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
             else -> super.onKeyDown(keyCode, event)
         }
     }
-
     @SuppressLint("UnsafeIntentLaunch")
     override fun onNewIntent(newIntent: Intent?) {
         super.onNewIntent(newIntent)
@@ -1610,6 +1636,47 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
 
     //Functions
+    //启动小窗
+    private fun startFloatingWindow() {
+        fun checkOverlayPermission(): Boolean {
+            return Settings.canDrawOverlays(this)
+        }
+        if (!checkOverlayPermission()){
+            notice("请先开启悬浮窗权限", 1000)
+            return
+        }else{
+            notice("尝试启动小窗", 1000)
+            //启动小窗服务
+            val displayMetrics = resources.displayMetrics
+            val screenWidth = displayMetrics.widthPixels
+            val intentFloatingWindow = Intent(applicationContext, FloatingWindowService::class.java)
+            intentFloatingWindow.putExtra("VIDEO_SIZE_WIDTH", videoSizeWidth)
+            intentFloatingWindow.putExtra("VIDEO_SIZE_HEIGHT", videoSizeHeight)
+            intentFloatingWindow.putExtra("SCREEN_WIDTH", screenWidth)
+            startService(intentFloatingWindow)
+
+
+            vm.inFloatingWindow = true
+            //返回系统桌面
+            val intentHomeLauncher = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_HOME)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intentHomeLauncher)
+
+            /*
+            LocalBroadcastManager.getInstance(this).sendBroadcast(Intent("LOCAL_RECEIVER").apply {
+                putExtra("key", "PLAYER_REBIND")
+            })
+
+             */
+        }
+    }
+    //关闭小窗
+    private fun stopFloatingWindow() {
+        stopService(Intent(applicationContext, FloatingWindowService::class.java))
+    }
+    //设置状态栏样式:横屏时隐藏状态栏,
     private fun AppBarSetting() {
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             //横屏时隐藏状态栏
@@ -1646,8 +1713,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
             //控件位置动态调整:反向横屏
             else if (rotation == Surface.ROTATION_270) {
                 val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
-                val buttonFloatWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
-                (buttonFloatWindow.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
                 (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
             }
 
@@ -1658,8 +1723,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             val buttonExit = findViewById<View>(R.id.buttonExit)
-            val buttonFloatingWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
-            (buttonFloatingWindow.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight + 8)
             (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight + 8)
         }
     }
@@ -1803,6 +1866,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
             PlayerExoSingleton.stopPlayer()
+            stopFloatingWindow()
             finish()
         }
     }
@@ -1914,6 +1978,11 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 playerRecoveryAllTrack()
             }
             if (PREFS_RC_LinkScrollEnabled && vm.player.isPlaying) startScrollerSync()
+            /*
+            LocalBroadcastManager.getInstance(this@PlayerActivityMVVM).sendBroadcast(Intent("LOCAL_RECEIVER").apply {
+                putExtra("key", "PLAYER_REBIND")
+            })
+             */
         }
         override fun onStop(owner: LifecycleOwner) {
             if (observerOnStoped){ return }

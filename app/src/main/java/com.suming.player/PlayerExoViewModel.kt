@@ -61,6 +61,9 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
     var playEnd: Boolean = false
 
 
+    var inFloatingWindow = false
+
+
     fun setManual() {
         Manual = true
         Auto = false

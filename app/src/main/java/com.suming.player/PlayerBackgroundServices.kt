@@ -14,11 +14,13 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.delay
 import kotlinx.serialization.descriptors.listSerialDescriptor
-
 
 @UnstableApi
 class PlayerBackgroundServices(): MediaSessionService() {
@@ -28,6 +30,8 @@ class PlayerBackgroundServices(): MediaSessionService() {
     private var PREFS_S_UseMVVMPlayer = false
     //媒体信息
     private var INFO_TITLE: String? = null
+
+    private var EnsureMediaSession = false
 
 
     @OptIn(UnstableApi::class)
@@ -44,16 +48,15 @@ class PlayerBackgroundServices(): MediaSessionService() {
 
         //由于执行顺序问题,播控中心逻辑应在onCreate中,自定义通知逻辑应在onStartCommand中
         if (Build.BRAND == "Xiaomi" || Build.BRAND == "samsung"){
+            //确认已启用播控中心
+            EnsureMediaSession = true
             //已确认三星,小米的播控中心不设限制,启用播控中心
             mediaSession = MediaSession.Builder(application, PlayerExoSingleton.getPlayer(application)).build()
-
-            //启用自定义控制通知的代码
-            /*
-            val NotificationCustomized = BuildCustomizeNotification()
-            createNotificationChannel()
-            startForeground(NOTIF_ID, NotificationCustomized)
-            */
+            mediaSession?.setSessionActivity(createPendingIntent())
         }
+
+
+
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
@@ -86,7 +89,13 @@ class PlayerBackgroundServices(): MediaSessionService() {
             val NotificationCustomized = BuildCustomizeNotification()
             createNotificationChannel()
             startForeground(NOTIF_ID, NotificationCustomized)
+        } else if (!EnsureMediaSession){
+            //其他机型,默认启用自定义通知
+            val NotificationCustomized = BuildCustomizeNotification()
+            createNotificationChannel()
+            startForeground(NOTIF_ID, NotificationCustomized)
         }
+
 
         //END
         return START_NOT_STICKY
@@ -112,11 +121,7 @@ class PlayerBackgroundServices(): MediaSessionService() {
         const val CHANNEL_ID = "playback"
     }
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "播放控制",
-            NotificationManager.IMPORTANCE_LOW
-        ).apply {
+        val channel = NotificationChannel(CHANNEL_ID, "播放控制", NotificationManager.IMPORTANCE_LOW).apply {
             setShowBadge(false)
             description = "后台音频播放"
         }
@@ -155,6 +160,8 @@ class PlayerBackgroundServices(): MediaSessionService() {
         }
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
+
+
 
 
 

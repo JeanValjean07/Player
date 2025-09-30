@@ -6,7 +6,10 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.view.View.GONE
+import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -49,15 +52,26 @@ class GuidanceActivity: AppCompatActivity() {
                 startActivity(Intent(Intent.ACTION_VIEW, webUri))
             }
         }
-
-
-        val deviceInfo = intent.getStringExtra("deviceInfo")
-        if (deviceInfo == "old"){
-            val textViewOldDevice = findViewById<TextView>(R.id.textViewOldDevice)
-            textViewOldDevice.text = "检测到您的系统是安卓10，打开由安卓12及以上版本设备拍摄的视频时，" +
-                    "可能出现播放暂停和无响应等兼容性问题，打开其他视频不受影响。兼容性故障导致的视频卡死基本都是假死，不影响APP自身界面" +
-                    "等待足够长时间，可以自己恢复。如果在活动创建时解码器立即卡死，才会导致APP界面卡死。可点击右上角\"系统播放器打开\"按钮，这大概率会让解码器脱离卡死状态。"
-            textViewOldDevice.setTextColor(ContextCompat.getColor(this, R.color.WarningText))
+        //SegRepo
+        val buttonGoSvgRepo = findViewById<FrameLayout>(R.id.buttonGoSvgRepo)
+        buttonGoSvgRepo.setOnClickListener {
+            val url = "https://www.svgrepo.com/"
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+            startActivity(intent)
         }
+
+        //兼容性警告
+        val deviceInfo = intent.getStringExtra("deviceInfo")
+        val textViewOldDevice = findViewById<TextView>(R.id.textViewOldDevice)
+        if (deviceInfo == "old"){
+            textViewOldDevice.text = "检测到您的系统是安卓10，解码部分视频可能会出现兼容性问题。该问题出现在高版本系统所拍摄的视频中，来自网络的视频和本机拍摄的视频应当不受影响。"
+            textViewOldDevice.setTextColor(ContextCompat.getColor(this, R.color.WarningText))
+        }else{
+            textViewOldDevice.visibility = GONE
+        }
+
+
+
+
     }
 }

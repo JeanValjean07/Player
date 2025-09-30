@@ -395,9 +395,7 @@ class PlayerActivityV2: AppCompatActivity(){
                         //反向横屏ORIENTATION_REVERSE_LANDSCAPE
                         if (vm.OrientationValue == 2) {
                             val buttonLinkContainer = findViewById<FrameLayout>(R.id.buttonLinkContainer)
-                            val buttonFloatWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
                             buttonLinkContainer.layoutParams = (buttonLinkContainer.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
-                            buttonFloatWindow.layoutParams = (buttonFloatWindow.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
                             vm.currentOrientation = 2
                             vm.LastLandscapeOrientation = 2
                             vm.setAuto()
@@ -447,9 +445,7 @@ class PlayerActivityV2: AppCompatActivity(){
                         //转动到反向横屏ORIENTATION_REVERSE_LANDSCAPE
                         else if (vm.OrientationValue == 2) {
                             val buttonLinkContainer = findViewById<FrameLayout>(R.id.buttonLinkContainer)
-                            val buttonFloatWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
                             buttonLinkContainer.layoutParams = (buttonLinkContainer.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
-                            buttonFloatWindow.layoutParams = (buttonFloatWindow.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
                         }
                     }
@@ -1203,11 +1199,6 @@ class PlayerActivityV2: AppCompatActivity(){
         buttonReload.setOnClickListener {
             finish()
         }
-        //悬浮窗
-        val buttonFloatingWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
-        buttonFloatingWindow.setOnClickListener {
-            notice("悬浮窗功能暂未实现", 1000)
-        }
 
 
 
@@ -1650,8 +1641,6 @@ class PlayerActivityV2: AppCompatActivity(){
             //控件位置动态调整:反向横屏
             else if (rotation == Surface.ROTATION_270) {
                 val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
-                val buttonFloatWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
-                (buttonFloatWindow.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
                 (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
             }
 
@@ -1663,8 +1652,6 @@ class PlayerActivityV2: AppCompatActivity(){
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             val buttonExit = findViewById<View>(R.id.buttonExit)
-            val buttonFloatingWindow = findViewById<ImageButton>(R.id.buttonFloatingWindow)
-            (buttonFloatingWindow.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight + 8)
             (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight + 8)
         }
     }

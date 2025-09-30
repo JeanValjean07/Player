@@ -144,7 +144,6 @@ class SettingsActivity: AppCompatActivity() {
 
     } //onCreate END
 
-
     private val settingsPrefs = mapOf(
         "PREFS_GenerateThumbSYNC"         to ::generateThumbSYNC,
         "PREFS_SeekSYNC"                  to ::seekSYNC,

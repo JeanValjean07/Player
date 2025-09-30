@@ -98,6 +98,51 @@
 
 
             </androidx.cardview.widget.CardView>
+            <!-- 卡片2：素材来源 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="5dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
+                        android:padding="16dp"
+                        android:text="本APP图标素材来源于"
+                        android:textSize="13sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+                    <FrameLayout
+                        android:id="@+id/buttonGoSvgRepo"
+                        android:layout_width="110dp"
+                        android:layout_height="match_parent">
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/White" />
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/ic_svgrepo"
+                            android:layout_gravity="center"
+                            android:contentDescription="SVGRepo" />
+                    </FrameLayout>
+
+
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
             <!-- 老机型警告 -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardViewOldDevice"
@@ -119,7 +164,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="0"
                         android:padding="16dp"
-                        android:text="当前设备没有兼容性提示"
+                        android:text="无兼容性提示时,此卡片应当被隐藏"
                         android:textSize="13sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

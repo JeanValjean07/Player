@@ -204,7 +204,6 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp">
                 <LinearLayout
-
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
@@ -212,7 +211,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="16dp"
-                        android:text="软件开源免费,如果您是付费获得此APP,请在酷安告知我"
+                        android:text="本软件开源免费"
                         android:textSize="13sp"
                         android:layout_weight="0"/>
                 </LinearLayout>

@@ -12,14 +12,17 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
 @UnstableApi
+@Suppress("unused")
 object PlayerExoSingleton {
 
-    private var _player: ExoPlayer? = null
+    var _player: ExoPlayer? = null
     @SuppressLint("StaticFieldLeak")
     private var _trackSelector: DefaultTrackSelector? = null
     @SuppressLint("StaticFieldLeak")
     private var _rendererFactory: RenderersFactory? = null
 
+    val player: ExoPlayer
+        get() = _player ?: throw IllegalStateException("Player not initialized")
 
     //创建播放器实例
     private fun buildPlayer(app: Application): ExoPlayer {
