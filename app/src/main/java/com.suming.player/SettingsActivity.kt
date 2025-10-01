@@ -249,7 +249,10 @@ class SettingsActivity: AppCompatActivity() {
             }
         }
         if (key == "PREFS_CloseVideoTrack"){
-            closeVideoTrack = sharedPreferences.getBoolean("PREFS_CloseVideoTrack", false)
+            if (!sharedPreferences.contains("PREFS_CloseVideoTrack")){
+                sharedPreferences.edit { putBoolean("PREFS_CloseVideoTrack", true).apply() }
+            }
+            closeVideoTrack = sharedPreferences.getBoolean("PREFS_CloseVideoTrack", true)
             if (closeVideoTrack){
                 Switch10.isChecked = true
             }

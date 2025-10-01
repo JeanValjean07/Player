@@ -76,6 +76,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.math.RoundingMode
 import kotlin.math.min
 
 @UnstableApi
@@ -772,68 +773,48 @@ class PlayerActivity: AppCompatActivity(){
         var touchRight = false
         var scrollDistance = 0
         val gestureDetectorPlayArea = GestureDetector(this, object : SimpleOnGestureListener() {
-                override fun onDoubleTap(e: MotionEvent): Boolean {
-                    if (player.isPlaying){
-                        pauseVideo()
-                        stopScrollerSync()
-                        notice("暂停播放",1000)
-                        buttonRefresh()
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                if (player.isPlaying) {
+                    pauseVideo()
+                    stopScrollerSync()
+                    notice("暂停播放", 1000)
+                    buttonRefresh()
+                } else {
+                    if (playEnd) {
+                        playEnd = false
+                        player.seekTo(0)
+                        playVideo()
+                        notice("视频已结束,开始重播", 1000)
                     } else {
-                        if (playEnd){
-                            playEnd = false
-                            player.seekTo(0)
-                            player.play()
-                            notice("视频已结束,开始重播",1000)
-                        }else{
-                            playVideo()
-                            startScrollerSync()
-                            notice("继续播放",1000)
-                            buttonRefresh()
-                        }
+                        playVideo()
+                        startScrollerSync()
+                        notice("继续播放", 1000)
+                        buttonRefresh()
                     }
-                    return true
                 }
-                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                    changeBackgroundColor()
-                    return true
+                return true
+            }
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                changeBackgroundColor()
+                return true
+            }
+            override fun onLongPress(e: MotionEvent) {
+                if (!player.isPlaying) {
+                    return
                 }
-                override fun onLongPress(e: MotionEvent) {
-                    if (!player.isPlaying){
-                        return
-                    }
-                    player.setPlaybackSpeed(2.0f)
-                    notice("倍速播放中",114514)
-                    longPress = true
-                    super.onLongPress(e)
-                }
-                override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-                    if (touchLeft){
-                        scrollDistance += distanceY.toInt()
-                        val windowInfo = window.attributes
-                        var initBrightness = windowInfo.screenBrightness
-                        if (initBrightness < 0) {
-                            initBrightness = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f
-                            windowInfo.screenBrightness = initBrightness
-                            window.attributes = windowInfo
-                        }
-                        val newBrightness = windowInfo.screenBrightness + scrollDistance.toFloat()/10000
-                        if (newBrightness <= 1.0 && newBrightness >= 0.0){
-                            windowInfo.screenBrightness = newBrightness
-                            window.attributes = windowInfo
-                        }
-                    }
-                    if (touchRight){
-                        scrollDistance += distanceY.toInt()
-                        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-                        currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                        player.volume = player.volume + scrollDistance.toFloat()/10000
-                    }
-                    return super.onScroll(e1, e2, distanceX, distanceY)
-                }
-            })
+                player.setPlaybackSpeed(2.0f)
+                notice("倍速播放中", 114514)
+                longPress = true
+                super.onLongPress(e)
+            }
+        })
         val playArea = findViewById<View>(R.id.playerView)
         playArea.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
+                val y = event.y
+                if (y < 250){
+                    return@setOnTouchListener false
+                }
                 val screenWidth = Resources.getSystem().displayMetrics.widthPixels
                 val x = event.x
                 if (x < screenWidth / 2) {
@@ -846,7 +827,7 @@ class PlayerActivity: AppCompatActivity(){
                 scrollDistance = 0
                 touchLeft = false
                 touchRight = false
-                if(longPress){
+                if (longPress) {
                     longPress = false
                     player.setPlaybackSpeed(1.0f)
                     val noticeCard = findViewById<CardView>(R.id.noticeCard)
@@ -855,34 +836,9 @@ class PlayerActivity: AppCompatActivity(){
             }
             gestureDetectorPlayArea.onTouchEvent(event)
         }
-        //按钮：关闭错误提示
-        val buttonCloseErrorNotice = findViewById<TextView>(R.id.buttonCloseErrorNotice)
-        buttonCloseErrorNotice.setOnClickListener {
-            val playerError = findViewById<LinearLayout>(R.id.playerError)
-            playerError.visibility = View.GONE
-        }
-        //按钮：重新加载
-        val buttonReload = findViewById<Button>(R.id.buttonReload)
-        buttonReload.setOnClickListener {
-            val playerError = findViewById<LinearLayout>(R.id.playerError)
-            playerError.visibility = View.GONE
-            player.release()
-            lifecycleScope.launch(Dispatchers.Main ){
-                delay(500)
-                player = ExoPlayer.Builder(applicationContext)
-                    .setSeekParameters(SeekParameters.CLOSEST_SYNC)
-                    .setWakeMode(WAKE_MODE_NETWORK)
-                    .setTrackSelector(trackSelector)
-                    .build()
-                    .apply {
-                        setMediaItem(MediaItem.fromUri(videoUri))
-                        prepare()
-                        playWhenReady = false
-                    }
-                player.play()
-                playerView.player = player
-            }
-        }
+
+
+
 
         //绑定Adapter
         lifecycleScope.launch(Dispatchers.IO) {

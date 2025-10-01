@@ -37,6 +37,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Button
 import android.widget.FrameLayout
@@ -676,35 +677,37 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //长进度条分图机制
         if (PREFS_S_UseLongScroller) {
             SCROLLERINFO_EachPicWidth = (47 * displayMetrics.density).toInt()
-
             if (videoDuration > 1_0000_000L) {
                 SCROLLERINFO_EachPicDuration = (videoDuration / 500.0).toInt()
                 SCROLLERINFO_PicNumber = 500
-            } else if (videoDuration > 7500_000L) {
+            }
+            else if (videoDuration > 7500_000L) {
                 SCROLLERINFO_EachPicDuration = (videoDuration / 400.0).toInt()
                 SCROLLERINFO_PicNumber = 400
-            } else if (videoDuration > 5000_000L) {
+            }
+            else if (videoDuration > 5000_000L) {
                 SCROLLERINFO_EachPicDuration = (videoDuration / 300.0).toInt()
                 SCROLLERINFO_PicNumber = 300
-            } else if (videoDuration > 500_000L) {
+            }
+            else if (videoDuration > 500_000L) {
                 SCROLLERINFO_EachPicDuration = (videoDuration / 200.0).toInt()
                 SCROLLERINFO_PicNumber = 200
-            } else {
+            }
+            else {
                 SCROLLERINFO_EachPicDuration = 1000
                 SCROLLERINFO_PicNumber = min((max((videoDuration / 1000), 1)), 500)
             }
-        } else {
+        }
+        else {
             syncScrollRunnableGap = ((videoDuration / 1000) * (1000.0 / 3600)).toLong()
-            if (videoDuration / 1000 > SCROLLERINFO_PicNumber) {
-                SCROLLERINFO_EachPicWidth = (47 * displayMetrics.density).toInt()
-                SCROLLERINFO_EachPicDuration =
-                    (videoDuration.div(100) * 100) / SCROLLERINFO_MaxPicNumber
+            if (videoDuration / 1000 > SCROLLERINFO_MaxPicNumber) {
+                SCROLLERINFO_EachPicWidth = (40 * displayMetrics.density).toInt()
+                SCROLLERINFO_EachPicDuration = (videoDuration.div(100) * 100) / SCROLLERINFO_MaxPicNumber
                 SCROLLERINFO_PicNumber = SCROLLERINFO_MaxPicNumber
             } else {
-                SCROLLERINFO_EachPicWidth = (47 * displayMetrics.density).toInt()
+                SCROLLERINFO_EachPicWidth = (40 * displayMetrics.density).toInt()
                 SCROLLERINFO_PicNumber = (videoDuration / 1000) + 1
-                SCROLLERINFO_EachPicDuration =
-                    (videoDuration.div(100) * 100) / SCROLLERINFO_PicNumber
+                SCROLLERINFO_EachPicDuration = (videoDuration.div(100) * 100) / SCROLLERINFO_PicNumber
             }
         }
         retriever.release()
@@ -1009,11 +1012,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
         val buttonLink = findViewById<FrameLayout>(R.id.buttonActualLink)
         val buttonLinkMaterial = findViewById<MaterialButton>(R.id.buttonMaterialLink)
         if (PREFS_RC_LinkScrollEnabled) {
-            buttonLinkMaterial.backgroundTintList =
-                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
+            buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
         } else {
-            buttonLinkMaterial.backgroundTintList =
-                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
+            buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
         }
         buttonLink.setOnClickListener {
             if (!prefs.getBoolean("PREFS_LinkScrolling", false)) {
@@ -1107,23 +1108,26 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     scrollDistance += distanceY.toInt()
                     val windowInfo = window.attributes
                     //亮度修改操作
+                    var newBrightness: Float
                     if (scrollDistance > 50) {
-                        val newBrightness = (vm.BrightnessValue + 0.1f).toBigDecimal().setScale(1, RoundingMode.HALF_UP).toFloat()
+
+                        newBrightness = (vm.BrightnessValue + 0.01f).toBigDecimal().setScale(2, RoundingMode.HALF_UP).toFloat()
+
                         if (newBrightness <= 1.0 && newBrightness >= 0.0) {
                             windowInfo.screenBrightness = newBrightness
                             window.attributes = windowInfo
                             vm.BrightnessValue = newBrightness
-                            notice("亮度 +1 (${newBrightness}/1)", 1000)
+                            notice("亮度 +1 (${(newBrightness*100).toInt()}/100)", 1000)
                         }else{
                             notice("亮度已到上限", 1000)
                         }
                     }else if (scrollDistance < -50){
-                        val newBrightness = (vm.BrightnessValue - 0.1f).toBigDecimal().setScale(1, RoundingMode.HALF_UP).toFloat()
+                        newBrightness = (vm.BrightnessValue - 0.01f).toBigDecimal().setScale(2, RoundingMode.HALF_UP).toFloat()
                         if (newBrightness <= 1.0 && newBrightness >= 0.0) {
                             windowInfo.screenBrightness = newBrightness
                             window.attributes = windowInfo
                             vm.BrightnessValue = newBrightness
-                            notice("亮度 -1 (${newBrightness}/1)", 1000)
+                            notice("亮度 -1 (${(newBrightness*100).toInt()}/100)", 1000)
                         }else{
                             notice("亮度已到下限", 1000)
                         }
@@ -1681,15 +1685,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             //横屏时隐藏状态栏
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets -> WindowInsetsCompat.CONSUMED }
-                    window.decorView.post {
-                        window.insetsController?.let { controller ->
-                            controller.hide(WindowInsets.Type.statusBars())
-                            controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                        }
-
-                    }
-                } else {
+                ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets -> WindowInsetsCompat.CONSUMED }
+                window.decorView.post { window.insetsController?.let { controller ->
+                        controller.hide(WindowInsets.Type.statusBars())
+                        controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    } }
+                //三星专用:显示到挖空区域
+                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            } else {
                     @Suppress("DEPRECATION")
                     window.decorView.systemUiVisibility = (
                             View.SYSTEM_UI_FLAG_FULLSCREEN
@@ -1958,7 +1961,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     }
     //后台播放只播音轨
     private fun playerSelectSoundTrack(){
-        if (PREFS_S_CloseVideoTrack){
+        if (PREFS_S_CloseVideoTrack && !vm.inFloatingWindow){
             vm.selectAudioOnly()
         }
     }
