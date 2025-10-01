@@ -61,24 +61,27 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
     var playEnd: Boolean = false
 
 
+    //浮窗相关
     var inFloatingWindow = false
 
 
+    //屏幕旋转相关
+    var currentOrientation: Int = 0
+    var LastLandscapeOrientation: Int = 0
     fun setManual() {
         Manual = true
         Auto = false
     }
-
     fun setAuto() {
         Auto = true
         Manual = false
     }
 
-    var currentOrientation: Int = 0
-    var LastLandscapeOrientation: Int = 0
 
-    var NoVolumeNoticed: Boolean = false
-
+    //音量相关
+    var NOTICED_VolumeIsZero: Boolean = false
+    var NOTICED_HeadSetInsert: Boolean = false
+    //亮度相关
     var BrightnessChanged: Boolean = false
     var BrightnessValue: Float = 0f
 
@@ -86,9 +89,5 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
 
 
 
-
-
-
-    //ViewModel级别通用
     override fun onCleared() {}
 }

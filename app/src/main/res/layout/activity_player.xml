@@ -65,8 +65,8 @@
         android:layout_height="45dp"
         android:layout_gravity="bottom"
         android:elevation="21dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="120dp">
+        app:layout_constraintBottom_toTopOf="@+id/MediumActionsContainer"
+        android:layout_marginBottom="2dp">
         <!-- 按钮：后台播放 -->
         <FrameLayout
             android:id="@+id/buttonBackgroundPlay"
@@ -112,6 +112,7 @@
             android:id="@+id/buttonBackToStart"
             android:layout_width="45dp"
             android:layout_height="45dp"
+            android:layout_marginEnd="1dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/buttonBackgroundPlay"
             app:layout_constraintTop_toTopOf="parent">
@@ -151,6 +152,7 @@
             android:id="@+id/buttonLoopPlay"
             android:layout_width="45dp"
             android:layout_height="45dp"
+            android:layout_marginEnd="1dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/buttonBackToStart"
             app:layout_constraintTop_toTopOf="parent">
@@ -190,6 +192,7 @@
             android:id="@+id/buttonSwitchLandscape"
             android:layout_width="45dp"
             android:layout_height="45dp"
+            android:layout_marginEnd="1dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/buttonLoopPlay"
             app:layout_constraintTop_toTopOf="parent">
@@ -232,8 +235,8 @@
         android:layout_height="45dp"
         android:layout_gravity="bottom"
         android:elevation="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="70dp">
+        app:layout_constraintBottom_toTopOf="@+id/bottomCardContainer"
+        android:layout_marginBottom="5dp">
         <!-- 按钮：快速定位 -->
         <FrameLayout
             android:id="@+id/buttonLinkContainer"

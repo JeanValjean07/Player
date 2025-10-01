@@ -2205,8 +2205,8 @@ class PlayerActivityV2: AppCompatActivity(){
         currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         volumnChangeGap = 750/maxVolume
-        if (originalVolume == 0 && !vm.NoVolumeNoticed) {
-            vm.NoVolumeNoticed = true
+        if (originalVolume == 0 && !vm.NOTICED_VolumeIsZero) {
+            vm.NOTICED_VolumeIsZero = true
             notice("当前音量为0", 3000)
         }
         //检查是否有耳机连接

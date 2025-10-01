@@ -261,6 +261,7 @@ class FloatingWindowService : Service() {
         playerView.player = player
 
 
+
     }
 
     override fun onDestroy() {
