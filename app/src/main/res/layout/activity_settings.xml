@@ -622,7 +622,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="MVVM架构播放器正在测试中，如果出现未知问题，请关闭此开关以使用基础架构播放器。但基于基础架构的播放器以后将较少引入新特性，主要开发重心仍在MVVM架构播放器。"
+                        android:text="仅供调式，若不了解请勿变更此开关。老式播放器和新页面共享界面布局，但部分按钮无对应程序逻辑。"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
