@@ -10,7 +10,6 @@ import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
 import android.content.res.Configuration
-import android.content.res.Resources
 import android.hardware.display.DisplayManager
 import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
@@ -26,7 +25,6 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
-import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -357,9 +355,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
             statusBarHeight = prefs.getInt("INFO_STATUSBAR_HEIGHT", 0)
         }
         prefsEditor.apply()
-
-
-
 
 
 
