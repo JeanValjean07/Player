@@ -94,7 +94,7 @@ import kotlin.math.min
 @Suppress("unused")
 class PlayerActivityMVVM: AppCompatActivity(){
     //变量初始化
-    //<editor-fold desc="DI fields">
+    //<editor-fold desc="变量初始化">
     //视频信息预读
     private var videoDuration = 0
     private var absolutePath = ""
@@ -1181,7 +1181,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             if (event.action == MotionEvent.ACTION_DOWN) {
                 val y = event.y
                 //屏蔽顶部和底部区域,防止和系统下拉上滑动作冲突
-                if (y < screenHeight * 0.2 || y > screenHeight * 0.8){
+                if (y < screenHeight * 0.2 || y > screenHeight * 0.95){
                     return@setOnTouchListener false
                 }
                 val x = event.x
@@ -1620,7 +1620,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
 
     //Functions
-
+    //空闲倒计时
     private fun startIdleTimer() {
         IDLE_Timer?.cancel()
         IDLE_Timer = object : CountDownTimer(IDLE_MS, 1000L) {
@@ -1633,12 +1633,28 @@ class PlayerActivityMVVM: AppCompatActivity(){
             setControllerInvisible()
         }
     }
+    //控件隐藏和显示
     private fun setControllerInvisible() {
+        //状态标记变更
         widgetsShowing = false
+        //被控控件控制
+        stopScrollerSync()
+        stopVideoTimeSync()
+        //显示控制
+        //<editor-fold desc="显示控制(隐藏)">
         val bottomCard = findViewById<View>(R.id.bottomCardContainer)
         val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
         val playerView = findViewById<View>(R.id.playerView)
         val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            val mediumActions2 = findViewById<ConstraintLayout>(R.id.MediumActionsContainer2)
+            mediumActions2.animate().alpha(0f).setDuration(100)
+                .setInterpolator(AccelerateDecelerateInterpolator())
+                .withEndAction { bottomCard.visibility = View.GONE }
+                .start()
+        }
+
         bottomCard.animate().alpha(0f).setDuration(100)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction { bottomCard.visibility = View.GONE }
@@ -1655,11 +1671,61 @@ class PlayerActivityMVVM: AppCompatActivity(){
         if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO && !PREFS_S_UseBlackScreenInLandscape){
             playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
         }
-        stopScrollerSync()
-        stopVideoTimeSync()
+        //</editor-fold>
     }
+    private fun setControllerVisible() {
+        //状态标记变更
+        widgetsShowing = true
+        //被控控件控制
+        if(PREFS_RC_LinkScrollEnabled) { startScrollerSync() }
+        startVideoTimeSync()
+        //显示控制
+        //<editor-fold desc="显示控制(显示)">
+        val bottomCard = findViewById<View>(R.id.bottomCardContainer)
+        val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
+        val playerView = findViewById<View>(R.id.playerView)
+        val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
 
-    //启动小窗
+        bottomCard.visibility = View.VISIBLE
+        mediumActions.visibility = View.VISIBLE
+        buttonExit.visibility = View.VISIBLE
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            val mediumActions2 = findViewById<ConstraintLayout>(R.id.MediumActionsContainer2)
+            mediumActions2.visibility = View.VISIBLE
+            mediumActions2.animate().alpha(1f).setDuration(300)
+                .setInterpolator(AccelerateDecelerateInterpolator())
+                .withEndAction { null }
+                .start()
+        }
+
+        bottomCard.animate().alpha(1f).setDuration(300)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction { null }
+            .start()
+        mediumActions.animate().alpha(1f).setDuration(300)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction { null }
+            .start()
+        buttonExit.animate().alpha(1f).setDuration(300)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction { null }
+            .start()
+        //背景颜色变更
+        if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO && !PREFS_S_UseBlackScreenInLandscape){
+            playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+        }
+        //</editor-fold>
+
+    }
+    private fun changeBackgroundColor(){
+        if (widgetsShowing){
+            setControllerInvisible()
+        }else{
+            setControllerVisible()
+        }
+    }
+    //启动和关闭小窗
     private fun startFloatingWindow() {
         fun checkOverlayPermission(): Boolean {
             return Settings.canDrawOverlays(this)
@@ -1695,11 +1761,10 @@ class PlayerActivityMVVM: AppCompatActivity(){
              */
         }
     }
-    //关闭小窗
     private fun stopFloatingWindow() {
         stopService(Intent(applicationContext, FloatingWindowService::class.java))
     }
-    //设置状态栏样式:横屏时隐藏状态栏,
+    //设置状态栏样式:横屏时隐藏状态栏
     private fun AppBarSetting() {
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             //横屏时隐藏状态栏
@@ -1892,100 +1957,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
             finish()
         }
     }
-    //点击时隐藏控件并设为黑色背景
-    private fun changeBackgroundColor(){
-        val bottomCard = findViewById<View>(R.id.bottomCardContainer)
-        val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
-        val playerView = findViewById<View>(R.id.playerView)
-        val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-            if (widgetsShowing){
-                widgetsShowing = false
-                //隐藏控件(无动画)
-                /*
-                bottomCard.visibility = View.GONE
-                mediumActions.visibility = View.GONE
-                buttonExit.visibility = View.GONE
-                */
-
-                bottomCard.animate().alpha(0f).setDuration(100)
-                    .setInterpolator(AccelerateDecelerateInterpolator())
-                    .withEndAction { bottomCard.visibility = View.GONE }
-                    .start()
-                mediumActions.animate().alpha(0f).setDuration(100)
-                    .setInterpolator(AccelerateDecelerateInterpolator())
-                    .withEndAction { mediumActions.visibility = View.GONE }
-                    .start()
-                buttonExit.animate().alpha(0f).setDuration(100)
-                    .setInterpolator(AccelerateDecelerateInterpolator())
-                    .withEndAction { buttonExit.visibility = View.GONE }
-                    .start()
-
-
-                if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO && !PREFS_S_UseBlackScreenInLandscape){
-                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
-                }
-                stopScrollerSync()
-                stopVideoTimeSync()
-            }else{
-                if(PREFS_RC_LinkScrollEnabled) { startScrollerSync() }
-                startVideoTimeSync()
-                widgetsShowing = true
-                //显示控件
-                bottomCard.visibility = View.VISIBLE
-                mediumActions.visibility = View.VISIBLE
-                buttonExit.visibility = View.VISIBLE
-
-                bottomCard.animate().alpha(1f).setDuration(100)
-                    .setInterpolator(AccelerateDecelerateInterpolator())
-                    .withEndAction { null }
-                    .start()
-                mediumActions.animate().alpha(1f).setDuration(100)
-                    .setInterpolator(AccelerateDecelerateInterpolator())
-                    .withEndAction { null }
-                    .start()
-                buttonExit.animate().alpha(1f).setDuration(100)
-                    .setInterpolator(AccelerateDecelerateInterpolator())
-                    .withEndAction { null }
-                    .start()
-
-                if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO && !PREFS_S_UseBlackScreenInLandscape){
-                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
-                }
-            }
-        }else{
-            val mediumActions2 = findViewById<ConstraintLayout>(R.id.MediumActionsContainer2)
-            val toolbar = findViewById<Toolbar>(R.id.toolbar)
-            val root = findViewById<ConstraintLayout>(R.id.root)
-            if (widgetsShowing){
-                widgetsShowing = false
-                bottomCard.visibility = View.GONE
-                mediumActions.visibility = View.GONE
-                buttonExit.visibility = View.GONE
-                mediumActions2.visibility = View.GONE
-                if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
-                    toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
-                    root.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
-                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
-                }
-                stopScrollerSync()
-                stopVideoTimeSync()
-            }else{
-                if(PREFS_RC_LinkScrollEnabled) { startScrollerSync() }
-                startVideoTimeSync()
-                widgetsShowing = true
-                bottomCard.visibility = View.VISIBLE
-                mediumActions.visibility = View.VISIBLE
-                buttonExit.visibility = View.VISIBLE
-                mediumActions2.visibility = View.VISIBLE
-                if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
-                    toolbar.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadBackground))
-                    root.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
-                    playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
-                }
-            }
-        }
-    }
     //设置:横屏时一律使用黑色背景
     private fun setBlackScreenInLandscape(){
         val playerView = findViewById<View>(R.id.playerView)
@@ -2039,11 +2010,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         override fun onStop(owner: LifecycleOwner) {
             if (observerOnStoped){ return }
             observerOnStoped = true
-
-            val prefs2 = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
-            PREFS_S_CloseVideoTrack = prefs2.getBoolean("PREFS_CloseVideoTrack", false)
-            PREFS_RC_LinkScrollEnabled = prefs2.getBoolean("PREFS_LinkScrollEnabled", false)
-            PREFS_RC_BackgroundPlay = prefs2.getBoolean("PREFS_BackgroundPlay", false)
 
             OrientationEventListener2?.disable()
             LIFE_ONSTOP_WasPlaying = vm.player.isPlaying
@@ -2240,14 +2206,21 @@ class PlayerActivityMVVM: AppCompatActivity(){
         notice("视频结束",1000)
         vm.player.pause()
         vm.playEnd = true
+        //停止被控控件
         stopVideoTimeSync()
         stopScrollerSync()
+        //播放结束时让控件显示
+        setControllerVisible()
+        val thumbScroller = findViewById<RecyclerView>(R.id.rvThumbnails)
+        thumbScroller.scrollToPosition(1)
+        IDLE_Timer?.cancel()
+        //自动退出和循环播放控制
         if (PREFS_S_ExitWhenEnd){
             finish()
         }
         if (PREFS_RC_LoopPlay){
             vm.player.seekTo(0)
-        }
+        } //使用播放器提供的循环播放功能时,不会触发playerEnd()
     }
 
     private fun pauseVideo(){
