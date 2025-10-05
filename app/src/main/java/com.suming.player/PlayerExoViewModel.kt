@@ -87,7 +87,11 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
 
 
 
+    var onOrientationChanging: Boolean = false
 
 
-    override fun onCleared() {}
+
+
+
+    override fun onCleared() {  }
 }

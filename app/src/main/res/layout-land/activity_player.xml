@@ -6,7 +6,78 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/Background">
-    <!-- 根2 - 视频播放区 -->
+    <!-- 顶部横盘按钮区 -->
+    <LinearLayout
+        android:id="@+id/TopBarArea"
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:elevation="5dp">
+        <!-- 悬浮返回键 -->
+        <ImageButton
+            android:id="@+id/TopBarArea_ButtonExit"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="单击退出,长按开启小窗"
+            android:padding="6dp"
+            android:elevation="10dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_toolbar_exit_color"
+            android:layout_marginStart="8dp"
+            android:layout_weight="0"/>
+        <!-- 占位 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+        <!-- 更多选项 -->
+        <ImageButton
+            android:id="@+id/TopBarArea_ButtonMoreOptions"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="更多选项"
+            android:padding="6dp"
+            android:elevation="10dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_toolbar_more_options_color"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="0"/>
+    </LinearLayout>
+
+    <!-- 小型提示卡片 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/NoticeCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|top"
+        android:layout_marginTop="8dp"
+        app:cardElevation="10dp"
+        app:cardCornerRadius="50dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:elevation="5dp">
+        <TextView
+            android:id="@+id/NoticeCardText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="加载中"
+            android:textColor="@color/HeadText"
+            android:textSize="12sp"
+            />
+    </androidx.cardview.widget.CardView>
+
+    <!-- 视频播放区 -->
     <FrameLayout
         android:id="@+id/playerContainer"
         android:layout_width="match_parent"
@@ -16,7 +87,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
-        <!-- playerView -->
+        <!-- PlayerView -->
         <androidx.media3.ui.PlayerView
             android:id="@+id/playerView"
             android:layout_width="match_parent"
@@ -33,458 +104,435 @@
                 android:layout_height="match_parent"
                 android:background="@color/Background"
                 android:visibility="visible" />
-            <!-- 错误信息 -->
+        </androidx.media3.ui.PlayerView>
+
+    </FrameLayout>
+
+
+    <!-- 缩略图上方按钮区 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/ButtonArea1"
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:layout_gravity="bottom"
+        app:layout_constraintBottom_toTopOf="@+id/ScrollerRootArea"
+        android:layout_marginBottom="5dp">
+        <!-- 按钮：快速定位 -->
+        <FrameLayout
+            android:id="@+id/buttonLinkContainer"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginEnd="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMaterialAlwaysSeek"
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+
+            <FrameLayout
+                android:id="@+id/buttonActualAlwaysSeek"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:elevation="11dp"
+                android:padding="5dp">
+
+                <ImageView
+                    android:id="@+id/buttonImgAlwaysSeek"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="1dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_always_seek"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+        </FrameLayout>
+        <!-- 按钮：暂停/开始 -->
+        <FrameLayout
+            android:id="@+id/buttonPauseContainer"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginEnd="1dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonLinkContainer"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:backgroundTint="@color/ButtonBg"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+
+            <FrameLayout
+                android:id="@+id/buttonPause"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:clickable="true"
+                android:elevation="11dp"
+                android:focusable="true"
+                android:padding="5dp">
+
+                <ImageView
+                    android:id="@+id/PauseImage"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="-1dp"
+                    android:layout_marginTop="-1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_player_pause"
+                    android:visibility="gone"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
+                    android:id="@+id/ContinueImage"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_player_continue"
+                    android:visibility="visible"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+        </FrameLayout>
+        <!-- 按钮：link -->
+        <FrameLayout
+            android:id="@+id/buttonQuickPosContainer"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginEnd="1dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonPauseContainer"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMaterialLink"
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+
+            <FrameLayout
+                android:id="@+id/buttonActualLink"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:clickable="true"
+                android:elevation="11dp"
+                android:focusable="true"
+                android:padding="5dp">
+
+                <ImageView
+                    android:id="@+id/buttonImgLink"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="1dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_scroller_link"
+                    android:visibility="visible"
+                    tools:ignore="ContentDescription" />
+
+
+            </FrameLayout>
+        </FrameLayout>
+        <!-- 按钮：单击定位 -->
+        <FrameLayout
+            android:id="@+id/buttonTapContainer"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginEnd="1dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonQuickPosContainer"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMaterialTap"
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+
+            <FrameLayout
+                android:id="@+id/buttonActualTap"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:clickable="true"
+                android:elevation="11dp"
+                android:focusable="true"
+                android:padding="5dp">
+
+                <ImageView
+                    android:id="@+id/buttonImgTap"
+                    android:layout_width="19dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="1dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_tap"
+                    android:visibility="visible"
+                    tools:ignore="ContentDescription" />
+
+
+            </FrameLayout>
+        </FrameLayout>
+        <!-- 按钮：后台播放 -->
+        <FrameLayout
+            android:id="@+id/buttonBackgroundPlay"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonTapContainer"
+            app:layout_constraintTop_toTopOf="parent">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMaterialBackgroundPlay"
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+            <FrameLayout
+                android:id="@+id/buttonActualBackgroundPlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:elevation="11dp"
+                android:padding="5dp">
+                <ImageView
+                    android:id="@+id/buttonImgBackgroundPlay"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="0dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_background_play"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+        </FrameLayout>
+        <!-- 按钮：回到起始点 -->
+        <FrameLayout
+            android:id="@+id/buttonBackToStart"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonBackgroundPlay"
+            app:layout_constraintTop_toTopOf="parent">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMaterialBackToStart"
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:backgroundTint="@color/ButtonBg"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+            <FrameLayout
+                android:id="@+id/buttonActualBackToStart"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:elevation="11dp"
+                android:padding="5dp">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_backtostart"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+        </FrameLayout>
+        <!-- 按钮：循环播放 -->
+        <FrameLayout
+            android:id="@+id/buttonLoopPlay"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonBackToStart"
+            app:layout_constraintTop_toTopOf="parent">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMaterialLoopPlay"
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:backgroundTint="@color/ButtonBg"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+            <FrameLayout
+                android:id="@+id/buttonActualLoopPlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:elevation="11dp"
+                android:padding="5dp">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="1dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_loop_play"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+        </FrameLayout>
+        <!-- 按钮：切换横屏 -->
+        <FrameLayout
+            android:id="@+id/buttonSwitchLandscape"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/buttonLoopPlay"
+            app:layout_constraintTop_toTopOf="parent">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonMaterialSwitchLandscape"
+                android:layout_width="37dp"
+                android:layout_height="37dp"
+                android:layout_margin="5dp"
+                android:backgroundTint="@color/ButtonBg"
+                android:elevation="10dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                app:cornerRadius="100dp" />
+            <FrameLayout
+                android:id="@+id/buttonActualSwitchLandscape"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:elevation="11dp"
+                android:padding="5dp">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="1dp"
+                    android:layout_marginTop="1dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_controller_landscape"
+                    tools:ignore="ContentDescription" />
+            </FrameLayout>
+        </FrameLayout>
+        <!-- 当前时间 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/VideoCurrentTimeCard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            app:cardCornerRadius="5dp"
+            app:cardElevation="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
             <LinearLayout
-                android:id="@+id/playerError"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                android:layout_gravity="center">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="似乎发生了错误"
-                    android:layout_marginBottom="30dp"
-                    android:textColor="@color/HeadText"
-                    android:textSize="15sp" />
-                <Button
-                    android:id="@+id/buttonReload"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="退出"
-                    android:backgroundTint="@color/ButtonBg"
-                    android:layout_gravity="center"
-                    android:textColor="@color/HeadText"
-                    android:textSize="15sp" />
-                <TextView
-                    android:id="@+id/buttonCloseErrorNotice"
-                    android:clickable="true"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="关闭提示"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="10dp"
-                    android:textColor="@color/HeadText"
-                    android:textSize="13sp" />
-            </LinearLayout>
-            <!-- 退出按钮 -->
-            <ImageButton
-                android:id="@+id/buttonExit"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="6dp"
-                android:elevation="20dp"
-                android:layout_marginStart="20dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_go_back_2"
-                />
-            <!-- 缩略图上方按钮区 -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/MediumActionsContainer"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:layout_gravity="bottom"
-                android:layout_marginBottom="50dp">
-                <!-- 按钮：快速定位 -->
-                <FrameLayout
-                    android:id="@+id/buttonLinkContainer"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    android:layout_marginEnd="10dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonMaterialAlwaysSeek"
-                        android:layout_width="37dp"
-                        android:layout_height="37dp"
-                        android:layout_margin="5dp"
-                        android:elevation="10dp"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-
-                    <FrameLayout
-                        android:id="@+id/buttonActualAlwaysSeek"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="5dp"
-                        android:elevation="11dp"
-                        android:padding="5dp">
-
-                        <ImageView
-                            android:id="@+id/buttonImgAlwaysSeek"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="1dp"
-                            android:layout_marginTop="1dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_controller_always_seek"
-                            tools:ignore="ContentDescription" />
-                    </FrameLayout>
-                </FrameLayout>
-                <!-- 按钮：暂停/开始 -->
-                <FrameLayout
-                    android:id="@+id/buttonPauseContainer"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    android:layout_marginEnd="1dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/buttonLinkContainer"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:layout_width="37dp"
-                        android:layout_height="37dp"
-                        android:layout_margin="5dp"
-                        android:backgroundTint="@color/ButtonBg"
-                        android:elevation="10dp"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-
-                    <FrameLayout
-                        android:id="@+id/buttonPause"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="5dp"
-                        android:clickable="true"
-                        android:elevation="11dp"
-                        android:focusable="true"
-                        android:padding="5dp">
-
-                        <ImageView
-                            android:id="@+id/PauseImage"
-                            android:layout_width="19dp"
-                            android:layout_height="19dp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="-1dp"
-                            android:layout_marginTop="-1dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_controller_player_pause"
-                            android:visibility="gone"
-                            tools:ignore="ContentDescription" />
-
-                        <ImageView
-                            android:id="@+id/ContinueImage"
-                            android:layout_width="15dp"
-                            android:layout_height="15dp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="3dp"
-                            android:layout_marginTop="1dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_controller_player_continue"
-                            android:visibility="visible"
-                            tools:ignore="ContentDescription" />
-                    </FrameLayout>
-                </FrameLayout>
-                <!-- 按钮：link -->
-                <FrameLayout
-                    android:id="@+id/buttonQuickPosContainer"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    android:layout_marginEnd="1dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/buttonPauseContainer"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonMaterialLink"
-                        android:layout_width="37dp"
-                        android:layout_height="37dp"
-                        android:layout_margin="5dp"
-                        android:elevation="10dp"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-
-                    <FrameLayout
-                        android:id="@+id/buttonActualLink"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="5dp"
-                        android:clickable="true"
-                        android:elevation="11dp"
-                        android:focusable="true"
-                        android:padding="5dp">
-
-                        <ImageView
-                            android:id="@+id/buttonImgLink"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="1dp"
-                            android:layout_marginTop="1dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_controller_scroller_link"
-                            android:visibility="visible"
-                            tools:ignore="ContentDescription" />
-
-
-                    </FrameLayout>
-                </FrameLayout>
-                <!-- 按钮：单击定位 -->
-                <FrameLayout
-                    android:id="@+id/buttonTapContainer"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    android:layout_marginEnd="1dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/buttonQuickPosContainer"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonMaterialTap"
-                        android:layout_width="37dp"
-                        android:layout_height="37dp"
-                        android:layout_margin="5dp"
-                        android:elevation="10dp"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-
-                    <FrameLayout
-                        android:id="@+id/buttonActualTap"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="5dp"
-                        android:clickable="true"
-                        android:elevation="11dp"
-                        android:focusable="true"
-                        android:padding="5dp">
-
-                        <ImageView
-                            android:id="@+id/buttonImgTap"
-                            android:layout_width="19dp"
-                            android:layout_height="19dp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="1dp"
-                            android:layout_marginTop="1dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_controller_tap"
-                            android:visibility="visible"
-                            tools:ignore="ContentDescription" />
-
-
-                    </FrameLayout>
-                </FrameLayout>
-                <!-- 按钮：后台播放 -->
-                <FrameLayout
-                    android:id="@+id/buttonBackgroundPlay"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/buttonTapContainer"
-                    app:layout_constraintTop_toTopOf="parent">
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonMaterialBackgroundPlay"
-                        android:layout_width="37dp"
-                        android:layout_height="37dp"
-                        android:layout_margin="5dp"
-                        android:elevation="10dp"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-                    <FrameLayout
-                        android:id="@+id/buttonActualBackgroundPlay"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="5dp"
-                        android:elevation="11dp"
-                        android:padding="5dp">
-                        <ImageView
-                            android:id="@+id/buttonImgBackgroundPlay"
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="0dp"
-                            android:layout_marginTop="1dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_controller_background_play"
-                            tools:ignore="ContentDescription" />
-                    </FrameLayout>
-                </FrameLayout>
-                <!-- 按钮：回到起始点 -->
-                <FrameLayout
-                    android:id="@+id/buttonBackToStart"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/buttonBackgroundPlay"
-                    app:layout_constraintTop_toTopOf="parent">
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonMaterialBackToStart"
-                        android:layout_width="37dp"
-                        android:layout_height="37dp"
-                        android:layout_margin="5dp"
-                        android:backgroundTint="@color/ButtonBg"
-                        android:elevation="10dp"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-                    <FrameLayout
-                        android:id="@+id/buttonActualBackToStart"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="5dp"
-                        android:elevation="11dp"
-                        android:padding="5dp">
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="2dp"
-                            android:layout_marginTop="1dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_controller_backtostart"
-                            tools:ignore="ContentDescription" />
-                    </FrameLayout>
-                </FrameLayout>
-                <!-- 按钮：循环播放 -->
-                <FrameLayout
-                    android:id="@+id/buttonLoopPlay"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/buttonBackToStart"
-                    app:layout_constraintTop_toTopOf="parent">
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonMaterialLoopPlay"
-                        android:layout_width="37dp"
-                        android:layout_height="37dp"
-                        android:layout_margin="5dp"
-                        android:backgroundTint="@color/ButtonBg"
-                        android:elevation="10dp"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-                    <FrameLayout
-                        android:id="@+id/buttonActualLoopPlay"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="5dp"
-                        android:elevation="11dp"
-                        android:padding="5dp">
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="1dp"
-                            android:layout_marginTop="1dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_controller_loop_play"
-                            tools:ignore="ContentDescription" />
-                    </FrameLayout>
-                </FrameLayout>
-                <!-- 按钮：切换横屏 -->
-                <FrameLayout
-                    android:id="@+id/buttonSwitchLandscape"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/buttonLoopPlay"
-                    app:layout_constraintTop_toTopOf="parent">
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonMaterialSwitchLandscape"
-                        android:layout_width="37dp"
-                        android:layout_height="37dp"
-                        android:layout_margin="5dp"
-                        android:backgroundTint="@color/ButtonBg"
-                        android:elevation="10dp"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-                    <FrameLayout
-                        android:id="@+id/buttonActualSwitchLandscape"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="5dp"
-                        android:elevation="11dp"
-                        android:padding="5dp">
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="1dp"
-                            android:layout_marginTop="1dp"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_controller_landscape"
-                            tools:ignore="ContentDescription" />
-                    </FrameLayout>
-                </FrameLayout>
-                <!-- 当前时间 -->
+                android:elevation="5dp"
+                android:background="@drawable/bg_card_stroke"
+                android:orientation="horizontal">
                 <TextView
                     android:id="@+id/tvCurrentTime"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginBottom="1dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="0"
                     android:text="00:00.000"
                     android:textColor="@color/HeadText"
                     android:textSize="15sp"
-                    android:textStyle="bold"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-        </androidx.media3.ui.PlayerView>
-        <!-- Notice卡片 -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/noticeCard"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|top"
-            android:layout_marginTop="8dp"
-            app:cardElevation="10dp"
-            app:cardCornerRadius="50dp"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/notice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:text="加载中"
-                android:textColor="@color/HeadText"
-                android:textSize="12sp"
-                />
-
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="/"
+                    android:textColor="@color/HeadText"
+                    android:textSize="15sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/tvWholeTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginBottom="1dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="0"
+                    android:text="00:00.000"
+                    android:textColor="@color/HeadText"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </androidx.cardview.widget.CardView>
-    </FrameLayout>
-    <!-- 根3 - 功能区 -->
+
+
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- 缩略图区 -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/bottomCardContainer"
+        android:id="@+id/ScrollerRootArea"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:backgroundTint="@color/CardView1"
@@ -497,19 +545,21 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
+        <!-- 缩略图式进度滚动条(父级) -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:minHeight="45dp">
-            <!-- 缩略图式进度滚动条 -->
+            <!-- 缩略图式进度滚动条(父级) -->
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/scrollerContainer"
+                android:id="@+id/ScrollerArea"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent">
+                <!-- 缩略图式进度滚动条(本人) -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/innerContainer"
                     android:layout_width="0dp"
@@ -537,7 +587,7 @@
                         app:layout_constraintTop_toTopOf="@+id/innerContainer"
                         app:layout_constraintVertical_bias="0.0" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
-
+                <!-- 底部抬起高度区域 -->
                 <View
                     android:layout_width="2dp"
                     android:layout_height="match_parent"

@@ -8,6 +8,10 @@ android {
     namespace = "com.suming.player"
     compileSdk = 36
 
+    buildFeatures {
+        viewBinding = true
+    }
+
 
     defaultConfig {
         applicationId = "com.suming.player"

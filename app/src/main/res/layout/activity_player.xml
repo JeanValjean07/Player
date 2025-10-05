@@ -8,64 +8,119 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/Background">
-    <!-- 根1 - Appbar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:visibility="gone"
+    <!-- 顶部横排按钮区 -->
+    <LinearLayout
+        android:id="@+id/TopBarArea"
         android:layout_width="match_parent"
         android:layout_height="45dp"
-        android:elevation="2dp"
-        android:background="@color/HeadBackground"
-        app:contentInsetStart="0dp"
-        app:contentInsetStartWithNavigation="0dp"
+        android:orientation="horizontal"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-        <LinearLayout
+        app:layout_constraintEnd_toEndOf="parent"
+        android:elevation="5dp">
+        <!-- 悬浮返回键 -->
+        <ImageButton
+            android:id="@+id/TopBarArea_ButtonExit"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="单击退出,长按开启小窗"
+            android:padding="6dp"
+            android:elevation="10dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_toolbar_exit_color"
+            android:layout_marginStart="8dp"
+            android:layout_weight="0"/>
+        <!-- 占位 -->
+        <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginStart="10dp"
-            android:orientation="horizontal">
-            <ImageButton
-                android:id="@+id/buttonExit2"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="center"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="退出"
-                android:padding="6dp"
-                android:layout_marginStart="0dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_go_back_2"
-                android:layout_weight="0" />
-            <View
-                android:layout_width="wrap_content"
-                android:layout_height="1dp"
-                android:layout_weight="0"/>
-        </LinearLayout>
-    </androidx.appcompat.widget.Toolbar>
-    <!-- 悬浮返回键 -->
-    <ImageButton
-        android:id="@+id/buttonExit"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="返回上一级页面"
-        android:padding="6dp"
-        android:elevation="10dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_go_back_2"
+            android:layout_weight="1"/>
+        <!-- 更多选项 -->
+        <ImageButton
+            android:id="@+id/TopBarArea_ButtonMoreOptions"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="更多选项"
+            android:padding="6dp"
+            android:elevation="10dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_toolbar_more_options_color"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="0"/>
+    </LinearLayout>
+
+    <!-- 小型提示卡片 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/NoticeCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|top"
+        app:cardElevation="10dp"
+        app:cardCornerRadius="50dp"
+        android:visibility="gone"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="8dp" />
-    <!-- 缩略图上方按钮区2 -->
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="90dp"
+        android:elevation="10dp">
+        <TextView
+            android:id="@+id/NoticeCardText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="加载中"
+            android:textColor="@color/HeadText"
+            android:textSize="12sp"
+            />
+    </androidx.cardview.widget.CardView>
+
+
+    <!-- 视频播放区 -->
+    <FrameLayout
+        android:id="@+id/playerContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/Background"
+        android:elevation="1dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+        <!-- playerView -->
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/playerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:resize_mode="fit"
+            android:elevation="2dp"
+            app:use_controller="false"
+            android:clickable="true"
+            android:background="@color/Background"
+            app:surface_type="surface_view">
+            <!-- 播放器遮罩 -->
+            <View
+                android:id="@+id/cover"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/Background"
+                android:visibility="visible" />
+        </androidx.media3.ui.PlayerView>
+    </FrameLayout>
+
+
+    <!-- 缩略图上方按钮区(从下往上第2排) -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/MediumActionsContainer2"
+        android:id="@+id/ButtonArea2"
         android:layout_width="match_parent"
         android:layout_height="45dp"
         android:layout_gravity="bottom"
         android:elevation="21dp"
-        app:layout_constraintBottom_toTopOf="@+id/MediumActionsContainer"
+        app:layout_constraintBottom_toTopOf="@+id/ButtonArea1"
         android:layout_marginBottom="2dp">
         <!-- 按钮：后台播放 -->
         <FrameLayout
@@ -228,14 +283,14 @@
             </FrameLayout>
         </FrameLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
-    <!-- 缩略图上方按钮区1 -->
+    <!-- 缩略图上方按钮区(从下往上第1排)(含当前时间) -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/MediumActionsContainer"
+        android:id="@+id/ButtonArea1"
         android:layout_width="match_parent"
         android:layout_height="45dp"
         android:layout_gravity="bottom"
         android:elevation="20dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottomCardContainer"
+        app:layout_constraintBottom_toTopOf="@+id/ScrollerRootArea"
         android:layout_marginBottom="5dp">
         <!-- 按钮：快速定位 -->
         <FrameLayout
@@ -434,112 +489,64 @@
             </FrameLayout>
         </FrameLayout>
         <!-- 当前时间 -->
-        <TextView
-            android:id="@+id/tvCurrentTime"
+        <androidx.cardview.widget.CardView
+            android:id="@+id/VideoCurrentTimeCard"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
-            android:layout_weight="0"
-            android:text="00:00.000"
-            android:textColor="@color/HeadText"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:cardCornerRadius="5dp"
+            app:cardElevation="0dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-    <!-- 播放器错误提示 -->
-    <LinearLayout
-        android:id="@+id/playerError"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone"
-        android:elevation="21dp"
-        android:layout_gravity="center"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
-        <TextView
-            android:id="@+id/playerText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Player_Text"
-            android:layout_gravity="center"
-            android:layout_marginBottom="30dp"
-            android:textColor="@color/HeadText"
-            android:textSize="20sp" />
-        <Button
-            android:id="@+id/playerButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Player_Button"
-            android:backgroundTint="@color/ButtonBg"
-            android:layout_gravity="center"
-            android:textColor="@color/HeadText"
-            android:textSize="15sp" />
-    </LinearLayout>
-    <!-- 根2 - 视频播放区 -->
-    <FrameLayout
-        android:id="@+id/playerContainer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@color/Background"
-        android:elevation="1dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
-        <!-- playerView -->
-        <androidx.media3.ui.PlayerView
-            android:id="@+id/playerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:resize_mode="fit"
-            android:elevation="2dp"
-            app:use_controller="false"
-            android:clickable="true"
-            android:background="@color/Background"
-            app:surface_type="surface_view">
-            <!-- 播放器遮罩 -->
-            <View
-                android:id="@+id/cover"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/Background"
-                android:visibility="visible" />
-        </androidx.media3.ui.PlayerView>
-        <!-- Notice卡片 -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/noticeCard"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|top"
-            android:layout_marginTop="90dp"
-            android:elevation="10dp"
-            app:cardElevation="10dp"
-            app:cardCornerRadius="50dp"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/notice"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:text="加载中"
-                android:textColor="@color/HeadText"
-                android:textSize="12sp"
-                />
-
+                android:elevation="5dp"
+                android:background="@drawable/bg_card_stroke"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/tvCurrentTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginBottom="1dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="0"
+                    android:text="00:00.000"
+                    android:textColor="@color/HeadText"
+                    android:textSize="15sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="/"
+                    android:textColor="@color/HeadText"
+                    android:textSize="15sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/tvWholeTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginBottom="1dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="0"
+                    android:text="00:00.000"
+                    android:textColor="@color/HeadText"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </androidx.cardview.widget.CardView>
-    </FrameLayout>
-    <!-- 根3 - 功能区 -->
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- 缩略图区 -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/bottomCardContainer"
+        android:id="@+id/ScrollerRootArea"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:backgroundTint="@color/CardViewBottom"
@@ -557,7 +564,7 @@
             android:minHeight="65dp">
             <!-- 缩略图式进度滚动条 -->
             <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/scrollerContainer"
+                android:id="@+id/ScrollerArea"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
                 android:layout_marginBottom="20dp"

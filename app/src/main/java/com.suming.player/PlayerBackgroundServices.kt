@@ -7,20 +7,13 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.MediaController
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import androidx.media3.session.SessionToken
-import com.google.common.util.concurrent.MoreExecutors
-import kotlinx.coroutines.delay
-import kotlinx.serialization.descriptors.listSerialDescriptor
 
 @UnstableApi
 class PlayerBackgroundServices(): MediaSessionService() {
@@ -37,14 +30,7 @@ class PlayerBackgroundServices(): MediaSessionService() {
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        //读取设置
-        val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
-        if (!prefs.contains("PREFS_UseMVVMPlayer")){
-            prefs.edit { putBoolean("PREFS_UseMVVMPlayer", true) }
-            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
-        } else{
-            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
-        }
+
 
         //由于执行顺序问题,播控中心逻辑应在onCreate中,自定义通知逻辑应在onStartCommand中
         if (Build.BRAND == "Xiaomi" || Build.BRAND == "samsung"){
@@ -132,17 +118,10 @@ class PlayerBackgroundServices(): MediaSessionService() {
     //自定义通知:点击拉起
     @OptIn(UnstableApi::class)
     private fun createPendingIntent(): PendingIntent {
-        if (PREFS_S_UseMVVMPlayer){
-            val intent = Intent(this, PlayerActivityMVVM::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            }.putExtra("SOURCE","FROM_PENDING" )
-            return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        }else{
-            val intent = Intent(this, PlayerActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            }.putExtra("SOURCE","FROM_PENDING" )
-            return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        }
+        val intent = Intent(this, PlayerActivityMVVM::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }.putExtra("SOURCE","FROM_PENDING" )
+        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
     //自定义通知:播放指令
     @OptIn(UnstableApi::class)

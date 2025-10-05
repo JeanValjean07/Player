@@ -1,5 +1,6 @@
 package com.suming.player
 
+import android.adservices.topics.Topic
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -49,7 +50,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.NotificationManagerCompat
@@ -59,9 +59,6 @@ import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -78,7 +75,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.MoreExecutors
-import com.suming.player.PlayerActivity.DeviceCompatUtil.isCompatibleDevice
+import com.suming.player.PlayerActivityMVVM.DeviceCompatUtil.isCompatibleDevice
 import data.model.VideoItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -91,7 +88,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @UnstableApi
-@Suppress("unused")
+//@Suppress("unused")
 class PlayerActivityMVVM: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -101,9 +98,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private lateinit var videoUri: Uri
     //播放状态
     private var wasPlaying = true
-    private var ONSTOP_WasPlaying = false
-    private var LIFE_ONSTOP_WasPlaying = false
-    private var INTERUPT_WasPlaying = false
     //音量配置参数
     private var maxVolume = 0
     private var currentVolume = 0
@@ -175,9 +169,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var DESTROY_FromSavedInstance = false
     //自动旋转状态
     private var rotationSetting = 0
-    //生命周期进入锁
-    private var observerOnStoped = false
-    private var observerOnStarted = false
     //PlayerReady
     private var STATE_PlayerReady = false
     //音量变化步长
@@ -376,60 +367,72 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 if (rotationSetting == 1){
                     //当前为竖屏
                     if (vm.currentOrientation == 0){
-                        //标准横屏ORIENTATION_LANDSCAPE
+                        //从 竖屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
                         if (vm.OrientationValue == 1) {
                             if (vm.Manual && vm.LastLandscapeOrientation == 1) return
                             vm.currentOrientation = 1
                             vm.LastLandscapeOrientation = 1
                             vm.setAuto()
+                            vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                         }
-                        //反向横屏ORIENTATION_REVERSE_LANDSCAPE
+                        //从 竖屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
                         else if (vm.OrientationValue == 2) {
                             if (vm.Manual && vm.LastLandscapeOrientation == 2) return
                             vm.currentOrientation = 2
                             vm.LastLandscapeOrientation = 2
                             vm.setAuto()
+                            vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
                         }
                     }
                     //当前为正向横屏
                     else if (vm.currentOrientation == 1){
-                        //反向横屏ORIENTATION_REVERSE_LANDSCAPE
+                        //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
                         if (vm.OrientationValue == 2) {
-                            val buttonLinkContainer = findViewById<FrameLayout>(R.id.buttonLinkContainer)
-                            buttonLinkContainer.layoutParams = (buttonLinkContainer.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
+                            //按钮避让:横排按钮区&更多选项按钮
+                            val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
+                            (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (150)
+                            val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
+                            (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (150)
+                            //更改状态并发起旋转
                             vm.currentOrientation = 2
                             vm.LastLandscapeOrientation = 2
                             vm.setAuto()
+                            vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
                         }
-                        //竖屏ORIENTATION_PORTRAIT
+                        //从 正向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
                         else if (vm.OrientationValue == 0) {
                             if (vm.Manual) return
                             vm.currentOrientation = 0
                             vm.setAuto()
+                            vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
                         }
                     }
                     //当前为反向横屏
                     else if (vm.currentOrientation == 2){
-                        //标准横屏ORIENTATION_LANDSCAPE
+                        //从 反向横屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
                         if (vm.OrientationValue == 1) {
-                            val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
-                            val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
-                            buttonExit.layoutParams = (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).apply { marginStart = 160 }
-                            CONTROLLER_CurrentTime.layoutParams = (CONTROLLER_CurrentTime.layoutParams as ViewGroup.MarginLayoutParams).apply { marginStart = 200 }
+                            //按钮避让时间框&退出按钮
+                            val TopBarArea_ButtonExit = findViewById<View>(R.id.TopBarArea_ButtonExit)
+                            val ControllerArea_VideoCurrentTimeCard = findViewById<CardView>(R.id.VideoCurrentTimeCard)
+                            (TopBarArea_ButtonExit.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                            (ControllerArea_VideoCurrentTimeCard.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                            //更改状态并发起旋转
                             vm.currentOrientation = 1
                             vm.LastLandscapeOrientation = 1
                             vm.setAuto()
+                            vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                         }
-                        //竖屏ORIENTATION_PORTRAIT
+                        //从 反向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
                         else if (vm.OrientationValue == 0) {
                             if (vm.Manual) return
                             vm.currentOrientation = 0
                             vm.setAuto()
+                            vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
                         }
                     }
@@ -437,18 +440,26 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 //自动旋转关闭
                 else if (rotationSetting == 0){
                     if (!vm.FromManualPortrait){
-                        //转动到正向横屏ORIENTATION_REVERSE_LANDSCAPE
+                        //从 反向横屏 转动到 正向横屏 ORIENTATION_REVERSE_LANDSCAPE
                         if (vm.OrientationValue == 1) {
-                            val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
-                            val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
-                            buttonExit.layoutParams = (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).apply { marginStart = 160 }
-                            CONTROLLER_CurrentTime.layoutParams = (CONTROLLER_CurrentTime.layoutParams as ViewGroup.MarginLayoutParams).apply { marginStart = 200 }
+                            //按钮避让时间框&退出按钮
+                            val TopBarArea_ButtonExit = findViewById<View>(R.id.TopBarArea_ButtonExit)
+                            (TopBarArea_ButtonExit.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                            val ControllerArea_VideoCurrentTimeCard = findViewById<CardView>(R.id.VideoCurrentTimeCard)
+                            (ControllerArea_VideoCurrentTimeCard.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                            //更改状态并发起旋转
+                            vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                         }
-                        //转动到反向横屏ORIENTATION_REVERSE_LANDSCAPE
+                        //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
                         else if (vm.OrientationValue == 2) {
-                            val buttonLinkContainer = findViewById<FrameLayout>(R.id.buttonLinkContainer)
-                            buttonLinkContainer.layoutParams = (buttonLinkContainer.layoutParams as ViewGroup.MarginLayoutParams).apply { marginEnd = 200 }
+                            //按钮避让:横排按钮区&更多选项按钮
+                            val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
+                            (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (150)
+                            val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
+                            (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (150)
+                            //更改状态并发起旋转
+                            vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
                         }
                     }
@@ -474,10 +485,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
 
 
-        //生命周期监听:判断应用是否退出
-        ProcessLifecycleOwner.get().lifecycle.addObserver(AppForegroundObserver)
-
-
 
 
         //音频设备监听
@@ -501,7 +508,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     if (PREFS_RC_LinkScrollEnabled) startScrollerSync()
                 }
                 if (data == "PLAYER_PAUSE") {
-                    INTERUPT_WasPlaying = vm.player.isPlaying
+                    wasPlaying = vm.player.isPlaying
                     vm.player.pause()
                 }
             }
@@ -641,6 +648,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
         CONTROLLER_ThumbScroller.itemAnimator = null
         CONTROLLER_ThumbScroller.layoutParams.width = 0
         videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
+
+        val tvWholeTime = findViewById<TextView>(R.id.tvWholeTime)
+        tvWholeTime.text = formatTime1(videoDuration.toLong())
 
         retriever.release()
         //视频时长超过120秒时进度条仅显秒
@@ -876,12 +886,12 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 super.onLongPress(e)
             }
         })
-        val buttonExit = findViewById<View>(R.id.buttonExit)
+        val buttonExit = findViewById<ImageButton>(R.id.TopBarArea_ButtonExit)
         buttonExit.setOnTouchListener { _, event ->
             gestureDetectorExitButton.onTouchEvent(event)
         }
         //提示卡点击时关闭
-        val noticeCard = findViewById<CardView>(R.id.noticeCard)
+        val noticeCard = findViewById<CardView>(R.id.NoticeCard)
         noticeCard.setOnClickListener {
             noticeCard.visibility = View.GONE
         }
@@ -1199,13 +1209,12 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 if (longPress) {
                     longPress = false
                     vm.player.setPlaybackSpeed(1.0f)
-                    val noticeCard = findViewById<CardView>(R.id.noticeCard)
-                    noticeCard.visibility = View.GONE
+                    val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
+                    NoticeCard.visibility = View.GONE
                 }
             }
             gestureDetectorPlayArea.onTouchEvent(event)
         }
-
 
 
         //根据机型选择启用播控中心或自定义通知
@@ -1472,21 +1481,21 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun showNoticeJob(text: String, duration: Long) {
         showNoticeJob?.cancel()
         showNoticeJob = lifecycleScope.launch {
-            val notice = findViewById<TextView>(R.id.notice)
-            val noticeCard = findViewById<CardView>(R.id.noticeCard)
-            noticeCard.visibility = View.VISIBLE
-            notice.text = text
+            val NoticeCardText = findViewById<TextView>(R.id.NoticeCardText)
+            val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
+            NoticeCard.visibility = View.VISIBLE
+            NoticeCardText.text = text
             delay(duration)
-            noticeCard.visibility = View.GONE
+            NoticeCard.visibility = View.GONE
         }
     }
     private fun showNoticeJobLong(text: String) {
         showNoticeJobLong?.cancel()
         showNoticeJobLong = lifecycleScope.launch {
-            val notice = findViewById<TextView>(R.id.notice)
-            val noticeCard = findViewById<CardView>(R.id.noticeCard)
-            noticeCard.visibility = View.VISIBLE
-            notice.text = text
+            val NoticeCardText = findViewById<TextView>(R.id.NoticeCardText)
+            val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
+            NoticeCard.visibility = View.VISIBLE
+            NoticeCardText.text = text
         }
     }
     private fun notice(text: String, duration: Long) {
@@ -1531,21 +1540,35 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+
+
+
         //数值计算
-        DESTROY_FromSavedInstance = true  //给onDestroy判断是否真的退出
+        DESTROY_FromSavedInstance = true
         //保存原始Intent
         outState.putParcelable("CONTENT_INTENT", intent)
     }
 
     override fun onPause() {
         super.onPause()
-        ONSTOP_WasPlaying = vm.player.isPlaying
+
         stopVideoSeek()
         stopVideoSmartScroll()
     }
 
     override fun onStop() {
         super.onStop()
+
+        if (!vm.onOrientationChanging){
+            OrientationEventListener2?.disable()
+            wasPlaying = vm.player.isPlaying
+            if (PREFS_RC_BackgroundPlay) {
+                playerSelectSoundTrack()
+            }else{
+                vm.player.pause()
+            }
+        }
+
         stopVideoTimeSync()
         stopScrollerSync()
         stopVideoSeek()
@@ -1554,20 +1577,29 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
     override fun onResume() {
         super.onResume()
-        observerOnStoped = false
-        observerOnStarted = false
+
+        if (!vm.onOrientationChanging){
+            OrientationEventListener2?.enable()
+            if (PREFS_RC_BackgroundPlay) {
+                playerRecoveryAllTrack()
+            }
+            if (PREFS_RC_LinkScrollEnabled && vm.player.isPlaying) startScrollerSync()
+
+        }
+
+        vm.onOrientationChanging = false
+
+
+
         requestAudioFocus()
-        if (PREFS_RC_LinkScrollEnabled && LIFE_ONSTOP_WasPlaying) {
-            LIFE_ONSTOP_WasPlaying = false
-            startScrollerSync()
-            startVideoTimeSync()
-            vm.player.play()
-        }else if (ONSTOP_WasPlaying) {
-            ONSTOP_WasPlaying = false
+        if (PREFS_RC_LinkScrollEnabled && wasPlaying) {
+            wasPlaying = false
             startScrollerSync()
             startVideoTimeSync()
             vm.player.play()
         }
+
+
         if (vm.inFloatingWindow){
             vm.inFloatingWindow = false
             stopFloatingWindow()
@@ -1575,6 +1607,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             playerView.player = vm.player
         }
     }
+
 
     override fun onDestroy() {
         super.onDestroy()
@@ -1642,34 +1675,34 @@ class PlayerActivityMVVM: AppCompatActivity(){
         stopVideoTimeSync()
         //显示控制
         //<editor-fold desc="显示控制(隐藏)">
-        val bottomCard = findViewById<View>(R.id.bottomCardContainer)
-        val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
+        val TopBarArea = findViewById<LinearLayout>(R.id.TopBarArea)
+        val ScrollerRootArea = findViewById<View>(R.id.ScrollerRootArea)
+        val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
         val playerView = findViewById<View>(R.id.playerView)
-        val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
 
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            val mediumActions2 = findViewById<ConstraintLayout>(R.id.MediumActionsContainer2)
-            mediumActions2.animate().alpha(0f).setDuration(100)
+            val ButtonArea2 = findViewById<ConstraintLayout>(R.id.ButtonArea2)
+            ButtonArea2.animate().alpha(0f).setDuration(100)
                 .setInterpolator(AccelerateDecelerateInterpolator())
-                .withEndAction { bottomCard.visibility = View.GONE }
+                .withEndAction { ButtonArea2.visibility = View.GONE }
                 .start()
         }
 
-        bottomCard.animate().alpha(0f).setDuration(100)
+        ScrollerRootArea.animate().alpha(0f).setDuration(100)
             .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction { bottomCard.visibility = View.GONE }
+            .withEndAction { ScrollerRootArea.visibility = View.GONE }
             .start()
-        mediumActions.animate().alpha(0f).setDuration(100)
+        ButtonArea1.animate().alpha(0f).setDuration(100)
             .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction { mediumActions.visibility = View.GONE }
+            .withEndAction { ButtonArea1.visibility = View.GONE }
             .start()
-        buttonExit.animate().alpha(0f).setDuration(100)
+        TopBarArea.animate().alpha(0f).setDuration(100)
             .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction { buttonExit.visibility = View.GONE }
+            .withEndAction { TopBarArea.visibility = View.GONE }
             .start()
 
-        if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO && !PREFS_S_UseBlackScreenInLandscape){
-            playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.HeadText))
+        if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
+            playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
         }
         //</editor-fold>
     }
@@ -1681,38 +1714,44 @@ class PlayerActivityMVVM: AppCompatActivity(){
         startVideoTimeSync()
         //显示控制
         //<editor-fold desc="显示控制(显示)">
-        val bottomCard = findViewById<View>(R.id.bottomCardContainer)
-        val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
+        val TopBarArea = findViewById<LinearLayout>(R.id.TopBarArea)
+        val ScrollerRootArea = findViewById<View>(R.id.ScrollerRootArea)
+        val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
         val playerView = findViewById<View>(R.id.playerView)
-        val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
 
-        bottomCard.visibility = View.VISIBLE
-        mediumActions.visibility = View.VISIBLE
-        buttonExit.visibility = View.VISIBLE
+        ScrollerRootArea.visibility = View.VISIBLE
+        ButtonArea1.visibility = View.VISIBLE
+        TopBarArea.visibility = View.VISIBLE
 
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            val mediumActions2 = findViewById<ConstraintLayout>(R.id.MediumActionsContainer2)
-            mediumActions2.visibility = View.VISIBLE
-            mediumActions2.animate().alpha(1f).setDuration(300)
+            val ButtonArea2 = findViewById<ConstraintLayout>(R.id.ButtonArea2)
+            ButtonArea2.visibility = View.VISIBLE
+            ButtonArea2.animate().alpha(1f).setDuration(300)
                 .setInterpolator(AccelerateDecelerateInterpolator())
                 .withEndAction { null }
                 .start()
         }
 
-        bottomCard.animate().alpha(1f).setDuration(300)
+        ScrollerRootArea.animate().alpha(1f).setDuration(300)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction { null }
             .start()
-        mediumActions.animate().alpha(1f).setDuration(300)
+        ButtonArea1.animate().alpha(1f).setDuration(300)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction { null }
             .start()
-        buttonExit.animate().alpha(1f).setDuration(300)
+        TopBarArea.animate().alpha(1f).setDuration(300)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction { null }
             .start()
         //背景颜色变更
-        if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO && !PREFS_S_UseBlackScreenInLandscape){
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            if (PREFS_S_UseBlackScreenInLandscape){
+                playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
+            }else{
+                playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+            }
+        }else{
             playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
         }
         //</editor-fold>
@@ -1786,21 +1825,22 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 }
 
             //控件位置动态调整
-            //val display = windowManager.defaultDisplay
             val displayManager = this.getSystemService(DISPLAY_SERVICE) as DisplayManager
             val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
             val rotation = display?.rotation
             //控件位置动态调整:正向横屏
             if (rotation == Surface.ROTATION_90) {
-                val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
-                val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
-                (buttonExit.layoutParams as FrameLayout.LayoutParams).marginStart = (150)
-                (CONTROLLER_CurrentTime.layoutParams as ConstraintLayout.LayoutParams).marginStart = (200)
+                val TopBarArea_ButtonExit = findViewById<View>(R.id.TopBarArea_ButtonExit)
+                (TopBarArea_ButtonExit.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                val ControllerArea_VideoCurrentTimeCard = findViewById<CardView>(R.id.VideoCurrentTimeCard)
+                (ControllerArea_VideoCurrentTimeCard.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
             }
             //控件位置动态调整:反向横屏
             else if (rotation == Surface.ROTATION_270) {
-                val mediumActions = findViewById<ConstraintLayout>(R.id.MediumActionsContainer)
-                (mediumActions.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (200)
+                val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
+                (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (150)
+                val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
+                (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (150)
             }
 
             //始终使用深色横屏页
@@ -1809,11 +1849,11 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            val buttonExit = findViewById<View>(R.id.buttonExit)
-            (buttonExit.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight + 8)
+            val TopBarArea = findViewById<View>(R.id.TopBarArea)
+            (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (statusBarHeight + 8)
         }
     }
-    //方向回调:逻辑改进onCreate,但此处需要保留
+    //方向监控器
     @SuppressLint("SourceLockedOrientationActivity")
     private fun orientationChange(orientation: Int){
         //手动更改控件位置功能已无奈取消
@@ -1896,26 +1936,34 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 }
             }
         }
-    }
+    }  //未使用：需增加vm.onOrientationChanging
     //切换横屏
     @SuppressLint("SourceLockedOrientationActivity")
     private fun ButtonChangeOrientation(){
         //自动旋转关闭
         if (rotationSetting == 0){
+            //当前为竖屏
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
                 if (vm.OrientationValue == 1){
                     vm.FromManualPortrait = false
+                    vm.onOrientationChanging = true
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-                }else if (vm.OrientationValue == 2){
+                }
+                else if (vm.OrientationValue == 2){
                     vm.FromManualPortrait = false
+                    vm.onOrientationChanging = true
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-                }else{
+                }
+                else{
                     vm.FromManualPortrait = false
+                    vm.onOrientationChanging = true
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                 }
             }
+            //当前为横屏
             else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.FromManualPortrait = true
+                vm.onOrientationChanging = true
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
             }
         }
@@ -1926,21 +1974,28 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     vm.currentOrientation = 1
                     vm.LastLandscapeOrientation = 1
                     vm.setManual()
+                    vm.onOrientationChanging = true
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-                }else if (vm.OrientationValue == 2){
+                }
+                else if (vm.OrientationValue == 2){
                     vm.currentOrientation = 2
                     vm.LastLandscapeOrientation = 2
                     vm.setManual()
+                    vm.onOrientationChanging = true
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-                }else{
+                }
+                else{
                     vm.currentOrientation = 1
                     vm.LastLandscapeOrientation = 1
                     vm.setManual()
+                    vm.onOrientationChanging = true
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
                 }
-            }else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            }
+            else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.currentOrientation = 0
                 vm.setManual()
+                vm.onOrientationChanging = true
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
             }
         }
@@ -1949,6 +2004,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun ExitByOrientation(){
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
             vm.setManual()
+            vm.onOrientationChanging = true
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
@@ -1960,15 +2016,15 @@ class PlayerActivityMVVM: AppCompatActivity(){
     //设置:横屏时一律使用黑色背景
     private fun setBlackScreenInLandscape(){
         val playerView = findViewById<View>(R.id.playerView)
-        val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-        val scrollerContainer = findViewById<View>(R.id.scrollerContainer)
-        val buttonExit = findViewById<ImageButton>(R.id.buttonExit)
-        val seekStop = findViewById<TextView>(R.id.tvCurrentTime)
         playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-        scrollerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.BlackGrey))
+
+        val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
+        val ScrollerRootArea = findViewById<View>(R.id.ScrollerRootArea)
+
         recyclerView.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
-        buttonExit.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.White))
-        seekStop.setTextColor(ContextCompat.getColor(this, R.color.White))
+        ScrollerRootArea.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
+
+
     }
     //开启后台播放服务
     private fun startBackgroundServices(){
@@ -1992,32 +2048,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun playerRecoveryAllTrack(){
         if (PREFS_S_CloseVideoTrack){
             vm.recoveryAllTrack()
-        }
-    }
-    //生命周期监听:判断应用是否退出
-    private val AppForegroundObserver = object : DefaultLifecycleObserver {
-        override fun onStart(owner: LifecycleOwner) {
-            if (observerOnStarted){ return }
-            observerOnStarted = true
-
-            OrientationEventListener2?.enable()
-            if (PREFS_RC_BackgroundPlay) {
-                playerRecoveryAllTrack()
-            }
-            if (PREFS_RC_LinkScrollEnabled && vm.player.isPlaying) startScrollerSync()
-
-        }
-        override fun onStop(owner: LifecycleOwner) {
-            if (observerOnStoped){ return }
-            observerOnStoped = true
-
-            OrientationEventListener2?.disable()
-            LIFE_ONSTOP_WasPlaying = vm.player.isPlaying
-            if (PREFS_RC_BackgroundPlay) {
-                playerSelectSoundTrack()
-            }else{
-                vm.player.pause()
-            }
         }
     }
     //耳机插入和拔出监听
@@ -2058,8 +2088,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
     private fun requestAudioFocus(){
         val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-            .setAudioAttributes(
-                AudioAttributes.Builder()
+            .setAudioAttributes(AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
@@ -2067,19 +2096,19 @@ class PlayerActivityMVVM: AppCompatActivity(){
             .setOnAudioFocusChangeListener { focusChange ->
                 when (focusChange) {
                     AudioManager.AUDIOFOCUS_LOSS -> {
-                        INTERUPT_WasPlaying = vm.player.isPlaying
+                        wasPlaying = vm.player.isPlaying
                     }
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                        INTERUPT_WasPlaying = vm.player.isPlaying
+                        wasPlaying = vm.player.isPlaying
                         vm.player.pause()
                     }
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                        INTERUPT_WasPlaying = vm.player.isPlaying
+                        wasPlaying = vm.player.isPlaying
                         vm.player.pause()
                     }
                     AudioManager.AUDIOFOCUS_GAIN -> {
-                        if (INTERUPT_WasPlaying){
-                            INTERUPT_WasPlaying = false
+                        if (wasPlaying){
+                            wasPlaying = false
                             vm.player.play()
                         }
                     }
@@ -2151,8 +2180,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             READY_FromFirstEntry = false
             requestAudioFocus()
             playVideo()
-            val playerError = findViewById<LinearLayout>(R.id.playerError)
-            playerError.visibility = View.GONE
+
             val cover = findViewById<View>(R.id.cover)
             cover.animate().alpha(0f).setDuration(100)
                 .setInterpolator(AccelerateDecelerateInterpolator())

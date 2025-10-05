@@ -34,7 +34,7 @@
                 android:padding="6dp"
                 android:layout_marginTop="12dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_go_back_2"
+                android:src="@drawable/ic_topbar_exit"
                 tools:ignore="MissingConstraints"/>
             <TextView
                 android:id="@+id/toolbar_title"

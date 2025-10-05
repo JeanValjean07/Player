@@ -2,15 +2,10 @@ package com.suming.player
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.Process
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -41,7 +36,6 @@ import data.source.LocalVideoSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.system.exitProcess
 
 class MainActivity: AppCompatActivity() {
 
@@ -272,15 +266,8 @@ class MainActivity: AppCompatActivity() {
 
     @OptIn(UnstableApi::class)
     private fun startPlayer(item: VideoItem){
-        if (PREFS_S_UseMVVMPlayer){
-            val intent = Intent(this, PlayerActivityMVVM::class.java).apply { putExtra("video", item) }
-            detailLauncher.launch(intent)
-        }
-        else{
-            val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
-            detailLauncher.launch(intent)
-        }
-
+        val intent = Intent(this, PlayerActivityMVVM::class.java).apply { putExtra("video", item) }
+        detailLauncher.launch(intent)
     }
 
     //显示通知
