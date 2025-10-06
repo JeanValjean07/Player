@@ -1127,6 +1127,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     scrollDistance += distanceY.toInt()
                     val windowInfo = window.attributes
                     //亮度修改操作
+                    vm.BrightnessChanged = true
                     var newBrightness: Float
                     if (scrollDistance > 50) {
 
@@ -2029,6 +2030,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
             if (vm.controllerHided){
+                notice("再按一次退出",2000)
                 setControllerVisible()
                 vm.controllerHided = false
             }else{
@@ -2359,7 +2361,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //亮度
         val windowInfo = window.attributes
         if (!vm.BrightnessChanged) {
-            vm.BrightnessChanged = true
             var initBrightness = windowInfo.screenBrightness
             if (initBrightness < 0) {
                 initBrightness = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f

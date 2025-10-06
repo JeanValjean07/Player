@@ -15,10 +15,6 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 
 
-
-
-
-
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -32,10 +28,10 @@
         tools:replace="android:allowBackup"
         android:theme="@style/Theme.SpeedSpy"
         tools:ignore="ForegroundServicePermission">
-
+        <!-- 主页:视频列表 -->
         <activity
             android:name=".MainActivity"
-            android:theme="@style/MainTheme"
+            android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
@@ -45,10 +41,10 @@
             </intent-filter>
         </activity>
 
-
+        <!-- 播放页 -->
         <activity android:name=".PlayerActivityMVVM"
-            android:theme="@style/MainTheme"
-            android:label="播放器(MVVM)"
+            android:theme="@style/THEME_Player"
+            android:label="播放器"
             android:screenOrientation="portrait"
             android:launchMode="singleTask"
             android:exported="true"
@@ -68,18 +64,29 @@
                 android:value="true"/>
         </activity>
 
+        <!-- 设置 -->
         <activity android:name=".SettingsActivity"
-            android:theme="@style/MainTheme"
+            android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
 
+        <!-- 指南和帮助 -->
         <activity android:name=".GuidanceActivity"
-            android:theme="@style/MainTheme"
+            android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
 
+        <!-- 开源许可证页 -->
+        <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
+            android:theme="@style/THEME_OSS" />
+        <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
+            android:theme="@style/THEME_OSS" />
+
+        <!-- 后台播放服务 -->
         <service
             android:name=".PlayerBackgroundServices"
             android:exported="false"
@@ -88,13 +95,14 @@
                 <action android:name="androidx.media3.session.MediaSessionService"/>
             </intent-filter>
         </service>
-
+        <!-- 悬浮窗服务 -->
         <service
             android:name=".FloatingWindowService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
 
+        <!-- 播放控制广播接收器 -->
         <receiver android:name=".PlayerActionReceiver"
             android:exported="false">
             <intent-filter>
