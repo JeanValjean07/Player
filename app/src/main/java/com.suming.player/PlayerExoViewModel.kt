@@ -90,6 +90,12 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
     var onOrientationChanging: Boolean = false
 
 
+    var wasPlayingViewModel = true
+
+
+    var controllerHided = false
+
+
 
 
 

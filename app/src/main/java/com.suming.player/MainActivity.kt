@@ -48,8 +48,6 @@ class MainActivity: AppCompatActivity() {
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
 
-    //PIP状态
-    private var NowPIP = false
 
     var statusBarHeight = 0
 

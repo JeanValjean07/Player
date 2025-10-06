@@ -1,7 +1,7 @@
 package com.suming.player
 
-import android.adservices.topics.Topic
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentResolver
@@ -619,7 +619,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
 
         //控件：缩略图滚动条初始化
-        val CONTROLLER_ThumbScroller = findViewById<RecyclerView>(R.id.rvThumbnails)
+        val Controller_ThumbScroller = findViewById<RecyclerView>(R.id.rvThumbnails)
         val displayMetrics = resources.displayMetrics
         val screenWidth = displayMetrics.widthPixels
         val screenHeight = displayMetrics.heightPixels
@@ -627,7 +627,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
         val videoUri = videoItem.uri
         absolutePath = getAbsoluteFilePath(this@PlayerActivityMVVM, videoUri).toString()
-        CONTROLLER_ThumbScroller.layoutManager = LinearLayoutManager(this@PlayerActivityMVVM, LinearLayoutManager.HORIZONTAL, false)
+        Controller_ThumbScroller.layoutManager = LinearLayoutManager(this@PlayerActivityMVVM, LinearLayoutManager.HORIZONTAL, false)
         val retriever = MediaMetadataRetriever()
         //信息读取
         STRING_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
@@ -645,8 +645,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
             finish()
             return
         }
-        CONTROLLER_ThumbScroller.itemAnimator = null
-        CONTROLLER_ThumbScroller.layoutParams.width = 0
+        Controller_ThumbScroller.itemAnimator = null
+        Controller_ThumbScroller.layoutParams.width = 0
         videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
 
         val tvWholeTime = findViewById<TextView>(R.id.tvWholeTime)
@@ -696,14 +696,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }  //使用普通进度条
         //进度条端点处理
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            CONTROLLER_ThumbScroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
+            Controller_ThumbScroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             var scrollerMarginType: Int
             if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor") {
                 scrollerMarginType = 2
                 val statusBarHeight = prefs.getInt("INFO_STATUSBAR_HEIGHT", 0)
-                CONTROLLER_ThumbScroller.setPadding(
+                Controller_ThumbScroller.setPadding(
                     sidePadding + statusBarHeight / 2,
                     0,
                     sidePadding + statusBarHeight / 2 - 1,
@@ -712,18 +712,18 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
             else if (Build.BRAND == "samsung") {
                 scrollerMarginType = 1
-                CONTROLLER_ThumbScroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
+                Controller_ThumbScroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
             }
             else {
                 scrollerMarginType = 1
-                CONTROLLER_ThumbScroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
+                Controller_ThumbScroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
             }
             if (PREFS_S_UseCompatScroller) {
                 val statusBarHeight = prefs.getInt("INFO_STATUSBAR_HEIGHT", 0)
                 if (scrollerMarginType == 2) {
-                    CONTROLLER_ThumbScroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
+                    Controller_ThumbScroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
                 }else {
-                    CONTROLLER_ThumbScroller.setPadding(sidePadding + statusBarHeight / 2, 0, sidePadding + statusBarHeight / 2 - 1, 0)
+                    Controller_ThumbScroller.setPadding(sidePadding + statusBarHeight / 2, 0, sidePadding + statusBarHeight / 2 - 1, 0)
                 }
             }
         }
@@ -743,9 +743,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     }
                 }
                 //根据百分比计算具体跳转时间点
-                val totalContentWidth = CONTROLLER_ThumbScroller.computeHorizontalScrollRange()
-                val scrolled = CONTROLLER_ThumbScroller.computeHorizontalScrollOffset()
-                val leftPadding = CONTROLLER_ThumbScroller.paddingLeft
+                val totalContentWidth = Controller_ThumbScroller.computeHorizontalScrollRange()
+                val scrolled = Controller_ThumbScroller.computeHorizontalScrollOffset()
+                val leftPadding = Controller_ThumbScroller.paddingLeft
                 val xInContent = e.x + scrolled - leftPadding
                 if (totalContentWidth <= 0) return false
                 val percent = xInContent / totalContentWidth
@@ -792,7 +792,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
         })
         //RecyclerView-事件监听器 (中间层)
-        CONTROLLER_ThumbScroller.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+        Controller_ThumbScroller.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
                 scrollerTouching = true
                 if (e.action == MotionEvent.ACTION_UP) {
@@ -809,7 +809,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
         })
         //RecyclerView-事件监听器 -onScrollStateChanged -onScrolled
-        CONTROLLER_ThumbScroller.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        Controller_ThumbScroller.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
                     dragging = true
@@ -842,7 +842,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 }
                 if (PREFS_RC_LinkScrollEnabled) {
                     val percentScroll = recyclerView.computeHorizontalScrollOffset()
-                        .toFloat() / CONTROLLER_ThumbScroller.computeHorizontalScrollRange()
+                        .toFloat() / Controller_ThumbScroller.computeHorizontalScrollRange()
                     videoTimeTo = (percentScroll * vm.player.duration).toLong()
                     currentTime = videoTimeTo
                     if (videoTimeSyncGap >= 500L) {
@@ -889,6 +889,16 @@ class PlayerActivityMVVM: AppCompatActivity(){
         val buttonExit = findViewById<ImageButton>(R.id.TopBarArea_ButtonExit)
         buttonExit.setOnTouchListener { _, event ->
             gestureDetectorExitButton.onTouchEvent(event)
+        }
+        //更多选项
+        val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
+        TopBarArea_ButtonMoreOptions.setOnClickListener {
+            //更多选项弹窗
+            val moreOptionsDialog = Dialog(this)
+            moreOptionsDialog.setContentView(R.layout.activity_player_inputvalue)
+            moreOptionsDialog.show()
+
+
         }
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.NoticeCard)
@@ -939,7 +949,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityMVVM, R.color.ButtonBgClosed))
             }
             stopVideoSeek()
-            CONTROLLER_ThumbScroller.stopScroll()
+            Controller_ThumbScroller.stopScroll()
             if (PREFS_RC_LinkScrollEnabled) startScrollerSync()
             vm.player.seekTo(0)
             playVideo()
@@ -959,7 +969,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 notice("继续播放", 1000)
                 playerView.player = vm.player
                 lifecycleScope.launch {
-                    CONTROLLER_ThumbScroller.stopScroll()
+                    Controller_ThumbScroller.stopScroll()
                     delay(20)
                     if (vm.playEnd) {
                         vm.playEnd = false
@@ -1034,7 +1044,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 prefs.edit { putBoolean("PREFS_LinkScrolling", true).apply() }
                 notice("已将进度条与视频进度同步", 1000)
                 isSeekReady = true
-                CONTROLLER_ThumbScroller.stopScroll()
+                Controller_ThumbScroller.stopScroll()
                 startScrollerSync()
                 buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
                 stopVideoSeek()
@@ -1042,7 +1052,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 PREFS_RC_LinkScrollEnabled = false
                 prefs.edit { putBoolean("PREFS_LinkScrolling", false).apply() }
                 stopScrollerSync()
-                CONTROLLER_ThumbScroller.stopScroll()
+                Controller_ThumbScroller.stopScroll()
                 buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
                 notice("已关闭链接滚动条与视频进度", 2500)
             }
@@ -1257,6 +1267,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
         }
 
+
+        if (vm.controllerHided){
+            setControllerInvisible()
+        }
+
+
+
+
         //开启空闲倒计时
         startIdleTimer()
 
@@ -1270,7 +1288,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             }
 
             withContext(Dispatchers.Main) {
-                CONTROLLER_ThumbScroller.adapter = PlayerScrollerAdapter(this@PlayerActivityMVVM,
+                Controller_ThumbScroller.adapter = PlayerScrollerAdapter(this@PlayerActivityMVVM,
                     absolutePath,playerScrollerViewModel.thumbItems,SCROLLERINFO_EachPicWidth,SCROLLERINFO_PicNumber,SCROLLERINFO_EachPicDuration,PREFS_RC_GenerateThumbSYNC)
             }
 
@@ -1670,6 +1688,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun setControllerInvisible() {
         //状态标记变更
         widgetsShowing = false
+        vm.controllerHided = true
         //被控控件控制
         stopScrollerSync()
         stopVideoTimeSync()
@@ -1709,6 +1728,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun setControllerVisible() {
         //状态标记变更
         widgetsShowing = true
+        vm.controllerHided = false
         //被控控件控制
         if(PREFS_RC_LinkScrollEnabled) { startScrollerSync() }
         startVideoTimeSync()
@@ -2008,9 +2028,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            PlayerExoSingleton.stopPlayer()
-            stopFloatingWindow()
-            finish()
+            if (vm.controllerHided){
+                setControllerVisible()
+                vm.controllerHided = false
+            }else{
+                PlayerExoSingleton.stopPlayer()
+                stopFloatingWindow()
+                finish()
+            }
         }
     }
     //设置:横屏时一律使用黑色背景
