@@ -39,6 +39,10 @@ class PlayerBackgroundServices(): MediaSessionService() {
             //已确认三星,小米的播控中心不设限制,启用播控中心
             mediaSession = MediaSession.Builder(application, PlayerExoSingleton.getPlayer(application)).build()
             mediaSession?.setSessionActivity(createPendingIntent())
+            //不论需不需要播控中心都要发通知,这是安卓要求,只是有播控中心时自动隐藏通知
+            val NotificationCustomized = BuildCustomizeNotification()
+            createNotificationChannel()
+            startForeground(NOTIF_ID, NotificationCustomized)
         }
 
 

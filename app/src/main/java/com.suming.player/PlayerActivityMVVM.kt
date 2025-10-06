@@ -66,6 +66,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.session.MediaController
@@ -165,8 +166,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private var SECUREINTERVAL_SEEKONCE = false
     private var SECUREINTERVAL_ONDOWN = false
     private var SECUREINTERVAL_FINGERUP = false
-    //销毁状态判断
-    private var DESTROY_FromSavedInstance = false
+
     //自动旋转状态
     private var rotationSetting = 0
     //PlayerReady
@@ -190,6 +190,10 @@ class PlayerActivityMVVM: AppCompatActivity(){
     //方向监听器初始化
     private var OrientationEventListener: OrientationEventListener? = null
     private var OrientationEventListener2: OrientationEventListener? = null
+
+    //视频播放状态监听器
+    private var PlayerStateListener: Player.Listener? = null
+
     //ViewModel
     private val vm: PlayerExoViewModel by viewModels { PlayerExoFactory.getInstance(application) }
     //视频尺寸
@@ -201,6 +205,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
     //空闲定时器
     private var IDLE_Timer: CountDownTimer? = null
     private val IDLE_MS = 5_000L
+
+
+    private var EnterAnimationComplete = false
 
 
     //</editor-fold>
@@ -249,7 +256,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //恢复暂存数据
         if (savedInstanceState == null) {
             PlayerExoSingleton.releasePlayer()    //初次打开:关闭播放器实例
-            stopBackgroundServices()           //初次打开:关闭后台播放服务
+            stopBackgroundServices()              //初次打开:关闭后台播放服务
         }else{
             //取出Intent
             intent = savedInstanceState.getParcelable("CONTENT_INTENT")
@@ -552,7 +559,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         playerView = findViewById(R.id.playerView)
         playerView.player = vm.player
 
-        //初次打开时传递视频链接
+        //初次打开时传递视频链接（！！！）
         if (savedInstanceState == null) {
             vm.setVideoUri(videoUri)
         } else {
@@ -565,7 +572,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
 
         //播放器事件监听
-        vm.player.addListener(object : Player.Listener {
+        PlayerStateListener = object : Player.Listener {
             @SuppressLint("SwitchIntDef")
             override fun onPlaybackStateChanged(state: Int) {
                 when (state) {
@@ -593,7 +600,10 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 }
 
             }
-        })
+        }
+        vm.player.addListener(PlayerStateListener!!)
+
+
 
         //视频当前时间位置
         val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
@@ -967,7 +977,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 onDown = false
                 fling = false
                 notice("继续播放", 1000)
-                playerView.player = vm.player
                 lifecycleScope.launch {
                     Controller_ThumbScroller.stopScroll()
                     delay(20)
@@ -1269,6 +1278,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
 
 
+
         if (vm.controllerHided){
             setControllerInvisible()
         }
@@ -1543,10 +1553,21 @@ class PlayerActivityMVVM: AppCompatActivity(){
             SECUREINTERVAL_FINGERUP = false
         }
     }
+    //Job:关闭视频轨道倒计时
+    private var closeVideoTrackJob: Job? = null
+    private fun CloseVideoTrackJob() {
+        closeVideoTrackJob?.cancel()
+        closeVideoTrackJob = lifecycleScope.launch {
+            delay(30_000)
+            vm.selectAudioOnly()
+            vm.closeVideoTrackJobRunning = false
+        }
+    }
 
 
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
+        EnterAnimationComplete = true
         //启动监听屏幕旋转程序：此处监听器关闭,工作暂时转移到onCreate的OrientationEventListener2
         OrientationEventListener = object : OrientationEventListener(this) {
             override fun onOrientationChanged(orientation: Int) {
@@ -1560,34 +1581,33 @@ class PlayerActivityMVVM: AppCompatActivity(){
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
-
-
-        //数值计算
-        DESTROY_FromSavedInstance = true
         //保存原始Intent
         outState.putParcelable("CONTENT_INTENT", intent)
     }
 
     override fun onPause() {
         super.onPause()
-
+        //关闭视频控制
         stopVideoSeek()
         stopVideoSmartScroll()
     }
 
     override fun onStop() {
         super.onStop()
-
+        //退出应用而不是旋转屏幕
         if (!vm.onOrientationChanging){
+            //关闭旋转监听器
             OrientationEventListener2?.disable()
+            //记录播放状态
             wasPlaying = vm.player.isPlaying
+            //是否后台播放
             if (PREFS_RC_BackgroundPlay) {
-                playerSelectSoundTrack()
+                startBackgroundPlay()
             }else{
                 vm.player.pause()
             }
         }
-
+        //通用
         stopVideoTimeSync()
         stopScrollerSync()
         stopVideoSeek()
@@ -1596,48 +1616,54 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
     override fun onResume() {
         super.onResume()
-
-        if (!vm.onOrientationChanging){
+        //如果关闭视频轨道倒计时正在运行
+        if (vm.closeVideoTrackJobRunning){
+            vm.closeVideoTrackJobRunning = false
+            closeVideoTrackJob?.cancel()
+            //重新绑定播放器以防万一
+            playerView.player = null
+            playerView.player = vm.player
+        }
+        //onResume来自旋转屏幕
+        if (vm.onOrientationChanging){
+            vm.onOrientationChanging = false
+        }
+        //onResume来自桌面进入
+        else{
+            //开启旋转监听器
             OrientationEventListener2?.enable()
+            //后台播放操作:恢复视频轨道
             if (PREFS_RC_BackgroundPlay) {
-                playerRecoveryAllTrack()
+                stopBackgroundPlay()
             }
-            if (PREFS_RC_LinkScrollEnabled && vm.player.isPlaying) startScrollerSync()
-
-        }
-
-        vm.onOrientationChanging = false
-
-
-
-        requestAudioFocus()
-        if (PREFS_RC_LinkScrollEnabled && wasPlaying) {
-            wasPlaying = false
-            startScrollerSync()
+            //判断是否需要开启ScrollerSync
             startVideoTimeSync()
-            vm.player.play()
+            if (PREFS_RC_LinkScrollEnabled && vm.player.isPlaying) startScrollerSync()
         }
 
-
+        //onResume来自浮窗
         if (vm.inFloatingWindow){
             vm.inFloatingWindow = false
             stopFloatingWindow()
             playerView.player = null
             playerView.player = vm.player
         }
-    }
 
+        //通用
+        requestAudioFocus()
+
+    }
 
     override fun onDestroy() {
         super.onDestroy()
-        //旋转屏幕
-        if (DESTROY_FromSavedInstance){
+        //onDestroy来自旋转屏幕
+        if (vm.onOrientationChanging){
             stopVideoSeek()
             stopVideoSmartScroll()
             stopVideoTimeSync()
             stopScrollerSync()
         }
-        //真正退出
+        //onDestroy来自退出
         else{
             stopBackgroundServices()
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, originalVolume, 0)
@@ -1664,7 +1690,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             startActivity(newIntent)
         }
     }
-    //用户交互callback
+    //用户交互监听器
     override fun onUserInteraction() {
         super.onUserInteraction()
         IDLE_Timer?.cancel()
@@ -1699,14 +1725,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         val ScrollerRootArea = findViewById<View>(R.id.ScrollerRootArea)
         val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
         val playerView = findViewById<View>(R.id.playerView)
-
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            val ButtonArea2 = findViewById<ConstraintLayout>(R.id.ButtonArea2)
-            ButtonArea2.animate().alpha(0f).setDuration(100)
-                .setInterpolator(AccelerateDecelerateInterpolator())
-                .withEndAction { ButtonArea2.visibility = View.GONE }
-                .start()
-        }
 
         ScrollerRootArea.animate().alpha(0f).setDuration(100)
             .setInterpolator(AccelerateDecelerateInterpolator())
@@ -1744,14 +1762,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         ButtonArea1.visibility = View.VISIBLE
         TopBarArea.visibility = View.VISIBLE
 
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            val ButtonArea2 = findViewById<ConstraintLayout>(R.id.ButtonArea2)
-            ButtonArea2.visibility = View.VISIBLE
-            ButtonArea2.animate().alpha(1f).setDuration(300)
-                .setInterpolator(AccelerateDecelerateInterpolator())
-                .withEndAction { null }
-                .start()
-        }
+
 
         ScrollerRootArea.animate().alpha(1f).setDuration(300)
             .setInterpolator(AccelerateDecelerateInterpolator())
@@ -2033,10 +2044,19 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 notice("再按一次退出",2000)
                 setControllerVisible()
                 vm.controllerHided = false
-            }else{
-                PlayerExoSingleton.stopPlayer()
-                stopFloatingWindow()
-                finish()
+            }
+            else{
+                if (EnterAnimationComplete){
+                    PlayerExoSingleton.stopPlayer()
+                    stopFloatingWindow()
+                    finish()
+                }else{
+                    EnterAnimationComplete = true
+                    val data = Intent().apply { putExtra("key", "needClosePlayer") }
+                    setResult(RESULT_OK, data)
+                    finish()
+                    return
+                }
             }
         }
     }
@@ -2066,13 +2086,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
         stopService(Intent(this, PlayerBackgroundServices::class.java))
     }
     //后台播放只播音轨
-    private fun playerSelectSoundTrack(){
+    private fun startBackgroundPlay(){
         if (PREFS_S_CloseVideoTrack && !vm.inFloatingWindow){
-            vm.selectAudioOnly()
+            CloseVideoTrackJob()
+            vm.closeVideoTrackJobRunning = true
         }
     }
     //回到前台恢复所有轨道
-    private fun playerRecoveryAllTrack(){
+    private fun stopBackgroundPlay(){
         if (PREFS_S_CloseVideoTrack){
             vm.recoveryAllTrack()
         }
@@ -2208,6 +2229,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             requestAudioFocus()
             playVideo()
 
+
             val cover = findViewById<View>(R.id.cover)
             cover.animate().alpha(0f).setDuration(100)
                 .setInterpolator(AccelerateDecelerateInterpolator())
@@ -2273,9 +2295,13 @@ class PlayerActivityMVVM: AppCompatActivity(){
         if (PREFS_S_ExitWhenEnd){
             finish()
         }
+
+        /*
         if (PREFS_RC_LoopPlay){
             vm.player.seekTo(0)
-        } //使用播放器提供的循环播放功能时,不会触发playerEnd()
+        }
+        */
+
     }
 
     private fun pauseVideo(){

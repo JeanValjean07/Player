@@ -78,13 +78,6 @@
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
 
-        <!-- 开源许可证页 -->
-        <activity
-            android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
-            android:theme="@style/THEME_OSS" />
-        <activity
-            android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
-            android:theme="@style/THEME_OSS" />
 
         <!-- 后台播放服务 -->
         <service

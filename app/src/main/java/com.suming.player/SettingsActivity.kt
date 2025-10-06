@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.edit
@@ -60,13 +61,6 @@ class SettingsActivity: AppCompatActivity() {
         val buttonBack = findViewById<ImageButton>(R.id.buttonExit)
         buttonBack.setOnClickListener {
             finish()
-        }
-        //按钮：开放源代码许可
-        val buttonLicense = findViewById<Button>(R.id.buttonLicense)
-        buttonLicense.setOnClickListener {
-            startActivity(
-                Intent(this, com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java)
-            )
         }
         //按钮：前往酷安主页
         val buttonGoCoolApk = findViewById<TextView>(R.id.buttonGoCoolApk)

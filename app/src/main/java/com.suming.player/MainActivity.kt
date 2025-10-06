@@ -52,12 +52,16 @@ class MainActivity: AppCompatActivity() {
     var statusBarHeight = 0
 
     //无法打开视频时的接收器
-    private val detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
-    { result: ActivityResult ->
+    @SuppressLint("UnsafeOptInUsageError")
+    private val detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        result: ActivityResult ->
         if (result.resultCode == RESULT_OK) {
             if (result.data?.getStringExtra("key") == "needRefresh") {
                 notice("这条视频似乎无法播放", 3000)
                 load()
+            }
+            else if (result.data?.getStringExtra("key") == "needClosePlayer") {
+                PlayerExoSingleton.stopPlayer()
             }
         }
     }

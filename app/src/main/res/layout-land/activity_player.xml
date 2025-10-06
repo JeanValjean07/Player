@@ -220,7 +220,7 @@
         </FrameLayout>
         <!-- 按钮：link -->
         <FrameLayout
-            android:id="@+id/buttonQuickPosContainer"
+            android:id="@+id/ButtonLinkScrollerContainer"
             android:layout_width="45dp"
             android:layout_height="45dp"
             android:layout_marginEnd="1dp"
@@ -273,7 +273,7 @@
             android:layout_height="45dp"
             android:layout_marginEnd="1dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/buttonQuickPosContainer"
+            app:layout_constraintEnd_toStartOf="@+id/ButtonLinkScrollerContainer"
             app:layout_constraintTop_toTopOf="parent">
 
             <com.google.android.material.button.MaterialButton

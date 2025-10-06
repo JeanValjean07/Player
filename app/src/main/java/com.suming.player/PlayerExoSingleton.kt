@@ -4,12 +4,15 @@ import android.annotation.SuppressLint
 import android.app.Application
 import androidx.media3.common.C
 import androidx.media3.common.C.WAKE_MODE_NETWORK
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import okhttp3.internal.http2.Http2Reader
+import java.util.logging.Handler
 
 @UnstableApi
 @Suppress("unused")
