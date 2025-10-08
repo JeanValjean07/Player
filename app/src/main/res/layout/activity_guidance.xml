@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,10 +6,10 @@
     android:layout_height="match_parent"
     android:background="@color/Background"
     android:fitsSystemWindows="false"
-    tools:context=".GuidanceActivity">
-
+    tools:context=".GuidanceActivity"
+    tools:ignore="HardcodedText" >
+    <!-- AppBar -->
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/HeadBackground"
@@ -20,31 +19,39 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar1"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:background="@color/HeadBackground"
-            android:elevation="10dp">
-            <ImageButton
-                android:id="@+id/buttonExit"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="6dp"
-                android:layout_marginTop="12dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_topbar_exit"
-                tools:ignore="MissingConstraints"/>
-            <TextView
-                android:id="@+id/toolbar_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="25dp"
-                android:text="指南和帮助"
-                android:textColor="@color/HeadText"
-                android:textSize="24sp" />
-
+            android:layout_height="50dp"
+            android:background="@android:color/transparent"
+            app:contentInsetStart="0dp"
+            android:elevation="1dp">
+            <!-- AppBar# -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+                <ImageButton
+                    android:id="@+id/buttonExit"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="start|center"
+                    android:layout_marginStart="5dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="退出"
+                    android:padding="11dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_topbar_exit"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="start|center"
+                    android:gravity="center"
+                    android:padding="5dp"
+                    android:text="指南和帮助"
+                    android:textColor="@color/HeadText"
+                    android:textSize="20sp" />
+            </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
-
+    <!-- 滚动区域 -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -58,17 +65,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="2dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -76,12 +81,10 @@
                         android:padding="16dp"
                         android:text="作者酷安主页(可反馈问题)"
                         android:textSize="13sp" />
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_weight="1" />
-
                     <TextView
                         android:id="@+id/buttonGoCoolApk"
                         android:layout_width="wrap_content"
@@ -91,8 +94,6 @@
                         android:text="前往"
                         android:textSize="11sp" />
                 </LinearLayout>
-
-
             </androidx.cardview.widget.CardView>
             <!-- 卡片2：素材来源 -->
             <androidx.cardview.widget.CardView
