@@ -1231,7 +1231,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
 
         if (vm.controllerHided){
-            setControllerInvisible()
+            setControllerInvisibleNoAnimation()
         }
 
 
@@ -1660,6 +1660,29 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
     }
     //控件隐藏和显示
+    private fun setControllerInvisibleNoAnimation() {
+        //状态标记变更
+        widgetsShowing = false
+        vm.controllerHided = true
+        //被控控件控制
+        stopScrollerSync()
+        stopVideoTimeSync()
+        //显示控制
+        //<editor-fold desc="显示控制(隐藏)">
+        val TopBarArea = findViewById<LinearLayout>(R.id.TopBarArea)
+        val ScrollerRootArea = findViewById<View>(R.id.ScrollerRootArea)
+        val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
+        val playerView = findViewById<View>(R.id.playerView)
+
+        ScrollerRootArea.visibility = View.GONE
+        ButtonArea1.visibility = View.GONE
+        TopBarArea.visibility = View.GONE
+
+        if ((resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
+            playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
+        }
+        //</editor-fold>
+    }
     private fun setControllerInvisible() {
         //状态标记变更
         widgetsShowing = false
