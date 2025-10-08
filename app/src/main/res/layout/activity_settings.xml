@@ -67,8 +67,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_height="match_parent"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="5dp"
-                >
+                app:cardElevation="5dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -106,45 +105,6 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-            <!-- 卡片：作者酷安主页 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="5dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="10dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp"
-                        android:text="作者酷安主页(可反馈问题)"
-                        android:textSize="13sp"
-                        android:layout_weight="0"/>
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"/>
-
-                    <TextView
-                        android:id="@+id/buttonGoCoolApk"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp"
-                        android:text="前往"
-                        android:textSize="11sp"
-                        android:layout_weight="0"/>
-                </LinearLayout>
-
-
-            </androidx.cardview.widget.CardView>
             <!-- 卡片：项目Github仓库页 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -152,9 +112,9 @@
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp"
                 android:layout_marginBottom="10dp"
+                android:layout_marginTop="5dp"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -221,13 +181,14 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="14dp">
+                    <!--  通用  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="通用"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp"/>
-                    <!--  开关1  -->
+                    <!--  开关1：进度条截图使用就近关键帧  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -254,39 +215,7 @@
                             />
 
                     </LinearLayout>
-                    <!--  开关2  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            android:text="视频Seek使用就近关键帧"
-                            android:layout_gravity="center"
-                            android:textColor="@color/HeadText"
-                            android:textSize="14sp" />
-                        <View
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1" />
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/seekSYNC"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"
-                            />
-                    </LinearLayout>
-                    <!--  就近关键帧描述  -->
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="精确Seek选项已弃用，改为跟随滚动速度动态切换。精确关键帧截取仅在低于20秒的视频上生效。"
-                        android:textSize="12sp" />
-                    <!--  开关3  -->
+                    <!--  开关2：后台播放时关闭视频轨道  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -312,11 +241,11 @@
                             app:thumbTint="@color/switchThumbColor"
                             />
                     </LinearLayout>
-                    <!--  关闭视频轨道描述  -->
+                    <!--  描述  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="传统后台播放模式会禁用视频轨道并在回到前台时恢复，这会导致回到前台时音频短暂停止。若选择不关闭视频轨道，回到前台时则不会停止，但视频仍在后台解码，导致更多电量消耗"
+                        android:text="进入后台播放状态30秒后,将关闭视频轨道"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -328,20 +257,20 @@
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
                 app:cardElevation="3dp"
-                app:cardCornerRadius="15dp"
-                >
+                app:cardCornerRadius="15dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="14dp">
+                    <!--  从其他应用打开  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="从其他应用打开"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp"/>
-                    <!--  开关1  -->
+                    <!--  开关1：播放结束后自动退出  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -370,7 +299,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="开启后，从其他应用打开视频时，视频播放结束后会自动退出。如果开启循环播放将不会退出。"
+                        android:text="开启后,从其他应用打开视频时,视频播放结束后会自动退出。若开启循环播放将不会退出"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -394,7 +323,7 @@
                         android:text="进度条绘制"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp"/>
-                    <!--  开关1  -->
+                    <!--  开关1：使用超长进度条  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -419,7 +348,7 @@
                             app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"/>
                     </LinearLayout>
-                    <!--  开关2  -->
+                    <!--  开关2：提高强制Seek时间差  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -450,7 +379,7 @@
                         android:layout_height="wrap_content"
                         android:text="默认状态进度条只绘制20张图。开启此开关后，进度条最高图片数量提升至500张。请注意，图数过多时，快速滚动进度条将导致高CPU负载和温度，易虚焊机型谨慎开启。若开启提高强制Seek时间差，视频处于倍速滚动时将花费更长时间追逐进度条目标位置，导致更晚开启声音。"
                         android:textSize="12sp" />
-                    <!--  开关3  -->
+                    <!--  开关3：进度条绘制使用兼容模式  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -561,59 +490,19 @@
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-            <!--  卡片：调试  -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
+            <!--  超链接样式:开源许可  -->
+            <TextView
+                android:id="@+id/openSourceLicense"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
-                app:cardElevation="3dp"
-                app:cardCornerRadius="15dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="调试"
-                        android:textColor="@color/HeadText"
-                        android:textSize="17sp"/>
-                    <!--  开关1  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            android:text="启用现代架构播放器"
-                            android:layout_gravity="center"
-                            android:textColor="@color/HeadText"
-                            android:textSize="14sp" />
-                        <View
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1" />
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/useMVVMPlayer"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
-                    </LinearLayout>
-                    <!--  描述  -->
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="仅供调式。"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                android:layout_marginTop="30dp"
+                android:layout_gravity="center"
+                android:clickable="true"
+                android:text="开放源代码许可"
+                android:textColor="@color/Text2"
+                android:textSize="12sp" />
+
+
 
 
         </LinearLayout>

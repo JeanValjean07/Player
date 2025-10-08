@@ -49,6 +49,10 @@ dependencies {
     implementation("io.coil-kt:coil:2.4.0")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
 
+    implementation("com.google.android.gms:play-services-oss-licenses:17.1.0")
+
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -63,6 +67,7 @@ dependencies {
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.lifecycle.service)
+    implementation(libs.play.services.oss.licenses)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

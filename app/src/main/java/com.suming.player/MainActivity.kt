@@ -30,7 +30,6 @@ import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.suming.player.MainActivity.DeviceCompatUtil.isCompatibleDevice
 import data.model.VideoItem
 import data.source.LocalVideoSource
 import kotlinx.coroutines.Job
@@ -43,8 +42,7 @@ class MainActivity: AppCompatActivity() {
     private lateinit var adapter: MainActivityAdapter
     //设置
     private var PREFS_S_UseMVVMPlayer = false
-    //兼容性1检查
-    private var isCompatibleDevice = false
+
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
 
@@ -62,34 +60,6 @@ class MainActivity: AppCompatActivity() {
             }
             else if (result.data?.getStringExtra("key") == "needClosePlayer") {
                 PlayerExoSingleton.stopPlayer()
-            }
-        }
-    }
-    //旧机型兼容判断
-    object DeviceCompatUtil {
-        /*
-        private val SOC_MAP = mapOf(
-            "kirin710" to 700,
-            "kirin970" to 970,
-            "kirin980" to 980,
-            "kirin990" to 990,
-            "kirin9000" to 1000,
-
-            "msm8998"  to 835,
-            "sdm845"   to 845,
-        )
-        */
-        fun isCompatibleDevice(): Boolean {
-            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
-                val hw = Build.HARDWARE.lowercase()
-                //val soc = SOC_MAP.entries.find { hw.contains(it.key) }?.value ?: return false
-                return when {
-                    hw.contains("kirin") -> return true
-                    hw.contains("sdm") -> return true       //暂不完善soc细分判断
-                    else -> false
-                }
-            }else{
-                return false
             }
         }
     }
@@ -139,9 +109,6 @@ class MainActivity: AppCompatActivity() {
         val button2 = findViewById<Button>(R.id.buttonGuidance)
         button2.setOnClickListener {
             val intent = Intent(this, GuidanceActivity::class.java)
-            if (isCompatibleDevice){
-                intent.putExtra("deviceInfo", "old")
-            }
             startActivity(intent)
         }
         //按钮：设置
@@ -194,7 +161,6 @@ class MainActivity: AppCompatActivity() {
 
 
 
-
     //Functions
     private fun preCheck(){
         //申请媒体权限
@@ -212,14 +178,6 @@ class MainActivity: AppCompatActivity() {
                     REQUEST_STORAGE_PERMISSION
                 )
                 notice("需要访问媒体权限来读取视频,授权后请手动刷新", 5000)
-            }
-        }
-
-        //兼容性检查
-        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q){
-            isCompatibleDevice = isCompatibleDevice()
-            if (isCompatibleDevice){
-                notice("\"指南\"页面有关于您设备兼容性的消息,请前往查看", 10000)
             }
         }
     }

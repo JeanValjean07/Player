@@ -3,11 +3,9 @@ package com.suming.player
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.edit
@@ -15,27 +13,29 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.android.gms.oss.licenses.OssLicensesActivity
+
 
 class SettingsActivity: AppCompatActivity() {
 
     private lateinit var Switch1: SwitchCompat
-    private lateinit var Switch2: SwitchCompat
+
     private lateinit var Switch3: SwitchCompat
     private lateinit var Switch4: SwitchCompat
     private lateinit var Switch5: SwitchCompat
     private lateinit var Switch6: SwitchCompat
-    private lateinit var Switch7: SwitchCompat
+
     private lateinit var Switch8: SwitchCompat
     private lateinit var Switch9: SwitchCompat
     private lateinit var Switch10: SwitchCompat
 
     private var generateThumbSYNC = true
-    private var seekSYNC = true
+
     private var exitWhenEnd = false
     private var useLongScroller = false
     private var useLongSeekGap = false
     private var useBlackScreenInLandscape = false
-    private var useMVVMPlayer = false
+
     private var useHighRefreshRate = false
     private var useCompatScroller = false
     private var closeVideoTrack = false
@@ -62,24 +62,20 @@ class SettingsActivity: AppCompatActivity() {
         buttonBack.setOnClickListener {
             finish()
         }
-        //按钮：前往酷安主页
-        val buttonGoCoolApk = findViewById<TextView>(R.id.buttonGoCoolApk)
-        buttonGoCoolApk.setOnClickListener {
-            val coolapkUri = "coolmarket://u/3105725".toUri()
-            val intent = Intent(Intent.ACTION_VIEW, coolapkUri)
-            if (intent.resolveActivity(packageManager) != null) {
-                startActivity(intent)
-            } else {
-                val webUri = "https://www.coolapk.com/u/3105725".toUri()
-                startActivity(Intent(Intent.ACTION_VIEW, webUri))
-            }
-        }
         //按钮：前往项目Github仓库页
         val buttonGoGithub = findViewById<TextView>(R.id.buttonGoGithub)
         buttonGoGithub.setOnClickListener {
             val url = "https://github.com/JeanValjean07/Player"
             val intent = Intent(Intent.ACTION_VIEW, url.toUri())
             startActivity(intent)
+        }
+        //超链接：开放源代码许可
+        val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
+        openSourceLicense.paint.isUnderlineText = true
+        openSourceLicense.setOnClickListener {
+            startActivity(
+                Intent(this, com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java)
+            )
         }
 
 
@@ -89,10 +85,7 @@ class SettingsActivity: AppCompatActivity() {
             saveSwitchState("PREFS_GenerateThumbSYNC", isChecked)
         }
         restoreSwitchState("PREFS_GenerateThumbSYNC")
-        Switch2 = findViewById(R.id.seekSYNC)
-        Switch2.setOnCheckedChangeListener { _, isChecked ->
-            saveSwitchState("PREFS_SeekSYNC", isChecked)
-        }
+
         restoreSwitchState("PREFS_SeekSYNC")
         Switch3 = findViewById(R.id.exitWhenEnd)
         Switch3.setOnCheckedChangeListener { _, isChecked ->
@@ -114,10 +107,7 @@ class SettingsActivity: AppCompatActivity() {
             saveSwitchState("PREFS_UseBlackScreenInLandscape", isChecked)
         }
         restoreSwitchState("PREFS_UseBlackScreenInLandscape")
-        Switch7 = findViewById(R.id.useMVVMPlayer)
-        Switch7.setOnCheckedChangeListener { _, isChecked ->
-            saveSwitchState("PREFS_UseMVVMPlayer", isChecked)
-        }
+
         restoreSwitchState("PREFS_UseMVVMPlayer")
         Switch8 = findViewById(R.id.useHighRefreshRate)
         Switch8.setOnCheckedChangeListener { _, isChecked ->
@@ -140,12 +130,10 @@ class SettingsActivity: AppCompatActivity() {
 
     private val settingsPrefs = mapOf(
         "PREFS_GenerateThumbSYNC"         to ::generateThumbSYNC,
-        "PREFS_SeekSYNC"                  to ::seekSYNC,
         "PREFS_ExitWhenEnd"               to ::exitWhenEnd,
         "PREFS_UseLongScroller"           to ::useLongScroller,
         "PREFS_UseLongSeekGap"            to ::useLongSeekGap,
         "PREFS_UseBlackScreenInLandscape" to ::useBlackScreenInLandscape,
-        "PREFS_UseMVVMPlayer"             to ::useMVVMPlayer,
         "PREFS_UseHighRefreshRate"        to ::useHighRefreshRate,
         "PREFS_UseCompatScroller"         to ::useCompatScroller,
         "PREFS_CloseVideoTrack"           to ::closeVideoTrack,
@@ -170,15 +158,7 @@ class SettingsActivity: AppCompatActivity() {
                 Switch1.isChecked = false
             }
         }
-        if (key == "PREFS_SeekSYNC"){
-            seekSYNC = sharedPreferences.getBoolean("PREFS_SeekSYNC", true)
-            if (seekSYNC){
-                Switch2.isChecked = true
-            }
-            else{
-                Switch2.isChecked = false
-            }
-        }
+
         if (key == "PREFS_ExitWhenEnd"){
             exitWhenEnd = sharedPreferences.getBoolean("PREFS_ExitWhenEnd", false)
             if (exitWhenEnd){
@@ -215,15 +195,7 @@ class SettingsActivity: AppCompatActivity() {
                 Switch6.isChecked = false
             }
         }
-        if (key == "PREFS_UseMVVMPlayer"){
-            useMVVMPlayer = sharedPreferences.getBoolean("PREFS_UseMVVMPlayer", false)
-            if (useMVVMPlayer){
-                Switch7.isChecked = true
-            }
-            else{
-                Switch7.isChecked = false
-            }
-        }
+
         if (key == "PREFS_UseHighRefreshRate"){
             useHighRefreshRate = sharedPreferences.getBoolean("PREFS_UseHighRefreshRate", false)
             if (useHighRefreshRate){

@@ -1,7 +1,6 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
-import android.app.Dialog
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentResolver
@@ -66,7 +65,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.session.MediaController
@@ -76,7 +74,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.MoreExecutors
-import com.suming.player.PlayerActivityMVVM.DeviceCompatUtil.isCompatibleDevice
 import data.model.VideoItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -211,35 +208,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
 
     //</editor-fold>
-
-    //旧机型兼容判断
-    object DeviceCompatUtil {
-        /*
-        private val SOC_MAP = mapOf(
-            "kirin710" to 700,
-            "kirin970" to 970,
-            "kirin980" to 980,
-            "kirin990" to 990,
-            "kirin9000" to 1000,
-
-            "msm8998"  to 835,
-            "sdm845"   to 845,
-        )
-        */
-        fun isCompatibleDevice(): Boolean {
-            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
-                val hw = Build.HARDWARE.lowercase()
-                //val soc = SOC_MAP.entries.find { hw.contains(it.key) }?.value ?: return false
-                return when {
-                    hw.contains("kirin") -> return true
-                    hw.contains("sdm") -> return true       //暂不完善soc细分判断
-                    else -> false
-                }
-            }else{
-                return false
-            }
-        }
-    }
 
     @OptIn(UnstableApi::class)
     @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION")
@@ -522,8 +490,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         }
         localBroadcastManager.registerReceiver(receiver, filter)
 
-
-
+        
 
 
         //区分打开方式并反序列化
@@ -559,16 +526,13 @@ class PlayerActivityMVVM: AppCompatActivity(){
         playerView = findViewById(R.id.playerView)
         playerView.player = vm.player
 
-        //初次打开时传递视频链接（！！！）
+        //初次打开时传递视频链接
         if (savedInstanceState == null) {
             vm.setVideoUri(videoUri)
         } else {
             buttonRefresh()
             val cover = findViewById<View>(R.id.cover)
-            cover.animate().alpha(0f).setDuration(100)
-                .setInterpolator(AccelerateDecelerateInterpolator())
-                .withEndAction { cover.visibility = View.GONE }
-                .start()
+            cover.visibility = View.GONE
         }
 
         //播放器事件监听
@@ -663,10 +627,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         tvWholeTime.text = formatTime1(videoDuration.toLong())
 
         retriever.release()
-        //视频时长超过120秒时进度条仅显秒
-        if (videoDuration > 120_000L) {
-            videoTimeSyncGap = 500L
-        }
+
 
         //进度条绘制
         if (PREFS_S_UseLongScroller) {
@@ -851,15 +812,10 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
                 }
                 if (PREFS_RC_LinkScrollEnabled) {
-                    val percentScroll = recyclerView.computeHorizontalScrollOffset()
-                        .toFloat() / Controller_ThumbScroller.computeHorizontalScrollRange()
+                    val percentScroll = recyclerView.computeHorizontalScrollOffset().toFloat() / Controller_ThumbScroller.computeHorizontalScrollRange()
                     videoTimeTo = (percentScroll * vm.player.duration).toLong()
                     currentTime = videoTimeTo
-                    if (videoTimeSyncGap >= 500L) {
-                        CONTROLLER_CurrentTime.text = formatTime1(videoTimeTo)
-                    } else {
-                        CONTROLLER_CurrentTime.text = formatTime(videoTimeTo)
-                    }
+                    CONTROLLER_CurrentTime.text = formatTime1(videoTimeTo)
                 } else {
                     return
                 } //时间戳跟随进度条
@@ -903,11 +859,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //更多选项
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
-            //更多选项弹窗
-            val moreOptionsDialog = Dialog(this)
-            moreOptionsDialog.setContentView(R.layout.activity_player_inputvalue)
-            moreOptionsDialog.show()
-
 
         }
         //提示卡点击时关闭
@@ -1285,7 +1236,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
 
 
-
         //开启空闲倒计时
         startIdleTimer()
 
@@ -1356,11 +1306,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
         override fun run() {
             val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
             val currentPosition = vm.player.currentPosition
-            if (videoTimeSyncGap >= 500L){
-                CONTROLLER_CurrentTime.text = formatTime1(currentPosition)
-            }else{
-                CONTROLLER_CurrentTime.text = formatTime(currentPosition)
-            }
+
+            CONTROLLER_CurrentTime.text = formatTime1(currentPosition)
+
             videoTimeSyncHandler.postDelayed(this, videoTimeSyncGap)
         }
     }
@@ -1763,7 +1711,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
         TopBarArea.visibility = View.VISIBLE
 
 
-
         ScrollerRootArea.animate().alpha(1f).setDuration(300)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction { null }
@@ -1836,6 +1783,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         stopService(Intent(applicationContext, FloatingWindowService::class.java))
     }
     //设置状态栏样式:横屏时隐藏状态栏
+    @Suppress("DEPRECATION")
     private fun AppBarSetting() {
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             //横屏时隐藏状态栏
@@ -1848,7 +1796,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 //三星专用:显示到挖空区域
                 window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             } else {
-                    @Suppress("DEPRECATION")
                     window.decorView.systemUiVisibility = (
                             View.SYSTEM_UI_FLAG_FULLSCREEN
                                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -2288,8 +2235,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
         stopScrollerSync()
         //播放结束时让控件显示
         setControllerVisible()
-        val thumbScroller = findViewById<RecyclerView>(R.id.rvThumbnails)
-        thumbScroller.scrollToPosition(1)
+        Handler().postDelayed({
+            stopScrollerSync()
+        }, 100)
         IDLE_Timer?.cancel()
         //自动退出和循环播放控制
         if (PREFS_S_ExitWhenEnd){
@@ -2370,8 +2318,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun preCheck(){
         //获取自动旋转状态
         rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
-        //兼容性检查
-        isCompatibleDevice = isCompatibleDevice()
+
         //屏幕方向检查
         val buttonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
