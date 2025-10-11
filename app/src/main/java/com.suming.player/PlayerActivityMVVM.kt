@@ -2341,7 +2341,6 @@ class PlayerActivityMVVM: AppCompatActivity(){
     private fun preCheck(){
         //获取自动旋转状态
         rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
-
         //屏幕方向检查
         val buttonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){

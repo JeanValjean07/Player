@@ -3,11 +3,8 @@ package com.suming.player
 import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.PixelFormat
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -16,15 +13,10 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
-import androidx.paging.LOG_TAG
-import kotlinx.coroutines.delay
-import kotlin.concurrent.thread
-
 
 class FloatingWindowService : Service() {
     private var mWindowManager: WindowManager? = null
@@ -99,7 +91,7 @@ class FloatingWindowService : Service() {
         super.onCreate()
 
         mWindowManager = getSystemService(WINDOW_SERVICE) as WindowManager?
-        mFloatingView = LayoutInflater.from(this).inflate(R.layout.player_floating_window, null)
+        mFloatingView = LayoutInflater.from(this).inflate(R.layout.float_player, null)
 
 
 
