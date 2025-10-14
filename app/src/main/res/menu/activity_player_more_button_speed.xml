@@ -1,0 +1,20 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText">
+    <item
+        android:id="@+id/MenuAction_0.5"
+        android:title="0.5" />
+    <item
+        android:id="@+id/MenuAction_1.0"
+        android:title="1.0" />
+    <item
+        android:id="@+id/MenuAction_1.5"
+        android:title="1.5" />
+    <item
+        android:id="@+id/MenuAction_2.0"
+        android:title="2.0" />
+    <item
+        android:id="@+id/MenuAction_Input"
+        android:title="自定义" />
+</menu>

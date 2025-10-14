@@ -2,19 +2,12 @@ package com.suming.player
 
 import android.app.Application
 import android.net.Uri
-import android.util.Log
-import android.widget.FrameLayout
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.effect.Brightness
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @UnstableApi
 class PlayerExoViewModel(application: Application) : AndroidViewModel(application) {
@@ -94,6 +87,20 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
     var controllerHided = false
 
     var closeVideoTrackJobRunning = false
+
+
+
+    var PREFS_LoopPlay: Boolean = false
+    var PREFS_AlwaysSeek: Boolean = false
+    var PREFS_BackgroundPlay: Boolean = false
+    var PREFS_TapJump: Boolean = false
+    var PREFS_LinkScroll: Boolean = false
+    var PREFS_SealOEL: Boolean = false
+
+    //以下开关不固化
+    var PREFS_OnlyAudio: Boolean = false
+    var PREFS_OnlyVideo: Boolean = false
+
 
 
 
