@@ -35,17 +35,12 @@ class GuidanceActivity: AppCompatActivity() {
         buttonBack.setOnClickListener {
             finish()
         }
-        //按钮：前往酷安主页
-        val buttonGoCoolApk = findViewById<TextView>(R.id.buttonGoCoolApk)
+        //按钮：前往Issue
+        val buttonGoCoolApk = findViewById<TextView>(R.id.buttonReportIssue)
         buttonGoCoolApk.setOnClickListener {
-            val coolapkUri = "coolmarket://u/3105725".toUri()
-            val intent = Intent(Intent.ACTION_VIEW, coolapkUri)
-            if (intent.resolveActivity(packageManager) != null) {
-                startActivity(intent)
-            } else {
-                val webUri = "https://www.coolapk.com/u/3105725".toUri()
-                startActivity(Intent(Intent.ACTION_VIEW, webUri))
-            }
+            val url = "https://space.bilibili.com/1206378184"
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+            startActivity(intent)
         }
         //SvgRepo
         val buttonGoSvgRepo = findViewById<FrameLayout>(R.id.buttonGoSvgRepo)

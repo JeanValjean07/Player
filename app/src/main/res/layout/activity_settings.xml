@@ -127,7 +127,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="16dp"
-                        android:text="项目Github仓库页(检查更新)"
+                        android:text="Github Release丨手动检查更新"
                         android:textSize="13sp"
                         android:layout_weight="0"/>
                     <View
@@ -136,7 +136,7 @@
                         android:layout_weight="1"/>
 
                     <TextView
-                        android:id="@+id/buttonGoGithub"
+                        android:id="@+id/buttonGoGithubRelease"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="16dp"

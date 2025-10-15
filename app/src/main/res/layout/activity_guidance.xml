@@ -79,14 +79,14 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="0"
                         android:padding="16dp"
-                        android:text="作者酷安主页(可反馈问题)"
+                        android:text="反馈问题丨B站私信"
                         android:textSize="13sp" />
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_weight="1" />
                     <TextView
-                        android:id="@+id/buttonGoCoolApk"
+                        android:id="@+id/buttonReportIssue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="0"

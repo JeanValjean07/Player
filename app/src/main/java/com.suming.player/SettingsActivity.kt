@@ -15,7 +15,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.oss.licenses.OssLicensesActivity
 
-
 class SettingsActivity: AppCompatActivity() {
 
     private lateinit var Switch1: SwitchCompat
@@ -63,9 +62,9 @@ class SettingsActivity: AppCompatActivity() {
             finish()
         }
         //按钮：前往项目Github仓库页
-        val buttonGoGithub = findViewById<TextView>(R.id.buttonGoGithub)
+        val buttonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
         buttonGoGithub.setOnClickListener {
-            val url = "https://github.com/JeanValjean07/Player"
+            val url = "https://github.com/JeanValjean07/Player/releases"
             val intent = Intent(Intent.ACTION_VIEW, url.toUri())
             startActivity(intent)
         }
