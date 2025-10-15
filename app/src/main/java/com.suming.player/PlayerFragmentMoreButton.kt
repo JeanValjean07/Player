@@ -31,7 +31,7 @@ import com.google.android.material.button.MaterialButton
 import com.suming.player.PlayerExoSingleton.player
 
 @UnstableApi
-class PlayerMoreButtonFragment: DialogFragment() {
+class PlayerFragmentMoreButton: DialogFragment() {
 
     //共享ViewModel
     private val vm: PlayerExoViewModel by activityViewModels()
@@ -46,8 +46,8 @@ class PlayerMoreButtonFragment: DialogFragment() {
 
     //companion object
     companion object {
-        fun newInstance(): PlayerMoreButtonFragment =
-            PlayerMoreButtonFragment().apply {
+        fun newInstance(): PlayerFragmentMoreButton =
+            PlayerFragmentMoreButton().apply {
                 arguments = bundleOf(
 
                 )
@@ -104,7 +104,7 @@ class PlayerMoreButtonFragment: DialogFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.activity_player_morebutton, container, false)
+    ): View = inflater.inflate(R.layout.activity_player_fragment_more_button, container, false)
 
     @SuppressLint("UseGetLayoutInflater", "InflateParams")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -154,7 +154,7 @@ class PlayerMoreButtonFragment: DialogFragment() {
         val buttonChangeSpeed = view.findViewById<TextView>(R.id.buttonChangeSpeed)
         buttonChangeSpeed.setOnClickListener {
             val popup = PopupMenu(requireContext(), buttonChangeSpeed)
-            popup.menuInflater.inflate(R.menu.activity_player_more_button_speed, popup.menu)
+            popup.menuInflater.inflate(R.menu.activity_player_popup_video_speed, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when(item.itemId){
                     R.id.MenuAction_0_5 -> { vm.player.setPlaybackSpeed(0.5f); customDismiss(); true }
@@ -295,8 +295,24 @@ class PlayerMoreButtonFragment: DialogFragment() {
             customDismiss()
         }
 
+        //视频信息
+        val buttonVideoInfo = view.findViewById<TextView>(R.id.buttonVideoInfo)
+        buttonVideoInfo.setOnClickListener {
+            //发回更改命令
+            val result = bundleOf("KEY" to "VideoInfo")
+            setFragmentResult("FROM_FRAGMENT", result)
 
+            dismiss()
+        }
+        //分享
+        val buttonSysShare = view.findViewById<TextView>(R.id.buttonSysShare)
+        buttonSysShare.setOnClickListener {
+            //发回更改命令
+            val result = bundleOf("KEY" to "SysShare")
+            setFragmentResult("FROM_FRAGMENT", result)
 
+            dismiss()
+        }
 
 
 
@@ -304,20 +320,17 @@ class PlayerMoreButtonFragment: DialogFragment() {
     } //onViewCreated END
 
 
-
-
-
     //Functions
     private fun setSpeed(){
-        Toast.makeText(requireContext(), "自定义倍速功能开发中", Toast.LENGTH_SHORT).show()
+        //发回更改命令
+        val result = bundleOf("KEY" to "SetSpeed")
+        setFragmentResult("FROM_FRAGMENT", result)
 
+        dismiss()
     }
 
     private fun customDismiss(){
         if (!lockPage) { dismiss() }
     }
-
-
-
 
 }

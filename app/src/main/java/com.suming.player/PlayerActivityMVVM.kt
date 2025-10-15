@@ -1,6 +1,7 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentResolver
@@ -30,6 +31,7 @@ import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.KeyEvent
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.OrientationEventListener
 import android.view.Surface
@@ -39,6 +41,9 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.inputmethod.InputMethodManager
+import android.widget.Button
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -54,6 +59,7 @@ import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
@@ -76,6 +82,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.MoreExecutors
 import data.model.VideoItem
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -899,7 +906,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
         //更多选项
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
-            PlayerMoreButtonFragment.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
+            PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
         }
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.NoticeCard)
@@ -957,6 +964,11 @@ class PlayerActivityMVVM: AppCompatActivity(){
         val buttonSwitchLandscape = findViewById<FrameLayout>(R.id.buttonActualSwitchLandscape)
         buttonSwitchLandscape.setOnClickListener {
             ButtonChangeOrientation()
+        }
+        //按钮：更多选项
+        val buttonMoreOptions = findViewById<FrameLayout>(R.id.buttonActualMoreButton)
+        buttonMoreOptions.setOnClickListener {
+            PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
         }
         //播放区域点击事件
         val gestureDetectorPlayArea = GestureDetector(this, object : SimpleOnGestureListener() {
@@ -1059,6 +1071,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
                         if (currentVolume >= 0){
                             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume, 0)
                             notice("音量 -1 ($currentVolume/$maxVolume)", 1000)
+                        }else{
+                            notice("音量已到最低", 1000)
                         }
                     }
                     //数值越界置位
@@ -1198,7 +1212,51 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 } else {
                     vm.player.volume = 1f
                     notice("已关闭仅播放视频", 1000)
+
                 }
+            }
+            else if (ReceiveKey == "VideoInfo"){
+                PlayerFragmentVideoInfo.newInstance().show(supportFragmentManager, "PlayerVideoInfoFragment")
+            }
+            else if (ReceiveKey == "SetSpeed"){
+                val dialog = Dialog(this)
+                val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+                dialog.setContentView(dialogView)
+                val title: TextView = dialogView.findViewById(R.id.dialog_title)
+                val Description:TextView = dialogView.findViewById(R.id.dialog_description)
+                val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+                val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+                title.text = "自定义倍速"
+                Description.text = "输入您的自定义倍速,最大允许数值为5.0"
+                EditText.hint = ""
+                Button.text = "确定"
+
+                val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                Button.setOnClickListener {
+                    val userInput = EditText.text.toString()
+                    if (userInput.isEmpty()){
+                        notice("未输入内容", 1000)
+                    } else {
+                        val inputValue = userInput.toFloat()
+                        if(inputValue > 0.0 && inputValue < 5.0){
+                            vm.player.setPlaybackSpeed(inputValue)
+                            notice("已将倍速设置为$inputValue", 2000)
+                        } else {
+                            notice("数值过大", 3000)
+                        }
+                    }
+                    dialog.dismiss()
+                }
+                dialog.show()
+                CoroutineScope(Dispatchers.Main).launch {
+                    delay(50)
+                    EditText.requestFocus()
+                    imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+                }
+            }
+            else if (ReceiveKey == "SysShare"){
+                shareVideo(this, videoUri)
             }
 
 
@@ -1593,7 +1651,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
             //后台播放操作:恢复播放状态
             if (wasPlaying) { vm.player.play() }
             //后台播放操作:恢复视频轨道
-            if (vm.PREFS_BackgroundPlay) {
+            if (vm.PREFS_BackgroundPlay && !vm.PREFS_OnlyAudio) {
                 stopBackgroundPlay()
             }
             //判断是否需要开启ScrollerSync
@@ -1658,6 +1716,16 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
 
     //Functions
+    //分享视频(已知Uri)
+    private fun shareVideo(context: Context, videoUri: Uri) {
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "video/*"
+            putExtra(Intent.EXTRA_STREAM, videoUri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        val chooser = Intent.createChooser(shareIntent, "分享视频")
+        context.startActivity(chooser)
+    }
     //空闲倒计时
     private fun startIdleTimer() {
         IDLE_Timer?.cancel()
@@ -2064,7 +2132,7 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
         audioManager.requestAudioFocus(focusRequest)
     }
-    //音量淡入淡出(未做完)
+    //音量淡入淡出
     private fun volumeRec(){
         volumeRecExecuted = true
         lifecycleScope.launch(Dispatchers.Main) {

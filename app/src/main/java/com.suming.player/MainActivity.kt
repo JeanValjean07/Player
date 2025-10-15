@@ -203,7 +203,7 @@ class MainActivity: AppCompatActivity() {
             },
             onOptionClick = { item ->
                 val popup = PopupMenu(this, recyclerview1)
-                popup.menuInflater.inflate(R.menu.activity_main_menu, popup.menu)
+                popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
                 popup.setOnMenuItemClickListener { /*handle*/; true }
                 popup.show()
             }

@@ -91,7 +91,7 @@ class FloatingWindowService : Service() {
         super.onCreate()
 
         mWindowManager = getSystemService(WINDOW_SERVICE) as WindowManager?
-        mFloatingView = LayoutInflater.from(this).inflate(R.layout.float_player, null)
+        mFloatingView = LayoutInflater.from(this).inflate(R.layout.activity_player_float_player, null)
 
 
 

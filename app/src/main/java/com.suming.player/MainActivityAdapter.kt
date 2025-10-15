@@ -43,7 +43,7 @@ class MainActivityAdapter(
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_items, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_adapter_items, parent, false)
         return ViewHolder(view)
     }
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
@@ -57,7 +57,7 @@ class MainActivityAdapter(
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
         holder.tvOption.setOnClickListener {
              val popup = PopupMenu(holder.itemView.context, holder.tvOption)
-            popup.menuInflater.inflate(R.menu.activity_main_menu, popup.menu)
+            popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when(item.itemId){
                     R.id.MenuAction_Repic -> {

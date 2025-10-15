@@ -46,7 +46,7 @@ class PlayerScrollerAdapter(
     override fun getItemCount() = (picNumber)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThumbViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_scrolleritem, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_adapter_scroller_item, parent, false)
         return ThumbViewHolder(view)
     }
 

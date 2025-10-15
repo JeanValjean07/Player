@@ -22,7 +22,7 @@ class VideoAdapter(
     //onCreateViewHolder：创建 ViewHolder（第一次需要显示 item 时调用）
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.activity_main_items, parent, false)
+            .inflate(R.layout.activity_main_adapter_items, parent, false)
         return VH(view)
     }
 
