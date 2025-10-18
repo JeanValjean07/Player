@@ -44,5 +44,5 @@ play-services-oss-licenses = { group = "com.google.android.gms", name = "play-se
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-compose-compiler   = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.2.10" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 

@@ -45,14 +45,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private var lockPage = false
 
     //companion object
-    companion object {
-        fun newInstance(): PlayerFragmentMoreButton =
-            PlayerFragmentMoreButton().apply {
-                arguments = bundleOf(
-
-                )
-            }
-    }
+    companion object { fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments = bundleOf(  ) } }
 
 
     override fun onStart() {
@@ -309,6 +302,15 @@ class PlayerFragmentMoreButton: DialogFragment() {
         buttonSysShare.setOnClickListener {
             //发回更改命令
             val result = bundleOf("KEY" to "SysShare")
+            setFragmentResult("FROM_FRAGMENT", result)
+
+            dismiss()
+        }
+        //音频
+        val buttonEqualizer = view.findViewById<TextView>(R.id.buttonEqualizer)
+        buttonEqualizer.setOnClickListener {
+            //发回更改命令
+            val result = bundleOf("KEY" to "Equalizer")
             setFragmentResult("FROM_FRAGMENT", result)
 
             dismiss()

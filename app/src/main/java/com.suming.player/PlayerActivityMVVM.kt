@@ -18,6 +18,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
+import android.media.audiofx.Equalizer
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -62,6 +63,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import androidx.core.content.edit
+import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -71,6 +73,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.SeekParameters
@@ -81,6 +84,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.MoreExecutors
+import com.suming.player.PlayerExoSingleton.player
 import data.model.VideoItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -206,6 +210,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
     private lateinit var playerView: PlayerView
 
+
+    private lateinit var equalizer: Equalizer
+
     //空闲定时器
     private var IDLE_Timer: CountDownTimer? = null
     private val IDLE_MS = 5_000L
@@ -213,8 +220,8 @@ class PlayerActivityMVVM: AppCompatActivity(){
 
     private var EnterAnimationComplete = false
 
+    private var fps = 0f
 
-    private var MoreButtonShowing = false
 
 
     //</editor-fold>
@@ -462,14 +469,9 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 }
             }
         }
-
-
-
         if (vm.PREFS_SealOEL){
-            Log.d("SuMing", "onResume: OEL关闭")
             OEL.disable()
         }else{
-            Log.d("SuMing", "onResume: OEL开启")
             OEL.enable()
         }
 
@@ -606,6 +608,14 @@ class PlayerActivityMVVM: AppCompatActivity(){
                     }
 
                      */
+                }
+
+            }
+            override fun onTracksChanged(tracks: Tracks) {
+                for (trackGroup in tracks.groups) {
+                    val format = trackGroup.getTrackFormat(0)
+                    fps = format.frameRate
+                    break
                 }
             }
         }
@@ -1113,6 +1123,30 @@ class PlayerActivityMVVM: AppCompatActivity(){
             gestureDetectorPlayArea.onTouchEvent(event)
         }
 
+
+
+
+        //均衡器页面返回值
+        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_EQUALIZER", this) { _, bundle ->
+            val ReceiveKey = bundle.getString("KEY")
+            if (ReceiveKey == "Add"){
+                for (i in 0 until equalizer.numberOfBands) {
+                    val gain = +3000
+                    equalizer.setBandLevel(i.toShort(), gain.toShort())
+                    notice("均衡器 +1(${equalizer.getBandLevel(i.toShort())/1000})", 1000)
+                }
+            }
+            else if (ReceiveKey == "Sub"){
+                for (i in 0 until equalizer.numberOfBands) {
+                    val gain = -3000
+                    equalizer.setBandLevel(i.toShort(), gain.toShort())
+                    notice("均衡器 -1(${equalizer.getBandLevel(i.toShort())/1000})", 1000)
+                }
+            }
+
+
+        }
+
         //更多按钮页面返回值
         supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT", this) { _, bundle ->
             val ReceiveKey = bundle.getString("KEY")
@@ -1216,7 +1250,40 @@ class PlayerActivityMVVM: AppCompatActivity(){
                 }
             }
             else if (ReceiveKey == "VideoInfo"){
-                PlayerFragmentVideoInfo.newInstance().show(supportFragmentManager, "PlayerVideoInfoFragment")
+                //读取数据
+                val retriever = MediaMetadataRetriever()
+                retriever.setDataSource(absolutePath)
+                val videoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                val videoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                val videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                val videoFps = fps
+                val captureFps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)
+                val videoMimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
+                val videoBitrate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
+
+                val videoFileName = STRING_FileName
+                val videoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+                val videoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                val videoDate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)
+
+                Log.d("SuMing", "VideoInfo: $videoFileName, $videoTitle, $videoArtist, $videoDate")
+
+
+                //将数据传递给Fragment
+                val videoInfoFragment = PlayerFragmentVideoInfo.newInstance(
+                    videoWidth?.toInt() ?: 0,
+                    videoHeight?.toInt() ?: 0,
+                    videoDuration?.toLong() ?: 0,
+                    videoFps,
+                    captureFps?.toFloat() ?: 0f,
+                    videoMimeType ?: "",
+                    videoBitrate?.toLong() ?: 0,
+                    videoFileName,
+                    videoTitle ?: "",
+                    videoArtist ?: "",
+                    videoDate ?: ""
+                )
+                videoInfoFragment.show(supportFragmentManager, "PlayerVideoInfoFragment")
             }
             else if (ReceiveKey == "SetSpeed"){
                 val dialog = Dialog(this)
@@ -1258,8 +1325,11 @@ class PlayerActivityMVVM: AppCompatActivity(){
             else if (ReceiveKey == "SysShare"){
                 shareVideo(this, videoUri)
             }
-
-
+            else if (ReceiveKey == "Equalizer"){
+                equalizer = Equalizer(1, vm.player.audioSessionId)
+                equalizer.enabled = true
+                PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
+            }
         }
 
 

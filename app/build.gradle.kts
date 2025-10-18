@@ -1,6 +1,12 @@
+import org.jetbrains.kotlin.descriptors.annotations.composeAnnotations
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+
+    //Compose
+    alias(libs.plugins.compose.compiler)
+    //Oss Licenses Plugin
     id("com.google.android.gms.oss-licenses-plugin")
 }
 
@@ -10,6 +16,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        compose = true
     }
 
 
@@ -49,7 +56,16 @@ dependencies {
     implementation("io.coil-kt:coil:2.4.0")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
 
+
+    //Oss Licenses Plugin
     implementation("com.google.android.gms:play-services-oss-licenses:17.1.0")
+
+
+    //Compose
+    implementation(platform("androidx.compose:compose-bom:2024.09.00"))
+    implementation("androidx.compose.runtime:runtime")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui-tooling")
 
 
 
