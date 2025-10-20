@@ -3,10 +3,8 @@ package com.suming.player
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.graphics.Color
-import android.media.audiofx.Equalizer
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,7 +25,7 @@ import com.google.android.material.button.MaterialButton
 class PlayerFragmentEqualizer: DialogFragment() {
 
     //共享ViewModel
-    private val vm: PlayerExoViewModel by activityViewModels()
+    private val vm: PlayerViewModel by activityViewModels()
 
     //companion object
     companion object {

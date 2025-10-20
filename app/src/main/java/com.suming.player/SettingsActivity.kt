@@ -33,7 +33,7 @@ class SettingsActivity: AppCompatActivity() {
     private var exitWhenEnd = false
     private var useLongScroller = false
     private var useLongSeekGap = false
-    private var useBlackScreenInLandscape = false
+    private var useBlackBackground = false
 
     private var useHighRefreshRate = false
     private var useCompatScroller = false
@@ -101,11 +101,11 @@ class SettingsActivity: AppCompatActivity() {
             saveSwitchState("PREFS_UseLongSeekGap", isChecked)
         }
         restoreSwitchState("PREFS_UseLongSeekGap")
-        Switch6 = findViewById(R.id.useBlackScreenInLandscape)
+        Switch6 = findViewById(R.id.useBlackBackground)
         Switch6.setOnCheckedChangeListener { _, isChecked ->
-            saveSwitchState("PREFS_UseBlackScreenInLandscape", isChecked)
+            saveSwitchState("PREFS_UseBlackBackground", isChecked)
         }
-        restoreSwitchState("PREFS_UseBlackScreenInLandscape")
+        restoreSwitchState("PREFS_UseBlackBackground")
 
         restoreSwitchState("PREFS_UseMVVMPlayer")
         Switch8 = findViewById(R.id.useHighRefreshRate)
@@ -132,7 +132,7 @@ class SettingsActivity: AppCompatActivity() {
         "PREFS_ExitWhenEnd"               to ::exitWhenEnd,
         "PREFS_UseLongScroller"           to ::useLongScroller,
         "PREFS_UseLongSeekGap"            to ::useLongSeekGap,
-        "PREFS_UseBlackScreenInLandscape" to ::useBlackScreenInLandscape,
+        "PREFS_UseBlackBackground"        to ::useBlackBackground,
         "PREFS_UseHighRefreshRate"        to ::useHighRefreshRate,
         "PREFS_UseCompatScroller"         to ::useCompatScroller,
         "PREFS_CloseVideoTrack"           to ::closeVideoTrack,
@@ -185,9 +185,9 @@ class SettingsActivity: AppCompatActivity() {
                 Switch5.isChecked = false
             }
         }
-        if (key == "PREFS_UseBlackScreenInLandscape"){
-            useBlackScreenInLandscape = sharedPreferences.getBoolean("PREFS_UseBlackScreenInLandscape", false)
-            if (useBlackScreenInLandscape){
+        if (key == "PREFS_UseBlackBackground"){
+            useBlackBackground = sharedPreferences.getBoolean("PREFS_UseBlackBackground", false)
+            if (useBlackBackground){
                 Switch6.isChecked = true
             }
             else{

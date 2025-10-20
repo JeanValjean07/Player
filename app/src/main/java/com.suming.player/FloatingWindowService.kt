@@ -112,7 +112,7 @@ class FloatingWindowService : Service() {
                 mWindowManager?.updateViewLayout(mFloatingView, mParams!!)
                 isFolded = false
             }else {
-                val intent = Intent(this, PlayerActivityMVVM::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                val intent = Intent(this, PlayerActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
                 startActivity(intent)
             }
 

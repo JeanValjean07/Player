@@ -226,7 +226,7 @@ class MainActivity: AppCompatActivity() {
 
     @OptIn(UnstableApi::class)
     private fun startPlayer(item: VideoItem){
-        val intent = Intent(this, PlayerActivityMVVM::class.java).apply { putExtra("video", item) }
+        val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
         detailLauncher.launch(intent)
     }
 

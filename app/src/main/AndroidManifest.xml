@@ -42,7 +42,7 @@
         </activity>
 
         <!-- 播放页 -->
-        <activity android:name=".PlayerActivityMVVM"
+        <activity android:name=".PlayerActivity"
             android:theme="@style/THEME_Player"
             android:label="播放器"
             android:screenOrientation="portrait"

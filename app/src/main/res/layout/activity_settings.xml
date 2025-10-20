@@ -435,7 +435,7 @@
                         android:text="界面显示"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp"/>
-                    <!--  开关1: 横屏时始终使用黑色界面  -->
+                    <!--  开关1: 始终使用深色播放界面  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -444,7 +444,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            android:text="横屏时始终使用黑色界面"
+                            android:text="始终使用深色播放界面"
                             android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
@@ -453,7 +453,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
                         <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/useBlackScreenInLandscape"
+                            android:id="@+id/useBlackBackground"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"

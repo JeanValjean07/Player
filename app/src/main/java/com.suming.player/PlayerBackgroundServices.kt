@@ -10,7 +10,6 @@ import android.os.Build
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
-import androidx.core.content.edit
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -122,7 +121,7 @@ class PlayerBackgroundServices(): MediaSessionService() {
     //自定义通知:点击拉起
     @OptIn(UnstableApi::class)
     private fun createPendingIntent(): PendingIntent {
-        val intent = Intent(this, PlayerActivityMVVM::class.java).apply {
+        val intent = Intent(this, PlayerActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }.putExtra("SOURCE","FROM_PENDING" )
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)

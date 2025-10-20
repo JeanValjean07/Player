@@ -22,6 +22,6 @@ class PlayerExoFactory private constructor(
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return PlayerExoViewModel(app) as T
+        return PlayerViewModel(app) as T
     }
 }

@@ -10,7 +10,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
 @UnstableApi
-class PlayerExoViewModel(application: Application) : AndroidViewModel(application) {
+class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
     //播放器数据连接
     private val app = application
@@ -88,6 +88,8 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
 
     var closeVideoTrackJobRunning = false
 
+    var statusBarHeight = 0
+
 
 
     var PREFS_LoopPlay: Boolean = false
@@ -96,6 +98,21 @@ class PlayerExoViewModel(application: Application) : AndroidViewModel(applicatio
     var PREFS_TapJump: Boolean = false
     var PREFS_LinkScroll: Boolean = false
     var PREFS_SealOEL: Boolean = false
+
+
+    var PREFS_GenerateThumbSYNC : Boolean = false
+    var PREFS_ExitWhenEnd : Boolean = false
+    var PREFS_UseLongScroller : Boolean = false
+    var PREFS_UseLongSeekGap : Boolean = false
+    var PREFS_UseBlackBackground : Boolean = false
+    var PREFS_UseHighRefreshRate : Boolean = false
+    var PREFS_UseCompatScroller : Boolean = false
+    var PREFS_CloseVideoTrack : Boolean = false
+
+
+    var ShouldUseBlackBackground : Boolean = false
+
+
 
     //以下开关不固化
     var PREFS_OnlyAudio: Boolean = false

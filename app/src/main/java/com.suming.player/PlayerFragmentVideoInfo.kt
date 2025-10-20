@@ -16,9 +16,13 @@ import android.widget.ImageButton
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
@@ -166,8 +170,6 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         }
 
 
-        Log.d("SuMing", "VideoInfo: Width $videoWidth Height $videoHeight,Duration $videoDuration ms, $videoFps fps  $captureFps fps, $videoMimeType, $videoBitrate bps")
-
         //信息显示
         val composeVideoInfo = view.findViewById<androidx.compose.ui.platform.ComposeView>(R.id.compose_video_info)
         composeVideoInfo.setContent {
@@ -188,57 +190,63 @@ class PlayerFragmentVideoInfo: DialogFragment() {
     //Functions
     @Composable
     private fun PlayerComposeVideoInfo(){
-        Column(
-            Modifier
-                .padding(16.dp)
+        CompositionLocalProvider(
+            LocalTextStyle provides TextStyle(
+                color = colorResource(R.color.HeadText)
+            )
         ) {
+            Column(
+                Modifier
+                    .padding(16.dp)
+            ) {
+                Text(text = "视频分辨率：$videoWidth x $videoHeight")
+                Text(text = "\n")
 
-            Text(text = "视频分辨率：$videoWidth x $videoHeight")
-            Text(text = "\n")
+                Text(text = "视频时长：${videoDuration / 1000} 秒丨${formatTime1(videoDuration)}")
+                Text(text = "\n")
 
-            Text(text = "视频时长：${videoDuration / 1000} 秒丨${formatTime1(videoDuration)}")
-            Text(text = "\n")
+                //视频实际帧率
+                if (captureFps != 0f && captureFps > videoFps){
+                    Text(text = "视频帧率：$videoFps FPS (受限于设备性能,实际帧率未达到采集帧率)")
+                }else{
+                    Text(text = "视频帧率：$videoFps FPS")
+                }
+                Text(text = "\n")
 
-            //视频实际帧率
-            if (captureFps != 0f && captureFps > videoFps){
-                Text(text = "视频帧率：$videoFps FPS (受限于设备性能,实际帧率未达到采集帧率)")
-            }else{
-                Text(text = "视频帧率：$videoFps FPS")
+                //采集帧率
+                if (captureFps == 0f){
+                    Text(text = "采集帧率：0 FPS (来自网络的视频通常无此值)")
+                }else{
+                    Text(text = "采集帧率：$captureFps FPS")
+                }
+                Text(text = "\n")
+
+                Text(text = "视频编码：$videoMimeType")
+                Text(text = "\n")
+
+                Text(text = "视频码率：${videoBitrate / 1000} kbps")
+                Text(text = "\n")
+
+                Text(text = "视频文件名：$videoFileName")
+                Text(text = "\n")
+
+                //视频标题
+                if (videoTitle.isBlank()){ Text(text = "视频标题：未写入此条元数据") }else{ Text(text = "视频标题：$videoTitle") }
+                Text(text = "\n")
+
+                //视频艺术家
+                if (videoArtist.isBlank()){ Text(text = "视频艺术家：未写入此条元数据") }else{ Text(text = "视频艺术家：$videoArtist") }
+                Text(text = "\n")
+
+                //视频日期
+                if (videoDate == "19040101T000000.000Z"){ Text(text = "视频日期：未写入此条元数据") }else{ Text(text = "视频日期：$videoDate") }
+
+
+
+
             }
-            Text(text = "\n")
-
-            //采集帧率
-            if (captureFps == 0f){
-                Text(text = "采集帧率：0 FPS (来自网络的视频通常无此值)")
-            }else{
-                Text(text = "采集帧率：$captureFps FPS")
-            }
-            Text(text = "\n")
-
-            Text(text = "视频编码：$videoMimeType")
-            Text(text = "\n")
-
-            Text(text = "视频码率：${videoBitrate / 1000} kbps")
-            Text(text = "\n")
-
-            Text(text = "视频文件名：$videoFileName")
-            Text(text = "\n")
-
-            //视频标题
-            if (videoTitle.isBlank()){ Text(text = "视频标题：未写入此条元数据") }else{ Text(text = "视频标题：$videoTitle") }
-            Text(text = "\n")
-
-            //视频艺术家
-            if (videoArtist.isBlank()){ Text(text = "视频艺术家：未写入此条元数据") }else{ Text(text = "视频艺术家：$videoArtist") }
-            Text(text = "\n")
-
-            //视频日期
-            if (videoDate == "19040101T000000.000Z"){ Text(text = "视频日期：未写入此条元数据") }else{ Text(text = "视频日期：$videoDate") }
-
-
-
-
         }
+
 
     }
 

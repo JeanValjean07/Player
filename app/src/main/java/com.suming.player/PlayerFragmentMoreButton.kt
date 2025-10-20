@@ -16,7 +16,6 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
@@ -34,7 +33,7 @@ import com.suming.player.PlayerExoSingleton.player
 class PlayerFragmentMoreButton: DialogFragment() {
 
     //共享ViewModel
-    private val vm: PlayerExoViewModel by activityViewModels()
+    private val vm: PlayerViewModel by activityViewModels()
     //开关初始化
     private lateinit var Switch_BackgroundPlay: SwitchCompat
     private lateinit var Switch_LoopPlay: SwitchCompat

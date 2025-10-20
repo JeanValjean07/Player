@@ -2,12 +2,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/root"
     android:keepScreenOn="true"
+    android:id="@+id/RootConstraint"
     android:fitsSystemWindows="false"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/Background"
     tools:ignore="HardcodedText">
     <!-- 顶部横排按钮区 -->
     <LinearLayout
@@ -101,7 +100,7 @@
             android:elevation="2dp"
             app:use_controller="false"
             android:clickable="true"
-            android:background="@color/Background"
+            android:background="@android:color/transparent"
             app:surface_type="surface_view"
             android:translationZ="1dp">
             <!-- 播放器遮罩 -->
@@ -113,6 +112,14 @@
                 android:translationZ="2dp"
                 android:visibility="visible" />
         </androidx.media3.ui.PlayerView>
+        <!-- 点击层 -->
+        <View
+            android:id="@+id/playerTouchPad"
+            android:clickable="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:translationZ="3dp"
+            />
     </FrameLayout>
 
     <!-- 缩略图上方按钮区 -->
@@ -353,6 +360,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
     <!-- 缩略图区 -->
     <androidx.cardview.widget.CardView
         android:id="@+id/ScrollerRootArea"
