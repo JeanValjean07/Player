@@ -136,12 +136,12 @@ class SettingsActivity: AppCompatActivity() {
         val prop = settingsPrefs[key] ?: return
         if (isChecked) 1 else 0
         prop.set(isChecked)
-        getSharedPreferences("PREFS_Player", MODE_PRIVATE)
+        getSharedPreferences("PREFS", MODE_PRIVATE)
             .edit { putBoolean(key, isChecked).apply() }
     }
 
     private fun restoreSwitchState(key: String) {
-        val sharedPreferences = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
+        val sharedPreferences = getSharedPreferences("PREFS", MODE_PRIVATE)
         if (key == "PREFS_GenerateThumbSYNC"){
             generateThumbSYNC = sharedPreferences.getBoolean("PREFS_GenerateThumbSYNC", true)
             if (generateThumbSYNC){

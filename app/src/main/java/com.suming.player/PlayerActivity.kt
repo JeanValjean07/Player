@@ -102,6 +102,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import android.graphics.Bitmap.CompressFormat.JPEG
+import android.util.Log
 
 @UnstableApi
 //@Suppress("unused")
@@ -164,7 +165,25 @@ class PlayerActivity: AppCompatActivity(){
     private var SECUREINTERVAL_SEEKONCE = false
     private var SECUREINTERVAL_ONDOWN = false
     private var SECUREINTERVAL_FINGERUP = false
-
+    //播放区域点击事件
+    private var STATE_2Fingers = false
+    private var ACTION_POINTER_DOWN = false
+    private var originalDistance = 0f
+    private var distanceGap = 0f
+    private var center0x = 0f
+    private var center0y = 0f
+    private var center1x = 0f
+    private var center1y = 0f
+    private var originalScale = 1f
+    private var scale = 1.0
+    private var definiteScale = 1.0f
+    private var center2x = 0f
+    private var center2y = 0f
+    private var center0pivoted = false
+    private var finger1x = 0f
+    private var finger1y = 0f
+    private var finger2x = 0f
+    private var finger2y = 0f
     //自动旋转状态
     private var rotationSetting = 0
     //PlayerReady
@@ -225,7 +244,6 @@ class PlayerActivity: AppCompatActivity(){
         //其他预设
         preCheck()
 
-
         //恢复暂存数据
         if (savedInstanceState == null) {
             PlayerExoSingleton.releasePlayer()    //初次打开:关闭播放器实例
@@ -235,9 +253,8 @@ class PlayerActivity: AppCompatActivity(){
             intent = savedInstanceState.getParcelable("CONTENT_INTENT")
         }
 
-
         //设置项读取,检查和预置
-        val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
+        val prefs = getSharedPreferences("PREFS", MODE_PRIVATE)
         if(savedInstanceState == null){
             val prefsEditor = prefs.edit()
             if (!prefs.contains("PREFS_GenerateThumbSYNC")) {
@@ -365,22 +382,39 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
         if (videoItem == null) {
-            val intentBackToMainActivity = Intent(this, MainActivity::class.java)
-            intentBackToMainActivity.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intentBackToMainActivity)
+            /*
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("ITEM_CLOSED", true)
+                startActivity(this)
+            }
+
+             */
+
             finish()
             return
         }
-        videoUri = videoItem.uri
 
+        //解码视频信息
+        videoUri = videoItem.uri
         val retriever = MediaMetadataRetriever()
-        retriever.setDataSource(this@PlayerActivity, videoUri)
+        //给retriever设置数据源,包含异常处理
+        try {
+            retriever.setDataSource(this@PlayerActivity, videoUri)
+        } catch (_: Exception) {
+            val data = Intent().apply {
+                putExtra("key", "NEED_REFRESH")
+            }
+            setResult(RESULT_OK, data)
+            finish()
+            return
+        }
+
 
         if (vm.PREFS_UseBlackBackground) {
             vm.ShouldUseBlackBackground = true
             setPageToDark()
         }
-
 
 
         //方向监听器
@@ -596,22 +630,7 @@ class PlayerActivity: AppCompatActivity(){
                 if (videoSize.width > 0 && videoSize.height > 0) {
                     videoSizeWidth = videoSize.width
                     videoSizeHeight = videoSize.height
-
-                    /*
-                    if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-                        if(videoSizeHeight.toFloat() / videoSizeWidth < 1.5){
-                            setBlackScreen()
-                        }
-                    }
-                    else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-                        if(videoSizeHeight.toFloat() / videoSizeWidth > 1.3){
-                            setBlackScreen()
-                        }
-                    }
-
-                     */
                 }
-
             }
             override fun onTracksChanged(tracks: Tracks) {
                 for (trackGroup in tracks.groups) {
@@ -622,8 +641,6 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
         vm.player.addListener(PlayerStateListener!!)
-
-
 
 
 
@@ -657,6 +674,7 @@ class PlayerActivity: AppCompatActivity(){
         val screenWidth = displayMetrics.widthPixels
         val screenHeight = displayMetrics.heightPixels
         val sidePadding = screenWidth / 2
+        
 
         val videoUri = videoItem.uri
         absolutePath = getAbsoluteFilePath(this@PlayerActivity, videoUri).toString()
@@ -666,45 +684,9 @@ class PlayerActivity: AppCompatActivity(){
         STRING_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
         val file = File(absolutePath)
         STRING_FileName = file.name
-        //视频无法打开时的处理
-        try {
-            retriever.setDataSource(this@PlayerActivity, videoUri)
-        } catch (_: Exception) {
-            val data = Intent().apply {
-                putExtra("key", "needRefresh")
-            }
-            setResult(RESULT_OK, data)
-            finish()
-            return
-        }
         Controller_ThumbScroller.itemAnimator = null
         Controller_ThumbScroller.layoutParams.width = 0
         videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
-
-        /*
-        val videoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-        val videoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-
-        if (vm.PREFS_UseBlackBackground) {
-            vm.ShouldUseBlackBackground = true
-            setPageToDark()
-        }else{
-            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                if (videoSizeWidth.toFloat() / videoSizeHeight > 1.8){
-                    setPageToDark()
-                    vm.ShouldUseBlackBackground = true
-                }
-            }else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                if (videoSizeHeight.toFloat() / videoSizeWidth > 1.8){
-                    setPageToDark()
-                    vm.ShouldUseBlackBackground = true
-                }
-            }
-
-        }
-
-         */
-
 
 
         val tvWholeTime = findViewById<TextView>(R.id.tvWholeTime)
@@ -988,36 +970,6 @@ class PlayerActivity: AppCompatActivity(){
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
         }
         //播放区域点击事件
-
-        var STATE_2Fingers = false
-        var ACTION_POINTER_DOWN = false
-
-        var originalDistance = 0f
-        var distanceGap: Float
-
-        var center0x = 0f
-        var center0y = 0f
-
-        var center1x = 0f
-        var center1y = 0f
-
-        var originalScale = 1f
-        var scale: Double
-        var definiteScale = 1.0f
-
-
-
-        var center2x: Float
-        var center2y: Float
-
-        var center0pivoted = false
-
-        var finger1x = 0f
-        var finger1y = 0f
-        var finger2x: Float
-        var finger2y: Float
-        
-
         val gestureDetectorPlayArea = GestureDetector(this, object : SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 if (vm.player.isPlaying) {
@@ -1142,8 +1094,7 @@ class PlayerActivity: AppCompatActivity(){
                     //记录1指初始坐标
                     finger1x = event.x
                     finger1y = event.y
-
-                    //屏蔽顶部和底部区域,防止和系统下拉上滑动作冲突
+                    //点击区域屏蔽
                     if (finger1y < screenHeight * 0.2 || finger1y > screenHeight * 0.95){
                         return@setOnTouchListener false
                     }
@@ -1923,7 +1874,7 @@ class PlayerActivity: AppCompatActivity(){
         }
         //onDestroy来自退出
         else{
-            stopBackgroundServices()
+            //stopBackgroundServices()
         }
     }
 
@@ -2262,7 +2213,7 @@ class PlayerActivity: AppCompatActivity(){
                     finish()
                 }else{
                     EnterAnimationComplete = true
-                    val data = Intent().apply { putExtra("key", "needClosePlayer") }
+                    val data = Intent().apply { putExtra("NEED_CLOSE", "NEED_CLOSE") }
                     setResult(RESULT_OK, data)
                     finish()
                     return

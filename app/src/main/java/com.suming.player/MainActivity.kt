@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -40,30 +41,29 @@ class MainActivity: AppCompatActivity() {
 
     //注册adapter
     private lateinit var adapter: MainActivityAdapter
-    //设置
-    private var PREFS_S_UseMVVMPlayer = false
-
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
-
-
-    var statusBarHeight = 0
+    //状态栏高度
+    private var statusBarHeight = 0
 
     //无法打开视频时的接收器
     @SuppressLint("UnsafeOptInUsageError")
     private val detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         result: ActivityResult ->
         if (result.resultCode == RESULT_OK) {
-            if (result.data?.getStringExtra("key") == "needRefresh") {
+            if (result.data?.getStringExtra("key") == "NEED_REFRESH") {
                 notice("这条视频似乎无法播放", 3000)
                 load()
             }
-            else if (result.data?.getStringExtra("key") == "needClosePlayer") {
+            else if (result.data?.getStringExtra("NEED_CLOSE") == "NEED_CLOSE") {
+                PlayerExoSingleton.stopPlayer()
+            }
+            else if (result.data?.getStringExtra("HAS_CLOSED") == "HAS_CLOSED") {
+                notice("该视频已关闭", 2000)
                 PlayerExoSingleton.stopPlayer()
             }
         }
     }
-
 
 
     //生命周期
@@ -75,13 +75,7 @@ class MainActivity: AppCompatActivity() {
 
 
         //读取设置
-        val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
-        if (!prefs.contains("PREFS_UseMVVMPlayer")){
-            prefs.edit { putBoolean("PREFS_UseMVVMPlayer", true).apply() }
-            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
-        } else{
-            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
-        }
+        val prefs = getSharedPreferences("PREFS", MODE_PRIVATE)
         //内容避让状态栏并预读取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -124,41 +118,28 @@ class MainActivity: AppCompatActivity() {
         }
 
 
+        /*
+        //视频项关闭时的处理
+        if (intent.getBooleanExtra("ITEM_CLOSED", false)) {
+            notice("已关闭该视频", 2000)
+        }
+
+         */
+
+
 
         //监听返回手势
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 finish()
-                /*
-                val intent = Intent(Intent.ACTION_MAIN).apply {
-                    addCategory(Intent.CATEGORY_HOME)
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-                startActivity(intent)
-                Handler(Looper.getMainLooper()).postDelayed({
-                    val pid = Process.myPid()
-                    Process.killProcess(pid)
-                }, 500)
-                */
             }
         })
-
     }//onCreate END
+
 
     override fun onResume() {
         super.onResume()
-        //重读设置
-        val prefs = getSharedPreferences("PREFS_Player", MODE_PRIVATE)
-
-        if (!prefs.contains("PREFS_UseMVVCPlayer")){
-            prefs.edit { putBoolean("PREFS_UseMVVCPlayer", true).apply() }
-            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
-        } else{
-            PREFS_S_UseMVVMPlayer = prefs.getBoolean("PREFS_UseMVVMPlayer", false)
-        }
     }
-
-
 
 
     //Functions
