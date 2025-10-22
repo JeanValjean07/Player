@@ -2032,8 +2032,8 @@ class PlayerActivity: AppCompatActivity(){
         }
     }
     private fun setPageToDark(){
-        val playerView = findViewById<View>(R.id.playerView)
-        playerView.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
+        val playerViewContainer = findViewById<FrameLayout>(R.id.playerContainer)
+        playerViewContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
 
         val cover = findViewById<View>(R.id.cover)
         cover.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
