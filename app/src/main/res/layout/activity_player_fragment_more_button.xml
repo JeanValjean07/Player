@@ -54,7 +54,8 @@
                         android:backgroundTint="@android:color/transparent"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_exit_2"
-                        tools:ignore="ContentDescription" />
+                        android:contentDescription="关闭本页面"
+                        android:tooltipText="关闭本页面" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -68,12 +69,29 @@
                         android:layout_height="0dp"
                         android:layout_weight="1"/>
                     <ImageButton
+                        android:id="@+id/buttonBackToStart"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_more_button_back_to_start"
+                        tools:ignore="ContentDescription" />
+                    <ImageButton
+                        android:id="@+id/buttonCapture"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_more_button_capture"
+                        tools:ignore="ContentDescription" />
+                    <ImageButton
                         android:id="@+id/buttonLock"
                         android:layout_width="41dp"
                         android:layout_height="41dp"
                         android:layout_marginEnd="10dp"
-                        android:layout_marginTop="5dp"
-                        android:gravity="start"
+                        android:layout_gravity="center"
                         android:backgroundTint="@android:color/transparent"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_more_button_lock_off"

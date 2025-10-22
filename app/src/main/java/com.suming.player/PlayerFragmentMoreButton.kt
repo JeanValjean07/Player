@@ -18,6 +18,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
+import androidx.appcompat.widget.TooltipCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
@@ -142,6 +143,20 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 buttonLock.setImageResource(R.drawable.ic_more_button_lock_off)
             }
         }
+        //截屏
+        val buttonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
+        buttonCapture.setOnClickListener {
+            val result = bundleOf("KEY" to "Capture")
+            setFragmentResult("FROM_FRAGMENT", result)
+            dismiss()
+        }
+        //按钮：回到开头
+        val buttonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
+        buttonBackToStart.setOnClickListener {
+            val result = bundleOf("KEY" to "BackToStart")
+            setFragmentResult("FROM_FRAGMENT", result)
+            dismiss()
+        }
         //按钮：更改倍速
         val buttonChangeSpeed = view.findViewById<TextView>(R.id.buttonChangeSpeed)
         buttonChangeSpeed.setOnClickListener {
@@ -167,7 +182,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //开关：后台播放
         Switch_BackgroundPlay.setOnCheckedChangeListener { _, isChecked ->
             vm.PREFS_BackgroundPlay = isChecked
-            //发回更改命令
+
             val result = bundleOf("KEY" to "BackgroundPlay")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -176,7 +191,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //开关：循环播放
         Switch_LoopPlay.setOnCheckedChangeListener { _, isChecked ->
             vm.PREFS_LoopPlay = isChecked
-            //发回更改命令
+
             val result = bundleOf("KEY" to "LoopPlay")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -185,8 +200,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //开关：关闭方向监听器(OEL：OrientationEventListener)
         Switch_SealOEL.setOnCheckedChangeListener { _, isChecked ->
             vm.PREFS_SealOEL = isChecked
-            Log.d("SuMing", "Switch_SealOEL: $isChecked")
-            //发回更改命令
+
             val result = bundleOf("KEY" to "SealOEL")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -199,7 +213,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 vm.PREFS_OnlyVideo = false
                 Switch_OnlyVideo.isChecked = false
             }
-            //发回更改命令
+
             val result = bundleOf("KEY" to "OnlyAudio")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -212,7 +226,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 vm.PREFS_OnlyAudio = false
                 Switch_OnlyAudio.isChecked = false
             }
-            //发回更改命令
+
             val result = bundleOf("KEY" to "OnlyVideo")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -238,7 +252,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }else{
                 buttonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
             }
-            //发回更改命令
+
             val result = bundleOf("KEY" to "AlwaysSeek")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -259,7 +273,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             } else {
                 buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
             }
-            //发回更改命令
+
             val result = bundleOf("KEY" to "TapScroll")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -280,7 +294,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             } else {
                 buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
             }
-            //发回更改命令
+
             val result = bundleOf("KEY" to "LinkScroll")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -290,7 +304,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //视频信息
         val buttonVideoInfo = view.findViewById<TextView>(R.id.buttonVideoInfo)
         buttonVideoInfo.setOnClickListener {
-            //发回更改命令
             val result = bundleOf("KEY" to "VideoInfo")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -299,7 +312,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //分享
         val buttonSysShare = view.findViewById<TextView>(R.id.buttonSysShare)
         buttonSysShare.setOnClickListener {
-            //发回更改命令
             val result = bundleOf("KEY" to "SysShare")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -308,7 +320,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //音频
         val buttonEqualizer = view.findViewById<TextView>(R.id.buttonEqualizer)
         buttonEqualizer.setOnClickListener {
-            //发回更改命令
             val result = bundleOf("KEY" to "Equalizer")
             setFragmentResult("FROM_FRAGMENT", result)
 
@@ -323,7 +334,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     //Functions
     private fun setSpeed(){
-        //发回更改命令
+
         val result = bundleOf("KEY" to "SetSpeed")
         setFragmentResult("FROM_FRAGMENT", result)
 

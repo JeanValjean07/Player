@@ -5,12 +5,14 @@ import android.app.Dialog
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.hardware.display.DisplayManager
 import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
@@ -27,7 +29,6 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
-import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -35,7 +36,9 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.OrientationEventListener
+import android.view.PixelCopy
 import android.view.Surface
+import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -90,11 +93,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.OutputStream
 import java.math.RoundingMode
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import android.graphics.Bitmap.CompressFormat.JPEG
 
 @UnstableApi
 //@Suppress("unused")
@@ -941,24 +948,6 @@ class PlayerActivity: AppCompatActivity(){
         noticeCard.setOnClickListener {
             noticeCard.visibility = View.GONE
         }
-        //按钮：返回视频开头
-        val buttonBackToStart = findViewById<FrameLayout>(R.id.buttonActualBackToStart)
-        val buttonBackToStartMaterial = findViewById<MaterialButton>(R.id.buttonMaterialBackToStart)
-        buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
-        buttonBackToStart.setOnClickListener {
-            stopVideoSmartScroll()
-            lifecycleScope.launch {
-                buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivity, R.color.ButtonBg))
-                delay(200)
-                buttonBackToStartMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivity, R.color.ButtonBgClosed))
-            }
-            stopVideoSeek()
-            Controller_ThumbScroller.stopScroll()
-            if (vm.PREFS_LinkScroll) startScrollerSync()
-            vm.player.seekTo(0)
-            playVideo()
-            notice("返回视频起始", 1000)
-        }
         //按钮：暂停/继续播放
         val buttonPause = findViewById<FrameLayout>(R.id.buttonPause)
         buttonPause.setOnClickListener {
@@ -1461,6 +1450,61 @@ class PlayerActivity: AppCompatActivity(){
                 equalizer = Equalizer(1, vm.player.audioSessionId)
                 equalizer.enabled = true
                 PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
+            }
+            else if (ReceiveKey == "Capture"){
+
+                fun generateFileName(): String {
+                    val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+                    val current = LocalDateTime.now()
+                    return "IMG_${current.format(formatter)}"
+                }
+
+                fun handleSuccess(bitmap: Bitmap) {
+                    val contentValues = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, generateFileName())
+                        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/截取")
+                    }
+                    val imageUri = contentResolver.insert(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        contentValues
+                    )
+                    imageUri?.let {
+                        val outputStream: OutputStream? = contentResolver.openOutputStream(it)
+                        outputStream?.use { stream ->
+                            bitmap.compress(JPEG, 100, stream)
+                        }
+                    }
+
+                    notice("已截取当前帧,存入Pictures/截取", 3000)
+
+                    if (wasPlaying){ vm.player.play() }
+
+
+                }
+
+                wasPlaying = vm.player.isPlaying
+                vm.player.pause()
+                val Bitmap = Bitmap.createBitmap(videoSizeWidth, videoSizeHeight, Bitmap.Config.ARGB_8888)
+                val surfaceView = playerView.videoSurfaceView as? SurfaceView
+                val surface = surfaceView?.holder?.surface
+                PixelCopy.request(surface!!, Bitmap,
+                    { copyResult ->
+                        if (copyResult == PixelCopy.SUCCESS) {
+                            handleSuccess(Bitmap)
+                        } else {
+                            notice("截图失败", 3000)
+                        }
+                    },
+                    Handler(Looper.getMainLooper())
+                )
+
+            }
+            else if (ReceiveKey == "BackToStart"){
+                vm.player.seekTo(0)
+                vm.player.play()
+                if (vm.PREFS_LinkScroll) startScrollerSync()
+                notice("回到视频起始", 3000)
             }
         }
 
