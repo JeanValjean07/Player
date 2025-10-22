@@ -13,32 +13,26 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import com.google.android.gms.oss.licenses.OssLicensesActivity
 
 class SettingsActivity: AppCompatActivity() {
 
-    private lateinit var Switch1: SwitchCompat
-
-    private lateinit var Switch3: SwitchCompat
-    private lateinit var Switch4: SwitchCompat
-    private lateinit var Switch5: SwitchCompat
-    private lateinit var Switch6: SwitchCompat
-
-    private lateinit var Switch8: SwitchCompat
-    private lateinit var Switch9: SwitchCompat
-    private lateinit var Switch10: SwitchCompat
+    private lateinit var Switch_GenerateThumbSync: SwitchCompat
+    private lateinit var Switch_ExitWhenEnd: SwitchCompat
+    private lateinit var Switch_UseLongScroller: SwitchCompat
+    private lateinit var Switch_UseLongSeekGap: SwitchCompat
+    private lateinit var Switch_UseBlackBackground: SwitchCompat
+    private lateinit var Switch_UseHighRefreshRate: SwitchCompat
+    private lateinit var Switch_UseCompatScroller: SwitchCompat
+    private lateinit var Switch_CloseVideoTrack: SwitchCompat
 
     private var generateThumbSYNC = true
-
     private var exitWhenEnd = false
     private var useLongScroller = false
     private var useLongSeekGap = false
     private var useBlackBackground = false
-
     private var useHighRefreshRate = false
     private var useCompatScroller = false
     private var closeVideoTrack = false
-
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,47 +73,47 @@ class SettingsActivity: AppCompatActivity() {
 
 
 
-        Switch1 = findViewById(R.id.generateThumbSYNC)
-        Switch1.setOnCheckedChangeListener { _, isChecked ->
+        Switch_GenerateThumbSync = findViewById(R.id.generateThumbSYNC)
+        Switch_GenerateThumbSync.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_GenerateThumbSYNC", isChecked)
         }
         restoreSwitchState("PREFS_GenerateThumbSYNC")
 
         restoreSwitchState("PREFS_SeekSYNC")
-        Switch3 = findViewById(R.id.exitWhenEnd)
-        Switch3.setOnCheckedChangeListener { _, isChecked ->
+        Switch_ExitWhenEnd = findViewById(R.id.exitWhenEnd)
+        Switch_ExitWhenEnd.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_ExitWhenEnd", isChecked)
         }
         restoreSwitchState("PREFS_ExitWhenEnd")
-        Switch4 = findViewById(R.id.useLongScroller)
-        Switch4.setOnCheckedChangeListener { _, isChecked ->
+        Switch_UseLongScroller = findViewById(R.id.useLongScroller)
+        Switch_UseLongScroller.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_UseLongScroller", isChecked)
         }
         restoreSwitchState("PREFS_UseLongScroller")
-        Switch5 = findViewById(R.id.useLongSeekGap)
-        Switch5.setOnCheckedChangeListener { _, isChecked ->
+        Switch_UseLongSeekGap = findViewById(R.id.useLongSeekGap)
+        Switch_UseLongSeekGap.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_UseLongSeekGap", isChecked)
         }
         restoreSwitchState("PREFS_UseLongSeekGap")
-        Switch6 = findViewById(R.id.useBlackBackground)
-        Switch6.setOnCheckedChangeListener { _, isChecked ->
+        Switch_UseBlackBackground = findViewById(R.id.useBlackBackground)
+        Switch_UseBlackBackground.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_UseBlackBackground", isChecked)
         }
         restoreSwitchState("PREFS_UseBlackBackground")
 
         restoreSwitchState("PREFS_UseMVVMPlayer")
-        Switch8 = findViewById(R.id.useHighRefreshRate)
-        Switch8.setOnCheckedChangeListener { _, isChecked ->
+        Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
+        Switch_UseHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_UseHighRefreshRate", isChecked)
         }
         restoreSwitchState("PREFS_UseHighRefreshRate")
-        Switch9 = findViewById(R.id.useCompatScroller)
-        Switch9.setOnCheckedChangeListener { _, isChecked ->
+        Switch_UseCompatScroller = findViewById(R.id.useCompatScroller)
+        Switch_UseCompatScroller.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_UseCompatScroller", isChecked)
         }
         restoreSwitchState("PREFS_UseCompatScroller")
-        Switch10 = findViewById(R.id.closeVideoTrack)
-        Switch10.setOnCheckedChangeListener { _, isChecked ->
+        Switch_CloseVideoTrack = findViewById(R.id.closeVideoTrack)
+        Switch_CloseVideoTrack.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_CloseVideoTrack", isChecked)
         }
         restoreSwitchState("PREFS_CloseVideoTrack")
@@ -151,66 +145,64 @@ class SettingsActivity: AppCompatActivity() {
         if (key == "PREFS_GenerateThumbSYNC"){
             generateThumbSYNC = sharedPreferences.getBoolean("PREFS_GenerateThumbSYNC", true)
             if (generateThumbSYNC){
-                Switch1.isChecked = true
+                Switch_GenerateThumbSync.isChecked = true
             }
             else{
-                Switch1.isChecked = false
+                Switch_GenerateThumbSync.isChecked = false
             }
         }
-
         if (key == "PREFS_ExitWhenEnd"){
             exitWhenEnd = sharedPreferences.getBoolean("PREFS_ExitWhenEnd", false)
             if (exitWhenEnd){
-                Switch3.isChecked = true
+                Switch_ExitWhenEnd.isChecked = true
             }
             else{
-                Switch3.isChecked = false
+                Switch_ExitWhenEnd.isChecked = false
             }
         }
         if (key == "PREFS_UseLongScroller"){
             useLongScroller = sharedPreferences.getBoolean("PREFS_UseLongScroller", false)
             if (useLongScroller){
-                Switch4.isChecked = true
+                Switch_UseLongScroller.isChecked = true
             }
             else{
-                Switch4.isChecked = false
+                Switch_UseLongScroller.isChecked = false
             }
         }
         if (key == "PREFS_UseLongSeekGap"){
             useLongSeekGap = sharedPreferences.getBoolean("PREFS_UseLongSeekGap", false)
             if (useLongSeekGap){
-                Switch5.isChecked = true
+                Switch_UseLongSeekGap.isChecked = true
             }
             else{
-                Switch5.isChecked = false
+                Switch_UseLongSeekGap.isChecked = false
             }
         }
         if (key == "PREFS_UseBlackBackground"){
             useBlackBackground = sharedPreferences.getBoolean("PREFS_UseBlackBackground", false)
             if (useBlackBackground){
-                Switch6.isChecked = true
+                Switch_UseBlackBackground.isChecked = true
             }
             else{
-                Switch6.isChecked = false
+                Switch_UseBlackBackground.isChecked = false
             }
         }
-
         if (key == "PREFS_UseHighRefreshRate"){
             useHighRefreshRate = sharedPreferences.getBoolean("PREFS_UseHighRefreshRate", false)
             if (useHighRefreshRate){
-                Switch8.isChecked = true
+                Switch_UseHighRefreshRate.isChecked = true
             }
             else{
-                Switch8.isChecked = false
+                Switch_UseHighRefreshRate.isChecked = false
             }
         }
         if (key == "PREFS_UseCompatScroller"){
             useCompatScroller = sharedPreferences.getBoolean("PREFS_UseCompatScroller", false)
             if (useCompatScroller){
-                Switch9.isChecked = true
+                Switch_UseCompatScroller.isChecked = true
             }
             else{
-                Switch9.isChecked = false
+                Switch_UseCompatScroller.isChecked = false
             }
         }
         if (key == "PREFS_CloseVideoTrack"){
@@ -219,10 +211,10 @@ class SettingsActivity: AppCompatActivity() {
             }
             closeVideoTrack = sharedPreferences.getBoolean("PREFS_CloseVideoTrack", true)
             if (closeVideoTrack){
-                Switch10.isChecked = true
+                Switch_CloseVideoTrack.isChecked = true
             }
             else{
-                Switch10.isChecked = false
+                Switch_CloseVideoTrack.isChecked = false
             }
         }
     }
