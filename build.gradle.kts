@@ -4,11 +4,15 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     //Compose
     alias(libs.plugins.compose.compiler) apply false
+
+    id("com.google.devtools.ksp") version "2.0.21-1.0.28" apply false
+
 }
 
 buildscript {
     dependencies {
         //Oss Licenses Plugin
         classpath("com.google.android.gms:oss-licenses-plugin:0.10.6")
+
     }
 }

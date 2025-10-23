@@ -26,9 +26,13 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.google.android.material.button.MaterialButton
 import com.suming.player.PlayerExoSingleton.player
+import data.MediaItemRepo
+import data.MediaItemSetting
+import kotlinx.coroutines.launch
 
 @UnstableApi
 class PlayerFragmentMoreButton: DialogFragment() {
@@ -41,6 +45,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private lateinit var Switch_SealOEL: SwitchCompat
     private lateinit var Switch_OnlyAudio: SwitchCompat
     private lateinit var Switch_OnlyVideo: SwitchCompat
+    private lateinit var Switch_ExitWhenMediaEnd: SwitchCompat
     //自动关闭标志位
     private var lockPage = false
 
@@ -94,9 +99,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?,
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_player_fragment_more_button, container, false)
 
     @SuppressLint("UseGetLayoutInflater", "InflateParams")
@@ -107,18 +110,25 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val currentSpeed: Float = player.playbackParameters.speed
         val currentSpeedText = view.findViewById<TextView>(R.id.current_speed)
         currentSpeedText.text = currentSpeed.toString()
+        val countExit = view.findViewById<TextView>(R.id.State_CountExit)
+        if (vm.PREFS_CountExit == 0){
+            countExit.text = "未开启"
+        }
+
         //开关置位
         Switch_BackgroundPlay = view.findViewById(R.id.Switch_BackgroundPlay)
         Switch_LoopPlay = view.findViewById(R.id.Switch_LoopPlay)
         Switch_SealOEL = view.findViewById(R.id.Switch_SealOEL)
         Switch_OnlyAudio = view.findViewById(R.id.Switch_OnlyAudio)
         Switch_OnlyVideo = view.findViewById(R.id.Switch_OnlyVideo)
+        Switch_ExitWhenMediaEnd = view.findViewById(R.id.Switch_ExitWhenMediaEnd)
 
         Switch_BackgroundPlay.isChecked = vm.PREFS_BackgroundPlay
         Switch_LoopPlay.isChecked = vm.PREFS_LoopPlay
         Switch_SealOEL.isChecked = vm.PREFS_SealOEL
         Switch_OnlyAudio.isChecked = vm.PREFS_OnlyAudio
         Switch_OnlyVideo.isChecked = vm.PREFS_OnlyVideo
+        Switch_ExitWhenMediaEnd.isChecked = vm.PREFS_ExitWhenMediaEnd
 
 
 
@@ -164,15 +174,15 @@ class PlayerFragmentMoreButton: DialogFragment() {
             popup.menuInflater.inflate(R.menu.activity_player_popup_video_speed, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when(item.itemId){
-                    R.id.MenuAction_0_5 -> { vm.player.setPlaybackSpeed(0.5f); customDismiss(); true }
+                    R.id.MenuAction_0_5 -> { chooseSpeed(0.5f); true }
 
-                    R.id.MenuAction_1_0 -> { vm.player.setPlaybackSpeed(1.0f); customDismiss(); true }
+                    R.id.MenuAction_1_0 -> { chooseSpeed(1.0f); true }
 
-                    R.id.MenuAction_1_5 -> { vm.player.setPlaybackSpeed(1.5f); customDismiss(); true }
+                    R.id.MenuAction_1_5 -> { chooseSpeed(1.5f); true }
 
-                    R.id.MenuAction_2_0 -> { vm.player.setPlaybackSpeed(2.0f); customDismiss(); true }
+                    R.id.MenuAction_2_0 -> { chooseSpeed(2.0f); true }
 
-                    R.id.MenuAction_Input -> { setSpeed(); customDismiss(); true }
+                    R.id.MenuAction_Input -> { setSpeed(); dismiss(); true }
 
                     else -> true
                 }
@@ -214,7 +224,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 Switch_OnlyVideo.isChecked = false
             }
 
-            val result = bundleOf("KEY" to "OnlyAudio")
+            val result = bundleOf("KEY" to "SoundOnly")
             setFragmentResult("FROM_FRAGMENT", result)
 
             customDismiss()
@@ -227,7 +237,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 Switch_OnlyAudio.isChecked = false
             }
 
-            val result = bundleOf("KEY" to "OnlyVideo")
+            val result = bundleOf("KEY" to "VideoOnly")
             setFragmentResult("FROM_FRAGMENT", result)
 
             customDismiss()
@@ -274,7 +284,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
             }
 
-            val result = bundleOf("KEY" to "TapScroll")
+            val result = bundleOf("KEY" to "TapJump")
             setFragmentResult("FROM_FRAGMENT", result)
 
             customDismiss()
@@ -328,11 +338,25 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
 
-
     } //onViewCreated END
 
 
     //Functions
+    private fun chooseSpeed(speed: Float){
+        vm.PREFS_PlaySpeed = speed
+        vm.player.setPlaybackSpeed(speed)
+        //刷新文字
+        val currentSpeedText = view?.findViewById<TextView>(R.id.current_speed)
+        currentSpeedText?.text = speed.toString()
+        //存表
+        lifecycleScope.launch {
+            val newSetting = MediaItemSetting(MARK_FileName = vm.fileName, PREFS_PlaySpeed = speed)
+            MediaItemRepo.get(requireContext()).saveSetting(newSetting)
+        }
+
+        customDismiss()
+    }
+
     private fun setSpeed(){
 
         val result = bundleOf("KEY" to "SetSpeed")

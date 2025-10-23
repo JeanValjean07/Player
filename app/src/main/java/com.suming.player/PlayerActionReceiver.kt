@@ -24,9 +24,9 @@ class PlayerActionReceiver:BroadcastReceiver() {
                 }
                 LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
             }
-            "PLAYER_FINISH" -> {
+            "PLAYER_EXIT" -> {
                 val intent2 = Intent("LOCAL_RECEIVER").apply {
-                    putExtra("key", "PLAYER_FINISH")
+                    putExtra("key", "PLAYER_EXIT")
                 }
                 LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
             }

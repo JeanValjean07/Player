@@ -1,6 +1,7 @@
 package com.suming.player
 
 import android.app.Application
+import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.C
@@ -90,15 +91,16 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var statusBarHeight = 0
 
+    var state_FromSysStart: Boolean = false
 
 
+    //设置项
     var PREFS_LoopPlay: Boolean = false
-    var PREFS_AlwaysSeek: Boolean = false
+    var PREFS_AlwaysSeek: Boolean = true
     var PREFS_BackgroundPlay: Boolean = false
     var PREFS_TapJump: Boolean = false
-    var PREFS_LinkScroll: Boolean = false
+    var PREFS_LinkScroll: Boolean = true
     var PREFS_SealOEL: Boolean = false
-
 
     var PREFS_GenerateThumbSYNC : Boolean = false
     var PREFS_ExitWhenEnd : Boolean = false
@@ -108,15 +110,39 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_UseHighRefreshRate : Boolean = false
     var PREFS_UseCompatScroller : Boolean = false
     var PREFS_CloseVideoTrack : Boolean = false
+    var PREFS_EnableRoomDatabase : Boolean = false
 
+    var PREFS_ExitWhenMediaEnd: Boolean = false
+    var PREFS_CountExit: Int = 0
 
-    var ShouldUseBlackBackground : Boolean = false
 
 
 
     //以下开关不固化
     var PREFS_OnlyAudio: Boolean = false
     var PREFS_OnlyVideo: Boolean = false
+
+    //Intent保存
+    var originIntent : Intent? = null
+    fun saveIntent(intent: Intent){
+        if (originIntent == null) {
+            originIntent = intent
+        }
+    }
+    //文件名保存
+    var fileName : String = ""
+    fun saveFileName(name: String){
+        if (fileName == "") {
+            fileName = name
+        }
+    }
+    //倍速
+    var PREFS_PlaySpeed: Float = 1.0f
+    fun setSpeed(speed: Float){
+        PREFS_PlaySpeed = speed
+        player.setPlaybackSpeed(speed)
+    }
+
 
 
 

@@ -24,6 +24,9 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseHighRefreshRate: SwitchCompat
     private lateinit var Switch_UseCompatScroller: SwitchCompat
     private lateinit var Switch_CloseVideoTrack: SwitchCompat
+    private lateinit var Switch_EnableRoomDatabase: SwitchCompat
+
+
 
     private var generateThumbSYNC = true
     private var exitWhenEnd = false
@@ -33,6 +36,9 @@ class SettingsActivity: AppCompatActivity() {
     private var useHighRefreshRate = false
     private var useCompatScroller = false
     private var closeVideoTrack = false
+    private var EnableRoomDatabase = false
+
+
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,8 +84,6 @@ class SettingsActivity: AppCompatActivity() {
             saveSwitchState("PREFS_GenerateThumbSYNC", isChecked)
         }
         restoreSwitchState("PREFS_GenerateThumbSYNC")
-
-        restoreSwitchState("PREFS_SeekSYNC")
         Switch_ExitWhenEnd = findViewById(R.id.exitWhenEnd)
         Switch_ExitWhenEnd.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_ExitWhenEnd", isChecked)
@@ -100,8 +104,6 @@ class SettingsActivity: AppCompatActivity() {
             saveSwitchState("PREFS_UseBlackBackground", isChecked)
         }
         restoreSwitchState("PREFS_UseBlackBackground")
-
-        restoreSwitchState("PREFS_UseMVVMPlayer")
         Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
         Switch_UseHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
             saveSwitchState("PREFS_UseHighRefreshRate", isChecked)
@@ -117,6 +119,11 @@ class SettingsActivity: AppCompatActivity() {
             saveSwitchState("PREFS_CloseVideoTrack", isChecked)
         }
         restoreSwitchState("PREFS_CloseVideoTrack")
+        Switch_EnableRoomDatabase = findViewById(R.id.EnableRoomDatabase)
+        Switch_EnableRoomDatabase.setOnCheckedChangeListener { _, isChecked ->
+            saveSwitchState("PREFS_EnableRoomDatabase", isChecked)
+        }
+        restoreSwitchState("PREFS_EnableRoomDatabase")
 
 
     } //onCreate END
@@ -130,6 +137,7 @@ class SettingsActivity: AppCompatActivity() {
         "PREFS_UseHighRefreshRate"        to ::useHighRefreshRate,
         "PREFS_UseCompatScroller"         to ::useCompatScroller,
         "PREFS_CloseVideoTrack"           to ::closeVideoTrack,
+        "PREFS_EnableRoomDatabase"        to ::EnableRoomDatabase,
     )
 
     private fun saveSwitchState(key: String, isChecked: Boolean) {
@@ -215,6 +223,15 @@ class SettingsActivity: AppCompatActivity() {
             }
             else{
                 Switch_CloseVideoTrack.isChecked = false
+            }
+        }
+        if (key == "PREFS_EnableRoomDatabase"){
+            EnableRoomDatabase = sharedPreferences.getBoolean("PREFS_EnableRoomDatabase", false)
+            if (EnableRoomDatabase){
+                Switch_EnableRoomDatabase.isChecked = true
+            }
+            else{
+                Switch_EnableRoomDatabase.isChecked = false
             }
         }
     }

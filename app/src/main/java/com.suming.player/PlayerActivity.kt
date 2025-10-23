@@ -102,10 +102,11 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import android.graphics.Bitmap.CompressFormat.JPEG
-import android.util.Log
+import data.MediaItemRepo
+import data.MediaItemSetting
 
 @UnstableApi
-//@Suppress("unused")
+@Suppress("unused")
 class PlayerActivity: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -215,13 +216,18 @@ class PlayerActivity: AppCompatActivity(){
     private var videoSizeHeight = 0
 
     private lateinit var playerView: PlayerView
-
-
     private lateinit var equalizer: Equalizer
 
     //空闲定时器
     private var IDLE_Timer: CountDownTimer? = null
     private val IDLE_MS = 5_000L
+    //定时关闭定时器
+    private var COUNT_Timer: CountDownTimer? = null
+    private val COUNT_MS = 120_000L
+
+    //来自查表恢复的设置
+    private var NeedSetSpeed = false
+    private var NeedSetSpeedValue = 1.0f
 
 
     private var EnterAnimationComplete = false
@@ -244,13 +250,15 @@ class PlayerActivity: AppCompatActivity(){
         //其他预设
         preCheck()
 
-        //恢复暂存数据
+        //初次打开
         if (savedInstanceState == null) {
-            PlayerExoSingleton.releasePlayer()    //初次打开:关闭播放器实例
-            stopBackgroundServices()              //初次打开:关闭后台播放服务
-        }else{
-            //取出Intent
-            intent = savedInstanceState.getParcelable("CONTENT_INTENT")
+            PlayerExoSingleton.releasePlayer()
+            stopBackgroundServices()
+            vm.saveIntent(intent)
+        }
+        //非初次打开
+        else{
+            intent = vm.originIntent
         }
 
         //设置项读取,检查和预置
@@ -262,24 +270,6 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_GenerateThumbSYNC = true
             } else {
                 vm.PREFS_GenerateThumbSYNC = prefs.getBoolean("PREFS_GenerateThumbSYNC", true)
-            }
-            if (!prefs.contains("PREFS_TapJump")) {
-                prefsEditor.putBoolean("PREFS_TapJump", false)
-                vm.PREFS_TapJump = false
-            } else {
-                vm.PREFS_TapJump = prefs.getBoolean("PREFS_TapJump", false)
-            }
-            if (!prefs.contains("PREFS_LinkScroll")) {
-                prefsEditor.putBoolean("PREFS_LinkScroll", true)
-                vm.PREFS_LinkScroll = true
-            } else {
-                vm.PREFS_LinkScroll = prefs.getBoolean("PREFS_LinkScroll", false)
-            }
-            if (!prefs.contains("PREFS_AlwaysSeek")) {
-                prefsEditor.putBoolean("PREFS_AlwaysSeek", true)
-                vm.PREFS_AlwaysSeek = true
-            } else {
-                vm.PREFS_AlwaysSeek = prefs.getBoolean("PREFS_AlwaysSeek", false)
             }
             if (!prefs.contains("PREFS_BackgroundPlay")) {
                 prefsEditor.putBoolean("PREFS_BackgroundPlay", false)
@@ -356,26 +346,30 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 vm.statusBarHeight = prefs.getInt("INFO_STATUSBAR_HEIGHT", 0)
             }
+            if (!prefs.contains("PREFS_EnableRoomDatabase")) {
+                prefsEditor.putBoolean("PREFS_EnableRoomDatabase", false)
+                vm.PREFS_EnableRoomDatabase = false
+            } else {
+                vm.PREFS_EnableRoomDatabase = prefs.getBoolean("PREFS_EnableRoomDatabase", false)
+            }
             prefsEditor.apply()
         }
 
         //区分打开方式并反序列化
         val videoItem: VideoItem? = when (intent?.action) {
-
+            //系统面板：分享
             Intent.ACTION_SEND -> {
-                vm.PREFS_ExitWhenEnd = true
-                val uri =
-                    IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
-                        ?: return finish()
+                vm.state_FromSysStart = true
+                val uri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java) ?: return finish()
                 VideoItem(0, uri, "", 0)
             }
-
+            //系统面板：选择其他应用打开
             Intent.ACTION_VIEW -> {
-                vm.PREFS_ExitWhenEnd = true
+                vm.state_FromSysStart = true
                 val uri = intent.data ?: return finish()
                 VideoItem(0, uri, "", 0)
             }
-
+            //正常打开
             else ->  {
                 vm.PREFS_ExitWhenEnd = false
                 IntentCompat.getParcelableExtra(intent, "video", VideoItem::class.java)
@@ -412,7 +406,6 @@ class PlayerActivity: AppCompatActivity(){
 
 
         if (vm.PREFS_UseBlackBackground) {
-            vm.ShouldUseBlackBackground = true
             setPageToDark()
         }
 
@@ -582,6 +575,10 @@ class PlayerActivity: AppCompatActivity(){
                     wasPlaying = vm.player.isPlaying
                     vm.player.pause()
                 }
+                if (data == "PLAYER_EXIT") {
+                    val pid = android.os.Process.myPid()
+                    android.os.Process.killProcess(pid)
+                }
             }
         }
         localBroadcastManager.registerReceiver(receiver, filter)
@@ -644,7 +641,6 @@ class PlayerActivity: AppCompatActivity(){
 
 
 
-
         //视频当前时间位置
         val CONTROLLER_CurrentTime = findViewById<TextView>(R.id.tvCurrentTime)
         var CONTROLLER_CurrentTime_Color = 1
@@ -684,6 +680,7 @@ class PlayerActivity: AppCompatActivity(){
         STRING_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
         val file = File(absolutePath)
         STRING_FileName = file.name
+        vm.saveFileName(STRING_FileName)
         Controller_ThumbScroller.itemAnimator = null
         Controller_ThumbScroller.layoutParams.width = 0
         videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
@@ -693,6 +690,15 @@ class PlayerActivity: AppCompatActivity(){
         tvWholeTime.text = formatTime1(videoDuration.toLong())
 
         retriever.release()
+
+        //读取数据库
+        if (savedInstanceState == null) {
+            if(vm.PREFS_EnableRoomDatabase){
+                getRoomSettings()
+            }else{
+                getPreferencesSettings()
+            }
+        }
 
 
         //进度条绘制
@@ -1249,43 +1255,13 @@ class PlayerActivity: AppCompatActivity(){
                 }
             }
             else if (ReceiveKey == "AlwaysSeek"){
-                if (vm.PREFS_AlwaysSeek){
-                    vm.PREFS_AlwaysSeek = false
-                    prefs.edit { putBoolean("PREFS_AlwaysSeek", false).apply() }
-                    notice("已关闭AlwaysSeek", 3000)
-                } else {
-                    vm.PREFS_AlwaysSeek = true
-                    prefs.edit { putBoolean("PREFS_AlwaysSeek", true).apply() }
-                    notice("已开启AlwaysSeek", 3000)
-                }
+                changeStateAlwaysSeek()
             }
-            else if (ReceiveKey == "TapScroll"){
-                if (vm.PREFS_TapJump){
-                    vm.PREFS_TapJump = false
-                    prefs.edit { putBoolean("PREFS_TapScrolling", false).apply() }
-                    notice("已关闭单击跳转", 1000)
-                } else {
-                    vm.PREFS_TapJump = true
-                    prefs.edit { putBoolean("PREFS_TapScrolling", true).apply() }
-                    notice("已开启单击跳转", 1000)
-                }
+            else if (ReceiveKey == "TapJump"){
+                changeStateTapJump()
             }
             else if (ReceiveKey == "LinkScroll"){
-                if (vm.PREFS_LinkScroll) {
-                    vm.PREFS_LinkScroll = false
-                    prefs.edit { putBoolean("PREFS_LinkScrolling", false).apply() }
-                    stopScrollerSync()
-                    Controller_ThumbScroller.stopScroll()
-                    notice("已关闭链接滚动条与视频进度", 2500)
-                } else {
-                    vm.PREFS_LinkScroll = true
-                    prefs.edit { putBoolean("PREFS_LinkScrolling", true).apply() }
-                    notice("已将进度条与视频进度同步", 1000)
-                    isSeekReady = true
-                    Controller_ThumbScroller.stopScroll()
-                    startScrollerSync()
-                    stopVideoSeek()
-                }
+                changeStateLinkScroll()
             }
             else if (ReceiveKey == "SealOEL"){
                 if (vm.PREFS_SealOEL){
@@ -1298,31 +1274,11 @@ class PlayerActivity: AppCompatActivity(){
                     notice("已开启方向监听器", 1000)
                 }
             }
-            else if (ReceiveKey == "OnlyAudio"){
-                if (vm.PREFS_OnlyAudio){
-                    //确保声音开启
-                    vm.player.volume = 1f
-                    //仅播放音频：关闭视频轨道
-                    vm.selectAudioOnly()
-                    notice("已开启仅播放音频", 1000)
-                } else {
-                    //仅播放音频：打开视频轨道
-                    vm.recoveryAllTrack()
-                    notice("已关闭仅播放音频", 1000)
-                }
+            else if (ReceiveKey == "SoundOnly"){
+                changeStateSoundOnly(true)
             }
-            else if (ReceiveKey == "OnlyVideo"){
-                if (vm.PREFS_OnlyVideo){
-                    //确保视频开启
-                    vm.recoveryAllTrack()
-                    //仅播放视频：关闭声音
-                    vm.player.volume = 0f
-                    notice("已开启仅播放视频", 1000)
-                } else {
-                    vm.player.volume = 1f
-                    notice("已关闭仅播放视频", 1000)
-
-                }
+            else if (ReceiveKey == "VideoOnly"){
+                changeStateVideoOnly(true)
             }
             else if (ReceiveKey == "VideoInfo"){
                 //读取数据
@@ -1381,6 +1337,10 @@ class PlayerActivity: AppCompatActivity(){
                         if(inputValue > 0.0 && inputValue < 5.0){
                             vm.player.setPlaybackSpeed(inputValue)
                             notice("已将倍速设置为$inputValue", 2000)
+                            lifecycleScope.launch {
+                                val newSetting = MediaItemSetting(MARK_FileName = vm.fileName, PREFS_PlaySpeed = inputValue)
+                                MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
+                            }
                         } else {
                             notice("数值过大", 3000)
                         }
@@ -1499,6 +1459,7 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
 
+        //恢复控件显示状态
         if (vm.controllerHided){
             setControllerInvisibleNoAnimation()
         }
@@ -1523,6 +1484,7 @@ class PlayerActivity: AppCompatActivity(){
             delay(100)
             startVideoTimeSync()
         }
+
         //系统手势监听：返回键重写
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -1530,6 +1492,164 @@ class PlayerActivity: AppCompatActivity(){
             }
         })
     } //onCreate END
+
+    //存表项
+    private fun changeStateSoundOnly(flag_need_notice: Boolean){
+        if (vm.PREFS_OnlyAudio){
+            //确保声音开启
+            vm.player.volume = 1f
+            //仅播放音频：关闭视频轨道
+            vm.selectAudioOnly()
+            if(flag_need_notice) notice("已开启仅播放音频", 1000)
+        } else {
+            //仅播放音频：打开视频轨道
+            vm.recoveryAllTrack()
+            if(flag_need_notice) notice("已关闭仅播放音频", 1000)
+        }
+    }
+    private fun changeStateVideoOnly(flag_need_notice: Boolean){
+        if (vm.PREFS_OnlyVideo){
+            //确保视频开启
+            vm.recoveryAllTrack()
+            //仅播放视频：关闭声音
+            vm.player.volume = 0f
+            if(flag_need_notice) notice("已开启仅播放视频", 1000)
+        } else {
+            vm.player.volume = 1f
+            if(flag_need_notice) notice("已关闭仅播放视频", 1000)
+        }
+    }
+    private fun changeStateAlwaysSeek(){
+        if (vm.PREFS_AlwaysSeek){
+            vm.PREFS_AlwaysSeek = false
+            notice("已关闭AlwaysSeek", 3000)
+        } else {
+            vm.PREFS_AlwaysSeek = true
+            notice("已开启AlwaysSeek", 3000)
+        }
+    }
+    private fun changeStateLinkScroll(){
+        val Controller_ThumbScroller = findViewById<RecyclerView>(R.id.rvThumbnails)
+        if (vm.PREFS_LinkScroll) {
+            vm.PREFS_LinkScroll = false
+            stopScrollerSync()
+            Controller_ThumbScroller.stopScroll()
+            notice("已关闭链接滚动条与视频进度", 2500)
+        } else {
+            vm.PREFS_LinkScroll = true
+            notice("已将进度条与视频进度同步", 1000)
+            isSeekReady = true
+            Controller_ThumbScroller.stopScroll()
+            startScrollerSync()
+            stopVideoSeek()
+        }
+    }
+    private fun changeStateTapJump(){
+        if (vm.PREFS_TapJump){
+            vm.PREFS_TapJump = false
+            notice("已关闭TapJump", 3000)
+        } else {
+            vm.PREFS_TapJump = true
+            notice("已开启TapJump", 3000)
+        }
+    }
+    private fun saveChangedMap(){
+        lifecycleScope.launch {
+            val newSetting = MediaItemSetting(
+                MARK_FileName = vm.fileName,
+                PREFS_SoundOnly = vm.PREFS_OnlyAudio,
+                PREFS_VideoOnly = vm.PREFS_OnlyVideo,
+                PREFS_PlaySpeed = vm.PREFS_PlaySpeed,
+                PREFS_AlwaysSeek = vm.PREFS_AlwaysSeek,
+                PREFS_LinkScroll = vm.PREFS_LinkScroll,
+                PREFS_TapJump = vm.PREFS_TapJump,
+                SaveState_ExitPosition = vm.player.currentPosition,
+            )
+            MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
+        }
+    }
+    private fun getRoomSettings(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            val setting = MediaItemRepo.get(this@PlayerActivity).getSetting(vm.fileName)
+            if (setting == null){ return@launch }
+            if (setting.PREFS_SoundOnly){
+                vm.PREFS_OnlyAudio = true
+                withContext(Dispatchers.Main) {
+                    changeStateSoundOnly(false)
+                }
+            }
+            if (setting.PREFS_VideoOnly){
+                vm.PREFS_OnlyVideo = true
+                withContext(Dispatchers.Main) {
+                    changeStateVideoOnly(false)
+                }
+            }
+            if (setting.PREFS_PlaySpeed != 1.0f){
+                val PlaySpeed = setting.PREFS_PlaySpeed
+                notice("已将倍速设置为上次保存的${PlaySpeed}x", 2000)
+                //用于播放器未准备好
+                NeedSetSpeed = true
+                NeedSetSpeedValue = PlaySpeed
+                //用于播放器已准备好
+                delay(500)
+                withContext(Dispatchers.Main) { vm.setSpeed(PlaySpeed) }
+            }
+            if (setting.PREFS_AlwaysSeek){
+                vm.PREFS_AlwaysSeek = true
+            }else{
+                vm.PREFS_AlwaysSeek = false
+            }
+            if (setting.PREFS_LinkScroll){
+                vm.PREFS_LinkScroll = true
+            }else{
+                vm.PREFS_LinkScroll = false
+            }
+            if (setting.PREFS_TapJump){
+                vm.PREFS_TapJump = true
+            }else{
+                vm.PREFS_TapJump = false
+            }
+            if (setting.SaveState_ExitPosition != 0L){
+                delay(500)
+                withContext(Dispatchers.Main) { vm.player.seekTo(setting.SaveState_ExitPosition) }
+            }
+        }
+    }
+    @SuppressLint("CommitPrefEdits", "UseKtx")
+    private fun getPreferencesSettings(){
+        val prefs = getSharedPreferences("PREFS", MODE_PRIVATE)
+        val prefsEditor = prefs.edit()
+        if (!prefs.contains("PREFS_AlwaysSeek")) {
+            prefsEditor.putBoolean("PREFS_AlwaysSeek", false)
+            vm.PREFS_AlwaysSeek = false
+        } else {
+            vm.PREFS_AlwaysSeek = prefs.getBoolean("PREFS_AlwaysSeek", false)
+        }
+        if (!prefs.contains("PREFS_LinkScroll")) {
+            prefsEditor.putBoolean("PREFS_LinkScroll", true)
+            vm.PREFS_LinkScroll = true
+        } else {
+            vm.PREFS_LinkScroll = prefs.getBoolean("PREFS_LinkScroll", true)
+        }
+        if (!prefs.contains("PREFS_TapJump")) {
+            prefsEditor.putBoolean("PREFS_TapJump", false)
+            vm.PREFS_TapJump = false
+        } else {
+            vm.PREFS_TapJump = prefs.getBoolean("PREFS_TapJump", false)
+        }
+        prefsEditor.apply()
+    }
+    @SuppressLint("CommitPrefEdits", "UseKtx")
+    private fun saveChangedPrefs(){
+        lifecycleScope.launch {
+            val prefs = getSharedPreferences("PREFS", MODE_PRIVATE)
+            val prefsEditor = prefs.edit()
+            prefsEditor.putBoolean("PREFS_AlwaysSeek", vm.PREFS_AlwaysSeek)
+            prefsEditor.putBoolean("PREFS_LinkScroll", vm.PREFS_LinkScroll)
+            prefsEditor.putBoolean("PREFS_TapJump", vm.PREFS_TapJump)
+            prefsEditor.apply()
+        }
+    }
 
 
 
@@ -1787,9 +1907,7 @@ class PlayerActivity: AppCompatActivity(){
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-
-        //保存原始Intent
-        outState.putParcelable("CONTENT_INTENT", intent)
+        //saveLongKeepItems(outState)
     }
 
     override fun onPause() {
@@ -1906,6 +2024,14 @@ class PlayerActivity: AppCompatActivity(){
 
 
     //Functions
+    private fun saveLongKeepItems(outState: Bundle){
+        //保存原始Intent
+        outState.putParcelable("CONTENT_INTENT", intent)
+
+    }
+    private fun getLongKeepItems(savedInstanceState: Bundle?){
+        intent = savedInstanceState?.getParcelable("CONTENT_INTENT")
+    }
     //分享视频(已知Uri)
     private fun shareVideo(context: Context, videoUri: Uri) {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -1915,6 +2041,17 @@ class PlayerActivity: AppCompatActivity(){
         }
         val chooser = Intent.createChooser(shareIntent, "分享视频")
         context.startActivity(chooser)
+    }
+    //定时关闭倒计时
+    private fun startCountCloseTimer(){
+        COUNT_Timer?.cancel()
+        COUNT_Timer = object : CountDownTimer(COUNT_MS, 1000L) {
+            override fun onTick(millisUntilFinished: Long) {}
+            override fun onFinish() { CountTimeout() }
+        }.start()
+    }
+    private fun CountTimeout() {
+
     }
     //空闲倒计时
     private fun startIdleTimer() {
@@ -2014,7 +2151,7 @@ class PlayerActivity: AppCompatActivity(){
     }
     private fun setBackgroundVisible(){
         val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
-        if (vm.ShouldUseBlackBackground){
+        if (vm.PREFS_UseBlackBackground){
             playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
         }else{
             playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
@@ -2206,12 +2343,17 @@ class PlayerActivity: AppCompatActivity(){
                 setControllerVisible()
                 vm.controllerHided = false
             }
+            //确认退出
             else{
+                //确认退出
                 if (EnterAnimationComplete){
                     PlayerExoSingleton.stopPlayer()
                     stopFloatingWindow()
+                    if (vm.PREFS_EnableRoomDatabase){ saveChangedMap() } else{ saveChangedPrefs() }
                     finish()
-                }else{
+                }
+                //为准备完成前退出
+                else{
                     EnterAnimationComplete = true
                     val data = Intent().apply { putExtra("NEED_CLOSE", "NEED_CLOSE") }
                     setResult(RESULT_OK, data)
@@ -2377,6 +2519,12 @@ class PlayerActivity: AppCompatActivity(){
     private fun playerReady(){
         if (READY_FromFirstEntry) {
             READY_FromFirstEntry = false
+
+            if (NeedSetSpeed){
+                vm.setSpeed(NeedSetSpeedValue)
+                NeedSetSpeed = false
+            }
+
             requestAudioFocus()
             playVideo()
 
@@ -2442,7 +2590,7 @@ class PlayerActivity: AppCompatActivity(){
         Handler(Looper.getMainLooper()).postDelayed({ stopScrollerSync() }, 100)
         IDLE_Timer?.cancel()
         //自动退出和循环播放控制
-        if (vm.PREFS_ExitWhenEnd){
+        if (vm.state_FromSysStart && vm.PREFS_ExitWhenEnd){
             finish()
         }
 

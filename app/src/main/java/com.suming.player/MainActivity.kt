@@ -71,7 +71,7 @@ class MainActivity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_main_old)
 
 
         //读取设置
@@ -93,8 +93,8 @@ class MainActivity: AppCompatActivity() {
         load()
 
         //按钮：刷新列表
-        val button1 = findViewById<FloatingActionButton>(R.id.fab)
-        button1.setOnClickListener {
+        val ButtonRefresh = findViewById<Button>(R.id.buttonRefresh)
+        ButtonRefresh.setOnClickListener {
             runOnUiThread { adapter.refresh() }
             val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
             recyclerview1.smoothScrollToPosition(0)
@@ -171,7 +171,8 @@ class MainActivity: AppCompatActivity() {
         )
 
         val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
-        recyclerview1.layoutManager = LinearLayoutManager(this)
+        //recyclerview1.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        recyclerview1.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
 
 
         //注册点击事件

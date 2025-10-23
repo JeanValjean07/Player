@@ -35,6 +35,7 @@ class MainActivityAdapter(
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val TouchPad: View = itemView.findViewById(R.id.TouchPad)
         val tvName: TextView = itemView.findViewById(R.id.tvName)
         val tvDuration: TextView = itemView.findViewById(R.id.tvDuration)
         val tvThumb: ImageView = itemView.findViewById(R.id.ivThumb)
@@ -53,7 +54,7 @@ class MainActivityAdapter(
         holder.tvDuration.text = formatTime1(item.durationMs)
         holder.tvThumb.load(item.thumbnailUri)
         //点击事件
-        holder.tvThumb.setOnClickListener { onItemClick(item) }
+        holder.TouchPad.setOnClickListener { onItemClick(item) }
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
         holder.tvOption.setOnClickListener {
              val popup = PopupMenu(holder.itemView.context, holder.tvOption)
@@ -94,9 +95,5 @@ class MainActivityAdapter(
             String.format("%02d:%02d:%02d",  hours, minutes, seconds)
         }
     }
-
-
-
-
 
 }//class END

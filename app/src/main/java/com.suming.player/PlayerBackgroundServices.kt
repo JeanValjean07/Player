@@ -18,8 +18,6 @@ import androidx.media3.session.MediaSessionService
 class PlayerBackgroundServices(): MediaSessionService() {
     //MediaSession
     private var mediaSession: MediaSession? = null
-    //设置参数
-    private var PREFS_S_UseMVVMPlayer = false
     //媒体信息
     private var INFO_TITLE: String? = null
 
@@ -29,7 +27,6 @@ class PlayerBackgroundServices(): MediaSessionService() {
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-
 
         //由于执行顺序问题,播控中心逻辑应在onCreate中,自定义通知逻辑应在onStartCommand中
         if (Build.BRAND == "Xiaomi" || Build.BRAND == "samsung"){
@@ -43,8 +40,6 @@ class PlayerBackgroundServices(): MediaSessionService() {
             createNotificationChannel()
             startForeground(NOTIF_ID, NotificationCustomized)
         }
-
-
 
     }
 
@@ -92,16 +87,30 @@ class PlayerBackgroundServices(): MediaSessionService() {
 
     //自定义通知:构建通知
     private fun BuildCustomizeNotification(): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentIntent(createPendingIntent())
-            .setContentTitle("媒体播放中")
-            .setContentText(INFO_TITLE)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setSmallIcon(R.drawable.ic_notification_area)
-            .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
-            .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
-            .setAutoCancel(false)
-            .build()
+        if (Build.BRAND == "samsung") {
+            return NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentIntent(createPendingIntent())
+                .setContentTitle("媒体播放中")
+                .setContentText(INFO_TITLE)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSmallIcon(R.drawable.ic_notification_area)
+                .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
+                .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
+                .addAction(android.R.drawable.ic_delete, "退出", broadcastExit())
+                .setAutoCancel(false)
+                .build()
+        }else{
+            return NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentIntent(createPendingIntent())
+                .setContentTitle("媒体播放中")
+                .setContentText(INFO_TITLE)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSmallIcon(R.drawable.ic_notification_area)
+                .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
+                .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
+                .setAutoCancel(false)
+                .build()
+        }
     }
 
     //自定义通知:创建通知通道
@@ -139,6 +148,14 @@ class PlayerBackgroundServices(): MediaSessionService() {
     private fun broadcastPause(): PendingIntent {
         val intent = Intent(this, PlayerActionReceiver::class.java).apply {
             action = "PLAYER_PAUSE"
+        }
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+    //自定义通知:退出指令
+    @OptIn(UnstableApi::class)
+    private fun broadcastExit(): PendingIntent {
+        val intent = Intent(this, PlayerActionReceiver::class.java).apply {
+            action = "PLAYER_EXIT"
         }
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }

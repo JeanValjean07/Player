@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.descriptors.annotations.composeAnnotations
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -8,11 +6,28 @@ plugins {
     alias(libs.plugins.compose.compiler)
     //Oss Licenses Plugin
     id("com.google.android.gms.oss-licenses-plugin")
+
+    id("com.google.devtools.ksp")
+
 }
 
 android {
     namespace = "com.suming.player"
     compileSdk = 36
+
+
+    kotlin {
+        compilerOptions {
+            // 这就是设置 JVM 目标版本的新方法
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+
+            // 解决 jvmDefault 冲突的推荐配置（如果需要）
+            // 默认情况下，Kotlin 2.0+ 应该启用 K2，您可能不再需要显式设置 jvmDefault
+            // 如果您需要开启，可以尝试使用：
+            // freeCompilerArgs.addAll("-Xjvm-default=all")
+        }
+    }
+
 
     buildFeatures {
         viewBinding = true
@@ -39,14 +54,20 @@ android {
             )
         }
     }
-    
+
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+
+    /*
     kotlinOptions {
-        jvmTarget = "11"
+        //jvmTarget = "11"
     }
+
+     */
 }
 
 dependencies {
@@ -66,6 +87,12 @@ dependencies {
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling")
+
+    //数据库
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
+
 
 
 
