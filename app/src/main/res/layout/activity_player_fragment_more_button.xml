@@ -358,6 +358,44 @@
                                     app:thumbTint="@color/switchThumbColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
+                            <!-- 开关：保存播放进度 -->
+                            <LinearLayout
+                                android:id="@+id/ContainerSavePosition"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="21dp"
+                                    android:layout_height="21dp"
+                                    android:src="@drawable/ic_more_button_save_position"
+                                    android:scaleType="centerCrop"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="保存播放进度"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2" />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1"/>
+                                <androidx.appcompat.widget.SwitchCompat
+                                    android:id="@+id/Switch_SavePositionWhenExit"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="20dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="5dp"
+                                    app:trackTint="@color/switchTrackColor"
+                                    app:thumbTint="@color/switchThumbColor"
+                                    tools:ignore="InefficientWeight" />
+                            </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
                     <!--  进度条相关 -->
@@ -576,7 +614,7 @@
                                 <ImageView
                                     android:layout_width="21dp"
                                     android:layout_height="21dp"
-                                    android:src="@drawable/ic_more_button_speed"
+                                    android:src="@drawable/ic_more_button_count_timer"
                                     android:scaleType="centerCrop"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"

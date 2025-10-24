@@ -223,6 +223,38 @@
                         android:layout_height="wrap_content"
                         android:text="进入后台播放状态30秒后,将关闭视频轨道"
                         android:textSize="12sp" />
+                    <!--  开关：退出时先转为竖屏  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="关闭时先转为竖屏"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/SwitchPortraitWhenExit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"
+                            />
+                    </LinearLayout>
+                    <!--  描述  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="平板电脑请开启此选项"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  卡片：数据库  -->

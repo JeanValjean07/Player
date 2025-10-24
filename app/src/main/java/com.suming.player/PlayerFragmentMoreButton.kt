@@ -15,6 +15,7 @@ import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
@@ -46,6 +47,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private lateinit var Switch_OnlyAudio: SwitchCompat
     private lateinit var Switch_OnlyVideo: SwitchCompat
     private lateinit var Switch_ExitWhenMediaEnd: SwitchCompat
+    private lateinit var Switch_SavePositionWhenExit: SwitchCompat
     //自动关闭标志位
     private var lockPage = false
 
@@ -129,6 +131,22 @@ class PlayerFragmentMoreButton: DialogFragment() {
         Switch_OnlyAudio.isChecked = vm.PREFS_OnlyAudio
         Switch_OnlyVideo.isChecked = vm.PREFS_OnlyVideo
         Switch_ExitWhenMediaEnd.isChecked = vm.PREFS_ExitWhenMediaEnd
+
+
+        //保存进度仅在数据库启用时开启
+        val ContainerSavePosition = view.findViewById<LinearLayout>(R.id.ContainerSavePosition)
+        if (!vm.PREFS_EnableRoomDatabase){
+            ContainerSavePosition.visibility = View.GONE
+        }else{
+            Switch_SavePositionWhenExit = view.findViewById(R.id.Switch_SavePositionWhenExit)
+            Switch_SavePositionWhenExit.isChecked = vm.PREFS_SavePositionWhenExit
+            //开关：退出时保存进度
+            Switch_SavePositionWhenExit.setOnCheckedChangeListener { _, isChecked ->
+                vm.PREFS_SavePositionWhenExit = isChecked
+
+                customDismiss()
+            }
+        }
 
 
 
@@ -242,6 +260,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
             customDismiss()
         }
+
 
 
 

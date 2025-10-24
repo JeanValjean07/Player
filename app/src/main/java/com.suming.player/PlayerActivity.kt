@@ -102,6 +102,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import android.graphics.Bitmap.CompressFormat.JPEG
+import android.util.Log
 import data.MediaItemRepo
 import data.MediaItemSetting
 
@@ -352,8 +353,21 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 vm.PREFS_EnableRoomDatabase = prefs.getBoolean("PREFS_EnableRoomDatabase", false)
             }
+            if (!prefs.contains("PREFS_ExitWhenMediaEnd")) {
+                prefsEditor.putBoolean("PREFS_ExitWhenMediaEnd", false)
+                vm.PREFS_ExitWhenMediaEnd = false
+            } else {
+                vm.PREFS_ExitWhenMediaEnd = prefs.getBoolean("PREFS_ExitWhenMediaEnd", false)
+            }
+            if (!prefs.contains("PREFS_SwitchPortraitWhenExit")) {
+                prefsEditor.putBoolean("PREFS_SwitchPortraitWhenExit", true)
+                vm.PREFS_SwitchPortraitWhenExit = true
+            } else {
+                vm.PREFS_SwitchPortraitWhenExit = prefs.getBoolean("PREFS_SwitchPortraitWhenExit", true)
+            }
             prefsEditor.apply()
         }
+
 
         //区分打开方式并反序列化
         val videoItem: VideoItem? = when (intent?.action) {
@@ -1419,6 +1433,7 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
 
+
         //根据机型选择启用播控中心或自定义通知
         if (savedInstanceState == null) {
             //三星小米可直接使用播控中心
@@ -1475,10 +1490,12 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_GenerateThumbSYNC = true
             }
 
+
             withContext(Dispatchers.Main) {
                 Controller_ThumbScroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
                     absolutePath,playerScrollerViewModel.thumbItems,SCROLLERINFO_EachPicWidth,SCROLLERINFO_PicNumber,SCROLLERINFO_EachPicDuration,vm.PREFS_GenerateThumbSYNC)
             }
+
 
             if(vm.PREFS_LinkScroll){ startScrollerSync() }
             delay(100)
@@ -1563,6 +1580,7 @@ class PlayerActivity: AppCompatActivity(){
                 PREFS_AlwaysSeek = vm.PREFS_AlwaysSeek,
                 PREFS_LinkScroll = vm.PREFS_LinkScroll,
                 PREFS_TapJump = vm.PREFS_TapJump,
+                PREFS_SavePositionWhenExit = vm.PREFS_SavePositionWhenExit,
                 SaveState_ExitPosition = vm.player.currentPosition,
             )
             MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
@@ -1609,9 +1627,16 @@ class PlayerActivity: AppCompatActivity(){
             }else{
                 vm.PREFS_TapJump = false
             }
-            if (setting.SaveState_ExitPosition != 0L){
-                delay(500)
-                withContext(Dispatchers.Main) { vm.player.seekTo(setting.SaveState_ExitPosition) }
+            if (setting.PREFS_SavePositionWhenExit){
+                vm.PREFS_SavePositionWhenExit = true
+                if (setting.SaveState_ExitPosition != 0L){
+                    delay(500)
+                    if (vm.PREFS_SavePositionWhenExit){
+                        withContext(Dispatchers.Main) { vm.player.seekTo(setting.SaveState_ExitPosition) }
+                    }
+                }
+            }else{
+                vm.PREFS_SavePositionWhenExit = false
             }
         }
     }
@@ -1647,6 +1672,8 @@ class PlayerActivity: AppCompatActivity(){
             prefsEditor.putBoolean("PREFS_AlwaysSeek", vm.PREFS_AlwaysSeek)
             prefsEditor.putBoolean("PREFS_LinkScroll", vm.PREFS_LinkScroll)
             prefsEditor.putBoolean("PREFS_TapJump", vm.PREFS_TapJump)
+            prefsEditor.putBoolean("PREFS_ExitWhenMediaEnd", vm.PREFS_ExitWhenMediaEnd)
+            prefsEditor.putBoolean("PREFS_SavePositionWhenExit", vm.PREFS_SavePositionWhenExit)
             prefsEditor.apply()
         }
     }
@@ -2243,6 +2270,8 @@ class PlayerActivity: AppCompatActivity(){
                             )
                 }
 
+            EnterAnimationComplete = true
+
             //控件位置动态调整
             val displayManager = this.getSystemService(DISPLAY_SERVICE) as DisplayManager
             val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
@@ -2332,12 +2361,38 @@ class PlayerActivity: AppCompatActivity(){
     }
     @SuppressLint("SourceLockedOrientationActivity")
     private fun ExitByOrientation(){
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-            vm.setManual()
-            vm.onOrientationChanging = true
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-        }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+        if (vm.PREFS_SwitchPortraitWhenExit){
+            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                vm.setManual()
+                vm.onOrientationChanging = true
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+            }
+            else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+                if (vm.controllerHided){
+                    notice("再按一次退出",2000)
+                    setControllerVisible()
+                    vm.controllerHided = false
+                }
+                //确认退出
+                else{
+                    //确认退出
+                    if (EnterAnimationComplete){
+                        PlayerExoSingleton.stopPlayer()
+                        stopFloatingWindow()
+                        if (vm.PREFS_EnableRoomDatabase){ saveChangedMap() } else{ saveChangedPrefs() }
+                        finish()
+                    }
+                    //为准备完成前退出
+                    else{
+                        EnterAnimationComplete = true
+                        val data = Intent().apply { putExtra("NEED_CLOSE", "NEED_CLOSE") }
+                        setResult(RESULT_OK, data)
+                        finish()
+                        return
+                    }
+                }
+            }
+        }else{
             if (vm.controllerHided){
                 notice("再按一次退出",2000)
                 setControllerVisible()
@@ -2362,6 +2417,7 @@ class PlayerActivity: AppCompatActivity(){
                 }
             }
         }
+
     }
     //开启后台播放服务
     private fun startBackgroundServices(){

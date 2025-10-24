@@ -15,6 +15,7 @@ data class MediaItemSetting(
     val PREFS_VideoOnly: Boolean = false,
     val PREFS_SoundOnly: Boolean = false,
     val PREFS_PlaySpeed: Float = 1.0f,
+    val PREFS_SavePositionWhenExit: Boolean = false,
     val SaveState_ExitPosition: Long = 0L,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -30,6 +31,7 @@ data class MediaItemSetting(
                 PREFS_VideoOnly == other.PREFS_VideoOnly &&
                 PREFS_SoundOnly == other.PREFS_SoundOnly &&
                 PREFS_PlaySpeed == other.PREFS_PlaySpeed &&
+                PREFS_SavePositionWhenExit == other.PREFS_SavePositionWhenExit &&
                 SaveState_ExitPosition == other.SaveState_ExitPosition
     }
 

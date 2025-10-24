@@ -114,6 +114,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var PREFS_ExitWhenMediaEnd: Boolean = false
     var PREFS_CountExit: Int = 0
+    var PREFS_SavePositionWhenExit: Boolean = false
+    var PREFS_SwitchPortraitWhenExit: Boolean = true
 
 
 
