@@ -73,7 +73,7 @@
                     android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/ic_floating_window_size"
+                    android:src="@drawable/ic_floating_size"
                     android:background="@null"
                     android:elevation="21dp"
                     app:layout_constraintTop_toTopOf="parent"

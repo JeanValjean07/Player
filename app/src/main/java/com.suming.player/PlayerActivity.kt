@@ -466,9 +466,9 @@ class PlayerActivity: AppCompatActivity(){
                         if (vm.OrientationValue == 2) {
                             //按钮避让:横排按钮区&更多选项按钮
                             val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
-                            (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (150)
+                            (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
                             val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
-                            (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (150)
+                            (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (vm.statusBarHeight)
                             //更改状态并发起旋转
                             vm.currentOrientation = 2
                             vm.LastLandscapeOrientation = 2
@@ -492,8 +492,8 @@ class PlayerActivity: AppCompatActivity(){
                             //按钮避让时间框&退出按钮
                             val TopBarArea_ButtonExit = findViewById<View>(R.id.TopBarArea_ButtonExit)
                             val ControllerArea_VideoCurrentTimeCard = findViewById<CardView>(R.id.VideoCurrentTimeCard)
-                            (TopBarArea_ButtonExit.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
-                            (ControllerArea_VideoCurrentTimeCard.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                            (TopBarArea_ButtonExit.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (vm.statusBarHeight)
+                            (ControllerArea_VideoCurrentTimeCard.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (vm.statusBarHeight)
                             //更改状态并发起旋转
                             vm.currentOrientation = 1
                             vm.LastLandscapeOrientation = 1
@@ -518,9 +518,9 @@ class PlayerActivity: AppCompatActivity(){
                         if (vm.OrientationValue == 1) {
                             //按钮避让时间框&退出按钮
                             val TopBarArea_ButtonExit = findViewById<View>(R.id.TopBarArea_ButtonExit)
-                            (TopBarArea_ButtonExit.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                            (TopBarArea_ButtonExit.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (vm.statusBarHeight)
                             val ControllerArea_VideoCurrentTimeCard = findViewById<CardView>(R.id.VideoCurrentTimeCard)
-                            (ControllerArea_VideoCurrentTimeCard.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                            (ControllerArea_VideoCurrentTimeCard.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (vm.statusBarHeight)
                             //更改状态并发起旋转
                             vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
@@ -529,9 +529,9 @@ class PlayerActivity: AppCompatActivity(){
                         else if (vm.OrientationValue == 2) {
                             //按钮避让:横排按钮区&更多选项按钮
                             val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
-                            (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (150)
+                            (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
                             val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
-                            (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (150)
+                            (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (vm.statusBarHeight)
                             //更改状态并发起旋转
                             vm.onOrientationChanging = true
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
@@ -1433,7 +1433,6 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
 
-
         //根据机型选择启用播控中心或自定义通知
         if (savedInstanceState == null) {
             //三星小米可直接使用播控中心
@@ -2279,16 +2278,16 @@ class PlayerActivity: AppCompatActivity(){
             //控件位置动态调整:正向横屏
             if (rotation == Surface.ROTATION_90) {
                 val TopBarArea_ButtonExit = findViewById<View>(R.id.TopBarArea_ButtonExit)
-                (TopBarArea_ButtonExit.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                (TopBarArea_ButtonExit.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (vm.statusBarHeight)
                 val ControllerArea_VideoCurrentTimeCard = findViewById<CardView>(R.id.VideoCurrentTimeCard)
-                (ControllerArea_VideoCurrentTimeCard.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (150)
+                (ControllerArea_VideoCurrentTimeCard.layoutParams as ViewGroup.MarginLayoutParams).marginStart = (vm.statusBarHeight)
             }
             //控件位置动态调整:反向横屏
             else if (rotation == Surface.ROTATION_270) {
                 val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
-                (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (150)
+                (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
                 val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
-                (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (150)
+                (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (vm.statusBarHeight)
             }
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
