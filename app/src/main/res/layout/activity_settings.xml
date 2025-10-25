@@ -1,4 +1,5 @@
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_settings"
@@ -217,11 +218,11 @@
                             app:thumbTint="@color/switchThumbColor"
                             />
                     </LinearLayout>
-                    <!--  描述  -->
+                    <!--  描述：后台播放时关闭视频轨道  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="进入后台播放状态30秒后,将关闭视频轨道"
+                        android:text="即使开启此选项，关闭视频轨道操作也只会在退到后台的第30秒后进行。"
                         android:textSize="12sp" />
                     <!--  开关：退出时先转为竖屏  -->
                     <LinearLayout
@@ -249,11 +250,53 @@
                             app:thumbTint="@color/switchThumbColor"
                             />
                     </LinearLayout>
-                    <!--  描述  -->
+                    <!--  描述：退出时先转为竖屏  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="平板电脑请开启此选项"
+                        android:text="平板电脑需关闭此选项，否则不能正常使用横屏播放"
+                        android:textSize="12sp" />
+                    <!--  选单按钮：播放器seek间隔  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="播放器寻帧间隔"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <TextView
+                            android:id="@+id/currentSeekHandlerGap"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="当前值"
+                            android:textSize="12sp"
+                            android:textColor="@color/HeadText"
+                            />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <TextView
+                            android:id="@+id/ButtonSeekHandlerGap"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="修改"
+                            android:textSize="12sp"
+                            android:textColor="@color/HeadText"
+                            />
+                    </LinearLayout>
+                    <!--  描述：播放器seek间隔  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="拖动进度条时，播放器的寻帧间隔可自行设定，默认无寻帧间隔。无间隔状态下，部分处理器运行时温度较高，有发热或虚焊风险，故高发热处理器建议拉高寻帧间隔。对于性能较低的老机型，适当提高寻帧间隔可提升流畅度。"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -271,14 +314,14 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="14dp">
-                    <!--  数据库  -->
+                    <!--  大标题：数据库  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="数据库"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp"/>
-                    <!--  开关3：使用数据库  -->
+                    <!--  开关：使用数据库  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -304,11 +347,11 @@
                             app:thumbTint="@color/switchThumbColor"
                             />
                     </LinearLayout>
-                    <!--  描述  -->
+                    <!--  描述：使用数据库  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="保存播放进度功能需要此选项(数据库)支持。将保存只播声音、倍速等设置，不会保存后台播放和循环播放选项"
+                        android:text="保存播放进度，保存缩略图生成状态等功能均需要此选项(数据库)支持，建议开启。开启后APP将产生更多缓存。将保存只播声音、倍速等设置，不会保存后台播放和循环播放选项"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

@@ -629,7 +629,7 @@
                                     android:layout_marginStart="10dp"
                                     android:textColor="@color/Text2" />
                                 <TextView
-                                    android:id="@+id/State_CountExit"
+                                    android:id="@+id/StateTimerShutDown"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="定时关闭状态"
@@ -642,7 +642,7 @@
                                     android:layout_height="0dp"
                                     android:layout_weight="1"/>
                                 <TextView
-                                    android:id="@+id/ButtonChangeCountExit"
+                                    android:id="@+id/ButtonTimerShutDown"
                                     android:layout_width="35dp"
                                     android:layout_height="20dp"
                                     android:text="设置"

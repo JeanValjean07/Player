@@ -7,6 +7,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -38,8 +39,7 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_GenerateThumbSYNC = true
     private var PREFS_UseBlackBackground = false
     private var PREFS_UseHighRefreshRate = false
-
-
+    private var PREFS_SeekHandlerGap = 0L
 
 
 
@@ -81,6 +81,7 @@ class SettingsActivity: AppCompatActivity() {
             )
         }
 
+        //静态操作部分:::
         //读取设置
         val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         val PREFS_Editor = PREFS.edit()
@@ -144,6 +145,12 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_UseHighRefreshRate = PREFS.getBoolean("PREFS_UseHighRefreshRate", false)
         }
+        if (!PREFS.contains("PREFS_SeekHandlerGap")) {
+            PREFS_Editor.putLong("PREFS_SeekHandlerGap", 0)
+            PREFS_SeekHandlerGap = 0
+        } else {
+            PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0)
+        }
         PREFS_Editor.apply()
 
         //开关初始化
@@ -170,6 +177,16 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseBlackBackground.isChecked = PREFS_UseBlackBackground
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
 
+        //文本信息预写
+        val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
+        if (PREFS_SeekHandlerGap == 0L){
+            currentSeekHandlerGap.text = "默认 (0 毫秒)"
+        } else {
+            currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
+        }
+
+
+        //动态操作部分:::
         //开关更改操作
         Switch_CloseVideoTrack.setOnCheckedChangeListener { _, isChecked ->
             PREFS_CloseVideoTrack = isChecked
@@ -202,6 +219,29 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_UseHighRefreshRate = isChecked
         }
 
+        //定时关闭
+        val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
+        ButtonSeekHandlerGap.setOnClickListener { item ->
+            val popup = PopupMenu(this, ButtonSeekHandlerGap)
+            popup.menuInflater.inflate(R.menu.activity_settings_popup_seek_gap, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when(item.itemId){
+                    R.id.MenuAction_NoGap -> { setSeekHandlerGap(0); true }
+
+                    R.id.MenuAction_50 -> { setSeekHandlerGap(50); true }
+
+                    R.id.MenuAction_100 -> { setSeekHandlerGap(100); true }
+
+                    R.id.MenuAction_200 -> { setSeekHandlerGap(200); true }
+
+                    R.id.MenuAction_Input -> { ; true }
+
+                    else -> true
+                }
+            }
+            popup.show()
+        }
+
 
     } //onCreate END
 
@@ -221,6 +261,22 @@ class SettingsActivity: AppCompatActivity() {
         PREFS_Editor.putBoolean("PREFS_UseBlackBackground", PREFS_UseBlackBackground)
         PREFS_Editor.putBoolean("PREFS_UseHighRefreshRate", PREFS_UseHighRefreshRate)
         PREFS_Editor.apply()
+    }
+
+    //Functions
+    @SuppressLint("SetTextI18n")
+    private fun setSeekHandlerGap(gap: Long) {
+        PREFS_SeekHandlerGap = gap
+        val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+        PREFS.edit {
+            putLong("PREFS_SeekHandlerGap", gap)
+        }
+        val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
+        if (PREFS_SeekHandlerGap == 0L){
+            currentSeekHandlerGap.text = "默认 (0 毫秒)"
+        } else {
+            currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
+        }
     }
 
 }

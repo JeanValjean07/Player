@@ -34,6 +34,7 @@ import com.suming.player.PlayerExoSingleton.player
 import data.MediaItemRepo
 import data.MediaItemSetting
 import kotlinx.coroutines.launch
+import java.time.format.DateTimeFormatter
 
 @UnstableApi
 class PlayerFragmentMoreButton: DialogFragment() {
@@ -104,7 +105,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_player_fragment_more_button, container, false)
 
-    @SuppressLint("UseGetLayoutInflater", "InflateParams")
+    @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         //信息预写
@@ -112,10 +113,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val currentSpeed: Float = player.playbackParameters.speed
         val currentSpeedText = view.findViewById<TextView>(R.id.current_speed)
         currentSpeedText.text = currentSpeed.toString()
-        val countExit = view.findViewById<TextView>(R.id.State_CountExit)
-        if (vm.PREFS_CountExit == 0){
-            countExit.text = "未开启"
+        val timerShutDown = view.findViewById<TextView>(R.id.StateTimerShutDown)
+        if (vm.PREFS_TimerShutDown){
+            timerShutDown.text = "将在${vm.shutDownTime}关闭"
+        }else{
+            timerShutDown.text = "未开启"
         }
+
+
 
         //开关置位
         Switch_BackgroundPlay = view.findViewById(R.id.Switch_BackgroundPlay)
@@ -150,6 +155,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
 
+
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
         buttonExit.setOnClickListener {
@@ -175,14 +181,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val buttonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
         buttonCapture.setOnClickListener {
             val result = bundleOf("KEY" to "Capture")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
             dismiss()
         }
         //按钮：回到开头
         val buttonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
         buttonBackToStart.setOnClickListener {
             val result = bundleOf("KEY" to "BackToStart")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
             dismiss()
         }
         //按钮：更改倍速
@@ -212,7 +218,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             vm.PREFS_BackgroundPlay = isChecked
 
             val result = bundleOf("KEY" to "BackgroundPlay")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             customDismiss()
         }
@@ -221,7 +227,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             vm.PREFS_LoopPlay = isChecked
 
             val result = bundleOf("KEY" to "LoopPlay")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             customDismiss()
         }
@@ -230,7 +236,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             vm.PREFS_SealOEL = isChecked
 
             val result = bundleOf("KEY" to "SealOEL")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             customDismiss()
         }
@@ -243,7 +249,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
             val result = bundleOf("KEY" to "SoundOnly")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             customDismiss()
         }
@@ -256,11 +262,35 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
             val result = bundleOf("KEY" to "VideoOnly")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             customDismiss()
         }
+        //定时关闭
+        val ButtonTimerShutDown = view.findViewById<TextView>(R.id.ButtonTimerShutDown)
+        ButtonTimerShutDown.setOnClickListener { item ->
+            val popup = PopupMenu(requireContext(), ButtonTimerShutDown)
+            popup.menuInflater.inflate(R.menu.activity_player_popup_timer_shut_down, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when(item.itemId){
 
+                    R.id.MenuAction_1 -> { chooseShutDownTime(1); true }
+
+                    R.id.MenuAction_15 -> { chooseShutDownTime(15); true }
+
+                    R.id.MenuAction_30 -> { chooseShutDownTime(30); true }
+
+                    R.id.MenuAction_60 -> { chooseShutDownTime(60); true }
+
+                    R.id.MenuAction_90 -> { chooseShutDownTime(90); true }
+
+                    R.id.MenuAction_Input -> { dismiss(); true }
+
+                    else -> true
+                }
+            }
+            popup.show()
+        }
 
 
 
@@ -283,7 +313,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
             val result = bundleOf("KEY" to "AlwaysSeek")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             customDismiss()
         }
@@ -304,7 +334,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
             val result = bundleOf("KEY" to "TapJump")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             customDismiss()
         }
@@ -325,7 +355,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
             val result = bundleOf("KEY" to "LinkScroll")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             customDismiss()
         }
@@ -334,7 +364,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val buttonVideoInfo = view.findViewById<TextView>(R.id.buttonVideoInfo)
         buttonVideoInfo.setOnClickListener {
             val result = bundleOf("KEY" to "VideoInfo")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             dismiss()
         }
@@ -342,7 +372,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val buttonSysShare = view.findViewById<TextView>(R.id.buttonSysShare)
         buttonSysShare.setOnClickListener {
             val result = bundleOf("KEY" to "SysShare")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             dismiss()
         }
@@ -350,7 +380,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val buttonEqualizer = view.findViewById<TextView>(R.id.buttonEqualizer)
         buttonEqualizer.setOnClickListener {
             val result = bundleOf("KEY" to "Equalizer")
-            setFragmentResult("FROM_FRAGMENT", result)
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             dismiss()
         }
@@ -382,6 +412,30 @@ class PlayerFragmentMoreButton: DialogFragment() {
         setFragmentResult("FROM_FRAGMENT", result)
 
         dismiss()
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun chooseShutDownTime(time: Int){
+
+        val result = bundleOf("KEY" to "ShutDownTime", "TIME" to time)
+        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
+        //计算关闭时间
+        val nowDateTime: String = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val nowMillis = System.currentTimeMillis()
+        val shutDownMillis = nowMillis + (time * 60_000L)  //分钟转毫秒
+        //val pattern = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+        val pattern = java.text.SimpleDateFormat("HH时mm分ss秒", java.util.Locale.getDefault())
+        val shutDownTime = pattern.format(java.util.Date(shutDownMillis))
+        //更改ViewModel标志位状态
+        vm.shutDownTime = shutDownTime
+        vm.PREFS_TimerShutDown = true
+
+        //更改显示文本
+        val timerShutDown = view?.findViewById<TextView>(R.id.StateTimerShutDown)
+        timerShutDown?.text = "将在${shutDownTime}关闭"
+
+        customDismiss()
     }
 
     private fun customDismiss(){

@@ -24,12 +24,13 @@ import kotlin.coroutines.coroutineContext
 
 class PlayerScrollerAdapter(
     private val context: Context,
-    private val videoPath: String,
+    private val MediaInfo_AbsolutePath: String,
+    private val MediaInfo_FileName: String,
     private val thumbItems: MutableList<PlayerScrollerViewModel.ThumbScrollerItem>,
     private val eachPicWidth: Int,
     private val picNumber: Int,
     private val eachPicDuration: Int,
-    private val PREFS_RC_GenerateThumbSYNC: Boolean,
+    private val PREFS_GenerateThumbSYNC: Boolean,
 ) : RecyclerView.Adapter<PlayerScrollerAdapter.ThumbViewHolder>() {
 
     //初始化—协程作用域
@@ -99,7 +100,7 @@ class PlayerScrollerAdapter(
         item.thumbGeneratingRunning = true
         retrieverMap[position] = MediaMetadataRetriever()
         try {
-            retrieverMap[position]?.setDataSource(videoPath)
+            retrieverMap[position]?.setDataSource(MediaInfo_AbsolutePath)
             coroutineContext.ensureActive()
             var wStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
             var hStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
@@ -113,7 +114,7 @@ class PlayerScrollerAdapter(
             val videoHeight = hStr?.toFloat() ?: 0f
             val ratio = videoHeight.div(videoWidth)
             coroutineContext.ensureActive()
-            if (PREFS_RC_GenerateThumbSYNC){
+            if (PREFS_GenerateThumbSYNC){
                 val frame = retrieverMap[position]?.getFrameAtTime(
                     (position * eachPicDuration * 1000L),
                     MediaMetadataRetriever.OPTION_CLOSEST_SYNC
@@ -145,8 +146,8 @@ class PlayerScrollerAdapter(
     private suspend fun saveThumb(ratio: Float, position: Int, frame: Bitmap?) {
         val item = thumbItems[position]
         if (frame != null) {
-            val outFile = File(context.cacheDir, "thumb_${videoPath.hashCode()}_${position}.jpg")
-            outFile.outputStream().use {
+            val SaveAs = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/${position}.jpg")
+            SaveAs.outputStream().use {
                 val targetCoverWidth = 200
                 val targetCoverHeight = (200 * ratio).toInt()
                 val scaledBitmap = frame.scale(targetCoverWidth, targetCoverHeight)
@@ -156,10 +157,12 @@ class PlayerScrollerAdapter(
                 frame.recycle()
             }
             //修改item中的缩略图链接
-            item.thumbPath=outFile
+            item.thumbPath = SaveAs
             item.thumbGeneratingRunning = false
             item.currentThumbType = true
             withContext(Dispatchers.Main) { notifyItemChanged(position) }
+            //保存状态到数据库
+
         }
     }
     //截取占位缩略图
@@ -168,7 +171,7 @@ class PlayerScrollerAdapter(
         generateCoverWorking = true
         CoroutineScope(Dispatchers.IO).launch {
             val item = thumbItems[0]
-            val retriever = MediaMetadataRetriever().apply { setDataSource(videoPath) }
+            val retriever = MediaMetadataRetriever().apply { setDataSource(MediaInfo_AbsolutePath) }
             var wStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
             var hStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
             val rotateStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
@@ -183,8 +186,8 @@ class PlayerScrollerAdapter(
             val frame = retriever.getFrameAtTime(500000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
             retriever.release()
             if (frame != null) {
-                val outFile = File(context.cacheDir, "thumb_${videoPath.hashCode()}_cover.jpg")
-                outFile.outputStream().use {
+                val SaveAs = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/cover.jpg")
+                SaveAs.outputStream().use {
                     val targetCoverWidth = 200
                     val targetCoverHeight = (200 * ratio).toInt()
                     val scaledBitmap = frame.scale(targetCoverWidth, targetCoverHeight)
@@ -193,7 +196,7 @@ class PlayerScrollerAdapter(
                     scaledBitmap.recycle()
                     frame.recycle()
                 }
-                val newItem = item.copy(thumbPath = outFile)
+                val newItem = item.copy(thumbPath = SaveAs)
                 thumbItems[0] = newItem
                 placeCover()
             }
@@ -202,7 +205,7 @@ class PlayerScrollerAdapter(
     //放置占位缩略图链接
     @SuppressLint("NotifyDataSetChanged")
     private suspend fun placeCover(){
-        val cover = File(context.cacheDir, "thumb_${videoPath.hashCode()}_cover.jpg")
+        val cover = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/cover.jpg")
         thumbItems.replaceAll { it.copy(thumbPath = cover) }
         thumbItems.replaceAll { it.copy(isCoverPlaced = true) }
         withContext(Dispatchers.Main) { notifyDataSetChanged() }

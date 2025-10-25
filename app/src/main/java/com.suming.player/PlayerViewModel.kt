@@ -144,6 +144,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         PREFS_PlaySpeed = speed
         player.setPlaybackSpeed(speed)
     }
+    //定时关闭
+    var PREFS_TimerShutDown: Boolean = false
+    var shutDownTime = ""
+
+
+    var PREFS_SeekHandlerGap: Long = 0
 
 
 
