@@ -892,6 +892,13 @@ class PlayerActivity: AppCompatActivity(){
                 stopScrollerSync()
                 //用户操作 -修改seek参数
                 if (scrollerState_DraggingMoving) {
+                    //修改视频寻帧间隔
+                    if (dx > 0){
+                        videoSeekHandlerGap = vm.PREFS_SeekHandlerGap
+                    }else if (dx < 0){
+                        videoSeekHandlerGap = max(vm.PREFS_SeekHandlerGap, 100L)
+                    }
+                    //修改视频seek参数
                     if (dx == 1 || dx == -1) {
                         vm.player.setSeekParameters(SeekParameters.EXACT)
                     } else {
