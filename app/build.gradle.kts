@@ -4,10 +4,12 @@ plugins {
 
     //Compose
     alias(libs.plugins.compose.compiler)
+    //ksp
+    id("com.google.devtools.ksp")
+
     //Oss Licenses Plugin
     id("com.google.android.gms.oss-licenses-plugin")
 
-    id("com.google.devtools.ksp")
 
 }
 
@@ -15,25 +17,16 @@ android {
     namespace = "com.suming.player"
     compileSdk = 36
 
-
     kotlin {
         compilerOptions {
-            // 这就是设置 JVM 目标版本的新方法
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-
-            // 解决 jvmDefault 冲突的推荐配置（如果需要）
-            // 默认情况下，Kotlin 2.0+ 应该启用 K2，您可能不再需要显式设置 jvmDefault
-            // 如果您需要开启，可以尝试使用：
-            // freeCompilerArgs.addAll("-Xjvm-default=all")
         }
     }
-
 
     buildFeatures {
         viewBinding = true
         compose = true
     }
-
 
     defaultConfig {
         applicationId = "com.suming.player"
@@ -43,7 +36,6 @@ android {
         versionName = "3.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-
 
     buildTypes {
         release {
@@ -55,19 +47,11 @@ android {
         }
     }
 
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-
-    /*
-    kotlinOptions {
-        //jvmTarget = "11"
-    }
-
-     */
 }
 
 dependencies {
@@ -79,8 +63,7 @@ dependencies {
 
 
     //Oss Licenses Plugin
-    implementation("com.google.android.gms:play-services-oss-licenses:17.1.0")
-
+    implementation("com.google.android.gms:play-services-oss-licenses:17.3.0")
 
     //Compose
     implementation(platform("androidx.compose:compose-bom:2024.09.00"))
