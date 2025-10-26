@@ -1,10 +1,16 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.inputmethod.InputMethodManager
+import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
@@ -14,7 +20,11 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.media3.common.Player
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class SettingsActivity: AppCompatActivity() {
 
@@ -219,22 +229,22 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_UseHighRefreshRate = isChecked
         }
 
-        //定时关闭
+        //seek间隔
         val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
         ButtonSeekHandlerGap.setOnClickListener { item ->
             val popup = PopupMenu(this, ButtonSeekHandlerGap)
             popup.menuInflater.inflate(R.menu.activity_settings_popup_seek_gap, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when(item.itemId){
-                    R.id.MenuAction_NoGap -> { setSeekHandlerGap(0); true }
+                    R.id.MenuAction_NoGap -> { chooseSeekHandlerGap(0); true }
 
-                    R.id.MenuAction_50 -> { setSeekHandlerGap(50); true }
+                    R.id.MenuAction_50 -> { chooseSeekHandlerGap(50); true }
 
-                    R.id.MenuAction_100 -> { setSeekHandlerGap(100); true }
+                    R.id.MenuAction_100 -> { chooseSeekHandlerGap(100); true }
 
-                    R.id.MenuAction_200 -> { setSeekHandlerGap(200); true }
+                    R.id.MenuAction_200 -> { chooseSeekHandlerGap(200); true }
 
-                    R.id.MenuAction_Input -> { ; true }
+                    R.id.MenuAction_Input -> { setSeekHandlerGap() ; true }
 
                     else -> true
                 }
@@ -265,7 +275,7 @@ class SettingsActivity: AppCompatActivity() {
 
     //Functions
     @SuppressLint("SetTextI18n")
-    private fun setSeekHandlerGap(gap: Long) {
+    private fun chooseSeekHandlerGap(gap: Long) {
         PREFS_SeekHandlerGap = gap
         val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         PREFS.edit {
@@ -277,6 +287,55 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
         }
+    }
+
+    @SuppressLint("InflateParams", "SetTextI18n")
+    private fun setSeekHandlerGap(){
+        val dialog = Dialog(this)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description:TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+        title.text = "自定义寻帧间隔"
+        Description.text = "输入自定义寻帧间隔"
+        EditText.hint = "单位：毫秒"
+        Button.text = "确定"
+
+        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val gapInput = EditText.text.toString().toLongOrNull()
+
+            if (gapInput == null || gapInput == 0L){
+                Toast.makeText(this, "未输入内容", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                return@setOnClickListener
+            }else if(gapInput > 1000){
+                Toast.makeText(this, "寻帧间隔不能大于1秒", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            else {
+                PREFS_SeekHandlerGap = gapInput
+                val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+                PREFS.edit { putLong("PREFS_SeekHandlerGap", gapInput).commit() }
+                //界面刷新
+                val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
+                currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
+                dialog.dismiss()
+            }
+            dialog.dismiss()
+        }
+        dialog.show()
+        //自动弹出键盘程序
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(50)
+            EditText.requestFocus()
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+
     }
 
 }

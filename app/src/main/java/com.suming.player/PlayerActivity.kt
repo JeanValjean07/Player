@@ -233,7 +233,7 @@ class PlayerActivity: AppCompatActivity(){
      //倍速播放
     private var currentSpeed = 1.0f
 
-
+    //进度条状态
     private var scrollerState_DraggingMoving = false
     private var scrollerState_DraggingStay = false
     private var scrollerState_InertiaMoving = false
@@ -242,6 +242,9 @@ class PlayerActivity: AppCompatActivity(){
     private var scrollerState_Pressed = true
     private var scrollerState_BackwardScroll = false
 
+
+    //播放结束需要定时关闭
+    private var playEnd_NeedShutDown = false
 
 
     //全局SeekToMs
@@ -254,6 +257,8 @@ class PlayerActivity: AppCompatActivity(){
     //VideoSeekHandler
     private var videoSeekHandlerGap = 0L
 
+
+    private var playerReady_FirstEntryReached = false
 
 
 
@@ -372,12 +377,6 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_EnableRoomDatabase = false
             } else {
                 vm.PREFS_EnableRoomDatabase = PREFS.getBoolean("PREFS_EnableRoomDatabase", false)
-            }
-            if (!PREFS.contains("PREFS_ExitWhenMediaEnd")) {
-                PREFSEditor.putBoolean("PREFS_ExitWhenMediaEnd", false)
-                vm.PREFS_ExitWhenMediaEnd = false
-            } else {
-                vm.PREFS_ExitWhenMediaEnd = PREFS.getBoolean("PREFS_ExitWhenMediaEnd", false)
             }
             if (!PREFS.contains("PREFS_SwitchPortraitWhenExit")) {
                 PREFSEditor.putBoolean("PREFS_SwitchPortraitWhenExit", true)
@@ -889,7 +888,7 @@ class PlayerActivity: AppCompatActivity(){
                     vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
                 }
                 //用户操作 -时间戳跟随进度条变动
-                if (vm.PREFS_LinkScroll) {
+                if (vm.PREFS_LinkScroll && playerReady_FirstEntryReached) {
                     val percentScroll = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
                     videoTimeTo = (percentScroll * vm.player.duration).toLong()
                     currentTime = videoTimeTo
@@ -1241,259 +1240,264 @@ class PlayerActivity: AppCompatActivity(){
         //更多按钮页面返回值
         supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MORE_BUTTON", this) { _, bundle ->
             val ReceiveKey = bundle.getString("KEY")
-            if (ReceiveKey == "BackgroundPlay"){
-                if (vm.PREFS_BackgroundPlay){
-                    PREFS.edit { putBoolean("PREFS_BackgroundPlay", true).apply() }
-                    notice("已开启后台播放", 1000)
-                } else {
-                    checkNotificationPermission()
-                    PREFS.edit { putBoolean("PREFS_BackgroundPlay", false).apply() }
-                    notice("已关闭后台播放", 1000)
-                }
-            }
-            else if (ReceiveKey == "LoopPlay"){
-                if (vm.player.repeatMode == Player.REPEAT_MODE_OFF){
-                    vm.player.repeatMode = Player.REPEAT_MODE_ONE
-                    vm.PREFS_LoopPlay = true
-                    PREFS.edit { putBoolean("PREFS_LoopPlay", true).apply() }
-                    notice("已开启单集循环", 1000)
-                } else {
-                    vm.player.repeatMode = Player.REPEAT_MODE_OFF
-                    vm.PREFS_LoopPlay = false
-                    PREFS.edit { putBoolean("PREFS_LoopPlay", false).apply() }
-                    notice("已关闭单集循环", 1000)
-                }
-            }
-            else if (ReceiveKey == "AlwaysSeek"){
-                changeStateAlwaysSeek()
-            }
-            else if (ReceiveKey == "TapJump"){
-                changeStateTapJump()
-            }
-            else if (ReceiveKey == "LinkScroll"){
-                changeStateLinkScroll()
-            }
-            else if (ReceiveKey == "SealOEL"){
-                if (vm.PREFS_SealOEL){
-                    PREFS.edit { putBoolean("PREFS_SealOEL", true).apply() }
-                    OEL.disable()
-                    notice("已关闭方向监听器", 1000)
-                } else {
-                    PREFS.edit { putBoolean("PREFS_SealOEL", false).apply() }
-                    OEL.enable()
-                    notice("已开启方向监听器", 1000)
-                }
-            }
-            else if (ReceiveKey == "SoundOnly"){
-                changeStateSoundOnly(true)
-            }
-            else if (ReceiveKey == "VideoOnly"){
-                changeStateVideoOnly(true)
-            }
-            else if (ReceiveKey == "VideoInfo"){
-                //读取数据
-                val retriever = MediaMetadataRetriever()
-                retriever.setDataSource(MediaInfo_AbsolutePath)
-                val videoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-                val videoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-                val videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                val videoFps = fps
-                val captureFps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)
-                val videoMimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
-                val videoBitrate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
+            when(ReceiveKey){
+                //顶部横排
+                "Capture" -> {
+                    fun generateFileName(): String {
+                        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+                        val current = LocalDateTime.now()
+                        return "IMG_${current.format(formatter)}"
+                    }
 
-                val videoFileName = MediaInfo_FileName
-                val videoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                val videoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                val videoDate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)
-
-                //将数据传递给Fragment
-                val videoInfoFragment = PlayerFragmentVideoInfo.newInstance(
-                    videoWidth?.toInt() ?: 0,
-                    videoHeight?.toInt() ?: 0,
-                    videoDuration?.toLong() ?: 0,
-                    videoFps,
-                    captureFps?.toFloat() ?: 0f,
-                    videoMimeType ?: "",
-                    videoBitrate?.toLong() ?: 0,
-                    videoFileName,
-                    videoTitle ?: "",
-                    videoArtist ?: "",
-                    videoDate ?: ""
-                )
-                videoInfoFragment.show(supportFragmentManager, "PlayerVideoInfoFragment")
-            }
-            else if (ReceiveKey == "SetSpeed"){
-                val dialog = Dialog(this)
-                val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
-                dialog.setContentView(dialogView)
-                val title: TextView = dialogView.findViewById(R.id.dialog_title)
-                val Description:TextView = dialogView.findViewById(R.id.dialog_description)
-                val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-                val Button: Button = dialogView.findViewById(R.id.dialog_button)
-
-                title.text = "自定义倍速"
-                Description.text = "输入您的自定义倍速,最大允许数值为5.0"
-                EditText.hint = ""
-                Button.text = "确定"
-
-                val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                Button.setOnClickListener {
-                    val userInput = EditText.text.toString()
-                    if (userInput.isEmpty()){
-                        notice("未输入内容", 1000)
-                    } else {
-                        val inputValue = userInput.toFloat()
-                        if(inputValue > 0.0 && inputValue < 5.0){
-                            vm.player.setPlaybackSpeed(inputValue)
-                            notice("已将倍速设置为$inputValue", 2000)
-                            lifecycleScope.launch {
-                                val newSetting = MediaItemSetting(MARK_FileName = vm.fileName, PREFS_PlaySpeed = inputValue)
-                                MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
+                    fun handleSuccess(bitmap: Bitmap) {
+                        val contentValues = ContentValues().apply {
+                            put(MediaStore.MediaColumns.DISPLAY_NAME, generateFileName())
+                            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                            put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/截取")
+                        }
+                        val imageUri = contentResolver.insert(
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            contentValues
+                        )
+                        imageUri?.let {
+                            val outputStream: OutputStream? = contentResolver.openOutputStream(it)
+                            outputStream?.use { stream ->
+                                bitmap.compress(JPEG, 100, stream)
                             }
-                        } else {
-                            notice("数值过大", 3000)
                         }
-                    }
-                    dialog.dismiss()
-                }
-                dialog.show()
-                CoroutineScope(Dispatchers.Main).launch {
-                    delay(50)
-                    EditText.requestFocus()
-                    imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-                }
-            }
-            else if (ReceiveKey == "SysShare"){
-                shareVideo(this, MediaInfo_VideoUri)
-            }
-            else if (ReceiveKey == "Equalizer"){
-                equalizer = Equalizer(1, vm.player.audioSessionId)
-                equalizer.enabled = true
-                PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
-            }
-            else if (ReceiveKey == "Capture"){
 
-                fun generateFileName(): String {
-                    val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
-                    val current = LocalDateTime.now()
-                    return "IMG_${current.format(formatter)}"
-                }
+                        notice("已截取当前帧,存入Pictures/截取", 3000)
 
-                fun handleSuccess(bitmap: Bitmap) {
-                    val contentValues = ContentValues().apply {
-                        put(MediaStore.MediaColumns.DISPLAY_NAME, generateFileName())
-                        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                        put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/截取")
+                        if (wasPlaying){ vm.player.play() }
+
+
                     }
-                    val imageUri = contentResolver.insert(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                        contentValues
+
+                    wasPlaying = vm.player.isPlaying
+                    vm.player.pause()
+                    val Bitmap = Bitmap.createBitmap(videoSizeWidth, videoSizeHeight, Bitmap.Config.ARGB_8888)
+                    val surfaceView = playerView.videoSurfaceView as? SurfaceView
+                    val surface = surfaceView?.holder?.surface
+                    PixelCopy.request(surface!!, Bitmap,
+                        { copyResult ->
+                            if (copyResult == PixelCopy.SUCCESS) {
+                                handleSuccess(Bitmap)
+                            } else {
+                                notice("截图失败", 3000)
+                            }
+                        },
+                        Handler(Looper.getMainLooper())
                     )
-                    imageUri?.let {
-                        val outputStream: OutputStream? = contentResolver.openOutputStream(it)
-                        outputStream?.use { stream ->
-                            bitmap.compress(JPEG, 100, stream)
-                        }
-                    }
-
-                    notice("已截取当前帧,存入Pictures/截取", 3000)
-
-                    if (wasPlaying){ vm.player.play() }
-
-
                 }
+                "BackToStart" -> {
+                    vm.player.seekTo(0)
+                    vm.player.play()
+                    if (vm.PREFS_LinkScroll) startScrollerSync()
+                    notice("回到视频起始", 3000)
+                }
+                //播放相关
+                "BackgroundPlay" -> {
+                    if (vm.PREFS_BackgroundPlay){
+                        PREFS.edit { putBoolean("PREFS_BackgroundPlay", true).apply() }
+                        notice("已开启后台播放", 1000)
+                    } else {
+                        checkNotificationPermission()
+                        PREFS.edit { putBoolean("PREFS_BackgroundPlay", false).apply() }
+                        notice("已关闭后台播放", 1000)
+                    }
+                }
+                "LoopPlay" -> {
+                    if (vm.player.repeatMode == Player.REPEAT_MODE_OFF){
+                        vm.player.repeatMode = Player.REPEAT_MODE_ONE
+                        vm.PREFS_LoopPlay = true
+                        PREFS.edit { putBoolean("PREFS_LoopPlay", true).apply() }
+                        notice("已开启单集循环", 1000)
+                    } else {
+                        vm.player.repeatMode = Player.REPEAT_MODE_OFF
+                        vm.PREFS_LoopPlay = false
+                        PREFS.edit { putBoolean("PREFS_LoopPlay", false).apply() }
+                        notice("已关闭单集循环", 1000)
+                    }
+                }
+                "SetSpeed" -> {
+                    val dialog = Dialog(this)
+                    val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+                    dialog.setContentView(dialogView)
+                    val title: TextView = dialogView.findViewById(R.id.dialog_title)
+                    val Description:TextView = dialogView.findViewById(R.id.dialog_description)
+                    val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+                    val Button: Button = dialogView.findViewById(R.id.dialog_button)
 
-                wasPlaying = vm.player.isPlaying
-                vm.player.pause()
-                val Bitmap = Bitmap.createBitmap(videoSizeWidth, videoSizeHeight, Bitmap.Config.ARGB_8888)
-                val surfaceView = playerView.videoSurfaceView as? SurfaceView
-                val surface = surfaceView?.holder?.surface
-                PixelCopy.request(surface!!, Bitmap,
-                    { copyResult ->
-                        if (copyResult == PixelCopy.SUCCESS) {
-                            handleSuccess(Bitmap)
+                    title.text = "自定义倍速"
+                    Description.text = "输入您的自定义倍速,最大允许数值为5.0"
+                    EditText.hint = ""
+                    Button.text = "确定"
+
+                    val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                    Button.setOnClickListener {
+                        val userInput = EditText.text.toString()
+                        if (userInput.isEmpty()){
+                            notice("未输入内容", 1000)
                         } else {
-                            notice("截图失败", 3000)
+                            val inputValue = userInput.toFloat()
+                            if(inputValue > 0.0 && inputValue < 5.0){
+                                vm.player.setPlaybackSpeed(inputValue)
+                                notice("已将倍速设置为$inputValue", 2000)
+                                lifecycleScope.launch {
+                                    val newSetting = MediaItemSetting(MARK_FileName = vm.fileName, PREFS_PlaySpeed = inputValue)
+                                    MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
+                                }
+                            } else {
+                                notice("数值过大", 3000)
+                            }
                         }
-                    },
-                    Handler(Looper.getMainLooper())
-                )
-
-            }
-            else if (ReceiveKey == "BackToStart"){
-                vm.player.seekTo(0)
-                vm.player.play()
-                if (vm.PREFS_LinkScroll) startScrollerSync()
-                notice("回到视频起始", 3000)
-            }
-            else if (ReceiveKey == "chooseShutDownTime"){
-                val time = bundle.getInt("TIME")
-                startTimerShutDown(time)
-            }
-            else if (ReceiveKey == "setShutDownTime"){
-                val dialog = Dialog(this)
-                val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_time, null)
-                dialog.setContentView(dialogView)
-                val title: TextView = dialogView.findViewById(R.id.dialog_title)
-                val Description:TextView = dialogView.findViewById(R.id.dialog_description)
-                val EditTextHour: EditText = dialogView.findViewById(R.id.dialog_input_hour)
-                val EditTextMinute: EditText = dialogView.findViewById(R.id.dialog_input_minute)
-                val Button: Button = dialogView.findViewById(R.id.dialog_button)
-
-                title.text = "自定义定时关闭时间"
-                Description.text = "输入自定义定时关闭时间"
-                EditTextHour.hint = "  "
-                EditTextMinute.hint = "  "
-                Button.text = "确定"
-
-                val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                Button.setOnClickListener {
-                    val hourInput = EditTextHour.text.toString().toIntOrNull()
-                    val minuteInput = EditTextMinute.text.toString().toIntOrNull()
-
-                    var hour = 0
-                    var minute = 0
-
-                    //获取时
-                    if (hourInput == null || hourInput == 0 ){
-                        hour = 0
-                    } else {
-                        hour = hourInput
-                    }
-                    //获取分
-                    if (minuteInput == null || minuteInput == 0 ){
-                        minute = 0
-                    } else {
-                        minute = minuteInput
-                    }
-
-                    if (hourInput == null && minuteInput == null){
-                        notice("未输入内容", 1000)
                         dialog.dismiss()
-                        return@setOnClickListener
                     }
-                    if (hour == 0 && minute == 0){
-                        notice("立即关闭", 1000)
-                        lifecycleScope.launch {
-                            delay(2000)
-                            val pid = android.os.Process.myPid()
-                            android.os.Process.killProcess(pid)
-                        }
+                    dialog.show()
+                    CoroutineScope(Dispatchers.Main).launch {
+                        delay(50)
+                        EditText.requestFocus()
+                        imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
                     }
-
-                    //计算总分钟数
-                    val totalMinutes = hour * 60 + minute
-                    startTimerShutDown(totalMinutes)
-
-                    dialog.dismiss()
                 }
-                dialog.show()
-                //自动弹出键盘程序
-                CoroutineScope(Dispatchers.Main).launch {
-                    delay(50)
-                    EditTextHour.requestFocus()
-                    imm.showSoftInput(EditTextHour, InputMethodManager.SHOW_IMPLICIT)
+                "SealOEL" -> {
+                    if (vm.PREFS_SealOEL){
+                        PREFS.edit { putBoolean("PREFS_SealOEL", true).apply() }
+                        OEL.disable()
+                        notice("已关闭方向监听器", 1000)
+                    } else {
+                        PREFS.edit { putBoolean("PREFS_SealOEL", false).apply() }
+                        OEL.enable()
+                        notice("已开启方向监听器", 1000)
+                    }
+                }
+                "SoundOnly" -> {
+                    changeStateSoundOnly(true)
+                }
+                "VideoOnly" -> {
+                    changeStateVideoOnly(true)
+                }
+                //进度条
+                "AlwaysSeek" -> {
+                    changeStateAlwaysSeek()
+                }
+                "LinkScroll" -> {
+                    changeStateLinkScroll()
+                }
+                "TapJump" -> {
+                    changeStateTapJump()
+                }
+                //定时关闭
+                "setShutDownTime" -> {
+                    val dialog = Dialog(this)
+                    val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_time, null)
+                    dialog.setContentView(dialogView)
+                    val title: TextView = dialogView.findViewById(R.id.dialog_title)
+                    val Description:TextView = dialogView.findViewById(R.id.dialog_description)
+                    val EditTextHour: EditText = dialogView.findViewById(R.id.dialog_input_hour)
+                    val EditTextMinute: EditText = dialogView.findViewById(R.id.dialog_input_minute)
+                    val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+                    title.text = "自定义定时关闭时间"
+                    Description.text = "输入自定义定时关闭时间"
+                    EditTextHour.hint = "  "
+                    EditTextMinute.hint = "  "
+                    Button.text = "确定"
+
+                    val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                    Button.setOnClickListener {
+                        val hourInput = EditTextHour.text.toString().toIntOrNull()
+                        val minuteInput = EditTextMinute.text.toString().toIntOrNull()
+
+                        var hour = 0
+                        var minute = 0
+
+                        //获取时
+                        if (hourInput == null || hourInput == 0 ){
+                            hour = 0
+                        } else {
+                            hour = hourInput
+                        }
+                        //获取分
+                        if (minuteInput == null || minuteInput == 0 ){
+                            minute = 0
+                        } else {
+                            minute = minuteInput
+                        }
+
+                        if (hourInput == null && minuteInput == null){
+                            notice("未输入内容", 1000)
+                            dialog.dismiss()
+                            return@setOnClickListener
+                        }
+                        if (hour == 0 && minute == 0){
+                            notice("立即关闭", 1000)
+                            lifecycleScope.launch {
+                                delay(2000)
+                                val pid = android.os.Process.myPid()
+                                android.os.Process.killProcess(pid)
+                            }
+                        }
+
+                        //计算总分钟数
+                        val totalMinutes = hour * 60 + minute
+                        startTimerShutDown(totalMinutes, true)
+
+                        dialog.dismiss()
+                    }
+                    dialog.show()
+                    //自动弹出键盘程序
+                    CoroutineScope(Dispatchers.Main).launch {
+                        delay(50)
+                        EditTextHour.requestFocus()
+                        imm.showSoftInput(EditTextHour, InputMethodManager.SHOW_IMPLICIT)
+                    }
+                }
+                "chooseShutDownTime" -> {
+                    val time = bundle.getInt("TIME")
+                    startTimerShutDown(time, true)
+                }
+                //底部按钮
+                "VideoInfo" -> {
+                    //读取数据
+                    val retriever = MediaMetadataRetriever()
+                    retriever.setDataSource(MediaInfo_AbsolutePath)
+                    val videoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                    val videoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                    val videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                    val videoFps = fps
+                    val captureFps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)
+                    val videoMimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
+                    val videoBitrate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
+
+                    val videoFileName = MediaInfo_FileName
+                    val videoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+                    val videoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                    val videoDate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)
+
+                    //将数据传递给Fragment
+                    val videoInfoFragment = PlayerFragmentVideoInfo.newInstance(
+                        videoWidth?.toInt() ?: 0,
+                        videoHeight?.toInt() ?: 0,
+                        videoDuration?.toLong() ?: 0,
+                        videoFps,
+                        captureFps?.toFloat() ?: 0f,
+                        videoMimeType ?: "",
+                        videoBitrate?.toLong() ?: 0,
+                        videoFileName,
+                        videoTitle ?: "",
+                        videoArtist ?: "",
+                        videoDate ?: ""
+                    )
+                    videoInfoFragment.show(supportFragmentManager, "PlayerVideoInfoFragment")
+                }
+                "SysShare" -> {
+                    shareVideo(this, MediaInfo_VideoUri)
+                }
+                "Equalizer" -> {
+                    equalizer = Equalizer(1, vm.player.audioSessionId)
+                    equalizer.enabled = true
+                    PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
                 }
             }
         }
@@ -1801,7 +1805,6 @@ class PlayerActivity: AppCompatActivity(){
             prefsEditor.putBoolean("PREFS_AlwaysSeek", vm.PREFS_AlwaysSeek)
             prefsEditor.putBoolean("PREFS_LinkScroll", vm.PREFS_LinkScroll)
             prefsEditor.putBoolean("PREFS_TapJump", vm.PREFS_TapJump)
-            prefsEditor.putBoolean("PREFS_ExitWhenMediaEnd", vm.PREFS_ExitWhenMediaEnd)
             prefsEditor.putBoolean("PREFS_SavePositionWhenExit", vm.PREFS_SavePositionWhenExit)
             prefsEditor.apply()
         }
@@ -2034,8 +2037,9 @@ class PlayerActivity: AppCompatActivity(){
     private fun notice(text: String, duration: Long) {
         if (duration > 114513){
             showNoticeJobLong(text)
+        }else{
+            showNoticeJob(text, duration)
         }
-        showNoticeJob(text, duration)
     }
     //Job:关闭视频轨道倒计时
     private var closeVideoTrackJob: Job? = null
@@ -2184,9 +2188,9 @@ class PlayerActivity: AppCompatActivity(){
         context.startActivity(chooser)
     }
     //定时关闭倒计时:接收参数time是分钟
-    private fun startTimerShutDown(time: Int){
+    private fun startTimerShutDown(time: Int ,flag_need_notice: Boolean){
         val ShotDownTime = time * 60_000L
-        notice("${time}分钟后自动关闭", ShotDownTime)
+        if (flag_need_notice) { notice("${time}分钟后自动关闭", 3000) }
         COUNT_Timer?.cancel()
         COUNT_Timer = object : CountDownTimer(ShotDownTime, 1000000L) {
             override fun onTick(millisUntilFinished: Long) {}
@@ -2194,14 +2198,27 @@ class PlayerActivity: AppCompatActivity(){
         }.start()
     }
     private fun timerShutDown() {
-        //1
-        finishAndRemoveTask()
-        //2
-        val pid = android.os.Process.myPid()
-        android.os.Process.killProcess(pid)
-        //3
-        exitProcess(0)
-
+        if (playEnd_NeedShutDown) {
+            playEnd_NeedShutDown = false
+            finishAndRemoveTask()
+            val pid = android.os.Process.myPid()
+            android.os.Process.killProcess(pid)
+            exitProcess(0)
+        }
+        if (vm.PREFS_ShutDownWhenMediaEnd) {
+            notice("本次播放结束后将关闭", 3000)
+            playEnd_NeedShutDown = true
+            val currentPosition = vm.player.currentPosition
+            val duration = vm.player.duration
+            val countSecond = (duration - currentPosition) / 1000L
+            startTimerShutDown(countSecond.toInt(), false)
+        }
+        else{
+            finishAndRemoveTask()
+            val pid = android.os.Process.myPid()
+            android.os.Process.killProcess(pid)
+            exitProcess(0)
+        }
     }
     //空闲倒计时
     private fun startIdleTimer() {
@@ -2654,6 +2671,7 @@ class PlayerActivity: AppCompatActivity(){
     private fun playerReady(){
         if (playerReadyFrom_FirstEntry) {
             playerReadyFrom_FirstEntry = false
+            playerReady_FirstEntryReached = true
 
             if (NeedSetSpeed){
                 vm.setSpeed(NeedSetSpeedValue)
@@ -2661,9 +2679,10 @@ class PlayerActivity: AppCompatActivity(){
             }
 
             requestAudioFocus()
+
             playVideo()
 
-
+            //隐藏遮罩
             val cover = findViewById<View>(R.id.cover)
             cover.animate().alpha(0f).setDuration(100)
                 .setInterpolator(AccelerateDecelerateInterpolator())
@@ -2699,7 +2718,13 @@ class PlayerActivity: AppCompatActivity(){
         if (vm.state_FromSysStart && vm.PREFS_ExitWhenEnd){
             finish()
         }
-
+        //播放结束时关闭
+        if (playEnd_NeedShutDown){
+            finishAndRemoveTask()
+            val pid = android.os.Process.myPid()
+            android.os.Process.killProcess(pid)
+            exitProcess(0)
+        }
     }
 
     private fun pauseVideo(){

@@ -143,7 +143,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         Switch_SealOEL.isChecked = vm.PREFS_SealOEL
         Switch_OnlyAudio.isChecked = vm.PREFS_OnlyAudio
         Switch_OnlyVideo.isChecked = vm.PREFS_OnlyVideo
-        Switch_ExitWhenMediaEnd.isChecked = vm.PREFS_ExitWhenMediaEnd
+        Switch_ExitWhenMediaEnd.isChecked = vm.PREFS_ShutDownWhenMediaEnd
 
 
         //保存进度仅在数据库启用时开启
@@ -273,6 +273,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             customDismiss()
+        }
+        //开关：播放结束时关闭
+        Switch_ExitWhenMediaEnd.setOnCheckedChangeListener { _, isChecked ->
+            vm.PREFS_ShutDownWhenMediaEnd = isChecked
         }
         //定时关闭
         val ButtonTimerShutDown = view.findViewById<TextView>(R.id.ButtonTimerShutDown)
