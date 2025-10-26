@@ -111,8 +111,6 @@ import kotlin.system.exitProcess
 class PlayerActivity: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
-    //视频信息预读
-
     //播放状态
     private var wasPlaying = true
     //音量配置参数
@@ -120,14 +118,8 @@ class PlayerActivity: AppCompatActivity(){
     private var currentVolume = 0
     private var originalVolume = 0
     //点击和滑动状态标识 + onScrolled回调参数
-    private var onDown = false
-    private var dragging = false
-    private var fling =false
     private var singleTap = false
-    private var scrolling = false
-    private var scrollerTouching = false
     private var videoTimeTo = 0L
-    private var STATE_FingerTouching = false
     //点击隐藏控件
     private var widgetsShowing = true
     //时间戳刷新间隔
@@ -141,13 +133,12 @@ class PlayerActivity: AppCompatActivity(){
     private var forceSeekGap = 5000L
     //功能:VideoSeek
     private var isSeekReady = true
-
     //判断体:PlayerReady(播放状态)
     private var playerReadyFrom_FirstEntry = true
-    private var playerReadyFrom_NoramlSeek = false
+    private var playerReadyFrom_NormalSeek = false
     private var playerReadyFrom_LastSeek = false
     //RunnableRunning
-    private var videoSeekHanderRunning = false
+    private var videoSeekHandlerRunning = false
     private var smartScrollRunnableRunning = false
     private var syncScrollRunnableRunning = false
     //LastSeek保底Seek机制
@@ -829,7 +820,6 @@ class PlayerActivity: AppCompatActivity(){
                 if (e.action == MotionEvent.ACTION_UP) {
                     scrollerState_Pressed = false
 
-                    scrollerStoppingTapUp()
                     //开启控件隐藏倒计时
                     startIdleTimer()
                 }
@@ -852,9 +842,6 @@ class PlayerActivity: AppCompatActivity(){
                     scrollerState_Moving = true
                     scrollerState_DraggingMoving = true
 
-
-                    dragging = true
-                    scrolling = true
                     return
                 }
                 if (newState == RecyclerView.SCROLL_STATE_SETTLING) {
@@ -864,9 +851,6 @@ class PlayerActivity: AppCompatActivity(){
                     scrollerState_DraggingMoving = false
                     scrollerState_InertiaMoving = true
 
-
-                    dragging = false
-                    scrolling = true
                     return
                 }
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
@@ -876,9 +860,6 @@ class PlayerActivity: AppCompatActivity(){
                     scrollerState_DraggingStay = false
                     scrollerState_InertiaMoving = false
 
-
-                    dragging = false
-                    scrolling = false
                     return
                 }
             }
@@ -973,9 +954,9 @@ class PlayerActivity: AppCompatActivity(){
                 notice("暂停", 1000)
                 buttonRefresh()
             } else {
-                onDown = false
-                fling = false
-                notice("继续播放", 1000)
+                //状态变更
+                scroller.stopScroll()
+                //播放或暂停
                 lifecycleScope.launch {
                     scroller.stopScroll()
                     delay(20)
@@ -991,6 +972,7 @@ class PlayerActivity: AppCompatActivity(){
                         return@launch
                     }
                 }
+                notice("继续播放", 1000)
             }
         }
         //按钮：切换横屏
@@ -1445,10 +1427,74 @@ class PlayerActivity: AppCompatActivity(){
                 if (vm.PREFS_LinkScroll) startScrollerSync()
                 notice("回到视频起始", 3000)
             }
-            else if (ReceiveKey == "ShutDownTime"){
+            else if (ReceiveKey == "chooseShutDownTime"){
                 val time = bundle.getInt("TIME")
                 startTimerShutDown(time)
-                notice("已设置${time}分钟后自动关闭", 3000)
+            }
+            else if (ReceiveKey == "setShutDownTime"){
+                val dialog = Dialog(this)
+                val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_time, null)
+                dialog.setContentView(dialogView)
+                val title: TextView = dialogView.findViewById(R.id.dialog_title)
+                val Description:TextView = dialogView.findViewById(R.id.dialog_description)
+                val EditTextHour: EditText = dialogView.findViewById(R.id.dialog_input_hour)
+                val EditTextMinute: EditText = dialogView.findViewById(R.id.dialog_input_minute)
+                val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+                title.text = "自定义定时关闭时间"
+                Description.text = "输入自定义定时关闭时间"
+                EditTextHour.hint = "  "
+                EditTextMinute.hint = "  "
+                Button.text = "确定"
+
+                val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                Button.setOnClickListener {
+                    val hourInput = EditTextHour.text.toString().toIntOrNull()
+                    val minuteInput = EditTextMinute.text.toString().toIntOrNull()
+
+                    var hour = 0
+                    var minute = 0
+
+                    //获取时
+                    if (hourInput == null || hourInput == 0 ){
+                        hour = 0
+                    } else {
+                        hour = hourInput
+                    }
+                    //获取分
+                    if (minuteInput == null || minuteInput == 0 ){
+                        minute = 0
+                    } else {
+                        minute = minuteInput
+                    }
+
+                    if (hourInput == null && minuteInput == null){
+                        notice("未输入内容", 1000)
+                        dialog.dismiss()
+                        return@setOnClickListener
+                    }
+                    if (hour == 0 && minute == 0){
+                        notice("立即关闭", 1000)
+                        lifecycleScope.launch {
+                            delay(2000)
+                            val pid = android.os.Process.myPid()
+                            android.os.Process.killProcess(pid)
+                        }
+                    }
+
+                    //计算总分钟数
+                    val totalMinutes = hour * 60 + minute
+                    startTimerShutDown(totalMinutes)
+
+                    dialog.dismiss()
+                }
+                dialog.show()
+                //自动弹出键盘程序
+                CoroutineScope(Dispatchers.Main).launch {
+                    delay(50)
+                    EditTextHour.requestFocus()
+                    imm.showSoftInput(EditTextHour, InputMethodManager.SHOW_IMPLICIT)
+                }
             }
         }
 
@@ -1542,9 +1588,7 @@ class PlayerActivity: AppCompatActivity(){
                 }
             }
             //使用普通进度条
-            else {
-                syncScrollRunnableGap = ((MediaInfo_VideoDuration / 1000) * (1000.0 / 3600)).toLong()
-                if (MediaInfo_VideoDuration / 1000 > ScrollerInfo_MaxPicNumber) {
+            else if (MediaInfo_VideoDuration / 1000 > ScrollerInfo_MaxPicNumber) {
                     ScrollerInfo_EachPicWidth = (40 * displayMetrics.density).toInt()
                     ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_MaxPicNumber
                     ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
@@ -1553,7 +1597,7 @@ class PlayerActivity: AppCompatActivity(){
                     ScrollerInfo_PicNumber = (MediaInfo_VideoDuration / 1000) + 1
                     ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_PicNumber
                 }
-            }
+
 
             //绑定Adapter
             withContext(Dispatchers.Main) {
@@ -1568,8 +1612,16 @@ class PlayerActivity: AppCompatActivity(){
             }
 
             //开启被控
-            delay(100)
+            fun startSyncScrollerGapControl(){
+                syncScrollRunnableGap = 0L
+                lifecycleScope.launch {
+                    delay(3000)
+                    syncScrollRunnableGap = ((MediaInfo_VideoDuration / 1000) * (1000.0 / 3600)).toLong()
+                }
+            }
+            startSyncScrollerGapControl()
             if(vm.PREFS_LinkScroll){ startScrollerSync() }
+            delay(200)
             startVideoTimeSync()
         }
 
@@ -1814,12 +1866,12 @@ class PlayerActivity: AppCompatActivity(){
         override fun run() {
             smartScrollRunnableRunning = true
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-            var delayGap = if (dragging){ 30L } else{ 30L }
+            var delayGap = if (scrollerState_Pressed){ 30L } else{ 30L }
             val videoPosition = vm.player.currentPosition
             val scrollerPosition =  vm.player.duration * (recyclerView.computeHorizontalScrollOffset().toFloat()/recyclerView.computeHorizontalScrollRange())
             vm.player.volume = 0f
             if (scrollerPosition < videoPosition +100) {
-                if (scrollerTouching){
+                if (scrollerState_Pressed){
                     vm.player.pause()
                 }else{
                     if (wasPlaying){
@@ -1844,7 +1896,7 @@ class PlayerActivity: AppCompatActivity(){
                     speed5 = speed5 - 0.1f
                 }
 
-                if (wasPlaying && !scrollerTouching){
+                if (wasPlaying && !scrollerState_Pressed){
                     if (speed5 <= 1.0){
                         speed5 = 1.0f
                     }
@@ -1879,7 +1931,7 @@ class PlayerActivity: AppCompatActivity(){
     private var videoSeek = object : Runnable{
         override fun run() {
             //标记位更改
-            videoSeekHanderRunning = true
+            videoSeekHandlerRunning = true
 
             //计算目标位置
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
@@ -1891,16 +1943,13 @@ class PlayerActivity: AppCompatActivity(){
             if (scrollerState_BackwardScroll){
                 if (seekToMs < vm.player.currentPosition){
                     vm.player.pause()
-                    if (seekToMs < 200){
-                        playerReadyFrom_NoramlSeek = true
+                    if (seekToMs < 50){
+                        playerReadyFrom_LastSeek = true
                         vm.player.seekTo(0)
-                    }else if (seekToMs > vm.player.duration - 300){
-                        playerReadyFrom_NoramlSeek = true
-                        vm.player.seekTo(vm.player.duration - 300)
                     }else{
                         if (isSeekReady){
                             isSeekReady = false
-                            playerReadyFrom_NoramlSeek = true
+                            playerReadyFrom_NormalSeek = true
                             vm.player.seekTo(seekToMs)
                         }else{
                             if (SECUREINTERVAL_FINGERUP){
@@ -1913,22 +1962,12 @@ class PlayerActivity: AppCompatActivity(){
             //正向seek
             else{
                 vm.player.pause()
-                if (seekToMs < 200){
-                    playerReadyFrom_NoramlSeek = true
-                    vm.player.seekTo(0)
+                if (isSeekReady){
+                    isSeekReady = false
+                    playerReadyFrom_NormalSeek = true
+                    vm.player.seekTo(seekToMs)
                 }
-                else if (seekToMs > vm.player.duration - 300){
-                    playerReadyFrom_NoramlSeek = true
-                    vm.player.seekTo(vm.player.duration - 300)
-                }
-                //普通seek
-                else{
-                    if (isSeekReady){
-                        isSeekReady = false
-                        playerReadyFrom_NoramlSeek = true
-                        vm.player.seekTo(seekToMs)
-                    }
-                }
+
             }
 
 
@@ -1938,20 +1977,20 @@ class PlayerActivity: AppCompatActivity(){
             }else{
                 global_SeekToMs = seekToMs
                 startLastSeek()
-                videoSeekHanderRunning = false
+                videoSeekHandlerRunning = false
             }
 
         }
     }
     private fun startVideoSeek() {
         vm.playEnd = false
-        if (videoSeekHanderRunning) return
+        if (videoSeekHandlerRunning) return
         //开启后不再允许记录播放状态
         allowRecord_wasPlaying = false
         videoSeekHandler.post(videoSeek)
     }
     private fun stopVideoSeek() {
-        videoSeekHanderRunning = false
+        videoSeekHandlerRunning = false
         videoSeekHandler.removeCallbacks(videoSeek)
     }
     //Runnable:lastSeek
@@ -1997,26 +2036,6 @@ class PlayerActivity: AppCompatActivity(){
             showNoticeJobLong(text)
         }
         showNoticeJob(text, duration)
-    }
-    //Job:ONDOWN安全期倒计时
-    private var secureIntervalJob: Job? = null
-    private fun SecureIntervalJob() {
-        secureIntervalJob?.cancel()
-        secureIntervalJob = lifecycleScope.launch {
-            SECUREINTERVAL_ONDOWN = true
-            delay(200)
-            SECUREINTERVAL_ONDOWN = false
-        }
-    }
-    //Job:FINGER_UP安全期倒计时
-    private var secureIntervalJobFingerUp: Job? = null
-    private fun SecureIntervalJobFingerUp() {
-        secureIntervalJobFingerUp?.cancel()
-        secureIntervalJobFingerUp = lifecycleScope.launch {
-            SECUREINTERVAL_FINGERUP = true
-            delay(200)
-            SECUREINTERVAL_FINGERUP = false
-        }
     }
     //Job:关闭视频轨道倒计时
     private var closeVideoTrackJob: Job? = null
@@ -2154,14 +2173,6 @@ class PlayerActivity: AppCompatActivity(){
 
 
     //Functions
-    private fun saveLongKeepItems(outState: Bundle){
-        //保存原始Intent
-        outState.putParcelable("CONTENT_INTENT", intent)
-
-    }
-    private fun getLongKeepItems(savedInstanceState: Bundle?){
-        intent = savedInstanceState?.getParcelable("CONTENT_INTENT")
-    }
     //分享视频(已知Uri)
     private fun shareVideo(context: Context, videoUri: Uri) {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -2172,9 +2183,10 @@ class PlayerActivity: AppCompatActivity(){
         val chooser = Intent.createChooser(shareIntent, "分享视频")
         context.startActivity(chooser)
     }
-    //定时关闭倒计时
+    //定时关闭倒计时:接收参数time是分钟
     private fun startTimerShutDown(time: Int){
         val ShotDownTime = time * 60_000L
+        notice("${time}分钟后自动关闭", ShotDownTime)
         COUNT_Timer?.cancel()
         COUNT_Timer = object : CountDownTimer(ShotDownTime, 1000000L) {
             override fun onTick(millisUntilFinished: Long) {}
@@ -2638,50 +2650,6 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
     }
-    //保底Seek机制
-    private fun LastSeek(){
-        if (LastSeekLaunched) return
-        lifecycleScope.launch {
-            SECUREINTERVAL_SEEKONCE = true
-            delay(200)
-            SECUREINTERVAL_SEEKONCE = false
-        }
-
-        LastSeekLaunched = true
-        playerReadyFrom_NoramlSeek = false
-        val thumbScroller = findViewById<RecyclerView>(R.id.rvThumbnails)
-        thumbScroller.stopScroll()
-        stopVideoSeek()
-        val totalWidthOnce = thumbScroller.computeHorizontalScrollRange()
-        val offsetOnce     = thumbScroller.computeHorizontalScrollOffset()
-        val percentOnce    = offsetOnce.toFloat() / totalWidthOnce
-        val seekToMsOnce   = (percentOnce * vm.player.duration).toLong()
-        playerReadyFrom_LastSeek = true
-        /*
-        //根据滑动状态确定使用精确帧还是关键帧
-        if (STATE_FingerTouching){
-            vm.player.setSeekParameters(SeekParameters.EXACT)
-        }else{
-            vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
-        }
-
-         */
-        vm.player.seekTo(seekToMsOnce)
-    }
-    //手指抬起事件
-    private fun scrollerStoppingTapUp(){
-        STATE_FingerTouching = false
-        //开启安全期倒计时
-        lifecycleScope.launch {
-            SecureIntervalJobFingerUp()
-        }
-        if (!vm.PREFS_LinkScroll) return
-        if (isSeekReady){
-            if (wasPlaying){
-                playVideo()
-            }
-        }
-    }
 
     private fun playerReady(){
         if (playerReadyFrom_FirstEntry) {
@@ -2702,8 +2670,8 @@ class PlayerActivity: AppCompatActivity(){
                 .withEndAction { cover.visibility = View.GONE }
                 .start()
         }
-        if (playerReadyFrom_NoramlSeek){
-            playerReadyFrom_NoramlSeek = false
+        if (playerReadyFrom_NormalSeek){
+            playerReadyFrom_NormalSeek = false
             isSeekReady = true
             return
         }
@@ -2747,7 +2715,7 @@ class PlayerActivity: AppCompatActivity(){
         requestAudioFocus()
         vm.player.setPlaybackSpeed(1f)
         vm.player.play()
-        if (vm.PREFS_LinkScroll && !scrollerTouching && !scrolling){ startScrollerSync() }
+        if (vm.PREFS_LinkScroll && !scrollerState_Pressed && !scrollerState_Moving){ startScrollerSync() }
         lifecycleScope.launch {
             delay(100)
             startVideoTimeSync()

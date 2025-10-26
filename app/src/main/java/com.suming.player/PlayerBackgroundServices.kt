@@ -90,7 +90,7 @@ class PlayerBackgroundServices(): MediaSessionService() {
         if (Build.BRAND == "samsung") {
             return NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentIntent(createPendingIntent())
-                .setContentTitle("媒体播放中")
+                .setContentTitle("媒体播放中（三星设备需手动点击退出）")
                 .setContentText(INFO_TITLE)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.ic_notification_area)
@@ -99,7 +99,8 @@ class PlayerBackgroundServices(): MediaSessionService() {
                 .addAction(android.R.drawable.ic_delete, "退出", broadcastExit())
                 .setAutoCancel(false)
                 .build()
-        }else{
+        }
+        else{
             return NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentIntent(createPendingIntent())
                 .setContentTitle("媒体播放中")

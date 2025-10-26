@@ -1,6 +1,8 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.app.Dialog
+import android.content.Context.INPUT_METHOD_SERVICE
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
@@ -13,6 +15,9 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
+import android.widget.Button
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -33,6 +38,9 @@ import com.google.android.material.button.MaterialButton
 import com.suming.player.PlayerExoSingleton.player
 import data.MediaItemRepo
 import data.MediaItemSetting
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
 
@@ -284,7 +292,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
                     R.id.MenuAction_90 -> { chooseShutDownTime(90); true }
 
-                    R.id.MenuAction_Input -> { dismiss(); true }
+                    R.id.MenuAction_Input -> { setShutDownTime(); dismiss(); true }
 
                     else -> true
                 }
@@ -386,7 +394,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
 
 
-
     } //onViewCreated END
 
 
@@ -405,11 +412,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
         customDismiss()
     }
-
     private fun setSpeed(){
 
         val result = bundleOf("KEY" to "SetSpeed")
-        setFragmentResult("FROM_FRAGMENT", result)
+        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
         dismiss()
     }
@@ -417,7 +423,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     @SuppressLint("SetTextI18n")
     private fun chooseShutDownTime(time: Int){
 
-        val result = bundleOf("KEY" to "ShutDownTime", "TIME" to time)
+        val result = bundleOf("KEY" to "chooseShutDownTime", "TIME" to time)
         setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
         //计算关闭时间
@@ -436,6 +442,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
         timerShutDown?.text = "将在${shutDownTime}关闭"
 
         customDismiss()
+    }
+    private fun setShutDownTime(){
+
+        val result = bundleOf("KEY" to "setShutDownTime")
+        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
+
+
     }
 
     private fun customDismiss(){
