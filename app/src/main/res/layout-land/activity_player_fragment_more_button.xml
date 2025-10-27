@@ -22,12 +22,11 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:cardElevation="10dp">
-        <!-- 主卡 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <!-- 标题# -->
+            <!-- 标题#：更多选项# -->
             <com.google.android.material.appbar.AppBarLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -105,7 +104,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-                    <!-- 播放相关# -->
+                    <!-- 功能卡1：后台播放 + 循环播放 + 倍速 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -114,7 +113,6 @@
                         app:cardBackgroundColor="@color/Background4"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="0dp">
-                        <!-- 播放相关 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -122,7 +120,7 @@
                             android:layout_marginBottom="5dp"
                             android:layout_marginStart="5dp"
                             android:orientation="vertical">
-                            <!-- 按钮：后台播放 -->
+                            <!-- 开关：后台播放 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -160,7 +158,7 @@
                                     app:thumbTint="@color/switchThumbColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
-                            <!-- 按钮：循环播放 -->
+                            <!-- 开关：循环播放 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -245,7 +243,7 @@
                                     android:textColor="@color/Text2"
                                     tools:ignore="SmallSp" />
                             </LinearLayout>
-                            <!-- 按钮：禁止传感器旋转 -->
+                            <!-- 开关：禁止传感器旋转 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -282,7 +280,7 @@
                                     app:thumbTint="@color/switchThumbColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
-                            <!-- 按钮：只播声音 -->
+                            <!-- 开关：只播声音 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -319,7 +317,7 @@
                                     app:thumbTint="@color/switchThumbColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
-                            <!-- 按钮：关闭声音 -->
+                            <!-- 开关：只播视频 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -396,7 +394,7 @@
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
-                    <!--  进度条相关 -->
+                    <!-- 功能卡2：链接滚动 + 单击跳转 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -413,7 +411,7 @@
                             android:layout_marginBottom="5dp"
                             android:layout_marginStart="5dp"
                             android:orientation="vertical">
-                            <!-- 按钮：快速定位 -->
+                            <!-- 按钮：快进策略 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -436,7 +434,8 @@
                                         android:insetRight="0dp"
                                         android:insetBottom="0dp"
                                         android:padding="0dp"
-                                        app:cornerRadius="100dp" />
+                                        app:cornerRadius="100dp"
+                                        tools:ignore="TooDeepLayout" />
                                     <FrameLayout
                                         android:id="@+id/buttonActualAlwaysSeek"
                                         android:layout_width="match_parent"
@@ -526,7 +525,7 @@
                                     android:textColor="@color/Text2"
                                     />
                             </LinearLayout>
-                            <!-- 按钮：单击定位 -->
+                            <!-- 按钮：单击跳转 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -585,7 +584,7 @@
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
-                    <!-- 定时关闭# -->
+                    <!-- 功能卡3：定时关闭 + 小窗播放 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -595,7 +594,6 @@
                         app:cardBackgroundColor="@color/Background4"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="0dp">
-                        <!-- 定时关闭 -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -603,7 +601,7 @@
                             android:layout_marginBottom="5dp"
                             android:layout_marginStart="5dp"
                             android:orientation="vertical">
-                            <!-- 定时关闭开关 -->
+                            <!-- 按钮：定时关闭 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -652,12 +650,13 @@
                                     android:textSize="14sp"
                                     tools:ignore="SmallSp" />
                             </LinearLayout>
-                            <!-- 播完后关闭 -->
+                            <!-- 开关：播完后关闭 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:minHeight="40dp"
-                                android:orientation="horizontal">
+                                android:orientation="horizontal"
+                                tools:ignore="TooManyViews">
                                 <ImageView
                                     android:layout_width="19dp"
                                     android:layout_height="19dp"
@@ -690,9 +689,50 @@
                                     app:thumbTint="@color/switchThumbColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
+                            <!-- 按钮：开启小窗 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal"
+                                tools:ignore="TooManyViews">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:src="@drawable/ic_more_button_pip"
+                                    android:scaleType="centerCrop"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="小窗播放"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2"
+                                    />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1"/>
+                                <TextView
+                                    android:id="@+id/ButtonStartPiP"
+                                    android:layout_width="35dp"
+                                    android:layout_height="20dp"
+                                    android:text="开启"
+                                    android:textSize="14sp"
+                                    android:gravity="center"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="12dp"
+                                    android:textColor="@color/Text2"
+                                    tools:ignore="SmallSp" />
+                            </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
-                    <!-- 视频信息 -->
+                    <!-- 功能卡4：视频信息 + 系统分享 + 均衡器 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -789,6 +829,45 @@
                                     android:textColor="@color/Text2"
                                     tools:ignore="SmallSp" />
                             </LinearLayout>
+                            <!-- 更新封面 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:src="@drawable/ic_more_button_capture"
+                                    android:scaleType="centerCrop"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="更新封面"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2" />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1"/>
+                                <TextView
+                                    android:id="@+id/buttonUpdateCover"
+                                    android:layout_width="35dp"
+                                    android:layout_height="20dp"
+                                    android:text="截取"
+                                    android:textSize="14sp"
+                                    android:gravity="center"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="12dp"
+                                    android:textColor="@color/Text2"
+                                    tools:ignore="SmallSp" />
+                            </LinearLayout>
                             <!-- 均衡器 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -829,7 +908,6 @@
                                     tools:ignore="SmallSp" />
                             </LinearLayout>
                         </LinearLayout>
-
                     </androidx.cardview.widget.CardView>
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>

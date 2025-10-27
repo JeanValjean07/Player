@@ -85,7 +85,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.MoreExecutors
-import data.model.VideoItem
+import data.MediaModel.MediaItem_video
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -105,14 +105,13 @@ import android.graphics.Bitmap.CompressFormat.JPEG
 import data.MediaItemRepo
 import data.MediaItemSetting
 import kotlin.system.exitProcess
+import androidx.core.graphics.createBitmap
 
 @UnstableApi
 //@Suppress("unused")
 class PlayerActivity: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
-    //播放状态
-    private var wasPlaying = true
     //音量配置参数
     private var maxVolume = 0
     private var currentVolume = 0
@@ -141,9 +140,9 @@ class PlayerActivity: AppCompatActivity(){
     private var videoSeekHandlerRunning = false
     private var smartScrollRunnableRunning = false
     private var syncScrollRunnableRunning = false
-    //LastSeek保底Seek机制
-    private var LastSeekLaunched = false
+
     //媒体信息
+    private lateinit var MediaInfo_VideoItem: MediaItem_video
     private lateinit var MediaInfo_VideoUri: Uri
     private var MediaInfo_VideoDuration = 0
     private var MediaInfo_AbsolutePath = ""
@@ -216,7 +215,6 @@ class PlayerActivity: AppCompatActivity(){
     private val IDLE_MS = 5_000L
     //定时关闭定时器
     private var COUNT_Timer: CountDownTimer? = null
-    private val COUNT_MS = 120_000L
 
     //来自查表恢复的设置
     private var NeedSetSpeed = false
@@ -229,6 +227,10 @@ class PlayerActivity: AppCompatActivity(){
 
      //保存缩略图状态
     private var SaveFlag_Thumb = 0L
+     //封面路径
+    private var SavePath_Cover = ""
+
+
 
      //倍速播放
     private var currentSpeed = 1.0f
@@ -251,14 +253,12 @@ class PlayerActivity: AppCompatActivity(){
     private var global_SeekToMs = 0L
 
 
-    private var allowRecord_wasPlaying = true
 
 
     //VideoSeekHandler
     private var videoSeekHandlerGap = 0L
 
 
-    private var playerReady_FirstEntryReached = false
 
 
 
@@ -273,19 +273,62 @@ class PlayerActivity: AppCompatActivity(){
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_player)
 
+        val vm = ViewModelProvider(this, PlayerExoFactory.getInstance(application))[PlayerViewModel::class.java]
+
         //其他预设
         preCheck()
 
-        //初次打开
+
+        //清除上一次残留 + 读取MediaItem
         if (savedInstanceState == null) {
             PlayerExoSingleton.releasePlayer()
             stopBackgroundServices()
             vm.saveIntent(intent)
+            if (!vm.MediaInfo_VideoItem_Saved){
+                vm.MediaInfo_VideoItem_Saved = true
+                //区分打开方式
+                val videoItem: MediaItem_video? = when (intent?.action) {
+                    //系统面板：分享
+                    Intent.ACTION_SEND -> {
+                        vm.state_FromSysStart = true
+                        val uri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java) ?: return finish()
+                        MediaItem_video.EMPTY.copy(uri = uri)
+                    }
+                    //系统面板：选择其他应用打开
+                    Intent.ACTION_VIEW -> {
+                        vm.state_FromSysStart = true
+                        val uri = intent.data ?: return finish()
+                        MediaItem_video.EMPTY.copy(uri = uri)
+                    }
+                    //正常打开
+                    else ->  {
+                        vm.PREFS_ExitWhenEnd = false
+                        IntentCompat.getParcelableExtra(intent, "video", MediaItem_video::class.java)
+                    }
+                }
+                //检查
+                if (videoItem != null) {
+                    vm.MediaInfo_VideoItem = videoItem
+                    MediaInfo_VideoItem = vm.MediaInfo_VideoItem
+                }else{
+                    vm.MediaInfo_VideoItem = MediaItem_video.EMPTY
+                    Toast.makeText(this, "视频已关闭", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
+                    finish()
+                    return
+                }
+            }else{
+                MediaInfo_VideoItem = vm.MediaInfo_VideoItem
+            }
         }
-        //非初次打开
+        //非初次打开:从ViewModel恢复intent
         else{
             intent = vm.originIntent
+            MediaInfo_VideoItem = vm.MediaInfo_VideoItem
         }
+
 
         //设置项读取,检查和预置
         val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
@@ -340,8 +383,10 @@ class PlayerActivity: AppCompatActivity(){
                 PREFSEditor.putBoolean("PREFS_UseBlackBackground", false)
                 vm.PREFS_UseBlackBackground = false
             } else {
-                vm.PREFS_UseBlackBackground =
-                    PREFS.getBoolean("PREFS_UseBlackBackground", false)
+                vm.PREFS_UseBlackBackground = PREFS.getBoolean("PREFS_UseBlackBackground", false)
+                if (vm.PREFS_UseBlackBackground) {
+                    setPageToDark()
+                }
             }
             if (!PREFS.contains("PREFS_UseHighRefreshRate")) {
                 PREFSEditor.putBoolean("PREFS_UseHighRefreshRate", false)
@@ -374,7 +419,7 @@ class PlayerActivity: AppCompatActivity(){
             }
             if (!PREFS.contains("PREFS_EnableRoomDatabase")) {
                 PREFSEditor.putBoolean("PREFS_EnableRoomDatabase", false)
-                vm.PREFS_EnableRoomDatabase = false
+                vm.PREFS_EnableRoomDatabase = true
             } else {
                 vm.PREFS_EnableRoomDatabase = PREFS.getBoolean("PREFS_EnableRoomDatabase", false)
             }
@@ -393,67 +438,35 @@ class PlayerActivity: AppCompatActivity(){
                 videoSeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0L)
             }
             PREFSEditor.apply()
-        }else{
+        }
+        //非初次打开:从ViewModel恢复设置
+        else{
             videoSeekHandlerGap = vm.PREFS_SeekHandlerGap
+            if (vm.PREFS_UseBlackBackground) {
+                setPageToDark()
+            }
+            vm.allowRecord_wasPlaying = true
+            playerReadyFrom_FirstEntry = false
+            EnterAnimationComplete = true
         }
 
 
-        //区分打开方式并反序列化
-        val videoItem: VideoItem? = when (intent?.action) {
-            //系统面板：分享
-            Intent.ACTION_SEND -> {
-                vm.state_FromSysStart = true
-                val uri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java) ?: return finish()
-                VideoItem(0, uri, "", 0)
-            }
-            //系统面板：选择其他应用打开
-            Intent.ACTION_VIEW -> {
-                vm.state_FromSysStart = true
-                val uri = intent.data ?: return finish()
-                VideoItem(0, uri, "", 0)
-            }
-            //正常打开
-            else ->  {
-                vm.PREFS_ExitWhenEnd = false
-                IntentCompat.getParcelableExtra(intent, "video", VideoItem::class.java)
+
+        //界面事务
+        //界面初始化:默认颜色设置+控件动态变位
+        AppBarSetting()
+        //刷新率强制修改
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && vm.PREFS_UseHighRefreshRate) {
+            val wm = windowManager
+            val mode = wm.defaultDisplay.mode
+            val fps = mode.refreshRate
+            window.attributes = window.attributes.apply {
+                preferredRefreshRate = fps
             }
         }
-        if (videoItem == null) {
-            /*
-            Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                putExtra("ITEM_CLOSED", true)
-                startActivity(this)
-            }
-
-             */
-
-            finish()
-            return
-        }
-
-        //初步解码视频信息
-        MediaInfo_VideoUri = videoItem.uri
-        val retriever = MediaMetadataRetriever()
-        try {
-            retriever.setDataSource(this@PlayerActivity, MediaInfo_VideoUri)
-        } catch (_: Exception) {
-            val data = Intent().apply {
-                putExtra("key", "NEED_REFRESH")
-            }
-            setResult(RESULT_OK, data)
-            finish()
-            return
-        } //给retriever设置数据源,包含异常处理
 
 
-
-
-        if (vm.PREFS_UseBlackBackground) {
-            setPageToDark()
-        }
-
-
+        //监听器事务
         //方向监听器
         OEL = object : OrientationEventListener(this) {
             override fun onOrientationChanged(orientation: Int) {
@@ -575,26 +588,6 @@ class PlayerActivity: AppCompatActivity(){
         }else{
             OEL.enable()
         }
-
-
-        //界面初始化:默认颜色设置+控件动态变位
-        AppBarSetting()
-
-
-        val vm = ViewModelProvider(this, PlayerExoFactory.getInstance(application))[PlayerViewModel::class.java]
-
-        //刷新率强制修改
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && vm.PREFS_UseHighRefreshRate) {
-            val wm = windowManager
-            val mode = wm.defaultDisplay.mode
-            val fps = mode.refreshRate
-            window.attributes = window.attributes.apply {
-                preferredRefreshRate = fps
-            }
-        }
-
-
-
         //音频设备监听
         val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         audioManager.registerAudioDeviceCallback(DeviceCallback, null)
@@ -616,7 +609,7 @@ class PlayerActivity: AppCompatActivity(){
                     if (vm.PREFS_LinkScroll) startScrollerSync()
                 }
                 if (data == "PLAYER_PAUSE") {
-                    wasPlaying = vm.player.isPlaying
+                    vm.wasPlaying = vm.player.isPlaying
                     vm.player.pause()
                 }
                 if (data == "PLAYER_EXIT") {
@@ -627,9 +620,23 @@ class PlayerActivity: AppCompatActivity(){
         }
         localBroadcastManager.registerReceiver(receiver, filter)
 
+
+
+        //媒体信息1 -视频根信息读取
+        MediaInfo_VideoUri = MediaInfo_VideoItem.uri
+        val retriever = MediaMetadataRetriever()
+        //给retriever设置数据源,包含异常处理
+        try { retriever.setDataSource(this@PlayerActivity, MediaInfo_VideoUri) }
+        catch (_: Exception) {
+            val data = Intent().apply {
+                putExtra("key", "NEED_REFRESH")
+            }
+            setResult(RESULT_OK, data)
+            finish()
+            return
+        }
+
         
-
-
 
         //绑定播放器输出
         playerView = findViewById(R.id.playerView)
@@ -728,13 +735,18 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
 
-        //媒体信息进一步读取
-        MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivity, MediaInfo_VideoUri).toString()
-        MediaInfo_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
-        MediaInfo_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
-        MediaInfo_VideoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
-        MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name
-        retriever.release()
+        //媒体信息2 -读取更多
+        fun readMediaInfo(){
+            MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivity, MediaInfo_VideoUri).toString()
+            MediaInfo_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
+            MediaInfo_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
+            MediaInfo_VideoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
+            MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name
+            retriever.release()
+        }
+        readMediaInfo()
+
+
 
         //媒体信息分散作用：保存文件名
         vm.saveFileName(MediaInfo_FileName)
@@ -742,8 +754,6 @@ class PlayerActivity: AppCompatActivity(){
         val timer_current = findViewById<TextView>(R.id.timer_current)
         val timer_duration = findViewById<TextView>(R.id.timer_duration)
         timer_duration.text = formatTime1(MediaInfo_VideoDuration.toLong())
-
-
 
 
 
@@ -799,8 +809,8 @@ class PlayerActivity: AppCompatActivity(){
 
 
 
-                if (wasPlaying) {
-                    wasPlaying = false
+                if (vm.wasPlaying) {
+                    vm.wasPlaying = false
                     vm.player.play()
                 }
                 return true
@@ -812,8 +822,8 @@ class PlayerActivity: AppCompatActivity(){
                 if (e.action == MotionEvent.ACTION_DOWN) {
                     scrollerState_Pressed = true
                     scrollerState_DraggingStay = true
-                    if (vm.player.isPlaying && allowRecord_wasPlaying) {
-                        wasPlaying = true
+                    if (vm.player.isPlaying && vm.allowRecord_wasPlaying) {
+                        vm.wasPlaying = true
                     }
                 }
                 if (e.action == MotionEvent.ACTION_UP) {
@@ -888,7 +898,7 @@ class PlayerActivity: AppCompatActivity(){
                     vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
                 }
                 //用户操作 -时间戳跟随进度条变动
-                if (vm.PREFS_LinkScroll && playerReady_FirstEntryReached) {
+                if (vm.PREFS_LinkScroll && vm.state_firstReadyReached) {
                     val percentScroll = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
                     videoTimeTo = (percentScroll * vm.player.duration).toLong()
                     currentTime = videoTimeTo
@@ -917,22 +927,21 @@ class PlayerActivity: AppCompatActivity(){
             }
         })
 
-        //固定控件初始化：退出按钮:短按退出,长按开小窗
-        val gestureDetectorExitButton = GestureDetector(this, object : SimpleOnGestureListener() {
-            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                PlayerExoSingleton.stopPlayer()
-                stopFloatingWindow()
-                finish()
-                return true
-            }
-            override fun onLongPress(e: MotionEvent) {
-                startFloatingWindow()
-                super.onLongPress(e)
-            }
-        })
+        //退出按钮
         val buttonExit = findViewById<ImageButton>(R.id.TopBarArea_ButtonExit)
-        buttonExit.setOnTouchListener { _, event ->
-            gestureDetectorExitButton.onTouchEvent(event)
+        buttonExit.setOnClickListener {
+            PlayerExoSingleton.stopPlayer()
+            stopFloatingWindow()
+            if (vm.PREFS_EnableRoomDatabase){ saveChangedMap() } else{ saveChangedPrefs() }
+            finish()
+        }
+        //缩小按钮
+        val TopBarArea_ButtonMinimize = findViewById<ImageButton>(R.id.TopBarArea_ButtonMinimize)
+        TopBarArea_ButtonMinimize.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            //intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            startActivity(intent)
         }
         //更多选项
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
@@ -1253,7 +1262,7 @@ class PlayerActivity: AppCompatActivity(){
                         val contentValues = ContentValues().apply {
                             put(MediaStore.MediaColumns.DISPLAY_NAME, generateFileName())
                             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                            put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/截取")
+                            put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/Screenshots")
                         }
                         val imageUri = contentResolver.insert(
                             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -1268,12 +1277,12 @@ class PlayerActivity: AppCompatActivity(){
 
                         notice("已截取当前帧,存入Pictures/截取", 3000)
 
-                        if (wasPlaying){ vm.player.play() }
+                        if (vm.wasPlaying){ vm.player.play() }
 
 
                     }
 
-                    wasPlaying = vm.player.isPlaying
+                    vm.wasPlaying = vm.player.isPlaying
                     vm.player.pause()
                     val Bitmap = Bitmap.createBitmap(videoSizeWidth, videoSizeHeight, Bitmap.Config.ARGB_8888)
                     val surfaceView = playerView.videoSurfaceView as? SurfaceView
@@ -1387,7 +1396,7 @@ class PlayerActivity: AppCompatActivity(){
                 "TapJump" -> {
                     changeStateTapJump()
                 }
-                //定时关闭
+                //定时关闭 + 开启小窗
                 "setShutDownTime" -> {
                     val dialog = Dialog(this)
                     val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_time, null)
@@ -1398,10 +1407,10 @@ class PlayerActivity: AppCompatActivity(){
                     val EditTextMinute: EditText = dialogView.findViewById(R.id.dialog_input_minute)
                     val Button: Button = dialogView.findViewById(R.id.dialog_button)
 
-                    title.text = "自定义定时关闭时间"
-                    Description.text = "输入自定义定时关闭时间"
-                    EditTextHour.hint = "  "
-                    EditTextMinute.hint = "  "
+                    title.text = "自定义：定时关闭时间"
+                    Description.text = "请输入您的自定定时关闭时间"
+                    EditTextHour.hint = "              "
+                    EditTextMinute.hint = "              "
                     Button.text = "确定"
 
                     val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
@@ -1457,6 +1466,9 @@ class PlayerActivity: AppCompatActivity(){
                     val time = bundle.getInt("TIME")
                     startTimerShutDown(time, true)
                 }
+                "StartPiP" -> {
+                    startFloatingWindow()
+                }
                 //底部按钮
                 "VideoInfo" -> {
                     //读取数据
@@ -1493,6 +1505,9 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 "SysShare" -> {
                     shareVideo(this, MediaInfo_VideoUri)
+                }
+                "UpdateCover" -> {
+                    updateCover(MediaInfo_FileName)
                 }
                 "Equalizer" -> {
                     equalizer = Equalizer(1, vm.player.audioSessionId)
@@ -1612,7 +1627,9 @@ class PlayerActivity: AppCompatActivity(){
                     ScrollerInfo_EachPicWidth,
                     ScrollerInfo_PicNumber,
                     ScrollerInfo_EachPicDuration,
-                    vm.PREFS_GenerateThumbSYNC)
+                    vm.PREFS_GenerateThumbSYNC,
+                    scroller,
+                    playerScrollerViewModel)
             }
 
             //开启被控
@@ -1710,6 +1727,7 @@ class PlayerActivity: AppCompatActivity(){
                 PREFS_SavePositionWhenExit = vm.PREFS_SavePositionWhenExit,
                 SaveState_ExitPosition = vm.player.currentPosition,
                 SaveFlag_Thumb = SaveFlag_Thumb,
+                SavePath_Cover = SavePath_Cover
             )
             MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
         }
@@ -1770,6 +1788,10 @@ class PlayerActivity: AppCompatActivity(){
             }else{
                 vm.PREFS_SavePositionWhenExit = false
             }
+            if (setting.SavePath_Cover != ""){
+                SavePath_Cover = setting.SavePath_Cover
+            }
+
 
         }
     }
@@ -1778,10 +1800,10 @@ class PlayerActivity: AppCompatActivity(){
         val prefs = getSharedPreferences("PREFS", MODE_PRIVATE)
         val prefsEditor = prefs.edit()
         if (!prefs.contains("PREFS_AlwaysSeek")) {
-            prefsEditor.putBoolean("PREFS_AlwaysSeek", false)
-            vm.PREFS_AlwaysSeek = false
+            prefsEditor.putBoolean("PREFS_AlwaysSeek", true)
+            vm.PREFS_AlwaysSeek = true
         } else {
-            vm.PREFS_AlwaysSeek = prefs.getBoolean("PREFS_AlwaysSeek", false)
+            vm.PREFS_AlwaysSeek = prefs.getBoolean("PREFS_AlwaysSeek", true)
         }
         if (!prefs.contains("PREFS_LinkScroll")) {
             prefsEditor.putBoolean("PREFS_LinkScroll", true)
@@ -1877,7 +1899,7 @@ class PlayerActivity: AppCompatActivity(){
                 if (scrollerState_Pressed){
                     vm.player.pause()
                 }else{
-                    if (wasPlaying){
+                    if (vm.wasPlaying){
                         smartScrollRunnableRunning = false
                         playVideo()
                         vm.player.volume = 1f
@@ -1899,7 +1921,7 @@ class PlayerActivity: AppCompatActivity(){
                     speed5 = speed5 - 0.1f
                 }
 
-                if (wasPlaying && !scrollerState_Pressed){
+                if (vm.wasPlaying && !scrollerState_Pressed){
                     if (speed5 <= 1.0){
                         speed5 = 1.0f
                     }
@@ -1970,7 +1992,6 @@ class PlayerActivity: AppCompatActivity(){
                     playerReadyFrom_NormalSeek = true
                     vm.player.seekTo(seekToMs)
                 }
-
             }
 
 
@@ -1989,7 +2010,7 @@ class PlayerActivity: AppCompatActivity(){
         vm.playEnd = false
         if (videoSeekHandlerRunning) return
         //开启后不再允许记录播放状态
-        allowRecord_wasPlaying = false
+        vm.allowRecord_wasPlaying = false
         videoSeekHandler.post(videoSeek)
     }
     private fun stopVideoSeek() {
@@ -2001,6 +2022,7 @@ class PlayerActivity: AppCompatActivity(){
     private var lastSeek = object : Runnable{
         override fun run() {
             if (isSeekReady){
+                isSeekReady = false
                 playerReadyFrom_LastSeek = true
                 vm.player.seekTo(global_SeekToMs)
             }else{
@@ -2077,7 +2099,7 @@ class PlayerActivity: AppCompatActivity(){
             //关闭旋转监听器
             OEL.disable()
             //记录播放状态
-            wasPlaying = vm.player.isPlaying
+            vm.wasPlaying = vm.player.isPlaying
             //是否后台播放
             if (vm.PREFS_BackgroundPlay) {
                 startBackgroundPlay()
@@ -2111,7 +2133,7 @@ class PlayerActivity: AppCompatActivity(){
             //开启旋转监听器
             if (!vm.PREFS_SealOEL) { OEL.enable() }
             //后台播放操作:恢复播放状态
-            if (wasPlaying) { vm.player.play() }
+            if (vm.wasPlaying) { vm.player.play() }
             //后台播放操作:恢复视频轨道
             if (vm.PREFS_BackgroundPlay && !vm.PREFS_OnlyAudio) {
                 stopBackgroundPlay()
@@ -2145,7 +2167,7 @@ class PlayerActivity: AppCompatActivity(){
         }
         //onDestroy来自退出
         else{
-            //stopBackgroundServices()
+            stopBackgroundServices()
         }
     }
 
@@ -2177,6 +2199,54 @@ class PlayerActivity: AppCompatActivity(){
 
 
     //Functions
+    //更新封面
+    @SuppressLint("UseKtx")
+    private fun updateCover(filename: String) {
+
+        fun handleSuccess(bitmap: Bitmap) {
+            //创建目录
+            val saveCover = File(cacheDir, "Media/${filename.hashCode()}/cover/cover.jpg")
+            saveCover.parentFile?.mkdirs()
+            //保存图片
+            saveCover.outputStream().use {
+                val success = bitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
+                if (!success) { bitmap.compress(JPEG, 80, it) }
+            }
+            //存入数据库
+            lifecycleScope.launch {
+                val newSetting = MediaItemSetting(
+                    MARK_FileName = filename,
+                    SavePath_Cover = saveCover.toString()
+                )
+                MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
+            }
+
+
+            notice("已截取当前帧,作为封面", 3000)
+
+            if (vm.wasPlaying){ vm.player.play() }
+
+
+        }
+
+        notice("请耐心等待", 3000)
+        vm.wasPlaying = vm.player.isPlaying
+        vm.player.pause()
+        val Bitmap = createBitmap(videoSizeWidth, videoSizeHeight)
+        val surfaceView = playerView.videoSurfaceView as? SurfaceView
+        val surface = surfaceView?.holder?.surface
+        PixelCopy.request(surface!!, Bitmap,
+            { copyResult ->
+                if (copyResult == PixelCopy.SUCCESS) {
+                    handleSuccess(Bitmap)
+                } else {
+                    notice("截图失败", 3000)
+                }
+            },
+            Handler(Looper.getMainLooper())
+        )
+
+    }
     //分享视频(已知Uri)
     private fun shareVideo(context: Context, videoUri: Uri) {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -2630,19 +2700,19 @@ class PlayerActivity: AppCompatActivity(){
             .setOnAudioFocusChangeListener { focusChange ->
                 when (focusChange) {
                     AudioManager.AUDIOFOCUS_LOSS -> {
-                        wasPlaying = vm.player.isPlaying
+                        vm.wasPlaying = vm.player.isPlaying
                     }
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                        wasPlaying = vm.player.isPlaying
+                        vm.wasPlaying = vm.player.isPlaying
                         vm.player.pause()
                     }
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                        wasPlaying = vm.player.isPlaying
+                        vm.wasPlaying = vm.player.isPlaying
                         vm.player.pause()
                     }
                     AudioManager.AUDIOFOCUS_GAIN -> {
-                        if (wasPlaying){
-                            wasPlaying = false
+                        if (vm.wasPlaying){
+                            vm.wasPlaying = false
                             vm.player.play()
                         }
                     }
@@ -2671,7 +2741,9 @@ class PlayerActivity: AppCompatActivity(){
     private fun playerReady(){
         if (playerReadyFrom_FirstEntry) {
             playerReadyFrom_FirstEntry = false
-            playerReady_FirstEntryReached = true
+            vm.state_firstReadyReached = true
+
+            isSeekReady = true
 
             if (NeedSetSpeed){
                 vm.setSpeed(NeedSetSpeedValue)
@@ -2688,6 +2760,8 @@ class PlayerActivity: AppCompatActivity(){
                 .setInterpolator(AccelerateDecelerateInterpolator())
                 .withEndAction { cover.visibility = View.GONE }
                 .start()
+
+            return
         }
         if (playerReadyFrom_NormalSeek){
             playerReadyFrom_NormalSeek = false
@@ -2696,9 +2770,10 @@ class PlayerActivity: AppCompatActivity(){
         }
         if (playerReadyFrom_LastSeek){
             playerReadyFrom_LastSeek = false
+            isSeekReady = true
             //恢复播放状态
-            if (wasPlaying){ playVideo() }
-            allowRecord_wasPlaying = true
+            if (vm.wasPlaying){ playVideo() }
+            vm.allowRecord_wasPlaying = true
 
         }
     }
@@ -2730,7 +2805,7 @@ class PlayerActivity: AppCompatActivity(){
     private fun pauseVideo(){
         vm.player.pause()
 
-        wasPlaying = false
+        vm.wasPlaying = false
 
         stopVideoTimeSync()
         stopScrollerSync()

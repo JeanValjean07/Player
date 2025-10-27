@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -30,9 +29,8 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import data.model.VideoItem
-import data.source.LocalVideoSource
+import data.MediaModel.MediaItem_video
+import data.MediaDataReader.MediaReader_video
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -90,6 +88,8 @@ class MainActivity: AppCompatActivity() {
 
         //准备工作+加载视频
         preCheck()
+
+        //加载
         load()
 
         //按钮：刷新列表
@@ -116,15 +116,6 @@ class MainActivity: AppCompatActivity() {
         noticeCard.setOnClickListener {
             noticeCard.visibility = View.GONE
         }
-
-
-        /*
-        //视频项关闭时的处理
-        if (intent.getBooleanExtra("ITEM_CLOSED", false)) {
-            notice("已关闭该视频", 2000)
-        }
-
-         */
 
 
 
@@ -167,16 +158,16 @@ class MainActivity: AppCompatActivity() {
     private fun load(){
         val pager = Pager(
             config = PagingConfig(pageSize = 20),
-            pagingSourceFactory = { LocalVideoSource(contentResolver, this) }
+            pagingSourceFactory = { MediaReader_video(context = this@MainActivity,contentResolver) }
         )
 
         val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
         //recyclerview1.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerview1.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
 
-
-        //注册点击事件
+        //注册adapter
         adapter = MainActivityAdapter(
+            context = this,
             onItemClick = { item ->
                 startPlayer(item)
             },
@@ -207,7 +198,7 @@ class MainActivity: AppCompatActivity() {
     }
 
     @OptIn(UnstableApi::class)
-    private fun startPlayer(item: VideoItem){
+    private fun startPlayer(item: MediaItem_video){
         val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
         detailLauncher.launch(intent)
     }

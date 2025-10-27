@@ -5,12 +5,17 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
+import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.core.graphics.scale
 import androidx.core.view.updateLayoutParams
+import androidx.databinding.ObservableList
+import androidx.fragment.app.activityViewModels
+import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,22 +26,87 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.coroutines.coroutineContext
+import kotlin.getValue
 
+@UnstableApi
 class PlayerScrollerAdapter(
     private val context: Context,
     private val MediaInfo_AbsolutePath: String,
     private val MediaInfo_FileName: String,
-    private val thumbItems: MutableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+    private val thumbItems: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
     private val eachPicWidth: Int,
     private val picNumber: Int,
     private val eachPicDuration: Int,
     private val PREFS_GenerateThumbSYNC: Boolean,
+    private var recyclerView: RecyclerView? = null,
+    private var PlayerScrollerVM: PlayerScrollerViewModel
 ) : RecyclerView.Adapter<PlayerScrollerAdapter.ThumbViewHolder>() {
+
+    init {
+        thumbItems.addOnListChangedCallback(
+            object : ObservableList.OnListChangedCallback<ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>>() {
+                @SuppressLint("NotifyDataSetChanged")
+                override fun onChanged(sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>) =
+                    notifyDataSetChanged()
+
+                override fun onItemRangeChanged(
+                    sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+                    positionStart: Int,
+                    itemCount: Int
+                ) {
+                    if (Looper.myLooper() == Looper.getMainLooper()) {
+                        notifyItemRangeChanged(positionStart, itemCount)
+                    } else {
+                        recyclerView?.post {
+                            notifyItemRangeChanged(positionStart, itemCount)
+                        }
+                    }
+                }
+
+                override fun onItemRangeInserted(
+                    sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+                    positionStart: Int,
+                    itemCount: Int
+                ) {
+                    recyclerView?.post {
+                        if (itemCount == 1) notifyItemInserted(positionStart)
+                        else notifyItemRangeInserted(positionStart, itemCount)
+                    }
+                }
+
+                override fun onItemRangeMoved(
+                    sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+                    fromPosition: Int,
+                    toPosition: Int,
+                    itemCount: Int
+                ) {
+                    recyclerView?.post {
+                        for (i in 0 until itemCount) {
+                            notifyItemMoved(fromPosition + i, toPosition + i)
+                        }
+                    }
+                }
+
+
+                override fun onItemRangeRemoved(
+                    sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+                    positionStart: Int,
+                    itemCount: Int
+                ) {
+                    recyclerView?.post {
+                        notifyItemRangeRemoved(positionStart, itemCount)
+                    }
+                }
+            })
+    }
+
+
 
     //初始化—协程作用域
     private val coroutineScopeGenerateThumb = CoroutineScope(Dispatchers.IO + SupervisorJob())
     @Volatile
     private var generateCoverWorking = false   //防止重复发起多次占位图生成任务
+
 
 
     inner class ThumbViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -46,8 +116,30 @@ class PlayerScrollerAdapter(
 
     override fun getItemCount() = (picNumber)
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThumbViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_adapter_scroller_item, parent, false)
+
+        if (MediaInfo_FileName != PlayerScrollerVM.last_MediaInfo_FileName){
+            PlayerScrollerVM.last_MediaInfo_FileName = MediaInfo_FileName
+
+            val newList = List(picNumber) {
+                PlayerScrollerViewModel.ThumbScrollerItem(
+                    thumbPath = null,
+                    isCoverPlaced = false,
+                    currentThumbType = false,
+                    thumbGeneratingRunning = false
+                )
+            }
+            thumbItems.clear()
+            thumbItems.addAll(newList)
+            recyclerView?.post {
+                notifyDataSetChanged()
+            }
+
+
+
+        }
         return ThumbViewHolder(view)
     }
 
@@ -213,4 +305,4 @@ class PlayerScrollerAdapter(
     }
 
 
-}//class END
+}

@@ -26,8 +26,6 @@ interface MediaItemDao {
     suspend fun getFlagInt(path: String): Int?
 
 
-
-
     @Delete
     suspend fun delete(item: MediaItemSetting)
 }

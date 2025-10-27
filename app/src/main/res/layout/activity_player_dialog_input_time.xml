@@ -25,6 +25,7 @@
         android:text="dialog_description"
         android:textSize="10sp"
         android:padding="4dp"
+        android:gravity="center"
         tools:ignore="SmallSp" />
     <!-- Dialog Input -->
     <LinearLayout

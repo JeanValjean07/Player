@@ -19,6 +19,7 @@ media3Session = "1.8.0"
 lifecycleProcess = "2.9.3"
 lifecycleService = "2.9.3"
 playServicesOssLicenses = "17.3.0"
+library = "3.2.0-alpha11"
 
 
 [libraries]
@@ -40,6 +41,7 @@ androidx-media3-session = { group = "androidx.media3", name = "media3-session", 
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
 androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
 play-services-oss-licenses = { group = "com.google.android.gms", name = "play-services-oss-licenses", version.ref = "playServicesOssLicenses" }
+androidx-library = { group = "androidx.databinding", name = "library", version.ref = "library" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

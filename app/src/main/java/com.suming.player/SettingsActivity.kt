@@ -288,7 +288,6 @@ class SettingsActivity: AppCompatActivity() {
             currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
         }
     }
-
     @SuppressLint("InflateParams", "SetTextI18n")
     private fun setSeekHandlerGap(){
         val dialog = Dialog(this)
@@ -299,8 +298,8 @@ class SettingsActivity: AppCompatActivity() {
         val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
         val Button: Button = dialogView.findViewById(R.id.dialog_button)
 
-        title.text = "自定义寻帧间隔"
-        Description.text = "输入自定义寻帧间隔"
+        title.text = "自定义：播放器寻帧间隔"
+        Description.text = "输入自定义滚动进度条时的寻帧间隔"
         EditText.hint = "单位：毫秒"
         Button.text = "确定"
 

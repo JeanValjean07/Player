@@ -18,6 +18,7 @@ data class MediaItemSetting(
     val PREFS_SavePositionWhenExit: Boolean = false,
     val SaveState_ExitPosition: Long = 0L,
     val SaveFlag_Thumb: Long = 0L,
+    val SavePath_Cover: String = "",
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

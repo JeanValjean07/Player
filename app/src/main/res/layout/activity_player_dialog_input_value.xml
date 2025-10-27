@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/Background"
     android:orientation="vertical"
     tools:ignore="HardcodedText"
     android:padding="24dp">
@@ -21,9 +22,10 @@
         android:id="@+id/dialog_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="dialog_description"
-        android:textSize="10sp"
         android:padding="4dp"
+        android:text="dialog_description"
+        android:gravity="center"
+        android:textSize="10sp"
         tools:ignore="SmallSp" />
     <!-- Dialog Input -->
     <EditText

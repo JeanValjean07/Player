@@ -9,6 +9,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import data.MediaModel.MediaItem_video
 
 @UnstableApi
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
@@ -118,6 +119,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_SwitchPortraitWhenExit: Boolean = true
 
 
+    var state_firstReadyReached: Boolean = false
+
+    var allowRecord_wasPlaying: Boolean = true
+
+    var wasPlaying: Boolean = false
+
+
 
 
     //以下开关不固化
@@ -150,6 +158,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
 
     var PREFS_SeekHandlerGap: Long = 0
+
+
+    var MediaInfo_VideoItem_Saved: Boolean = false
+
+
+    lateinit var MediaInfo_VideoItem: MediaItem_video
 
 
 

@@ -128,8 +128,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
             timerShutDown.text = "未开启"
         }
 
-
-
         //开关置位
         Switch_BackgroundPlay = view.findViewById(R.id.Switch_BackgroundPlay)
         Switch_LoopPlay = view.findViewById(R.id.Switch_LoopPlay)
@@ -145,7 +143,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         Switch_OnlyVideo.isChecked = vm.PREFS_OnlyVideo
         Switch_ExitWhenMediaEnd.isChecked = vm.PREFS_ShutDownWhenMediaEnd
 
-
         //保存进度仅在数据库启用时开启
         val ContainerSavePosition = view.findViewById<LinearLayout>(R.id.ContainerSavePosition)
         if (!vm.PREFS_EnableRoomDatabase){
@@ -160,8 +157,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 customDismiss()
             }
         }
-
-
 
 
         //按钮：退出
@@ -303,8 +298,22 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
             popup.show()
         }
+        //开启小窗
+        val ButtonStartPiP = view.findViewById<TextView>(R.id.ButtonStartPiP)
+        ButtonStartPiP.setOnClickListener {
+            val result = bundleOf("KEY" to "StartPiP")
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
+            dismiss()
+        }
+        //按钮：更新封面
+        val buttonUpdateCover = view.findViewById<TextView>(R.id.buttonUpdateCover)
+        buttonUpdateCover.setOnClickListener {
+            val result = bundleOf("KEY" to "UpdateCover")
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
+            dismiss()
+        }
 
 
         //按钮：AlwaysSeek
@@ -402,6 +411,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
     //Functions
+    //设置倍速
     private fun chooseSpeed(speed: Float){
         vm.PREFS_PlaySpeed = speed
         vm.player.setPlaybackSpeed(speed)
@@ -423,7 +433,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
         dismiss()
     }
-
+    //设置自动关闭倒计时
     @SuppressLint("SetTextI18n")
     private fun chooseShutDownTime(time: Int){
 
@@ -456,6 +466,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     }
 
+    //自定义退出逻辑
     private fun customDismiss(){
         if (!lockPage) { dismiss() }
     }
