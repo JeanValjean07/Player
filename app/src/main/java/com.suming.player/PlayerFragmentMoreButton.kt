@@ -154,6 +154,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
             Switch_SavePositionWhenExit.setOnCheckedChangeListener { _, isChecked ->
                 vm.PREFS_SavePositionWhenExit = isChecked
 
+                val result = bundleOf("KEY" to "SavePosition")
+                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
                 customDismiss()
             }
         }
@@ -184,6 +187,13 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val buttonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
         buttonCapture.setOnClickListener {
             val result = bundleOf("KEY" to "Capture")
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+            dismiss()
+        }
+        //按钮：播放列表
+        val ButtonPlayList = view.findViewById<ImageButton>(R.id.ButtonPlayList)
+        ButtonPlayList.setOnClickListener {
+            val result = bundleOf("KEY" to "PlayList")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
             dismiss()
         }

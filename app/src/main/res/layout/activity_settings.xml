@@ -353,6 +353,33 @@
                         android:layout_height="wrap_content"
                         android:text="保存播放进度，保存缩略图生成状态等功能均需要此选项(数据库)支持，建议开启。开启后APP将产生更多缓存。将保存只播声音、倍速等设置，不会保存后台播放和循环播放选项"
                         android:textSize="12sp" />
+                    <!--  按钮：重置封面  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="重新生成封面"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <TextView
+                            android:id="@+id/RemoveAllThumbPath"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="重新生成"
+                            android:textSize="12sp"
+                            android:textColor="@color/HeadText"
+                            />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  卡片：从其他应用打开  -->

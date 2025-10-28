@@ -21,6 +21,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import data.MediaItemDao
+import data.MediaItemDataBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -156,10 +158,10 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_UseHighRefreshRate = PREFS.getBoolean("PREFS_UseHighRefreshRate", false)
         }
         if (!PREFS.contains("PREFS_SeekHandlerGap")) {
-            PREFS_Editor.putLong("PREFS_SeekHandlerGap", 0)
-            PREFS_SeekHandlerGap = 0
+            PREFS_Editor.putLong("PREFS_SeekHandlerGap", 20L)
+            PREFS_SeekHandlerGap = 20L
         } else {
-            PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0)
+            PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 20L)
         }
         PREFS_Editor.apply()
 
@@ -189,8 +191,8 @@ class SettingsActivity: AppCompatActivity() {
 
         //文本信息预写
         val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
-        if (PREFS_SeekHandlerGap == 0L){
-            currentSeekHandlerGap.text = "默认 (0 毫秒)"
+        if (PREFS_SeekHandlerGap == 20L){
+            currentSeekHandlerGap.text = "默认 (20毫秒)"
         } else {
             currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
         }
@@ -252,6 +254,19 @@ class SettingsActivity: AppCompatActivity() {
             popup.show()
         }
 
+        //重新生成封面
+        val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
+        ButtonRemoveAllThumbPath.setOnClickListener { item ->
+
+            lifecycleScope.launch {
+                val db = MediaItemDataBase.get(this@SettingsActivity)
+                val dao = db.mediaItemDao()
+                dao.removeAllThumbPath("")
+            }
+
+            showCustomToast("重启APP后会重新截取封面", Toast.LENGTH_SHORT,3)
+        }
+
 
     } //onCreate END
 
@@ -300,7 +315,7 @@ class SettingsActivity: AppCompatActivity() {
 
         title.text = "自定义：播放器寻帧间隔"
         Description.text = "输入自定义滚动进度条时的寻帧间隔"
-        EditText.hint = "单位：毫秒"
+        EditText.hint = "单位：毫秒丨默认值：20"
         Button.text = "确定"
 
         val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager

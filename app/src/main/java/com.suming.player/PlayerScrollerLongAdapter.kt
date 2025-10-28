@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,7 +27,7 @@ import java.io.File
 import kotlin.coroutines.coroutineContext
 
 @UnstableApi
-class PlayerScrollerAdapter(
+class PlayerScrollerLongAdapter(
     private val context: Context,
     private val MediaInfo_AbsolutePath: String,
     private val MediaInfo_FileName: String,
@@ -36,68 +37,8 @@ class PlayerScrollerAdapter(
     private val eachPicDuration: Int,
     private val PREFS_GenerateThumbSYNC: Boolean,
     private var recyclerView: RecyclerView? = null,
-    private val SavedThumbFlags: String,
-    private val onFlagUpdateListener: PlayerActivity.OnFlagUpdateListener,
     private var PlayerScrollerVM: PlayerScrollerViewModel
-) : RecyclerView.Adapter<PlayerScrollerAdapter.ThumbViewHolder>() {
-
-    init {
-        thumbItems.addOnListChangedCallback(
-            object : ObservableList.OnListChangedCallback<ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>>() {
-                @SuppressLint("NotifyDataSetChanged")
-                override fun onChanged(sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>) =
-                    notifyDataSetChanged()
-
-                override fun onItemRangeChanged(
-                    sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
-                    positionStart: Int,
-                    itemCount: Int
-                ) {
-                    if (Looper.myLooper() == Looper.getMainLooper()) {
-                        notifyItemRangeChanged(positionStart, itemCount)
-                    } else {
-                        recyclerView?.post {
-                            notifyItemRangeChanged(positionStart, itemCount)
-                        }
-                    }
-                }
-
-                override fun onItemRangeInserted(
-                    sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
-                    positionStart: Int,
-                    itemCount: Int
-                ) {
-                    recyclerView?.post {
-                        if (itemCount == 1) notifyItemInserted(positionStart)
-                        else notifyItemRangeInserted(positionStart, itemCount)
-                    }
-                }
-
-                override fun onItemRangeMoved(
-                    sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
-                    fromPosition: Int,
-                    toPosition: Int,
-                    itemCount: Int
-                ) {
-                    recyclerView?.post {
-                        for (i in 0 until itemCount) {
-                            notifyItemMoved(fromPosition + i, toPosition + i)
-                        }
-                    }
-                }
-
-
-                override fun onItemRangeRemoved(
-                    sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
-                    positionStart: Int,
-                    itemCount: Int
-                ) {
-                    recyclerView?.post {
-                        notifyItemRangeRemoved(positionStart, itemCount)
-                    }
-                }
-            })
-    }
+) : RecyclerView.Adapter<PlayerScrollerLongAdapter.ThumbViewHolder>() {
 
 
     //初始化—协程作用域
@@ -144,7 +85,7 @@ class PlayerScrollerAdapter(
         //指定单图宽度
         holder.itemView.updateLayoutParams<ViewGroup.LayoutParams> { this.width = eachPicWidth }
         //绑图
-        val thumbPath = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/${position}.jpg")
+        val thumbPath = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/long/${position}.jpg")
         val frame = BitmapFactory.decodeFile(thumbPath.absolutePath)
         holder.ivThumbnail.setImageBitmap(frame)
 
@@ -155,22 +96,21 @@ class PlayerScrollerAdapter(
         super.onViewAttachedToWindow(holder)
         val position = holder.bindingAdapterPosition
         val item = thumbItems[position]
+        Log.d("SuMing", "onViewAttachedToWindow: $position")
 
         if (coverExist){
+            Log.d("SuMing", "onViewAttachedToWindow: coverExist  $position")
             if (item.currentThumbType){
                 return
             }
             else{
-                if (SavedThumbFlags[position] == '1'){
-                    item.currentThumbType = true
-                }else{
-                    holder.generateThumbJob?.cancel()
-                    holder.generateThumbJob = coroutineScopeGenerateThumb.launch(Dispatchers.IO) { generateThumb(position) }
-                }
-
+                Log.d("SuMing", "onViewAttachedToWindow: 生成缩略图 $position")
+                holder.generateThumbJob?.cancel()
+                holder.generateThumbJob = coroutineScopeGenerateThumb.launch(Dispatchers.IO) { generateThumb(position) }
             }
         }
         else{
+            Log.d("SuMing", "onViewAttachedToWindow: 生成占位")
             generateCover()
         }
     }
@@ -242,7 +182,7 @@ class PlayerScrollerAdapter(
     private suspend fun saveThumb(ratio: Float, position: Int, frame: Bitmap?) {
         val item = thumbItems[position]
         if (frame != null) {
-            val SaveAs = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/${position}.jpg")
+            val SaveAs = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/long/${position}.jpg")
             SaveAs.outputStream().use {
                 val targetCoverWidth = 200
                 val targetCoverHeight = (200 * ratio).toInt()
@@ -256,10 +196,6 @@ class PlayerScrollerAdapter(
             item.thumbGeneratingRunning = false
             item.currentThumbType = true
             withContext(Dispatchers.Main) { notifyItemChanged(position) }
-            //保存标记状态
-            onFlagUpdateListener.onFlagUpdate(position)
-
-
 
         }
     }
@@ -268,10 +204,6 @@ class PlayerScrollerAdapter(
         if (coverExist) return
         if (generateCoverWorking) return
         generateCoverWorking = true
-        //二次检查占位是否已存在
-        val coverPath = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/0.jpg")
-        coverExist = coverPath.exists()
-        if (coverExist) return
 
         CoroutineScope(Dispatchers.IO).launch {
             val item = thumbItems[0]
@@ -295,8 +227,10 @@ class PlayerScrollerAdapter(
     //放置占位缩略图链接
     @SuppressLint("NotifyDataSetChanged")
     private suspend fun placeCover(frame: Bitmap, ratio: Float){
+        Log.d("SuMing", "generateCover: 占位缩略图生成中")
         for (i in 0 until picNumber+1){
-            val SaveAs = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/${i}.jpg")
+            val SaveAs = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/long/${i}.jpg")
+            SaveAs.parentFile?.mkdirs()
             SaveAs.outputStream().use {
                 val targetCoverWidth = 200
                 val targetCoverHeight = (200 * ratio).toInt()

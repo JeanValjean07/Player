@@ -7,6 +7,7 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.suming.player.PlayListManager
 import data.MediaItemRepo
 import data.MediaModel.MediaItem_video
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +50,7 @@ class MediaReader_video(
         //</editor-fold desc="其他排序方式">
         val sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} DESC"
 
+
         //发起查询
         //<editor-fold desc="查询参数">
         //1.uri：MediaStore.Video(指定视频).Media.EXTERNAL_CONTENT_URI(指定外部储存)
@@ -71,7 +73,6 @@ class MediaReader_video(
             if (cursor.moveToPosition(offset)) {
                 var left = limit
                 do {
-                    //Log.d("SuMing", "${cursor.getString(nameCol)}:${cursor.getLong(durCol)}")
                     val id   = cursor.getLong(idCol)
                     val name = cursor.getString(nameCol).orEmpty()
                     val dur  = cursor.getLong(durCol)
@@ -81,7 +82,6 @@ class MediaReader_video(
                     val setting = MediaItemRepo.get(context).getSetting(name)
                     //视频没记录过数据
                     if (setting == null){
-                        Log.d("MediaReader", "${name}:视频没记录过数据")
                         list += MediaItem_video(
                             id = id,
                             uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
@@ -93,7 +93,6 @@ class MediaReader_video(
                     }
                     //视频有数据,但目标位为空
                     else if (setting.SavePath_Cover == ""){
-                        Log.d("MediaReader", "${name}:视频已有缩略图路径,但目标位为空")
                         list += MediaItem_video(
                             id = id,
                             uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
@@ -105,7 +104,6 @@ class MediaReader_video(
                     }
                     //视频已有缩略图路径
                     else{
-                        Log.d("MediaReader", "${name}:视频已有缩略图路径")
                         list += MediaItem_video(
                             id = id,
                             uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
@@ -120,6 +118,9 @@ class MediaReader_video(
                 } while (left > 0 && cursor.moveToNext())
             }
         }
+
+        //记录到播放列表
+        if (page == 0) { PlayListManager.getInstance(context).updatePlayList_MediaStore(list) }
 
         //return
         return LoadResult.Page(

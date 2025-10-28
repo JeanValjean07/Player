@@ -85,11 +85,11 @@ class MainActivityAdapter(
             popup.setOnMenuItemClickListener { item ->
                 when(item.itemId){
                     R.id.MenuAction_Repic -> {
-                        Toast.makeText(holder.itemView.context, "进入视频后,在更多按钮面板可重新截取封面", Toast.LENGTH_SHORT).show()
+                        context.showCustomToast( "进入视频后,在更多按钮面板可重新截取封面", Toast.LENGTH_SHORT,3)
                         true
                     }
                     R.id.MenuAction_Hide -> {
-                        Toast.makeText(holder.itemView.context, "隐藏功能开发中", Toast.LENGTH_SHORT).show()
+                        context.showCustomToast( "隐藏功能开发中", Toast.LENGTH_SHORT,3)
                         true
                     }
                     else -> true
@@ -107,7 +107,6 @@ class MainActivityAdapter(
         coroutineScopeGenerateCover.launch(Dispatchers.IO) {
             //需要生成缩略图
             if (item.Media_Cover_Path == ""){
-                Log.d("MediaReader", "${item.name}:需要重新生成缩略图")
 
                 val retriever = MediaMetadataRetriever()
                 //核心逻辑:::
@@ -124,14 +123,8 @@ class MainActivityAdapter(
                         saveCover.parentFile?.mkdirs()
                         //保存图片
                         saveCover.outputStream().use {
-                            /*
-                            val targetCoverWidth = 200
-                            val targetCoverHeight = 160
-                            val scaledBitmap = bitmap.scale(targetCoverWidth, targetCoverHeight)
-
-                             */
-                            val success = bitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
-                            if (!success) { bitmap.compress(Bitmap.CompressFormat.JPEG, 80, it) }
+                            val success = bitmap.compress(Bitmap.CompressFormat.WEBP, 10, it)
+                            if (!success) { bitmap.compress(Bitmap.CompressFormat.JPEG, 10, it) }
                         }
                         //刷新页面
                         withContext(Dispatchers.Main){
@@ -174,8 +167,6 @@ class MainActivityAdapter(
                  */
             }
         }
-
-
 
     }
 

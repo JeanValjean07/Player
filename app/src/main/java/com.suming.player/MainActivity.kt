@@ -130,6 +130,7 @@ class MainActivity: AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        //load()
     }
 
 
@@ -137,7 +138,7 @@ class MainActivity: AppCompatActivity() {
     private fun preCheck(){
         //申请媒体权限
         lifecycleScope.launch {
-            delay(2000)
+            delay(300)
             val requiredPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 Manifest.permission.READ_MEDIA_VIDEO
             } else {

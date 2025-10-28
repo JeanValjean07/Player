@@ -15,15 +15,9 @@ interface MediaItemDao {
     @Query("SELECT * FROM video_settings WHERE MARK_FileName = :path LIMIT 1")
     suspend operator fun get(path: String): MediaItemSetting?
 
-    @Query("""UPDATE video_settings SET SaveFlag_Thumb = CASE WHEN :on THEN SaveFlag_Thumb | (1 << :bitIdx) ELSE SaveFlag_Thumb & ~(1 << :bitIdx) END WHERE MARK_FileName = :path """)
-    suspend fun updateFlagBit(path: String, bitIdx: Int, on: Boolean)
 
-    @Query("""UPDATE video_settings SET SaveFlag_Thumb = (SaveFlag_Thumb & ~:mask) | (:value & :mask) WHERE MARK_FileName = :path""")
-    suspend fun updateFlagMasked(path: String, mask: Int, value: Int)
-
-    /* 3. 读整个 flagInt 做调试或展示 ------------------------ */
-    @Query("SELECT SaveFlag_Thumb FROM video_settings WHERE MARK_FileName = :path")
-    suspend fun getFlagInt(path: String): Int?
+    @Query("UPDATE video_settings SET SavePath_Cover = :newValue")
+    suspend fun removeAllThumbPath(newValue: String)
 
 
     @Delete

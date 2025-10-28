@@ -125,6 +125,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var wasPlaying: Boolean = false
 
+    var Flag_SavedThumbFlag: String = ""
+
+    var String_SavedCoverPath: String = ""
+
 
 
 

@@ -9,6 +9,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
+import androidx.media3.exoplayer.ScrubbingModeParameters
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import okhttp3.internal.http2.Http2Reader
@@ -32,12 +33,18 @@ object PlayerExoSingleton {
         val trackSelector = getTrackSelector(app)
         val rendererFactory = getRendererFactory(app)
 
+        val scrubbingParams = ScrubbingModeParameters.Builder()
+            .setAllowSkippingMediaCodecFlush(true)
+            .setShouldEnableDynamicScheduling(true)
+            .build()
+
 
         return ExoPlayer.Builder(app)
             .setSeekParameters(SeekParameters.CLOSEST_SYNC)
             .setWakeMode(WAKE_MODE_NETWORK)
             .setTrackSelector(trackSelector)
             .setRenderersFactory(rendererFactory)
+            .setScrubbingModeParameters(scrubbingParams)
             .build()
             .apply {
                 prepare()
