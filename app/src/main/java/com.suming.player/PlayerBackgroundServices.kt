@@ -5,10 +5,8 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
@@ -103,7 +101,7 @@ class PlayerBackgroundServices(): MediaSessionService() {
                 .setContentTitle("媒体播放中")
                 .setContentText(INFO_TITLE)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setSmallIcon(R.drawable.ic_notification_area)
+                .setSmallIcon(R.drawable.ic_player_service_notification)
                 .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
                 .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
                 .addAction(android.R.drawable.ic_delete, "退出", broadcastExit())
@@ -116,7 +114,7 @@ class PlayerBackgroundServices(): MediaSessionService() {
                 .setContentTitle("媒体播放中")
                 .setContentText(INFO_TITLE)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setSmallIcon(R.drawable.ic_notification_area)
+                .setSmallIcon(R.drawable.ic_player_service_notification)
                 .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
                 .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
                 .setAutoCancel(false)

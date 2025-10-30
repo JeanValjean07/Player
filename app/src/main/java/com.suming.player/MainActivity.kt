@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
@@ -169,7 +171,7 @@ class MainActivity: AppCompatActivity() {
                     arrayOf(requiredPermission),
                     REQUEST_STORAGE_PERMISSION
                 )
-                notice("需要访问媒体权限来读取视频,授权后请手动刷新", 5000)
+                startCheckPermission()
             }
         }
     }
@@ -250,6 +252,33 @@ class MainActivity: AppCompatActivity() {
         }else{
             String.format("%02d时%02d分%02d秒",  hours, minutes, seconds)
         }
+    }
+
+
+    //Runnable:检查权限循环
+    private val checkPermissionHandler = Handler(Looper.getMainLooper())
+    private var checkPermission = object : Runnable{
+        override fun run() {
+            val requiredPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                Manifest.permission.READ_MEDIA_VIDEO
+            } else {
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            }
+            if (ContextCompat.checkSelfPermission(this@MainActivity, requiredPermission) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this@MainActivity, arrayOf(requiredPermission), REQUEST_STORAGE_PERMISSION)
+                notice("需要访问媒体权限来读取视频", 1000)
+                checkPermissionHandler.postDelayed(this, 100)
+            }else{
+                notice("媒体权限已授权", 2000)
+                load()
+            }
+        }
+    }
+    private fun startCheckPermission() {
+        checkPermissionHandler.post(checkPermission)
+    }
+    private fun stopCheckPermission() {
+        checkPermissionHandler.removeCallbacks(checkPermission)
     }
 
 

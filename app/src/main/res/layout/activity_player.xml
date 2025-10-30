@@ -108,7 +108,7 @@
                 android:padding="6dp"
                 android:elevation="10dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_toolbar_exit_color"
+                android:src="@drawable/ic_general_exit_stroke"
                 android:layout_marginStart="8dp"
                 android:layout_weight="0"/>
             <ImageButton
@@ -137,7 +137,7 @@
                 android:padding="6dp"
                 android:elevation="10dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_toolbar_more_options_color"
+                android:src="@drawable/ic_general_more_options_stroke"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="0" />
         </LinearLayout>

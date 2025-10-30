@@ -218,19 +218,15 @@ class PlayerActivity: AppCompatActivity(){
     private var NeedSetSpeed = false
     private var NeedSetSpeedValue = 1.0f
 
-
     private var EnterAnimationComplete = false
 
     private var fps = 0f
 
-     //保存缩略图状态
-    private var SaveFlag_Thumb = 0L
-     //封面路径
-    private var SavePath_Cover = ""
+    //更新时间戳参数
+    private var lastMillis = 0L
+    private var timeUpdateGap = 100L
 
-
-
-     //倍速播放
+    //倍速播放
     private var currentSpeed = 1.0f
 
     //进度条状态
@@ -242,23 +238,14 @@ class PlayerActivity: AppCompatActivity(){
     private var scrollerState_Pressed = true
     private var scrollerState_BackwardScroll = false
 
-
     //播放结束需要定时关闭
     private var playEnd_NeedShutDown = false
-
 
     //全局SeekToMs
     private var global_SeekToMs = 0L
 
-
-
-
     //VideoSeekHandler
     private var videoSeekHandlerGap = 0L
-
-
-
-
 
     //</editor-fold>
 
@@ -403,6 +390,18 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 vm.PREFS_UseCompatScroller = PREFS.getBoolean("PREFS_UseCompatScroller", false)
             }
+            if (!PREFS.contains("PREFS_UseOnlySyncFrame")) {
+                PREFSEditor.putBoolean("PREFS_UseOnlySyncFrame", false)
+                vm.PREFS_UseOnlySyncFrame = false
+            } else {
+                vm.PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", false)
+            }
+            if (!PREFS.contains("PREFS_TimeUpdateGap")) {
+                PREFSEditor.putLong("PREFS_TimeUpdateGap", 16L)
+                vm.PREFS_TimeUpdateGap = 16L
+            } else {
+                vm.PREFS_TimeUpdateGap = PREFS.getLong("PREFS_TimeUpdateGap", 16L)
+            }
             if (!PREFS.contains("PREFS_CloseVideoTrack")) {
                 PREFSEditor.putBoolean("PREFS_CloseVideoTrack", true)
                 vm.PREFS_CloseVideoTrack = true
@@ -445,12 +444,6 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_CloseFragmentGesture = false
             } else {
                 vm.PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
-            }
-            if (!PREFS.contains("PREFS_UseOnlySyncFrame")) {
-                PREFSEditor.putBoolean("PREFS_UseOnlySyncFrame", false)
-                vm.PREFS_UseOnlySyncFrame = false
-            } else {
-                vm.PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", false)
             }
             PREFSEditor.apply()
         }
@@ -917,13 +910,17 @@ class PlayerActivity: AppCompatActivity(){
                     vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
                 }
                 //用户操作 -时间戳跟随进度条变动
-                if (vm.PREFS_LinkScroll && vm.state_firstReadyReached) {
-                    val percentScroll = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
-                    videoTimeTo = (percentScroll * vm.player.duration).toLong()
-                    currentTime = videoTimeTo
-                    timer_current.text = formatTime1(videoTimeTo)
-                } else {
-                    return
+                val currentMillis = System.currentTimeMillis()
+                if (currentMillis - lastMillis > vm.PREFS_TimeUpdateGap) {
+                    lastMillis = currentMillis
+                    if (vm.PREFS_LinkScroll && vm.state_firstReadyReached) {
+                        val percentScroll = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
+                        videoTimeTo = (percentScroll * vm.player.duration).toLong()
+                        currentTime = videoTimeTo
+                        timer_current.text = formatTime1(videoTimeTo)
+                    } else {
+                        return
+                    }
                 }
                 //用户操作 -视频跳转
                 //进度条往左走/视频正向

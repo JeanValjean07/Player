@@ -118,6 +118,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var PREFS_ShutDownWhenMediaEnd: Boolean = false
 
+    var PREFS_TimeUpdateGap: Long = 20L
+
     var PREFS_SavePositionWhenExit: Boolean = false
     var PREFS_SwitchPortraitWhenExit: Boolean = true
 

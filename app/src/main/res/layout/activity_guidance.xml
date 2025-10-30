@@ -38,7 +38,7 @@
                     android:contentDescription="退出"
                     android:padding="11dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/ic_topbar_exit"/>
+                    android:src="@drawable/ic_general_exit"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
@@ -131,7 +131,7 @@
                         <ImageView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:src="@drawable/ic_svgrepo"
+                            android:src="@drawable/ic_guidance_svgrepo"
                             android:layout_gravity="center"
                             android:contentDescription="SVGRepo" />
                     </FrameLayout>

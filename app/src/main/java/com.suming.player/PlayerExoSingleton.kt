@@ -25,7 +25,7 @@ object PlayerExoSingleton {
     private var _rendererFactory: RenderersFactory? = null
 
     val player: ExoPlayer
-        get() = _player ?: throw IllegalStateException("Player not initialized")
+        get() = _player ?: throw IllegalStateException("播放器还未初始化完成")
 
     //创建播放器实例
     private fun buildPlayer(app: Application): ExoPlayer {
@@ -45,7 +45,7 @@ object PlayerExoSingleton {
             .setWakeMode(WAKE_MODE_NETWORK)
             .setTrackSelector(trackSelector)
             .setRenderersFactory(rendererFactory)
-            .setScrubbingModeParameters(scrubbingParams)
+            //.setScrubbingModeParameters(scrubbingParams)
             .build()
             .apply {
                 prepare()
@@ -66,7 +66,6 @@ object PlayerExoSingleton {
     fun getRendererFactory(app: Application): RenderersFactory =
         _rendererFactory ?: synchronized(this) {
             _rendererFactory ?: DefaultRenderersFactory(app)
-
                 .also { _rendererFactory = it }
         }
 

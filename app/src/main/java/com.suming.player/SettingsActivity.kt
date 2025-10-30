@@ -39,11 +39,12 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseLongSeekGap: SwitchCompat
     private lateinit var Switch_UseCompatScroller: SwitchCompat
     private lateinit var Switch_GenerateThumbSync: SwitchCompat
+    private lateinit var Switch_UseOnlySyncFrame: SwitchCompat
     private lateinit var Switch_UseBlackBackground: SwitchCompat
     private lateinit var Switch_UseHighRefreshRate: SwitchCompat
     private lateinit var Switch_CloseFragmentGesture: SwitchCompat
-    private lateinit var Switch_UseOnlySyncFrame: SwitchCompat
-    //开关变量
+
+    //开关变量 + 数值量
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
     private var PREFS_EnableRoomDatabase = false
@@ -52,16 +53,15 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UseLongSeekGap = false
     private var PREFS_UseCompatScroller = false
     private var PREFS_GenerateThumbSYNC = true
+    private var PREFS_UseOnlySyncFrame = false
+    private var PREFS_TimeUpdateGap = 16L
     private var PREFS_UseBlackBackground = false
     private var PREFS_UseHighRefreshRate = false
     private var PREFS_SeekHandlerGap = 0L
     private var PREFS_CloseFragmentGesture = false
-    private var PREFS_UseOnlySyncFrame = false
 
-
+    //按钮循环：清除所有视频缓存
     private var ButtonRemoveAllThumbPathIndex = 0
-
-
 
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
@@ -97,7 +97,10 @@ class SettingsActivity: AppCompatActivity() {
         openSourceLicense.paint.isUnderlineText = true
         openSourceLicense.setOnClickListener {
             startActivity(
-                Intent(this, com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java)
+                Intent(
+                    this,
+                    com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java
+                )
             )
         }
 
@@ -111,11 +114,17 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_CloseVideoTrack = PREFS.getBoolean("PREFS_CloseVideoTrack", false)
         }
-        if (!PREFS.contains("PREFS_SwitchPortraitWhenExit")){
+        if (!PREFS.contains("PREFS_SwitchPortraitWhenExit")) {
             PREFS_Editor.putBoolean("PREFS_SwitchPortraitWhenExit", true)
             PREFS_SwitchPortraitWhenExit = true
         } else {
             PREFS_SwitchPortraitWhenExit = PREFS.getBoolean("PREFS_SwitchPortraitWhenExit", true)
+        }
+        if (!PREFS.contains("PREFS_SeekHandlerGap")) {
+            PREFS_Editor.putLong("PREFS_SeekHandlerGap", 20L)
+            PREFS_SeekHandlerGap = 20L
+        } else {
+            PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 20L)
         }
         if (!PREFS.contains("PREFS_EnableRoomDatabase")) {
             PREFS_Editor.putBoolean("PREFS_EnableRoomDatabase", false)
@@ -153,6 +162,18 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_GenerateThumbSYNC = PREFS.getBoolean("PREFS_GenerateThumbSYNC", true)
         }
+        if (!PREFS.contains("PREFS_UseOnlySyncFrame")) {
+            PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", false)
+            PREFS_UseOnlySyncFrame = false
+        } else {
+            PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", false)
+        }
+        if (!PREFS.contains("PREFS_TimeUpdateGap")) {
+            PREFS_Editor.putLong("PREFS_TimeUpdateGap", 16L)
+            PREFS_TimeUpdateGap = 16L
+        } else {
+            PREFS_TimeUpdateGap = PREFS.getLong("PREFS_TimeUpdateGap", 16L)
+        }
         if (!PREFS.contains("PREFS_UseBlackBackground")) {
             PREFS_Editor.putBoolean("PREFS_UseBlackBackground", false)
             PREFS_UseBlackBackground = false
@@ -165,24 +186,13 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_UseHighRefreshRate = PREFS.getBoolean("PREFS_UseHighRefreshRate", false)
         }
-        if (!PREFS.contains("PREFS_SeekHandlerGap")) {
-            PREFS_Editor.putLong("PREFS_SeekHandlerGap", 20L)
-            PREFS_SeekHandlerGap = 20L
-        } else {
-            PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 20L)
-        }
         if (!PREFS.contains("PREFS_CloseFragmentGesture")) {
             PREFS_Editor.putBoolean("PREFS_CloseFragmentGesture", false)
             PREFS_CloseFragmentGesture = false
         } else {
             PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
         }
-        if (!PREFS.contains("PREFS_UseOnlySyncFrame")) {
-            PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", false)
-            PREFS_UseOnlySyncFrame = false
-        } else {
-            PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", false)
-        }
+
         PREFS_Editor.apply()
 
         //开关初始化
@@ -194,10 +204,10 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseLongSeekGap = findViewById(R.id.useLongSeekGap)
         Switch_UseCompatScroller = findViewById(R.id.useCompatScroller)
         Switch_GenerateThumbSync = findViewById(R.id.generateThumbSYNC)
+        Switch_UseOnlySyncFrame = findViewById(R.id.UseOnlySyncFrame)
         Switch_UseBlackBackground = findViewById(R.id.useBlackBackground)
         Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
         Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
-        Switch_UseOnlySyncFrame = findViewById(R.id.UseOnlySyncFrame)
         //开关预置位
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
         Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
@@ -207,17 +217,23 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseLongSeekGap.isChecked = PREFS_UseLongSeekGap
         Switch_UseCompatScroller.isChecked = PREFS_UseCompatScroller
         Switch_GenerateThumbSync.isChecked = PREFS_GenerateThumbSYNC
+        Switch_UseOnlySyncFrame.isChecked = PREFS_UseOnlySyncFrame
         Switch_UseBlackBackground.isChecked = PREFS_UseBlackBackground
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
         Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
-        Switch_UseOnlySyncFrame.isChecked = PREFS_UseOnlySyncFrame
 
         //文本信息预写
         val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
-        if (PREFS_SeekHandlerGap == 20L){
+        if (PREFS_SeekHandlerGap == 20L) {
             currentSeekHandlerGap.text = "默认 (20毫秒)"
         } else {
             currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
+        }
+        val currentTimeUpdateGap = findViewById<TextView>(R.id.currentTimeUpdateGap)
+        if (PREFS_TimeUpdateGap == 16L) {
+            currentTimeUpdateGap.text = "默认 (16毫秒丨60Hz)"
+        } else {
+            currentTimeUpdateGap.text = "$PREFS_TimeUpdateGap 毫秒"
         }
 
 
@@ -247,6 +263,9 @@ class SettingsActivity: AppCompatActivity() {
         Switch_GenerateThumbSync.setOnCheckedChangeListener { _, isChecked ->
             PREFS_GenerateThumbSYNC = isChecked
         }
+        Switch_UseOnlySyncFrame.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_UseOnlySyncFrame = isChecked
+        }
         Switch_UseBlackBackground.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseBlackBackground = isChecked
         }
@@ -256,9 +275,6 @@ class SettingsActivity: AppCompatActivity() {
         Switch_CloseFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
             PREFS_CloseFragmentGesture = isChecked
         }
-        Switch_UseOnlySyncFrame.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseOnlySyncFrame = isChecked
-        }
 
         //seek间隔
         val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
@@ -266,16 +282,62 @@ class SettingsActivity: AppCompatActivity() {
             val popup = PopupMenu(this, ButtonSeekHandlerGap)
             popup.menuInflater.inflate(R.menu.activity_settings_popup_seek_gap, popup.menu)
             popup.setOnMenuItemClickListener { item ->
-                when(item.itemId){
-                    R.id.MenuAction_NoGap -> { chooseSeekHandlerGap(0); true }
+                when (item.itemId) {
+                    R.id.MenuAction_NoGap -> {
+                        chooseSeekHandlerGap(0); true
+                    }
 
-                    R.id.MenuAction_50 -> { chooseSeekHandlerGap(50); true }
+                    R.id.MenuAction_50 -> {
+                        chooseSeekHandlerGap(50); true
+                    }
 
-                    R.id.MenuAction_100 -> { chooseSeekHandlerGap(100); true }
+                    R.id.MenuAction_100 -> {
+                        chooseSeekHandlerGap(100); true
+                    }
 
-                    R.id.MenuAction_200 -> { chooseSeekHandlerGap(200); true }
+                    R.id.MenuAction_200 -> {
+                        chooseSeekHandlerGap(200); true
+                    }
 
-                    R.id.MenuAction_Input -> { setSeekHandlerGap() ; true }
+                    R.id.MenuAction_Input -> {
+                        setSeekHandlerGap(); true
+                    }
+
+                    else -> true
+                }
+            }
+            popup.show()
+        }
+        //时间更新间隔
+        val ButtonTimeUpdateGap = findViewById<TextView>(R.id.ButtonTimeUpdateGap)
+        ButtonTimeUpdateGap.setOnClickListener { item ->
+            val popup = PopupMenu(this, ButtonTimeUpdateGap)
+            popup.menuInflater.inflate(R.menu.activity_settings_popup_time_update_gap, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.MenuAction_8 -> {
+                        chooseTimeUpdateGap(8L); true
+                    }
+
+                    R.id.MenuAction_12 -> {
+                        chooseTimeUpdateGap(12L); true
+                    }
+
+                    R.id.MenuAction_16 -> {
+                        chooseTimeUpdateGap(16L); true
+                    }
+
+                    R.id.MenuAction_33 -> {
+                        chooseTimeUpdateGap(33L); true
+                    }
+
+                    R.id.MenuAction_66 -> {
+                        chooseTimeUpdateGap(66L); true
+                    }
+
+                    R.id.MenuAction_Input -> {
+                        setTimeUpdateGap(); true
+                    }
 
                     else -> true
                 }
@@ -283,13 +345,14 @@ class SettingsActivity: AppCompatActivity() {
             popup.show()
         }
 
+
         //重新生成封面
         val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
         ButtonRemoveAllThumbPath.setOnClickListener { item ->
-            if (ButtonRemoveAllThumbPathIndex == 0){
+            if (ButtonRemoveAllThumbPathIndex == 0) {
                 ButtonRemoveAllThumbPathIndex = 1
                 ButtonRemoveAllThumbPath.text = "请再次点击确认重新生成"
-            }else if (ButtonRemoveAllThumbPathIndex == 1){
+            } else if (ButtonRemoveAllThumbPathIndex == 1) {
                 ButtonRemoveAllThumbPathIndex = 0
                 ButtonRemoveAllThumbPath.text = "已确认重新生成"
                 lifecycleScope.launch {
@@ -297,7 +360,7 @@ class SettingsActivity: AppCompatActivity() {
                     val dao = db.mediaItemDao()
                     dao.removeAllThumbPath("")
                 }
-                showCustomToast("重启APP后会重新截取封面", Toast.LENGTH_SHORT,3)
+                showCustomToast("重启APP后会重新截取封面", Toast.LENGTH_SHORT, 3)
             }
         }
 
@@ -333,19 +396,20 @@ class SettingsActivity: AppCompatActivity() {
             putLong("PREFS_SeekHandlerGap", gap)
         }
         val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
-        if (PREFS_SeekHandlerGap == 0L){
+        if (PREFS_SeekHandlerGap == 0L) {
             currentSeekHandlerGap.text = "默认 (0 毫秒)"
         } else {
             currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
         }
     }
     @SuppressLint("InflateParams", "SetTextI18n")
-    private fun setSeekHandlerGap(){
+    private fun setSeekHandlerGap() {
         val dialog = Dialog(this)
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+        val dialogView =
+            LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
         dialog.setContentView(dialogView)
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
-        val Description:TextView = dialogView.findViewById(R.id.dialog_description)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
         val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
         val Button: Button = dialogView.findViewById(R.id.dialog_button)
 
@@ -358,16 +422,15 @@ class SettingsActivity: AppCompatActivity() {
         Button.setOnClickListener {
             val gapInput = EditText.text.toString().toLongOrNull()
 
-            if (gapInput == null || gapInput == 0L){
+            if (gapInput == null || gapInput == 0L) {
                 Toast.makeText(this, "未输入内容", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
                 return@setOnClickListener
-            }else if(gapInput > 1000){
+            } else if (gapInput > 1000) {
                 Toast.makeText(this, "寻帧间隔不能大于1秒", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
                 return@setOnClickListener
-            }
-            else {
+            } else {
                 PREFS_SeekHandlerGap = gapInput
                 val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
                 PREFS.edit { putLong("PREFS_SeekHandlerGap", gapInput).commit() }
@@ -387,5 +450,67 @@ class SettingsActivity: AppCompatActivity() {
         }
 
     }
+    @SuppressLint("SetTextI18n")
+    private fun chooseTimeUpdateGap(gap: Long) {
+        PREFS_TimeUpdateGap = gap
+        val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+        PREFS.edit {
+            putLong("PREFS_TimeUpdateGap", gap)
+        }
+        val currentTimeUpdateGap = findViewById<TextView>(R.id.currentTimeUpdateGap)
+        if (PREFS_TimeUpdateGap == 16L) {
+            currentTimeUpdateGap.text = "默认 (16 毫秒)"
+        } else {
+            currentTimeUpdateGap.text = "$PREFS_TimeUpdateGap 毫秒"
+        }
+    }
+    @SuppressLint("InflateParams", "SetTextI18n")
+    private fun setTimeUpdateGap() {
+        val dialog = Dialog(this)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+        title.text = "自定义：播放器时间更新间隔"
+        Description.text = "输入自定义时间更新间隔"
+        EditText.hint = "单位：毫秒丨默认值：16"
+        Button.text = "确定"
+
+        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val gapInput = EditText.text.toString().toLongOrNull()
+            if (gapInput == null || gapInput == 0L) {
+                Toast.makeText(this, "未输入内容", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                return@setOnClickListener
+
+            }
+            else if (gapInput > 1000) {
+                Toast.makeText(this, "时间更新间隔不能大于1秒", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            else {
+                PREFS_TimeUpdateGap = gapInput
+                val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+                PREFS.edit { putLong("PREFS_TimeUpdateGap", gapInput).commit() }
+                //界面刷新
+                val currentTimeUpdateGap = findViewById<TextView>(R.id.currentTimeUpdateGap)
+                currentTimeUpdateGap.text = "$PREFS_TimeUpdateGap 毫秒"
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+        //自动弹出键盘程序
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(50)
+            EditText.requestFocus()
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+
 
 }
