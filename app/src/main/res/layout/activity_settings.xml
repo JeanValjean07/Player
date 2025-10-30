@@ -547,7 +547,8 @@
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="horizontal"
+                        tools:ignore="TooManyViews">
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -642,11 +643,42 @@
                             app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"/>
                     </LinearLayout>
-                    <!--  界面显示:提示信息  -->
+                    <!--  提示信息:尝试强制使用高刷新率  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="如果您的设备在播放时被系统限制刷新率，可开启此开关以尝试使用高刷新率，仅尝试，最终决策权在系统。仅支持安卓11及以上版本"
+                        android:textSize="12sp" />
+                    <!--  开关3:关闭卡片下滑手势  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="关闭更多操作面板下滑手势"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/closeFragmentGesture"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"/>
+                    </LinearLayout>
+                    <!--  提示信息:关闭卡片下滑手势  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="如果出现卡顿可考虑关闭"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

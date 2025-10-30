@@ -42,6 +42,7 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:orientation="horizontal">
+                    <!-- 按钮：退出 -->
                     <ImageButton
                         android:id="@+id/buttonExit"
                         android:layout_width="41dp"
@@ -53,6 +54,7 @@
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_more_button_exit"
                         tools:ignore="ContentDescription" />
+                    <!-- 标题文本：更多选项 -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -65,6 +67,27 @@
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1"/>
+                    <!-- 按钮：提取帧 -->
+                    <ImageButton
+                        android:id="@+id/buttonExtractFrame"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_more_button_optimize"
+                        tools:ignore="ContentDescription" />
+                    <!-- 按钮：播放列表 -->
+                    <ImageButton
+                        android:id="@+id/ButtonPlayList"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_more_button_list"
+                        tools:ignore="ContentDescription" />
+                    <!-- 按钮：回到起始 -->
                     <ImageButton
                         android:id="@+id/buttonBackToStart"
                         android:layout_width="35dp"
@@ -74,6 +97,7 @@
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_more_button_back_to_start"
                         tools:ignore="ContentDescription" />
+                    <!-- 按钮：截图 -->
                     <ImageButton
                         android:id="@+id/buttonCapture"
                         android:layout_width="35dp"
@@ -83,6 +107,7 @@
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_more_button_capture"
                         tools:ignore="ContentDescription" />
+                    <!-- 按钮：页面锁定 -->
                     <ImageButton
                         android:id="@+id/buttonLock"
                         android:layout_width="41dp"
@@ -97,6 +122,7 @@
             </com.google.android.material.appbar.AppBarLayout>
             <!-- 滚动区域# -->
             <androidx.core.widget.NestedScrollView
+                android:id="@+id/NestedScrollView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
                 <!-- 滚动区域 -->

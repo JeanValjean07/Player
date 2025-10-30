@@ -1,8 +1,6 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
-import android.app.Dialog
-import android.content.Context.INPUT_METHOD_SERVICE
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
@@ -10,25 +8,25 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
-import android.view.inputmethod.InputMethodManager
-import android.widget.Button
-import android.widget.EditText
+import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
-import androidx.appcompat.widget.TooltipCompat
+import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
@@ -38,11 +36,9 @@ import com.google.android.material.button.MaterialButton
 import com.suming.player.PlayerExoSingleton.player
 import data.MediaItemRepo
 import data.MediaItemSetting
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.format.DateTimeFormatter
+import kotlin.math.abs
 
 @UnstableApi
 class PlayerFragmentMoreButton: DialogFragment() {
@@ -59,6 +55,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private lateinit var Switch_SavePositionWhenExit: SwitchCompat
     //自动关闭标志位
     private var lockPage = false
+
 
     //companion object
     companion object { fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments = bundleOf(  ) } }
@@ -113,7 +110,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_player_fragment_more_button, container, false)
 
-    @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n")
+    @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         //信息预写
@@ -122,9 +119,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val currentSpeedText = view.findViewById<TextView>(R.id.current_speed)
         currentSpeedText.text = currentSpeed.toString()
         val timerShutDown = view.findViewById<TextView>(R.id.StateTimerShutDown)
-        if (vm.PREFS_TimerShutDown){
+        if (vm.PREFS_TimerShutDown) {
             timerShutDown.text = "将在${vm.shutDownTime}关闭"
-        }else{
+        } else {
             timerShutDown.text = "未开启"
         }
 
@@ -145,9 +142,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
         //保存进度仅在数据库启用时开启
         val ContainerSavePosition = view.findViewById<LinearLayout>(R.id.ContainerSavePosition)
-        if (!vm.PREFS_EnableRoomDatabase){
+        if (!vm.PREFS_EnableRoomDatabase) {
             ContainerSavePosition.visibility = View.GONE
-        }else{
+        } else {
             Switch_SavePositionWhenExit = view.findViewById(R.id.Switch_SavePositionWhenExit)
             Switch_SavePositionWhenExit.isChecked = vm.PREFS_SavePositionWhenExit
             //开关：退出时保存进度
@@ -176,10 +173,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val buttonLock = view.findViewById<ImageButton>(R.id.buttonLock)
         buttonLock.setOnClickListener {
             lockPage = !lockPage
-            if (lockPage){
+            if (lockPage) {
                 buttonLock.setImageResource(R.drawable.ic_more_button_lock_on)
-            }
-            else{
+            } else {
                 buttonLock.setImageResource(R.drawable.ic_more_button_lock_off)
             }
         }
@@ -210,16 +206,26 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val popup = PopupMenu(requireContext(), buttonChangeSpeed)
             popup.menuInflater.inflate(R.menu.activity_player_popup_video_speed, popup.menu)
             popup.setOnMenuItemClickListener { item ->
-                when(item.itemId){
-                    R.id.MenuAction_0_5 -> { chooseSpeed(0.5f); true }
+                when (item.itemId) {
+                    R.id.MenuAction_0_5 -> {
+                        chooseSpeed(0.5f); true
+                    }
 
-                    R.id.MenuAction_1_0 -> { chooseSpeed(1.0f); true }
+                    R.id.MenuAction_1_0 -> {
+                        chooseSpeed(1.0f); true
+                    }
 
-                    R.id.MenuAction_1_5 -> { chooseSpeed(1.5f); true }
+                    R.id.MenuAction_1_5 -> {
+                        chooseSpeed(1.5f); true
+                    }
 
-                    R.id.MenuAction_2_0 -> { chooseSpeed(2.0f); true }
+                    R.id.MenuAction_2_0 -> {
+                        chooseSpeed(2.0f); true
+                    }
 
-                    R.id.MenuAction_Input -> { setSpeed(); dismiss(); true }
+                    R.id.MenuAction_Input -> {
+                        setSpeed(); dismiss(); true
+                    }
 
                     else -> true
                 }
@@ -256,7 +262,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //开关：仅播放音频
         Switch_OnlyAudio.setOnCheckedChangeListener { _, isChecked ->
             vm.PREFS_OnlyAudio = isChecked
-            if (isChecked){
+            if (isChecked) {
                 vm.PREFS_OnlyVideo = false
                 Switch_OnlyVideo.isChecked = false
             }
@@ -269,7 +275,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //开关：仅播放视频
         Switch_OnlyVideo.setOnCheckedChangeListener { _, isChecked ->
             vm.PREFS_OnlyVideo = isChecked
-            if (isChecked){
+            if (isChecked) {
                 vm.PREFS_OnlyAudio = false
                 Switch_OnlyAudio.isChecked = false
             }
@@ -289,19 +295,31 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val popup = PopupMenu(requireContext(), ButtonTimerShutDown)
             popup.menuInflater.inflate(R.menu.activity_player_popup_timer_shut_down, popup.menu)
             popup.setOnMenuItemClickListener { item ->
-                when(item.itemId){
+                when (item.itemId) {
 
-                    R.id.MenuAction_1 -> { chooseShutDownTime(1); true }
+                    R.id.MenuAction_1 -> {
+                        chooseShutDownTime(1); true
+                    }
 
-                    R.id.MenuAction_15 -> { chooseShutDownTime(15); true }
+                    R.id.MenuAction_15 -> {
+                        chooseShutDownTime(15); true
+                    }
 
-                    R.id.MenuAction_30 -> { chooseShutDownTime(30); true }
+                    R.id.MenuAction_30 -> {
+                        chooseShutDownTime(30); true
+                    }
 
-                    R.id.MenuAction_60 -> { chooseShutDownTime(60); true }
+                    R.id.MenuAction_60 -> {
+                        chooseShutDownTime(60); true
+                    }
 
-                    R.id.MenuAction_90 -> { chooseShutDownTime(90); true }
+                    R.id.MenuAction_90 -> {
+                        chooseShutDownTime(90); true
+                    }
 
-                    R.id.MenuAction_Input -> { setShutDownTime(); dismiss(); true }
+                    R.id.MenuAction_Input -> {
+                        setShutDownTime(); dismiss(); true
+                    }
 
                     else -> true
                 }
@@ -317,9 +335,17 @@ class PlayerFragmentMoreButton: DialogFragment() {
             dismiss()
         }
         //按钮：更新封面
-        val buttonUpdateCover = view.findViewById<TextView>(R.id.buttonUpdateCover)
-        buttonUpdateCover.setOnClickListener {
+        val ButtonUpdateCover = view.findViewById<TextView>(R.id.buttonUpdateCover)
+        ButtonUpdateCover.setOnClickListener {
             val result = bundleOf("KEY" to "UpdateCover")
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
+            dismiss()
+        }
+        //按钮：提取帧
+        val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
+        ButtonExtractFrame.setOnClickListener {
+            val result = bundleOf("KEY" to "ExtractFrame")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             dismiss()
@@ -330,17 +356,33 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val buttonAlwaysSeek = view.findViewById<FrameLayout>(R.id.buttonActualAlwaysSeek)
         val buttonAlwaysMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialAlwaysSeek)
         if (vm.PREFS_AlwaysSeek) {
-            buttonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+            buttonAlwaysMaterial.backgroundTintList =
+                ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
         } else {
             buttonAlwaysMaterial.backgroundTintList =
-                ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBgClosed))
+                ColorStateList.valueOf(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        R.color.ButtonBgClosed
+                    )
+                )
         }
         buttonAlwaysSeek.setOnClickListener {
             //先给按钮改颜色
             if (vm.PREFS_AlwaysSeek) {
-                buttonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBgClosed))
-            }else{
-                buttonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+                buttonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        R.color.ButtonBgClosed
+                    )
+                )
+            } else {
+                buttonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        R.color.ButtonBg
+                    )
+                )
             }
 
             val result = bundleOf("KEY" to "AlwaysSeek")
@@ -352,16 +394,32 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val buttonTap = view.findViewById<FrameLayout>(R.id.buttonActualTap)
         val buttonTapMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialTap)
         if (vm.PREFS_TapJump) {
-            buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+            buttonTapMaterial.backgroundTintList =
+                ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
         } else {
-            buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBgClosed))
+            buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.ButtonBgClosed
+                )
+            )
         }
         buttonTap.setOnClickListener {
             //先给按钮改颜色
             if (vm.PREFS_TapJump) {
-                buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBgClosed))
+                buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        R.color.ButtonBgClosed
+                    )
+                )
             } else {
-                buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+                buttonTapMaterial.backgroundTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        R.color.ButtonBg
+                    )
+                )
             }
 
             val result = bundleOf("KEY" to "TapJump")
@@ -373,16 +431,32 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val buttonLink = view.findViewById<FrameLayout>(R.id.buttonActualLink)
         val buttonLinkMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialLink)
         if (vm.PREFS_LinkScroll) {
-            buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+            buttonLinkMaterial.backgroundTintList =
+                ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
         } else {
-            buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBgClosed))
+            buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.ButtonBgClosed
+                )
+            )
         }
         buttonLink.setOnClickListener {
             //先给按钮改颜色
             if (vm.PREFS_LinkScroll) {
-                buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBgClosed))
+                buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        R.color.ButtonBgClosed
+                    )
+                )
             } else {
-                buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+                buttonLinkMaterial.backgroundTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        R.color.ButtonBg
+                    )
+                )
             }
 
             val result = bundleOf("KEY" to "LinkScroll")
@@ -417,7 +491,107 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
 
 
+        //面板下滑关闭(NestedScrollView)
+        if (!vm.PREFS_CloseFragmentGesture){
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+                var down_y = 0f
+                var deltaY = 0f
+                val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                val RootCardOriginY = RootCard.translationY
+                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+                var NestedScrollViewAtTop = true
+                NestedScrollView.setOnTouchListener { _, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            if (NestedScrollView.scrollY != 0){
+                                NestedScrollViewAtTop = false
+                                return@setOnTouchListener false
+                            }else{
+                                NestedScrollViewAtTop = true
+                                down_y = event.rawY
+                            }
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            if (!NestedScrollViewAtTop){
+                                return@setOnTouchListener false
+                            }
+                            deltaY = event.rawY - down_y
+                            if (deltaY < 0){
+                                return@setOnTouchListener false
+                            }
+                            RootCard.translationY = RootCardOriginY + deltaY
+                            return@setOnTouchListener true
+                        }
+                        MotionEvent.ACTION_UP -> {
+                            if (deltaY >= 400f){
+                                dismiss()
+                            }else{
+                                RootCard.animate()
+                                    .translationY(0f)
+                                    .setInterpolator(DecelerateInterpolator(1f))
+                                    .duration = 300
+                            }
+
+                        }
+                    }
+                    return@setOnTouchListener false
+                }
+            }else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                var down_y = 0f
+                var deltaY = 0f
+                var down_x = 0f
+                var deltaX = 0f
+                var Y_move_ensure = false
+                val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                val RootCardOriginX = RootCard.translationX
+                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+                NestedScrollView.setOnTouchListener { _, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            down_x = event.rawX
+                            down_y = event.rawY
+                            Y_move_ensure = false
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            deltaY = event.rawY - down_y
+                            deltaX = event.rawX - down_x
+                            Log.d("SuMing", "deltaY: $deltaY, deltaX: $deltaX")
+                            if (deltaX < 0){
+                                return@setOnTouchListener false
+                            }
+                            if (Y_move_ensure){
+                                return@setOnTouchListener false
+                            }
+                            if (abs(deltaY) > abs(deltaX)){
+                                Y_move_ensure = true
+                                return@setOnTouchListener false
+                            }
+                            RootCard.translationX = RootCardOriginX + deltaX
+                            return@setOnTouchListener true
+                        }
+                        MotionEvent.ACTION_UP -> {
+                            if (Y_move_ensure){
+                                return@setOnTouchListener false
+                            }
+                            if (deltaX >= 200f){
+                                dismiss()
+                            }else{
+                                RootCard.animate()
+                                    .translationX(0f)
+                                    .setInterpolator(DecelerateInterpolator(1f))
+                                    .duration = 300
+                            }
+                        }
+                    }
+                    return@setOnTouchListener false
+                }
+            }
+        }
+
+
     } //onViewCreated END
+
+
 
 
     //Functions

@@ -69,6 +69,16 @@
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1"/>
+                    <!-- 按钮：提取帧 -->
+                    <ImageButton
+                        android:id="@+id/buttonExtractFrame"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_more_button_optimize"
+                        tools:ignore="ContentDescription" />
                     <!-- 按钮：播放列表 -->
                     <ImageButton
                         android:id="@+id/ButtonPlayList"
@@ -114,6 +124,7 @@
             </com.google.android.material.appbar.AppBarLayout>
             <!-- 滚动区域# -->
             <androidx.core.widget.NestedScrollView
+                android:id="@+id/NestedScrollView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
                 <!-- 滚动区域 -->
@@ -173,7 +184,8 @@
                                     android:layout_marginEnd="5dp"
                                     app:trackTint="@color/switchTrackColor"
                                     app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
+                                    tools:ignore="InefficientWeight"
+                                    />
                             </LinearLayout>
                             <!-- 开关：循环播放 -->
                             <LinearLayout
@@ -655,7 +667,8 @@
                                 <View
                                     android:layout_width="0dp"
                                     android:layout_height="0dp"
-                                    android:layout_weight="1"/>
+                                    android:layout_weight="1"
+                                    tools:ignore="TooManyViews" />
                                 <TextView
                                     android:id="@+id/ButtonTimerShutDown"
                                     android:layout_width="35dp"
@@ -932,4 +945,11 @@
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
+    <!-- 触摸板 -->
+    <View
+        android:id="@+id/TouchPad"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:translationZ="11dp"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

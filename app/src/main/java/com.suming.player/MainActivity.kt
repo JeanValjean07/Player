@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
@@ -65,6 +66,7 @@ class MainActivity: AppCompatActivity() {
 
 
     //生命周期
+    @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -115,6 +117,12 @@ class MainActivity: AppCompatActivity() {
         val noticeCard = findViewById<CardView>(R.id.noticeCard)
         noticeCard.setOnClickListener {
             noticeCard.visibility = View.GONE
+        }
+
+        //按钮：安卓媒体库设置
+        val ButtonMediaStoreSettings = findViewById<ImageButton>(R.id.ButtonMediaStoreSettings)
+        ButtonMediaStoreSettings.setOnClickListener {
+            MainActivityFragmentMediaStoreSettings.newInstance().show(supportFragmentManager, "MainActivityFragmentMediaStoreSettings")
         }
 
 

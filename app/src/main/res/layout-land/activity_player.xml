@@ -7,60 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/Background"
     tools:ignore="HardcodedText">
-    <!-- 顶部横排按钮区 -->
-    <LinearLayout
-        android:id="@+id/TopBarArea"
-        android:layout_width="match_parent"
-        android:layout_height="45dp"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:elevation="5dp">
-        <!-- 悬浮返回键 -->
-        <ImageButton
-            android:id="@+id/TopBarArea_ButtonExit"
-            android:layout_width="40dp"
-            android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="单击退出,长按开启小窗"
-            android:padding="6dp"
-            android:elevation="10dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_toolbar_exit_color"
-            android:layout_marginStart="8dp"
-            android:layout_weight="0"
-             />
-        <ImageButton
-            android:id="@+id/TopBarArea_ButtonMinimize"
-            android:layout_width="40dp"
-            android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="缩小"
-            android:padding="6dp"
-            android:elevation="10dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_controller_minimize"
-            android:layout_weight="0"/>
-        <!-- 占位 -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"/>
-        <!-- 更多选项 -->
-        <ImageButton
-            android:id="@+id/TopBarArea_ButtonMoreOptions"
-            android:layout_width="40dp"
-            android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="更多选项"
-            android:padding="6dp"
-            android:elevation="10dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_toolbar_more_options_color"
-            android:layout_marginEnd="8dp"
-            android:layout_weight="0"/>
-    </LinearLayout>
+
 
     <!-- 小型提示卡片 -->
     <androidx.cardview.widget.CardView
@@ -130,272 +77,335 @@
             />
     </FrameLayout>
 
-    <!-- 缩略图上方按钮区 -->
+
+    <!-- 控件层 -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/ButtonArea1"
+        android:id="@+id/ControllerLayer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:elevation="20dp"
-        app:layout_constraintBottom_toTopOf="@+id/ScrollerRootArea"
-        android:layout_marginBottom="5dp">
-        <!-- 按钮：暂停/开始 -->
-        <FrameLayout
-            android:id="@+id/buttonPauseContainer"
-            android:layout_width="45dp"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        android:translationZ="10dp">
+        <!-- 顶部横排按钮区 -->
+        <LinearLayout
+            android:id="@+id/TopBarArea"
+            android:layout_width="match_parent"
             android:layout_height="45dp"
-            android:layout_marginEnd="15dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:orientation="horizontal"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-            <com.google.android.material.button.MaterialButton
-                android:layout_width="37dp"
-                android:layout_height="37dp"
-                android:layout_margin="5dp"
-                android:backgroundTint="@color/ButtonBg"
-                android:elevation="10dp"
-                android:insetLeft="0dp"
-                android:insetTop="0dp"
-                android:insetRight="0dp"
-                android:insetBottom="0dp"
-                android:padding="0dp"
-                app:cornerRadius="100dp" />
-            <FrameLayout
-                android:id="@+id/buttonPause"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="5dp"
-                android:clickable="true"
-                android:elevation="11dp"
-                android:focusable="true"
-                android:padding="5dp">
-
-                <ImageView
-                    android:id="@+id/PauseImage"
-                    android:layout_width="19dp"
-                    android:layout_height="19dp"
-                    android:layout_gravity="center"
-                    android:layout_marginStart="-1dp"
-                    android:layout_marginTop="-1dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_controller_player_pause"
-                    android:visibility="gone"
-                    tools:ignore="ContentDescription" />
-
-                <ImageView
-                    android:id="@+id/ContinueImage"
-                    android:layout_width="15dp"
-                    android:layout_height="15dp"
-                    android:layout_gravity="center"
-                    android:layout_marginStart="3dp"
-                    android:layout_marginTop="1dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_controller_player_continue"
-                    android:visibility="visible"
-                    tools:ignore="ContentDescription" />
-            </FrameLayout>
-        </FrameLayout>
-        <!-- 按钮：切换横屏 -->
-        <FrameLayout
-            android:id="@+id/buttonSwitchLandscape"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_marginEnd="1dp"
-            app:layout_constraintEnd_toStartOf="@+id/buttonPauseContainer"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" >
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/buttonMaterialSwitchLandscape"
-                android:layout_width="37dp"
-                android:layout_height="37dp"
-                android:layout_margin="5dp"
-                android:backgroundTint="@color/ButtonBg"
-                android:elevation="10dp"
-                android:insetLeft="0dp"
-                android:insetTop="0dp"
-                android:insetRight="0dp"
-                android:insetBottom="0dp"
-                android:padding="0dp"
-                app:cornerRadius="100dp" />
-            <FrameLayout
-                android:id="@+id/buttonActualSwitchLandscape"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="5dp"
-                android:elevation="11dp"
-                android:padding="5dp">
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:layout_marginStart="1dp"
-                    android:layout_marginTop="1dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_controller_landscape"
-                    tools:ignore="ContentDescription" />
-            </FrameLayout>
-        </FrameLayout>
-        <!-- 按钮：更多选项 -->
-        <FrameLayout
-            android:id="@+id/buttonMoreButton"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_marginEnd="1dp"
-            app:layout_constraintEnd_toStartOf="@+id/buttonSwitchLandscape"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" >
-            <com.google.android.material.button.MaterialButton
-                android:layout_width="37dp"
-                android:layout_height="37dp"
-                android:layout_margin="5dp"
-                android:backgroundTint="@color/ButtonBgClosed"
-                android:elevation="10dp"
-                android:insetLeft="0dp"
-                android:insetTop="0dp"
-                android:insetRight="0dp"
-                android:insetBottom="0dp"
-                android:padding="0dp"
-                app:cornerRadius="100dp" />
-            <FrameLayout
-                android:id="@+id/buttonActualMoreButton"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="5dp"
-                android:elevation="11dp"
-                android:padding="5dp">
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:layout_marginStart="1dp"
-                    android:layout_marginTop="1dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_controller_more"
-                    tools:ignore="ContentDescription" />
-            </FrameLayout>
-        </FrameLayout>
-
-        <!-- 当前时间 -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/VideoCurrentTimeCard"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            app:cardCornerRadius="5dp"
-            app:cardElevation="0dp"
             app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginBottom="9dp"
-            app:layout_constraintBottom_toBottomOf="parent">
-            <LinearLayout
+            app:layout_constraintEnd_toEndOf="parent"
+            android:elevation="5dp">
+            <!-- 悬浮返回键 -->
+            <ImageButton
+                android:id="@+id/TopBarArea_ButtonExit"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="单击退出,长按开启小窗"
+                android:padding="6dp"
+                android:elevation="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_toolbar_exit_color"
+                android:layout_marginStart="8dp"
+                android:layout_weight="0"
+                />
+            <ImageButton
+                android:id="@+id/TopBarArea_ButtonMinimize"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="缩小"
+                android:padding="6dp"
+                android:elevation="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_controller_minimize"
+                android:layout_weight="0"/>
+            <!-- 占位 -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"/>
+            <!-- 更多选项 -->
+            <ImageButton
+                android:id="@+id/TopBarArea_ButtonMoreOptions"
+                android:layout_width="40dp"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="更多选项"
+                android:padding="6dp"
+                android:elevation="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_toolbar_more_options_color"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="0"/>
+        </LinearLayout>
+        <!-- 缩略图上方按钮区 -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/ButtonArea1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:elevation="20dp"
+            app:layout_constraintBottom_toTopOf="@+id/ScrollerRootArea"
+            android:layout_marginBottom="5dp">
+            <!-- 按钮：暂停/开始 -->
+            <FrameLayout
+                android:id="@+id/buttonPauseContainer"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_marginEnd="15dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="37dp"
+                    android:layout_height="37dp"
+                    android:layout_margin="5dp"
+                    android:backgroundTint="@color/ButtonBg"
+                    android:elevation="10dp"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    android:padding="0dp"
+                    app:cornerRadius="100dp" />
+                <FrameLayout
+                    android:id="@+id/buttonPause"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:clickable="true"
+                    android:elevation="11dp"
+                    android:focusable="true"
+                    android:padding="5dp">
+
+                    <ImageView
+                        android:id="@+id/PauseImage"
+                        android:layout_width="19dp"
+                        android:layout_height="19dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="-1dp"
+                        android:layout_marginTop="-1dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_player_pause"
+                        android:visibility="gone"
+                        tools:ignore="ContentDescription" />
+
+                    <ImageView
+                        android:id="@+id/ContinueImage"
+                        android:layout_width="15dp"
+                        android:layout_height="15dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginTop="1dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_player_continue"
+                        android:visibility="visible"
+                        tools:ignore="ContentDescription" />
+                </FrameLayout>
+            </FrameLayout>
+            <!-- 按钮：切换横屏 -->
+            <FrameLayout
+                android:id="@+id/buttonSwitchLandscape"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_marginEnd="1dp"
+                app:layout_constraintEnd_toStartOf="@+id/buttonPauseContainer"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" >
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonMaterialSwitchLandscape"
+                    android:layout_width="37dp"
+                    android:layout_height="37dp"
+                    android:layout_margin="5dp"
+                    android:backgroundTint="@color/ButtonBg"
+                    android:elevation="10dp"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    android:padding="0dp"
+                    app:cornerRadius="100dp" />
+                <FrameLayout
+                    android:id="@+id/buttonActualSwitchLandscape"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:elevation="11dp"
+                    android:padding="5dp">
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="1dp"
+                        android:layout_marginTop="1dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_landscape"
+                        tools:ignore="ContentDescription" />
+                </FrameLayout>
+            </FrameLayout>
+            <!-- 按钮：更多选项 -->
+            <FrameLayout
+                android:id="@+id/buttonMoreButton"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_marginEnd="1dp"
+                app:layout_constraintEnd_toStartOf="@+id/buttonSwitchLandscape"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" >
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="37dp"
+                    android:layout_height="37dp"
+                    android:layout_margin="5dp"
+                    android:backgroundTint="@color/ButtonBgClosed"
+                    android:elevation="10dp"
+                    android:insetLeft="0dp"
+                    android:insetTop="0dp"
+                    android:insetRight="0dp"
+                    android:insetBottom="0dp"
+                    android:padding="0dp"
+                    app:cornerRadius="100dp" />
+                <FrameLayout
+                    android:id="@+id/buttonActualMoreButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="5dp"
+                    android:elevation="11dp"
+                    android:padding="5dp">
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:layout_marginStart="1dp"
+                        android:layout_marginTop="1dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_more"
+                        tools:ignore="ContentDescription" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <!-- 当前时间 -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/VideoCurrentTimeCard"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:elevation="5dp"
-                android:background="@drawable/bg_card_stroke"
-                android:orientation="horizontal">
-                <TextView
-                    android:id="@+id/timer_current"
+                android:backgroundTint="@color/Background4"
+                app:cardCornerRadius="5dp"
+                app:cardElevation="0dp"
+                android:layout_marginStart="10dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="1dp"
-                    android:layout_marginBottom="1dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="0"
-                    android:text="00:00.000"
-                    android:textColor="@color/HeadText"
-                    android:textSize="15sp"
-                    android:textStyle="bold"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="/"
-                    android:textColor="@color/HeadText"
-                    android:textSize="15sp"
-                    android:textStyle="bold"/>
-                <TextView
-                    android:id="@+id/timer_duration"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="1dp"
-                    android:layout_marginBottom="1dp"
-                    android:layout_marginStart="6dp"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="0"
-                    android:text="00:00.000"
-                    android:textColor="@color/HeadText"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                    android:elevation="5dp"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/timer_current"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="1dp"
+                        android:layout_marginBottom="1dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="0"
+                        android:text="00:00.000"
+                        android:textColor="@color/HeadText"
+                        android:textSize="15sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="/"
+                        android:textColor="@color/HeadText"
+                        android:textSize="15sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:id="@+id/timer_duration"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="1dp"
+                        android:layout_marginBottom="1dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="0"
+                        android:text="00:00.000"
+                        android:textColor="@color/HeadText"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- 缩略图区 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/ScrollerRootArea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/CardView1"
+            android:paddingLeft="20dp"
+            android:paddingTop="10dp"
+            android:paddingRight="20dp"
+            android:paddingBottom="10dp"
+            app:cardCornerRadius="0dp"
+            app:cardElevation="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+            <!-- 缩略图式进度滚动条(父级) -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:minHeight="45dp">
+                <!-- 缩略图式进度滚动条(父级) -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/ScrollerArea"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent">
+                    <!-- 缩略图式进度滚动条(本人) -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/innerContainer"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+                        <!-- RecyclerView核心 -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvThumbnails"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:adjustViewBounds="false"
+                            android:backgroundTint="@color/CardViewRV"
+                            android:clipToPadding="false"
+                            android:orientation="horizontal"
+                            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                            app:layout_constraintBottom_toBottomOf="@+id/innerContainer"
+                            app:layout_constraintEnd_toEndOf="@+id/innerContainer"
+                            app:layout_constraintHorizontal_bias="0.0"
+                            app:layout_constraintStart_toStartOf="@+id/innerContainer"
+                            app:layout_constraintTop_toTopOf="@+id/innerContainer"
+                            app:layout_constraintVertical_bias="0.0" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                    <!-- 底部抬起高度区域 -->
+                    <View
+                        android:layout_width="2dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/HeadText"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 缩略图区 -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/ScrollerRootArea"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="@color/CardView1"
-        android:paddingLeft="20dp"
-        android:paddingTop="10dp"
-        android:paddingRight="20dp"
-        android:paddingBottom="10dp"
-        app:cardCornerRadius="0dp"
-        app:cardElevation="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-        <!-- 缩略图式进度滚动条(父级) -->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:minHeight="45dp">
-            <!-- 缩略图式进度滚动条(父级) -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/ScrollerArea"
-                android:layout_width="match_parent"
-                android:layout_height="45dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
-                <!-- 缩略图式进度滚动条(本人) -->
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/innerContainer"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-                    <!-- RecyclerView核心 -->
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvThumbnails"
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:adjustViewBounds="false"
-                        android:backgroundTint="@color/CardViewRV"
-                        android:clipToPadding="false"
-                        android:orientation="horizontal"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                        app:layout_constraintBottom_toBottomOf="@+id/innerContainer"
-                        app:layout_constraintEnd_toEndOf="@+id/innerContainer"
-                        app:layout_constraintHorizontal_bias="0.0"
-                        app:layout_constraintStart_toStartOf="@+id/innerContainer"
-                        app:layout_constraintTop_toTopOf="@+id/innerContainer"
-                        app:layout_constraintVertical_bias="0.0" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-                <!-- 底部抬起高度区域 -->
-                <View
-                    android:layout_width="2dp"
-                    android:layout_height="match_parent"
-                    android:background="@color/HeadText"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

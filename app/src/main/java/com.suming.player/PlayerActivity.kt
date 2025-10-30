@@ -102,10 +102,12 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import android.graphics.Bitmap.CompressFormat.JPEG
+import android.util.Log
 import data.MediaItemRepo
 import data.MediaItemSetting
 import kotlin.system.exitProcess
 import androidx.core.graphics.createBitmap
+import okio.Path
 
 @UnstableApi
 //@Suppress("unused")
@@ -437,6 +439,12 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 vm.PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 20L)
                 videoSeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 20L)
+            }
+            if (!PREFS.contains("PREFS_CloseFragmentGesture")) {
+                PREFSEditor.putBoolean("PREFS_CloseFragmentGesture", false)
+                vm.PREFS_CloseFragmentGesture = false
+            } else {
+                vm.PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
             }
             PREFSEditor.apply()
         }
@@ -1312,6 +1320,16 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 "PlayList" -> {
                     PlayerFragmentList.newInstance().show(supportFragmentManager, "PlayerListFragment")
+                }
+                //提取帧
+                "ExtractFrame" -> {
+                    Log.d("SuMing", "ExtractFrame: ${MediaInfo_FileName.hashCode()}")
+                    val videoPath = getAbsoluteFilePath(this, MediaInfo_VideoUri)
+                    if (videoPath == null){
+                        showCustomToast("视频绝对路径获取失败", Toast.LENGTH_SHORT, 3)
+                        return@setFragmentResultListener
+                    }
+                    ExtractFrame(videoPath, MediaInfo_FileName)
                 }
                 //播放相关
                 "BackgroundPlay" -> {
@@ -2267,6 +2285,30 @@ class PlayerActivity: AppCompatActivity(){
     }
 
 
+    private fun ExtractFrame(videoPath: String, filename: String) {
+        val frameExtractor = FrameExtractor(object : FrameListener {
+            override fun onFrameExtracted(bitmap: Bitmap, presentationTimeUs: Long ) {
+                val save_path = File(cacheDir, "Media/${filename.hashCode()}/frame/${presentationTimeUs}.jpg")
+                save_path.parentFile?.mkdirs()
+                bitmap.compress(JPEG, 80, save_path.outputStream())
+
+                //Log.d("SuMing", "onFrameExtracted: $presentationTimeUs")
+            }
+            override fun onExtractionFinished() {
+                notice("提取完成", 3000)
+                Log.d("SuMing", "onExtractionFinished: ")
+            }
+            override fun onExtractionError(message: String) {
+                notice("提取失败: $message", 3000)
+                Log.d("SuMing", "onExtractionError: $message")
+            }
+        })
+        frameExtractor.startExtraction(videoPath)
+
+    }
+
+
+
     //Functions
     //更新封面
     @SuppressLint("UseKtx")
@@ -2380,13 +2422,8 @@ class PlayerActivity: AppCompatActivity(){
         stopVideoTimeSync()
         //显示控制
         //<editor-fold desc="显示控制(隐藏)">
-        val TopBarArea = findViewById<LinearLayout>(R.id.TopBarArea)
-        val ScrollerRootArea = findViewById<View>(R.id.ScrollerRootArea)
-        val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
-
-        ScrollerRootArea.visibility = View.GONE
-        ButtonArea1.visibility = View.GONE
-        TopBarArea.visibility = View.GONE
+        val ControllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
+        ControllerLayer.visibility = View.GONE
         //</editor-fold>
         setBackgroundInvisible()
     }
@@ -2399,23 +2436,11 @@ class PlayerActivity: AppCompatActivity(){
         stopVideoTimeSync()
         //显示控制
         //<editor-fold desc="显示控制(隐藏)">
-        val TopBarArea = findViewById<LinearLayout>(R.id.TopBarArea)
-        val ScrollerRootArea = findViewById<View>(R.id.ScrollerRootArea)
-        val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
-
-        ScrollerRootArea.animate().alpha(0f).setDuration(100)
+        val ControllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
+        ControllerLayer.animate().alpha(0f).setDuration(100)
             .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction { ScrollerRootArea.visibility = View.GONE }
+            .withEndAction { ControllerLayer.visibility = View.GONE }
             .start()
-        ButtonArea1.animate().alpha(0f).setDuration(100)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction { ButtonArea1.visibility = View.GONE }
-            .start()
-        TopBarArea.animate().alpha(0f).setDuration(100)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction { TopBarArea.visibility = View.GONE }
-            .start()
-
         //</editor-fold>
         setBackgroundInvisible()
     }
@@ -2428,28 +2453,12 @@ class PlayerActivity: AppCompatActivity(){
         startVideoTimeSync()
         //显示控制
         //<editor-fold desc="显示控制(显示)">
-        val TopBarArea = findViewById<LinearLayout>(R.id.TopBarArea)
-        val ScrollerRootArea = findViewById<View>(R.id.ScrollerRootArea)
-        val ButtonArea1 = findViewById<ConstraintLayout>(R.id.ButtonArea1)
-
-        ScrollerRootArea.visibility = View.VISIBLE
-        ButtonArea1.visibility = View.VISIBLE
-        TopBarArea.visibility = View.VISIBLE
-
-
-        ScrollerRootArea.animate().alpha(1f).setDuration(300)
+        val ControllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
+        ControllerLayer.visibility = View.VISIBLE
+        ControllerLayer.animate().alpha(1f).setDuration(300)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .withEndAction { null }
             .start()
-        ButtonArea1.animate().alpha(1f).setDuration(300)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction { null }
-            .start()
-        TopBarArea.animate().alpha(1f).setDuration(300)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction { null }
-            .start()
-
         //</editor-fold>
         setBackgroundVisible()
     }
@@ -2567,11 +2576,12 @@ class PlayerActivity: AppCompatActivity(){
                 val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
                 (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (vm.statusBarHeight)
             }
+
         }
+        /*
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            val TopBarArea = findViewById<View>(R.id.TopBarArea)
-            (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (vm.statusBarHeight + 8)
         }
+        */
     }
     //切换横屏
     @SuppressLint("SourceLockedOrientationActivity")
@@ -2884,7 +2894,7 @@ class PlayerActivity: AppCompatActivity(){
         requestAudioFocus()
         vm.player.setPlaybackSpeed(1f)
         vm.player.play()
-        if (vm.PREFS_LinkScroll && !scrollerState_Pressed && !scrollerState_Moving){ startScrollerSync() }
+        if (vm.PREFS_LinkScroll){ startScrollerSync() }
         lifecycleScope.launch {
             delay(100)
             startVideoTimeSync()

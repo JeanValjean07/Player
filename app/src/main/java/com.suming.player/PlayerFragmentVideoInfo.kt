@@ -7,12 +7,15 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
+import androidx.cardview.widget.CardView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -27,11 +30,18 @@ import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.activityViewModels
 import androidx.media3.common.util.UnstableApi
+import kotlin.getValue
+import kotlin.math.abs
 
 @UnstableApi
 class PlayerFragmentVideoInfo: DialogFragment() {
+
+    //共享ViewModel
+    private val vm: PlayerViewModel by activityViewModels()
 
     private var videoWidth: Int = 0
     private var videoHeight: Int = 0
@@ -154,7 +164,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_player_fragment_video_info, container, false)
 
-    @SuppressLint("UseGetLayoutInflater", "InflateParams")
+    @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
 
@@ -177,8 +187,102 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         }
 
 
+        //面板下滑关闭(NestedScrollView)
+        if (!vm.PREFS_CloseFragmentGesture){
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+                var down_y = 0f
+                var deltaY = 0f
+                val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                val RootCardOriginY = RootCard.translationY
+                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+                var NestedScrollViewAtTop = true
+                NestedScrollView.setOnTouchListener { _, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            if (NestedScrollView.scrollY != 0){
+                                NestedScrollViewAtTop = false
+                                return@setOnTouchListener false
+                            }else{
+                                NestedScrollViewAtTop = true
+                                down_y = event.rawY
+                            }
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            if (!NestedScrollViewAtTop){
+                                return@setOnTouchListener false
+                            }
+                            deltaY = event.rawY - down_y
+                            if (deltaY < 0){
+                                return@setOnTouchListener false
+                            }
+                            RootCard.translationY = RootCardOriginY + deltaY
+                            return@setOnTouchListener true
+                        }
+                        MotionEvent.ACTION_UP -> {
+                            if (deltaY >= 400f){
+                                dismiss()
+                            }else{
+                                RootCard.animate()
+                                    .translationY(0f)
+                                    .setInterpolator(DecelerateInterpolator(1f))
+                                    .duration = 300
+                            }
 
-
+                        }
+                    }
+                    return@setOnTouchListener false
+                }
+            }else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                var down_y = 0f
+                var deltaY = 0f
+                var down_x = 0f
+                var deltaX = 0f
+                var Y_move_ensure = false
+                val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                val RootCardOriginX = RootCard.translationX
+                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+                NestedScrollView.setOnTouchListener { _, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            down_x = event.rawX
+                            down_y = event.rawY
+                            Y_move_ensure = false
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            deltaY = event.rawY - down_y
+                            deltaX = event.rawX - down_x
+                            Log.d("SuMing", "deltaY: $deltaY, deltaX: $deltaX")
+                            if (deltaX < 0){
+                                return@setOnTouchListener false
+                            }
+                            if (Y_move_ensure){
+                                return@setOnTouchListener false
+                            }
+                            if (abs(deltaY) > abs(deltaX)){
+                                Y_move_ensure = true
+                                return@setOnTouchListener false
+                            }
+                            RootCard.translationX = RootCardOriginX + deltaX
+                            return@setOnTouchListener true
+                        }
+                        MotionEvent.ACTION_UP -> {
+                            if (Y_move_ensure){
+                                return@setOnTouchListener false
+                            }
+                            if (deltaX >= 200f){
+                                dismiss()
+                            }else{
+                                RootCard.animate()
+                                    .translationX(0f)
+                                    .setInterpolator(DecelerateInterpolator(1f))
+                                    .duration = 300
+                            }
+                        }
+                    }
+                    return@setOnTouchListener false
+                }
+            }
+        }
 
 
 

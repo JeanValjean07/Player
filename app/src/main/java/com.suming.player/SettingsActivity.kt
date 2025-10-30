@@ -40,6 +40,7 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_GenerateThumbSync: SwitchCompat
     private lateinit var Switch_UseBlackBackground: SwitchCompat
     private lateinit var Switch_UseHighRefreshRate: SwitchCompat
+    private lateinit var Switch_CloseFragmentGesture: SwitchCompat
 
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
@@ -52,6 +53,7 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UseBlackBackground = false
     private var PREFS_UseHighRefreshRate = false
     private var PREFS_SeekHandlerGap = 0L
+    private var PREFS_CloseFragmentGesture = false
 
 
 
@@ -163,6 +165,12 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 20L)
         }
+        if (!PREFS.contains("PREFS_CloseFragmentGesture")) {
+            PREFS_Editor.putBoolean("PREFS_CloseFragmentGesture", false)
+            PREFS_CloseFragmentGesture = false
+        } else {
+            PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
+        }
         PREFS_Editor.apply()
 
         //开关初始化
@@ -176,6 +184,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_GenerateThumbSync = findViewById(R.id.generateThumbSYNC)
         Switch_UseBlackBackground = findViewById(R.id.useBlackBackground)
         Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
+        Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
 
         //开关预置位
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
@@ -188,6 +197,8 @@ class SettingsActivity: AppCompatActivity() {
         Switch_GenerateThumbSync.isChecked = PREFS_GenerateThumbSYNC
         Switch_UseBlackBackground.isChecked = PREFS_UseBlackBackground
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
+        Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
+
 
         //文本信息预写
         val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
@@ -230,6 +241,10 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseHighRefreshRate = isChecked
         }
+        Switch_CloseFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_CloseFragmentGesture = isChecked
+        }
+
 
         //seek间隔
         val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
@@ -285,6 +300,7 @@ class SettingsActivity: AppCompatActivity() {
         PREFS_Editor.putBoolean("PREFS_GenerateThumbSYNC", PREFS_GenerateThumbSYNC)
         PREFS_Editor.putBoolean("PREFS_UseBlackBackground", PREFS_UseBlackBackground)
         PREFS_Editor.putBoolean("PREFS_UseHighRefreshRate", PREFS_UseHighRefreshRate)
+        PREFS_Editor.putBoolean("PREFS_CloseFragmentGesture", PREFS_CloseFragmentGesture)
         PREFS_Editor.apply()
     }
 
