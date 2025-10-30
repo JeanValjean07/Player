@@ -5,6 +5,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
 import android.util.Log
+import androidx.core.content.edit
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.PlayListManager
@@ -42,13 +43,53 @@ class MediaReader_video(
             MediaStore.Video.Media.SIZE
         )
         //排序方式
+        var sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} DESC"
+        var sort_orientation: String
+        val PREFS = context.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)
+        if (!PREFS.contains("sort_orientation")){
+            PREFS.edit { putString("sort_orientation", "DESC") }
+            sort_orientation = "DESC"
+        }else{
+            sort_orientation = PREFS.getString("sort_orientation", "") ?: ""
+        }
+        if (!PREFS.contains("sort_type")){
+            PREFS.edit { putString("sort_type", "DISPLAY_NAME") }
+        }else{
+            val sort_type = PREFS.getString("sort_type", "") ?: ""
+            if (sort_type == "DISPLAY_NAME"){
+                if (sort_orientation == "DESC"){
+                    sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} DESC"
+                }else{
+                    sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} ASC"
+                }
+            }else if (sort_type == "DURATION"){
+                if (sort_orientation == "DESC"){
+                    sortOrder = "${MediaStore.Video.Media.DURATION} DESC"
+                }else{
+                    sortOrder = "${MediaStore.Video.Media.DURATION} ASC"
+                }
+            }else if (sort_type == "DATE_ADDED"){
+                if (sort_orientation == "DESC"){
+                    sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
+                }else{
+                    sortOrder = "${MediaStore.Video.Media.DATE_ADDED} ASC"
+                }
+            }else if (sort_type == "RESOLUTION"){
+                if (sort_orientation == "DESC"){
+                    sortOrder = "${MediaStore.Video.Media.RESOLUTION} DESC"
+                }else{
+                    sortOrder = "${MediaStore.Video.Media.RESOLUTION} ASC"
+                }
+            }
+        }
         //<editor-fold desc="其他排序方式">
         //MediaStore.Video.Media.DISPLAY_NAME: 视频文件名
         //MediaStore.Video.Media.TITLE：视频标题
         //MediaStore.Video.Media.DATE_ADDED：视频添加日期
         //MediaStore.Video.Media.DURATION：视频时长
+        //MediaStore.Video.Media.RESOLUTION: 视频分辨率
         //</editor-fold desc="其他排序方式">
-        val sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} DESC"
+
 
 
         //发起查询

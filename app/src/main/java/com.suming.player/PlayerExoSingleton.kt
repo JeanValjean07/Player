@@ -4,16 +4,15 @@ import android.annotation.SuppressLint
 import android.app.Application
 import androidx.media3.common.C
 import androidx.media3.common.C.WAKE_MODE_NETWORK
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.ScrubbingModeParameters
 import androidx.media3.exoplayer.SeekParameters
+import androidx.media3.exoplayer.mediacodec.MediaCodecAdapter
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import okhttp3.internal.http2.Http2Reader
-import java.util.logging.Handler
 
 @UnstableApi
 @Suppress("unused")
@@ -32,6 +31,8 @@ object PlayerExoSingleton {
     private fun buildPlayer(app: Application): ExoPlayer {
         val trackSelector = getTrackSelector(app)
         val rendererFactory = getRendererFactory(app)
+
+
 
         val scrubbingParams = ScrubbingModeParameters.Builder()
             .setAllowSkippingMediaCodecFlush(true)
@@ -64,8 +65,15 @@ object PlayerExoSingleton {
 
     fun getRendererFactory(app: Application): RenderersFactory =
         _rendererFactory ?: synchronized(this) {
-            _rendererFactory ?: DefaultRenderersFactory(app).also { _rendererFactory = it }
+            _rendererFactory ?: DefaultRenderersFactory(app)
+
+                .also { _rendererFactory = it }
         }
+
+    fun createCustomCodecFactory(): MediaCodecAdapter.Factory {
+
+        return MediaCodecAdapter.Factory.DEFAULT
+    }
 
     fun releasePlayer() {
         _player?.release()

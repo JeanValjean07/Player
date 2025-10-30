@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 
 class SettingsActivity: AppCompatActivity() {
 
+    //开关初始化
     private lateinit var Switch_CloseVideoTrack: SwitchCompat
     private lateinit var Switch_SwitchPortraitWhenExit: SwitchCompat
     private lateinit var Switch_EnableRoomDatabase: SwitchCompat
@@ -41,7 +42,8 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseBlackBackground: SwitchCompat
     private lateinit var Switch_UseHighRefreshRate: SwitchCompat
     private lateinit var Switch_CloseFragmentGesture: SwitchCompat
-
+    private lateinit var Switch_UseOnlySyncFrame: SwitchCompat
+    //开关变量
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
     private var PREFS_EnableRoomDatabase = false
@@ -54,6 +56,10 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UseHighRefreshRate = false
     private var PREFS_SeekHandlerGap = 0L
     private var PREFS_CloseFragmentGesture = false
+    private var PREFS_UseOnlySyncFrame = false
+
+
+    private var ButtonRemoveAllThumbPathIndex = 0
 
 
 
@@ -171,6 +177,12 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
         }
+        if (!PREFS.contains("PREFS_UseOnlySyncFrame")) {
+            PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", false)
+            PREFS_UseOnlySyncFrame = false
+        } else {
+            PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", false)
+        }
         PREFS_Editor.apply()
 
         //开关初始化
@@ -185,7 +197,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseBlackBackground = findViewById(R.id.useBlackBackground)
         Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
         Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
-
+        Switch_UseOnlySyncFrame = findViewById(R.id.UseOnlySyncFrame)
         //开关预置位
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
         Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
@@ -198,7 +210,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseBlackBackground.isChecked = PREFS_UseBlackBackground
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
         Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
-
+        Switch_UseOnlySyncFrame.isChecked = PREFS_UseOnlySyncFrame
 
         //文本信息预写
         val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
@@ -244,7 +256,9 @@ class SettingsActivity: AppCompatActivity() {
         Switch_CloseFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
             PREFS_CloseFragmentGesture = isChecked
         }
-
+        Switch_UseOnlySyncFrame.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_UseOnlySyncFrame = isChecked
+        }
 
         //seek间隔
         val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
@@ -272,14 +286,19 @@ class SettingsActivity: AppCompatActivity() {
         //重新生成封面
         val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
         ButtonRemoveAllThumbPath.setOnClickListener { item ->
-
-            lifecycleScope.launch {
-                val db = MediaItemDataBase.get(this@SettingsActivity)
-                val dao = db.mediaItemDao()
-                dao.removeAllThumbPath("")
+            if (ButtonRemoveAllThumbPathIndex == 0){
+                ButtonRemoveAllThumbPathIndex = 1
+                ButtonRemoveAllThumbPath.text = "请再次点击确认重新生成"
+            }else if (ButtonRemoveAllThumbPathIndex == 1){
+                ButtonRemoveAllThumbPathIndex = 0
+                ButtonRemoveAllThumbPath.text = "已确认重新生成"
+                lifecycleScope.launch {
+                    val db = MediaItemDataBase.get(this@SettingsActivity)
+                    val dao = db.mediaItemDao()
+                    dao.removeAllThumbPath("")
+                }
+                showCustomToast("重启APP后会重新截取封面", Toast.LENGTH_SHORT,3)
             }
-
-            showCustomToast("重启APP后会重新截取封面", Toast.LENGTH_SHORT,3)
         }
 
 
@@ -301,6 +320,7 @@ class SettingsActivity: AppCompatActivity() {
         PREFS_Editor.putBoolean("PREFS_UseBlackBackground", PREFS_UseBlackBackground)
         PREFS_Editor.putBoolean("PREFS_UseHighRefreshRate", PREFS_UseHighRefreshRate)
         PREFS_Editor.putBoolean("PREFS_CloseFragmentGesture", PREFS_CloseFragmentGesture)
+        PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", PREFS_UseOnlySyncFrame)
         PREFS_Editor.apply()
     }
 

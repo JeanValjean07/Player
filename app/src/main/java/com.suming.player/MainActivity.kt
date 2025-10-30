@@ -127,6 +127,17 @@ class MainActivity: AppCompatActivity() {
 
 
 
+        //媒体库设置返回值
+        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MediaStore", this) { _, bundle ->
+            val ReceiveKey = bundle.getString("KEY")
+            if (ReceiveKey == "Refresh Now"){
+                load()
+            }
+
+
+        }
+
+
         //监听返回手势
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {

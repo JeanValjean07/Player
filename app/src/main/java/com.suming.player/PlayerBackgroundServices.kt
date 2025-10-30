@@ -5,8 +5,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.Service
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
@@ -47,14 +49,22 @@ class PlayerBackgroundServices(): MediaSessionService() {
 
     override fun onDestroy() {
         super.onDestroy()
+
         mediaSession?.run {
             release()
             mediaSession = null
         }
     }
-    //定制ROM一般执行不到这儿
+
     override fun onTaskRemoved(rootIntent: Intent?) {
         mediaSession?.player?.pause()
+
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopForeground(true)
+
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(NOTIF_ID)
+
         stopSelf()
     }
     //接收Intent额外信息+主要操作
@@ -90,7 +100,7 @@ class PlayerBackgroundServices(): MediaSessionService() {
         if (Build.BRAND == "samsung") {
             return NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentIntent(createPendingIntent())
-                .setContentTitle("媒体播放中（三星设备需手动点击退出）")
+                .setContentTitle("媒体播放中")
                 .setContentText(INFO_TITLE)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.ic_notification_area)

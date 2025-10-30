@@ -61,7 +61,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="设置"
+                        android:text="媒体库设置"
                         android:textColor="@color/HeadText"
                         android:textSize="20sp" />
                     <View
@@ -90,12 +90,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
+                    <!-- 排序方式 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        android:layout_marginBottom="400dp"
+                        android:layout_marginBottom="10dp"
                         app:cardBackgroundColor="@color/Background4"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="0dp">
@@ -106,81 +107,6 @@
                             android:layout_marginBottom="5dp"
                             android:layout_marginStart="5dp"
                             android:orientation="vertical">
-                            <!-- 开关：后台播放 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:minHeight="40dp"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="19dp"
-                                    android:layout_height="19dp"
-                                    android:src="@drawable/ic_more_button_background_play"
-                                    android:scaleType="centerCrop"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="1dp"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="后台播放"
-                                    android:textSize="16sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2"
-                                    />
-                                <View
-                                    android:layout_width="0dp"
-                                    android:layout_height="0dp"
-                                    android:layout_weight="1"/>
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_BackgroundPlay"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="20dp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
-                            </LinearLayout>
-                            <!-- 开关：循环播放 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:minHeight="40dp"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="20dp"
-                                    android:layout_height="20dp"
-                                    android:src="@drawable/ic_more_button_loop_play"
-                                    android:scaleType="centerCrop"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="1dp"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="循环播放"
-                                    android:textSize="16sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
-                                <View
-                                    android:layout_width="0dp"
-                                    android:layout_height="0dp"
-                                    android:layout_weight="1"/>
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_LoopPlay"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="20dp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
-                            </LinearLayout>
                             <!-- 按钮：排序方式 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -190,7 +116,7 @@
                                 <ImageView
                                     android:layout_width="21dp"
                                     android:layout_height="21dp"
-                                    android:src="@drawable/ic_more_button_speed"
+                                    android:src="@drawable/ic_main_fragment_sort"
                                     android:scaleType="centerCrop"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
@@ -208,7 +134,7 @@
                                     android:id="@+id/current_sort"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="1.0"
+                                    android:text="当前排序方式"
                                     android:textSize="12sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
@@ -219,8 +145,8 @@
                                     android:layout_weight="1"/>
                                 <TextView
                                     android:id="@+id/ButtonChangeSort"
-                                    android:layout_width="35dp"
-                                    android:layout_height="20dp"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
                                     android:text="更改"
                                     android:textSize="14sp"
                                     android:gravity="center"
@@ -229,44 +155,122 @@
                                     android:textColor="@color/Text2"
                                     tools:ignore="SmallSp" />
                             </LinearLayout>
-                            <!-- 开关：禁止传感器旋转 -->
+                            <!-- 排序方式面板 -->
                             <LinearLayout
+                                android:id="@+id/sort_type_area"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:minHeight="40dp"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="21dp"
-                                    android:layout_height="21dp"
-                                    android:src="@drawable/ic_more_button_landscape"
-                                    android:scaleType="centerCrop"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="1dp"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
+                                android:orientation="vertical">
+                                <!-- 正序或倒序 -->
+                                <LinearLayout
+                                    android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:text="禁止传感器旋转"
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="排序顺序"
+                                        android:textSize="16sp"
+                                        android:padding="5dp"
+                                        android:paddingStart="40dp"
+                                        android:paddingEnd="0dp"
+                                        android:layout_gravity="start"
+                                        android:textColor="@color/Text2"
+                                        tools:ignore="TooDeepLayout" />
+                                    <TextView
+                                        android:id="@+id/current_sort_orientation"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="当前排序顺序"
+                                        android:textSize="12sp"
+                                        android:layout_gravity="center"
+                                        android:layout_marginStart="10dp"
+                                        android:textColor="@color/Text2" />
+                                    <View
+                                        android:layout_width="0dp"
+                                        android:layout_height="0dp"
+                                        android:layout_weight="1"/>
+                                    <TextView
+                                        android:id="@+id/ButtonChangeSortOrientation"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="更改"
+                                        android:textSize="14sp"
+                                        android:gravity="center"
+                                        android:layout_gravity="center"
+                                        android:layout_marginEnd="12dp"
+                                        android:textColor="@color/Text2"
+                                        tools:ignore="SmallSp" />
+
+                                </LinearLayout>
+                                <!-- 排序方式列表 -->
+                                <TextView
+                                    android:id="@+id/sort_name"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="文件名"
                                     android:textSize="16sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
-                                <View
-                                    android:layout_width="0dp"
-                                    android:layout_height="0dp"
-                                    android:layout_weight="1"/>
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_SealOEL"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="20dp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
+                                    android:padding="5dp"
+                                    android:paddingStart="40dp"
+                                    android:paddingEnd="0dp"
+                                    android:layout_gravity="start"
+                                    android:textColor="@color/Text2"/>
+                                <TextView
+                                    android:id="@+id/sort_duration"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="时长"
+                                    android:textSize="16sp"
+                                    android:padding="5dp"
+                                    android:paddingStart="40dp"
+                                    android:paddingEnd="0dp"
+                                    android:layout_gravity="start"
+                                    android:textColor="@color/Text2"/>
+                                <TextView
+                                    android:id="@+id/sort_date_added"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="添加日期"
+                                    android:textSize="16sp"
+                                    android:padding="5dp"
+                                    android:paddingStart="40dp"
+                                    android:paddingEnd="0dp"
+                                    android:layout_gravity="start"
+                                    android:textColor="@color/Text2"/>
+                                <TextView
+                                    android:id="@+id/sort_resolution"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="分辨率"
+                                    android:textSize="16sp"
+                                    android:padding="5dp"
+                                    android:paddingStart="40dp"
+                                    android:paddingEnd="0dp"
+                                    android:layout_gravity="start"
+                                    android:textColor="@color/Text2"/>
                             </LinearLayout>
-                            <!-- 开关：只播声音 -->
+
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                    <!-- 筛选 -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="400dp"
+                        app:cardBackgroundColor="@color/Background4"
+                        app:cardCornerRadius="15dp"
+                        app:cardElevation="0dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginStart="5dp"
+                            android:orientation="vertical">
+                            <!-- 标题：筛选 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -275,7 +279,7 @@
                                 <ImageView
                                     android:layout_width="21dp"
                                     android:layout_height="21dp"
-                                    android:src="@drawable/ic_more_button_close_video_track"
+                                    android:src="@drawable/ic_main_fragment_filter"
                                     android:scaleType="centerCrop"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
@@ -284,99 +288,11 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="只播声音"
+                                    android:text="筛选"
                                     android:textSize="16sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:textColor="@color/Text2" />
-                                <View
-                                    android:layout_width="0dp"
-                                    android:layout_height="0dp"
-                                    android:layout_weight="1"/>
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_OnlyAudio"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="20dp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
-                            </LinearLayout>
-                            <!-- 开关：只播视频 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:minHeight="40dp"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="21dp"
-                                    android:layout_height="21dp"
-                                    android:src="@drawable/ic_more_button_close_sound_track"
-                                    android:scaleType="centerCrop"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="1dp"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="只播视频"
-                                    android:textSize="16sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
-                                <View
-                                    android:layout_width="0dp"
-                                    android:layout_height="0dp"
-                                    android:layout_weight="1"/>
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_OnlyVideo"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="20dp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
-                            </LinearLayout>
-                            <!-- 开关：保存播放进度 -->
-                            <LinearLayout
-                                android:id="@+id/ContainerSavePosition"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:minHeight="40dp"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="21dp"
-                                    android:layout_height="21dp"
-                                    android:src="@drawable/ic_more_button_save_position"
-                                    android:scaleType="centerCrop"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="1dp"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="保存播放进度"
-                                    android:textSize="16sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
-                                <View
-                                    android:layout_width="0dp"
-                                    android:layout_height="0dp"
-                                    android:layout_weight="1"/>
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_SavePositionWhenExit"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="20dp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>

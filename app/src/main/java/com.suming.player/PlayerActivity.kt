@@ -446,6 +446,12 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 vm.PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
             }
+            if (!PREFS.contains("PREFS_UseOnlySyncFrame")) {
+                PREFSEditor.putBoolean("PREFS_UseOnlySyncFrame", false)
+                vm.PREFS_UseOnlySyncFrame = false
+            } else {
+                vm.PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", false)
+            }
             PREFSEditor.apply()
         }
         //非初次打开:从ViewModel恢复设置
@@ -901,7 +907,9 @@ class PlayerActivity: AppCompatActivity(){
                     }
                     //修改视频seek参数
                     if (dx == 1 || dx == -1) {
-                        vm.player.setSeekParameters(SeekParameters.EXACT)
+                        if (!vm.PREFS_UseOnlySyncFrame){
+                            vm.player.setSeekParameters(SeekParameters.EXACT)
+                        }
                     } else {
                         vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
                     }

@@ -450,13 +450,14 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="14dp">
+                    <!--  标题:进度条绘制  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="进度条绘制"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp"/>
-                    <!--  开关1：使用超长进度条  -->
+                    <!--  开关：使用超长进度条  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -481,7 +482,7 @@
                             app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"/>
                     </LinearLayout>
-                    <!--  开关2：提高强制Seek时间差  -->
+                    <!--  开关：提高强制Seek时间差  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -506,13 +507,13 @@
                             app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"/>
                     </LinearLayout>
-                    <!--  描述  -->
+                    <!--  描述：提高强制Seek时间差  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="默认状态进度条只绘制20张图。开启此开关后，进度条最高图片数量提升至500张。请注意，图数过多时，快速滚动进度条将导致高CPU负载和温度，易虚焊机型谨慎开启。若开启提高强制Seek时间差，视频处于倍速滚动时将花费更长时间追逐进度条目标位置，导致更晚开启声音。"
                         android:textSize="12sp" />
-                    <!--  开关3：进度条绘制使用兼容模式  -->
+                    <!--  开关：进度条绘制使用兼容模式  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -537,13 +538,13 @@
                             app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"/>
                     </LinearLayout>
-                    <!--  描述  -->
+                    <!--  描述：进度条绘制使用兼容模式  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="如果您的进度条两端无法与中央竖线对齐，请打开兼容模式。"
                         android:textSize="12sp" />
-                    <!--  开关1：进度条截图使用就近关键帧  -->
+                    <!--  开关：进度条截图使用就近关键帧  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -563,6 +564,34 @@
                             android:layout_weight="1" />
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/generateThumbSYNC"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"
+                            />
+
+                    </LinearLayout>
+                    <!--  开关：一律使用关键帧  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        tools:ignore="TooManyViews">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="寻帧时一律使用关键帧"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/UseOnlySyncFrame"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"

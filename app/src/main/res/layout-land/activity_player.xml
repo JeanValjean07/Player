@@ -83,7 +83,7 @@
         android:id="@+id/ControllerLayer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
+        android:fitsSystemWindows="false"
         android:translationZ="10dp">
         <!-- 顶部横排按钮区 -->
         <LinearLayout
