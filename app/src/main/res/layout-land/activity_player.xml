@@ -145,7 +145,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:elevation="20dp"
-            app:layout_constraintBottom_toTopOf="@+id/ScrollerRootArea"
+            app:layout_constraintBottom_toTopOf="@+id/ScrollerRootAreaCard"
             android:layout_marginBottom="5dp">
             <!-- 按钮：暂停/开始 -->
             <FrameLayout
@@ -341,7 +341,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
         <!-- 缩略图区 -->
         <androidx.cardview.widget.CardView
-            android:id="@+id/ScrollerRootArea"
+            android:id="@+id/ScrollerRootAreaCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="@color/CardView1"
@@ -356,6 +356,7 @@
             app:layout_constraintStart_toStartOf="parent">
             <!-- 缩略图式进度滚动条(父级) -->
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ScrollerRootAreaConstraint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"

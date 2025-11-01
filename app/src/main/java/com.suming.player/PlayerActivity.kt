@@ -102,7 +102,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import android.graphics.Bitmap.CompressFormat.JPEG
-import android.util.Log
 import data.MediaItemRepo
 import data.MediaItemSetting
 import kotlin.system.exitProcess
@@ -301,7 +300,9 @@ class PlayerActivity: AppCompatActivity(){
                     MediaInfo_VideoItem = vm.MediaInfo_VideoItem
                 }else{
                     vm.MediaInfo_VideoItem = MediaItem_video.EMPTY
-                    showCustomToast("这条视频已被关闭", Toast.LENGTH_SHORT, 3)
+                    if (Build.BRAND == "huawei") {
+                        showCustomToast("这条视频已被关闭", Toast.LENGTH_SHORT, 3)
+                    }
                     val intent = Intent(this, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     startActivity(intent)
@@ -444,6 +445,12 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_CloseFragmentGesture = false
             } else {
                 vm.PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
+            }
+            if (!PREFS.contains("PREFS_RaiseProgressBarInLandscape")) {
+                PREFSEditor.putBoolean("PREFS_RaiseProgressBarInLandscape", false)
+                vm.PREFS_RaiseProgressBarInLandscape = false
+            } else {
+                vm.PREFS_RaiseProgressBarInLandscape = PREFS.getBoolean("PREFS_RaiseProgressBarInLandscape", false)
             }
             PREFSEditor.apply()
         }
@@ -627,6 +634,7 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
         localBroadcastManager.registerReceiver(receiver, filter)
+
 
 
 
@@ -1328,7 +1336,6 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 //提取帧
                 "ExtractFrame" -> {
-                    Log.d("SuMing", "ExtractFrame: ${MediaInfo_FileName.hashCode()}")
                     val videoPath = getAbsoluteFilePath(this, MediaInfo_VideoUri)
                     if (videoPath == null){
                         showCustomToast("视频绝对路径获取失败", Toast.LENGTH_SHORT, 3)
@@ -1655,12 +1662,15 @@ class PlayerActivity: AppCompatActivity(){
                     ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_PicNumber
                 }
 
+            //移除查询参数
+            val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
 
             //绑定Adapter
+            //使用超长进度条
             if (vm.PREFS_UseLongScroller){
                 withContext(Dispatchers.Main) {
                     scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivity,
-                        MediaInfo_AbsolutePath,
+                        MediaInfo_AbsolutePath_clean,
                         MediaInfo_FileName,
                         playerScrollerViewModel.thumbItems,
                         ScrollerInfo_EachPicWidth,
@@ -1672,10 +1682,11 @@ class PlayerActivity: AppCompatActivity(){
                     )
                 }
             }
+            //使用标准进度条
             else{
                 withContext(Dispatchers.Main) {
                     scroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
-                        MediaInfo_AbsolutePath,
+                        MediaInfo_AbsolutePath_clean,
                         MediaInfo_FileName,
                         playerScrollerViewModel.thumbItems,
                         ScrollerInfo_EachPicWidth,
@@ -2290,6 +2301,8 @@ class PlayerActivity: AppCompatActivity(){
     }
 
 
+    //Functions
+    //提取帧函数
     private fun ExtractFrame(videoPath: String, filename: String) {
         val frameExtractor = FrameExtractor(object : FrameListener {
             override fun onFrameExtracted(bitmap: Bitmap, presentationTimeUs: Long ) {
@@ -2297,24 +2310,19 @@ class PlayerActivity: AppCompatActivity(){
                 save_path.parentFile?.mkdirs()
                 bitmap.compress(JPEG, 80, save_path.outputStream())
 
-                //Log.d("SuMing", "onFrameExtracted: $presentationTimeUs")
             }
             override fun onExtractionFinished() {
                 notice("提取完成", 3000)
-                Log.d("SuMing", "onExtractionFinished: ")
+
             }
             override fun onExtractionError(message: String) {
                 notice("提取失败: $message", 3000)
-                Log.d("SuMing", "onExtractionError: $message")
+
             }
         })
         frameExtractor.startExtraction(videoPath)
 
     }
-
-
-
-    //Functions
     //更新封面
     @SuppressLint("UseKtx")
     private fun updateCover(filename: String) {
@@ -2494,10 +2502,10 @@ class PlayerActivity: AppCompatActivity(){
         cover.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
 
         val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-        val ScrollerRootArea = findViewById<View>(R.id.ScrollerRootArea)
+        val ScrollerRootAreaCard = findViewById<View>(R.id.ScrollerRootAreaCard)
 
         recyclerView.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
-        ScrollerRootArea.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
+        ScrollerRootAreaCard.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
 
 
     }
@@ -2580,6 +2588,12 @@ class PlayerActivity: AppCompatActivity(){
                 (ButtonArea1.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
                 val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
                 (TopBarArea_ButtonMoreOptions.layoutParams as ViewGroup.MarginLayoutParams).marginEnd = (vm.statusBarHeight)
+            }
+
+            //控件位置动态调整:横屏时抬高进度条
+            if (vm.PREFS_RaiseProgressBarInLandscape){
+                val ScrollerRootAreaConstraint = findViewById<ConstraintLayout>(R.id.ScrollerRootAreaConstraint)
+                (ScrollerRootAreaConstraint.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin = (50)
             }
 
         }
@@ -2918,25 +2932,23 @@ class PlayerActivity: AppCompatActivity(){
     }
 
     private fun getAbsoluteFilePath(context: Context, uri: Uri): String? {
-        var absolutePath: String? = null
-
-        if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
-            val projection = arrayOf(MediaStore.Video.Media.DATA)
-            val cursor = context.contentResolver.query(uri, projection, null, null, null)
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val columnIndex = it.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
-                    absolutePath = it.getString(columnIndex)
+        val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
+            Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
+        } else {
+            uri
+        }
+        val absolutePath: String? = when (cleanUri.scheme) {
+            ContentResolver.SCHEME_CONTENT -> {
+                val projection = arrayOf(MediaStore.Video.Media.DATA)
+                context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
+                    if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
                 }
             }
-        } else if (uri.scheme == ContentResolver.SCHEME_FILE) {
-            absolutePath = uri.path
+            ContentResolver.SCHEME_FILE    -> cleanUri.path
+            else                           -> cleanUri.path
         }
 
-        if (absolutePath != null && File(absolutePath).exists()) {
-            return absolutePath
-        }
-        return null
+        return absolutePath?.takeIf { File(it).exists() }
     }
 
     private fun buttonRefresh(){

@@ -750,6 +750,31 @@
                         android:layout_height="wrap_content"
                         android:text="如果出现卡顿可考虑关闭"
                         android:textSize="12sp" />
+                    <!--  开关4:横屏时抬高进度条  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="横屏时抬高进度条区域"
+                            android:layout_gravity="center"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/RaiseProgressBarInLandscape"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:trackTint="@color/switchTrackColor"
+                            app:thumbTint="@color/switchThumbColor"/>
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  超链接样式:开源许可  -->
@@ -763,7 +788,6 @@
                 android:text="开放源代码许可"
                 android:textColor="@color/Text2"
                 android:textSize="12sp" />
-
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

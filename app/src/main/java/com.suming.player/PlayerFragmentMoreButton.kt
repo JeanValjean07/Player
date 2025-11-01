@@ -19,6 +19,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
@@ -345,10 +346,15 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //按钮：提取帧
         val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
         ButtonExtractFrame.setOnClickListener {
+            context?.showCustomToast("暂不开放此功能", Toast.LENGTH_SHORT, 3)
+
+            /*
             val result = bundleOf("KEY" to "ExtractFrame")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             dismiss()
+
+             */
         }
 
 

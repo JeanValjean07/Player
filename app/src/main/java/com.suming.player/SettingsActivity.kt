@@ -43,7 +43,7 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseBlackBackground: SwitchCompat
     private lateinit var Switch_UseHighRefreshRate: SwitchCompat
     private lateinit var Switch_CloseFragmentGesture: SwitchCompat
-
+    private lateinit var Switch_RaiseProgressBarInLandscape: SwitchCompat
     //开关变量 + 数值量
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
@@ -59,6 +59,8 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UseHighRefreshRate = false
     private var PREFS_SeekHandlerGap = 0L
     private var PREFS_CloseFragmentGesture = false
+    private var PREFS_RaiseProgressBarInLandscape = false
+
 
     //按钮循环：清除所有视频缓存
     private var ButtonRemoveAllThumbPathIndex = 0
@@ -192,7 +194,12 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
         }
-
+        if (!PREFS.contains("PREFS_RaiseProgressBarInLandscape")) {
+            PREFS_Editor.putBoolean("PREFS_RaiseProgressBarInLandscape", false)
+            PREFS_RaiseProgressBarInLandscape = false
+        } else {
+            PREFS_RaiseProgressBarInLandscape = PREFS.getBoolean("PREFS_RaiseProgressBarInLandscape", false)
+        }
         PREFS_Editor.apply()
 
         //开关初始化
@@ -208,6 +215,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseBlackBackground = findViewById(R.id.useBlackBackground)
         Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
         Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
+        Switch_RaiseProgressBarInLandscape = findViewById(R.id.RaiseProgressBarInLandscape)
         //开关预置位
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
         Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
@@ -221,6 +229,8 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseBlackBackground.isChecked = PREFS_UseBlackBackground
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
         Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
+        Switch_RaiseProgressBarInLandscape.isChecked = PREFS_RaiseProgressBarInLandscape
+
 
         //文本信息预写
         val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
@@ -275,6 +285,10 @@ class SettingsActivity: AppCompatActivity() {
         Switch_CloseFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
             PREFS_CloseFragmentGesture = isChecked
         }
+        Switch_RaiseProgressBarInLandscape.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_RaiseProgressBarInLandscape = isChecked
+        }
+
 
         //seek间隔
         val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
@@ -384,6 +398,7 @@ class SettingsActivity: AppCompatActivity() {
         PREFS_Editor.putBoolean("PREFS_UseHighRefreshRate", PREFS_UseHighRefreshRate)
         PREFS_Editor.putBoolean("PREFS_CloseFragmentGesture", PREFS_CloseFragmentGesture)
         PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", PREFS_UseOnlySyncFrame)
+        PREFS_Editor.putBoolean("PREFS_RaiseProgressBarInLandscape", PREFS_RaiseProgressBarInLandscape)
         PREFS_Editor.apply()
     }
 

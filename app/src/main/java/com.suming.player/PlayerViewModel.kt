@@ -114,6 +114,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_EnableRoomDatabase : Boolean = false
     var PREFS_CloseFragmentGesture : Boolean = false
     var PREFS_UseOnlySyncFrame : Boolean = false
+    var PREFS_RaiseProgressBarInLandscape : Boolean = false
 
 
     var PREFS_ShutDownWhenMediaEnd: Boolean = false

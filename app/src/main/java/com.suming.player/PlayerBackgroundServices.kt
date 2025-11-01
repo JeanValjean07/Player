@@ -98,7 +98,7 @@ class PlayerBackgroundServices(): MediaSessionService() {
         if (Build.BRAND == "samsung") {
             return NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentIntent(createPendingIntent())
-                .setContentTitle("媒体播放中")
+                .setContentTitle("播放器正在运行")
                 .setContentText(INFO_TITLE)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.ic_player_service_notification)

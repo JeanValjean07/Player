@@ -147,7 +147,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:elevation="20dp"
-            app:layout_constraintBottom_toTopOf="@+id/ScrollerRootArea"
+            app:layout_constraintBottom_toTopOf="@+id/ScrollerRootAreaCard"
             android:layout_marginBottom="5dp"
             android:translationZ="3dp">
             <!-- 按钮：暂停/开始 -->
@@ -341,7 +341,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
         <!-- 缩略图区 -->
         <androidx.cardview.widget.CardView
-            android:id="@+id/ScrollerRootArea"
+            android:id="@+id/ScrollerRootAreaCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="@color/CardViewBottom"
@@ -354,6 +354,7 @@
             app:layout_constraintStart_toStartOf="parent"
             android:translationZ="3dp">
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ScrollerRootAreaConstraint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
@@ -394,7 +395,6 @@
                             app:layout_constraintTop_toTopOf="@+id/innerContainer"
                             app:layout_constraintVertical_bias="0.0" />
                     </androidx.constraintlayout.widget.ConstraintLayout>
-
                     <View
                         android:layout_width="2dp"
                         android:layout_height="match_parent"
