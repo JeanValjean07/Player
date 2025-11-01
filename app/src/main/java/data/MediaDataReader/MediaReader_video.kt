@@ -45,6 +45,7 @@ class MediaReader_video(
         //排序方式
         var sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} DESC"
         var sort_orientation: String
+        var show_hide_items = false
         val PREFS = context.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)
         if (!PREFS.contains("sort_orientation")){
             PREFS.edit { putString("sort_orientation", "DESC") }
@@ -82,6 +83,11 @@ class MediaReader_video(
                 }
             }
         }
+        if (!PREFS.contains("show_hide_items")){
+            PREFS.edit { putBoolean("show_hide_items", false) }
+        }else{
+            show_hide_items = PREFS.getBoolean("show_hide_items", false)
+        }
         //<editor-fold desc="其他排序方式">
         //MediaStore.Video.Media.DISPLAY_NAME: 视频文件名
         //MediaStore.Video.Media.TITLE：视频标题
@@ -89,7 +95,6 @@ class MediaReader_video(
         //MediaStore.Video.Media.DURATION：视频时长
         //MediaStore.Video.Media.RESOLUTION: 视频分辨率
         //</editor-fold desc="其他排序方式">
-
 
 
         //发起查询
@@ -131,32 +136,67 @@ class MediaReader_video(
                             sizeBytes = size,
                             Media_Cover_Path = ""
                         )
+                        continue
                     }
-                    //视频有数据,但目标位为空
-                    else if (setting.SavePath_Cover == ""){
-                        list += MediaItem_video(
-                            id = id,
-                            uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
-                            name = name,
-                            durationMs = dur,
-                            sizeBytes = size,
-                            Media_Cover_Path = ""
-                        )
+
+                    //视频已隐藏
+                    if (setting.PREFS_Hide){
+                        //Log.d("SuMing", "PREFS_Hide")
+                        if (show_hide_items){
+                            //视频有数据,但目标位为空
+                            if (setting.SavePath_Cover == ""){
+                                list += MediaItem_video(
+                                    id = id,
+                                    uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
+                                    name = name,
+                                    durationMs = dur,
+                                    sizeBytes = size,
+                                    Media_Cover_Path = ""
+                                )
+                            }
+                            //视频已有缩略图路径
+                            else{
+                                list += MediaItem_video(
+                                    id = id,
+                                    uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
+                                    name = name,
+                                    durationMs = dur,
+                                    sizeBytes = size,
+                                    Media_Cover_Path = setting.SavePath_Cover
+                                )
+                            }
+                        }
                     }
-                    //视频已有缩略图路径
                     else{
-                        list += MediaItem_video(
-                            id = id,
-                            uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
-                            name = name,
-                            durationMs = dur,
-                            sizeBytes = size,
-                            Media_Cover_Path = setting.SavePath_Cover
-                        )
+                        //视频有数据,但目标位为空
+                        if (setting.SavePath_Cover == ""){
+                            list += MediaItem_video(
+                                id = id,
+                                uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
+                                name = name,
+                                durationMs = dur,
+                                sizeBytes = size,
+                                Media_Cover_Path = ""
+                            )
+                        }
+                        //视频已有缩略图路径
+                        else{
+                            list += MediaItem_video(
+                                id = id,
+                                uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
+                                name = name,
+                                durationMs = dur,
+                                sizeBytes = size,
+                                Media_Cover_Path = setting.SavePath_Cover
+                            )
+                        }
                     }
+
+
                     left--
                     //写入列表
-                } while (left > 0 && cursor.moveToNext())
+                }
+                while (left > 0 && cursor.moveToNext())
             }
         }
 

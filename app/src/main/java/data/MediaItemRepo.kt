@@ -10,6 +10,8 @@ class MediaItemRepo private constructor(context: Context) {
 
     suspend fun getSetting(path: String): MediaItemSetting? = dao[path]
 
+    suspend fun HideVideo(filename: String,flag_need_hide: Boolean) = dao.HideVideo(filename,flag_need_hide)
+
 
 
     companion object {

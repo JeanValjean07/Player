@@ -2,12 +2,21 @@ package com.suming.player
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.util.Log
+import android.view.GestureDetector
+import android.view.GestureDetector.SimpleOnGestureListener
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
@@ -23,6 +32,7 @@ import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -34,9 +44,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import data.MediaModel.MediaItem_video
 import data.MediaDataReader.MediaReader_video
+import data.MediaItemDataBase
+import data.MediaItemRepo
+import data.MediaItemSetting
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.math.RoundingMode
+import kotlin.math.hypot
+import kotlin.math.pow
 
 class MainActivity: AppCompatActivity() {
 
@@ -46,6 +62,8 @@ class MainActivity: AppCompatActivity() {
     private val REQUEST_STORAGE_PERMISSION = 1001
     //状态栏高度
     private var statusBarHeight = 0
+    //震动时间
+    private var PREFS_VibrateMillis = 0L
 
     //无法打开视频时的接收器
     @SuppressLint("UnsafeOptInUsageError")
@@ -67,7 +85,9 @@ class MainActivity: AppCompatActivity() {
     }
 
 
+
     //生命周期
+    @SuppressLint("ClickableViewAccessibility")
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,17 +97,33 @@ class MainActivity: AppCompatActivity() {
 
 
         //读取设置
-        val prefs = getSharedPreferences("PREFS", MODE_PRIVATE)
+        val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+        if (!PREFS.contains("PREFS_VibrateMillis")){
+            PREFS.edit { putLong("PREFS_VibrateMillis", 10L).apply() }
+            PREFS_VibrateMillis = 10L
+        }else{
+            PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 10L)
+        }
         //内容避让状态栏并预读取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            if (!prefs.contains("INFO_STATUSBAR_HEIGHT")){
+            if (!PREFS.contains("INFO_STATUSBAR_HEIGHT")){
                 statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-                prefs.edit { putInt("INFO_STATUSBAR_HEIGHT", statusBarHeight).apply() }
+                PREFS.edit { putInt("INFO_STATUSBAR_HEIGHT", statusBarHeight).apply() }
             }
             insets
         }
+        //读取媒体库设置
+        val PREFS2 = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
+        if (!PREFS2.contains("show_hide_items")){
+            PREFS2.edit { putBoolean("show_hide_items", false).apply() }
+        }else{
+            PREFS2.edit { putBoolean("show_hide_items", false).apply() }
+        }
+
+
+
 
 
         //准备工作+加载视频
@@ -95,6 +131,9 @@ class MainActivity: AppCompatActivity() {
 
         //加载
         load()
+
+
+
 
         //按钮：刷新列表
         val ButtonRefresh = findViewById<Button>(R.id.buttonRefresh)
@@ -126,6 +165,30 @@ class MainActivity: AppCompatActivity() {
         ButtonMediaStoreSettings.setOnClickListener {
             MainActivityFragmentMediaStoreSettings.newInstance().show(supportFragmentManager, "MainActivityFragmentMediaStoreSettings")
         }
+
+
+        val gestureDetectorToolbarTitle = GestureDetector(this, object : SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) {
+                //震动
+                val vib = this@MainActivity.vibrator()
+                vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+                //逻辑修改
+                val show_hide_items = PREFS2.getBoolean("show_hide_items", false)
+                if (show_hide_items){
+                    PREFS2.edit { putBoolean("show_hide_items", false).apply() }
+                    notice("不显示隐藏的视频,刷新后生效", 2000)
+                }else{
+                    PREFS2.edit { putBoolean("show_hide_items", true).apply() }
+                    notice("将显示隐藏的视频,刷新后生效", 2000)
+                }
+                super.onLongPress(e)
+            }
+        })
+        val ToolbarTitle = findViewById<TextView>(R.id.toolbar_title)
+        ToolbarTitle.setOnTouchListener { _, event ->
+            gestureDetectorToolbarTitle.onTouchEvent(event)
+        }
+
 
 
 
@@ -201,9 +264,11 @@ class MainActivity: AppCompatActivity() {
                 popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
                 popup.setOnMenuItemClickListener { /*handle*/; true }
                 popup.show()
+            },
+            onItemHideClick = { filename,flag_need_hide ->
+                HideItem(filename,flag_need_hide)
             }
         )
-
 
         recyclerview1.adapter = adapter
 
@@ -211,19 +276,31 @@ class MainActivity: AppCompatActivity() {
             pager.flow.collect { adapter.submitData(it) }
         }
     }
-
-    private fun BroadcastFinish(): Intent {
-        val intent = Intent(this, PlayerActionReceiver::class.java).apply {
-            action = "PLAYER_FINISH"
+    //震动控制
+    @Suppress("DEPRECATION")
+    private fun Context.vibrator(): Vibrator =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
+        } else {
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
-        return intent
-    }
 
     @OptIn(UnstableApi::class)
     private fun startPlayer(item: MediaItem_video){
         val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
         detailLauncher.launch(intent)
     }
+    //隐藏
+    private fun HideItem(filename: String,flag_need_hide: Boolean) {
+        //更新数据库
+        lifecycleScope.launch {
+            //根据flag_need_hide来判断是否隐藏
+            MediaItemRepo.get(this@MainActivity).HideVideo(filename,flag_need_hide)
+        }
+
+    }
+
 
     //显示通知
     private var showNoticeJob: Job? = null

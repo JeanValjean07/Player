@@ -487,13 +487,18 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
             dismiss()
         }
-        //音频
+        //均衡器
         val buttonEqualizer = view.findViewById<TextView>(R.id.buttonEqualizer)
         buttonEqualizer.setOnClickListener {
+            context?.showCustomToast("暂不开放此功能", Toast.LENGTH_SHORT, 3)
+
+            /*
             val result = bundleOf("KEY" to "Equalizer")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             dismiss()
+
+             */
         }
 
 

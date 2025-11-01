@@ -177,8 +177,6 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
 
 
 
-
-
     } //onViewCreated END
 
 

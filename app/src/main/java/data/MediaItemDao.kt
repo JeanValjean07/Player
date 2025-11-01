@@ -19,6 +19,9 @@ interface MediaItemDao {
     @Query("UPDATE video_settings SET SavePath_Cover = :newValue")
     suspend fun removeAllThumbPath(newValue: String)
 
+    @Query("UPDATE video_settings SET PREFS_Hide = :newValue1 WHERE MARK_FileName = :videoId")
+    suspend fun HideVideo(videoId: String,newValue1: Boolean)
+
 
     @Delete
     suspend fun delete(item: MediaItemSetting)

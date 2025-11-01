@@ -603,7 +603,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -639,7 +638,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="拖动进度条时的时间刷新。由于系统优化问题，部分机型在此更新间隔过短时掉帧严重。请根据设备情况适当调整。"
+                        android:text="拖动进度条时的时间戳刷新间隔。由于系统优化问题，部分系统在此更新间隔过短时掉帧严重。请根据设备情况适当调整。"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -660,7 +659,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="界面显示"
+                        android:text="界面显示和交互"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp"/>
                     <!--  开关1: 始终使用深色播放界面  -->
@@ -717,7 +716,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="如果您的设备在播放时被系统限制刷新率，可开启此开关以尝试使用高刷新率，仅尝试，最终决策权在系统。仅支持安卓11及以上版本"
+                        android:text="如果您的设备在播放时被系统限制刷新率，可开启此开关以尝试使用高刷新率。仅尝试，最终决策权在系统。仅支持安卓11及以上版本。"
                         android:textSize="12sp" />
                     <!--  开关3:关闭卡片下滑手势  -->
                     <LinearLayout
@@ -728,7 +727,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            android:text="关闭更多操作面板下滑手势"
+                            android:text="不使用更多操作面板的下滑手势"
                             android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
@@ -748,7 +747,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="如果出现卡顿可考虑关闭"
+                        android:text="如果出现卡顿可考虑关闭。"
                         android:textSize="12sp" />
                     <!--  开关4:横屏时抬高进度条  -->
                     <LinearLayout
@@ -775,6 +774,66 @@
                             app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"/>
                     </LinearLayout>
+                    <!--  选单按钮：震动时长  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="0"
+                            android:text="震动时长"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <TextView
+                            android:id="@+id/currentVibratorMillis"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="当前值"
+                            android:textSize="12sp"
+                            android:textColor="@color/HeadText"
+                            />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <TextView
+                            android:id="@+id/ButtonVibratorMillis"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="修改"
+                            android:textSize="12sp"
+                            android:textColor="@color/HeadText"
+                            />
+                    </LinearLayout>
+                    <!--  seek bar：震动时长  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <SeekBar
+                            android:id="@+id/seekBar"
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"
+                            android:max="100"
+                            android:progress="30"
+                            android:progressDrawable="@drawable/bg_seek_bar_style"
+                            android:thumb="@drawable/bg_seek_bar_thumb"
+                            android:splitTrack="false"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:layout_margin="16dp" />
+                    </LinearLayout>
+                    <!--  描述：震动时长  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="根据您的设备马达配置选择合适的震动时长，以获得更好的震动体验。"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  超链接样式:开源许可  -->

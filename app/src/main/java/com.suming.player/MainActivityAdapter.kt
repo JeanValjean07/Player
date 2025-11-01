@@ -35,7 +35,8 @@ class MainActivityAdapter(
     private val context: Context,
     private val onItemClick: (MediaItem_video) -> Unit,
     private val onDurationClick: (MediaItem_video) -> Unit,
-    private val onOptionClick: (MediaItem_video) -> Unit
+    private val onOptionClick: (MediaItem_video) -> Unit,
+    private val onItemHideClick: (String, Boolean) -> Unit
 ):PagingDataAdapter<MediaItem_video, MainActivityAdapter.ViewHolder>(diffCallback) {
 
     //比较器
@@ -62,6 +63,9 @@ class MainActivityAdapter(
     //协程作用域
     private val coroutineScopeGenerateCover = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutineScopeSaveRoom = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val coroutineScopeReadRoom = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+
 
 
 
@@ -82,14 +86,34 @@ class MainActivityAdapter(
         holder.tvOption.setOnClickListener {
              val popup = PopupMenu(holder.itemView.context, holder.tvOption)
             popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
-            popup.setOnMenuItemClickListener { item ->
-                when(item.itemId){
+            //读数据库
+            var itemHided = false
+            coroutineScopeReadRoom.launch {
+                val setting = MediaItemRepo.get(context).getSetting(item.name) ?: return@launch
+                if (setting.PREFS_Hide){
+                    itemHided = true
+                    popup.menu.findItem(R.id.MenuAction_Hide).title = "取消隐藏"
+                }else{
+                    itemHided = false
+                }
+            }
+            popup.setOnMenuItemClickListener { menu_item ->
+                when(menu_item.itemId){
                     R.id.MenuAction_Repic -> {
                         context.showCustomToast( "进入视频后,在更多按钮面板可重新截取封面", Toast.LENGTH_SHORT,3)
                         true
                     }
                     R.id.MenuAction_Hide -> {
-                        context.showCustomToast( "隐藏功能开发中", Toast.LENGTH_SHORT,3)
+                        if (itemHided) {
+                            context.showCustomToast( "已取消隐藏,刷新后生效", Toast.LENGTH_SHORT,3)
+                            //interface
+                            onItemHideClick(item.name, false)
+                        }else{
+                            context.showCustomToast( "仅能在本APP中隐藏,刷新后生效", Toast.LENGTH_SHORT,3)
+                            //interface
+                            onItemHideClick(item.name, true)
+                        }
+
                         true
                     }
                     else -> true

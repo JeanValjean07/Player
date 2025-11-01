@@ -102,6 +102,9 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import android.graphics.Bitmap.CompressFormat.JPEG
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import data.MediaItemRepo
 import data.MediaItemSetting
 import kotlin.system.exitProcess
@@ -300,11 +303,11 @@ class PlayerActivity: AppCompatActivity(){
                     MediaInfo_VideoItem = vm.MediaInfo_VideoItem
                 }else{
                     vm.MediaInfo_VideoItem = MediaItem_video.EMPTY
-                    if (Build.BRAND == "huawei") {
+                    if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI") {
                         showCustomToast("这条视频已被关闭", Toast.LENGTH_SHORT, 3)
                     }
                     val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
                     startActivity(intent)
                     finish()
                     return
@@ -451,6 +454,12 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_RaiseProgressBarInLandscape = false
             } else {
                 vm.PREFS_RaiseProgressBarInLandscape = PREFS.getBoolean("PREFS_RaiseProgressBarInLandscape", false)
+            }
+            if (!PREFS.contains("PREFS_VibrateMillis")){
+                PREFS.edit { putLong("PREFS_VibrateMillis", 10L).apply() }
+                vm.PREFS_VibrateMillis = 10L
+            }else{
+                vm.PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 10L)
             }
             PREFSEditor.apply()
         }
@@ -766,7 +775,6 @@ class PlayerActivity: AppCompatActivity(){
 
 
 
-
         //媒体信息分散作用：保存文件名
         vm.saveFileName(MediaInfo_FileName)
         //读取数据库: 先读文件名丨仅首次启动读取丨全部存vm
@@ -1056,6 +1064,9 @@ class PlayerActivity: AppCompatActivity(){
                 vm.player.setPlaybackSpeed(currentSpeed * 2.0f)
                 notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
                 longPress = true
+                //震动
+                val vib = this@PlayerActivity.vibrator()
+                vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
                 super.onLongPress(e)
             }
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
@@ -2077,6 +2088,9 @@ class PlayerActivity: AppCompatActivity(){
                     if (seekToMs < 50){
                         playerReadyFrom_LastSeek = true
                         vm.player.seekTo(0)
+                        //震动
+                        val vib = this@PlayerActivity.vibrator()
+                        vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
                     }
                     else{
                         if (isSeekReady){
@@ -2302,6 +2316,15 @@ class PlayerActivity: AppCompatActivity(){
 
 
     //Functions
+    //震动控制
+    @Suppress("DEPRECATION")
+    private fun Context.vibrator(): Vibrator =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
+        } else {
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
     //提取帧函数
     private fun ExtractFrame(videoPath: String, filename: String) {
         val frameExtractor = FrameExtractor(object : FrameListener {
