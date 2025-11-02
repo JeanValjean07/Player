@@ -105,10 +105,12 @@ import android.graphics.Bitmap.CompressFormat.JPEG
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import data.MediaItemRepo
 import data.MediaItemSetting
 import kotlin.system.exitProcess
 import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 import okio.Path
 
 @UnstableApi
@@ -475,7 +477,6 @@ class PlayerActivity: AppCompatActivity(){
         }
 
 
-
         //界面事务
         //界面初始化:默认颜色设置+控件动态变位
         AppBarSetting()
@@ -648,7 +649,12 @@ class PlayerActivity: AppCompatActivity(){
 
 
         //媒体信息1 -视频根信息读取
-        MediaInfo_VideoUri = MediaInfo_VideoItem.uri
+        if (savedInstanceState == null) {
+            MediaInfo_VideoUri = MediaInfo_VideoItem.uri
+            vm.MediaInfo_VideoUri = MediaInfo_VideoUri
+        }else{
+            MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
+        }
         val retriever = MediaMetadataRetriever()
         //给retriever设置数据源,包含异常处理
         try { retriever.setDataSource(this@PlayerActivity, MediaInfo_VideoUri) }
@@ -916,7 +922,10 @@ class PlayerActivity: AppCompatActivity(){
                     }
                     //修改视频seek参数
                     if (dx == 1 || dx == -1) {
-                        if (!vm.PREFS_UseOnlySyncFrame){
+                        if (vm.PREFS_UseOnlySyncFrame){
+                            vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                        }
+                        else {
                             vm.player.setSeekParameters(SeekParameters.EXACT)
                         }
                     } else {
@@ -1343,9 +1352,9 @@ class PlayerActivity: AppCompatActivity(){
                     notice("回到视频起始", 3000)
                 }
                 "PlayList" -> {
+                    notice("加载中", 1000)
                     PlayerFragmentList.newInstance().show(supportFragmentManager, "PlayerListFragment")
                 }
-                //提取帧
                 "ExtractFrame" -> {
                     val videoPath = getAbsoluteFilePath(this, MediaInfo_VideoUri)
                     if (videoPath == null){
@@ -1573,6 +1582,211 @@ class PlayerActivity: AppCompatActivity(){
                 }
             }
         }
+        //播放列表返回值 FROM_FRAGMENT_PLAY_LIST
+        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_PLAY_LIST", this) { _, bundle ->
+            val ReceiveKey = bundle.getString("KEY")
+            when(ReceiveKey){
+                "switchItem" -> {
+                    val newItemUri = (bundle.getString("new_item_uri"))?.toUri()
+                    if (newItemUri == null){
+                        notice("切换失败", 2000)
+                        return@setFragmentResultListener
+                    }
+
+                    vm.setVideoUri(newItemUri)
+
+                    vm.player.play()
+
+                    fun switchItemWork(){
+                        MediaInfo_VideoUri = newItemUri
+
+                        vm.MediaInfo_VideoUri = MediaInfo_VideoUri
+
+                        val retriever = MediaMetadataRetriever()
+                        //给retriever设置数据源,包含异常处理
+                        try { retriever.setDataSource(this@PlayerActivity, MediaInfo_VideoUri) }
+                        catch (_: Exception) {
+                            showCustomToast("无法解码该视频信息", Toast.LENGTH_SHORT, 3)
+                            val data = Intent().apply {
+                                putExtra("key", "NEED_REFRESH")
+                            }
+                            setResult(RESULT_OK, data)
+                            finish()
+                            return
+                        }
+
+                        MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivity, MediaInfo_VideoUri).toString()
+                        MediaInfo_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
+                        MediaInfo_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
+                        MediaInfo_VideoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
+                        MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name
+                        retriever.release()
+
+                        val timer_current = findViewById<TextView>(R.id.timer_current)
+                        val timer_duration = findViewById<TextView>(R.id.timer_duration)
+                        timer_duration.text = formatTime1(MediaInfo_VideoDuration.toLong())
+
+                        //绑定Adapter
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            //获取ViewModel
+                            val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
+                            //预先规划文件夹结构并创建 + 基于文件名哈希区分
+                            val SubDir_ThisMedia = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller")
+                            if (!SubDir_ThisMedia.exists()){
+                                SubDir_ThisMedia.mkdirs()
+                            }
+                            //传入参数预处理
+                            if (ScrollerInfo_EachPicDuration > 1000){
+                                vm.PREFS_GenerateThumbSYNC = true
+                            }
+                            //进度条绘制参数计算
+                            //使用超长进度条
+                            if (vm.PREFS_UseLongScroller) {
+                                ScrollerInfo_EachPicWidth = (47 * displayMetrics.density).toInt()
+                                if (MediaInfo_VideoDuration > 1_0000_000L) {
+                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 500.0).toInt()
+                                    ScrollerInfo_PicNumber = 500
+                                }
+                                else if (MediaInfo_VideoDuration > 7500_000L) {
+                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 400.0).toInt()
+                                    ScrollerInfo_PicNumber = 400
+                                }
+                                else if (MediaInfo_VideoDuration > 5000_000L) {
+                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 300.0).toInt()
+                                    ScrollerInfo_PicNumber = 300
+                                }
+                                else if (MediaInfo_VideoDuration > 500_000L) {
+                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 200.0).toInt()
+                                    ScrollerInfo_PicNumber = 200
+                                }
+                                else {
+                                    ScrollerInfo_EachPicDuration = 1000
+                                    ScrollerInfo_PicNumber = min((max((MediaInfo_VideoDuration / 1000), 1)), 500)
+                                }
+                            }
+                            //使用普通进度条
+                            else if (MediaInfo_VideoDuration / 1000 > ScrollerInfo_MaxPicNumber) {
+                                ScrollerInfo_EachPicWidth = (40 * displayMetrics.density).toInt()
+                                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_MaxPicNumber
+                                ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
+                            } else {
+                                ScrollerInfo_EachPicWidth = (40 * displayMetrics.density).toInt()
+                                ScrollerInfo_PicNumber = (MediaInfo_VideoDuration / 1000) + 1
+                                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_PicNumber
+                            }
+
+                            //移除查询参数
+                            val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
+
+                            //绑定Adapter
+                            //使用超长进度条
+                            if (vm.PREFS_UseLongScroller){
+                                withContext(Dispatchers.Main) {
+                                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivity,
+                                        MediaInfo_AbsolutePath_clean,
+                                        MediaInfo_FileName,
+                                        playerScrollerViewModel.thumbItems,
+                                        ScrollerInfo_EachPicWidth,
+                                        ScrollerInfo_PicNumber,
+                                        ScrollerInfo_EachPicDuration,
+                                        vm.PREFS_GenerateThumbSYNC,
+                                        scroller,
+                                        playerScrollerViewModel
+                                    )
+                                }
+                            }
+                            //使用标准进度条
+                            else{
+                                withContext(Dispatchers.Main) {
+                                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
+                                        MediaInfo_AbsolutePath_clean,
+                                        MediaInfo_FileName,
+                                        playerScrollerViewModel.thumbItems,
+                                        ScrollerInfo_EachPicWidth,
+                                        ScrollerInfo_PicNumber,
+                                        ScrollerInfo_EachPicDuration,
+                                        vm.PREFS_GenerateThumbSYNC,
+                                        scroller,
+                                        vm.Flag_SavedThumbFlag,
+                                        object : OnFlagUpdateListener {
+                                            override fun onFlagUpdate(position: Int) {
+                                                vm.Flag_SavedThumbFlag = vm.Flag_SavedThumbFlag.substring(0, position) + '1' + vm.Flag_SavedThumbFlag.substring(position + 1)
+                                            }
+                                        },
+                                        playerScrollerViewModel
+                                    )
+                                }
+                            }
+
+
+                            //开启被控
+                            fun startSyncScrollerGapControl(){
+                                syncScrollRunnableGap = 0L
+                                lifecycleScope.launch {
+                                    delay(3000)
+                                    syncScrollRunnableGap = ((MediaInfo_VideoDuration / 1000) * (1000.0 / 3600)).toLong()
+                                    if (vm.PREFS_UseLongScroller){
+                                        syncScrollRunnableGap = 10L
+                                    }
+                                }
+                            }
+                            startSyncScrollerGapControl()
+                            if(vm.PREFS_LinkScroll){ startScrollerSync() }
+                            delay(200)
+                            startVideoTimeSync()
+                        }
+
+                        //播控中心
+                        fun MediaSessionControl(){
+                            if (Build.BRAND == "Xiaomi" || Build.BRAND == "samsung") {
+                                val coverImage = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/cover/cover.jpg")
+
+
+                                val SessionToken = SessionToken(this, ComponentName(this, PlayerBackgroundServices::class.java))
+                                val MediaSessionController = MediaController.Builder(this, SessionToken).buildAsync()
+                                MediaSessionController.addListener({
+                                    val controller = MediaSessionController.get()
+                                    controller.setMediaItem(
+                                        MediaItem.Builder()
+                                            .setUri(MediaInfo_VideoUri)
+                                            .setMediaMetadata(
+                                                MediaMetadata.Builder()
+                                                    .setTitle(MediaInfo_FileName)
+                                                    .setArtist(MediaInfo_VideoArtist)
+                                                    .setArtworkUri(Uri.fromFile(coverImage))
+                                                    .build()
+                                            )
+                                            .build()
+                                    )
+                                    controller.prepare()
+                                }, MoreExecutors.directExecutor())
+                            }
+                            //华为播控中心为白名单,启用自定义控制通知
+                            else if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor"){
+                                lifecycleScope.launch {
+                                    delay(1000)
+                                    startBackgroundServices()
+                                }
+                            }
+                            //其他机型,默认启用自定义通知
+                            else{
+                                lifecycleScope.launch {
+                                    delay(1000)
+                                    startBackgroundServices()
+                                }
+                            }
+
+                        }
+                        MediaSessionControl()
+                    }
+
+                    switchItemWork()
+                }
+
+            }
+        }
+
+
 
         //根据机型选择启用播控中心或自定义通知
         if (savedInstanceState == null) {
@@ -1675,6 +1889,8 @@ class PlayerActivity: AppCompatActivity(){
 
             //移除查询参数
             val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
+
+            //Log.d("SuMing", "MediaInfo_AbsolutePath_clean: $MediaInfo_AbsolutePath_clean, MediaInfo_FileName: $MediaInfo_FileName")
 
             //绑定Adapter
             //使用超长进度条
@@ -2259,7 +2475,6 @@ class PlayerActivity: AppCompatActivity(){
             startVideoTimeSync()
             if (vm.PREFS_LinkScroll && vm.player.isPlaying) startScrollerSync()
         }
-
         //onResume来自浮窗
         if (vm.inFloatingWindow){
             vm.inFloatingWindow = false
@@ -2732,13 +2947,13 @@ class PlayerActivity: AppCompatActivity(){
             else{
                 //确认退出
                 if (EnterAnimationComplete){
-                    PlayerExoSingleton.stopPlayer()
+                    PlayerExoSingleton.pausePlayer()
                     stopFloatingWindow()
                     saveChangedMap()
                     saveChangedPrefs()
                     finish()
                 }
-                //为准备完成前退出
+                //未准备完成前退出
                 else{
                     EnterAnimationComplete = true
                     val data = Intent().apply { putExtra("NEED_CLOSE", "NEED_CLOSE") }

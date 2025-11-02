@@ -9,10 +9,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
 
+@Suppress("unused")
 class PlayListManager private constructor(context: Context) {
-    // 单例模式
+
     companion object {
-        private const val PREFS_NAME = "PlayListPreferences"
+        private const val PREFS_NAME = "PREFS_List"
         private const val KEY_CURRENT_PLAYLIST = "CurrentPlayList"
         private const val KEY_PLAYING_INDEX = "PlayingIndex"
         private const val KEY_PLAY_MODE = "PlayMode"
@@ -34,8 +35,8 @@ class PlayListManager private constructor(context: Context) {
     //RANDOM 随机播放
     //LOOP 循环播放
 
-    private val preferences: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val editor: SharedPreferences.Editor = preferences.edit()
+    private val PREFS_List: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val PREFS_List_Editor: SharedPreferences.Editor = PREFS_List.edit()
 
     //当前播放列表
     private var currentPlayList: MutableList<MediaItem_video> = mutableListOf()
@@ -67,14 +68,12 @@ class PlayListManager private constructor(context: Context) {
         savePlayList_MediaStore()
     }
 
-
     suspend fun addToPlayList(video: MediaItem_video) {
         if (!currentPlayList.any { it.id == video.id }) {
             currentPlayList.add(video)
             savePlayList()
         }
     }
-
 
     suspend fun removeFromPlayList(videoId: Long) {
         val index = currentPlayList.indexOfFirst { it.id == videoId }
@@ -89,7 +88,6 @@ class PlayListManager private constructor(context: Context) {
         }
     }
 
-
     suspend fun setCurrentPlayingVideo(videoId: Long): Boolean {
         val index = currentPlayList.indexOfFirst { it.id == videoId }
         if (index != -1) {
@@ -101,7 +99,6 @@ class PlayListManager private constructor(context: Context) {
         }
         return false
     }
-
 
     fun getCurrentPlayingVideo(): MediaItem_video? {
         return if (currentPlayingIndex >= 0 && currentPlayingIndex < currentPlayList.size) {
@@ -176,8 +173,8 @@ class PlayListManager private constructor(context: Context) {
 
     fun setPlayMode(mode: PlayMode) {
         currentPlayMode = mode
-        editor.putInt(KEY_PLAY_MODE, mode.ordinal)
-        editor.apply()
+        PREFS_List_Editor.putInt(KEY_PLAY_MODE, mode.ordinal)
+        PREFS_List_Editor.apply()
     }
 
     fun getPlayMode(): PlayMode {
@@ -218,19 +215,23 @@ class PlayListManager private constructor(context: Context) {
             // 这里简化了存储逻辑，实际应用中可能需要更复杂的序列化方式
             // 例如使用Gson将对象转换为JSON字符串
             val playListString = currentPlayList.joinToString(separator = ",") { it.id.toString() }
-            editor.putString(KEY_CURRENT_PLAYLIST, playListString)
-            editor.putInt(KEY_PLAYING_INDEX, currentPlayingIndex)
-            editor.apply()
+            PREFS_List_Editor.putString(KEY_CURRENT_PLAYLIST, playListString)
+            PREFS_List_Editor.putInt(KEY_PLAYING_INDEX, currentPlayingIndex)
+            PREFS_List_Editor.apply()
         }
     }
     @WorkerThread
     private suspend fun savePlayList_MediaStore() {
         withContext(Dispatchers.IO) {
-            val playListString = currentPlayList.joinToString(separator = ",") { it.id.toString() }
-            editor.putString(KEY_CURRENT_PLAYLIST, playListString)
-            editor.putInt(KEY_PLAYING_INDEX, currentPlayingIndex)
-            editor.apply()
-            //Log.d("SuMing", "savePlayList_MediaStore: $playListString")
+            val playListString = currentPlayList.joinToString(separator = ",") {
+                "MediaItem_video(uri=${it.uri}, name=${it.name})"
+            }
+
+
+            PREFS_List_Editor.putString(KEY_CURRENT_PLAYLIST, playListString)
+            PREFS_List_Editor.putInt(KEY_PLAYING_INDEX, currentPlayingIndex)
+            PREFS_List_Editor.apply()
+            Log.d("SuMing", "savePlayList_MediaStore: $playListString")
         }
 
     }
@@ -240,12 +241,12 @@ class PlayListManager private constructor(context: Context) {
     private fun loadPlayList() {
         // 注意：这里简化了加载逻辑，实际应用中需要从数据库或其他地方获取完整的MediaItem_video对象
         // 这里只加载了ID列表，需要额外的逻辑来获取完整的视频信息
-        val playListString = preferences.getString(KEY_CURRENT_PLAYLIST, "")
-        currentPlayingIndex = preferences.getInt(KEY_PLAYING_INDEX, -1)
-        currentPlayMode = PlayMode.entries.toTypedArray()[preferences.getInt(KEY_PLAY_MODE, PlayMode.SEQUENCE.ordinal)]
+        val playListString = PREFS_List.getString(KEY_CURRENT_PLAYLIST, "")
+        currentPlayingIndex = PREFS_List.getInt(KEY_PLAYING_INDEX, -1)
+        currentPlayMode = PlayMode.entries.toTypedArray()[PREFS_List.getInt(KEY_PLAY_MODE, PlayMode.SEQUENCE.ordinal)]
 
         // 加载历史记录
-        val historyString = preferences.getString(KEY_HISTORY_LIST, "")
+        val historyString = PREFS_List.getString(KEY_HISTORY_LIST, "")
         if (!historyString.isNullOrEmpty()) {
             historyList = historyString.split(",").mapNotNull { it.toLongOrNull() }.toMutableList()
         }
@@ -253,7 +254,7 @@ class PlayListManager private constructor(context: Context) {
 
     private fun saveHistory() {
         val historyString = historyList.joinToString(",")
-        editor.putString(KEY_HISTORY_LIST, historyString)
-        editor.apply()
+        PREFS_List_Editor.putString(KEY_HISTORY_LIST, historyString)
+        PREFS_List_Editor.apply()
     }
 }

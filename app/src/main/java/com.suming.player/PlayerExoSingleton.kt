@@ -2,7 +2,6 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.app.Application
-import androidx.media3.common.C
 import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -11,7 +10,6 @@ import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.ScrubbingModeParameters
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.mediacodec.MediaCodecAdapter
-import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
 @UnstableApi

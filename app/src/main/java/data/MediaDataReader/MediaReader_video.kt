@@ -42,44 +42,49 @@ class MediaReader_video(
             MediaStore.Video.Media.DURATION,
             MediaStore.Video.Media.SIZE
         )
-        //排序方式
+
+        //配置变量初始化
         var sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} DESC"
         var sort_orientation: String
         var show_hide_items = false
+        //读取配置
         val PREFS = context.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)
         if (!PREFS.contains("sort_orientation")){
             PREFS.edit { putString("sort_orientation", "DESC") }
             sort_orientation = "DESC"
         }else{
-            sort_orientation = PREFS.getString("sort_orientation", "") ?: ""
+            sort_orientation = PREFS.getString("sort_orientation", "DESC") ?: "DESC"
         }
         if (!PREFS.contains("sort_type")){
             PREFS.edit { putString("sort_type", "DISPLAY_NAME") }
         }else{
-            val sort_type = PREFS.getString("sort_type", "") ?: ""
+            val sort_type = PREFS.getString("sort_type", "DISPLAY_NAME") ?: "DISPLAY_NAME"
             if (sort_type == "DISPLAY_NAME"){
                 if (sort_orientation == "DESC"){
                     sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} DESC"
                 }else{
                     sortOrder = "${MediaStore.Video.Media.DISPLAY_NAME} ASC"
                 }
-            }else if (sort_type == "DURATION"){
-                if (sort_orientation == "DESC"){
-                    sortOrder = "${MediaStore.Video.Media.DURATION} DESC"
+            }
+            else if (sort_type == "DURATION"){
+                sortOrder = if (sort_orientation == "DESC"){
+                    "${MediaStore.Video.Media.DURATION} DESC"
                 }else{
-                    sortOrder = "${MediaStore.Video.Media.DURATION} ASC"
+                    "${MediaStore.Video.Media.DURATION} ASC"
                 }
-            }else if (sort_type == "DATE_ADDED"){
-                if (sort_orientation == "DESC"){
-                    sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
+            }
+            else if (sort_type == "DATE_ADDED"){
+                sortOrder = if (sort_orientation == "DESC"){
+                    "${MediaStore.Video.Media.DATE_ADDED} DESC"
                 }else{
-                    sortOrder = "${MediaStore.Video.Media.DATE_ADDED} ASC"
+                    "${MediaStore.Video.Media.DATE_ADDED} ASC"
                 }
-            }else if (sort_type == "RESOLUTION"){
-                if (sort_orientation == "DESC"){
-                    sortOrder = "${MediaStore.Video.Media.RESOLUTION} DESC"
+            }
+            else if (sort_type == "RESOLUTION"){
+                sortOrder = if (sort_orientation == "DESC"){
+                    "${MediaStore.Video.Media.RESOLUTION} DESC"
                 }else{
-                    sortOrder = "${MediaStore.Video.Media.RESOLUTION} ASC"
+                    "${MediaStore.Video.Media.RESOLUTION} ASC"
                 }
             }
         }
@@ -88,13 +93,8 @@ class MediaReader_video(
         }else{
             show_hide_items = PREFS.getBoolean("show_hide_items", false)
         }
-        //<editor-fold desc="其他排序方式">
-        //MediaStore.Video.Media.DISPLAY_NAME: 视频文件名
-        //MediaStore.Video.Media.TITLE：视频标题
-        //MediaStore.Video.Media.DATE_ADDED：视频添加日期
-        //MediaStore.Video.Media.DURATION：视频时长
-        //MediaStore.Video.Media.RESOLUTION: 视频分辨率
-        //</editor-fold desc="其他排序方式">
+
+        //播放列表
 
 
         //发起查询
@@ -126,7 +126,7 @@ class MediaReader_video(
                     //检查数据库
                     //检查数据库是否存在该视频
                     val setting = MediaItemRepo.get(context).getSetting(name)
-                    //视频没记录过数据
+                    //视频没记录过数据(初次打开)
                     if (setting == null){
                         list += MediaItem_video(
                             id = id,
@@ -141,7 +141,6 @@ class MediaReader_video(
 
                     //视频已隐藏
                     if (setting.PREFS_Hide){
-                        //Log.d("SuMing", "PREFS_Hide")
                         if (show_hide_items){
                             //视频有数据,但目标位为空
                             if (setting.SavePath_Cover == ""){
@@ -167,6 +166,7 @@ class MediaReader_video(
                             }
                         }
                     }
+                    //视频未隐藏
                     else{
                         //视频有数据,但目标位为空
                         if (setting.SavePath_Cover == ""){
@@ -194,7 +194,6 @@ class MediaReader_video(
 
 
                     left--
-                    //写入列表
                 }
                 while (left > 0 && cursor.moveToNext())
             }
@@ -202,6 +201,7 @@ class MediaReader_video(
 
         //记录到播放列表
         if (page == 0) { PlayListManager.getInstance(context).updatePlayList_MediaStore(list) }
+
 
         //return
         return LoadResult.Page(

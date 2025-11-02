@@ -161,8 +161,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
         //按钮：退出
-        val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
-        buttonExit.setOnClickListener {
+        val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
+        ButtonExit.setOnClickListener {
             dismiss()
         }
         //按钮：点击空白区域退出
@@ -171,40 +171,43 @@ class PlayerFragmentMoreButton: DialogFragment() {
             dismiss()
         }
         //按钮：锁定页面
-        val buttonLock = view.findViewById<ImageButton>(R.id.buttonLock)
-        buttonLock.setOnClickListener {
+        val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
+        ButtonLock.setOnClickListener {
             lockPage = !lockPage
             if (lockPage) {
-                buttonLock.setImageResource(R.drawable.ic_more_button_lock_on)
+                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
             } else {
-                buttonLock.setImageResource(R.drawable.ic_more_button_lock_off)
+                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
             }
         }
         //截屏
-        val buttonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
-        buttonCapture.setOnClickListener {
+        val ButtonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
+        ButtonCapture.setOnClickListener {
             val result = bundleOf("KEY" to "Capture")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
             dismiss()
         }
         //按钮：播放列表
         val ButtonPlayList = view.findViewById<ImageButton>(R.id.ButtonPlayList)
+        if (vm.state_FromSysStart) {
+            ButtonPlayList.visibility = View.GONE
+        }
         ButtonPlayList.setOnClickListener {
             val result = bundleOf("KEY" to "PlayList")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
             dismiss()
         }
         //按钮：回到开头
-        val buttonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
-        buttonBackToStart.setOnClickListener {
+        val ButtonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
+        ButtonBackToStart.setOnClickListener {
             val result = bundleOf("KEY" to "BackToStart")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
             dismiss()
         }
         //按钮：更改倍速
-        val buttonChangeSpeed = view.findViewById<TextView>(R.id.buttonChangeSpeed)
-        buttonChangeSpeed.setOnClickListener {
-            val popup = PopupMenu(requireContext(), buttonChangeSpeed)
+        val ButtonChangeSpeed = view.findViewById<TextView>(R.id.buttonChangeSpeed)
+        ButtonChangeSpeed.setOnClickListener {
+            val popup = PopupMenu(requireContext(), ButtonChangeSpeed)
             popup.menuInflater.inflate(R.menu.activity_player_popup_video_speed, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {

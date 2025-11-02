@@ -13,14 +13,12 @@
     tools:ignore="HardcodedText" >
     <androidx.cardview.widget.CardView
         android:id="@+id/mainCard"
-        android:layout_width="match_parent"
+        android:layout_width="400dp"
         android:layout_height="wrap_content"
         app:cardCornerRadius="8dp"
         app:cardBackgroundColor="@color/Background3"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="500dp"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:cardElevation="10dp">
         <!-- 主卡 -->

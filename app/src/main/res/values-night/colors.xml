@@ -11,6 +11,7 @@
 
     <color name="HeadBackground">#000000</color>
     <color name="HeadText">#FFFFFF</color>
+    <color name="HeadText2">#F1F1F1</color>
     <color name="Background">#000000</color>
     <color name="Background2">#000000</color>
     <color name="Background3">#111111</color>
@@ -36,6 +37,8 @@
     <color name="TransparentHeadBackground">#90000000</color>
     <color name="HalfBackground">#98000000</color>
     <color name="SuperLink">#81D4FA</color>
+
+    <color name="divider">#212121</color>
 
 
 

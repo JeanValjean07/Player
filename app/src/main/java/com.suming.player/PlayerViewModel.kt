@@ -175,6 +175,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var MediaInfo_VideoItem_Saved: Boolean = false
 
+    var MediaInfo_VideoUri: Uri? = null
+
 
     lateinit var MediaInfo_VideoItem: MediaItem_video
 
