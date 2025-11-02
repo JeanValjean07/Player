@@ -162,7 +162,8 @@
                         android:layout_weight="0"
                         android:padding="16dp"
                         android:text="无兼容性提示时,此卡片应当被隐藏"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        tools:ignore="InefficientWeight" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 

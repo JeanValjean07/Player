@@ -83,6 +83,7 @@
             </com.google.android.material.appbar.AppBarLayout>
             <!-- 滚动区域# -->
             <androidx.core.widget.NestedScrollView
+                android:id="@+id/NestedScrollView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
                 <!-- 滚动区域 -->
@@ -249,8 +250,6 @@
                                     android:layout_gravity="start"
                                     android:textColor="@color/Text2"/>
                             </LinearLayout>
-
-
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
                     <!-- 筛选 -->
@@ -259,7 +258,6 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        android:layout_marginBottom="400dp"
                         app:cardBackgroundColor="@color/Background4"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="0dp">
@@ -290,6 +288,65 @@
                                     android:layout_height="wrap_content"
                                     android:text="筛选"
                                     android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                    <!-- 媒体储存提示 -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="400dp"
+                        app:cardBackgroundColor="@color/Background4"
+                        app:cardCornerRadius="15dp"
+                        app:cardElevation="0dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginStart="5dp"
+                            android:orientation="vertical">
+                            <!-- 标题：媒体储存提示 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="21dp"
+                                    android:layout_height="21dp"
+                                    android:src="@drawable/ic_more_button_info"
+                                    android:scaleType="centerCrop"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="媒体储存提示"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2" />
+                            </LinearLayout>
+                            <!-- 标题：媒体储存提示 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="20dp"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="基于安卓媒体库的读取方法依赖系统内容提供器“媒体储存”。请勿卸载或冻结系统“媒体储存”应用程序,请勿清除其数据或缓存。(com.android.providers.media.module)"
+                                    android:textSize="12sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:textColor="@color/Text2" />
