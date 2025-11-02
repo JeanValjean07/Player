@@ -948,6 +948,9 @@ class PlayerActivity: AppCompatActivity(){
                     }
                 }
                 //用户操作 -视频跳转
+                if (!vm.PREFS_LinkScroll) {
+                    return
+                }
                 //进度条往左走/视频正向
                 if (dx > 0) {
                     //选择跳转方式：seek/快放
