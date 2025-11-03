@@ -79,16 +79,6 @@
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_more_button_optimize"
                         tools:ignore="ContentDescription" />
-                    <!-- 按钮：播放列表 -->
-                    <ImageButton
-                        android:id="@+id/ButtonPlayList"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:layout_gravity="center"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_more_button_list"
-                        tools:ignore="ContentDescription" />
                     <!-- 按钮：回到起始 -->
                     <ImageButton
                         android:id="@+id/buttonBackToStart"
@@ -98,6 +88,16 @@
                         android:backgroundTint="@android:color/transparent"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_more_button_back_to_start"
+                        tools:ignore="ContentDescription" />
+                    <!-- 按钮：播放列表 -->
+                    <ImageButton
+                        android:id="@+id/ButtonPlayList"
+                        android:layout_width="35dp"
+                        android:layout_height="35dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_more_button_list"
                         tools:ignore="ContentDescription" />
                     <!-- 按钮：截图 -->
                     <ImageButton

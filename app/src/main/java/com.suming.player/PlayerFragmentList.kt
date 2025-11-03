@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -64,6 +65,9 @@ class PlayerFragmentList: DialogFragment() {
     private val vm: PlayerViewModel by activityViewModels()
 
     private val viewModelScope = CoroutineScope(Dispatchers.IO)
+
+    //自动关闭标志位
+    private var lockPage = false
 
 
 
@@ -139,43 +143,62 @@ class PlayerFragmentList: DialogFragment() {
         savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_player_fragment_play_list, container, false)
 
-    @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility")
+    @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "SuspiciousIndentation")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
         buttonExit.setOnClickListener {
-            dismiss()
+            Dismiss()
         }
         //按钮：点击空白区域退出
         val topArea = view.findViewById<View>(R.id.topArea)
         topArea.setOnClickListener {
-            dismiss()
+            Dismiss()
+        }
+        //按钮：锁定页面
+        val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
+        ButtonLock.setOnClickListener {
+            lockPage = !lockPage
+            if (lockPage) {
+                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
+            } else {
+                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
+            }
         }
 
-        //先显示空列表
+
+        val playListString = vm.List_PlayList
+
         val composableView = view.findViewById<View>(R.id.composableView)
         val composeView = composableView as androidx.compose.ui.platform.ComposeView
         composeView.setContent {
-            showVideoList("")
+            showVideoList(playListString)
         }
 
-        //读取播放列表 (暂时放在主线程)
 
 
-            val PREFS_List = requireContext().getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
-            if (PREFS_List.contains("CurrentPlayList")){
 
-                val playListString = PREFS_List.getString("CurrentPlayList", "错误") ?: "错误"
 
-                val composableView = view.findViewById<View>(R.id.composableView)
-                val composeView = composableView as androidx.compose.ui.platform.ComposeView
 
-                    composeView.setContent {
-                        showVideoList(playListString)
-                    }
+        //读取播放列表
+        /*
+        val PREFS_List = requireContext().getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
+        if (PREFS_List.contains("CurrentPlayList")){
 
+            val playListString = PREFS_List.getString("CurrentPlayList", "错误") ?: "错误"
+
+            val composableView = view.findViewById<View>(R.id.composableView)
+            val composeView = composableView as androidx.compose.ui.platform.ComposeView
+
+            composeView.setContent {
+                showVideoList(playListString)
             }
+
+        }
+
+         */
+
 
 
 
@@ -213,7 +236,7 @@ class PlayerFragmentList: DialogFragment() {
                         }
                         MotionEvent.ACTION_UP -> {
                             if (deltaY >= 400f){
-                                dismiss()
+                                Dismiss()
                             }else{
                                 RootCard.animate()
                                     .translationY(0f)
@@ -264,7 +287,7 @@ class PlayerFragmentList: DialogFragment() {
                                 return@setOnTouchListener false
                             }
                             if (deltaX >= 200f){
-                                dismiss()
+                                Dismiss()
                             }else{
                                 RootCard.animate()
                                     .translationX(0f)
@@ -276,6 +299,14 @@ class PlayerFragmentList: DialogFragment() {
                     return@setOnTouchListener false
                 }
             }
+        }
+        //监听返回手势(DialogFragment)
+        dialog?.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                Dismiss()
+                return@setOnKeyListener true
+            }
+            return@setOnKeyListener false
         }
 
     } //onViewCreated END
@@ -375,7 +406,7 @@ class PlayerFragmentList: DialogFragment() {
         val result = bundleOf("KEY" to "switchItem", "new_item" to itemString, "new_item_uri" to itemUri)
         setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
 
-        dismiss()
+        customDismiss()
 
     }
 
@@ -398,6 +429,19 @@ class PlayerFragmentList: DialogFragment() {
                 name = it.groupValues[2]
             )
         }.toList()
+    }
+
+
+
+    //自定义退出逻辑
+    private fun customDismiss(){
+        if (!lockPage) { Dismiss() }
+    }
+    private fun Dismiss(){
+        val result = bundleOf("KEY" to "Dismiss")
+        setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
+        dismiss()
+
     }
 
 

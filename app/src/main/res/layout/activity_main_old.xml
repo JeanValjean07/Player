@@ -143,21 +143,11 @@
                                 android:layout_gravity="center"
                                 android:layout_marginStart="10dp"
                                 android:layout_marginTop="5dp"
-                                android:layout_marginEnd="1dp"
+                                android:layout_marginEnd="10dp"
                                 android:layout_marginBottom="5dp"
                                 android:text="视频陈列架"
                                 android:textColor="@color/HeadText"
                                 android:textSize="11sp" />
-                            <ImageButton
-                                android:layout_width="15dp"
-                                android:layout_height="15dp"
-                                android:layout_gravity="center"
-                                android:layout_margin="4dp"
-                                android:layout_marginEnd="15dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="安卓媒体库"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/ic_main_activity_settings" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
                 </LinearLayout>

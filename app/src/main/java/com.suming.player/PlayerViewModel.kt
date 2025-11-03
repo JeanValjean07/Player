@@ -115,18 +115,21 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_CloseFragmentGesture : Boolean = false
     var PREFS_UseOnlySyncFrame : Boolean = false
     var PREFS_RaiseProgressBarInLandscape : Boolean = false
-
-
     var PREFS_VibrateMillis: Long = 10L
-
-
     var PREFS_ShutDownWhenMediaEnd: Boolean = false
-
     var PREFS_TimeUpdateGap: Long = 20L
-
     var PREFS_SavePositionWhenExit: Boolean = false
     var PREFS_SwitchPortraitWhenExit: Boolean = true
+    var PREFS_EnablePlayAreaMove: Boolean = false
 
+
+
+
+    var List_PlayList = ""
+
+
+    var MediaInfo_Uri_Saved: Boolean = false
+    var MediaInfo_VideoUri: Uri? = null
 
     var state_firstReadyReached: Boolean = false
 
@@ -137,6 +140,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var Flag_SavedThumbFlag: String = ""
 
     var String_SavedCoverPath: String = ""
+
+    var state_playerAreaUp = false
 
 
 
@@ -173,9 +178,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_SeekHandlerGap: Long = 0
 
 
-    var MediaInfo_VideoItem_Saved: Boolean = false
 
-    var MediaInfo_VideoUri: Uri? = null
+
 
 
     lateinit var MediaInfo_VideoItem: MediaItem_video

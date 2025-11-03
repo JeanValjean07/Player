@@ -35,7 +35,6 @@
                 android:outlineSpotShadowColor="@color/HeadText"
                 app:liftOnScrollColor="@color/HeadBackground"
                 android:outlineAmbientShadowColor="@color/HeadText">
-                <!-- 标题 -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -43,6 +42,7 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:orientation="horizontal">
+                    <!-- 关闭按钮 -->
                     <ImageButton
                         android:id="@+id/buttonExit"
                         android:layout_width="41dp"
@@ -54,6 +54,7 @@
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_more_button_exit"
                         tools:ignore="ContentDescription" />
+                    <!-- 标题:播放列表 -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -62,6 +63,22 @@
                         android:layout_marginTop="10dp"
                         android:textColor="@color/HeadText"
                         />
+                    <!-- 占位 -->
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"/>
+                    <!-- 按钮：页面锁定 -->
+                    <ImageButton
+                        android:id="@+id/buttonLock"
+                        android:layout_width="41dp"
+                        android:layout_height="41dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_more_button_lock_off"
+                        tools:ignore="ContentDescription" />
                 </LinearLayout>
             </com.google.android.material.appbar.AppBarLayout>
             <!-- 滚动区域# -->

@@ -51,7 +51,6 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -105,13 +104,12 @@ import android.graphics.Bitmap.CompressFormat.JPEG
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.util.Log
+import android.view.animation.DecelerateInterpolator
 import data.MediaItemRepo
 import data.MediaItemSetting
 import kotlin.system.exitProcess
 import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
-import okio.Path
 
 @UnstableApi
 //@Suppress("unused")
@@ -271,57 +269,55 @@ class PlayerActivity: AppCompatActivity(){
         //其他预设
         preCheck()
 
-
-        //清除上一次残留 + 读取MediaItem
+        //首次启动提取uri并保存
         if (savedInstanceState == null) {
             PlayerExoSingleton.releasePlayer()
-            stopBackgroundServices()
-            vm.saveIntent(intent)
-            if (!vm.MediaInfo_VideoItem_Saved){
-                vm.MediaInfo_VideoItem_Saved = true
+            if (vm.MediaInfo_Uri_Saved){
+                MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
+                intent = vm.originIntent
+            }else{
                 //区分打开方式
-                val videoItem: MediaItem_video? = when (intent?.action) {
+                when (intent?.action) {
                     //系统面板：分享
                     Intent.ACTION_SEND -> {
                         vm.state_FromSysStart = true
                         val uri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java) ?: return finish()
-                        MediaItem_video.EMPTY.copy(uri = uri)
+                        MediaInfo_VideoUri = uri
                     }
                     //系统面板：选择其他应用打开
                     Intent.ACTION_VIEW -> {
                         vm.state_FromSysStart = true
                         val uri = intent.data ?: return finish()
-                        MediaItem_video.EMPTY.copy(uri = uri)
+                        MediaInfo_VideoUri = uri
                     }
                     //正常打开
                     else ->  {
                         vm.PREFS_ExitWhenEnd = false
-                        IntentCompat.getParcelableExtra(intent, "video", MediaItem_video::class.java)
+                        val uri = IntentCompat.getParcelableExtra(intent, "video", MediaItem_video::class.java)?.uri
+                        try { MediaInfo_VideoUri = uri!! }
+                        catch (_: NullPointerException) {
+                            if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI") {
+                                showCustomToast("这条视频已被关闭", Toast.LENGTH_SHORT, 3)
+                            }
+                            val intent = Intent(this, MainActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            startActivity(intent)
+                            finish()
+                            return
+                        }
                     }
                 }
-                //检查
-                if (videoItem != null) {
-                    vm.MediaInfo_VideoItem = videoItem
-                    MediaInfo_VideoItem = vm.MediaInfo_VideoItem
-                }else{
-                    vm.MediaInfo_VideoItem = MediaItem_video.EMPTY
-                    if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI") {
-                        showCustomToast("这条视频已被关闭", Toast.LENGTH_SHORT, 3)
-                    }
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    startActivity(intent)
-                    finish()
-                    return
-                }
-            }else{
-                MediaInfo_VideoItem = vm.MediaInfo_VideoItem
+                //保存intent至ViewModel
+                vm.saveIntent(intent)
+                //保存uri至ViewModel
+                vm.MediaInfo_VideoUri = MediaInfo_VideoUri
+                vm.MediaInfo_Uri_Saved = true
             }
         }
-        //非初次打开:从ViewModel恢复intent
+        //直接使用保存的uri
         else{
+            MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
             intent = vm.originIntent
-            MediaInfo_VideoItem = vm.MediaInfo_VideoItem
         }
 
 
@@ -463,25 +459,33 @@ class PlayerActivity: AppCompatActivity(){
             }else{
                 vm.PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 10L)
             }
+            if (!PREFS.contains("PREFS_EnablePlayAreaMove")){
+                PREFSEditor.putBoolean("PREFS_EnablePlayAreaMove", false)
+                vm.PREFS_EnablePlayAreaMove = false
+            }else{
+                vm.PREFS_EnablePlayAreaMove = PREFS.getBoolean("PREFS_EnablePlayAreaMove", false)
+            }
             PREFSEditor.apply()
         }
-        //非初次打开:从ViewModel恢复设置
+        //非初次打开:从ViewModel恢复需转移本地或具备后续操作的设置项
         else{
+            //1.videoSeekHandlerGap
             videoSeekHandlerGap = vm.PREFS_SeekHandlerGap
+            //2.始终使用深色界面
             if (vm.PREFS_UseBlackBackground) {
                 setPageToDark()
             }
+            //状态预置位
             vm.allowRecord_wasPlaying = true
             playerReadyFrom_FirstEntry = false
             EnterAnimationComplete = true
         }
 
 
-        //界面事务
         //界面初始化:默认颜色设置+控件动态变位
         AppBarSetting()
         //刷新率强制修改
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && vm.PREFS_UseHighRefreshRate) {
+        if (vm.PREFS_UseHighRefreshRate && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val wm = windowManager
             val mode = wm.defaultDisplay.mode
             val fps = mode.refreshRate
@@ -491,7 +495,6 @@ class PlayerActivity: AppCompatActivity(){
         }
 
 
-        //监听器事务
         //方向监听器
         OEL = object : OrientationEventListener(this) {
             override fun onOrientationChanged(orientation: Int) {
@@ -646,17 +649,8 @@ class PlayerActivity: AppCompatActivity(){
         localBroadcastManager.registerReceiver(receiver, filter)
 
 
-
-
-        //媒体信息1 -视频根信息读取
-        if (savedInstanceState == null) {
-            MediaInfo_VideoUri = MediaInfo_VideoItem.uri
-            vm.MediaInfo_VideoUri = MediaInfo_VideoUri
-        }else{
-            MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
-        }
+        //开始读取媒体信息
         val retriever = MediaMetadataRetriever()
-        //给retriever设置数据源,包含异常处理
         try { retriever.setDataSource(this@PlayerActivity, MediaInfo_VideoUri) }
         catch (_: Exception) {
             showCustomToast("无法解码该视频信息", Toast.LENGTH_SHORT, 3)
@@ -668,7 +662,6 @@ class PlayerActivity: AppCompatActivity(){
             return
         }
 
-        
 
         //绑定播放器输出
         playerView = findViewById(R.id.playerView)
@@ -678,11 +671,15 @@ class PlayerActivity: AppCompatActivity(){
         //初次打开时传递视频链接
         if (savedInstanceState == null) {
             vm.setVideoUri(MediaInfo_VideoUri)
-        } else {
+        }
+        //刷新按钮+移除遮罩
+        else {
             buttonRefresh()
+            //移除遮罩
             val cover = findViewById<View>(R.id.cover)
             cover.visibility = View.GONE
         }
+
 
         //播放器事件监听
         PlayerStateListener = object : Player.Listener {
@@ -797,9 +794,6 @@ class PlayerActivity: AppCompatActivity(){
         val timer_current = findViewById<TextView>(R.id.timer_current)
         val timer_duration = findViewById<TextView>(R.id.timer_duration)
         timer_duration.text = formatTime1(MediaInfo_VideoDuration.toLong())
-
-
-
 
 
 
@@ -971,6 +965,7 @@ class PlayerActivity: AppCompatActivity(){
             }
         })
 
+
         //退出按钮
         val buttonExit = findViewById<ImageButton>(R.id.TopBarArea_ButtonExit)
         buttonExit.setOnClickListener {
@@ -993,6 +988,9 @@ class PlayerActivity: AppCompatActivity(){
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                MovePlayAreaJob()
+            }
         }
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.NoticeCard)
@@ -1038,6 +1036,9 @@ class PlayerActivity: AppCompatActivity(){
         val buttonMoreOptions = findViewById<FrameLayout>(R.id.buttonActualMoreButton)
         buttonMoreOptions.setOnClickListener {
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                MovePlayAreaJob()
+            }
         }
         //播放区域点击事件
         val gestureDetectorPlayArea = GestureDetector(this, object : SimpleOnGestureListener() {
@@ -1583,6 +1584,10 @@ class PlayerActivity: AppCompatActivity(){
                     equalizer.enabled = true
                     PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
                 }
+                //退出事件
+                "Dismiss" -> {
+                    MovePlayArea_down()
+                }
             }
         }
         //播放列表返回值 FROM_FRAGMENT_PLAY_LIST
@@ -1591,22 +1596,35 @@ class PlayerActivity: AppCompatActivity(){
             when(ReceiveKey){
                 "switchItem" -> {
                     val newItemUri = (bundle.getString("new_item_uri"))?.toUri()
+
+                    if (newItemUri == MediaInfo_VideoUri){
+                        notice("已在此视频中", 2000)
+                        return@setFragmentResultListener
+                    }
+
                     if (newItemUri == null){
                         notice("切换失败", 2000)
                         return@setFragmentResultListener
                     }
 
+                    //设置uri并播放
                     vm.setVideoUri(newItemUri)
-
                     vm.player.play()
 
+                    //切换操作
                     fun switchItemWork(){
-                        MediaInfo_VideoUri = newItemUri
+                        //状态变更
+                        vm.playEnd = false
+                        //被控端刷新
+                        if(vm.PREFS_LinkScroll) {startScrollerSync()}
+                        startVideoTimeSync()
 
+                        //读取并保存新uri
+                        MediaInfo_VideoUri = newItemUri
                         vm.MediaInfo_VideoUri = MediaInfo_VideoUri
 
+                        //重解码视频信息
                         val retriever = MediaMetadataRetriever()
-                        //给retriever设置数据源,包含异常处理
                         try { retriever.setDataSource(this@PlayerActivity, MediaInfo_VideoUri) }
                         catch (_: Exception) {
                             showCustomToast("无法解码该视频信息", Toast.LENGTH_SHORT, 3)
@@ -1617,7 +1635,6 @@ class PlayerActivity: AppCompatActivity(){
                             finish()
                             return
                         }
-
                         MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivity, MediaInfo_VideoUri).toString()
                         MediaInfo_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
                         MediaInfo_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
@@ -1625,11 +1642,11 @@ class PlayerActivity: AppCompatActivity(){
                         MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name
                         retriever.release()
 
-                        val timer_current = findViewById<TextView>(R.id.timer_current)
+                        //刷新总时长
                         val timer_duration = findViewById<TextView>(R.id.timer_duration)
                         timer_duration.text = formatTime1(MediaInfo_VideoDuration.toLong())
 
-                        //绑定Adapter
+                        //刷新进度条adapter(重榜)
                         lifecycleScope.launch(Dispatchers.IO) {
                             //获取ViewModel
                             val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
@@ -1672,7 +1689,8 @@ class PlayerActivity: AppCompatActivity(){
                                 ScrollerInfo_EachPicWidth = (40 * displayMetrics.density).toInt()
                                 ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_MaxPicNumber
                                 ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
-                            } else {
+                            }
+                            else {
                                 ScrollerInfo_EachPicWidth = (40 * displayMetrics.density).toInt()
                                 ScrollerInfo_PicNumber = (MediaInfo_VideoDuration / 1000) + 1
                                 ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_PicNumber
@@ -1782,14 +1800,39 @@ class PlayerActivity: AppCompatActivity(){
                         }
                         MediaSessionControl()
                     }
-
                     switchItemWork()
+
                 }
 
+
+                "Dismiss" -> {
+                    MovePlayArea_down()
+                }
+            }
+        }
+        //媒体信息列表返回值 FROM_FRAGMENT_VIDEO_INFO
+        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_VIDEO_INFO", this) { _, bundle ->
+            val ReceiveKey = bundle.getString("KEY")
+            when(ReceiveKey){
+
+                "Dismiss" -> {
+                    MovePlayArea_down()
+                }
             }
         }
 
 
+
+        //读取播放列表
+        var playListString = ""
+        val PREFS_List = getSharedPreferences("PREFS_List", MODE_PRIVATE)
+        if (PREFS_List.contains("CurrentPlayList")){
+            playListString = PREFS_List.getString("CurrentPlayList", "错误") ?: "错误"
+            vm.List_PlayList = playListString
+        }else{
+            playListString = ""
+            vm.List_PlayList = playListString
+        }
 
         //根据机型选择启用播控中心或自定义通知
         if (savedInstanceState == null) {
@@ -1841,7 +1884,7 @@ class PlayerActivity: AppCompatActivity(){
         //开启空闲倒计时
         startIdleTimer()
 
-        //绑定Adapter
+        //绑定进度条adapter
         lifecycleScope.launch(Dispatchers.IO) {
             //获取ViewModel
             val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
@@ -2409,6 +2452,15 @@ class PlayerActivity: AppCompatActivity(){
             vm.closeVideoTrackJobRunning = false
         }
     }
+    //Job:播放区域上移
+    private var MovePlayAreaJob: Job? = null
+    private fun MovePlayAreaJob() {
+        MovePlayAreaJob?.cancel()
+        MovePlayAreaJob = lifecycleScope.launch {
+            delay(500)
+            MovePlayArea_up()
+        }
+    }
 
 
     override fun onEnterAnimationComplete() {
@@ -2534,6 +2586,27 @@ class PlayerActivity: AppCompatActivity(){
 
 
     //Functions
+    //视频区域抬高
+    private fun MovePlayArea_down(){
+        if (!vm.PREFS_EnablePlayAreaMove) return
+
+        //取消Job:播放区域上移
+        MovePlayAreaJob?.cancel()
+
+        playerView.animate()
+            .translationY(0f)
+            .setInterpolator(DecelerateInterpolator())
+            .setDuration(300)
+            .start()
+    }
+    private fun MovePlayArea_up() {
+        if (!vm.PREFS_EnablePlayAreaMove) return
+        playerView.animate()
+            .translationY(-850f)
+            .setInterpolator(DecelerateInterpolator())
+            .setDuration(300)
+            .start()
+    }
     //震动控制
     @Suppress("DEPRECATION")
     private fun Context.vibrator(): Vibrator =

@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -33,6 +34,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.util.UnstableApi
 import kotlin.getValue
 import kotlin.math.abs
@@ -54,6 +56,9 @@ class PlayerFragmentVideoInfo: DialogFragment() {
     private lateinit var videoTitle: String
     private lateinit var videoArtist: String
     private lateinit var videoDate: String
+
+    //自动关闭标志位
+    private var lockPage = false
 
 
     companion object {
@@ -176,12 +181,22 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
         buttonExit.setOnClickListener {
-            dismiss()
+            Dismiss()
         }
         //按钮：点击空白区域退出
         val topArea = view.findViewById<View>(R.id.topArea)
         topArea.setOnClickListener {
-            dismiss()
+            Dismiss()
+        }
+        //按钮：锁定页面
+        val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
+        ButtonLock.setOnClickListener {
+            lockPage = !lockPage
+            if (lockPage) {
+                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
+            } else {
+                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
+            }
         }
 
 
@@ -225,7 +240,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                         }
                         MotionEvent.ACTION_UP -> {
                             if (deltaY >= 400f){
-                                dismiss()
+                                Dismiss()
                             }else{
                                 RootCard.animate()
                                     .translationY(0f)
@@ -237,7 +252,8 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                     }
                     return@setOnTouchListener false
                 }
-            }else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            }
+            else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 var down_y = 0f
                 var deltaY = 0f
                 var down_x = 0f
@@ -275,7 +291,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                                 return@setOnTouchListener false
                             }
                             if (deltaX >= 200f){
-                                dismiss()
+                                Dismiss()
                             }else{
                                 RootCard.animate()
                                     .translationX(0f)
@@ -288,9 +304,14 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                 }
             }
         }
-
-
-
+        //监听返回手势(DialogFragment)
+        dialog?.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                Dismiss()
+                return@setOnKeyListener true
+            }
+            return@setOnKeyListener false
+        }
 
     } //onViewCreated END
 
@@ -370,6 +391,22 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         }else{
             String.format("%02d时%02d分%02d秒",  hours, minutes, seconds)
         }
+    }
+
+    //自定义退出逻辑
+    private fun customDismiss(){
+        /*
+        if (!lockPage) {
+            Dismiss()
+        }
+
+         */
+    }
+    private fun Dismiss(){
+        val result = bundleOf("KEY" to "Dismiss")
+        setFragmentResult("FROM_FRAGMENT_VIDEO_INFO", result)
+        dismiss()
+
     }
 
 

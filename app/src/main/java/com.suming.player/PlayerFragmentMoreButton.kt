@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -20,6 +21,7 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
@@ -168,12 +170,12 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //按钮：退出
         val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
         ButtonExit.setOnClickListener {
-            dismiss()
+            Dismiss()
         }
         //按钮：点击空白区域退出
         val topArea = view.findViewById<View>(R.id.topArea)
         topArea.setOnClickListener {
-            dismiss()
+            Dismiss()
         }
         //按钮：锁定页面
         val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
@@ -190,7 +192,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         ButtonCapture.setOnClickListener {
             val result = bundleOf("KEY" to "Capture")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-            dismiss()
+            Dismiss()
         }
         //按钮：播放列表
         val ButtonPlayList = view.findViewById<ImageButton>(R.id.ButtonPlayList)
@@ -207,7 +209,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         ButtonBackToStart.setOnClickListener {
             val result = bundleOf("KEY" to "BackToStart")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-            dismiss()
+            Dismiss()
         }
         //按钮：更改倍速
         val ButtonChangeSpeed = view.findViewById<TextView>(R.id.buttonChangeSpeed)
@@ -233,7 +235,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     }
 
                     R.id.MenuAction_Input -> {
-                        setSpeed(); dismiss(); true
+                        setSpeed(); Dismiss(); true
                     }
 
                     else -> true
@@ -327,7 +329,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     }
 
                     R.id.MenuAction_Input -> {
-                        setShutDownTime(); dismiss(); true
+                        setShutDownTime(); Dismiss(); true
                     }
 
                     else -> true
@@ -341,7 +343,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val result = bundleOf("KEY" to "StartPiP")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
-            dismiss()
+            Dismiss()
         }
         //按钮：更新封面
         val ButtonUpdateCover = view.findViewById<TextView>(R.id.buttonUpdateCover)
@@ -349,7 +351,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val result = bundleOf("KEY" to "UpdateCover")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
-            dismiss()
+            Dismiss()
         }
         //按钮：提取帧
         val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
@@ -360,7 +362,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val result = bundleOf("KEY" to "ExtractFrame")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
-            dismiss()
+            Dismiss()
 
              */
         }
@@ -480,31 +482,31 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
 
         //视频信息
-        val buttonVideoInfo = view.findViewById<TextView>(R.id.buttonVideoInfo)
-        buttonVideoInfo.setOnClickListener {
+        val ButtonVideoInfo = view.findViewById<TextView>(R.id.buttonVideoInfo)
+        ButtonVideoInfo.setOnClickListener {
             val result = bundleOf("KEY" to "VideoInfo")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             dismiss()
         }
         //分享
-        val buttonSysShare = view.findViewById<TextView>(R.id.buttonSysShare)
-        buttonSysShare.setOnClickListener {
+        val ButtonSysShare = view.findViewById<TextView>(R.id.buttonSysShare)
+        ButtonSysShare.setOnClickListener {
             val result = bundleOf("KEY" to "SysShare")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
-            dismiss()
+            Dismiss()
         }
         //均衡器
-        val buttonEqualizer = view.findViewById<TextView>(R.id.buttonEqualizer)
-        buttonEqualizer.setOnClickListener {
+        val ButtonEqualizer = view.findViewById<TextView>(R.id.buttonEqualizer)
+        ButtonEqualizer.setOnClickListener {
             context?.showCustomToast("暂不开放此功能", Toast.LENGTH_SHORT, 3)
 
             /*
             val result = bundleOf("KEY" to "Equalizer")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
-            dismiss()
+            Dismiss()
 
              */
         }
@@ -543,7 +545,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                         }
                         MotionEvent.ACTION_UP -> {
                             if (deltaY >= 400f){
-                                dismiss()
+                                Dismiss()
                             }else{
                                 RootCard.animate()
                                     .translationY(0f)
@@ -555,7 +557,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     }
                     return@setOnTouchListener false
                 }
-            }else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            }
+            else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 var down_y = 0f
                 var deltaY = 0f
                 var down_x = 0f
@@ -593,7 +596,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                                 return@setOnTouchListener false
                             }
                             if (deltaX >= 200f){
-                                dismiss()
+                                Dismiss()
                             }else{
                                 RootCard.animate()
                                     .translationX(0f)
@@ -606,7 +609,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 }
             }
         }
-
+        //监听返回手势(DialogFragment)
+        dialog?.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                Dismiss()
+                return@setOnKeyListener true
+            }
+            return@setOnKeyListener false
+        }
 
     } //onViewCreated END
 
@@ -634,7 +644,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val result = bundleOf("KEY" to "SetSpeed")
         setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
-        dismiss()
+        Dismiss()
     }
     //设置自动关闭倒计时
     @SuppressLint("SetTextI18n")
@@ -671,7 +681,15 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     //自定义退出逻辑
     private fun customDismiss(){
-        if (!lockPage) { dismiss() }
+        if (!lockPage) {
+            Dismiss()
+        }
+    }
+    private fun Dismiss(){
+        val result = bundleOf("KEY" to "Dismiss")
+        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+        dismiss()
+
     }
 
 }
