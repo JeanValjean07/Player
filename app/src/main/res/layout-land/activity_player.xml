@@ -109,17 +109,6 @@
                 android:layout_marginStart="8dp"
                 android:layout_weight="0"
                 />
-            <ImageButton
-                android:id="@+id/TopBarArea_ButtonMinimize"
-                android:layout_width="40dp"
-                android:layout_height="match_parent"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="缩小"
-                android:padding="6dp"
-                android:elevation="10dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_controller_minimize"
-                android:layout_weight="0"/>
             <!-- 占位 -->
             <View
                 android:layout_width="match_parent"

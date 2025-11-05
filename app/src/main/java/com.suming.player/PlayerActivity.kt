@@ -112,7 +112,7 @@ import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 
 @UnstableApi
-//@Suppress("unused")
+@Suppress("unused")
 class PlayerActivity: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -969,24 +969,17 @@ class PlayerActivity: AppCompatActivity(){
         //退出按钮
         val buttonExit = findViewById<ImageButton>(R.id.TopBarArea_ButtonExit)
         buttonExit.setOnClickListener {
+            vibrate()
             PlayerExoSingleton.stopPlayer()
             stopFloatingWindow()
             saveChangedMap()
             saveChangedPrefs()
             finish()
         }
-        //缩小按钮
-        val TopBarArea_ButtonMinimize = findViewById<ImageButton>(R.id.TopBarArea_ButtonMinimize)
-        TopBarArea_ButtonMinimize.visibility = View.GONE
-        TopBarArea_ButtonMinimize.setOnClickListener {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            //intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-            startActivity(intent)
-        }
         //更多选项
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
+            vibrate()
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 MovePlayAreaJob()
@@ -995,11 +988,13 @@ class PlayerActivity: AppCompatActivity(){
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.NoticeCard)
         noticeCard.setOnClickListener {
+            vibrate()
             noticeCard.visibility = View.GONE
         }
         //按钮：暂停/继续播放
         val buttonPause = findViewById<FrameLayout>(R.id.buttonPause)
         buttonPause.setOnClickListener {
+            vibrate()
             if (vm.player.isPlaying) {
                 pauseVideo()
                 stopScrollerSync()
@@ -1030,11 +1025,13 @@ class PlayerActivity: AppCompatActivity(){
         //按钮：切换横屏
         val buttonSwitchLandscape = findViewById<FrameLayout>(R.id.buttonActualSwitchLandscape)
         buttonSwitchLandscape.setOnClickListener {
+            vibrate()
             ButtonChangeOrientation()
         }
         //按钮：更多选项
         val buttonMoreOptions = findViewById<FrameLayout>(R.id.buttonActualMoreButton)
         buttonMoreOptions.setOnClickListener {
+            vibrate()
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 MovePlayAreaJob()
@@ -1077,9 +1074,7 @@ class PlayerActivity: AppCompatActivity(){
                 vm.player.setPlaybackSpeed(currentSpeed * 2.0f)
                 notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
                 longPress = true
-                //震动
-                val vib = this@PlayerActivity.vibrator()
-                vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+                vibrate()
                 super.onLongPress(e)
             }
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
@@ -1999,6 +1994,7 @@ class PlayerActivity: AppCompatActivity(){
         //系统手势监听：返回键重写
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                vibrate()
                 ExitByOrientation()
             }
         })
@@ -2350,9 +2346,6 @@ class PlayerActivity: AppCompatActivity(){
                     if (seekToMs < 50){
                         playerReadyFrom_LastSeek = true
                         vm.player.seekTo(0)
-                        //震动
-                        val vib = this@PlayerActivity.vibrator()
-                        vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
                     }
                     else{
                         if (isSeekReady){
@@ -2616,6 +2609,10 @@ class PlayerActivity: AppCompatActivity(){
         } else {
             getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
+    private fun vibrate() {
+        val vib = this@PlayerActivity.vibrator()
+        vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
     //提取帧函数
     private fun ExtractFrame(videoPath: String, filename: String) {
         val frameExtractor = FrameExtractor(object : FrameListener {
@@ -2981,6 +2978,7 @@ class PlayerActivity: AppCompatActivity(){
     }
     @SuppressLint("SourceLockedOrientationActivity")
     private fun ExitByOrientation(){
+        //退出前先转为竖屏
         if (vm.PREFS_SwitchPortraitWhenExit){
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.setManual()
@@ -3013,7 +3011,9 @@ class PlayerActivity: AppCompatActivity(){
                     }
                 }
             }
-        }else{
+        }
+        //横屏可直接退出
+        else{
             if (vm.controllerHided){
                 notice("再按一次退出",2000)
                 setControllerVisible()

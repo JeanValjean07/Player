@@ -2,8 +2,13 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.LayoutInflater
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -29,6 +34,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SettingsActivity: AppCompatActivity() {
+
+    //震动时间
+    private var PREFS_VibrateMillis = 0L
 
     //开关初始化
     private lateinit var Switch_CloseVideoTrack: SwitchCompat
@@ -86,11 +94,14 @@ class SettingsActivity: AppCompatActivity() {
         //按钮：返回
         val buttonBack = findViewById<ImageButton>(R.id.buttonExit)
         buttonBack.setOnClickListener {
+            vibrate()
             finish()
         }
         //按钮：前往项目Github仓库页
         val buttonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
         buttonGoGithub.setOnClickListener {
+            vibrate()
+
             val url = "https://github.com/JeanValjean07/Player/releases"
             val intent = Intent(Intent.ACTION_VIEW, url.toUri())
             startActivity(intent)
@@ -207,6 +218,18 @@ class SettingsActivity: AppCompatActivity() {
         }else{
             PREFS_EnablePlayAreaMove = PREFS.getBoolean("PREFS_EnablePlayAreaMove", false)
         }
+        if (!PREFS.contains("PREFS_TimeUpdateGap")) {
+            PREFS_Editor.putLong("PREFS_TimeUpdateGap", 16L)
+            PREFS_TimeUpdateGap = 16L
+        } else {
+            PREFS_TimeUpdateGap = PREFS.getLong("PREFS_TimeUpdateGap", 16L)
+        }
+        if (!PREFS.contains("PREFS_VibrateMillis")) {
+            PREFS_Editor.putLong("PREFS_VibrateMillis", 50L)
+            PREFS_VibrateMillis = 50L
+        } else {
+            PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 50L)
+        }
         PREFS_Editor.apply()
 
         //开关初始化
@@ -254,57 +277,78 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             currentTimeUpdateGap.text = "$PREFS_TimeUpdateGap 毫秒"
         }
+        val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
+        if (PREFS_VibrateMillis == 0L) {
+            currentVibrateMillis.text = "关闭"
+        } else {
+            currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
+        }
 
 
         //动态操作部分:::
         //开关更改操作
         Switch_CloseVideoTrack.setOnCheckedChangeListener { _, isChecked ->
             PREFS_CloseVideoTrack = isChecked
+            vibrate()
         }
         Switch_SwitchPortraitWhenExit.setOnCheckedChangeListener { _, isChecked ->
             PREFS_SwitchPortraitWhenExit = isChecked
+            vibrate()
         }
         Switch_EnableRoomDatabase.setOnCheckedChangeListener { _, isChecked ->
             PREFS_EnableRoomDatabase = isChecked
+            vibrate()
         }
         Switch_ExitWhenEnd.setOnCheckedChangeListener { _, isChecked ->
             PREFS_ExitWhenEnd = isChecked
+            vibrate()
         }
         Switch_UseLongScroller.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseLongScroller = isChecked
+            vibrate()
         }
         Switch_UseLongSeekGap.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseLongSeekGap = isChecked
+            vibrate()
         }
         Switch_UseCompatScroller.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseCompatScroller = isChecked
+            vibrate()
         }
         Switch_GenerateThumbSync.setOnCheckedChangeListener { _, isChecked ->
             PREFS_GenerateThumbSYNC = isChecked
+            vibrate()
         }
         Switch_UseOnlySyncFrame.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseOnlySyncFrame = isChecked
+            vibrate()
         }
         Switch_UseBlackBackground.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseBlackBackground = isChecked
+            vibrate()
         }
         Switch_UseHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseHighRefreshRate = isChecked
+            vibrate()
         }
         Switch_CloseFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
             PREFS_CloseFragmentGesture = isChecked
+            vibrate()
         }
         Switch_RaiseProgressBarInLandscape.setOnCheckedChangeListener { _, isChecked ->
             PREFS_RaiseProgressBarInLandscape = isChecked
+            vibrate()
         }
         Switch_EnablePlayAreaMove.setOnCheckedChangeListener { _, isChecked ->
             PREFS_EnablePlayAreaMove = isChecked
+            vibrate()
         }
 
 
         //seek间隔
         val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
         ButtonSeekHandlerGap.setOnClickListener { item ->
+            vibrate()
             val popup = PopupMenu(this, ButtonSeekHandlerGap)
             popup.menuInflater.inflate(R.menu.activity_settings_popup_seek_gap, popup.menu)
             popup.setOnMenuItemClickListener { item ->
@@ -337,6 +381,7 @@ class SettingsActivity: AppCompatActivity() {
         //时间更新间隔
         val ButtonTimeUpdateGap = findViewById<TextView>(R.id.ButtonTimeUpdateGap)
         ButtonTimeUpdateGap.setOnClickListener { item ->
+            vibrate()
             val popup = PopupMenu(this, ButtonTimeUpdateGap)
             popup.menuInflater.inflate(R.menu.activity_settings_popup_time_update_gap, popup.menu)
             popup.setOnMenuItemClickListener { item ->
@@ -370,15 +415,44 @@ class SettingsActivity: AppCompatActivity() {
             }
             popup.show()
         }
-
+        //振动时长
+        val ButtonVibratorMillis = findViewById<TextView>(R.id.ButtonVibratorMillis)
+        ButtonVibratorMillis.setOnClickListener { item ->
+            vibrate()
+            val popup = PopupMenu(this, ButtonVibratorMillis)
+            popup.menuInflater.inflate(R.menu.activity_settings_popup_vibrate_millis, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.MenuAction_NoMillis -> {
+                        chooseVibrateMillis(0L); true
+                    }
+                    R.id.MenuAction_20 -> {
+                        chooseVibrateMillis(20L); true
+                    }
+                    R.id.MenuAction_50 -> {
+                        chooseVibrateMillis(50L); true
+                    }
+                    R.id.MenuAction_100 -> {
+                        chooseVibrateMillis(100L); true
+                    }
+                    R.id.MenuAction_Input -> {
+                        setVibrateMillis(); true
+                    }
+                    else -> true
+                }
+            }
+            popup.show()
+        }
 
         //重新生成封面
         val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
         ButtonRemoveAllThumbPath.setOnClickListener { item ->
+            vibrate()
             if (ButtonRemoveAllThumbPathIndex == 0) {
                 ButtonRemoveAllThumbPathIndex = 1
                 ButtonRemoveAllThumbPath.text = "请再次点击确认重新生成"
-            } else if (ButtonRemoveAllThumbPathIndex == 1) {
+            }
+            else if (ButtonRemoveAllThumbPathIndex == 1) {
                 ButtonRemoveAllThumbPathIndex = 0
                 ButtonRemoveAllThumbPath.text = "已确认重新生成"
                 lifecycleScope.launch {
@@ -418,6 +492,7 @@ class SettingsActivity: AppCompatActivity() {
     //Functions
     @SuppressLint("SetTextI18n")
     private fun chooseSeekHandlerGap(gap: Long) {
+        vibrate()
         PREFS_SeekHandlerGap = gap
         val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         PREFS.edit {
@@ -432,6 +507,7 @@ class SettingsActivity: AppCompatActivity() {
     }
     @SuppressLint("InflateParams", "SetTextI18n")
     private fun setSeekHandlerGap() {
+        vibrate()
         val dialog = Dialog(this)
         val dialogView =
             LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
@@ -480,6 +556,7 @@ class SettingsActivity: AppCompatActivity() {
     }
     @SuppressLint("SetTextI18n")
     private fun chooseTimeUpdateGap(gap: Long) {
+        vibrate()
         PREFS_TimeUpdateGap = gap
         val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         PREFS.edit {
@@ -494,6 +571,7 @@ class SettingsActivity: AppCompatActivity() {
     }
     @SuppressLint("InflateParams", "SetTextI18n")
     private fun setTimeUpdateGap() {
+        vibrate()
         val dialog = Dialog(this)
         val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
         dialog.setContentView(dialogView)
@@ -539,6 +617,89 @@ class SettingsActivity: AppCompatActivity() {
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
         }
     }
+    @SuppressLint("SetTextI18n")
+    private fun chooseVibrateMillis(gap: Long) {
+        vibrate()
+        PREFS_VibrateMillis = gap
+        val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+        PREFS.edit {
+            putLong("PREFS_VibrateMillis", gap)
+        }
+        val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
+        if (PREFS_VibrateMillis == 0L) {
+            currentVibrateMillis.text = "关闭"
+        } else {
+            currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
+        }
+    }
+    @SuppressLint("InflateParams", "SetTextI18n")
+    private fun setVibrateMillis() {
+        vibrate()
+        val dialog = Dialog(this)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+        title.text = "自定义：振动时长"
+        Description.text = "输入自定义振动时长"
+        EditText.hint = "单位：毫秒丨设为0即为关闭"
+        Button.text = "确定"
+
+        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val gapInput = EditText.text.toString().toLongOrNull()
+            if (gapInput == null || gapInput == 0L) {
+                Toast.makeText(this, "未输入内容", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                return@setOnClickListener
+
+            }
+            else if (gapInput > 300L) {
+                Toast.makeText(this, "振动时长不能大于300毫秒", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            else {
+                PREFS_VibrateMillis = gapInput
+                val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+                PREFS.edit { putLong("PREFS_VibrateMillis", gapInput).commit() }
+                //界面刷新
+                val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
+                if (PREFS_VibrateMillis == 0L) {
+                    currentVibrateMillis.text = "关闭"
+                } else {
+                    currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
+                }
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+        //自动弹出键盘程序
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(50)
+            EditText.requestFocus()
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+
+
+    //震动控制
+    @Suppress("DEPRECATION")
+    private fun Context.vibrator(): Vibrator =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
+        } else {
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
+    private fun vibrate() {
+        val vib = this@SettingsActivity.vibrator()
+        vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+
 
 
 }

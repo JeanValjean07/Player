@@ -54,6 +54,7 @@ import java.math.RoundingMode
 import kotlin.math.hypot
 import kotlin.math.pow
 
+@Suppress("unused")
 class MainActivity: AppCompatActivity() {
 
     //注册adapter
@@ -84,8 +85,6 @@ class MainActivity: AppCompatActivity() {
         }
     }
 
-
-
     //生命周期
     @SuppressLint("ClickableViewAccessibility")
     @OptIn(UnstableApi::class)
@@ -94,7 +93,6 @@ class MainActivity: AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main_old)
-
 
         //读取设置
         val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
@@ -122,10 +120,6 @@ class MainActivity: AppCompatActivity() {
             PREFS2.edit { putBoolean("show_hide_items", false).apply() }
         }
 
-
-
-
-
         //准备工作+加载视频
         preCheck()
 
@@ -133,11 +127,10 @@ class MainActivity: AppCompatActivity() {
         load()
 
 
-
-
         //按钮：刷新列表
         val ButtonRefresh = findViewById<Button>(R.id.buttonRefresh)
         ButtonRefresh.setOnClickListener {
+            vibrate()
             runOnUiThread { adapter.refresh() }
             val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
             recyclerview1.smoothScrollToPosition(0)
@@ -145,33 +138,33 @@ class MainActivity: AppCompatActivity() {
         //按钮：指南
         val button2 = findViewById<Button>(R.id.buttonGuidance)
         button2.setOnClickListener {
+            vibrate()
             val intent = Intent(this, GuidanceActivity::class.java)
             startActivity(intent)
         }
         //按钮：设置
         val buttonSettings= findViewById<Button>(R.id.buttonSetting)
         buttonSettings.setOnClickListener {
+            vibrate()
             val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
         }
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.noticeCard)
         noticeCard.setOnClickListener {
+            vibrate()
             noticeCard.visibility = View.GONE
         }
-
         //按钮：安卓媒体库设置
         val ButtonMediaStoreSettings = findViewById<ImageButton>(R.id.ButtonMediaStoreSettings)
         ButtonMediaStoreSettings.setOnClickListener {
+            vibrate()
             MainActivityFragmentMediaStoreSettings.newInstance().show(supportFragmentManager, "MainActivityFragmentMediaStoreSettings")
         }
-
-
+        //显示隐藏的视频
         val gestureDetectorToolbarTitle = GestureDetector(this, object : SimpleOnGestureListener() {
             override fun onLongPress(e: MotionEvent) {
-                //震动
-                val vib = this@MainActivity.vibrator()
-                vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+                vibrate()
                 //逻辑修改
                 val show_hide_items = PREFS2.getBoolean("show_hide_items", false)
                 if (show_hide_items){
@@ -191,7 +184,6 @@ class MainActivity: AppCompatActivity() {
 
 
 
-
         //媒体库设置返回值
         supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MediaStore", this) { _, bundle ->
             val ReceiveKey = bundle.getString("KEY")
@@ -206,11 +198,11 @@ class MainActivity: AppCompatActivity() {
         //监听返回手势
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                vibrate()
                 finish()
             }
         })
     }//onCreate END
-
 
     override fun onResume() {
         super.onResume()
@@ -285,7 +277,11 @@ class MainActivity: AppCompatActivity() {
         } else {
             getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
-
+    private fun vibrate() {
+        val vib = this@MainActivity.vibrator()
+        vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+    //启动播放器
     @OptIn(UnstableApi::class)
     private fun startPlayer(item: MediaItem_video){
         val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
@@ -300,8 +296,6 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
-
-
     //显示通知
     private var showNoticeJob: Job? = null
     private fun showNoticeJob(text: String, duration: Long) {
@@ -330,8 +324,6 @@ class MainActivity: AppCompatActivity() {
             String.format("%02d时%02d分%02d秒",  hours, minutes, seconds)
         }
     }
-
-
     //Runnable:检查权限循环
     private val checkPermissionHandler = Handler(Looper.getMainLooper())
     private var checkPermission = object : Runnable{

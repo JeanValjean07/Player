@@ -774,7 +774,7 @@
                             app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"/>
                     </LinearLayout>
-                    <!--  选单按钮：震动时长  -->
+                    <!--  选单按钮：振动时长  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -784,7 +784,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_weight="0"
-                            android:text="震动时长"
+                            android:text="振动时长"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
                         <TextView
@@ -810,29 +810,11 @@
                             android:textColor="@color/HeadText"
                             />
                     </LinearLayout>
-                    <!--  seek bar：震动时长  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-                        <SeekBar
-                            android:id="@+id/seekBar"
-                            android:layout_width="match_parent"
-                            android:layout_height="8dp"
-                            android:max="100"
-                            android:progress="30"
-                            android:progressDrawable="@drawable/bg_seek_bar_style"
-                            android:thumb="@drawable/bg_seek_bar_thumb"
-                            android:splitTrack="false"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="12dp"
-                            android:layout_margin="16dp" />
-                    </LinearLayout>
-                    <!--  描述：震动时长  -->
+                    <!--  描述：振动时长  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="根据您的设备马达配置选择合适的震动时长，以获得更好的震动体验。"
+                        android:text="根据您的设备马达配置选择合适的振动时长，以获得更好的振动体验。"
                         android:textSize="12sp" />
                     <!--  开关:播放区域自动移动  -->
                     <LinearLayout
