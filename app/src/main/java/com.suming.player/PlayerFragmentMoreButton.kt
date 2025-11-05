@@ -1,19 +1,23 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Context.VIBRATOR_MANAGER_SERVICE
+import android.content.Context.VIBRATOR_SERVICE
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
@@ -21,7 +25,6 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
@@ -214,6 +217,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //按钮：更改倍速
         val ButtonChangeSpeed = view.findViewById<TextView>(R.id.buttonChangeSpeed)
         ButtonChangeSpeed.setOnClickListener {
+            vibrate()
             val popup = PopupMenu(requireContext(), ButtonChangeSpeed)
             popup.menuInflater.inflate(R.menu.activity_player_popup_video_speed, popup.menu)
             popup.setOnMenuItemClickListener { item ->
@@ -303,6 +307,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //定时关闭
         val ButtonTimerShutDown = view.findViewById<TextView>(R.id.ButtonTimerShutDown)
         ButtonTimerShutDown.setOnClickListener { item ->
+            vibrate()
             val popup = PopupMenu(requireContext(), ButtonTimerShutDown)
             popup.menuInflater.inflate(R.menu.activity_player_popup_timer_shut_down, popup.menu)
             popup.setOnMenuItemClickListener { item ->
@@ -356,6 +361,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //按钮：提取帧
         val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
         ButtonExtractFrame.setOnClickListener {
+            vibrate()
             context?.showCustomToast("暂不开放此功能", Toast.LENGTH_SHORT, 3)
 
             /*
@@ -612,6 +618,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //监听返回手势(DialogFragment)
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                vibrate()
                 Dismiss()
                 return@setOnKeyListener true
             }
@@ -677,6 +684,29 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
 
+    }
+
+    //震动控制
+    @Suppress("DEPRECATION")
+    private fun Context.vibrator(): Vibrator =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
+        } else {
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
+    private fun vibrate() {
+        if (vm.PREFS_VibrateMillis <= 0L) {
+            return
+        }
+        val vib = requireContext().vibrator()
+        if (vm.PREFS_UseSysVibrate) {
+            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+            vib.vibrate(effect)
+        }
+        else{
+            vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
     }
 
     //自定义退出逻辑

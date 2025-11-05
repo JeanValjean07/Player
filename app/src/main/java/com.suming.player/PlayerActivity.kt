@@ -101,6 +101,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import android.graphics.Bitmap.CompressFormat.JPEG
+import android.os.Process
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -648,8 +649,8 @@ class PlayerActivity: AppCompatActivity(){
                     vm.player.pause()
                 }
                 if (data == "PLAYER_EXIT") {
-                    val pid = android.os.Process.myPid()
-                    android.os.Process.killProcess(pid)
+                    val pid = Process.myPid()
+                    Process.killProcess(pid)
                 }
             }
         }
@@ -1333,6 +1334,8 @@ class PlayerActivity: AppCompatActivity(){
 
                     }
 
+                    vibrate()
+
                     notice("请耐心等待", 3000)
 
                     vm.wasPlaying = vm.player.isPlaying
@@ -1352,16 +1355,23 @@ class PlayerActivity: AppCompatActivity(){
                     )
                 }
                 "BackToStart" -> {
+                    vibrate()
+
                     vm.player.seekTo(0)
                     vm.player.play()
                     if (vm.PREFS_LinkScroll) startScrollerSync()
                     notice("回到视频起始", 3000)
                 }
                 "PlayList" -> {
+                    vibrate()
+
                     notice("加载中", 1000)
                     PlayerFragmentList.newInstance().show(supportFragmentManager, "PlayerListFragment")
                 }
                 "ExtractFrame" -> {
+
+                    vibrate()
+
                     val videoPath = getAbsoluteFilePath(this, MediaInfo_VideoUri)
                     if (videoPath == null){
                         showCustomToast("视频绝对路径获取失败", Toast.LENGTH_SHORT, 3)
@@ -1371,6 +1381,7 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 //播放相关
                 "BackgroundPlay" -> {
+                    vibrate()
                     if (vm.PREFS_BackgroundPlay){
                         PREFS.edit { putBoolean("PREFS_BackgroundPlay", true).apply() }
                         notice("已开启后台播放", 1000)
@@ -1381,6 +1392,7 @@ class PlayerActivity: AppCompatActivity(){
                     }
                 }
                 "LoopPlay" -> {
+                    vibrate()
                     if (vm.player.repeatMode == Player.REPEAT_MODE_OFF){
                         vm.player.repeatMode = Player.REPEAT_MODE_ONE
                         vm.PREFS_LoopPlay = true
@@ -1394,6 +1406,7 @@ class PlayerActivity: AppCompatActivity(){
                     }
                 }
                 "SetSpeed" -> {
+                    vibrate()
                     val dialog = Dialog(this)
                     val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
                     dialog.setContentView(dialogView)
@@ -1435,6 +1448,7 @@ class PlayerActivity: AppCompatActivity(){
                     }
                 }
                 "SealOEL" -> {
+                    vibrate()
                     if (vm.PREFS_SealOEL){
                         PREFS.edit { putBoolean("PREFS_SealOEL", true).apply() }
                         OEL.disable()
@@ -1446,12 +1460,15 @@ class PlayerActivity: AppCompatActivity(){
                     }
                 }
                 "SoundOnly" -> {
+                    vibrate()
                     changeStateSoundOnly(true)
                 }
                 "VideoOnly" -> {
+                    vibrate()
                     changeStateVideoOnly(true)
                 }
                 "SavePosition" -> {
+                    vibrate()
                     if (vm.PREFS_SavePositionWhenExit){
                         notice("退出时将会保存进度", 2000)
                     } else {
@@ -1460,16 +1477,20 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 //进度条
                 "AlwaysSeek" -> {
+                    vibrate()
                     changeStateAlwaysSeek()
                 }
                 "LinkScroll" -> {
+                    vibrate()
                     changeStateLinkScroll()
                 }
                 "TapJump" -> {
+                    vibrate()
                     changeStateTapJump()
                 }
                 //定时关闭 + 开启小窗
                 "setShutDownTime" -> {
+                    vibrate()
                     val dialog = Dialog(this)
                     val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_time, null)
                     dialog.setContentView(dialogView)
@@ -1490,8 +1511,8 @@ class PlayerActivity: AppCompatActivity(){
                         val hourInput = EditTextHour.text.toString().toIntOrNull()
                         val minuteInput = EditTextMinute.text.toString().toIntOrNull()
 
-                        var hour = 0
-                        var minute = 0
+                        var hour: Int
+                        var minute: Int
 
                         //获取时
                         if (hourInput == null || hourInput == 0 ){
@@ -1515,8 +1536,8 @@ class PlayerActivity: AppCompatActivity(){
                             notice("立即关闭", 1000)
                             lifecycleScope.launch {
                                 delay(2000)
-                                val pid = android.os.Process.myPid()
-                                android.os.Process.killProcess(pid)
+                                val pid = Process.myPid()
+                                Process.killProcess(pid)
                             }
                         }
 
@@ -1539,10 +1560,12 @@ class PlayerActivity: AppCompatActivity(){
                     startTimerShutDown(time, true)
                 }
                 "StartPiP" -> {
+                    vibrate()
                     startFloatingWindow()
                 }
                 //底部按钮
                 "VideoInfo" -> {
+                    vibrate()
                     //读取数据
                     val retriever = MediaMetadataRetriever()
                     retriever.setDataSource(MediaInfo_AbsolutePath)
@@ -1576,18 +1599,22 @@ class PlayerActivity: AppCompatActivity(){
                     videoInfoFragment.show(supportFragmentManager, "PlayerVideoInfoFragment")
                 }
                 "SysShare" -> {
+                    vibrate()
                     shareVideo(this, MediaInfo_VideoUri)
                 }
                 "UpdateCover" -> {
+                    vibrate()
                     updateCover(MediaInfo_FileName)
                 }
                 "Equalizer" -> {
+                    vibrate()
                     equalizer = Equalizer(1, vm.player.audioSessionId)
                     equalizer.enabled = true
                     PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
                 }
                 //退出事件
                 "Dismiss" -> {
+                    vibrate()
                     MovePlayArea_down()
                 }
             }
@@ -1806,7 +1833,6 @@ class PlayerActivity: AppCompatActivity(){
 
                 }
 
-
                 "Dismiss" -> {
                     MovePlayArea_down()
                 }
@@ -1824,9 +1850,8 @@ class PlayerActivity: AppCompatActivity(){
         }
 
 
-
         //读取播放列表
-        var playListString = ""
+        var playListString: String
         val PREFS_List = getSharedPreferences("PREFS_List", MODE_PRIVATE)
         if (PREFS_List.contains("CurrentPlayList")){
             playListString = PREFS_List.getString("CurrentPlayList", "错误") ?: "错误"
@@ -2720,8 +2745,8 @@ class PlayerActivity: AppCompatActivity(){
         if (playEnd_NeedShutDown) {
             playEnd_NeedShutDown = false
             finishAndRemoveTask()
-            val pid = android.os.Process.myPid()
-            android.os.Process.killProcess(pid)
+            val pid = Process.myPid()
+            Process.killProcess(pid)
             exitProcess(0)
         }
         if (vm.PREFS_ShutDownWhenMediaEnd) {
@@ -2734,8 +2759,8 @@ class PlayerActivity: AppCompatActivity(){
         }
         else{
             finishAndRemoveTask()
-            val pid = android.os.Process.myPid()
-            android.os.Process.killProcess(pid)
+            val pid = Process.myPid()
+            Process.killProcess(pid)
             exitProcess(0)
         }
     }
@@ -3224,8 +3249,8 @@ class PlayerActivity: AppCompatActivity(){
         //播放结束时关闭
         if (playEnd_NeedShutDown){
             finishAndRemoveTask()
-            val pid = android.os.Process.myPid()
-            android.os.Process.killProcess(pid)
+            val pid = Process.myPid()
+            Process.killProcess(pid)
             exitProcess(0)
         }
     }

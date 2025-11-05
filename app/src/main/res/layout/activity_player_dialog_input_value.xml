@@ -33,6 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="dialog_input"
+        android:gravity="center"
         android:textSize="14sp"
         android:inputType="numberDecimal"
         android:maxLength="5"

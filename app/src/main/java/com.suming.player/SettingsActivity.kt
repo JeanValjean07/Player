@@ -26,7 +26,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import data.MediaItemDao
 import data.MediaItemDataBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -541,11 +540,11 @@ class SettingsActivity: AppCompatActivity() {
             val gapInput = EditText.text.toString().toLongOrNull()
 
             if (gapInput == null || gapInput == 0L) {
-                Toast.makeText(this, "未输入内容", Toast.LENGTH_SHORT).show()
+                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
                 dialog.dismiss()
                 return@setOnClickListener
             } else if (gapInput > 1000) {
-                Toast.makeText(this, "寻帧间隔不能大于1秒", Toast.LENGTH_SHORT).show()
+                showCustomToast("寻帧间隔不能大于1秒", Toast.LENGTH_SHORT, 3)
                 dialog.dismiss()
                 return@setOnClickListener
             } else {
@@ -603,13 +602,13 @@ class SettingsActivity: AppCompatActivity() {
         Button.setOnClickListener {
             val gapInput = EditText.text.toString().toLongOrNull()
             if (gapInput == null || gapInput == 0L) {
-                Toast.makeText(this, "未输入内容", Toast.LENGTH_SHORT).show()
+                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
                 dialog.dismiss()
                 return@setOnClickListener
 
             }
             else if (gapInput > 1000) {
-                Toast.makeText(this, "时间更新间隔不能大于1秒", Toast.LENGTH_SHORT).show()
+                showCustomToast("时间更新间隔不能大于1秒", Toast.LENGTH_SHORT, 3)
                 dialog.dismiss()
                 return@setOnClickListener
             }
@@ -670,14 +669,14 @@ class SettingsActivity: AppCompatActivity() {
 
         title.text = "自定义：振动时长"
         Description.text = "输入自定义振动时长"
-        EditText.hint = "单位：毫秒丨设为0即为关闭"
+        EditText.hint = "单位：毫秒"
         Button.text = "确定"
 
         val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         Button.setOnClickListener {
             val gapInput = EditText.text.toString().toLongOrNull()
             if (gapInput == null || gapInput == 0L) {
-                Toast.makeText(this, "未输入内容", Toast.LENGTH_SHORT).show()
+                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
                 dialog.dismiss()
                 return@setOnClickListener
 
