@@ -6,6 +6,9 @@
         android:id="@+id/MenuAction_NoMillis"
         android:title="关闭" />
     <item
+        android:id="@+id/MenuAction_UseSys"
+        android:title="跟随系统" />
+    <item
         android:id="@+id/MenuAction_20"
         android:title="20 毫秒" />
     <item

@@ -26,6 +26,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
@@ -65,6 +66,9 @@ class MainActivity: AppCompatActivity() {
     private var statusBarHeight = 0
     //震动时间
     private var PREFS_VibrateMillis = 0L
+    private var PREFS_UseSysVibrate = false
+
+
 
     //无法打开视频时的接收器
     @SuppressLint("UnsafeOptInUsageError")
@@ -101,6 +105,12 @@ class MainActivity: AppCompatActivity() {
             PREFS_VibrateMillis = 10L
         }else{
             PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 10L)
+        }
+        if (!PREFS.contains("PREFS_UseSysVibrate")){
+            PREFS.edit { putBoolean("PREFS_UseSysVibrate", false).apply() }
+            PREFS_UseSysVibrate = false
+        }else{
+            PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", false)
         }
         //内容避让状态栏并预读取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
@@ -278,8 +288,17 @@ class MainActivity: AppCompatActivity() {
             getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
     private fun vibrate() {
+        if (PREFS_VibrateMillis <= 0L) {
+            return
+        }
         val vib = this@MainActivity.vibrator()
-        vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+        if (PREFS_UseSysVibrate) {
+            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+            vib.vibrate(effect)
+        }
+        else{
+            vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
     }
     //启动播放器
     @OptIn(UnstableApi::class)

@@ -249,6 +249,7 @@ class PlayerActivity: AppCompatActivity(){
     //VideoSeekHandler
     private var videoSeekHandlerGap = 0L
 
+
     //</editor-fold>
 
     interface OnFlagUpdateListener {
@@ -464,6 +465,12 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_EnablePlayAreaMove = false
             }else{
                 vm.PREFS_EnablePlayAreaMove = PREFS.getBoolean("PREFS_EnablePlayAreaMove", false)
+            }
+            if (!PREFS.contains("PREFS_UseSysVibrate")){
+                PREFSEditor.putBoolean("PREFS_UseSysVibrate", false)
+                vm.PREFS_UseSysVibrate = false
+            }else{
+                vm.PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", false)
             }
             PREFSEditor.apply()
         }
@@ -2610,8 +2617,17 @@ class PlayerActivity: AppCompatActivity(){
             getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
     private fun vibrate() {
+        if (vm.PREFS_VibrateMillis <= 0L) {
+            return
+        }
         val vib = this@PlayerActivity.vibrator()
-        vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+        if (vm.PREFS_UseSysVibrate) {
+            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+            vib.vibrate(effect)
+        }
+        else{
+            vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
     }
     //提取帧函数
     private fun ExtractFrame(videoPath: String, filename: String) {

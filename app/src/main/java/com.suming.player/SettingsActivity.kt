@@ -37,6 +37,7 @@ class SettingsActivity: AppCompatActivity() {
 
     //震动时间
     private var PREFS_VibrateMillis = 0L
+    private var PREFS_UseSysVibrate = false
 
     //开关初始化
     private lateinit var Switch_CloseVideoTrack: SwitchCompat
@@ -230,6 +231,12 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 50L)
         }
+        if (!PREFS.contains("PREFS_UseSysVibrate")) {
+            PREFS_Editor.putBoolean("PREFS_UseSysVibrate", false)
+            PREFS_UseSysVibrate = false
+        } else {
+            PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", false)
+        }
         PREFS_Editor.apply()
 
         //开关初始化
@@ -281,7 +288,11 @@ class SettingsActivity: AppCompatActivity() {
         if (PREFS_VibrateMillis == 0L) {
             currentVibrateMillis.text = "关闭"
         } else {
-            currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
+            if (PREFS_UseSysVibrate) {
+                currentVibrateMillis.text = "跟随系统"
+            } else {
+                currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
+            }
         }
 
 
@@ -425,6 +436,9 @@ class SettingsActivity: AppCompatActivity() {
                 when (item.itemId) {
                     R.id.MenuAction_NoMillis -> {
                         chooseVibrateMillis(0L); true
+                    }
+                    R.id.MenuAction_UseSys -> {
+                        chooseVibrateMillis(-1L); true
                     }
                     R.id.MenuAction_20 -> {
                         chooseVibrateMillis(20L); true
@@ -620,17 +634,28 @@ class SettingsActivity: AppCompatActivity() {
     @SuppressLint("SetTextI18n")
     private fun chooseVibrateMillis(gap: Long) {
         vibrate()
-        PREFS_VibrateMillis = gap
-        val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
-        PREFS.edit {
-            putLong("PREFS_VibrateMillis", gap)
+        //跟随系统
+        if (gap == -1L) {
+            PREFS_UseSysVibrate = true
+            val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+            PREFS.edit { putBoolean("PREFS_UseSysVibrate", true) }
+            val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
+            currentVibrateMillis.text = "跟随系统"
+            return
         }
+        //自定时长
+        PREFS_VibrateMillis = gap
+        PREFS_UseSysVibrate = false
+        val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+        PREFS.edit { putLong("PREFS_VibrateMillis", gap).apply() }
+        PREFS.edit { putBoolean("PREFS_UseSysVibrate", false).apply() }
         val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
         if (PREFS_VibrateMillis == 0L) {
             currentVibrateMillis.text = "关闭"
         } else {
             currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
         }
+        vibrate()
     }
     @SuppressLint("InflateParams", "SetTextI18n")
     private fun setVibrateMillis() {
@@ -664,8 +689,10 @@ class SettingsActivity: AppCompatActivity() {
             }
             else {
                 PREFS_VibrateMillis = gapInput
+                PREFS_UseSysVibrate = false
                 val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
-                PREFS.edit { putLong("PREFS_VibrateMillis", gapInput).commit() }
+                PREFS.edit { putLong("PREFS_VibrateMillis", gapInput).apply() }
+                PREFS.edit { putBoolean("PREFS_UseSysVibrate", false).apply() }
                 //界面刷新
                 val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
                 if (PREFS_VibrateMillis == 0L) {
@@ -696,8 +723,17 @@ class SettingsActivity: AppCompatActivity() {
             getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
     private fun vibrate() {
+        if (PREFS_VibrateMillis <= 0L) {
+            return
+        }
         val vib = this@SettingsActivity.vibrator()
-        vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+        if (PREFS_UseSysVibrate) {
+            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+            vib.vibrate(effect)
+        }
+        else{
+            vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
     }
 
 

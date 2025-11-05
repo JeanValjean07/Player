@@ -116,6 +116,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_UseOnlySyncFrame : Boolean = false
     var PREFS_RaiseProgressBarInLandscape : Boolean = false
     var PREFS_VibrateMillis: Long = 10L
+    var PREFS_UseSysVibrate: Boolean = false
     var PREFS_ShutDownWhenMediaEnd: Boolean = false
     var PREFS_TimeUpdateGap: Long = 20L
     var PREFS_SavePositionWhenExit: Boolean = false
