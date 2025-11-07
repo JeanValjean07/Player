@@ -185,7 +185,7 @@
                                     app:thumbTint="@color/switchThumbColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
-                            <!-- 开关：循环播放 -->
+                            <!-- 菜单：循环播放 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -203,7 +203,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="循环播放"
+                                    android:text="循环模式"
                                     android:textSize="16sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
@@ -212,15 +212,18 @@
                                     android:layout_width="0dp"
                                     android:layout_height="0dp"
                                     android:layout_weight="1"/>
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_LoopPlay"
+                                <!-- 循环模式 -->
+                                <TextView
+                                    android:id="@+id/ButtonLoopMode"
                                     android:layout_width="wrap_content"
-                                    android:layout_height="20dp"
+                                    android:layout_height="40dp"
+                                    android:text="循环模式"
                                     android:layout_gravity="center"
-                                    android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
+                                    android:gravity="center"
+                                    android:paddingEnd="10dp"
+                                    android:paddingStart="10dp"
+                                    android:textSize="14sp"
+                                    android:textColor="@color/HeadText" />
                             </LinearLayout>
                             <!-- 按钮：倍速 -->
                             <LinearLayout
@@ -766,7 +769,7 @@
                         android:layout_marginTop="10dp"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        android:layout_marginBottom="50dp"
+                        android:layout_marginBottom="30dp"
                         app:cardBackgroundColor="@color/Background4"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="0dp">
@@ -927,6 +930,45 @@
                                     android:layout_width="35dp"
                                     android:layout_height="20dp"
                                     android:text="打开"
+                                    android:textSize="14sp"
+                                    android:gravity="center"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="12dp"
+                                    android:textColor="@color/Text2"
+                                    tools:ignore="SmallSp" />
+                            </LinearLayout>
+                            <!-- 重建缩略图 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="18dp"
+                                    android:layout_height="18dp"
+                                    android:src="@drawable/ic_more_button_capture"
+                                    android:scaleType="centerCrop"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="重新生成进度条缩略图"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2" />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1"/>
+                                <TextView
+                                    android:id="@+id/ButtonReCreateThumb"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="20dp"
+                                    android:text="重新生成"
                                     android:textSize="14sp"
                                     android:gravity="center"
                                     android:layout_gravity="center"

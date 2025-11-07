@@ -14,12 +14,12 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/mainCard"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         app:cardCornerRadius="8dp"
         app:cardBackgroundColor="@color/Background3"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="500dp"
+        android:layout_marginTop="300dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:cardElevation="10dp">
@@ -68,6 +68,38 @@
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1"/>
+                    <!-- 按钮：上一曲 -->
+                    <ImageButton
+                        android:id="@+id/ButtonPreviousMedia"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_play_list_previous"
+                        tools:ignore="ContentDescription" />
+                    <!-- 按钮：下一曲 -->
+                    <ImageButton
+                        android:id="@+id/ButtonNextMedia"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@android:color/transparent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_play_list_next"
+                        tools:ignore="ContentDescription" />
+                    <!-- 循环模式 -->
+                    <TextView
+                        android:id="@+id/ButtonLoopMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="循环模式"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:paddingEnd="10dp"
+                        android:paddingStart="10dp"
+                        android:textSize="12sp"
+                        android:textColor="@color/HeadText" />
                     <!-- 按钮：页面锁定 -->
                     <ImageButton
                         android:id="@+id/buttonLock"
@@ -96,7 +128,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        android:layout_marginBottom="300dp"
+                        android:layout_marginBottom="30dp"
                         app:cardBackgroundColor="@color/Background4"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="0dp">

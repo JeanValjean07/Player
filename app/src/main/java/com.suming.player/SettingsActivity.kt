@@ -727,7 +727,7 @@ class SettingsActivity: AppCompatActivity() {
         }
         val vib = this@SettingsActivity.vibrator()
         if (PREFS_UseSysVibrate) {
-            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
             vib.vibrate(effect)
         }
         else{

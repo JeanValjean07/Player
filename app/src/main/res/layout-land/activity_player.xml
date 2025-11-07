@@ -83,7 +83,7 @@
         android:id="@+id/ControllerLayer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="false"
+        android:fitsSystemWindows="true"
         android:translationZ="10dp">
         <!-- 顶部横排按钮区 -->
         <LinearLayout
@@ -107,8 +107,7 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_general_exit_stroke"
                 android:layout_marginStart="8dp"
-                android:layout_weight="0"
-                />
+                android:layout_weight="0"/>
             <!-- 占位 -->
             <View
                 android:layout_width="match_parent"
@@ -126,16 +125,17 @@
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_general_more_options_stroke"
                 android:layout_marginEnd="8dp"
-                android:layout_weight="0"/>
+                android:layout_weight="0" />
         </LinearLayout>
         <!-- 缩略图上方按钮区 -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/ButtonArea1"
+            android:id="@+id/ButtonArea"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:elevation="20dp"
-            app:layout_constraintBottom_toTopOf="@+id/ScrollerRootAreaCard"
-            android:layout_marginBottom="5dp">
+            app:layout_constraintBottom_toTopOf="@+id/ScrollerRootAreaConstraint"
+            android:layout_marginBottom="5dp"
+            android:translationZ="3dp">
             <!-- 按钮：暂停/开始 -->
             <FrameLayout
                 android:id="@+id/buttonPauseContainer"
@@ -143,7 +143,6 @@
                 android:layout_height="45dp"
                 android:layout_marginEnd="15dp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
                 <com.google.android.material.button.MaterialButton
                     android:layout_width="37dp"
@@ -166,7 +165,6 @@
                     android:elevation="11dp"
                     android:focusable="true"
                     android:padding="5dp">
-
                     <ImageView
                         android:id="@+id/PauseImage"
                         android:layout_width="19dp"
@@ -178,7 +176,6 @@
                         android:src="@drawable/ic_controller_player_pause"
                         android:visibility="gone"
                         tools:ignore="ContentDescription" />
-
                     <ImageView
                         android:id="@+id/ContinueImage"
                         android:layout_width="15dp"
@@ -271,7 +268,6 @@
                         tools:ignore="ContentDescription" />
                 </FrameLayout>
             </FrameLayout>
-
             <!-- 当前时间 -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/VideoCurrentTimeCard"
@@ -327,75 +323,69 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
         </androidx.constraintlayout.widget.ConstraintLayout>
         <!-- 缩略图区 -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/ScrollerRootAreaCard"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/ScrollerRootAreaConstraint"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/CardView1"
-            android:paddingLeft="20dp"
-            android:paddingTop="10dp"
-            android:paddingRight="20dp"
-            android:paddingBottom="10dp"
-            app:cardCornerRadius="0dp"
-            app:cardElevation="20dp"
+            android:background="@color/bottomArea"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-            <!-- 缩略图式进度滚动条(父级) -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/ScrollerRootAreaConstraint"
+            android:minHeight="65dp">
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:minHeight="45dp">
-                <!-- 缩略图式进度滚动条(父级) -->
+                android:layout_height="0.05dp"
+                android:background="@color/strokeLine"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+            <!-- 缩略图式进度滚动条 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ScrollerArea"
+                android:layout_width="match_parent"
+                android:layout_height="45dp"
+                android:layout_marginBottom="20dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
                 <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/ScrollerArea"
-                    android:layout_width="match_parent"
-                    android:layout_height="45dp"
+                    android:id="@+id/innerContainer"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent">
-                    <!-- 缩略图式进度滚动条(本人) -->
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:id="@+id/innerContainer"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+                    <!-- RecyclerView核心 -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvThumbnails"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
-                        android:layout_marginTop="5dp"
-                        android:layout_marginBottom="5dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
-                        <!-- RecyclerView核心 -->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/rvThumbnails"
-                            android:layout_width="0dp"
-                            android:layout_height="0dp"
-                            android:adjustViewBounds="false"
-                            android:backgroundTint="@color/CardViewRV"
-                            android:clipToPadding="false"
-                            android:orientation="horizontal"
-                            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                            app:layout_constraintBottom_toBottomOf="@+id/innerContainer"
-                            app:layout_constraintEnd_toEndOf="@+id/innerContainer"
-                            app:layout_constraintHorizontal_bias="0.0"
-                            app:layout_constraintStart_toStartOf="@+id/innerContainer"
-                            app:layout_constraintTop_toTopOf="@+id/innerContainer"
-                            app:layout_constraintVertical_bias="0.0" />
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-                    <!-- 底部抬起高度区域 -->
-                    <View
-                        android:layout_width="2dp"
-                        android:layout_height="match_parent"
-                        android:background="@color/HeadText"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent" />
+                        android:adjustViewBounds="false"
+                        android:backgroundTint="@color/CardViewRV"
+                        android:clipToPadding="false"
+                        android:orientation="horizontal"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        app:layout_constraintBottom_toBottomOf="@+id/innerContainer"
+                        app:layout_constraintEnd_toEndOf="@+id/innerContainer"
+                        app:layout_constraintHorizontal_bias="0.0"
+                        app:layout_constraintStart_toStartOf="@+id/innerContainer"
+                        app:layout_constraintTop_toTopOf="@+id/innerContainer"
+                        app:layout_constraintVertical_bias="0.0" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
+                <View
+                    android:layout_width="2dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/HeadText"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
-        </androidx.cardview.widget.CardView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

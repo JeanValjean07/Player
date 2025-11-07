@@ -1,26 +1,21 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
 import androidx.cardview.widget.CardView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,13 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.bundleOf
@@ -52,14 +42,11 @@ import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 @SuppressLint("ComposableNaming")
 @UnstableApi
-class PlayerFragmentList: DialogFragment() {
+class PlayerFragmentPlayList: DialogFragment() {
 
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
@@ -72,8 +59,8 @@ class PlayerFragmentList: DialogFragment() {
 
 
     companion object {
-        fun newInstance(): PlayerFragmentList =
-            PlayerFragmentList().apply {
+        fun newInstance(): PlayerFragmentPlayList =
+            PlayerFragmentPlayList().apply {
                 arguments = bundleOf(
 
                 )
@@ -166,22 +153,34 @@ class PlayerFragmentList: DialogFragment() {
                 ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
             }
         }
+        //按钮：上一曲
+        val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
+        ButtonPreviousMedia.setOnClickListener {
+            val result = bundleOf("KEY" to "PreviousMedia")
+            setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
+
+            customDismiss()
+        }
+        //按钮：下一曲
+        val ButtonNextMedia = view.findViewById<ImageButton>(R.id.ButtonNextMedia)
+        ButtonNextMedia.setOnClickListener {
+            val result = bundleOf("KEY" to "NextMedia")
+            setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
+
+            customDismiss()
+        }
 
 
+
+        //声明式显示列表
         val playListString = vm.List_PlayList
-
         val composableView = view.findViewById<View>(R.id.composableView)
         val composeView = composableView as androidx.compose.ui.platform.ComposeView
         composeView.setContent {
             showVideoList(playListString)
         }
 
-
-
-
-
-
-        //读取播放列表
+        //读取播放列表：读取操作交给activity承担
         /*
         val PREFS_List = requireContext().getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
         if (PREFS_List.contains("CurrentPlayList")){
@@ -198,9 +197,6 @@ class PlayerFragmentList: DialogFragment() {
         }
 
          */
-
-
-
 
 
         //面板下滑关闭(NestedScrollView)
@@ -268,7 +264,6 @@ class PlayerFragmentList: DialogFragment() {
                         MotionEvent.ACTION_MOVE -> {
                             deltaY = event.rawY - down_y
                             deltaX = event.rawX - down_x
-                            Log.d("SuMing", "deltaY: $deltaY, deltaX: $deltaX")
                             if (deltaX < 0){
                                 return@setOnTouchListener false
                             }
@@ -311,9 +306,10 @@ class PlayerFragmentList: DialogFragment() {
 
     } //onViewCreated END
 
-    //Composable
+
+
     @Composable
-    fun showVideoList(playlistString: String) {
+    private fun showVideoList(playlistString: String) {
         val list = remember(playlistString) { parsePlaylistString(playlistString) }
 
         Column(
@@ -382,23 +378,6 @@ class PlayerFragmentList: DialogFragment() {
         }
     }
 
-
-    //傻逼预览
-    /*
-    @Preview(showBackground = true)
-    @Composable
-    fun PlainVideoListPreview() {
-        showVideoList(
-            playlistString = """
-            MediaItem_video(uri=content://media/external/video/media/3248, name=角色入场4.mp4),
-            MediaItem_video(uri=content://media/external/video/media/537, name=角色入场3.mp4)
-        """.trimIndent(),
-        )
-    }
-
-     */
-
-
     private fun onPlayClick(item: MediaItem_video) {
 
         val itemString = item.toString()
@@ -412,16 +391,12 @@ class PlayerFragmentList: DialogFragment() {
 
     private fun onDeleteClick(item: MediaItem_video) {
 
-       Log.d("SuMing", "onDeleteClick: $item")
-
-
 
     }
 
-
     //Functions
     //字符串转list<MediaItem_video>
-    fun parsePlaylistString(str: String): List<MediaItem_video> {
+    private fun parsePlaylistString(str: String): List<MediaItem_video> {
         val regex = """MediaItem_video\(uri=([^,]+),\s*name=([^)]+)\)""".toRegex()
         return regex.findAll(str).map {
             MediaItem_video(
@@ -430,8 +405,6 @@ class PlayerFragmentList: DialogFragment() {
             )
         }.toList()
     }
-
-
 
     //自定义退出逻辑
     private fun customDismiss(){

@@ -1,5 +1,4 @@
 package com.suming.player
-
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
@@ -7,7 +6,6 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -20,14 +18,14 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.cardview.widget.CardView
+import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.DialogFragment
-import androidx.media3.common.util.UnstableApi
-import androidx.core.content.edit
 import androidx.core.widget.NestedScrollView
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
+import androidx.media3.common.util.UnstableApi
 import kotlin.math.abs
 
 @UnstableApi
@@ -94,9 +92,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_main_fragment_media_store_settings, container, false)
 
-    @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n",
-        "ClickableViewAccessibility"
-    )
+    @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         //按钮：退出
@@ -260,7 +256,6 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                         MotionEvent.ACTION_MOVE -> {
                             deltaY = event.rawY - down_y
                             deltaX = event.rawX - down_x
-                            Log.d("SuMing", "deltaY: $deltaY, deltaX: $deltaX")
                             if (deltaX < 0){
                                 return@setOnTouchListener false
                             }

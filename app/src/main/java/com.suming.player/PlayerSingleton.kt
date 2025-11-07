@@ -14,7 +14,7 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
 @UnstableApi
 @Suppress("unused")
-object PlayerExoSingleton {
+object PlayerSingleton {
 
     var _player: ExoPlayer? = null
     @SuppressLint("StaticFieldLeak")
@@ -84,5 +84,9 @@ object PlayerExoSingleton {
 
     fun pausePlayer() {
         _player?.pause()
+    }
+
+    fun clearPlayer() {
+        _player?.clearMediaItems()
     }
 }

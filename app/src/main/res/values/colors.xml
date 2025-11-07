@@ -40,6 +40,9 @@
 
     <color name="divider">#E0E0E0</color>
 
+    <color name="strokeLine">#EEEEEE</color>
+    <color name="bottomArea">#FFFFFF</color>
+
 
 
     <color name="HeadText111">#000000</color>

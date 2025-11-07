@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -13,7 +12,6 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
@@ -26,14 +24,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -45,15 +41,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import data.MediaModel.MediaItem_video
 import data.MediaDataReader.MediaReader_video
-import data.MediaItemDataBase
 import data.MediaItemRepo
-import data.MediaItemSetting
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.math.RoundingMode
-import kotlin.math.hypot
-import kotlin.math.pow
 
 @Suppress("unused")
 class MainActivity: AppCompatActivity() {
@@ -80,11 +71,11 @@ class MainActivity: AppCompatActivity() {
                 load()
             }
             else if (result.data?.getStringExtra("NEED_CLOSE") == "NEED_CLOSE") {
-                PlayerExoSingleton.stopPlayer()
+                PlayerSingleton.clearPlayer()
             }
             else if (result.data?.getStringExtra("HAS_CLOSED") == "HAS_CLOSED") {
                 notice("该视频已关闭", 2000)
-                PlayerExoSingleton.stopPlayer()
+                PlayerSingleton.clearPlayer()
             }
         }
     }
@@ -205,10 +196,10 @@ class MainActivity: AppCompatActivity() {
         }
 
 
+
         //监听返回手势
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                vibrate()
                 finish()
             }
         })
@@ -249,7 +240,6 @@ class MainActivity: AppCompatActivity() {
         )
 
         val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
-        //recyclerview1.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         recyclerview1.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
 
         //注册adapter
@@ -293,7 +283,7 @@ class MainActivity: AppCompatActivity() {
         }
         val vib = this@MainActivity.vibrator()
         if (PREFS_UseSysVibrate) {
-            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
             vib.vibrate(effect)
         }
         else{

@@ -30,6 +30,25 @@ class PlayerActionReceiver:BroadcastReceiver() {
                 }
                 LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
             }
+            "PLAYER_NextMedia" -> {
+                val intent2 = Intent("LOCAL_RECEIVER").apply {
+                    putExtra("key", "PLAYER_NextMedia")
+                }
+                LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
+            }
+            "PLAYER_PreviousMedia" -> {
+                val intent2 = Intent("LOCAL_RECEIVER").apply {
+                    putExtra("key", "PLAYER_PreviousMedia")
+                }
+                LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
+            }
+            "PLAYER_PlayOrPause" -> {
+                Log.d("SuMing", " receiver PLAYER_PlayOrPause")
+                val intent2 = Intent("LOCAL_RECEIVER").apply {
+                    putExtra("key", "PLAYER_PlayOrPause")
+                }
+                LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
+            }
         }
     }
 }

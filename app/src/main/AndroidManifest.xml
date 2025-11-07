@@ -1,6 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="ImpliedTouchscreenHardware,MissingLeanbackLauncher,MissingLeanbackSupport">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
@@ -46,7 +47,8 @@
         <activity android:name=".PlayerActivity"
             android:theme="@style/THEME_Player"
             android:label="播放器"
-            android:screenOrientation="portrait"
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize|screenLayout"
             android:launchMode="singleTask"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
@@ -96,7 +98,7 @@
 
         <!-- 后台播放服务 -->
         <service
-            android:name=".PlayerBackgroundServices"
+            android:name=".PlayerService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>

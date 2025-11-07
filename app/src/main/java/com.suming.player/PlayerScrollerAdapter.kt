@@ -259,8 +259,6 @@ class PlayerScrollerAdapter(
             //保存标记状态
             onFlagUpdateListener.onFlagUpdate(position)
 
-
-
         }
     }
     //截取占位缩略图

@@ -5,20 +5,16 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
 import androidx.cardview.widget.CardView
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
@@ -36,7 +32,6 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.util.UnstableApi
-import kotlin.getValue
 import kotlin.math.abs
 
 @UnstableApi
@@ -272,7 +267,6 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                         MotionEvent.ACTION_MOVE -> {
                             deltaY = event.rawY - down_y
                             deltaX = event.rawX - down_x
-                            Log.d("SuMing", "deltaY: $deltaY, deltaX: $deltaX")
                             if (deltaX < 0){
                                 return@setOnTouchListener false
                             }

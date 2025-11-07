@@ -18,10 +18,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private val app = application
 
     val player: ExoPlayer
-        get() = PlayerExoSingleton.getPlayer(app)
+        get() = PlayerSingleton.getPlayer(app)
 
     val trackSelector: DefaultTrackSelector
-        get() = PlayerExoSingleton.getTrackSelector(app)
+        get() = PlayerSingleton.getTrackSelector(app)
 
     fun setVideoUri(videoUri: Uri) {
         player.setMediaItem(MediaItem.fromUri(videoUri))
@@ -125,6 +125,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
 
 
+
+    var YaxisDestination = 800f
 
     var List_PlayList = ""
 
