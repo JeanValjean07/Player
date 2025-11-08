@@ -307,7 +307,7 @@ class PlayerActivity: AppCompatActivity(){
 
         //首次启动提取uri并保存
         if (savedInstanceState == null) {
-            //PlayerSingleton.releasePlayer()
+            PlayerSingleton.releasePlayer()
             if (vm.MediaInfo_Uri_Saved){
                 MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
                 intent = vm.originIntent
@@ -682,7 +682,6 @@ class PlayerActivity: AppCompatActivity(){
                     vm.player.seekToPreviousMediaItem()
                 }
                 if (data == "PLAYER_PlayOrPause") {
-                    Log.d("SuMing", "PLAYER_PlayOrPause")
                     if (vm.player.isPlaying) {
                         vm.player.pause()
                     } else {
@@ -855,6 +854,7 @@ class PlayerActivity: AppCompatActivity(){
                 if (e.action == MotionEvent.ACTION_DOWN) {
                     scrollerState_Pressed = true
                     scrollerState_DraggingStay = true
+                    lastSeekExecuted = false
                     if (vm.player.isPlaying && vm.allowRecord_wasPlaying) {
                         vm.wasPlaying = true
                     }
@@ -906,6 +906,7 @@ class PlayerActivity: AppCompatActivity(){
                 }
             }
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (!vm.state_firstReadyReached) return
                 //进度条随视频滚动,用户没有操作
                 if (scrollerState_Stay) {
                     return
@@ -947,9 +948,10 @@ class PlayerActivity: AppCompatActivity(){
                     if (currentMillis - lastMillis > vm.PREFS_TimeUpdateGap) {
                         lastMillis = currentMillis
                         if (vm.PREFS_LinkScroll && vm.state_firstReadyReached) {
-                            val percentScroll = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
-                            var duration: Long = 0L
+                            var percentScroll = 0f
+                            var duration = 0L
                             withContext(Dispatchers.Main) {
+                                percentScroll = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
                                 duration = vm.player.duration
                             }
                             videoTimeTo = (percentScroll * duration).toLong()
@@ -982,6 +984,8 @@ class PlayerActivity: AppCompatActivity(){
                     //进度条往右走/视频反向
                     else if (dx < 0) {
                         scrollerState_BackwardScroll = true
+                        withContext(Dispatchers.Main) { vm.player.pause() }
+                        stopVideoSmartScroll()
                         startVideoSeek()
                     }
                 }
@@ -1839,6 +1843,7 @@ class PlayerActivity: AppCompatActivity(){
             setControllerInvisibleNoAnimation()
         }
 
+        /*
         lifecycleScope.launch(Dispatchers.IO) {
             delay(2000)
             if (!vm.state_firstReadyReached){
@@ -1847,6 +1852,8 @@ class PlayerActivity: AppCompatActivity(){
             }
 
         }
+
+         */
 
         //开启空闲倒计时
         startIdleTimer()
@@ -1903,7 +1910,6 @@ class PlayerActivity: AppCompatActivity(){
             //移除查询参数
             val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
 
-            //Log.d("SuMing", "MediaInfo_AbsolutePath_clean: $MediaInfo_AbsolutePath_clean, MediaInfo_FileName: $MediaInfo_FileName")
 
             //绑定Adapter
             //使用超长进度条
@@ -2010,13 +2016,11 @@ class PlayerActivity: AppCompatActivity(){
     private fun readPlayListFromExoplayer(){
         //列表条目数
         val count = vm.player.mediaItemCount
-        //Log.d("SuMing", "从ExoPlayer读取媒体列表：媒体条目数:${count}")
         if (count == 0) { return }
         for (i in 0 until count) {
             val mediaItem: MediaItem = vm.player.getMediaItemAt(i)
             val uri = mediaItem.localConfiguration?.uri
             val title = mediaItem.mediaMetadata.title ?: "无标题"
-            Log.d("SuMing", "从ExoPlayer读取媒体列表：索引${i} -URI: ${uri} -标题:${title}")
         }
     }
 
@@ -2174,7 +2178,6 @@ class PlayerActivity: AppCompatActivity(){
             vm.PREFS_AlwaysSeek = true
         } else {
             vm.PREFS_AlwaysSeek = PREFS.getBoolean("PREFS_AlwaysSeek", true)
-            Log.d("SuMing","PREFS_AlwaysSeek : ${vm.PREFS_AlwaysSeek}")
         }
         if (!PREFS.contains("PREFS_LinkScroll")) {
             PREFSEditor.putBoolean("PREFS_LinkScroll", true)
@@ -2285,11 +2288,11 @@ class PlayerActivity: AppCompatActivity(){
     //Runnable:视频倍速滚动
 
     var lastSeekExecuted = false
-
+    var lastSeekExecuted2 = false
     private val videoSmartScrollHandler = Handler(Looper.getMainLooper())
     private var videoSmartScroll = object : Runnable{
         override fun run() {
-
+            vm.allowRecord_wasPlaying = false
             val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
             var delayGap = if (scrollerState_Pressed){ 30L } else{ 30L }
             val videoPosition = vm.player.currentPosition
@@ -2299,30 +2302,28 @@ class PlayerActivity: AppCompatActivity(){
                 if (vm.player.currentPosition > scrollerPosition - 100) {
                     vm.player.pause()
                 }else{
-                    vm.player.play()
-                }
+                    val positionGap = scrollerPosition - videoPosition
+                    var speed5 = (((positionGap / 100).toInt()) /10.0).toFloat()
 
-                val positionGap = scrollerPosition - videoPosition
+                    if (speed5 > lastPlaySpeed){
+                        speed5 = speed5 + 0.2f
+                    }else if(speed5 < lastPlaySpeed){
+                        speed5 = speed5 - 0.2f
+                    }
 
-                var speed5 = (((positionGap / 100).toInt()) /10.0).toFloat()
-                if (speed5 > lastPlaySpeed){
-                    speed5 = speed5 + 0.2f
-                }else if(speed5 < lastPlaySpeed){
-                    speed5 = speed5 - 0.2f
-                }
-                val MAX_EFFICIENT_SPEED = 8.0f
-                speed5 = speed5.coerceAtMost(MAX_EFFICIENT_SPEED)
 
-                if (speed5 > 0f){
-                    vm.player.setPlaybackSpeed(speed5)
-                }else{
-                    vm.player.play()
+                    val MAX_EFFICIENT_SPEED = 20.0f
+                    speed5 = speed5.coerceAtMost(MAX_EFFICIENT_SPEED)
+
+
+                    if (speed5 > 0f){ vm.player.setPlaybackSpeed(speed5) }
                 }
                 videoSmartScrollHandler.postDelayed(this,delayGap)
             }
             else{
                 if (lastSeekExecuted) return
                 lastSeekExecuted = true
+
                 global_SeekToMs = scrollerPosition.toLong()
                 vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
                 smartScrollRunnableRunning = false
@@ -2342,8 +2343,6 @@ class PlayerActivity: AppCompatActivity(){
         }
         if (smartScrollRunnableRunning) return
         smartScrollRunnableRunning = true
-        playerReadyFrom_SmartScrollLastSeek = false
-        lastSeekExecuted = false
         videoSmartScrollHandler.post(videoSmartScroll)
     }
     private fun stopVideoSmartScroll() {
@@ -2365,7 +2364,23 @@ class PlayerActivity: AppCompatActivity(){
             val seekToMs   = (percent * vm.player.duration).toLong()
             //反向滚动时防止seek到前面
             if (scrollerState_BackwardScroll){
-                if (seekToMs < vm.player.currentPosition){
+                if (vm.PREFS_AlwaysSeek) {
+                    if (seekToMs < vm.player.currentPosition){
+                        vm.player.pause()
+                        if (seekToMs < 50){
+                            playerReadyFrom_LastSeek = true
+                            vm.player.seekTo(0)
+                        }
+                        else{
+                            if (isSeekReady){
+                                isSeekReady = false
+                                playerReadyFrom_NormalSeek = true
+                                vm.player.seekTo(seekToMs)
+                            }
+                        }
+                    }
+                }
+                else{
                     vm.player.pause()
                     if (seekToMs < 50){
                         playerReadyFrom_LastSeek = true
@@ -2429,7 +2444,7 @@ class PlayerActivity: AppCompatActivity(){
     private fun startLastSeek() {
         lastSeekHandler.post(lastSeek)
     }
-    //Runnable:lastSeek
+    //Runnable:SmartScrollLastSeek
     private val SmartScrollLastSeekHandler = Handler(Looper.getMainLooper())
     private var SmartScrollLastSeek = object : Runnable{
         override fun run() {
@@ -3365,7 +3380,8 @@ class PlayerActivity: AppCompatActivity(){
                 else{
                     //确认退出
                     if (EnterAnimationComplete){
-                        PlayerSingleton.clearPlayer()
+                        //PlayerSingleton.clearPlayer()
+                        PlayerSingleton.releasePlayer()
                         stopFloatingWindow()
                         saveChangedMap()
                         saveChangedPrefs()
@@ -3394,7 +3410,8 @@ class PlayerActivity: AppCompatActivity(){
             else{
                 //确认退出
                 if (EnterAnimationComplete){
-                    PlayerSingleton.clearPlayer()
+                    //PlayerSingleton.clearPlayer()
+                    PlayerSingleton.releasePlayer()
                     stopFloatingWindow()
                     saveChangedMap()
                     saveChangedPrefs()
@@ -3522,6 +3539,7 @@ class PlayerActivity: AppCompatActivity(){
     }
 
     private fun playerReady(){
+        isSeekReady = true
         if (playerReadyFrom_FirstEntry) {
             playerReadyFrom_FirstEntry = false
             vm.state_firstReadyReached = true
@@ -3546,19 +3564,6 @@ class PlayerActivity: AppCompatActivity(){
 
             return
         }
-        if (playerReadyFrom_NormalSeek){
-            playerReadyFrom_NormalSeek = false
-            isSeekReady = true
-            return
-        }
-        if (playerReadyFrom_LastSeek){
-            playerReadyFrom_LastSeek = false
-            isSeekReady = true
-            //恢复播放状态
-            if (vm.wasPlaying){ playVideo() }
-            vm.allowRecord_wasPlaying = true
-
-        }
         if (playerReadyFrom_SmartScrollLastSeek){
             playerReadyFrom_SmartScrollLastSeek = false
             isSeekReady = true
@@ -3570,7 +3575,24 @@ class PlayerActivity: AppCompatActivity(){
                 vm.player.setPlaybackSpeed(1f)
             }
             vm.allowRecord_wasPlaying = true
+
+            return
         }
+        if (playerReadyFrom_LastSeek){
+            playerReadyFrom_LastSeek = false
+            isSeekReady = true
+            //恢复播放状态
+            if (vm.wasPlaying){ playVideo() }
+            vm.allowRecord_wasPlaying = true
+
+            return
+        }
+        if (playerReadyFrom_NormalSeek){
+            playerReadyFrom_NormalSeek = false
+            isSeekReady = true
+            return
+        }
+
     }
 
     private fun playerEnd(){
@@ -3611,6 +3633,9 @@ class PlayerActivity: AppCompatActivity(){
         vm.player.setPlaybackSpeed(1f)
         vm.player.play()
         if (vm.PREFS_LinkScroll){ startScrollerSync() }
+        if (!vm.PREFS_OnlyVideo) {
+            vm.player.volume = 1f
+        }
         lifecycleScope.launch {
             delay(100)
             startVideoTimeSync()

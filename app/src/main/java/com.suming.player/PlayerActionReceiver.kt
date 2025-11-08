@@ -43,7 +43,6 @@ class PlayerActionReceiver:BroadcastReceiver() {
                 LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent2)
             }
             "PLAYER_PlayOrPause" -> {
-                Log.d("SuMing", " receiver PLAYER_PlayOrPause")
                 val intent2 = Intent("LOCAL_RECEIVER").apply {
                     putExtra("key", "PLAYER_PlayOrPause")
                 }

@@ -220,8 +220,6 @@ class PlayerService(): MediaSessionService() {
     }
 
     private fun BroadcastPlayOrPause(): PendingIntent {
-
-        Log.d("SuMing", " service PLAYER_PlayOrPause")
         val intent = Intent(this, PlayerActionReceiver::class.java).apply {
             action = "PLAYER_PlayOrPause"
             data = "intent:playhouse/${System.currentTimeMillis()}".toUri()
