@@ -17,13 +17,10 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
@@ -140,31 +137,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
         Switch_OnlyAudio = view.findViewById(R.id.Switch_OnlyAudio)
         Switch_OnlyVideo = view.findViewById(R.id.Switch_OnlyVideo)
         Switch_ExitWhenMediaEnd = view.findViewById(R.id.Switch_ExitWhenMediaEnd)
+        Switch_SavePositionWhenExit = view.findViewById(R.id.Switch_SavePositionWhenExit)
         Switch_BackgroundPlay.isChecked = vm.PREFS_BackgroundPlay
         Switch_SealOEL.isChecked = vm.PREFS_SealOEL
         Switch_OnlyAudio.isChecked = vm.PREFS_OnlyAudio
         Switch_OnlyVideo.isChecked = vm.PREFS_OnlyVideo
         Switch_ExitWhenMediaEnd.isChecked = vm.PREFS_ShutDownWhenMediaEnd
+        Switch_SavePositionWhenExit.isChecked = vm.PREFS_SavePositionWhenExit
 
-        //保存进度仅在数据库启用时开启
-        val ContainerSavePosition = view.findViewById<LinearLayout>(R.id.ContainerSavePosition)
-        if (!vm.PREFS_EnableRoomDatabase) {
-            ContainerSavePosition.visibility = View.GONE
-        } else {
-            Switch_SavePositionWhenExit = view.findViewById(R.id.Switch_SavePositionWhenExit)
-            Switch_SavePositionWhenExit.isChecked = vm.PREFS_SavePositionWhenExit
-            //开关：退出时保存进度
-            Switch_SavePositionWhenExit.setOnCheckedChangeListener { _, isChecked ->
-                vibrate()
-
-                vm.PREFS_SavePositionWhenExit = isChecked
-
-                val result = bundleOf("KEY" to "SavePosition")
-                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
-                customDismiss()
-            }
-        }
 
 
         //按钮：退出
@@ -298,6 +278,16 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
             customDismiss()
         }
+        //开关：保存播放进度
+        Switch_SavePositionWhenExit.setOnCheckedChangeListener { _, isChecked ->
+            vibrate()
+            vm.PREFS_SavePositionWhenExit = isChecked
+
+            val result = bundleOf("KEY" to "SavePositionWhenExit")
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
+            customDismiss()
+        }
         //开关：播放结束时关闭
         Switch_ExitWhenMediaEnd.setOnCheckedChangeListener { _, isChecked ->
             vibrate()
@@ -377,16 +367,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val ButtonAlwaysSeek = view.findViewById<FrameLayout>(R.id.buttonActualAlwaysSeek)
         val ButtonAlwaysMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialAlwaysSeek)
         if (vm.PREFS_AlwaysSeek) {
-            ButtonAlwaysMaterial.backgroundTintList =
-                ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+            ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
         } else {
-            ButtonAlwaysMaterial.backgroundTintList =
-                ColorStateList.valueOf(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.ButtonBgClosed
-                    )
-                )
+            ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBgClosed))
         }
         ButtonAlwaysSeek.setOnClickListener {
             vibrate()
@@ -650,7 +633,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         currentSpeedText?.text = speed.toString()
         //存表
         lifecycleScope.launch {
-            val newSetting = MediaItemSetting(MARK_FileName = vm.fileName, PREFS_PlaySpeed = speed)
+            val newSetting = MediaItemSetting(MARK_FileName = vm.MediaInfo_FileName, PREFS_PlaySpeed = speed)
             MediaItemRepo.get(requireContext()).saveSetting(newSetting)
         }
 

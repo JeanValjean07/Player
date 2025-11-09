@@ -319,7 +319,7 @@
                         android:text="数据库"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp"/>
-                    <!--  开关：使用数据库  -->
+                    <!--  开关：进度条设置保存方式  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -328,7 +328,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            android:text="为每个视频单独保存设置"
+                            android:text="进度条设置为单个视频保存"
                             android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
@@ -337,7 +337,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
                         <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/EnableRoomDatabase"
+                            android:id="@+id/UseDataBaseForScrollerSetting"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
@@ -345,11 +345,11 @@
                             app:thumbTint="@color/switchThumbColor"
                             />
                     </LinearLayout>
-                    <!--  描述：使用数据库  -->
+                    <!--  描述：进度条设置保存方式  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="保存播放进度，保存缩略图生成状态等功能均需要此选项(数据库)支持，建议开启。开启后APP将产生更多缓存。将保存只播声音、倍速等设置，不会保存后台播放和循环播放选项"
+                        android:text="开启后，快进策略，链接滚动，单击跳转这三项设置将仅为单个视频保存。若关闭，则所有视频共享进度条设置"
                         android:textSize="12sp" />
                     <!--  按钮：重置封面  -->
                     <LinearLayout
@@ -749,31 +749,7 @@
                         android:layout_height="wrap_content"
                         android:text="如果出现卡顿可考虑关闭。"
                         android:textSize="12sp" />
-                    <!--  开关4:横屏时抬高进度条  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            android:text="横屏时抬高进度条区域"
-                            android:layout_gravity="center"
-                            android:textColor="@color/HeadText"
-                            android:textSize="14sp" />
-                        <View
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1" />
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/RaiseProgressBarInLandscape"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
-                    </LinearLayout>
+
                     <!--  选单按钮：振动时长  -->
                     <LinearLayout
                         android:layout_width="wrap_content"

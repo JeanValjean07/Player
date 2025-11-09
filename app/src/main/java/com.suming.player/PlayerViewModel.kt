@@ -9,7 +9,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import data.MediaModel.MediaItem_video
 
 @UnstableApi
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
@@ -96,8 +95,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
 
     //设置项
-    var PREFS_LoopPlay: Boolean = false
-    var PREFS_AlwaysSeek: Boolean = true
+
+    var PREFS_AlwaysSeek: Boolean = false
     var PREFS_BackgroundPlay: Boolean = false
     var PREFS_TapJump: Boolean = false
     var PREFS_LinkScroll: Boolean = true
@@ -111,10 +110,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_UseHighRefreshRate : Boolean = false
     var PREFS_UseCompatScroller : Boolean = false
     var PREFS_CloseVideoTrack : Boolean = false
-    var PREFS_EnableRoomDatabase : Boolean = false
     var PREFS_CloseFragmentGesture : Boolean = false
     var PREFS_UseOnlySyncFrame : Boolean = false
-    var PREFS_RaiseProgressBarInLandscape : Boolean = false
     var PREFS_VibrateMillis: Long = 10L
     var PREFS_UseSysVibrate: Boolean = false
     var PREFS_ShutDownWhenMediaEnd: Boolean = false
@@ -122,6 +119,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_SavePositionWhenExit: Boolean = false
     var PREFS_SwitchPortraitWhenExit: Boolean = true
     var PREFS_EnablePlayAreaMove: Boolean = false
+
+    var PREFS_UseDataBaseForScrollerSetting: Boolean = false
 
 
 
@@ -144,9 +143,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var String_SavedCoverPath: String = ""
 
-    var state_playerAreaUp = false
-
-
 
 
     //以下开关不固化
@@ -161,10 +157,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
     //文件名保存
-    var fileName : String = ""
+    var MediaInfo_FileName : String = ""
     fun saveFileName(name: String){
-        if (fileName == "") {
-            fileName = name
+        if (MediaInfo_FileName == "") {
+            MediaInfo_FileName = name
         }
     }
     //倍速
@@ -179,16 +175,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
 
     var PREFS_SeekHandlerGap: Long = 0
-
-
-
-
-
-
-    lateinit var MediaInfo_VideoItem: MediaItem_video
-
-
-
 
 
 

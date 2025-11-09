@@ -301,7 +301,7 @@ class MainActivity: AppCompatActivity() {
         //更新数据库
         lifecycleScope.launch {
             //根据flag_need_hide来判断是否隐藏
-            MediaItemRepo.get(this@MainActivity).HideVideo(filename,flag_need_hide)
+            MediaItemRepo.get(this@MainActivity).update_PREFS_HideThisItem(filename,flag_need_hide)
         }
 
     }
