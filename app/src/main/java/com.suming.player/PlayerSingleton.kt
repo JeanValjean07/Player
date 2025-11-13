@@ -31,25 +31,18 @@ object PlayerSingleton {
         val rendererFactory = getRendererFactory(app)
 
 
-
-        val scrubbingParams = ScrubbingModeParameters.Builder()
-            .setAllowSkippingMediaCodecFlush(true)
-            .setShouldEnableDynamicScheduling(true)
-            .build()
-
-
         return ExoPlayer.Builder(app)
             .setSeekParameters(SeekParameters.CLOSEST_SYNC)
             .setWakeMode(WAKE_MODE_NETWORK)
             .setTrackSelector(trackSelector)
             .setRenderersFactory(rendererFactory)
-            //.setScrubbingModeParameters(scrubbingParams)
             .build()
             .apply {
                 prepare()
                 playWhenReady = true
             }
     }
+
 
     //功能
     fun getPlayer(app: Application): ExoPlayer = _player ?: synchronized(this) {

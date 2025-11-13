@@ -28,8 +28,17 @@ class MediaItemRepo private constructor(context: Context) {
 
     suspend fun update_PREFS_SavePositionWhenExit(filename: String,flag_save_position_when_exit: Boolean) = dao.update_PREFS_SavePositionWhenExit(filename,flag_save_position_when_exit)
 
+    suspend fun update_cover_path(filename: String, savePathCover: String) = dao.update_cover_path(filename, savePathCover)
 
-    suspend fun preset_Flag_SavedThumbPos(filename: String) = dao.preset_Flag_SavedThumbPos(filename)
+
+
+    suspend fun preset_all_row_default(filename: String) = dao.preset_all_row_default(filename)
+
+    suspend fun preset_all_row_without_cover_path(filename: String, savePathCover: String) = dao.preset_all_row_without_cover_path(filename, savePathCover)
+
+
+
+    suspend fun get_saved_cover_path(filename: String): String? = dao.get_saved_cover_path(filename)
 
 
 

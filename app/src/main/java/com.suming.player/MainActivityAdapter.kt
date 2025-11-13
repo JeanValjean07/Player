@@ -138,6 +138,10 @@ class MainActivityAdapter(
                     //生成封面缩略图
                     retriever.setDataSource(getAbsoluteFilePath(context, item.uri) ?: item.uri.toString())
 
+                    Log.d("SuMing", "生成缩略图: ${item.uri}")
+
+
+
                     val bitmap = retriever.getFrameAtTime(1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
 
                     //生成成功
@@ -159,11 +163,16 @@ class MainActivityAdapter(
                         item.Media_Cover_Path = saveCover.path
                         //存入数据库
                         coroutineScopeSaveRoom.launch {
-                            val newSetting = MediaItemSetting(
-                                MARK_FileName = item.name,
-                                SavePath_Cover = saveCover.path,
-                            )
+
+                            /*
+                            val newSetting = MediaItemSetting(MARK_FileName = item.name, SavePath_Cover = saveCover.path,)
                             MediaItemRepo.get(context).saveSetting(newSetting)
+
+                             */
+
+                            MediaItemRepo.get(context).update_cover_path(item.name, saveCover.path)
+
+                            //MediaItemRepo.get(context).preset_all_row_without_cover_path(item.name, saveCover.path)
                         }
                     }
                     //生成失败
@@ -235,4 +244,4 @@ class MainActivityAdapter(
         return null
     }
 
-}//class END
+}

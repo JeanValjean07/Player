@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import data.PresetDataClass.PresetRoomRows
 
 @Dao
 interface MediaItemDao {
@@ -15,7 +16,7 @@ interface MediaItemDao {
     @Query("SELECT * FROM video_settings WHERE MARK_FileName = :path LIMIT 1")
     suspend operator fun get(path: String): MediaItemSetting?
 
-
+    //快速修改单个位
     @Query("UPDATE video_settings SET SavePath_Cover = :newValue")
     suspend fun removeAllThumbPath(newValue: String)
 
@@ -40,14 +41,82 @@ interface MediaItemDao {
     @Query("UPDATE video_settings SET PREFS_SavePositionWhenExit = :newValue WHERE MARK_FileName = :videoId")
     suspend fun update_PREFS_SavePositionWhenExit(videoId: String,newValue: Boolean)
 
-    @Query("UPDATE video_settings SET SaveFlag_Thumb = \"00000000000000000000\" WHERE MARK_FileName = :videoId")
-    suspend fun preset_Flag_SavedThumbPos(videoId: String)
-
     @Query("UPDATE video_settings SET SaveState_ExitPosition = :newValue WHERE MARK_FileName = :videoId")
     suspend fun update_State_PositionWhenExit(videoId: String,newValue: Long)
 
     @Query("UPDATE video_settings SET SaveFlag_Thumb = :newValue WHERE MARK_FileName = :videoId")
     suspend fun update_Flag_SavedThumbPos(videoId: String,newValue: String)
+
+    @Query("UPDATE video_settings SET SavePath_Cover = :newValue WHERE MARK_FileName = :videoId")
+    suspend fun update_cover_path(videoId: String,newValue: String)
+
+
+    //快速预写
+    @Query("""UPDATE video_settings SET
+            PREFS_BackgroundPlay = :PREFS_BackgroundPlay,
+            PREFS_LoopPlay = :PREFS_LoopPlay,
+            PREFS_TapJump = :PREFS_TapJump,
+            PREFS_LinkScroll = :PREFS_LinkScroll,
+            PREFS_AlwaysSeek = :PREFS_AlwaysSeek,
+            PREFS_VideoOnly = :PREFS_VideoOnly,
+            PREFS_SoundOnly = :PREFS_SoundOnly,
+            PREFS_PlaySpeed = :PREFS_PlaySpeed,
+            PREFS_SavePositionWhenExit = :PREFS_SavePositionWhenExit,
+            SaveState_ExitPosition = :SaveState_ExitPosition,
+            SaveFlag_Thumb = :SaveFlag_Thumb,
+            SavePath_Cover = :SavePath_Cover,
+            PREFS_Hide = :PREFS_Hide
+            WHERE MARK_FileName = :MARK_FileName
+    """)
+    suspend fun preset_all_row(
+        MARK_FileName: String, PREFS_BackgroundPlay: Boolean, PREFS_LoopPlay: Boolean, PREFS_TapJump : Boolean, PREFS_LinkScroll : Boolean, PREFS_AlwaysSeek : Boolean,
+        PREFS_VideoOnly: Boolean, PREFS_SoundOnly: Boolean, PREFS_PlaySpeed: Float, PREFS_SavePositionWhenExit: Boolean, SaveState_ExitPosition: Long, SaveFlag_Thumb: String,
+        SavePath_Cover: String, PREFS_Hide: Boolean
+    )
+    suspend fun preset_all_row_default(MARK_FileName: String){
+        with(PresetRoomRows.Preset()){
+            preset_all_row(
+                    MARK_FileName,
+                    PREFS_BackgroundPlay,
+                    PREFS_LoopPlay,
+                    PREFS_TapJump,
+                    PREFS_LinkScroll,
+                    PREFS_AlwaysSeek,
+                    PREFS_VideoOnly,
+                    PREFS_SoundOnly,
+                    PREFS_PlaySpeed,
+                    PREFS_SavePositionWhenExit,
+                    SaveState_ExitPosition,
+                    SaveFlag_Thumb,
+                    SavePath_Cover,
+                    PREFS_Hide
+                )
+        }
+    }
+    suspend fun preset_all_row_without_cover_path(MARK_FileName: String, savePathCover: String)
+    { with(PresetRoomRows.Preset()) {
+            preset_all_row(
+                MARK_FileName,
+                PREFS_BackgroundPlay,
+                PREFS_LoopPlay,
+                PREFS_TapJump,
+                PREFS_LinkScroll,
+                PREFS_AlwaysSeek,
+                PREFS_VideoOnly,
+                PREFS_SoundOnly,
+                PREFS_PlaySpeed,
+                PREFS_SavePositionWhenExit,
+                SaveState_ExitPosition,
+                SaveFlag_Thumb,
+                savePathCover,
+                PREFS_Hide
+            )
+        } }
+
+    //快速读取
+    @Query("SELECT SavePath_Cover FROM video_settings WHERE MARK_FileName = :filename LIMIT 1")
+    suspend fun get_saved_cover_path(filename: String): String?
+
 
 
 

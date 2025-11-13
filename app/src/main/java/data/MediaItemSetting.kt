@@ -41,7 +41,7 @@ data class MediaItemSetting(
                 PREFS_Hide == other.PREFS_Hide
     }
 
-
+    //修改数据库结构时记得同步修改预置数据类
 
     override fun hashCode(): Int {
         return MARK_FileName.hashCode()

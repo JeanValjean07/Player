@@ -289,6 +289,12 @@ class PlayerActivity: AppCompatActivity(){
     private lateinit var retriever: MediaMetadataRetriever
 
 
+    private var NeedRecoverySettings = false
+    private var NeedRecoverySetting_VideoOnly = false
+    private var NeedRecoverySetting_SoundOnly = false
+    private var NeedRecoverySetting_LastPosition = 0L
+
+
 
     private var DataBaseProfile: MediaItemSetting? = null
 
@@ -528,80 +534,93 @@ class PlayerActivity: AppCompatActivity(){
             EnterAnimationComplete = true
         }
         //读取必读数据库
-        lifecycleScope.launch(Dispatchers.IO) {
-            DataBaseProfile = MediaItemRepo.get(applicationContext).getSetting(vm.MediaInfo_FileName)
-            if (DataBaseProfile == null){
-                FlagsPreWrite()
-                DataBasePreWrite()
-                return@launch }
-            val DataBaseSetting = DataBaseProfile!!
-            //进度条缩略图生成状态
-            if (DataBaseSetting.SaveFlag_Thumb != ""){
-                vm.Flag_SavedThumbFlag = DataBaseSetting.SaveFlag_Thumb
-            }else{
-                vm.Flag_SavedThumbFlag = "00000000000000000000"
-            }
-            if (DataBaseSetting.SavePath_Cover != ""){
-                vm.String_SavedCoverPath = DataBaseSetting.SavePath_Cover
-            }
-            //视频强单项适用设置读取
-            if (DataBaseSetting.PREFS_SoundOnly){ vm.PREFS_OnlyAudio = true }else{
-                vm.PREFS_OnlyAudio = false
-            }
-            if (DataBaseSetting.PREFS_VideoOnly){ vm.PREFS_OnlyVideo = true }else{
-                vm.PREFS_OnlyVideo = false
-            }
-            if (DataBaseSetting.PREFS_SavePositionWhenExit){ vm.PREFS_SavePositionWhenExit = true }else{
-                vm.PREFS_SavePositionWhenExit = false
-            }
+        if (savedInstanceState == null){
+            lifecycleScope.launch(Dispatchers.IO) {
+                DataBaseProfile = MediaItemRepo.get(applicationContext).getSetting(vm.MediaInfo_FileName)
+                if (DataBaseProfile == null){
+                    FlagsPreWrite()
+                    DataBasePreWrite()
+                    return@launch }
+                val DataBaseSetting = DataBaseProfile!!
+                //进度条缩略图生成状态
+                if (DataBaseSetting.SaveFlag_Thumb != ""){
+                    vm.Flag_SavedThumbFlag = DataBaseSetting.SaveFlag_Thumb
+                }else{
+                    vm.Flag_SavedThumbFlag = "00000000000000000000"
+                }
+                if (DataBaseSetting.SavePath_Cover != ""){
+                    vm.String_SavedCoverPath = DataBaseSetting.SavePath_Cover
+                }
+                //视频强单项适用设置读取
+                if (DataBaseSetting.PREFS_SoundOnly){ vm.PREFS_OnlyAudio = true }else{
+                    vm.PREFS_OnlyAudio = false
+                }
+                if (DataBaseSetting.PREFS_VideoOnly){ vm.PREFS_OnlyVideo = true }else{
+                    vm.PREFS_OnlyVideo = false
+                }
+                if (DataBaseSetting.PREFS_SavePositionWhenExit){ vm.PREFS_SavePositionWhenExit = true }else{
+                    vm.PREFS_SavePositionWhenExit = false
+                }
 
-            //数据库后续操作
-            if (vm.PREFS_OnlyAudio){
-                withContext(Dispatchers.Main) {
-                    changeStateSoundOnly(false)
-                }
-            }
-            if (vm.PREFS_OnlyVideo){
-                withContext(Dispatchers.Main) {
-                    changeStateVideoOnly(false)
-                }
-            }
-            if (vm.PREFS_SavePositionWhenExit){
-                if (DataBaseSetting.SaveState_ExitPosition != 0L){
-                    delay(500)
-                    //恢复播放进度需区分恢复时播放器已准备好或未准备好两种状态
+                //数据库后续操作
+                if (vm.PREFS_OnlyAudio){
+                    delay(100)
                     if (vm.state_firstReadyReached){
-                        withContext(Dispatchers.Main) { vm.player.seekTo(DataBaseSetting.SaveState_ExitPosition) }
-                        notice("已定位到上次播放的位置", 3000)
+                        withContext(Dispatchers.Main) {
+                            changeStateSoundOnly(true)
+                        }
                     }else{
-                        TODO()
-
+                        NeedRecoverySettings = true
+                        NeedRecoverySetting_SoundOnly = true
                     }
                 }
-            }
-
-            if (vm.PREFS_UseDataBaseForScrollerSetting){
-                lifecycleScope.launch(Dispatchers.IO) {
-                    if (DataBaseProfile == null){ return@launch }
-                    val DataBaseSetting = DataBaseProfile!!
-                    if (DataBaseSetting.PREFS_AlwaysSeek){
-                        vm.PREFS_AlwaysSeek = true
+                if (vm.PREFS_OnlyVideo){
+                    delay(100)
+                    if (vm.state_firstReadyReached){
+                        withContext(Dispatchers.Main) {
+                            changeStateVideoOnly(true)
+                        }
                     }else{
-                        vm.PREFS_AlwaysSeek = false
-                    }
-                    if (DataBaseSetting.PREFS_LinkScroll){
-                        vm.PREFS_LinkScroll = true
-                    }else{
-                        vm.PREFS_LinkScroll = false
-                    }
-                    if (DataBaseSetting.PREFS_TapJump){
-                        vm.PREFS_TapJump = true
-                    }else{
-                        vm.PREFS_TapJump = false
+                        NeedRecoverySettings = true
+                        NeedRecoverySetting_VideoOnly = true
                     }
                 }
-            }
+                if (vm.PREFS_SavePositionWhenExit) {
+                    val LastPosition = DataBaseSetting.SaveState_ExitPosition
+                    if (LastPosition != 0L) {
+                        delay(100)
+                        if (vm.state_firstReadyReached) {
+                            withContext(Dispatchers.Main) { vm.player.seekTo(LastPosition) }
+                            notice("已定位到上次播放的位置", 3000)
+                        } else {
+                            NeedRecoverySettings = true
+                            NeedRecoverySetting_LastPosition = LastPosition
+                        }
+                    }
+                }
+                if (vm.PREFS_UseDataBaseForScrollerSetting){
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        if (DataBaseProfile == null){ return@launch }
+                        val DataBaseSetting = DataBaseProfile!!
+                        if (DataBaseSetting.PREFS_AlwaysSeek){
+                            vm.PREFS_AlwaysSeek = true
+                        }else{
+                            vm.PREFS_AlwaysSeek = false
+                        }
+                        if (DataBaseSetting.PREFS_LinkScroll){
+                            vm.PREFS_LinkScroll = true
+                        }else{
+                            vm.PREFS_LinkScroll = false
+                        }
+                        if (DataBaseSetting.PREFS_TapJump){
+                            vm.PREFS_TapJump = true
+                        }else{
+                            vm.PREFS_TapJump = false
+                        }
+                    }
+                }
 
+            }
         }
         //基于设置的后续操作
         if (vm.PREFS_UseBlackBackground) {
@@ -1469,9 +1488,10 @@ class PlayerActivity: AppCompatActivity(){
                         val userInput = EditText.text.toString()
                         if (userInput.isEmpty()){
                             notice("未输入内容", 1000)
-                        } else {
+                        }
+                        else {
                             val inputValue = userInput.toFloat()
-                            if(inputValue > 0.0 && inputValue < 5.0){
+                            if(inputValue > 0.0 && inputValue <= 5.0){
                                 vm.player.setPlaybackSpeed(inputValue)
                                 notice("已将倍速设置为$inputValue", 2000)
                                 lifecycleScope.launch {
@@ -1479,7 +1499,7 @@ class PlayerActivity: AppCompatActivity(){
                                     MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
                                 }
                             } else {
-                                notice("数值过大", 3000)
+                                notice("不允许该值", 3000)
                             }
                         }
                         dialog.dismiss()
@@ -2215,12 +2235,9 @@ class PlayerActivity: AppCompatActivity(){
     }
 
     private fun DataBasePreWrite(){
-
         lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivity).preset_Flag_SavedThumbPos(MediaInfo_FileName)
+            MediaItemRepo.get(this@PlayerActivity).preset_all_row_default(MediaInfo_FileName)
         }
-
-
     }
 
 
@@ -3501,13 +3518,24 @@ class PlayerActivity: AppCompatActivity(){
         if (playerReadyFrom_FirstEntry) {
             playerReadyFrom_FirstEntry = false
             vm.state_firstReadyReached = true
-
             isSeekReady = true
 
-            if (NeedSetSpeed){
-                vm.setSpeed(NeedSetSpeedValue)
-                NeedSetSpeed = false
+            if (NeedRecoverySettings){
+                if (NeedRecoverySetting_VideoOnly){
+                    changeStateVideoOnly(true)
+                }
+                if (NeedRecoverySetting_SoundOnly){
+                    changeStateSoundOnly(true)
+                }
+                if (NeedRecoverySetting_LastPosition != 0L){
+                    vm.player.seekTo(NeedRecoverySetting_LastPosition)
+                    notice("已定位到上次播放的位置", 3000)
+                }else{
+                    NeedRecoverySettings = false
+                }
             }
+
+
 
             requestAudioFocus()
 
@@ -3515,7 +3543,7 @@ class PlayerActivity: AppCompatActivity(){
 
             //隐藏遮罩
             val cover = findViewById<View>(R.id.cover)
-            cover.animate().alpha(0f).setDuration(100)
+            cover.animate().alpha(0f).setDuration(250)
                 .setInterpolator(AccelerateDecelerateInterpolator())
                 .withEndAction { cover.visibility = View.GONE }
                 .start()
@@ -3737,3 +3765,4 @@ class PlayerActivity: AppCompatActivity(){
     }
 
 }
+
