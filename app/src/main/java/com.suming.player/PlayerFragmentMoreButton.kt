@@ -19,6 +19,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.TextView
@@ -35,9 +36,9 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import com.google.android.material.button.MaterialButton
-import com.suming.player.PlayerSingleton.player
 import data.MediaItemRepo
 import data.MediaItemSetting
 import kotlinx.coroutines.launch
@@ -121,7 +122,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
         //信息预写
         //1.倍速预写
-        val currentSpeed: Float = player.playbackParameters.speed
+        val currentSpeed: Float = vm.player.playbackParameters.speed
         val currentSpeedText = view.findViewById<TextView>(R.id.current_speed)
         currentSpeedText.text = currentSpeed.toString()
         val timerShutDown = view.findViewById<TextView>(R.id.StateTimerShutDown)
@@ -129,6 +130,26 @@ class PlayerFragmentMoreButton: DialogFragment() {
             timerShutDown.text = "将在${vm.shutDownTime}关闭"
         } else {
             timerShutDown.text = "未开启"
+        }
+
+        //2.循环模式
+        val ButtonLoopModeWithText = view.findViewById<TextView>(R.id.ButtonLoopMode)
+        fun refreshLoopModeText(){
+            val currentRepeatMode: Int = vm.player.repeatMode
+            ButtonLoopModeWithText.text = when (currentRepeatMode) {
+                Player.REPEAT_MODE_OFF -> "播完暂停"
+                Player.REPEAT_MODE_ONE -> "单集循环"
+                Player.REPEAT_MODE_ALL -> "列表循环"
+                else -> "未知"
+            }
+        }
+        refreshLoopModeText()
+        ButtonLoopModeWithText.setOnClickListener {
+
+            val result = bundleOf("KEY" to "RepeatMode")
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
+            refreshLoopModeText()
         }
 
         //开关置位
@@ -360,6 +381,11 @@ class PlayerFragmentMoreButton: DialogFragment() {
             Dismiss()
 
              */
+        }
+
+        val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
+        if(vm.state_playerWithSeekBar){
+            CardScrollerStuff.visibility = View.GONE
         }
 
 

@@ -2,8 +2,10 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.app.Application
+import androidx.media3.common.C
 import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
@@ -25,6 +27,19 @@ object PlayerSingleton {
     val player: ExoPlayer
         get() = _player ?: throw IllegalStateException("播放器还未初始化完成")
 
+
+    val loadControl = DefaultLoadControl.Builder()
+        .setBackBuffer(1500, true) // 减少回缓冲
+        .setBufferDurationsMs(
+            1000,  // minBufferMs - 减少最小缓冲
+            3000,  // maxBufferMs - 减少最大缓冲
+            500,   // bufferForPlaybackMs
+            500    // bufferForPlaybackAfterRebufferMs
+        )
+        .setTargetBufferBytes(-1) // 不限制缓冲区大小
+        .setPrioritizeTimeOverSizeThresholds(true)
+        .build()
+
     //创建播放器实例
     private fun buildPlayer(app: Application): ExoPlayer {
         val trackSelector = getTrackSelector(app)
@@ -34,7 +49,11 @@ object PlayerSingleton {
         return ExoPlayer.Builder(app)
             .setSeekParameters(SeekParameters.CLOSEST_SYNC)
             .setWakeMode(WAKE_MODE_NETWORK)
+            .setMaxSeekToPreviousPositionMs(1_000_000L)
+            .setLoadControl(loadControl)
             .setTrackSelector(trackSelector)
+
+
             .setRenderersFactory(rendererFactory)
             .build()
             .apply {
@@ -51,8 +70,12 @@ object PlayerSingleton {
 
     fun getTrackSelector(app: Application): DefaultTrackSelector =
         _trackSelector ?: synchronized(this) {
-            _trackSelector ?: DefaultTrackSelector(app).also { _trackSelector = it }
+            _trackSelector ?: DefaultTrackSelector(app)
+                    .also { _trackSelector = it }
+
         }
+
+
 
     fun getRendererFactory(app: Application): RenderersFactory =
         _rendererFactory ?: synchronized(this) {

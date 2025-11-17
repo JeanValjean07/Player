@@ -13,7 +13,8 @@ data class MediaItem_video (
     val durationMs: Long,
     val sizeBytes: Long,
     val markCount: Int = 0,
-    var Media_Cover_Path: String? = null
+    var Media_Cover_Path: String? = null,
+    val index: Int = 0
 
 ): Parcelable{
     override fun describeContents(): Int = 0
@@ -26,6 +27,7 @@ data class MediaItem_video (
         dest.writeLong(sizeBytes)
         dest.writeInt(markCount)
         dest.writeString(Media_Cover_Path)
+        dest.writeInt(index)
     }
 
     companion object CREATOR : Parcelable.Creator<MediaItem_video> {
@@ -40,7 +42,8 @@ data class MediaItem_video (
                 durationMs = parcel.readLong(),
                 sizeBytes = parcel.readLong(),
                 markCount = parcel.readInt(),
-                Media_Cover_Path = parcel.readString()
+                Media_Cover_Path = parcel.readString(),
+                index = parcel.readInt()
             )
         }
 

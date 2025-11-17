@@ -219,7 +219,7 @@
                                     android:id="@+id/ButtonLoopMode"
                                     android:layout_width="wrap_content"
                                     android:layout_height="40dp"
-                                    android:text="循环模式"
+                                    android:text="当前循环模式"
                                     android:layout_gravity="center"
                                     android:gravity="center"
                                     android:paddingEnd="10dp"
@@ -428,6 +428,7 @@
                     </androidx.cardview.widget.CardView>
                     <!-- 功能卡2：链接滚动 + 单击跳转 -->
                     <androidx.cardview.widget.CardView
+                        android:id="@+id/card_scrollerStuff"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"

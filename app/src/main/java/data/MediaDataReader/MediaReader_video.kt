@@ -115,6 +115,7 @@ class MediaReader_video(
             val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
             val durCol  = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
             val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+            var index = 0
             //获取列索引数据
             if (cursor.moveToPosition(offset)) {
                 var left = limit
@@ -134,8 +135,11 @@ class MediaReader_video(
                             name = name,
                             durationMs = dur,
                             sizeBytes = size,
-                            Media_Cover_Path = ""
+                            Media_Cover_Path = "" ,
+                            index = index
                         )
+
+                        index++
                         continue
                     }
 
@@ -150,7 +154,8 @@ class MediaReader_video(
                                     name = name,
                                     durationMs = dur,
                                     sizeBytes = size,
-                                    Media_Cover_Path = ""
+                                    Media_Cover_Path = "",
+                                    index = index
                                 )
                             }
                             //视频已有缩略图路径
@@ -161,9 +166,12 @@ class MediaReader_video(
                                     name = name,
                                     durationMs = dur,
                                     sizeBytes = size,
-                                    Media_Cover_Path = setting.SavePath_Cover
+                                    Media_Cover_Path = setting.SavePath_Cover,
+                                    index = index
                                 )
                             }
+
+                            index++
                         }
                     }
                     //视频未隐藏
@@ -176,7 +184,8 @@ class MediaReader_video(
                                 name = name,
                                 durationMs = dur,
                                 sizeBytes = size,
-                                Media_Cover_Path = ""
+                                Media_Cover_Path = "",
+                                index = index
                             )
                         }
                         //视频已有缩略图路径
@@ -187,20 +196,29 @@ class MediaReader_video(
                                 name = name,
                                 durationMs = dur,
                                 sizeBytes = size,
-                                Media_Cover_Path = setting.SavePath_Cover
+                                Media_Cover_Path = setting.SavePath_Cover,
+                                index = index
                             )
                         }
+
+                        index++
                     }
 
 
                     left--
+
                 }
                 while (left > 0 && cursor.moveToNext())
             }
         }
 
+        //Log.d("SuMing", "load: ${list.size},${list}")
+
+
+
+
         //记录到播放列表
-        if (page == 0) { PlayListManager.getInstance(context).updatePlayList_MediaStore(list) }
+        if (page == 0) { PlayListManager.getInstance(context).initPlayList_byMediaStore(list) }
 
 
         //return

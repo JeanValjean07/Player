@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -59,6 +60,12 @@ class MainActivity: AppCompatActivity() {
     private var PREFS_VibrateMillis = 0L
     private var PREFS_UseSysVibrate = false
 
+    private var PREFS_UsePlayerWithSeekBar = false
+
+
+    private lateinit var PREFS: SharedPreferences
+    private lateinit var PREFS_MediaStore: SharedPreferences
+
 
 
     //无法打开视频时的接收器
@@ -90,7 +97,7 @@ class MainActivity: AppCompatActivity() {
         setContentView(R.layout.activity_main_old)
 
         //读取设置
-        val PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+        PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         if (!PREFS.contains("PREFS_VibrateMillis")){
             PREFS.edit { putLong("PREFS_VibrateMillis", 10L).apply() }
             PREFS_VibrateMillis = 10L
@@ -103,6 +110,20 @@ class MainActivity: AppCompatActivity() {
         }else{
             PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", false)
         }
+        if (!PREFS.contains("PREFS_UseMediaSession")){
+            //预写入媒体会话配置
+            if (Build.BRAND == "samsung" || Build.BRAND == "Xiaomi"){
+                PREFS.edit { putBoolean("PREFS_UseMediaSession", true).apply() }
+            }else{
+                PREFS.edit { putBoolean("PREFS_UseMediaSession", false).apply() }
+            }
+        }
+        if (!PREFS.contains("PREFS_UsePlayerWithSeekBar")){
+            PREFS.edit { putBoolean("PREFS_UsePlayerWithSeekBar", false).apply() }
+            PREFS_UsePlayerWithSeekBar = false
+        }else{
+            PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
+        }
         //内容避让状态栏并预读取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -114,11 +135,11 @@ class MainActivity: AppCompatActivity() {
             insets
         }
         //读取媒体库设置
-        val PREFS2 = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-        if (!PREFS2.contains("show_hide_items")){
-            PREFS2.edit { putBoolean("show_hide_items", false).apply() }
+        PREFS_MediaStore = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
+        if (!PREFS_MediaStore.contains("show_hide_items")){
+            PREFS_MediaStore.edit { putBoolean("show_hide_items", false).apply() }
         }else{
-            PREFS2.edit { putBoolean("show_hide_items", false).apply() }
+            PREFS_MediaStore.edit { putBoolean("show_hide_items", false).apply() }
         }
 
         //准备工作+加载视频
@@ -167,12 +188,12 @@ class MainActivity: AppCompatActivity() {
             override fun onLongPress(e: MotionEvent) {
                 vibrate()
                 //逻辑修改
-                val show_hide_items = PREFS2.getBoolean("show_hide_items", false)
+                val show_hide_items = PREFS_MediaStore.getBoolean("show_hide_items", false)
                 if (show_hide_items){
-                    PREFS2.edit { putBoolean("show_hide_items", false).apply() }
+                    PREFS_MediaStore.edit { putBoolean("show_hide_items", false).apply() }
                     notice("不显示隐藏的视频,刷新后生效", 2000)
                 }else{
-                    PREFS2.edit { putBoolean("show_hide_items", true).apply() }
+                    PREFS_MediaStore.edit { putBoolean("show_hide_items", true).apply() }
                     notice("将显示隐藏的视频,刷新后生效", 2000)
                 }
                 super.onLongPress(e)
@@ -207,7 +228,7 @@ class MainActivity: AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        //load()
+        PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
     }
 
 
@@ -230,6 +251,7 @@ class MainActivity: AppCompatActivity() {
                 startCheckPermission()
             }
         }
+
     }
     @OptIn(UnstableApi::class)
     //加载视频列表+点击事件处理
@@ -241,6 +263,7 @@ class MainActivity: AppCompatActivity() {
 
         val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
         recyclerview1.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+
 
         //注册adapter
         adapter = MainActivityAdapter(
@@ -261,12 +284,11 @@ class MainActivity: AppCompatActivity() {
                 HideItem(filename,flag_need_hide)
             }
         )
-
         recyclerview1.adapter = adapter
-
         lifecycleScope.launch {
             pager.flow.collect { adapter.submitData(it) }
         }
+
     }
     //震动控制
     @Suppress("DEPRECATION")
@@ -293,8 +315,33 @@ class MainActivity: AppCompatActivity() {
     //启动播放器
     @OptIn(UnstableApi::class)
     private fun startPlayer(item: MediaItem_video){
-        val intent = Intent(this, PlayerActivity::class.java).apply { putExtra("video", item) }
+
+        val intent = Intent(this, PlayerActivityTest::class.java).apply {
+            putExtra("video", item)
+        }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
         detailLauncher.launch(intent)
+
+        return
+
+        if (PREFS_UsePlayerWithSeekBar){
+            val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
+                putExtra("video", item)
+            }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
+            detailLauncher.launch(intent)
+        }else{
+            val intent = Intent(this, PlayerActivity::class.java)
+                .apply {
+                    putExtra("video", item)
+                }
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
+            detailLauncher.launch(intent)
+        }
     }
     //隐藏
     private fun HideItem(filename: String,flag_need_hide: Boolean) {

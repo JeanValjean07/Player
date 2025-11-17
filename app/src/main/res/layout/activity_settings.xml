@@ -54,6 +54,7 @@
     </com.google.android.material.appbar.AppBarLayout>
     <!-- 滚动区域# -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -61,51 +62,57 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingBottom="100dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="100dp">
             <!-- 版本卡片 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:layout_marginStart="10dp"
+                android:layout_marginTop="2dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="5dp"
-                android:layout_marginTop="2dp"
-                android:layout_height="match_parent"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="horizontal">
+
                     <ImageView
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:contentDescription="icon"
-                        android:src="@drawable/ic_settings_icon"/>
+                        android:src="@drawable/ic_settings_icon" />
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="horizontal"
-                        android:layout_margin="3dp">
+                        android:layout_margin="3dp"
+                        android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:text="播放器"
-                            android:layout_weight="0"/>
+                            android:layout_weight="0"
+                            android:text="播放器" />
+
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:layout_weight="1"/>
+                            android:layout_weight="1" />
+
                         <TextView
                             android:id="@+id/version"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_marginEnd="10dp"
-                            android:textSize="11sp"
+                            android:layout_weight="0"
                             android:text="当前版本1.0"
-                            android:layout_weight="0"/>
+                            android:textSize="11sp" />
 
                     </LinearLayout>
                 </LinearLayout>
@@ -114,36 +121,39 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="5dp"
-                android:layout_marginBottom="10dp"
-                android:layout_marginTop="5dp"
                 android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp">
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="5dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_weight="0"
                         android:padding="16dp"
                         android:text="Github Release丨手动检查更新"
-                        android:textSize="13sp"
-                        android:layout_weight="0"/>
+                        android:textSize="13sp" />
+
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_weight="1"/>
+                        android:layout_weight="1" />
 
                     <TextView
                         android:id="@+id/buttonGoGithubRelease"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_weight="0"
                         android:padding="16dp"
                         android:text="前往"
-                        android:textSize="11sp"
-                        android:layout_weight="0"/>
+                        android:textSize="11sp" />
                 </LinearLayout>
 
 
@@ -152,21 +162,23 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="5dp"
-                android:layout_marginBottom="10dp"
                 android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp">
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="5dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="16dp"
                         android:text="本软件为开源项目"
-                        android:textSize="13sp"/>
+                        android:textSize="13sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  卡片：通用  -->
@@ -176,8 +188,9 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                app:cardElevation="3dp"
-                app:cardCornerRadius="15dp">
+                app:cardCornerRadius="15dp"
+                app:cardElevation="3dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -189,32 +202,34 @@
                         android:layout_height="wrap_content"
                         android:text="通用"
                         android:textColor="@color/HeadText"
-                        android:textSize="17sp"/>
+                        android:textSize="17sp" />
                     <!--  开关：后台播放时关闭视频轨道  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="后台播放时关闭视频轨道"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/closeVideoTrack"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"
-                            />
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  描述：后台播放时关闭视频轨道  -->
                     <TextView
@@ -227,26 +242,28 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="关闭时先转为竖屏"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/SwitchPortraitWhenExit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"
-                            />
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  描述：退出时先转为竖屏  -->
                     <TextView
@@ -259,6 +276,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -267,34 +285,97 @@
                             android:text="播放器寻帧间隔"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <TextView
                             android:id="@+id/currentSeekHandlerGap"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:text="当前值"
-                            android:textSize="12sp"
                             android:textColor="@color/HeadText"
-                            />
+                            android:textSize="12sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <TextView
                             android:id="@+id/ButtonSeekHandlerGap"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:text="修改"
-                            android:textSize="12sp"
                             android:textColor="@color/HeadText"
-                            />
+                            android:textSize="12sp" />
                     </LinearLayout>
                     <!--  描述：播放器seek间隔  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="拖动进度条时，播放器的寻帧间隔可自行设定，默认无寻帧间隔。无间隔状态下，部分处理器运行时温度较高，有发热或虚焊风险，故高发热处理器建议拉高寻帧间隔。对于性能较低的老机型，适当提高寻帧间隔可提升流畅度。"
+                        android:text="拖动进度条时，播放器的寻帧间隔可自行设定，默认无寻帧间隔。实际上，由于播放核心状态切换导致的开销，直接关闭寻帧间隔反而可能获得更流畅的体验，因为无寻帧间隔时播放核心的状态切换次数减少了。具体情况请自行测试。"
+                        android:textSize="12sp" />
+                    <!--  开关：使用媒体会话  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="0"
+                            android:text="使用媒体会话"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/SwitchUseMediaSession"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
+                    </LinearLayout>
+                    <!--  开关：媒体会话插入媒体预览图  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="0"
+                            android:text="媒体会话插入预览图"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/SwitchInsertPreviewInMediaSession"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
+                    </LinearLayout>
+                    <!--  描述：使用媒体会话  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="若使用媒体会话，播放时将启用播控中心，否则降级为普通通知。此选项在首次进入程序时自动识别您的设备是否支持媒体会话，您也可以自行控制。"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -305,8 +386,9 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                app:cardElevation="3dp"
-                app:cardCornerRadius="15dp">
+                app:cardCornerRadius="15dp"
+                app:cardElevation="3dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -318,32 +400,34 @@
                         android:layout_height="wrap_content"
                         android:text="数据库"
                         android:textColor="@color/HeadText"
-                        android:textSize="17sp"/>
+                        android:textSize="17sp" />
                     <!--  开关：进度条设置保存方式  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="进度条设置为单个视频保存"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/UseDataBaseForScrollerSetting"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"
-                            />
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  描述：进度条设置保存方式  -->
                     <TextView
@@ -356,27 +440,29 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="重新生成封面"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <TextView
                             android:id="@+id/RemoveAllThumbPath"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:text="重新生成"
-                            android:textSize="12sp"
                             android:textColor="@color/HeadText"
-                            />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -387,8 +473,9 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                app:cardElevation="3dp"
-                app:cardCornerRadius="15dp">
+                app:cardCornerRadius="15dp"
+                app:cardElevation="3dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -400,31 +487,34 @@
                         android:layout_height="wrap_content"
                         android:text="从其他应用打开"
                         android:textColor="@color/HeadText"
-                        android:textSize="17sp"/>
+                        android:textSize="17sp" />
                     <!--  开关1：播放结束后自动退出  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="播放结束后自动退出"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/exitWhenEnd"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  从其他应用打开描述  -->
                     <TextView
@@ -441,8 +531,9 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                app:cardElevation="3dp"
-                app:cardCornerRadius="15dp">
+                app:cardCornerRadius="15dp"
+                app:cardElevation="3dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -454,56 +545,62 @@
                         android:layout_height="wrap_content"
                         android:text="进度条绘制"
                         android:textColor="@color/HeadText"
-                        android:textSize="17sp"/>
+                        android:textSize="17sp" />
                     <!--  开关：使用超长进度条  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="使用超长进度条"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/useLongScroller"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  开关：提高强制Seek时间差  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="提高强制Seek时间差"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/useLongSeekGap"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  描述：提高强制Seek时间差  -->
                     <TextView
@@ -516,25 +613,28 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="进度条绘制使用兼容模式"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/useCompatScroller"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  描述：进度条绘制使用兼容模式  -->
                     <TextView
@@ -548,26 +648,28 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         tools:ignore="TooManyViews">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="进度条截图使用就近关键帧"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/generateThumbSYNC"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"
-                            />
+                            app:trackTint="@color/switchTrackColor" />
 
                     </LinearLayout>
                     <!--  开关：一律使用关键帧  -->
@@ -576,26 +678,28 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         tools:ignore="TooManyViews">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="寻帧时一律使用关键帧"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/UseOnlySyncFrame"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
                             app:thumbTint="@color/switchThumbColor"
-                            />
+                            app:trackTint="@color/switchTrackColor" />
 
                     </LinearLayout>
                     <!--  选单按钮：时间戳更新间隔  -->
@@ -603,6 +707,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -611,28 +716,29 @@
                             android:text="时间显示刷新间隔"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <TextView
                             android:id="@+id/currentTimeUpdateGap"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:text="当前值"
-                            android:textSize="12sp"
                             android:textColor="@color/HeadText"
-                            />
+                            android:textSize="12sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <TextView
                             android:id="@+id/ButtonTimeUpdateGap"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:text="修改"
-                            android:textSize="12sp"
                             android:textColor="@color/HeadText"
-                            />
+                            android:textSize="12sp" />
                     </LinearLayout>
                     <!--  描述：时间戳更新间隔  -->
                     <TextView
@@ -649,68 +755,76 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                app:cardElevation="3dp"
-                app:cardCornerRadius="15dp">
+                app:cardCornerRadius="15dp"
+                app:cardElevation="3dp">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="14dp">
+
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="界面显示和交互"
                         android:textColor="@color/HeadText"
-                        android:textSize="17sp"/>
+                        android:textSize="17sp" />
                     <!--  开关1: 始终使用深色播放界面  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="始终使用深色播放界面"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/useBlackBackground"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  开关2:尝试强制使用高刷新率  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="尝试强制使用高刷新率"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/useHighRefreshRate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  提示信息:尝试强制使用高刷新率  -->
                     <TextView
@@ -723,25 +837,28 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="不使用更多操作面板的下滑手势"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/closeFragmentGesture"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  提示信息:关闭卡片下滑手势  -->
                     <TextView
@@ -755,6 +872,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -763,28 +881,29 @@
                             android:text="振动时长"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <TextView
                             android:id="@+id/currentVibratorMillis"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:text="当前值"
-                            android:textSize="12sp"
                             android:textColor="@color/HeadText"
-                            />
+                            android:textSize="12sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <TextView
                             android:id="@+id/ButtonVibratorMillis"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:text="修改"
-                            android:textSize="12sp"
                             android:textColor="@color/HeadText"
-                            />
+                            android:textSize="12sp" />
                     </LinearLayout>
                     <!--  描述：振动时长  -->
                     <TextView
@@ -797,31 +916,68 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="播放区域随面板移动"
-                            android:layout_gravity="center"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
+
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/EnablePlayAreaMove"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
-                            app:trackTint="@color/switchTrackColor"
-                            app:thumbTint="@color/switchThumbColor"/>
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
                     <!--  提示信息:播放区域自动移动  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="移动过程出现卡顿可考虑关闭。"
+                        android:textSize="12sp" />
+                    <!--  开关:使用传统播放页面  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="0"
+                            android:text="使用传统播放页面"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/UsePlayerWithSeekBar"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
+                    </LinearLayout>
+                    <!--  提示信息:使用传统播放页面  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="传统播放页面使用传统进度条，而不是缩略图组成的进度条"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -830,8 +986,8 @@
                 android:id="@+id/openSourceLicense"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
                 android:layout_gravity="center"
+                android:layout_marginTop="30dp"
                 android:clickable="true"
                 android:text="开放源代码许可"
                 android:textColor="@color/Text2"

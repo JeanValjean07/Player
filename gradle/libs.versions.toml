@@ -21,6 +21,7 @@ lifecycleService = "2.9.3"
 playServicesOssLicenses = "17.3.0"
 library = "3.2.0-alpha11"
 foundationLayoutVersion = "1.9.4"
+datastoreCore = "1.1.7"
 
 
 [libraries]
@@ -44,6 +45,7 @@ androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-s
 play-services-oss-licenses = { group = "com.google.android.gms", name = "play-services-oss-licenses", version.ref = "playServicesOssLicenses" }
 androidx-library = { group = "androidx.databinding", name = "library", version.ref = "library" }
 foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

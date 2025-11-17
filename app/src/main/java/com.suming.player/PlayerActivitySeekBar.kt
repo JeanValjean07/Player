@@ -35,7 +35,6 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.MediaStore
 import android.provider.Settings
-import android.support.v4.media.session.PlaybackStateCompat
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Display
@@ -62,6 +61,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -70,7 +70,6 @@ import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
-import androidx.compose.animation.core.repeatable
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -88,7 +87,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
@@ -122,7 +120,7 @@ import kotlin.system.exitProcess
 
 @UnstableApi
 //@Suppress("unused")
-class PlayerActivity: AppCompatActivity(){
+class PlayerActivitySeekBar: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
     //音量配置参数
@@ -240,25 +238,11 @@ class PlayerActivity: AppCompatActivity(){
     //倍速播放
     private var currentSpeed = 1.0f
 
-    //进度条状态
-    private var scrollerState_DraggingMoving = false
-    private var scrollerState_DraggingStay = false
-    private var scrollerState_InertiaMoving = false
-    private var scrollerState_Stay = true
-    private var scrollerState_Moving = true
-    private var scrollerState_Pressed = true
-    private var scrollerState_BackwardScroll = false
 
     //播放结束需要定时关闭
     private var playEnd_NeedShutDown = false
 
-    //全局SeekToMs
-    private var global_SeekToMs = 0L
 
-    //VideoSeekHandler
-    private var videoSeekHandlerGap = 0L
-
-    private var sidePadding = 0
     private var screenWidth = 0
     private var screenHeight = 0
 
@@ -266,13 +250,11 @@ class PlayerActivity: AppCompatActivity(){
 
 
     //lateInitItem -控件
-    private lateinit var scroller: RecyclerView
     private lateinit var TopBarArea : LinearLayout
     private lateinit var ButtonArea : ConstraintLayout
     private lateinit var NoticeCard : CardView
     private lateinit var ButtonExit : ImageButton
     private lateinit var TimeCard : CardView
-    private lateinit var RootConstraint: ConstraintLayout
     private lateinit var playerView: PlayerView
     private lateinit var timer_current : TextView
     private lateinit var timer_duration : TextView
@@ -315,6 +297,8 @@ class PlayerActivity: AppCompatActivity(){
 
     private var DataBaseProfile: MediaItemSetting? = null
 
+    private lateinit var SeekBar : SeekBar
+
 
 
 
@@ -325,9 +309,6 @@ class PlayerActivity: AppCompatActivity(){
 
     //</editor-fold>
 
-    interface OnFlagUpdateListener {
-        fun onFlagUpdate(position: Int)
-    }
 
     @OptIn(UnstableApi::class)
     @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
@@ -336,12 +317,12 @@ class PlayerActivity: AppCompatActivity(){
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        setContentView(R.layout.activity_player)
+        setContentView(R.layout.activity_player_seek_bar)
 
 
         fun lateInitItem(){
-            scroller = findViewById(R.id.rvThumbnails)
             DisplayMetrics = resources.displayMetrics
+            SeekBar = findViewById(R.id.seek_bar)
             NoticeCard = findViewById(R.id.NoticeCard)
             TopBarArea = findViewById(R.id.TopBarArea)
             ButtonArea = findViewById(R.id.ButtonArea)
@@ -418,12 +399,6 @@ class PlayerActivity: AppCompatActivity(){
         PREFSEditor = PREFS.edit()
         if(savedInstanceState == null){
             //固定项
-            if (!PREFS.contains("PREFS_GenerateThumbSYNC")) {
-                PREFSEditor.putBoolean("PREFS_GenerateThumbSYNC", true)
-                vm.PREFS_GenerateThumbSYNC = true
-            } else {
-                vm.PREFS_GenerateThumbSYNC = PREFS.getBoolean("PREFS_GenerateThumbSYNC", true)
-            }
             if (!PREFS.contains("PREFS_ExitWhenEnd")) {
                 PREFSEditor.putBoolean("PREFS_ExitWhenEnd", false)
                 vm.PREFS_ExitWhenEnd = false
@@ -442,21 +417,6 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 vm.PREFS_InsertPreviewInMediaSession = PREFS.getBoolean("PREFS_InsertPreviewInMediaSession", false)
             }
-            if (!PREFS.contains("PREFS_UseLongScroller")) {
-                PREFSEditor.putBoolean("PREFS_UseLongScroller", false)
-                vm.PREFS_UseLongScroller = false
-            } else {
-                vm.PREFS_UseLongScroller = PREFS.getBoolean("PREFS_UseLongScroller", false)
-            }
-            if (!PREFS.contains("PREFS_UseLongSeekGap")) {
-                PREFSEditor.putBoolean("PREFS_UseLongSeekGap", false)
-                vm.PREFS_UseLongSeekGap = false
-            } else {
-                vm.PREFS_UseLongSeekGap = PREFS.getBoolean("PREFS_UseLongSeekGap", false)
-                if (vm.PREFS_UseLongSeekGap) {
-                    forceSeekGap = 20000L
-                }
-            }
             if (!PREFS.contains("PREFS_UseBlackBackground")) {
                 PREFSEditor.putBoolean("PREFS_UseBlackBackground", false)
                 vm.PREFS_UseBlackBackground = false
@@ -469,12 +429,6 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 vm.PREFS_UseHighRefreshRate = PREFS.getBoolean("PREFS_UseHighRefreshRate", false)
             }
-            if (!PREFS.contains("PREFS_UseCompatScroller")) {
-                PREFSEditor.putBoolean("PREFS_UseCompatScroller", false)
-                vm.PREFS_UseCompatScroller = false
-            } else {
-                vm.PREFS_UseCompatScroller = PREFS.getBoolean("PREFS_UseCompatScroller", false)
-            }
             if (!PREFS.contains("PREFS_UseOnlySyncFrame")) {
                 PREFSEditor.putBoolean("PREFS_UseOnlySyncFrame", true)
                 vm.PREFS_UseOnlySyncFrame = true
@@ -486,12 +440,6 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_UseSysVibrate = true
             }else{
                 vm.PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
-            }
-            if (!PREFS.contains("PREFS_UseDataBaseForScrollerSetting")) {
-                PREFSEditor.putBoolean("PREFS_EnableRoomDatabase", false)
-                vm.PREFS_UseDataBaseForScrollerSetting = true
-            } else {
-                vm.PREFS_UseDataBaseForScrollerSetting = PREFS.getBoolean("PREFS_UseDataBaseForScrollerSetting", false)
             }
             if (!PREFS.contains("PREFS_SwitchPortraitWhenExit")) {
                 PREFSEditor.putBoolean("PREFS_SwitchPortraitWhenExit", true)
@@ -536,14 +484,6 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 vm.statusBarHeight = PREFS.getInt("INFO_STATUSBAR_HEIGHT", 0)
             }
-            if (!PREFS.contains("PREFS_SeekHandlerGap")) {
-                PREFSEditor.putLong("PREFS_SeekHandlerGap", 0L)
-                vm.PREFS_SeekHandlerGap = 0L
-                videoSeekHandlerGap = 0L
-            } else {
-                vm.PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0L)
-                videoSeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0L)
-            }
 
             //可动态更改项
             if (!PREFS.contains("PREFS_BackgroundPlay")) {
@@ -562,10 +502,7 @@ class PlayerActivity: AppCompatActivity(){
             PREFSEditor.apply()
 
         }else{
-
-            videoSeekHandlerGap = vm.PREFS_SeekHandlerGap
             //状态预置位
-            vm.allowRecord_wasPlaying = true
             playerReadyFrom_FirstEntry = false
             EnterAnimationComplete = true
         }
@@ -578,27 +515,6 @@ class PlayerActivity: AppCompatActivity(){
         if (vm.PREFS_UseBlackBackground) {
             setPageToDark()
         }                     //使用深色播放页
-        if (!vm.PREFS_UseDataBaseForScrollerSetting){
-            if (!PREFS.contains("PREFS_AlwaysSeek")) {
-                PREFS.edit { putBoolean("PREFS_AlwaysSeek", true).apply() }
-                vm.PREFS_AlwaysSeek = true
-            } else {
-                vm.PREFS_AlwaysSeek = PREFS.getBoolean("PREFS_AlwaysSeek", true)
-            }
-            if (!PREFS.contains("PREFS_LinkScroll")) {
-                PREFS.edit { putBoolean("PREFS_LinkScroll", true).apply() }
-                vm.PREFS_LinkScroll = true
-            } else {
-
-                vm.PREFS_LinkScroll = PREFS.getBoolean("PREFS_LinkScroll", true)
-            }
-            if (!PREFS.contains("PREFS_TapJump")) {
-                PREFS.edit { putBoolean("PREFS_TapJump", false).apply() }
-                vm.PREFS_TapJump = false
-            } else {
-                vm.PREFS_TapJump = PREFS.getBoolean("PREFS_TapJump", false)
-            }
-        }          //选读数据库
         if (vm.PREFS_UseHighRefreshRate) {
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 val wm = windowManager
@@ -741,7 +657,7 @@ class PlayerActivity: AppCompatActivity(){
                     } else {
                         vm.player.play()
                     }
-                    if (vm.PREFS_LinkScroll) startScrollerSync()
+                    if (vm.PREFS_LinkScroll) startSeekBarSync()
                 }
                 if (data == "PLAYER_PAUSE") {
                     vm.wasPlaying = vm.player.isPlaying
@@ -786,7 +702,7 @@ class PlayerActivity: AppCompatActivity(){
                     }
                     Player.STATE_IDLE -> {
                         stopVideoTimeSync()
-                        stopScrollerSync()
+                        stopSeekBarSync()
                     }
                 }
             }
@@ -841,188 +757,22 @@ class PlayerActivity: AppCompatActivity(){
         }
 
 
-        //控件初始化
-        setScrollerPadding()
-
-
-
-
-        //Scroller事件 gestureDetector层 -onSingleTap -onDown
-        val gestureDetectorScroller = GestureDetector(this, object : SimpleOnGestureListener() {
-            @SuppressLint("SetTextI18n")
-            override fun onSingleTapUp(e: MotionEvent): Boolean {
-                singleTap = true
-                if (!vm.PREFS_TapJump) {
-                    if (vm.PREFS_LinkScroll) {
-                        notice("未开启单击跳转,如需跳转请先开启,或关闭链接滚动", 1000)
-                        return false
-                    }
+        SeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    val duration = vm.player.duration
+                    val seekToPosition = (progress.toFloat() / 1000 * duration.toFloat()).toLong()
+                    vm.player.seekTo(seekToPosition)
                 }
-                //根据百分比计算具体跳转时间点
-                val totalContentWidth = scroller.computeHorizontalScrollRange()
-                val scrolled = scroller.computeHorizontalScrollOffset()
-                val leftPadding = scroller.paddingLeft
-                val xInContent = e.x + scrolled - leftPadding
-                if (totalContentWidth <= 0) return false
-                val percent = xInContent / totalContentWidth
-                val seekToMs = (percent * vm.player.duration).toLong().coerceIn(0, vm.player.duration)
-                if (seekToMs <= 0) {
-                    return false
-                }
-                if (seekToMs >= vm.player.duration) {
-                    return false
-                }
-                //发送跳转命令
-                vm.player.seekTo(seekToMs)
-                notice("跳转至${formatTime2(seekToMs)}", 1000)
-                lifecycleScope.launch {
-                    startScrollerSync()
-                    delay(20)
-                    if (!vm.PREFS_LinkScroll) {
-                        stopScrollerSync()
-                    }
-                }
-
-
-
-                if (vm.wasPlaying) {
-                    vm.wasPlaying = false
-                    vm.player.play()
-                }
-                return true
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                stopSeekBarSync()
+            }
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                startSeekBarSync()
             }
         })
-        //Scroller事件 -原生层
-        scroller.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
-            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                if (e.action == MotionEvent.ACTION_DOWN) {
-                    scrollerState_Pressed = true
-                    scrollerState_DraggingStay = true
-                    lastSeekExecuted = false
-                    if (vm.player.isPlaying && vm.allowRecord_wasPlaying) {
-                        vm.wasPlaying = true
-                    }
-                }
-                if (e.action == MotionEvent.ACTION_UP) {
-                    scrollerState_Pressed = false
 
-                    //开启控件隐藏倒计时
-                    startIdleTimer()
-                }
-                //detector承担长按
-                gestureDetectorScroller.onTouchEvent(e)
-                return false
-            }
-            //以下未使用
-            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
-                gestureDetectorScroller.onTouchEvent(e)
-            }
-            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {  }
-        })
-        //Scroller事件 -滚动层 -onScrollStateChanged -onScrolled
-        scroller.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            //onScrollStateChanged承担状态标记变更
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
-                    scrollerState_Stay = false
-                    scrollerState_Moving = true
-                    scrollerState_DraggingMoving = true
-
-                    return
-                }
-                if (newState == RecyclerView.SCROLL_STATE_SETTLING) {
-                    scrollerState_Stay = false
-                    scrollerState_Moving = true
-                    scrollerState_DraggingStay = false
-                    scrollerState_DraggingMoving = false
-                    scrollerState_InertiaMoving = true
-
-                    return
-                }
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    scrollerState_Stay = true
-                    scrollerState_Moving = false
-                    scrollerState_DraggingMoving = false
-                    scrollerState_DraggingStay = false
-                    scrollerState_InertiaMoving = false
-
-                    return
-                }
-            }
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (!vm.state_firstReadyReached) return
-                //进度条随视频滚动,用户没有操作
-                if (scrollerState_Stay) {
-                    return
-                }
-                //用户操作 -停止同步
-                stopVideoTimeSync()
-                stopScrollerSync()
-                //用户操作 -修改seek参数和间隔
-                if (scrollerState_DraggingMoving) {
-                    //修改视频寻帧间隔
-                    if (dx > 0){
-                        videoSeekHandlerGap = vm.PREFS_SeekHandlerGap
-                    }else if (dx < 0){
-                        videoSeekHandlerGap = vm.PREFS_SeekHandlerGap
-                    }
-                    //修改视频seek参数
-                    if (dx == 1 || dx == -1) {
-                        if (vm.PREFS_UseOnlySyncFrame){
-                            vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
-                        }
-                        else {
-                            vm.player.setSeekParameters(SeekParameters.EXACT)
-                        }
-                    } else {
-                        vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
-                    }
-                } else {
-                    vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
-                }
-                //用户操作 -时间戳跟随进度条变动
-                onScroll_currentMillis = System.currentTimeMillis()
-                if (onScroll_currentMillis - lastMillis > vm.PREFS_TimeUpdateGap) {
-                    lastMillis = onScroll_currentMillis
-                    if (vm.PREFS_LinkScroll && vm.state_firstReadyReached) {
-
-                        //计算对应时间戳
-                        onScroll_scrollPercent = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
-                        onScroll_seekToMs = (onScroll_scrollPercent * vm.global_videoDuration).toLong()
-
-                        //刷新时间显示
-                        timer_current.text = formatTime1(onScroll_seekToMs)
-
-                    } else {
-                        return
-                    }
-                }
-                //用户操作 -视频跳转
-                if (!vm.PREFS_LinkScroll) {
-                    return
-                }
-                //进度条往左走/视频正向
-                if (dx > 0) {
-                    //跳转方式:寻帧
-                    if (vm.PREFS_AlwaysSeek) {
-                        scrollerState_BackwardScroll = false
-                        startVideoSeek()
-                    }
-                    //跳转方式:倍速滚动
-                    else {
-                        stopVideoSeek()
-                        startVideoSmartScroll()
-                    }
-                }
-                //进度条往右走/视频反向
-                else if (dx < 0) {
-                    scrollerState_BackwardScroll = true
-                    vm.player.pause()
-                    stopVideoSmartScroll()
-                    startVideoSeek()
-                }
-            }
-        })
 
 
         //退出按钮
@@ -1051,15 +801,12 @@ class PlayerActivity: AppCompatActivity(){
             vibrate()
             if (vm.player.isPlaying) {
                 pauseVideo()
-                stopScrollerSync()
+                stopSeekBarSync()
                 notice("暂停", 1000)
                 ButtonRefresh()
             } else {
-                //状态变更
-                scroller.stopScroll()
                 //播放或暂停
                 lifecycleScope.launch {
-                    scroller.stopScroll()
                     delay(20)
                     if (vm.playEnd) {
                         vm.playEnd = false
@@ -1096,7 +843,7 @@ class PlayerActivity: AppCompatActivity(){
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 if (vm.player.isPlaying) {
                     pauseVideo()
-                    stopScrollerSync()
+                    stopSeekBarSync()
                     notice("暂停播放", 1000)
                     ButtonRefresh()
                 } else {
@@ -1107,7 +854,7 @@ class PlayerActivity: AppCompatActivity(){
                         notice("视频已结束,开始重播", 1000)
                     } else {
                         playVideo()
-                        startScrollerSync()
+                        startSeekBarSync()
                         notice("继续播放", 1000)
                         ButtonRefresh()
                     }
@@ -1342,8 +1089,6 @@ class PlayerActivity: AppCompatActivity(){
                     notice("均衡器 -1(${equalizer.getBandLevel(i.toShort())/1000})", 1000)
                 }
             }
-
-
         }
         //更多按钮页面返回值 FROM_FRAGMENT_MORE_BUTTON
         supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MORE_BUTTON", this) { _, bundle ->
@@ -1357,7 +1102,7 @@ class PlayerActivity: AppCompatActivity(){
                 "BackToStart" -> {
                     vm.player.seekTo(0)
                     vm.player.play()
-                    if (vm.PREFS_LinkScroll) startScrollerSync()
+                    if (vm.PREFS_LinkScroll) startSeekBarSync()
                     notice("回到视频起始", 3000)
                 }
                 "PlayList" -> {
@@ -1382,10 +1127,6 @@ class PlayerActivity: AppCompatActivity(){
                         notice("已关闭后台播放", 1000)
                     }
                 }
-                "RepeatMode" -> {
-                    changeRepeatMode()
-                }
-                //倍速
                 "SetSpeed" -> {
                     val dialog = Dialog(this)
                     val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
@@ -1413,7 +1154,7 @@ class PlayerActivity: AppCompatActivity(){
                                 notice("已将倍速设置为$inputValue", 2000)
                                 lifecycleScope.launch {
                                     val newSetting = MediaItemSetting(MARK_FileName = vm.MediaInfo_FileName, PREFS_PlaySpeed = inputValue)
-                                    MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
+                                    MediaItemRepo.get(this@PlayerActivitySeekBar).saveSetting(newSetting)
                                 }
                             } else {
                                 notice("不允许该值", 3000)
@@ -1452,19 +1193,10 @@ class PlayerActivity: AppCompatActivity(){
                         notice("已关闭退出时保存进度", 2000)
                     }
                     lifecycleScope.launch(Dispatchers.IO) {
-                        MediaItemRepo.get(this@PlayerActivity).update_PREFS_SavePositionWhenExit(MediaInfo_FileName,vm.PREFS_SavePositionWhenExit)
+                        MediaItemRepo.get(this@PlayerActivitySeekBar).update_PREFS_SavePositionWhenExit(MediaInfo_FileName,vm.PREFS_SavePositionWhenExit)
                     }
                 }
-                //进度条
-                "AlwaysSeek" -> {
-                    changeStateAlwaysSeek()
-                }
-                "LinkScroll" -> {
-                    changeStateLinkScroll()
-                }
-                "TapJump" -> {
-                    changeStateTapJump()
-                }
+
                 //定时关闭 + 开启小窗
                 "setShutDownTime" -> {
                     val dialog = Dialog(this)
@@ -1575,7 +1307,7 @@ class PlayerActivity: AppCompatActivity(){
                 "SysShare" -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         delay(500)
-                        shareVideo(this@PlayerActivity, MediaInfo_VideoUri)
+                        shareVideo(this@PlayerActivitySeekBar, MediaInfo_VideoUri)
                     }
                 }
                 "UpdateCover" -> {
@@ -1583,9 +1315,6 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 "Equalizer" -> {
                     PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
-                }
-                "ReCreateThumb" -> {
-                    ReCreateScrollerThumb()
                 }
                 //退出事件
                 "Dismiss" -> {
@@ -1603,173 +1332,6 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 "NextMedia" -> {
                     vm.player.seekToNextMediaItem()
-                }
-                //列表
-                "switchItem" -> {
-                    val newItemUri = (bundle.getString("new_item_uri"))?.toUri()
-                    //检查新的媒体uri
-                    if (newItemUri == MediaInfo_VideoUri){
-                        notice("已在此视频中", 2000)
-                        return@setFragmentResultListener
-                    }
-                    if (newItemUri == null){
-                        notice("切换失败", 2000)
-                        return@setFragmentResultListener
-                    }
-                    //切换操作
-                    fun switchItemWork(){
-                        //状态变更
-                        vm.playEnd = false
-                        //被控端刷新
-                        if(vm.PREFS_LinkScroll) {startScrollerSync()}
-                        startVideoTimeSync()
-
-                        //读取并保存新uri
-                        MediaInfo_VideoUri = newItemUri
-                        vm.MediaInfo_VideoUri = MediaInfo_VideoUri
-
-                        //重解码视频信息
-                        val retriever = MediaMetadataRetriever()
-                        try { retriever.setDataSource(this@PlayerActivity, MediaInfo_VideoUri) }
-                        catch (_: Exception) {
-                            showCustomToast("无法解码该视频信息", Toast.LENGTH_SHORT, 3)
-                            val data = Intent().apply {
-                                putExtra("key", "NEED_REFRESH")
-                            }
-                            setResult(RESULT_OK, data)
-                            finish()
-                            return
-                        }
-                        MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivity, MediaInfo_VideoUri).toString()
-                        MediaInfo_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
-                        MediaInfo_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
-                        MediaInfo_VideoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
-                        MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name
-                        retriever.release()
-
-                        //刷新总时长
-                        val timer_duration = findViewById<TextView>(R.id.timer_duration)
-                        timer_duration.text = formatTime1(MediaInfo_VideoDuration.toLong())
-
-                        //刷新进度条adapter(重榜)
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            //获取ViewModel
-                            val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
-                            //预先规划文件夹结构并创建 + 基于文件名哈希区分
-                            val SubDir_ThisMedia = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller")
-                            if (!SubDir_ThisMedia.exists()){
-                                SubDir_ThisMedia.mkdirs()
-                            }
-                            //传入参数预处理
-                            if (ScrollerInfo_EachPicDuration > 1000){
-                                vm.PREFS_GenerateThumbSYNC = true
-                            }
-                            //进度条绘制参数计算
-                            //使用超长进度条
-                            if (vm.PREFS_UseLongScroller) {
-                                ScrollerInfo_EachPicWidth = (47 * DisplayMetrics.density).toInt()
-                                if (MediaInfo_VideoDuration > 1_0000_000L) {
-                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 500.0).toInt()
-                                    ScrollerInfo_PicNumber = 500
-                                }
-                                else if (MediaInfo_VideoDuration > 7500_000L) {
-                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 400.0).toInt()
-                                    ScrollerInfo_PicNumber = 400
-                                }
-                                else if (MediaInfo_VideoDuration > 5000_000L) {
-                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 300.0).toInt()
-                                    ScrollerInfo_PicNumber = 300
-                                }
-                                else if (MediaInfo_VideoDuration > 500_000L) {
-                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 200.0).toInt()
-                                    ScrollerInfo_PicNumber = 200
-                                }
-                                else {
-                                    ScrollerInfo_EachPicDuration = 1000
-                                    ScrollerInfo_PicNumber = min((max((MediaInfo_VideoDuration / 1000), 1)), 500)
-                                }
-                            }
-                            //使用普通进度条
-                            else if (MediaInfo_VideoDuration / 1000 > ScrollerInfo_MaxPicNumber) {
-                                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_MaxPicNumber
-                                ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
-                            }
-                            else {
-                                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                                ScrollerInfo_PicNumber = (MediaInfo_VideoDuration / 1000) + 1
-                                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_PicNumber
-                            }
-
-                            //移除查询参数
-                            val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
-
-                            //绑定Adapter
-                            //使用超长进度条
-                            if (vm.PREFS_UseLongScroller){
-                                withContext(Dispatchers.Main) {
-                                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivity,
-                                        MediaInfo_AbsolutePath_clean,
-                                        MediaInfo_FileName,
-                                        playerScrollerViewModel.thumbItems,
-                                        ScrollerInfo_EachPicWidth,
-                                        ScrollerInfo_PicNumber,
-                                        ScrollerInfo_EachPicDuration,
-                                        vm.PREFS_GenerateThumbSYNC,
-                                        scroller,
-                                        playerScrollerViewModel
-                                    )
-                                }
-                            }
-                            //使用标准进度条
-                            else{
-                                withContext(Dispatchers.Main) {
-                                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
-                                        MediaInfo_AbsolutePath_clean,
-                                        MediaInfo_FileName,
-                                        playerScrollerViewModel.thumbItems,
-                                        ScrollerInfo_EachPicWidth,
-                                        ScrollerInfo_PicNumber,
-                                        ScrollerInfo_EachPicDuration,
-                                        vm.PREFS_GenerateThumbSYNC,
-                                        scroller,
-                                        vm.Flag_SavedThumbFlag,
-                                        object : OnFlagUpdateListener {
-                                            override fun onFlagUpdate(position: Int) {
-                                                vm.Flag_SavedThumbFlag = vm.Flag_SavedThumbFlag.substring(0, position) + '1' + vm.Flag_SavedThumbFlag.substring(position + 1)
-                                            }
-                                        },
-                                        playerScrollerViewModel
-                                    )
-                                }
-                            }
-
-
-                            //开启被控
-                            fun startSyncScrollerGapControl(){
-                                syncScrollRunnableGap = 0L
-                                lifecycleScope.launch {
-                                    delay(3000)
-                                    syncScrollRunnableGap = ((MediaInfo_VideoDuration / 1000) * (1000.0 / 3600)).toLong()
-                                    if (vm.PREFS_UseLongScroller){
-                                        syncScrollRunnableGap = 10L
-                                    }
-                                }
-                            }
-                            startSyncScrollerGapControl()
-                            if(vm.PREFS_LinkScroll){ startScrollerSync() }
-                            delay(200)
-                            startVideoTimeSync()
-                        }
-
-                        //播控中心
-                        startPlayNewItem()
-
-
-                        vm.player.play()
-                    }
-                    switchItemWork()
-
                 }
                 //退出逻辑
                 "Dismiss" -> {
@@ -1796,14 +1358,11 @@ class PlayerActivity: AppCompatActivity(){
 
             ReadBasicRoomDataBase()
 
-            scrollerAdapterUpdate()
-
 
         }
 
         //开启空闲倒计时
         startIdleTimer()
-
 
 
         //系统手势监听：返回键重写
@@ -1828,16 +1387,10 @@ class PlayerActivity: AppCompatActivity(){
         lifecycleScope.launch(Dispatchers.IO) {
             DataBaseProfile = MediaItemRepo.get(applicationContext).getSetting(vm.MediaInfo_FileName)
             if (DataBaseProfile == null){
-                FlagsPreWrite()
                 DataBasePreWrite()
                 return@launch }
             val DataBaseSetting = DataBaseProfile!!
             //进度条缩略图生成状态
-            if (DataBaseSetting.SaveFlag_Thumb != ""){
-                vm.Flag_SavedThumbFlag = DataBaseSetting.SaveFlag_Thumb
-            }else{
-                vm.Flag_SavedThumbFlag = "00000000000000000000"
-            }
             if (DataBaseSetting.SavePath_Cover != ""){
                 vm.String_SavedCoverPath = DataBaseSetting.SavePath_Cover
             }
@@ -1929,8 +1482,6 @@ class PlayerActivity: AppCompatActivity(){
         //读取数据库
         ReadBasicRoomDataBase()
 
-        scrollerAdapterUpdate()
-
         RefreshTimeLine()
 
         if (!vm.PREFS_UseMediaSession) {
@@ -1939,121 +1490,9 @@ class PlayerActivity: AppCompatActivity(){
 
     }
 
-    private fun scrollerAdapterUpdate(){
-        lifecycleScope.launch(Dispatchers.IO) {
-            //获取ViewModel
-            val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
-            //预先规划文件夹结构并创建 + 基于文件名哈希区分
-            val SubDir_ThisMedia = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller")
-            if (!SubDir_ThisMedia.exists()){
-                SubDir_ThisMedia.mkdirs()
-            }
-            //传入参数预处理
-            if (ScrollerInfo_EachPicDuration > 1000){
-                vm.PREFS_GenerateThumbSYNC = true
-            }
-            //进度条绘制参数计算
-            //使用超长进度条
-            if (vm.PREFS_UseLongScroller) {
-                ScrollerInfo_EachPicWidth = (47 * DisplayMetrics.density).toInt()
-                if (MediaInfo_VideoDuration > 1_0000_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 500.0).toInt()
-                    ScrollerInfo_PicNumber = 500
-                }
-                else if (MediaInfo_VideoDuration > 7500_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 400.0).toInt()
-                    ScrollerInfo_PicNumber = 400
-                }
-                else if (MediaInfo_VideoDuration > 5000_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 300.0).toInt()
-                    ScrollerInfo_PicNumber = 300
-                }
-                else if (MediaInfo_VideoDuration > 500_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 200.0).toInt()
-                    ScrollerInfo_PicNumber = 200
-                }
-                else {
-                    ScrollerInfo_EachPicDuration = 1000
-                    ScrollerInfo_PicNumber = min((max((MediaInfo_VideoDuration / 1000), 1)), 500)
-                }
-            }
-            //使用普通进度条
-            else if (MediaInfo_VideoDuration / 1000 >= ScrollerInfo_MaxPicNumber) {
-                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_MaxPicNumber
-                ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
-            } else {
-                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                ScrollerInfo_PicNumber = (MediaInfo_VideoDuration / 1000) + 1
-                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_PicNumber
-            }
-
-            //移除查询参数
-            val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
-
-
-            //绑定Adapter
-            //使用超长进度条
-            if (vm.PREFS_UseLongScroller){
-                withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivity,
-                        MediaInfo_AbsolutePath_clean,
-                        MediaInfo_FileName,
-                        playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
-                        vm.PREFS_GenerateThumbSYNC,
-                        scroller,
-                        playerScrollerViewModel
-                    )
-                }
-            }
-            //使用标准进度条
-            else{
-                withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
-                        MediaInfo_AbsolutePath_clean,
-                        MediaInfo_FileName,
-                        playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
-                        vm.PREFS_GenerateThumbSYNC,
-                        scroller,
-                        vm.Flag_SavedThumbFlag,
-                        object : OnFlagUpdateListener {
-                            override fun onFlagUpdate(position: Int) {
-                                vm.Flag_SavedThumbFlag = vm.Flag_SavedThumbFlag.substring(0, position) + '1' + vm.Flag_SavedThumbFlag.substring(position + 1)
-                            }
-                        },
-                        playerScrollerViewModel
-                    )
-                }
-            }
-
-
-            //开启被控
-            fun startSyncScrollerGapControl(){
-                syncScrollRunnableGap = 0L
-                lifecycleScope.launch {
-                    delay(3000)
-                    syncScrollRunnableGap = ((MediaInfo_VideoDuration / 1000) * (1000.0 / 3600)).toLong()
-                    if (vm.PREFS_UseLongScroller){
-                        syncScrollRunnableGap = 10L
-                    }
-                }
-            }
-            startSyncScrollerGapControl()
-            if(vm.PREFS_LinkScroll){ startScrollerSync() }
-            delay(200)
-            startVideoTimeSync()
-        }
-    }
-
     private fun getMediaInfo(uri: Uri){
         retriever = MediaMetadataRetriever()
-        try { retriever.setDataSource(this@PlayerActivity, uri) }
+        try { retriever.setDataSource(this@PlayerActivitySeekBar, uri) }
         catch (_: Exception) {
             showCustomToast("无法解码该视频信息", Toast.LENGTH_SHORT, 3)
             val data = Intent().apply {
@@ -2063,7 +1502,7 @@ class PlayerActivity: AppCompatActivity(){
             finish()
             return
         }
-        MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivity, MediaInfo_VideoUri).toString()
+        MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivitySeekBar, MediaInfo_VideoUri).toString()
         MediaInfo_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
         MediaInfo_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
         MediaInfo_VideoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
@@ -2081,20 +1520,6 @@ class PlayerActivity: AppCompatActivity(){
         }
     }
 
-    private fun changeRepeatMode(){
-        if (controller.repeatMode == REPEAT_MODE_OFF){
-            controller.repeatMode = Player.REPEAT_MODE_ONE
-            vm.player.repeatMode = Player.REPEAT_MODE_ONE
-            notice("已切换为 单集循环",2000)
-        }
-        else if (controller.repeatMode == Player.REPEAT_MODE_ONE){
-            controller.repeatMode = Player.REPEAT_MODE_ALL
-            vm.player.repeatMode = Player.REPEAT_MODE_ALL
-            notice("已切换为 列表循环",2000)
-        }
-
-    }
-
     private fun MediaSessionControl(){
 
         startBackgroundServices()
@@ -2104,7 +1529,6 @@ class PlayerActivity: AppCompatActivity(){
         val MediaSessionController = MediaController.Builder(this, SessionToken).buildAsync()
         MediaSessionController.addListener({
             controller = MediaSessionController.get()
-
 
             play_list_default = PREFS.getString("play_list_default", "")!!
 
@@ -2129,12 +1553,10 @@ class PlayerActivity: AppCompatActivity(){
 
                 val robustMediaItems = parseMediaItemsRobust(play_list_default)
                 controller.setMediaItems(robustMediaItems,index,0)
-                controller.repeatMode = REPEAT_MODE_OFF
 
             }
 
             controller.prepare()
-
         }, MoreExecutors.directExecutor())
     }
 
@@ -2255,7 +1677,7 @@ class PlayerActivity: AppCompatActivity(){
             if(flag_need_notice) notice("已关闭仅播放音频", 1000)
         }
         lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivity).update_PREFS_SoundOnly(MediaInfo_FileName,vm.PREFS_OnlyAudio)
+            MediaItemRepo.get(this@PlayerActivitySeekBar).update_PREFS_SoundOnly(MediaInfo_FileName,vm.PREFS_OnlyAudio)
         }
     }
     private fun changeStateVideoOnly(flag_need_notice: Boolean){
@@ -2270,94 +1692,7 @@ class PlayerActivity: AppCompatActivity(){
             if(flag_need_notice) notice("已关闭仅播放视频", 1000)
         }
         lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivity).update_PREFS_VideoOnly(MediaInfo_FileName,vm.PREFS_OnlyVideo)
-        }
-    }
-    private fun changeStateAlwaysSeek(){
-        if (vm.PREFS_UseDataBaseForScrollerSetting){
-            if (vm.PREFS_AlwaysSeek){
-                vm.PREFS_AlwaysSeek = false
-                notice("已关闭AlwaysSeek", 3000)
-            } else {
-                vm.PREFS_AlwaysSeek = true
-                notice("已开启AlwaysSeek", 3000)
-            }
-            lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivity).update_PREFS_AlwaysSeek(MediaInfo_FileName,vm.PREFS_AlwaysSeek)
-            }
-        }
-        else{
-            if (vm.PREFS_AlwaysSeek){
-                vm.PREFS_AlwaysSeek = false
-                PREFS.edit { putBoolean("PREFS_AlwaysSeek", false).apply() }
-                notice("已关闭AlwaysSeek", 3000)
-            } else {
-                vm.PREFS_AlwaysSeek = true
-                PREFS.edit { putBoolean("PREFS_AlwaysSeek", true).apply() }
-                notice("已开启AlwaysSeek", 3000)
-            }
-        }
-    }
-    private fun changeStateLinkScroll(){
-        if (vm.PREFS_UseDataBaseForScrollerSetting){
-            if (vm.PREFS_LinkScroll) {
-                vm.PREFS_LinkScroll = false
-                stopScrollerSync()
-                scroller.stopScroll()
-                notice("已关闭链接滚动条与视频进度", 2500)
-            } else {
-                vm.PREFS_LinkScroll = true
-                notice("已将进度条与视频进度同步", 1000)
-                isSeekReady = true
-                scroller.stopScroll()
-                startScrollerSync()
-                stopVideoSeek()
-            }
-            lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivity).update_PREFS_LinkScroll(MediaInfo_FileName,vm.PREFS_LinkScroll)
-            }
-        }
-        else{
-            if (vm.PREFS_LinkScroll) {
-                vm.PREFS_LinkScroll = false
-                stopScrollerSync()
-                scroller.stopScroll()
-                PREFS.edit { putBoolean("PREFS_LinkScroll", false).apply() }
-                notice("已关闭链接滚动条与视频进度", 2500)
-            } else {
-                vm.PREFS_LinkScroll = true
-                notice("已将进度条与视频进度同步", 1000)
-                isSeekReady = true
-                scroller.stopScroll()
-                startScrollerSync()
-                stopVideoSeek()
-                PREFS.edit { putBoolean("PREFS_TapJump", true).apply() }
-            }
-        }
-    }
-    private fun changeStateTapJump(){
-        if (vm.PREFS_UseDataBaseForScrollerSetting){
-            if (vm.PREFS_TapJump){
-                vm.PREFS_TapJump = false
-                notice("已关闭TapJump", 3000)
-            } else {
-                vm.PREFS_TapJump = true
-                notice("已开启TapJump", 3000)
-            }
-            lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivity).update_PREFS_TapJump(MediaInfo_FileName,vm.PREFS_TapJump)
-            }
-        }
-        else{
-            if (vm.PREFS_TapJump){
-                vm.PREFS_TapJump = false
-                PREFS.edit { putBoolean("PREFS_TapJump", false).apply() }
-                notice("已关闭TapJump", 3000)
-            } else {
-                vm.PREFS_TapJump = true
-                PREFS.edit { putBoolean("PREFS_TapJump", true).apply() }
-                notice("已开启TapJump", 3000)
-            }
+            MediaItemRepo.get(this@PlayerActivitySeekBar).update_PREFS_VideoOnly(MediaInfo_FileName,vm.PREFS_OnlyVideo)
         }
     }
 
@@ -2367,30 +1702,22 @@ class PlayerActivity: AppCompatActivity(){
         if (vm.PREFS_SavePositionWhenExit){
             val currentPosition = vm.player.currentPosition
             lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivity).update_State_PositionWhenExit(MediaInfo_FileName,currentPosition)
+                MediaItemRepo.get(this@PlayerActivitySeekBar).update_State_PositionWhenExit(MediaInfo_FileName,currentPosition)
             }
         }
-        //保存进度条缩略图生成状态
-        lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivity).update_Flag_SavedThumbPos(MediaInfo_FileName,vm.Flag_SavedThumbFlag)
-        }
+
 
         //停止
-        stopScrollerSync()
+        stopSeekBarSync()
         PlayerSingleton.releasePlayer()
         stopFloatingWindow()
         stopBackgroundServices()
         finish()
     }
 
-    private fun FlagsPreWrite(){
-        vm.Flag_SavedThumbFlag = "00000000000000000000"
-        vm.String_SavedCoverPath = ""
-    }
-
     private fun DataBasePreWrite(){
         lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivity).preset_all_row_default(MediaInfo_FileName)
+            MediaItemRepo.get(this@PlayerActivitySeekBar).preset_all_row_default(MediaInfo_FileName)
         }
     }
 
@@ -2401,39 +1728,31 @@ class PlayerActivity: AppCompatActivity(){
 
 
     //Runnable:根据视频时间更新进度条位置
-    private val syncScrollTaskHandler = Handler(Looper.getMainLooper())
-    private val syncScrollTask = object : Runnable {
+    private val syncSeekBarTaskHandler = Handler(Looper.getMainLooper())
+    private val syncSeekBarTask = object : Runnable {
         override fun run() {
-            syncScrollRunnableRunning = true
-            if (ScrollerInfo_EachPicDuration == 0){ return }
-
-            scrollParam1 = ( vm.player.currentPosition / ScrollerInfo_EachPicDuration ).toInt()
-            scrollParam2 = (( vm.player.currentPosition - scrollParam1 * ScrollerInfo_EachPicDuration ) * ScrollerInfo_EachPicWidth / ScrollerInfo_EachPicDuration ).toInt()
-
-            if (vm.playEnd && !vm.player.isPlaying){
-                scrollParam1 = scrollParam1 - 1
-                scrollParam2 = 150
-                scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
-                syncScrollRunnableRunning = false
+            //更新进度条位置
+            val currentPosition = vm.player.currentPosition
+            val duration = vm.player.duration
+            if (duration > 0) {
+                val progress = (currentPosition.toFloat() / duration.toFloat() * 1000).toInt()
+                SeekBar.progress = progress
             }
-            else{
 
-                scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
 
-                syncScrollTaskHandler.postDelayed(this, 1)
-            }
+            syncSeekBarTaskHandler.postDelayed(this, 1)
         }
     }
-    private fun startScrollerSync() {
-        if (syncScrollRunnableRunning){
-            return
-        }
-        scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
-        syncScrollTaskHandler.post(syncScrollTask)
+    private fun startSeekBarSync() {
+
+
+
+
+        syncSeekBarTaskHandler.post(syncSeekBarTask)
     }
-    private fun stopScrollerSync() {
-        syncScrollRunnableRunning = false
-        syncScrollTaskHandler.removeCallbacks(syncScrollTask)
+    private fun stopSeekBarSync() {
+
+        syncSeekBarTaskHandler.removeCallbacks(syncSeekBarTask)
     }
     //Runnable:根据视频时间更新时间戳
     private val videoTimeSyncHandler = Handler(Looper.getMainLooper())
@@ -2451,178 +1770,6 @@ class PlayerActivity: AppCompatActivity(){
     }
     private fun stopVideoTimeSync() {
         videoTimeSyncHandler.removeCallbacks(videoTimeSync)
-    }
-    //Runnable:视频倍速滚动
-    var lastSeekExecuted = false
-    private val videoSmartScrollHandler = Handler(Looper.getMainLooper())
-    private var videoSmartScroll = object : Runnable{
-        override fun run() {
-            vm.allowRecord_wasPlaying = false
-            val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-            var delayGap = if (scrollerState_Pressed){ 30L } else{ 30L }
-            val videoPosition = vm.player.currentPosition
-            val scrollerPosition =  vm.player.duration * (recyclerView.computeHorizontalScrollOffset().toFloat()/recyclerView.computeHorizontalScrollRange())
-            vm.player.volume = 0f
-            if (scrollerState_Moving) {
-                if (vm.player.currentPosition > scrollerPosition - 100) {
-                    vm.player.pause()
-                }else{
-                    val positionGap = scrollerPosition - videoPosition
-                    var speed5 = (((positionGap / 100).toInt()) /10.0).toFloat()
-
-                    if (speed5 > lastPlaySpeed){
-                        speed5 = speed5 + 0.2f
-                    }else if(speed5 < lastPlaySpeed){
-                        speed5 = speed5 - 0.2f
-                    }
-
-
-                    val MAX_EFFICIENT_SPEED = 20.0f
-                    speed5 = speed5.coerceAtMost(MAX_EFFICIENT_SPEED)
-
-
-                    if (speed5 > 0f){ vm.player.setPlaybackSpeed(speed5) }
-                }
-                videoSmartScrollHandler.postDelayed(this,delayGap)
-            }
-            else{
-                if (lastSeekExecuted) return
-                lastSeekExecuted = true
-
-                global_SeekToMs = scrollerPosition.toLong()
-                vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
-                smartScrollRunnableRunning = false
-                playerReadyFrom_SmartScrollLastSeek = true
-                startSmartScrollLastSeek()
-            }
-        }
-    }
-    private fun startVideoSmartScroll() {
-        stopScrollerSync()
-        stopVideoTimeSync()
-        vm.player.volume = 0f
-        vm.player.play()
-        if (singleTap){
-            singleTap = false
-            return
-        }
-        if (smartScrollRunnableRunning) return
-        smartScrollRunnableRunning = true
-        videoSmartScrollHandler.post(videoSmartScroll)
-    }
-    private fun stopVideoSmartScroll() {
-        smartScrollRunnableRunning = false
-        videoSmartScrollHandler.removeCallbacks(videoSmartScroll)
-    }
-    //Runnable:视频Seek滚动
-    private val videoSeekHandler = Handler(Looper.getMainLooper())
-    private var videoSeek = object : Runnable{
-        override fun run() {
-            //标记位更改
-            videoSeekHandlerRunning = true
-
-            //计算目标位置
-            VideoSeekHandler_totalWidth = scroller.computeHorizontalScrollRange()
-            VideoSeekHandler_offset = scroller.computeHorizontalScrollOffset()
-            VideoSeekHandler_percent = VideoSeekHandler_offset.toFloat() / VideoSeekHandler_totalWidth
-            VideoSeekHandler_seekToMs = (VideoSeekHandler_percent * vm.player.duration).toLong()
-            //反向滚动时防止seek到前面
-            if (scrollerState_BackwardScroll){
-                if (vm.PREFS_AlwaysSeek) {
-                    if (VideoSeekHandler_seekToMs < vm.player.currentPosition){
-                        vm.player.pause()
-                        if (VideoSeekHandler_seekToMs < 50){
-                            playerReadyFrom_LastSeek = true
-                            vm.player.seekTo(0)
-                        }
-                        else{
-                            if (isSeekReady){
-                                isSeekReady = false
-                                playerReadyFrom_NormalSeek = true
-                                vm.player.seekTo(VideoSeekHandler_seekToMs)
-                            }
-                        }
-                    }
-                }
-                else{
-                    vm.player.pause()
-                    if (VideoSeekHandler_seekToMs < 50){
-                        playerReadyFrom_LastSeek = true
-                        vm.player.seekTo(0)
-                    }
-                    else{
-                        if (isSeekReady){
-                            isSeekReady = false
-                            playerReadyFrom_NormalSeek = true
-                            vm.player.seekTo(VideoSeekHandler_seekToMs)
-                        }
-                    }
-                }
-            }
-            //正向seek
-            else{
-                vm.player.pause()
-                if (isSeekReady){
-                    isSeekReady = false
-                    playerReadyFrom_NormalSeek = true
-                    vm.player.seekTo(VideoSeekHandler_seekToMs)
-                }
-            }
-
-
-            //决定继续运行或是结束
-            if (scrollerState_Pressed || scrollerState_Moving) {
-                videoSeekHandler.postDelayed(this, videoSeekHandlerGap)
-            }else{
-                global_SeekToMs = VideoSeekHandler_seekToMs
-                startLastSeek()
-                videoSeekHandlerRunning = false
-            }
-
-        }
-    }
-    private fun startVideoSeek() {
-        vm.playEnd = false
-        if (videoSeekHandlerRunning) return
-        //开启后不再允许记录播放状态
-        vm.allowRecord_wasPlaying = false
-        videoSeekHandler.post(videoSeek)
-    }
-    private fun stopVideoSeek() {
-        videoSeekHandlerRunning = false
-        videoSeekHandler.removeCallbacks(videoSeek)
-    }
-    //Runnable:lastSeek
-    private val lastSeekHandler = Handler(Looper.getMainLooper())
-    private var lastSeek = object : Runnable{
-        override fun run() {
-            if (isSeekReady){
-                isSeekReady = false
-                vm.player.setSeekParameters(SeekParameters.EXACT)
-                playerReadyFrom_LastSeek = true
-                vm.player.seekTo(global_SeekToMs)
-            }
-            else{ videoSeekHandler.post(this) }
-        }
-    }
-    private fun startLastSeek() {
-        lastSeekHandler.post(lastSeek)
-    }
-    //Runnable:SmartScrollLastSeek
-    private val SmartScrollLastSeekHandler = Handler(Looper.getMainLooper())
-    private var SmartScrollLastSeek = object : Runnable{
-        override fun run() {
-            if (isSeekReady){
-                isSeekReady = false
-                playerReadyFrom_SmartScrollLastSeek = true
-                vm.player.seekTo(global_SeekToMs)
-            }else{
-                videoSeekHandler.post(this)
-            }
-        }
-    }
-    private fun startSmartScrollLastSeek() {
-        SmartScrollLastSeekHandler.post(SmartScrollLastSeek)
     }
     //Job:显示通知
     private var showNoticeJob: Job? = null
@@ -2687,9 +1834,8 @@ class PlayerActivity: AppCompatActivity(){
 
     override fun onPause() {
         super.onPause()
-        //关闭视频控制
-        stopVideoSeek()
-        stopVideoSmartScroll()
+
+
     }
 
     override fun onStop() {
@@ -2709,9 +1855,8 @@ class PlayerActivity: AppCompatActivity(){
         }
         //通用
         stopVideoTimeSync()
-        stopScrollerSync()
-        stopVideoSeek()
-        stopVideoSmartScroll()
+        stopSeekBarSync()
+
     }
 
     override fun onResume() {
@@ -2740,7 +1885,7 @@ class PlayerActivity: AppCompatActivity(){
             }
             //判断是否需要开启ScrollerSync
             startVideoTimeSync()
-            if (vm.PREFS_LinkScroll && vm.player.isPlaying) startScrollerSync()
+            if (vm.PREFS_LinkScroll && vm.player.isPlaying) startSeekBarSync()
         }
         //onResume来自浮窗
         if (vm.inFloatingWindow){
@@ -2760,10 +1905,8 @@ class PlayerActivity: AppCompatActivity(){
         localBroadcastManager.unregisterReceiver(receiver)
         //onDestroy来自旋转屏幕
         if (vm.onOrientationChanging){
-            stopVideoSeek()
-            stopVideoSmartScroll()
             stopVideoTimeSync()
-            stopScrollerSync()
+            stopSeekBarSync()
         }
 
     }
@@ -2850,10 +1993,10 @@ class PlayerActivity: AppCompatActivity(){
             else{
                 setControllerLayerPadding("left")
             } //其他
-            //进度条端点
-            setScrollerPadding()
             //通知卡片
             (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (50)
+
+            displayMetricsLoad()
 
 
         }
@@ -2861,12 +2004,12 @@ class PlayerActivity: AppCompatActivity(){
         else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             //取消隐藏状态栏
             setStatusBarParams()
-            //进度条端点
-            setScrollerPadding()
             //控件
             setControllerLayerPadding("recover")
             //通知卡片
             (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (500)
+
+            displayMetricsLoad()
 
 
         }
@@ -2936,68 +2079,14 @@ class PlayerActivity: AppCompatActivity(){
         //刷新旋转屏幕按钮
         val ButtonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivity, R.color.ButtonBgClosed))
+            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivitySeekBar, R.color.ButtonBgClosed))
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivity, R.color.ButtonBg))
+            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivitySeekBar, R.color.ButtonBg))
         }
 
 
 
-    }
-
-    private fun displayMetricsLoad(){
-        val displayMetrics = resources.displayMetrics
-        screenWidth = displayMetrics.widthPixels
-        screenHeight = displayMetrics.heightPixels
-    }
-
-    private fun setScrollerPadding(){
-        displayMetricsLoad()
-        scroller.layoutManager = LinearLayoutManager(this@PlayerActivity, LinearLayoutManager.HORIZONTAL, false)
-        scroller.itemAnimator = null
-        scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        scroller.layoutParams.width = 0
-        sidePadding = screenWidth / 2
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-        }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            var scrollerMarginType: Int
-            //华为
-            if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor") {
-                scrollerMarginType = 2
-                scroller.setPadding(
-                    sidePadding + vm.statusBarHeight / 2,
-                    0,
-                    sidePadding + vm.statusBarHeight / 2 - 1,
-                    0
-                )
-            }
-            //三星
-            else if (Build.BRAND == "samsung") {
-                scrollerMarginType = 1
-                scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-            }
-            //其他机型
-            else {
-                scrollerMarginType = 1
-                scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-            }
-            //超长进度条
-            if (vm.PREFS_UseCompatScroller) {
-                if (scrollerMarginType == 2) {
-                    scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-                }
-                else {
-                    scroller.setPadding(sidePadding + vm.statusBarHeight / 2, 0, sidePadding + vm.statusBarHeight / 2 - 1, 0)
-                }
-            }
-        }
-
-        scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
-        stopScrollerSync()
-        if (vm.PREFS_LinkScroll) startScrollerSync()
     }
 
     private fun setControllerLayerPadding(flag_dodge_which_side: String){
@@ -3018,121 +2107,6 @@ class PlayerActivity: AppCompatActivity(){
             (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (0)
             (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (0)
         }
-    }
-
-    private fun ReCreateScrollerThumb(){
-        //刷新进度条adapter(重榜)
-        vm.Flag_SavedThumbFlag = "00000000000000000000"
-        lifecycleScope.launch(Dispatchers.IO) {
-            //获取ViewModel
-            val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
-            //预先规划文件夹结构并创建 + 基于文件名哈希区分
-            val SubDir_ThisMedia = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller")
-            if (!SubDir_ThisMedia.exists()){
-                SubDir_ThisMedia.mkdirs()
-            }
-            //传入参数预处理
-            if (ScrollerInfo_EachPicDuration > 1000){
-                vm.PREFS_GenerateThumbSYNC = true
-            }
-            //进度条绘制参数计算
-            //使用超长进度条
-            if (vm.PREFS_UseLongScroller) {
-                ScrollerInfo_EachPicWidth = (47 * DisplayMetrics.density).toInt()
-                if (MediaInfo_VideoDuration > 1_0000_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 500.0).toInt()
-                    ScrollerInfo_PicNumber = 500
-                }
-                else if (MediaInfo_VideoDuration > 7500_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 400.0).toInt()
-                    ScrollerInfo_PicNumber = 400
-                }
-                else if (MediaInfo_VideoDuration > 5000_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 300.0).toInt()
-                    ScrollerInfo_PicNumber = 300
-                }
-                else if (MediaInfo_VideoDuration > 500_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 200.0).toInt()
-                    ScrollerInfo_PicNumber = 200
-                }
-                else {
-                    ScrollerInfo_EachPicDuration = 1000
-                    ScrollerInfo_PicNumber = min((max((MediaInfo_VideoDuration / 1000), 1)), 500)
-                }
-            }
-            //使用普通进度条
-            else if (MediaInfo_VideoDuration / 1000 > ScrollerInfo_MaxPicNumber) {
-                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_MaxPicNumber
-                ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
-            }
-            else {
-                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                ScrollerInfo_PicNumber = (MediaInfo_VideoDuration / 1000) + 1
-                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_PicNumber
-            }
-
-            //移除查询参数
-            val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
-
-            //绑定Adapter
-            //使用超长进度条
-            if (vm.PREFS_UseLongScroller){
-                withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivity,
-                        MediaInfo_AbsolutePath_clean,
-                        MediaInfo_FileName,
-                        playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
-                        vm.PREFS_GenerateThumbSYNC,
-                        scroller,
-                        playerScrollerViewModel
-                    )
-                }
-            }
-            //使用标准进度条
-            else{
-                withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
-                        MediaInfo_AbsolutePath_clean,
-                        MediaInfo_FileName,
-                        playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
-                        vm.PREFS_GenerateThumbSYNC,
-                        scroller,
-                        vm.Flag_SavedThumbFlag,
-                        object : OnFlagUpdateListener {
-                            override fun onFlagUpdate(position: Int) {
-                                vm.Flag_SavedThumbFlag = vm.Flag_SavedThumbFlag.substring(0, position) + '1' + vm.Flag_SavedThumbFlag.substring(position + 1)
-                            }
-                        },
-                        playerScrollerViewModel
-                    )
-                }
-            }
-
-
-            //开启被控
-            fun startSyncScrollerGapControl(){
-                syncScrollRunnableGap = 0L
-                lifecycleScope.launch {
-                    delay(3000)
-                    syncScrollRunnableGap = ((MediaInfo_VideoDuration / 1000) * (1000.0 / 3600)).toLong()
-                    if (vm.PREFS_UseLongScroller){
-                        syncScrollRunnableGap = 10L
-                    }
-                }
-            }
-            startSyncScrollerGapControl()
-            if(vm.PREFS_LinkScroll){ startScrollerSync() }
-            delay(200)
-            startVideoTimeSync()
-        }
-
     }
 
 
@@ -3185,7 +2159,7 @@ class PlayerActivity: AppCompatActivity(){
         if (vm.PREFS_VibrateMillis <= 0L) {
             return
         }
-        val vib = this@PlayerActivity.vibrator()
+        val vib = this@PlayerActivitySeekBar.vibrator()
         if (vm.PREFS_UseSysVibrate) {
             val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
             vib.vibrate(effect)
@@ -3283,7 +2257,7 @@ class PlayerActivity: AppCompatActivity(){
                     MARK_FileName = filename,
                     SavePath_Cover = saveCover.toString()
                 )
-                MediaItemRepo.get(this@PlayerActivity).saveSetting(newSetting)
+                MediaItemRepo.get(this@PlayerActivitySeekBar).saveSetting(newSetting)
             }
 
             notice("截取封面完成", 3000)
@@ -3376,9 +2350,8 @@ class PlayerActivity: AppCompatActivity(){
         widgetsShowing = false
         vm.controllerHided = true
         //被控控件控制
-        stopScrollerSync()
+        stopSeekBarSync()
         stopVideoTimeSync()
-        scroller.stopScroll()
         //显示控制
         //<editor-fold desc="显示控制(隐藏)">
         val ControllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
@@ -3391,9 +2364,8 @@ class PlayerActivity: AppCompatActivity(){
         widgetsShowing = false
         vm.controllerHided = true
         //被控控件控制
-        stopScrollerSync()
+        stopSeekBarSync()
         stopVideoTimeSync()
-        scroller.stopScroll()
         //显示控制
         //<editor-fold desc="显示控制(隐藏)">
         val ControllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
@@ -3409,7 +2381,7 @@ class PlayerActivity: AppCompatActivity(){
         widgetsShowing = true
         vm.controllerHided = false
         //被控控件控制
-        if(vm.PREFS_LinkScroll) { startScrollerSync() }
+        if(vm.PREFS_LinkScroll) { startSeekBarSync() }
         startVideoTimeSync()
         //显示控制
         //<editor-fold desc="显示控制(显示)">
@@ -3764,8 +2736,8 @@ class PlayerActivity: AppCompatActivity(){
             vm.state_firstReadyReached = true
             isSeekReady = true
 
-            stopScrollerSync()
-            if (vm.PREFS_LinkScroll) startScrollerSync()
+            stopSeekBarSync()
+            if (vm.PREFS_LinkScroll) startSeekBarSync()
 
             if (NeedRecoverySettings){
                 if (NeedRecoverySetting_VideoOnly){
@@ -3839,10 +2811,10 @@ class PlayerActivity: AppCompatActivity(){
         vm.playEnd = true
         //停止被控控件
         stopVideoTimeSync()
-        stopScrollerSync()
+        stopSeekBarSync()
         //播放结束时让控件显示
         setControllerVisible()
-        Handler(Looper.getMainLooper()).postDelayed({ stopScrollerSync() }, 100)
+        Handler(Looper.getMainLooper()).postDelayed({ stopSeekBarSync() }, 100)
         IDLE_Timer?.cancel()
         //自动退出和循环播放控制
         if (vm.state_FromSysStart && vm.PREFS_ExitWhenEnd){
@@ -3863,14 +2835,14 @@ class PlayerActivity: AppCompatActivity(){
         vm.wasPlaying = false
 
         stopVideoTimeSync()
-        stopScrollerSync()
+        stopSeekBarSync()
     }
 
     private fun playVideo(){
         requestAudioFocus()
         vm.player.setPlaybackSpeed(1f)
         vm.player.play()
-        if (vm.PREFS_LinkScroll){ startScrollerSync() }
+        if (vm.PREFS_LinkScroll){ startSeekBarSync() }
         if (!vm.PREFS_OnlyVideo) {
             vm.player.volume = 1f
         }
@@ -3922,6 +2894,12 @@ class PlayerActivity: AppCompatActivity(){
             PauseImage.visibility = View.GONE
             ContinueImage.visibility = View.VISIBLE
         }
+    }
+
+    private fun displayMetricsLoad(){
+        val displayMetrics = resources.displayMetrics
+        screenWidth = displayMetrics.widthPixels
+        screenHeight = displayMetrics.heightPixels
     }
 
     private fun preCheck(){
@@ -3981,10 +2959,13 @@ class PlayerActivity: AppCompatActivity(){
         }
         //状态栏设置
         AppBarSetting()
+        displayMetricsLoad()
         //恢复控件显示状态
         if (vm.controllerHided){
             setControllerInvisibleNoAnimation()
         }
+
+        vm.state_playerWithSeekBar = true
     }
     //格式化时间显示
     @SuppressLint("DefaultLocale")

@@ -6,8 +6,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
+import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
@@ -23,32 +25,38 @@ import androidx.core.net.toUri
 class PlayerService(): MediaSessionService() {
     //MediaSession
     private var mediaSession: MediaSession? = null
-    //媒体信息
-    private var INFO_TITLE: String? = null
-
     private var EnsureMediaSession = false
+
+    //媒体信息和配置信息
+    private var info_MediaTitle: String? = null
+
+    private lateinit var PREFS: SharedPreferences
+    private var PREFS_UseMediaSession: Boolean = false
 
 
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        //读取配置
+        PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+        PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", false)
 
+        //启用播控中心
+        if (PREFS_UseMediaSession){
 
-        //由于执行顺序问题,播控中心逻辑应在onCreate中,自定义通知逻辑应在onStartCommand中
-        if (Build.BRAND == "Xiaomi" || Build.BRAND == "samsung"){
-            //确认已启用播控中心
-            EnsureMediaSession = true
-            //已确认三星,小米的播控中心不设限制,启用播控中心
             mediaSession = MediaSession.Builder(application, PlayerSingleton.getPlayer(application)).build()
             mediaSession?.setSessionActivity(createPendingIntent())
+
 
 
             //不论需不需要播控中心都要发通知,这是安卓要求,只是有播控中心时自动隐藏通知
             val NotificationCustomized = BuildCustomizeNotification()
             createNotificationChannel()
             startForeground(NOTIF_ID, NotificationCustomized)
+
         }
+
 
 
     }
@@ -81,22 +89,17 @@ class PlayerService(): MediaSessionService() {
         super.onStartCommand(intent, flags, startId)
         //取出数据
         intent?.let {
-            INFO_TITLE = it.getStringExtra("MEDIA_TITLE")
+            info_MediaTitle = it.getStringExtra("info_to_service_MediaTitle")
         }
 
 
-        //华为播控中心为白名单,启用自定义控制通知
-        if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor"){
+        //启用通知
+        if (!PREFS_UseMediaSession){
 
             val NotificationCustomized = BuildCustomizeNotification()
             createNotificationChannel()
             startForeground(NOTIF_ID, NotificationCustomized)
-        }
-        //其他机型,默认启用自定义通知
-        else if (!EnsureMediaSession){
-            val NotificationCustomized = BuildCustomizeNotification()
-            createNotificationChannel()
-            startForeground(NOTIF_ID, NotificationCustomized)
+
         }
 
 
@@ -107,29 +110,15 @@ class PlayerService(): MediaSessionService() {
 
     //自定义通知:构建通知
     private fun BuildCustomizeNotification(): Notification {
-        if (Build.BRAND == "samsung") {
-            return NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentIntent(createPendingIntent())
-                .setContentText(INFO_TITLE)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setSmallIcon(R.drawable.ic_player_service_notification)
-                .addAction(android.R.drawable.ic_media_play, "播放/暂停", BroadcastPlayOrPause())
-                .addAction(android.R.drawable.ic_media_pause, "上一曲", BroadcastPrevious())
-                .addAction(android.R.drawable.ic_media_pause, "下一曲", BroadcastNext())
-                .setAutoCancel(false)
-                .build()
-        }
-        else{
-            return NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentIntent(createPendingIntent())
-                .setContentText(INFO_TITLE)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setSmallIcon(R.drawable.ic_player_service_notification)
-                .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
-                .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
-                .setAutoCancel(false)
-                .build()
-        }
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentIntent(createPendingIntent())
+            .setContentText(info_MediaTitle)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setSmallIcon(R.drawable.ic_player_service_notification)
+            .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
+            .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
+            .setAutoCancel(false)
+            .build()
     }
 
     private fun BuildCustomViewNotification(): Notification {
@@ -157,7 +146,7 @@ class PlayerService(): MediaSessionService() {
         )
 
         // 3. 动态文字/图片
-        remoteView.setTextViewText(R.id.tvTitle, INFO_TITLE)
+        remoteView.setTextViewText(R.id.tvTitle, info_MediaTitle)
        // remoteView.setImageViewResource(R.id.ivCover, R.drawable.ic_player_service_notification)
 
         // 4. 构建 Notification

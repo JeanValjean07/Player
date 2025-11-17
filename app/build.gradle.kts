@@ -33,7 +33,7 @@ android {
         minSdk = 29
         targetSdk = 36
         versionCode = 1
-        versionName = "3.6.0"
+        versionName = "3.6.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -76,6 +76,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     implementation(libs.androidx.library)
     implementation(libs.foundation.layout)
+    implementation(libs.androidx.datastore.core)
     ksp("androidx.room:room-compiler:2.6.1")
 
 

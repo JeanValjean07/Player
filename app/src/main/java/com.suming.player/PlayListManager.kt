@@ -1,16 +1,22 @@
 package com.suming.player
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.annotation.WorkerThread
+import androidx.core.content.edit
+import androidx.datastore.core.FileStorage
 import data.MediaModel.MediaItem_video
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.io.ObjectOutputStream
 import java.util.*
 
 @Suppress("unused")
-class PlayListManager private constructor(context: Context) {
+class PlayListManager private constructor(private val context: Context) {
 
     companion object {
         private const val PREFS_NAME = "PREFS_List"
@@ -19,6 +25,7 @@ class PlayListManager private constructor(context: Context) {
         private const val KEY_PLAY_MODE = "PlayMode"
         private const val KEY_HISTORY_LIST = "HistoryList"
 
+        @SuppressLint("StaticFieldLeak")
         @Volatile
         private var INSTANCE: PlayListManager? = null
 
@@ -36,10 +43,12 @@ class PlayListManager private constructor(context: Context) {
     //LOOP 循环播放
 
     private val PREFS_List: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val PREFS: SharedPreferences = context.getSharedPreferences("PREFS", Context.MODE_PRIVATE)
     private val PREFS_List_Editor: SharedPreferences.Editor = PREFS_List.edit()
 
     //当前播放列表
     private var currentPlayList: MutableList<MediaItem_video> = mutableListOf()
+    private var currentPlayList2: MutableList<MutableList<MediaItem_video>> = mutableListOf()
     //当前播放索引
     private var currentPlayingIndex: Int = -1
     //当前播放模式
@@ -206,6 +215,29 @@ class PlayListManager private constructor(context: Context) {
 
     fun getHistoryList(): List<Long> {
         return historyList.toList()
+    }
+
+
+    fun initPlayList_byMediaStore(playList: List<MediaItem_video>) {
+        currentPlayList2.clear()
+
+        //val list = arrayOf(playList)
+
+        val list = playList.toMutableList()
+
+        Log.d("SuMing", "initPlayList_byMediaStore: list.size1111 ${list.size}")
+
+        PREFS.edit{ putString("play_list_default", list.toString()) }
+
+        for (i in 0 until list.size) {
+            Log.d("SuMing", "initPlayList_byMediaStore: ${list[i]}")
+        }
+
+        Log.d("SuMing", "initPlayList_byMediaStore:whole list  ${list}")
+
+
+
+
     }
 
 

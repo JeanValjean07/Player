@@ -138,7 +138,7 @@ class MainActivityAdapter(
                     //生成封面缩略图
                     retriever.setDataSource(getAbsoluteFilePath(context, item.uri) ?: item.uri.toString())
 
-                    Log.d("SuMing", "生成缩略图: ${item.uri}")
+                    //Log.d("SuMing", "生成缩略图: ${item.uri}")
 
 
 
@@ -164,13 +164,13 @@ class MainActivityAdapter(
                         //存入数据库
                         coroutineScopeSaveRoom.launch {
 
-                            /*
+
                             val newSetting = MediaItemSetting(MARK_FileName = item.name, SavePath_Cover = saveCover.path,)
                             MediaItemRepo.get(context).saveSetting(newSetting)
 
-                             */
 
-                            MediaItemRepo.get(context).update_cover_path(item.name, saveCover.path)
+
+                           // MediaItemRepo.get(context).update_cover_path(item.name, saveCover.path)
 
                             //MediaItemRepo.get(context).preset_all_row_without_cover_path(item.name, saveCover.path)
                         }

@@ -42,7 +42,7 @@
     <FrameLayout
         android:id="@+id/playerContainer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:background="@color/Background"
         android:elevation="1dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -55,6 +55,7 @@
             android:id="@+id/playerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_gravity="center"
             app:resize_mode="fit"
             android:elevation="2dp"
             app:use_controller="false"
@@ -62,14 +63,8 @@
             android:background="@android:color/transparent"
             app:surface_type="surface_view"
             android:translationZ="1dp">
-            <!-- 播放器遮罩 -->
-            <View
-                android:id="@+id/cover"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/Background"
-                android:translationZ="2dp"
-                android:visibility="visible" />
+
+
         </androidx.media3.ui.PlayerView>
         <!-- 点击层 -->
         <View
@@ -79,6 +74,14 @@
             android:layout_height="match_parent"
             android:translationZ="3dp"
             />
+        <!-- 播放器遮罩 -->
+        <View
+            android:id="@+id/cover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/Background"
+            android:translationZ="3dp"
+            android:visibility="visible" />
     </FrameLayout>
 
     <!-- 控件层 -->
@@ -130,14 +133,16 @@
                 android:layout_marginEnd="8dp"
                 android:layout_weight="0" />
         </LinearLayout>
+
+
+
         <!-- 缩略图上方按钮区 -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/ButtonArea"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:elevation="20dp"
-            app:layout_constraintBottom_toTopOf="@+id/ScrollerRootAreaConstraint"
-            android:layout_marginBottom="5dp"
+            app:layout_constraintBottom_toTopOf="@+id/scroller_area"
+            android:layout_marginBottom="10dp"
             android:translationZ="3dp">
             <!-- 按钮：暂停/开始 -->
             <FrameLayout
@@ -326,16 +331,20 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
         </androidx.constraintlayout.widget.ConstraintLayout>
-        <!-- 缩略图区 -->
+
+        <!-- 缩略图进度条区 -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/ScrollerRootAreaConstraint"
+            android:id="@+id/scroller_area"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/bottomArea"
+            android:layout_height="65dp"
+            android:paddingBottom="25dp"
+            android:background="@color/Background"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:minHeight="65dp">
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            >
+            <!-- 顶部分隔线 -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0.05dp"
@@ -343,49 +352,33 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
-            <!-- 缩略图式进度滚动条 -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/ScrollerArea"
+            <!-- 中间竖线 -->
+            <View
+                android:layout_width="2dp"
+                android:layout_height="match_parent"
+                android:background="@color/HeadText"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:elevation="2dp"
+                />
+            <!-- 缩略图进度条 -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvThumbnails"
                 android:layout_width="match_parent"
-                android:layout_height="45dp"
-                android:layout_marginBottom="20dp"
+                android:layout_height="match_parent"
+                android:adjustViewBounds="false"
+                android:backgroundTint="@color/CardViewRV"
+                android:clipToPadding="false"
+                android:orientation="horizontal"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent">
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/innerContainer"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-                    <!-- RecyclerView核心 -->
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvThumbnails"
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:adjustViewBounds="false"
-                        android:backgroundTint="@color/CardViewRV"
-                        android:clipToPadding="false"
-                        android:orientation="horizontal"
-                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                        app:layout_constraintBottom_toBottomOf="@+id/innerContainer"
-                        app:layout_constraintEnd_toEndOf="@+id/innerContainer"
-                        app:layout_constraintHorizontal_bias="0.0"
-                        app:layout_constraintStart_toStartOf="@+id/innerContainer"
-                        app:layout_constraintTop_toTopOf="@+id/innerContainer"
-                        app:layout_constraintVertical_bias="0.0" />
-                </androidx.constraintlayout.widget.ConstraintLayout>
-                <View
-                    android:layout_width="2dp"
-                    android:layout_height="match_parent"
-                    android:background="@color/HeadText"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_marginTop="3dp"
+                android:layout_marginBottom="3dp"
+                android:elevation="1dp"
+                />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 

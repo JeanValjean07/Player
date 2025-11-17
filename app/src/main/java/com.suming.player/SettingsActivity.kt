@@ -53,6 +53,9 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseHighRefreshRate: SwitchCompat
     private lateinit var Switch_CloseFragmentGesture: SwitchCompat
     private lateinit var Switch_EnablePlayAreaMove: SwitchCompat
+    private lateinit var Switch_UseMediaSession: SwitchCompat
+    private lateinit var Switch_InsertPreviewInMediaSession: SwitchCompat
+    private lateinit var Switch_UsePlayerWithSeekBar: SwitchCompat
     //开关变量 + 数值量
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
@@ -69,6 +72,10 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_SeekHandlerGap = 0L
     private var PREFS_CloseFragmentGesture = false
     private var PREFS_EnablePlayAreaMove = false
+    private var PREFS_UseMediaSession = false
+    private var PREFS_InsertPreviewInMediaSession = false
+    private var PREFS_UsePlayerWithSeekBar = false
+
 
     //按钮循环：清除所有视频缓存
     private var ButtonRemoveAllThumbPathIndex = 0
@@ -138,10 +145,10 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_SwitchPortraitWhenExit = PREFS.getBoolean("PREFS_SwitchPortraitWhenExit", true)
         }
         if (!PREFS.contains("PREFS_SeekHandlerGap")) {
-            PREFS_Editor.putLong("PREFS_SeekHandlerGap", 50L)
-            PREFS_SeekHandlerGap = 50L
+            PREFS_Editor.putLong("PREFS_SeekHandlerGap", 0L)
+            PREFS_SeekHandlerGap = 0L
         } else {
-            PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 50L)
+            PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0L)
         }
         if (!PREFS.contains("PREFS_UseDataBaseForScrollerSetting")) {
             PREFS_Editor.putBoolean("PREFS_UseDataBaseForScrollerSetting", false)
@@ -180,10 +187,10 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_GenerateThumbSYNC = PREFS.getBoolean("PREFS_GenerateThumbSYNC", true)
         }
         if (!PREFS.contains("PREFS_UseOnlySyncFrame")) {
-            PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", false)
-            PREFS_UseOnlySyncFrame = false
+            PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", true)
+            PREFS_UseOnlySyncFrame = true
         } else {
-            PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", false)
+            PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", true)
         }
         if (!PREFS.contains("PREFS_TimeUpdateGap")) {
             PREFS_Editor.putLong("PREFS_TimeUpdateGap", 16L)
@@ -233,6 +240,28 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
         }
+        if (!PREFS.contains("PREFS_UseMediaSession")){
+            //预写入媒体会话配置
+            if (Build.BRAND == "samsung" || Build.BRAND == "Xiaomi"){
+                PREFS.edit { putBoolean("PREFS_UseMediaSession", true).apply() }
+            }else{
+                PREFS.edit { putBoolean("PREFS_UseMediaSession", false).apply() }
+            }
+        } else {
+            PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", false)
+        }
+        if (!PREFS.contains("PREFS_InsertPreviewInMediaSession")){
+            PREFS_Editor.putBoolean("PREFS_InsertPreviewInMediaSession", true)
+            PREFS_InsertPreviewInMediaSession = true
+        } else {
+            PREFS_InsertPreviewInMediaSession = PREFS.getBoolean("PREFS_InsertPreviewInMediaSession", false)
+        }
+        if (!PREFS.contains("PREFS_UsePlayerWithSeekBar")){
+            PREFS_Editor.putBoolean("PREFS_UsePlayerWithSeekBar", false)
+            PREFS_UsePlayerWithSeekBar = false
+        } else {
+            PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
+        }
         PREFS_Editor.apply()
 
         //开关初始化
@@ -249,6 +278,9 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
         Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
         Switch_EnablePlayAreaMove = findViewById(R.id.EnablePlayAreaMove)
+        Switch_UseMediaSession = findViewById(R.id.SwitchUseMediaSession)
+        Switch_InsertPreviewInMediaSession = findViewById(R.id.SwitchInsertPreviewInMediaSession)
+        Switch_UsePlayerWithSeekBar = findViewById(R.id.UsePlayerWithSeekBar)
         //开关预置位
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
         Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
@@ -263,12 +295,15 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
         Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
         Switch_EnablePlayAreaMove.isChecked = PREFS_EnablePlayAreaMove
+        Switch_UseMediaSession.isChecked = PREFS_UseMediaSession
+        Switch_InsertPreviewInMediaSession.isChecked = PREFS_InsertPreviewInMediaSession
+        Switch_UsePlayerWithSeekBar.isChecked = PREFS_UsePlayerWithSeekBar
 
 
         //文本信息预写
         val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
-        if (PREFS_SeekHandlerGap == 50L) {
-            currentSeekHandlerGap.text = "默认 (50毫秒)"
+        if (PREFS_SeekHandlerGap == 0L) {
+            currentSeekHandlerGap.text = "默认 (无寻帧间隔)"
         } else {
             currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
         }
@@ -356,6 +391,26 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_EnablePlayAreaMove = isChecked
             vibrate()
             PREFS_Editor.putBoolean("PREFS_EnablePlayAreaMove", isChecked).apply()
+        }
+        Switch_UseMediaSession.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_UseMediaSession = isChecked
+            vibrate()
+            PREFS_Editor.putBoolean("PREFS_UseMediaSession", isChecked).apply()
+            if (PREFS_UseMediaSession) {
+                if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor"){
+                    showCustomToast("您的设备可能不支持媒体会话,若不能播放请关闭此选项", Toast.LENGTH_SHORT,3)
+                }
+            }
+        }
+        Switch_InsertPreviewInMediaSession.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_InsertPreviewInMediaSession = isChecked
+            vibrate()
+            PREFS_Editor.putBoolean("PREFS_InsertPreviewInMediaSession", isChecked).apply()
+        }
+        Switch_UsePlayerWithSeekBar.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_UsePlayerWithSeekBar = isChecked
+            vibrate()
+            PREFS_Editor.putBoolean("PREFS_UsePlayerWithSeekBar", isChecked).apply()
         }
 
 

@@ -40,6 +40,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             .build()
     }
 
+    fun selectVideoOnly() {
+        trackSelector.parameters = trackSelector
+            .buildUponParameters()
+            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+            .build()
+    }
+
 
     //屏幕旋转状态
     var FromManualPortrait: Boolean = true
@@ -57,6 +64,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     //浮窗相关
     var inFloatingWindow = false
+
+    //视频时长
+    var global_videoDuration = 0L
+
 
 
     //屏幕旋转相关
@@ -122,6 +133,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var PREFS_UseDataBaseForScrollerSetting: Boolean = false
 
+    var PREFS_UseMediaSession: Boolean = false
+    var PREFS_InsertPreviewInMediaSession: Boolean = false
+
+
+    var state_playerWithSeekBar : Boolean = false
 
 
 
