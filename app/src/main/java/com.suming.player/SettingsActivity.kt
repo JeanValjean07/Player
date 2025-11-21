@@ -5,11 +5,13 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -32,6 +34,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.ByteArrayInputStream
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 
 class SettingsActivity: AppCompatActivity() {
 
@@ -56,6 +61,8 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseMediaSession: SwitchCompat
     private lateinit var Switch_InsertPreviewInMediaSession: SwitchCompat
     private lateinit var Switch_UsePlayerWithSeekBar: SwitchCompat
+    private lateinit var Switch_UseTestingPlayer: SwitchCompat
+    private lateinit var Switch_UseSyncFrameWhenScrollerStop: SwitchCompat
     //开关变量 + 数值量
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
@@ -75,6 +82,8 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UseMediaSession = false
     private var PREFS_InsertPreviewInMediaSession = false
     private var PREFS_UsePlayerWithSeekBar = false
+    private var PREFS_UseTestingPlayer = false
+    private var PREFS_UseSyncFrameWhenScrollerStop = false
 
 
     //按钮循环：清除所有视频缓存
@@ -262,6 +271,18 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
         }
+        if (!PREFS.contains("PREFS_UseTestingPlayer")){
+            PREFS_Editor.putBoolean("PREFS_UseTestingPlayer", false)
+            PREFS_UseTestingPlayer = false
+        } else {
+            PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
+        }
+        if (!PREFS.contains("PREFS_UseSyncFrameWhenScrollerStop")){
+            PREFS_Editor.putBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
+            PREFS_UseSyncFrameWhenScrollerStop = false
+        } else {
+            PREFS_UseSyncFrameWhenScrollerStop = PREFS.getBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
+        }
         PREFS_Editor.apply()
 
         //开关初始化
@@ -281,6 +302,8 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseMediaSession = findViewById(R.id.SwitchUseMediaSession)
         Switch_InsertPreviewInMediaSession = findViewById(R.id.SwitchInsertPreviewInMediaSession)
         Switch_UsePlayerWithSeekBar = findViewById(R.id.UsePlayerWithSeekBar)
+        Switch_UseTestingPlayer = findViewById(R.id.UseTestingPlayer)
+        Switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
         //开关预置位
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
         Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
@@ -298,6 +321,8 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseMediaSession.isChecked = PREFS_UseMediaSession
         Switch_InsertPreviewInMediaSession.isChecked = PREFS_InsertPreviewInMediaSession
         Switch_UsePlayerWithSeekBar.isChecked = PREFS_UsePlayerWithSeekBar
+        Switch_UseTestingPlayer.isChecked = PREFS_UseTestingPlayer
+        Switch_UseSyncFrameWhenScrollerStop.isChecked = PREFS_UseSyncFrameWhenScrollerStop
 
 
         //文本信息预写
@@ -396,11 +421,6 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_UseMediaSession = isChecked
             vibrate()
             PREFS_Editor.putBoolean("PREFS_UseMediaSession", isChecked).apply()
-            if (PREFS_UseMediaSession) {
-                if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor"){
-                    showCustomToast("您的设备可能不支持媒体会话,若不能播放请关闭此选项", Toast.LENGTH_SHORT,3)
-                }
-            }
         }
         Switch_InsertPreviewInMediaSession.setOnCheckedChangeListener { _, isChecked ->
             PREFS_InsertPreviewInMediaSession = isChecked
@@ -411,6 +431,18 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_UsePlayerWithSeekBar = isChecked
             vibrate()
             PREFS_Editor.putBoolean("PREFS_UsePlayerWithSeekBar", isChecked).apply()
+            if (PREFS_UseTestingPlayer){
+                showCustomToast("使用测试版页面已开始,此选项不会生效", Toast.LENGTH_SHORT,3)
+            }
+        }
+        Switch_UseTestingPlayer.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_UseTestingPlayer = isChecked
+            check_PREFS_UseTestingPlayer()
+        }
+        Switch_UseSyncFrameWhenScrollerStop.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_UseSyncFrameWhenScrollerStop = isChecked
+            vibrate()
+            PREFS_Editor.putBoolean("PREFS_UseSyncFrameWhenScrollerStop", isChecked).apply()
         }
 
 
@@ -545,6 +577,57 @@ class SettingsActivity: AppCompatActivity() {
     }
 
     //Functions
+    private fun turnOFF_Switch_UseTestPlayer(){
+        PREFS_UseTestingPlayer = false
+        Switch_UseTestingPlayer.isChecked = false
+        PREFS.edit { putBoolean("PREFS_UseTestingPlayer", false) }
+
+    }
+    private fun turnON_Switch_UseTestPlayer(){
+        PREFS_UseTestingPlayer = true
+        PREFS.edit { putBoolean("PREFS_UseTestingPlayer", true) }
+
+    }
+    private fun check_PREFS_UseTestingPlayer(){
+
+        if (PREFS_UseTestingPlayer){
+            val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+            val signingInfo = packageInfo.signingInfo
+
+            if (signingInfo == null) {
+                showCustomToast("签名错误", Toast.LENGTH_SHORT, 3)
+                turnOFF_Switch_UseTestPlayer()
+                return
+            }
+
+            if (signingInfo.hasMultipleSigners()) {
+                showCustomToast("签名错误", Toast.LENGTH_SHORT, 3)
+                turnOFF_Switch_UseTestPlayer()
+                return
+            }
+
+            val signatures = signingInfo.signingCertificateHistory
+            for (sig in signatures) {
+                val cert = sig.toByteArray()
+                val input = ByteArrayInputStream(cert)
+                val cf = CertificateFactory.getInstance("X509")
+                val c = cf.generateCertificate(input) as X509Certificate
+                val name = c.subjectDN.name
+                if (name.contains("Android Debug")) {
+                    showCustomToast("当前程序可使用测试版界面", Toast.LENGTH_SHORT, 3)
+                    turnON_Switch_UseTestPlayer()
+                }else{
+                    showCustomToast("Release版本不能使用测试版页面", Toast.LENGTH_SHORT, 3)
+                    turnOFF_Switch_UseTestPlayer()
+                }
+            }
+        }else{
+            turnOFF_Switch_UseTestPlayer()
+        }
+
+    }
+
+
     @SuppressLint("SetTextI18n")
     private fun chooseSeekHandlerGap(gap: Long) {
         vibrate()

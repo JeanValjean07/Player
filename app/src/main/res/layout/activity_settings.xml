@@ -58,7 +58,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
-        <!-- 滚动区域 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -533,7 +532,6 @@
                 android:layout_marginBottom="10dp"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="3dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -543,7 +541,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="进度条绘制"
+                        android:text="进度条"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp" />
                     <!--  开关：使用超长进度条  -->
@@ -579,7 +577,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -587,13 +584,12 @@
                             android:layout_weight="0"
                             android:text="提高强制Seek时间差"
                             android:textColor="@color/HeadText"
-                            android:textSize="14sp" />
-
+                            android:textSize="14sp"
+                            tools:ignore="TooManyViews" />
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
-
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/useLongSeekGap"
                             android:layout_width="wrap_content"
@@ -702,6 +698,38 @@
                             app:trackTint="@color/switchTrackColor" />
 
                     </LinearLayout>
+                    <!--  开关：进度条停止时使用关键帧  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="0"
+                            android:text="进度条停止时使用关键帧"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp"
+                            tools:ignore="TooManyViews" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/UseSyncFrameWhenScrollerStop"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
+                    </LinearLayout>
+                    <!--  描述：进度条停止时使用关键帧  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="提升播放流畅性，但会导致进度条跳跃"
+                        android:textSize="12sp" />
                     <!--  选单按钮：时间戳更新间隔  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -757,7 +785,6 @@
                 android:layout_marginBottom="10dp"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="3dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -979,6 +1006,53 @@
                         android:layout_height="wrap_content"
                         android:text="传统播放页面使用传统进度条，而不是缩略图组成的进度条"
                         android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            <!--  卡片：测试  -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="3dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="测试"
+                        android:textColor="@color/HeadText"
+                        android:textSize="17sp" />
+                    <!--  开关：使用测试版播放页面  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="0"
+                            android:text="使用测试版播放页面"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/UseTestingPlayer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  超链接样式:开源许可  -->

@@ -431,10 +431,10 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_ExitWhenEnd = PREFS.getBoolean("PREFS_ExitWhenEnd", false)
             }
             if (!PREFS.contains("PREFS_UseMediaSession")){
-                PREFS.edit { putBoolean("PREFS_UseMediaSession", false).apply() }
-                vm.PREFS_UseMediaSession = false
+                PREFS.edit { putBoolean("PREFS_UseMediaSession", true).apply() }
+                vm.PREFS_UseMediaSession = true
             }else{
-                vm.PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", false)
+                vm.PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", true)
             }
             if (!PREFS.contains("PREFS_InsertPreviewInMediaSession")){
                 PREFSEditor.putBoolean("PREFS_InsertPreviewInMediaSession", true)
@@ -480,6 +480,12 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_UseOnlySyncFrame = true
             } else {
                 vm.PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", true)
+            }
+            if (!PREFS.contains("PREFS_UseSyncFrameWhenScrollerStop")){
+                PREFSEditor.putBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
+                vm.PREFS_UseSyncFrameWhenScrollerStop = false
+            } else {
+                vm.PREFS_UseSyncFrameWhenScrollerStop = PREFS.getBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
             }
             if (!PREFS.contains("PREFS_UseSysVibrate")){
                 PREFSEditor.putBoolean("PREFS_UseSysVibrate", true)
@@ -2598,7 +2604,14 @@ class PlayerActivity: AppCompatActivity(){
         override fun run() {
             if (isSeekReady){
                 isSeekReady = false
-                vm.player.setSeekParameters(SeekParameters.EXACT)
+
+                if (vm.PREFS_UseSyncFrameWhenScrollerStop){
+                    vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                }
+                else{
+                    vm.player.setSeekParameters(SeekParameters.EXACT)
+                }
+
                 playerReadyFrom_LastSeek = true
                 vm.player.seekTo(global_SeekToMs)
             }
@@ -2614,9 +2627,15 @@ class PlayerActivity: AppCompatActivity(){
         override fun run() {
             if (isSeekReady){
                 isSeekReady = false
+                if (vm.PREFS_UseSyncFrameWhenScrollerStop){
+                    vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                } else{
+                    vm.player.setSeekParameters(SeekParameters.EXACT)
+                }
                 playerReadyFrom_SmartScrollLastSeek = true
                 vm.player.seekTo(global_SeekToMs)
-            }else{
+            }
+            else{
                 videoSeekHandler.post(this)
             }
         }

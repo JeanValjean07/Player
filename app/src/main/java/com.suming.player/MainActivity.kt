@@ -50,8 +50,11 @@ import kotlinx.coroutines.launch
 @Suppress("unused")
 class MainActivity: AppCompatActivity() {
 
-    //注册adapter
+    //成员变量
     private lateinit var adapter: MainActivityAdapter
+    private lateinit var PREFS: SharedPreferences
+    private lateinit var PREFS_MediaStore: SharedPreferences
+
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
     //状态栏高度
@@ -59,12 +62,12 @@ class MainActivity: AppCompatActivity() {
     //震动时间
     private var PREFS_VibrateMillis = 0L
     private var PREFS_UseSysVibrate = false
-
+    //基本设置项
     private var PREFS_UsePlayerWithSeekBar = false
+    private var PREFS_UseTestingPlayer = false
 
 
-    private lateinit var PREFS: SharedPreferences
-    private lateinit var PREFS_MediaStore: SharedPreferences
+
 
 
 
@@ -105,25 +108,48 @@ class MainActivity: AppCompatActivity() {
             PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 10L)
         }
         if (!PREFS.contains("PREFS_UseSysVibrate")){
-            PREFS.edit { putBoolean("PREFS_UseSysVibrate", false).apply() }
-            PREFS_UseSysVibrate = false
+            PREFS.edit { putBoolean("PREFS_UseSysVibrate", true).apply() }
+            PREFS_UseSysVibrate = true
         }else{
-            PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", false)
+            PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
         }
-        if (!PREFS.contains("PREFS_UseMediaSession")){
-            //预写入媒体会话配置
-            if (Build.BRAND == "samsung" || Build.BRAND == "Xiaomi"){
-                PREFS.edit { putBoolean("PREFS_UseMediaSession", true).apply() }
-            }else{
-                PREFS.edit { putBoolean("PREFS_UseMediaSession", false).apply() }
-            }
+
+        if (!PREFS.contains("PREFS_UseTestingPlayer")){
+            PREFS.edit { putBoolean("PREFS_UseTestingPlayer", false).apply() }
+            PREFS_UseTestingPlayer = false
+        }else{
+            PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
         }
+
+        //基于设备信息
         if (!PREFS.contains("PREFS_UsePlayerWithSeekBar")){
-            PREFS.edit { putBoolean("PREFS_UsePlayerWithSeekBar", false).apply() }
-            PREFS_UsePlayerWithSeekBar = false
+            if (Build.BRAND.equals("xiaomi",ignoreCase = true) || Build.BRAND.equals("redmi",ignoreCase = true)){
+                PREFS.edit { putBoolean("PREFS_UsePlayerWithSeekBar", true).apply() }
+                PREFS_UsePlayerWithSeekBar = true
+            }else{
+                PREFS.edit { putBoolean("PREFS_UsePlayerWithSeekBar", false).apply() }
+                PREFS_UsePlayerWithSeekBar = false
+            }
         }else{
             PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
         }
+
+        //基于设备信息的预写入
+        if (!PREFS.contains("PREFS_EnablePlayAreaMove")){
+            if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
+                PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", false).apply() }
+            }else{
+                PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", true).apply() }
+            }
+        }
+        if (!PREFS.contains("PREFS_UseHighRefreshRate")) {
+            if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
+                PREFS.edit { putBoolean("PREFS_UseHighRefreshRate", true).apply() }
+            }else{
+                PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", false).apply() }
+            }
+        }
+
         //内容避让状态栏并预读取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -229,6 +255,7 @@ class MainActivity: AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
+        PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
     }
 
 
@@ -316,15 +343,16 @@ class MainActivity: AppCompatActivity() {
     @OptIn(UnstableApi::class)
     private fun startPlayer(item: MediaItem_video){
 
-        val intent = Intent(this, PlayerActivityTest::class.java).apply {
-            putExtra("video", item)
-        }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        //使用测试播放页
+        if (PREFS_UseTestingPlayer){
+            val intent = Intent(this, PlayerActivityTest::class.java).apply {
+                putExtra("video", item)
+            }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            detailLauncher.launch(intent)
+            return
+        }
 
-        detailLauncher.launch(intent)
-
-        return
-
+        //使用传统播放页
         if (PREFS_UsePlayerWithSeekBar){
             val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
                 putExtra("video", item)
@@ -332,7 +360,9 @@ class MainActivity: AppCompatActivity() {
                 .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
             detailLauncher.launch(intent)
-        }else{
+        }
+        //使用新晋播放页
+        else{
             val intent = Intent(this, PlayerActivity::class.java)
                 .apply {
                     putExtra("video", item)
@@ -407,4 +437,7 @@ class MainActivity: AppCompatActivity() {
     }
 
 
-}//class END
+
+//class END
+}
+

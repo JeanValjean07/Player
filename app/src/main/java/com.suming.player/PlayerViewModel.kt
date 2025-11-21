@@ -138,6 +138,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
 
     var state_playerWithSeekBar : Boolean = false
+    //进度条停止时使用关键帧
+    var PREFS_UseSyncFrameWhenScrollerStop: Boolean = false
 
 
 
