@@ -23,6 +23,7 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.audiofx.Equalizer
+import android.media.session.MediaSessionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -35,7 +36,6 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.MediaStore
 import android.provider.Settings
-import android.support.v4.media.session.PlaybackStateCompat
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Display
@@ -70,10 +70,10 @@ import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
-import androidx.compose.animation.core.repeatable
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import androidx.core.content.edit
 import androidx.core.graphics.createBitmap
@@ -94,8 +94,10 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.session.MediaController
-import androidx.media3.session.MediaSessionService
+import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionToken
+import androidx.media3.session.legacy.MediaBrowserCompat
+import androidx.media3.session.legacy.MediaControllerCompat
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -1035,6 +1037,10 @@ class PlayerActivityTest: AppCompatActivity(){
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
             vibrate()
+            connecToMediaSession()
+
+            return@setOnClickListener
+
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 MovePlayAreaJob()
@@ -1752,12 +1758,6 @@ class PlayerActivityTest: AppCompatActivity(){
         if (mediaItem == null){ return }
 
 
-        if (!vm.state_FromSysStart && vm.PREFS_UseMediaSession) {
-            val newMediaId = mediaItem.mediaId.toLong()
-            MediaInfo_VideoUri = BuildNewUri(newMediaId)
-        }
-
-
 
         //更新视频uri存档
         vm.MediaInfo_VideoUri = MediaInfo_VideoUri
@@ -1765,12 +1765,6 @@ class PlayerActivityTest: AppCompatActivity(){
         getMediaInfo(MediaInfo_VideoUri)
         //读取数据库
         ReadBasicRoomDataBase()
-
-        lifecycleScope.launch{
-            delay(2000)
-            //尝试连接MediaSession
-            connecToMediaSession()
-        }
 
 
         scrollerAdapterUpdate()
@@ -1783,24 +1777,93 @@ class PlayerActivityTest: AppCompatActivity(){
 
     }
 
-    private fun connecToMediaSession(){
 
-        val token = SessionToken(this, ComponentName(this, PlayerService::class.java))
-        val controllerFuture = MediaController.Builder(this, token).buildAsync()
-        controllerFuture.addListener({
-            val controller = controllerFuture.get()
+    private fun connecToMediaSession() {
+        try {
+            Log.d("SuMing", "开始连接 PlayerService...")
 
-            /* 关键：controller 实现了 Player 接口，指向的就是 Service 里那个 ExoPlayer */
-            controller.setMediaItem(MediaItem.fromUri(MediaInfo_VideoUri))   // 直接丢链接
+            // 确保服务已启动
+            startBackgroundServices()
+
+            // 给服务一点时间启动
+            //Handler(Looper.getMainLooper()).postDelayed({
+                try {
+                    val sessionToken = SessionToken(this, ComponentName(this, PlayerServiceTest::class.java))
+                    Log.d("SuMing", "SessionToken 创建成功")
+
+                    val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+                    Log.d("SuMing", "controllerFuture 创建成功")
+
+                    controllerFuture.addListener({
+                        try {
+                            val mediaController = controllerFuture.get()
+
+                            Log.d("SuMing", "MediaController 连接成功!")
+
+                            // 进行媒体操作
+                            //performMediaOperations(mediaController)
+
+                        }
+                        catch (e: Exception) {
+                            Log.e("SuMing", "MediaController 获取失败: ${e.message}")
+                            e.printStackTrace()
+                            showError("连接失败: ${e.message}")
+                        }
+                    }, MoreExecutors.directExecutor())
+
+                    Log.d("SuMing", "controllerFuture 完成监听器添加")
+
+                }
+                catch (e: Exception) {
+                    Log.e("SuMing", "SessionToken 创建失败: ${e.message}")
+                    e.printStackTrace()
+                    showError("服务配置错误: ${e.message}")
+                }
+            //}, 300) // 延迟300ms确保服务启动
+
+        }
+        catch (e: Exception) {
+            Log.e("SuMing", "连接过程异常: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
+    private fun performMediaOperations(controller: MediaController) {
+        try {
+            Log.d("SuMing", "开始设置媒体项目...")
+
+            controller.setMediaItem(
+                MediaItem.Builder()
+                    .setUri(MediaInfo_VideoUri)
+                    .setMediaMetadata(
+                        MediaMetadata.Builder()
+                            .setTitle(MediaInfo_FileName)
+                            .setArtist(MediaInfo_VideoArtist)
+                            .build()
+                    )
+                    .build()
+            )
+
+            Log.d("SuMing", "媒体项目设置完成，调用 prepare()")
             controller.prepare()
-            controller.playWhenReady = true
-        }, MoreExecutors.directExecutor())
 
 
+            Log.d("SuMing", "媒体操作完成")
+
+        }
+        catch (e: Exception) {
+            Log.e("SuMing", "媒体操作失败: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
+    private fun showError(message: String) {
+        runOnUiThread {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun scrollerAdapterUpdate(){
-        /*
         lifecycleScope.launch(Dispatchers.IO) {
             //获取ViewModel
             val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
@@ -1873,7 +1936,7 @@ class PlayerActivityTest: AppCompatActivity(){
             //使用标准进度条
             else{
                 withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
+                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivityTest,
                         MediaInfo_AbsolutePath_clean,
                         MediaInfo_FileName,
                         playerScrollerViewModel.thumbItems,
@@ -1882,12 +1945,6 @@ class PlayerActivityTest: AppCompatActivity(){
                         ScrollerInfo_EachPicDuration,
                         vm.PREFS_GenerateThumbSYNC,
                         scroller,
-                        vm.Flag_SavedThumbFlag,
-                        object : OnFlagUpdateListener {
-                            override fun onFlagUpdate(position: Int) {
-                                vm.Flag_SavedThumbFlag = vm.Flag_SavedThumbFlag.substring(0, position) + '1' + vm.Flag_SavedThumbFlag.substring(position + 1)
-                            }
-                        },
                         playerScrollerViewModel
                     )
                 }
@@ -1910,8 +1967,6 @@ class PlayerActivityTest: AppCompatActivity(){
             delay(200)
             startVideoTimeSync()
         }
-
-         */
     }
 
     private fun getMediaInfo(uri: Uri){
@@ -1936,12 +1991,36 @@ class PlayerActivityTest: AppCompatActivity(){
     }
 
     private fun startPlayNewItem(){
-        if (vm.PREFS_UseMediaSession){
-            MediaSessionControl()
-        }else{
-            vm.setVideoUri(MediaInfo_VideoUri)
-            MediaNotification()
+        //vm.setMediaUri(MediaInfo_VideoUri)
+
+        val cover_img_path = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/cover/cover.jpg")
+        val cover_img_uri = if (vm.PREFS_InsertPreviewInMediaSession && cover_img_path.exists()) {
+            try {
+                FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
+            }
+            catch (e: Exception) {
+                if (cover_img_path.canRead()) {
+                    cover_img_path.toUri()
+                } else {
+                    null
+                }
+            }
+        } else {
+            null
         }
+        val mediaItem = MediaItem.Builder()
+            .setUri(MediaInfo_VideoUri)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(MediaInfo_FileName)
+                    .setArtist(MediaInfo_VideoArtist)
+                    .setArtworkUri( cover_img_uri )
+                    .build()
+            )
+            .build()
+
+        vm.setMediaItem(mediaItem)
+
     }
 
     private fun changeRepeatMode(){
@@ -1963,7 +2042,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
         startBackgroundServices()
 
-        val SessionToken = SessionToken(this, ComponentName(this, PlayerService::class.java))
+        val SessionToken = SessionToken(this, ComponentName(this, PlayerServiceTest::class.java))
 
         val MediaSessionController = MediaController.Builder(this, SessionToken).buildAsync()
         MediaSessionController.addListener({
@@ -2091,7 +2170,7 @@ class PlayerActivityTest: AppCompatActivity(){
     }
 
     private fun MediaNotification(){
-        startBackgroundServices()
+       startBackgroundServices()
     }
 
     private fun readPlayListFromExoplayer(){
@@ -2111,11 +2190,11 @@ class PlayerActivityTest: AppCompatActivity(){
             //确保声音开启
             vm.player.volume = 1f
             //仅播放音频：关闭视频轨道
-            vm.selectAudioOnly()
+            vm.close_VideoTrack()
             if(flag_need_notice) notice("已开启仅播放音频", 1000)
         } else {
             //仅播放音频：打开视频轨道
-            vm.recoveryAllTrack()
+            vm.recovery_VideoTrack()
             if(flag_need_notice) notice("已关闭仅播放音频", 1000)
         }
         lifecycleScope.launch(Dispatchers.IO) {
@@ -2125,7 +2204,7 @@ class PlayerActivityTest: AppCompatActivity(){
     private fun changeStateVideoOnly(flag_need_notice: Boolean){
         if (vm.PREFS_OnlyVideo){
             //确保视频开启
-            vm.recoveryAllTrack()
+            vm.recovery_VideoTrack()
             //仅播放视频：关闭声音
             vm.player.volume = 0f
             if(flag_need_notice) notice("已开启仅播放视频", 1000)
@@ -2262,12 +2341,12 @@ class PlayerActivityTest: AppCompatActivity(){
 
 
 
-
-
     //Runnable:根据视频时间更新进度条位置
     private val syncScrollTaskHandler = Handler(Looper.getMainLooper())
     private val syncScrollTask = object : Runnable {
+        @SuppressLint("ServiceCast")
         override fun run() {
+
             syncScrollRunnableRunning = true
             if (ScrollerInfo_EachPicDuration == 0){ return }
 
@@ -2524,7 +2603,7 @@ class PlayerActivityTest: AppCompatActivity(){
         closeVideoTrackJob?.cancel()
         closeVideoTrackJob = lifecycleScope.launch {
             delay(30_000)
-            vm.selectAudioOnly()
+            vm.close_VideoTrack()
             vm.closeVideoTrackJobRunning = false
         }
     }
@@ -3516,7 +3595,7 @@ class PlayerActivityTest: AppCompatActivity(){
     }
     //开启后台播放服务
     private fun startBackgroundServices(){
-        val intent = Intent(this, PlayerService::class.java)
+        val intent = Intent(this, PlayerServiceTest::class.java)
         //传递媒体信息和配置信息
         intent.putExtra("info_to_service_MediaTitle", MediaInfo_FileName)
         intent.putExtra("info_to_service_PREFS_UseMediaSession", vm.PREFS_UseMediaSession)
@@ -3525,7 +3604,7 @@ class PlayerActivityTest: AppCompatActivity(){
     }
     //关闭后台播放服务
     private fun stopBackgroundServices(){
-        stopService(Intent(this, PlayerService::class.java))
+        stopService(Intent(this, PlayerServiceTest::class.java))
     }
     //后台播放只播音轨
     private fun startBackgroundPlay(){
@@ -3537,7 +3616,7 @@ class PlayerActivityTest: AppCompatActivity(){
     //回到前台恢复所有轨道
     private fun stopBackgroundPlay(){
         if (vm.PREFS_CloseVideoTrack){
-            vm.recoveryAllTrack()
+            vm.recovery_VideoTrack()
         }
     }
     //耳机插入和拔出监听

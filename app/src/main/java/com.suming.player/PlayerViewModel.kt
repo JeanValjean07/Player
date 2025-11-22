@@ -22,30 +22,51 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     val trackSelector: DefaultTrackSelector
         get() = PlayerSingleton.getTrackSelector(app)
 
-    fun setVideoUri(videoUri: Uri) {
+    //Functions
+    //设置单链接或媒体项
+    fun setMediaUri(videoUri: Uri) {
         player.setMediaItem(MediaItem.fromUri(videoUri))
     }
+    fun setMediaItem(mediaItem: MediaItem) {
+        player.setMediaItem(mediaItem)
+    }
 
-    fun selectAudioOnly() {
+    //关闭和开启视频轨道
+    fun close_VideoTrack() {
         trackSelector.parameters = trackSelector
             .buildUponParameters()
             .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)
             .build()
     }
-
-    fun recoveryAllTrack() {
+    fun recovery_VideoTrack() {
         trackSelector.parameters = trackSelector
             .buildUponParameters()
             .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
             .build()
     }
 
-    fun selectVideoOnly() {
+    //关闭和开启音频轨道
+    fun close_AudioTrack() {
         trackSelector.parameters = trackSelector
             .buildUponParameters()
             .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
             .build()
     }
+    fun recovery_AudioTrack() {
+        trackSelector.parameters = trackSelector
+            .buildUponParameters()
+            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
+            .build()
+    }
+
+
+
+
+
+    var repeatMode = ""
+
+    var lastPositionLocated = false
+
 
 
     //屏幕旋转状态

@@ -1,11 +1,13 @@
 package com.suming.player
 
 import android.Manifest
+import android.animation.Animator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -13,6 +15,7 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
@@ -46,6 +49,8 @@ import data.MediaItemRepo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
+import androidx.recyclerview.widget.DefaultItemAnimator
 
 @Suppress("unused")
 class MainActivity: AppCompatActivity() {
@@ -81,11 +86,11 @@ class MainActivity: AppCompatActivity() {
                 load()
             }
             else if (result.data?.getStringExtra("NEED_CLOSE") == "NEED_CLOSE") {
-                PlayerSingleton.clearPlayer()
+                PlayerSingleton.clearMediaItem()
             }
             else if (result.data?.getStringExtra("HAS_CLOSED") == "HAS_CLOSED") {
                 notice("该视频已关闭", 2000)
-                PlayerSingleton.clearPlayer()
+                PlayerSingleton.clearMediaItem()
             }
         }
     }
@@ -173,6 +178,23 @@ class MainActivity: AppCompatActivity() {
 
         //加载
         load()
+
+        /*
+        val uri = "content://media/external/video/media/781".toUri()
+
+        PlayerSingleton.addInitializationCallback {
+            runOnUiThread {
+                Log.d("SuMing", "播放器已初始化完成，可以进行操作")
+                PlayerSingleton.setMediaUri(uri)
+
+            }
+        }
+
+         */
+
+
+        PlayerSingleton.getPlayer(application)
+
 
 
         //按钮：刷新列表
@@ -290,6 +312,7 @@ class MainActivity: AppCompatActivity() {
 
         val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
         recyclerview1.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+       // recyclerview1.animation = DefaultItemAnimator()
 
 
         //注册adapter

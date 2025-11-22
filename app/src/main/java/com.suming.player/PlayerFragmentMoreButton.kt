@@ -28,6 +28,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -135,21 +136,37 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //2.循环模式
         val ButtonLoopModeWithText = view.findViewById<TextView>(R.id.ButtonLoopMode)
         fun refreshLoopModeText(){
-            val currentRepeatMode: Int = vm.player.repeatMode
+            val currentRepeatMode=  vm.repeatMode
             ButtonLoopModeWithText.text = when (currentRepeatMode) {
-                Player.REPEAT_MODE_OFF -> "播完暂停"
-                Player.REPEAT_MODE_ONE -> "单集循环"
-                Player.REPEAT_MODE_ALL -> "列表循环"
+                "one" -> "单集循环"
+                "all" -> "列表循环"
                 else -> "未知"
             }
         }
         refreshLoopModeText()
         ButtonLoopModeWithText.setOnClickListener {
 
-            val result = bundleOf("KEY" to "RepeatMode")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+            if (!vm.PREFS_UseMediaSession){
+                    context?.applicationContext?.showCustomToast("当前模式无法切换", Toast.LENGTH_SHORT, 3)
+                    return@setOnClickListener
+                }
 
-            refreshLoopModeText()
+            if (vm.repeatMode == "all"){
+                val result = bundleOf("KEY" to "RepeatMode", "mode" to "one")
+                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                ButtonLoopModeWithText.text = "单集循环"
+            }
+            else if (vm.repeatMode == "one"){
+                val result = bundleOf("KEY" to "RepeatMode", "mode" to "all")
+                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                ButtonLoopModeWithText.text = "列表循环"
+            }
+            else{
+                val result = bundleOf("KEY" to "RepeatMode", "mode" to "one")
+                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                ButtonLoopModeWithText.text = "单集循环"
+            }
+
         }
 
         //开关置位

@@ -225,15 +225,15 @@ class PlayListManager private constructor(private val context: Context) {
 
         val list = playList.toMutableList()
 
-        Log.d("SuMing", "initPlayList_byMediaStore: list.size1111 ${list.size}")
+        //Log.d("SuMing", "initPlayList_byMediaStore: list.size1111 ${list.size}")
 
         PREFS.edit{ putString("play_list_default", list.toString()) }
 
         for (i in 0 until list.size) {
-            Log.d("SuMing", "initPlayList_byMediaStore: ${list[i]}")
+            //Log.d("SuMing", "initPlayList_byMediaStore: ${list[i]}")
         }
 
-        Log.d("SuMing", "initPlayList_byMediaStore:whole list  ${list}")
+        //Log.d("SuMing", "initPlayList_byMediaStore:whole list  ${list}")
 
 
 

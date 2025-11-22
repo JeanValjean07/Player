@@ -2,8 +2,10 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.net.Uri
 import androidx.media3.common.C
 import androidx.media3.common.C.WAKE_MODE_NETWORK
+import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -18,6 +20,7 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 @Suppress("unused")
 object PlayerSingleton {
 
+    //播放器参数
     var _player: ExoPlayer? = null
     @SuppressLint("StaticFieldLeak")
     private var _trackSelector: DefaultTrackSelector? = null
@@ -25,20 +28,22 @@ object PlayerSingleton {
     private var _rendererFactory: RenderersFactory? = null
 
     val player: ExoPlayer
-        get() = _player ?: throw IllegalStateException("播放器还未初始化完成")
+        get() = _player ?: throw IllegalStateException("发生错误")
 
-
+    /*
     val loadControl = DefaultLoadControl.Builder()
-        .setBackBuffer(1500, true) // 减少回缓冲
+        .setBackBuffer(1500, true)
         .setBufferDurationsMs(
             1000,  // minBufferMs - 减少最小缓冲
             3000,  // maxBufferMs - 减少最大缓冲
             500,   // bufferForPlaybackMs
             500    // bufferForPlaybackAfterRebufferMs
         )
-        .setTargetBufferBytes(-1) // 不限制缓冲区大小
+        .setTargetBufferBytes(-1)
         .setPrioritizeTimeOverSizeThresholds(true)
         .build()
+
+     */
 
     //创建播放器实例
     private fun buildPlayer(app: Application): ExoPlayer {
@@ -50,10 +55,8 @@ object PlayerSingleton {
             .setSeekParameters(SeekParameters.CLOSEST_SYNC)
             .setWakeMode(WAKE_MODE_NETWORK)
             .setMaxSeekToPreviousPositionMs(1_000_000L)
-            .setLoadControl(loadControl)
+            //.setLoadControl(loadControl)
             .setTrackSelector(trackSelector)
-
-
             .setRenderersFactory(rendererFactory)
             .build()
             .apply {
@@ -62,10 +65,80 @@ object PlayerSingleton {
             }
     }
 
+    //播放器回调接口
+    private val initializationCallbacks = mutableListOf<() -> Unit>()
+    private var isPlayerInitialized = false
+    fun addInitializationCallback(callback: () -> Unit) {
+        synchronized(initializationCallbacks) {
+            if (isPlayerInitialized && _player != null) {
+                callback.invoke()
+            } else {
+                initializationCallbacks.add(callback)
+            }
+        }
+    }
 
-    //功能
+
+
+    //播放器状态变量
+    var singleton_media_type = ""
+    var singleton_media_title = ""
+    var singleton_media_url = ""
+    var singleton_media_cover_path = ""
+
+
+
+
+
+
+    //功能1
+    fun setMediaUri(uri: Uri) {
+        _player?.setMediaItem(MediaItem.fromUri(uri))
+    }
+
+    fun setMediaItem(item: MediaItem) {
+        _player?.setMediaItem(item)
+    }
+
+    fun setMediaInfo(type: String, title: String, url: String, coverPath: String) {
+        singleton_media_type = type
+        singleton_media_title = title
+        singleton_media_url = url
+        singleton_media_cover_path = coverPath
+    }
+
+    fun playPlayer() {
+        _player?.play()
+    }
+
+    fun pausePlayer() {
+        _player?.pause()
+    }
+    //清除媒体,触发playEnd事件
+    fun clearMediaItem() {
+        _player?.clearMediaItems()
+    }
+
+
+    //功能2
+    fun stopPlayer() {
+        _player?.stop()
+    }
+
+    fun releasePlayer() {
+        _player?.release()
+        _player = null
+        _trackSelector = null
+    }
+
+
+    //功能3
     fun getPlayer(app: Application): ExoPlayer = _player ?: synchronized(this) {
             _player ?: buildPlayer(app).also { _player = it }
+        }.also {
+            isPlayerInitialized = true
+            initializationCallbacks.forEach { callback -> callback.invoke() }
+            initializationCallbacks.clear()
         }
 
     fun getTrackSelector(app: Application): DefaultTrackSelector =
@@ -75,8 +148,6 @@ object PlayerSingleton {
 
         }
 
-
-
     fun getRendererFactory(app: Application): RenderersFactory =
         _rendererFactory ?: synchronized(this) {
             _rendererFactory ?: DefaultRenderersFactory(app)
@@ -84,25 +155,11 @@ object PlayerSingleton {
         }
 
     fun createCustomCodecFactory(): MediaCodecAdapter.Factory {
-
         return MediaCodecAdapter.Factory.DEFAULT
     }
 
-    fun releasePlayer() {
-        _player?.release()
-        _player = null
-        _trackSelector = null
-    }
 
-    fun stopPlayer() {
-        _player?.stop()
-    }
 
-    fun pausePlayer() {
-        _player?.pause()
-    }
 
-    fun clearPlayer() {
-        _player?.clearMediaItems()
-    }
+//singleton object END
 }

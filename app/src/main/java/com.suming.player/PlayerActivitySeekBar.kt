@@ -36,7 +36,6 @@ import android.os.VibratorManager
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -113,8 +112,6 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.hypot
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.pow
 import kotlin.system.exitProcess
 
@@ -1515,7 +1512,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         if (vm.PREFS_UseMediaSession){
             MediaSessionControl()
         }else{
-            vm.setVideoUri(MediaInfo_VideoUri)
+            vm.setMediaUri(MediaInfo_VideoUri)
             MediaNotification()
         }
     }
@@ -1669,11 +1666,11 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             //确保声音开启
             vm.player.volume = 1f
             //仅播放音频：关闭视频轨道
-            vm.selectAudioOnly()
+            vm.close_VideoTrack()
             if(flag_need_notice) notice("已开启仅播放音频", 1000)
         } else {
             //仅播放音频：打开视频轨道
-            vm.recoveryAllTrack()
+            vm.recovery_VideoTrack()
             if(flag_need_notice) notice("已关闭仅播放音频", 1000)
         }
         lifecycleScope.launch(Dispatchers.IO) {
@@ -1683,7 +1680,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     private fun changeStateVideoOnly(flag_need_notice: Boolean){
         if (vm.PREFS_OnlyVideo){
             //确保视频开启
-            vm.recoveryAllTrack()
+            vm.recovery_VideoTrack()
             //仅播放视频：关闭声音
             vm.player.volume = 0f
             if(flag_need_notice) notice("已开启仅播放视频", 1000)
@@ -1807,7 +1804,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         closeVideoTrackJob?.cancel()
         closeVideoTrackJob = lifecycleScope.launch {
             delay(30_000)
-            vm.selectAudioOnly()
+            vm.close_VideoTrack()
             vm.closeVideoTrackJobRunning = false
         }
     }
@@ -2642,7 +2639,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     //回到前台恢复所有轨道
     private fun stopBackgroundPlay(){
         if (vm.PREFS_CloseVideoTrack){
-            vm.recoveryAllTrack()
+            vm.recovery_VideoTrack()
         }
     }
     //耳机插入和拔出监听

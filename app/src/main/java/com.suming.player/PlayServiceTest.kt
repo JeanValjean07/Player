@@ -33,7 +33,7 @@ import com.google.common.util.concurrent.Futures
 
 
 @UnstableApi
-class PlayerService(): MediaSessionService() {
+class PlayerServiceTest(): MediaSessionService() {
     //MediaSession
     private var mediaSession: MediaSession? = null
     private var EnsureMediaSession = false
@@ -53,61 +53,84 @@ class PlayerService(): MediaSessionService() {
         PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", false)
 
-        //启用播控中心
-        if (PREFS_UseMediaSession) {
-            // 创建播放器实例
-            val player = PlayerSingleton.getPlayer(application)
+        // 创建播放器实例
+        val player = PlayerSingleton.getPlayer(application)
 
-            // 创建媒体会话回调
-            val sessionCallback = object : MediaSession.Callback {
-                // 使用正确的方法签名处理自定义命令
-                override fun onCustomCommand(
-                    session: MediaSession,
-                    controller: MediaSession.ControllerInfo,
-                    customCommand: SessionCommand,
-                    args: Bundle
-                ): ListenableFuture<SessionResult> {
-                    if (customCommand.customAction == "UPDATE_METADATA_FIELDS") {
-                        // 从Bundle中获取各个元数据字段
-                        val title = args.getString("METADATA_TITLE")
-                        val artist = args.getString("METADATA_ARTIST")
+        // 创建媒体会话回调
+        val sessionCallback = object : MediaSession.Callback {
+            // 使用正确的方法签名处理自定义命令
+            override fun onCustomCommand(
+                session: MediaSession,
+                controller: MediaSession.ControllerInfo,
+                customCommand: SessionCommand,
+                args: Bundle
+            ): ListenableFuture<SessionResult> {
+                if (customCommand.customAction == "UPDATE_METADATA_FIELDS") {
+                    // 从Bundle中获取各个元数据字段
+                    val title = args.getString("METADATA_TITLE")
+                    val artist = args.getString("METADATA_ARTIST")
 
-                        // 在服务端重建MediaMetadata对象
-                        val metadataBuilder = MediaMetadata.Builder()
-                        title?.let { metadataBuilder.setTitle(it) }
-                        artist?.let { metadataBuilder.setArtist(it) }
+                    // 在服务端重建MediaMetadata对象
+                    val metadataBuilder = MediaMetadata.Builder()
+                    title?.let { metadataBuilder.setTitle(it) }
+                    artist?.let { metadataBuilder.setArtist(it) }
 
-                        // 创建新的MediaItem，保留原有URI但更新元数据
-                        /*
-                        val newMediaItem = MediaItem.Builder()
-                            .setUri(currentMediaItem.localConfiguration?.uri)
-                            .setMediaMetadata(metadataBuilder.build())
-                            .build()
+                    // 创建新的MediaItem，保留原有URI但更新元数据
+                    /*
+                    val newMediaItem = MediaItem.Builder()
+                        .setUri(currentMediaItem.localConfiguration?.uri)
+                        .setMediaMetadata(metadataBuilder.build())
+                        .build()
 
-                        // 替换当前媒体项，不改变播放状态
-                        player.replaceMediaItem(player.currentMediaItemIndex, newMediaItem)
+                    // 替换当前媒体项，不改变播放状态
+                    player.replaceMediaItem(player.currentMediaItemIndex, newMediaItem)
 
-                        // 恢复播放位置和状态
-                        player.seekTo(currentPosition)
-                        if (isPlaying) {
-                            player.playWhenReady = true
-                        }
-
-                         */
-
-
-
-
-                        // 返回成功结果
-                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                    // 恢复播放位置和状态
+                    player.seekTo(currentPosition)
+                    if (isPlaying) {
+                        player.playWhenReady = true
                     }
-                    return super.onCustomCommand(session, controller, customCommand, args)
-                }
 
-                override fun onConnect(
-                    session: MediaSession,
-                    controller: MediaSession.ControllerInfo
-                ): MediaSession.ConnectionResult {
+                     */
+
+
+
+
+                    // 返回成功结果
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                }
+                return super.onCustomCommand(session, controller, customCommand, args)
+            }
+
+            override fun onConnect(
+                session: MediaSession,
+                controller: MediaSession.ControllerInfo
+            ): MediaSession.ConnectionResult {
+
+                val sessionCommands = SessionCommands.Builder()
+                    .build()
+
+                val playerCommands = Player.Commands.Builder()
+                    .addAll(Player.COMMAND_PLAY_PAUSE) // 添加播放暂停命令
+                    .addAll(Player.COMMAND_SEEK_TO_NEXT) // 添加下一首命令
+                    .addAll(Player.COMMAND_SEEK_TO_PREVIOUS) // 添加上一首命令
+                    .build()
+
+                // 处理连接逻辑
+                return MediaSession.ConnectionResult.accept(
+                    sessionCommands,
+                    playerCommands
+                )
+            }
+
+        }
+
+        // 创建媒体会话时设置回调
+        mediaSession = MediaSession.Builder(this, player)
+            .setId("TestSession")
+            .setCallback(object : MediaSession.Callback {
+                override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
+                    Log.d("SuMing", "服务端: 接受连接请求")
 
                     val sessionCommands = SessionCommands.Builder()
                         .build()
@@ -118,32 +141,25 @@ class PlayerService(): MediaSessionService() {
                         .addAll(Player.COMMAND_SEEK_TO_PREVIOUS) // 添加上一首命令
                         .build()
 
-                    // 处理连接逻辑
-                    return MediaSession.ConnectionResult.accept(
-                        sessionCommands,
-                        playerCommands
-                    )
+                    return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                        .setAvailableSessionCommands(sessionCommands)
+                        .setAvailablePlayerCommands(playerCommands)
+                        // 还可以设置其他参数，如自定义布局等
+                        .build()
                 }
-
-            }
-
-            // 创建媒体会话时设置回调
-            mediaSession = MediaSession.Builder(this, player)
-                .setId("PlayerServiceSession")
-                .build()
-
-            Log.d("PlayerService", "MediaSession 创建完成")
+            })
+            .build()
 
 
-            mediaSession?.setSessionActivity(createPendingIntent())
 
-            //不论需不需要播控中心都要发通知,这是安卓要求,只是有播控中心时自动隐藏通知
-            val NotificationCustomized = BuildCustomizeNotification()
-            createNotificationChannel()
-            startForeground(NOTIF_ID, NotificationCustomized)
-        }
+        Log.d("SuMing", "服务端: MediaSession 创建完成")
 
+        mediaSession?.setSessionActivity(createPendingIntent())
 
+        //不论需不需要播控中心都要发通知,这是安卓要求,只是有播控中心时自动隐藏通知
+        val NotificationCustomized = BuildCustomizeNotification()
+        createNotificationChannel()
+        startForeground(NOTIF_ID, NotificationCustomized)
 
     }
 
@@ -151,6 +167,7 @@ class PlayerService(): MediaSessionService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d("SuMing", "服务端: onDestroy() 服务销毁")
 
         mediaSession?.run {
             release()
@@ -159,6 +176,9 @@ class PlayerService(): MediaSessionService() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+
+        Log.d("SuMing", "服务端: onTaskRemoved 服务销毁")
+
         mediaSession?.player?.pause()
 
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -184,7 +204,7 @@ class PlayerService(): MediaSessionService() {
 
             val NotificationCustomized = BuildCustomizeNotification()
             createNotificationChannel()
-            startForeground(NOTIF_ID, NotificationCustomized)
+            //startForeground(NOTIF_ID, NotificationCustomized)
 
         }
 
@@ -235,7 +255,7 @@ class PlayerService(): MediaSessionService() {
 
         // 3. 动态文字/图片
         remoteView.setTextViewText(R.id.tvTitle, info_MediaTitle)
-       // remoteView.setImageViewResource(R.id.ivCover, R.drawable.ic_player_service_notification)
+        // remoteView.setImageViewResource(R.id.ivCover, R.drawable.ic_player_service_notification)
 
         // 4. 构建 Notification
         return NotificationCompat.Builder(this, CHANNEL_ID)
@@ -266,7 +286,7 @@ class PlayerService(): MediaSessionService() {
     //自定义通知:点击拉起
     @OptIn(UnstableApi::class)
     private fun createPendingIntent(): PendingIntent {
-        val intent = Intent(this, PlayerActivity::class.java).apply {
+        val intent = Intent(this, PlayerActivityTest::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }.putExtra("SOURCE","FROM_PENDING" )
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)

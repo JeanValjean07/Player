@@ -35,9 +35,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.MediaStore
 import android.provider.Settings
-import android.support.v4.media.session.PlaybackStateCompat
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -70,10 +68,10 @@ import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
-import androidx.compose.animation.core.repeatable
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import androidx.core.content.edit
 import androidx.core.graphics.createBitmap
@@ -88,7 +86,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
@@ -325,9 +322,6 @@ class PlayerActivity: AppCompatActivity(){
 
     //</editor-fold>
 
-    interface OnFlagUpdateListener {
-        fun onFlagUpdate(position: Int)
-    }
 
     @OptIn(UnstableApi::class)
     @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
@@ -578,7 +572,7 @@ class PlayerActivity: AppCompatActivity(){
         //读取数据库
         if (savedInstanceState == null){
             //读取数据库
-            ReadBasicRoomDataBase()
+            ReadRoomDataBase()
         }
         //基于设置的后续操作
         if (vm.PREFS_UseBlackBackground) {
@@ -644,7 +638,7 @@ class PlayerActivity: AppCompatActivity(){
                             vm.LastLandscapeOrientation = 1
                             vm.setAuto()
                             vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                            setOrientation_LANDSCAPE()
                         }
                         //从 竖屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
                         else if (vm.OrientationValue == 2) {
@@ -653,7 +647,7 @@ class PlayerActivity: AppCompatActivity(){
                             vm.LastLandscapeOrientation = 2
                             vm.setAuto()
                             vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                            setOrientation_REVERSE_LANDSCAPE()
                         }
                     }
                     //当前为正向横屏
@@ -667,7 +661,7 @@ class PlayerActivity: AppCompatActivity(){
                             vm.LastLandscapeOrientation = 2
                             vm.setAuto()
                             vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                            setOrientation_REVERSE_LANDSCAPE()
                         }
                         //从 正向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
                         else if (vm.OrientationValue == 0) {
@@ -675,7 +669,7 @@ class PlayerActivity: AppCompatActivity(){
                             vm.currentOrientation = 0
                             vm.setAuto()
                             vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            setOrientation_PORTRAIT()
                         }
                     }
                     //当前为反向横屏
@@ -689,7 +683,7 @@ class PlayerActivity: AppCompatActivity(){
                             vm.LastLandscapeOrientation = 1
                             vm.setAuto()
                             vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                            setOrientation_LANDSCAPE()
                         }
                         //从 反向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
                         else if (vm.OrientationValue == 0) {
@@ -697,7 +691,7 @@ class PlayerActivity: AppCompatActivity(){
                             vm.currentOrientation = 0
                             vm.setAuto()
                             vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                            setOrientation_PORTRAIT()
                         }
                     }
                 }
@@ -710,7 +704,7 @@ class PlayerActivity: AppCompatActivity(){
                             setControllerLayerPadding("left")
                             //更改状态并发起旋转
                             vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                            setOrientation_LANDSCAPE()
                         }
                         //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
                         else if (vm.OrientationValue == 2) {
@@ -718,7 +712,7 @@ class PlayerActivity: AppCompatActivity(){
                             setControllerLayerPadding("right")
                             //更改状态并发起旋转
                             vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                            setOrientation_REVERSE_LANDSCAPE()
                         }
                     }
                 }
@@ -1389,7 +1383,19 @@ class PlayerActivity: AppCompatActivity(){
                     }
                 }
                 "RepeatMode" -> {
-                    changeRepeatMode()
+                    val mode = bundle.getString("mode")
+                    if (mode == "one"){
+                        controller.repeatMode = Player.REPEAT_MODE_ONE
+                        vm.repeatMode = "one"
+                        notice("已开启单集循环", 2000)
+                        PREFS.edit { putString("PREFS_RepeatMode", "one").apply() }
+                    }
+                    else if (mode == "all"){
+                        controller.repeatMode = Player.REPEAT_MODE_ALL
+                        vm.repeatMode = "all"
+                        notice("已开启列表循环", 2000)
+                        PREFS.edit { putString("PREFS_RepeatMode", "all").apply() }
+                    }
                 }
                 //倍速
                 "SetSpeed" -> {
@@ -1610,173 +1616,6 @@ class PlayerActivity: AppCompatActivity(){
                 "NextMedia" -> {
                     vm.player.seekToNextMediaItem()
                 }
-                //列表
-                "switchItem" -> {
-                    val newItemUri = (bundle.getString("new_item_uri"))?.toUri()
-                    //检查新的媒体uri
-                    if (newItemUri == MediaInfo_VideoUri){
-                        notice("已在此视频中", 2000)
-                        return@setFragmentResultListener
-                    }
-                    if (newItemUri == null){
-                        notice("切换失败", 2000)
-                        return@setFragmentResultListener
-                    }
-                    //切换操作
-                    fun switchItemWork(){
-                        //状态变更
-                        vm.playEnd = false
-                        //被控端刷新
-                        if(vm.PREFS_LinkScroll) {startScrollerSync()}
-                        startVideoTimeSync()
-
-                        //读取并保存新uri
-                        MediaInfo_VideoUri = newItemUri
-                        vm.MediaInfo_VideoUri = MediaInfo_VideoUri
-
-                        //重解码视频信息
-                        val retriever = MediaMetadataRetriever()
-                        try { retriever.setDataSource(this@PlayerActivity, MediaInfo_VideoUri) }
-                        catch (_: Exception) {
-                            showCustomToast("无法解码该视频信息", Toast.LENGTH_SHORT, 3)
-                            val data = Intent().apply {
-                                putExtra("key", "NEED_REFRESH")
-                            }
-                            setResult(RESULT_OK, data)
-                            finish()
-                            return
-                        }
-                        MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivity, MediaInfo_VideoUri).toString()
-                        MediaInfo_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
-                        MediaInfo_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
-                        MediaInfo_VideoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
-                        MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name
-                        retriever.release()
-
-                        //刷新总时长
-                        val timer_duration = findViewById<TextView>(R.id.timer_duration)
-                        timer_duration.text = formatTime1(MediaInfo_VideoDuration.toLong())
-
-                        //刷新进度条adapter(重榜)
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            //获取ViewModel
-                            val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
-                            //预先规划文件夹结构并创建 + 基于文件名哈希区分
-                            val SubDir_ThisMedia = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller")
-                            if (!SubDir_ThisMedia.exists()){
-                                SubDir_ThisMedia.mkdirs()
-                            }
-                            //传入参数预处理
-                            if (ScrollerInfo_EachPicDuration > 1000){
-                                vm.PREFS_GenerateThumbSYNC = true
-                            }
-                            //进度条绘制参数计算
-                            //使用超长进度条
-                            if (vm.PREFS_UseLongScroller) {
-                                ScrollerInfo_EachPicWidth = (47 * DisplayMetrics.density).toInt()
-                                if (MediaInfo_VideoDuration > 1_0000_000L) {
-                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 500.0).toInt()
-                                    ScrollerInfo_PicNumber = 500
-                                }
-                                else if (MediaInfo_VideoDuration > 7500_000L) {
-                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 400.0).toInt()
-                                    ScrollerInfo_PicNumber = 400
-                                }
-                                else if (MediaInfo_VideoDuration > 5000_000L) {
-                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 300.0).toInt()
-                                    ScrollerInfo_PicNumber = 300
-                                }
-                                else if (MediaInfo_VideoDuration > 500_000L) {
-                                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 200.0).toInt()
-                                    ScrollerInfo_PicNumber = 200
-                                }
-                                else {
-                                    ScrollerInfo_EachPicDuration = 1000
-                                    ScrollerInfo_PicNumber = min((max((MediaInfo_VideoDuration / 1000), 1)), 500)
-                                }
-                            }
-                            //使用普通进度条
-                            else if (MediaInfo_VideoDuration / 1000 > ScrollerInfo_MaxPicNumber) {
-                                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_MaxPicNumber
-                                ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
-                            }
-                            else {
-                                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                                ScrollerInfo_PicNumber = (MediaInfo_VideoDuration / 1000) + 1
-                                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_PicNumber
-                            }
-
-                            //移除查询参数
-                            val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
-
-                            //绑定Adapter
-                            //使用超长进度条
-                            if (vm.PREFS_UseLongScroller){
-                                withContext(Dispatchers.Main) {
-                                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivity,
-                                        MediaInfo_AbsolutePath_clean,
-                                        MediaInfo_FileName,
-                                        playerScrollerViewModel.thumbItems,
-                                        ScrollerInfo_EachPicWidth,
-                                        ScrollerInfo_PicNumber,
-                                        ScrollerInfo_EachPicDuration,
-                                        vm.PREFS_GenerateThumbSYNC,
-                                        scroller,
-                                        playerScrollerViewModel
-                                    )
-                                }
-                            }
-                            //使用标准进度条
-                            else{
-                                withContext(Dispatchers.Main) {
-                                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
-                                        MediaInfo_AbsolutePath_clean,
-                                        MediaInfo_FileName,
-                                        playerScrollerViewModel.thumbItems,
-                                        ScrollerInfo_EachPicWidth,
-                                        ScrollerInfo_PicNumber,
-                                        ScrollerInfo_EachPicDuration,
-                                        vm.PREFS_GenerateThumbSYNC,
-                                        scroller,
-                                        vm.Flag_SavedThumbFlag,
-                                        object : OnFlagUpdateListener {
-                                            override fun onFlagUpdate(position: Int) {
-                                                vm.Flag_SavedThumbFlag = vm.Flag_SavedThumbFlag.substring(0, position) + '1' + vm.Flag_SavedThumbFlag.substring(position + 1)
-                                            }
-                                        },
-                                        playerScrollerViewModel
-                                    )
-                                }
-                            }
-
-
-                            //开启被控
-                            fun startSyncScrollerGapControl(){
-                                syncScrollRunnableGap = 0L
-                                lifecycleScope.launch {
-                                    delay(3000)
-                                    syncScrollRunnableGap = ((MediaInfo_VideoDuration / 1000) * (1000.0 / 3600)).toLong()
-                                    if (vm.PREFS_UseLongScroller){
-                                        syncScrollRunnableGap = 10L
-                                    }
-                                }
-                            }
-                            startSyncScrollerGapControl()
-                            if(vm.PREFS_LinkScroll){ startScrollerSync() }
-                            delay(200)
-                            startVideoTimeSync()
-                        }
-
-                        //播控中心
-                        startPlayNewItem()
-
-
-                        vm.player.play()
-                    }
-                    switchItemWork()
-
-                }
                 //退出逻辑
                 "Dismiss" -> {
                     MovePlayArea_down()
@@ -1800,7 +1639,7 @@ class PlayerActivity: AppCompatActivity(){
 
             RefreshTimeLine()
 
-            ReadBasicRoomDataBase()
+            ReadRoomDataBase()
 
             scrollerAdapterUpdate()
 
@@ -1809,7 +1648,6 @@ class PlayerActivity: AppCompatActivity(){
 
         //开启空闲倒计时
         startIdleTimer()
-
 
 
         //系统手势监听：返回键重写
@@ -1830,7 +1668,7 @@ class PlayerActivity: AppCompatActivity(){
         return "content://media/external/video/media/$id".toUri()
     }
 
-    private fun ReadBasicRoomDataBase(){
+    private fun ReadRoomDataBase(){
         lifecycleScope.launch(Dispatchers.IO) {
             DataBaseProfile = MediaItemRepo.get(applicationContext).getSetting(vm.MediaInfo_FileName)
             if (DataBaseProfile == null){
@@ -1882,8 +1720,12 @@ class PlayerActivity: AppCompatActivity(){
                 }
             }
             if (vm.PREFS_SavePositionWhenExit) {
+
+                if (vm.lastPositionLocated){ return@launch }
+
                 val LastPosition = DataBaseSetting.SaveState_ExitPosition
-                if (LastPosition != 0L) {
+                if (LastPosition != 0L && LastPosition < MediaInfo_VideoDuration - 10000) {
+                    vm.lastPositionLocated = true
                     delay(100)
                     if (vm.state_firstReadyReached) {
                         withContext(Dispatchers.Main) { vm.player.seekTo(LastPosition) }
@@ -1927,13 +1769,18 @@ class PlayerActivity: AppCompatActivity(){
             MediaInfo_VideoUri = BuildNewUri(newMediaId)
         }
 
+        //if (MediaInfo_VideoUri == vm.MediaInfo_VideoUri){ return }
+
 
         //更新视频uri存档
         vm.MediaInfo_VideoUri = MediaInfo_VideoUri
         //更新全局媒体信息变量
         getMediaInfo(MediaInfo_VideoUri)
+
+        vm.global_videoDuration = vm.player.duration
+
         //读取数据库
-        ReadBasicRoomDataBase()
+        ReadRoomDataBase()
 
         scrollerAdapterUpdate()
 
@@ -2027,12 +1874,6 @@ class PlayerActivity: AppCompatActivity(){
                         ScrollerInfo_EachPicDuration,
                         vm.PREFS_GenerateThumbSYNC,
                         scroller,
-                        vm.Flag_SavedThumbFlag,
-                        object : OnFlagUpdateListener {
-                            override fun onFlagUpdate(position: Int) {
-                                vm.Flag_SavedThumbFlag = vm.Flag_SavedThumbFlag.substring(0, position) + '1' + vm.Flag_SavedThumbFlag.substring(position + 1)
-                            }
-                        },
                         playerScrollerViewModel
                     )
                 }
@@ -2082,23 +1923,9 @@ class PlayerActivity: AppCompatActivity(){
         if (vm.PREFS_UseMediaSession){
             MediaSessionControl()
         }else{
-            vm.setVideoUri(MediaInfo_VideoUri)
+            vm.setMediaUri(MediaInfo_VideoUri)
             MediaNotification()
         }
-    }
-
-    private fun changeRepeatMode(){
-        if (controller.repeatMode == REPEAT_MODE_OFF){
-            controller.repeatMode = Player.REPEAT_MODE_ONE
-            vm.player.repeatMode = Player.REPEAT_MODE_ONE
-            notice("已切换为 单集循环",2000)
-        }
-        else if (controller.repeatMode == Player.REPEAT_MODE_ONE){
-            controller.repeatMode = Player.REPEAT_MODE_ALL
-            vm.player.repeatMode = Player.REPEAT_MODE_ALL
-            notice("已切换为 列表循环",2000)
-        }
-
     }
 
     private fun MediaSessionControl(){
@@ -2106,11 +1933,9 @@ class PlayerActivity: AppCompatActivity(){
         startBackgroundServices()
 
         val SessionToken = SessionToken(this, ComponentName(this, PlayerService::class.java))
-
         val MediaSessionController = MediaController.Builder(this, SessionToken).buildAsync()
         MediaSessionController.addListener({
             controller = MediaSessionController.get()
-
 
             play_list_default = PREFS.getString("play_list_default", "")!!
 
@@ -2135,13 +1960,26 @@ class PlayerActivity: AppCompatActivity(){
 
                 val robustMediaItems = parseMediaItemsRobust(play_list_default)
                 controller.setMediaItems(robustMediaItems,index,0)
-                controller.repeatMode = REPEAT_MODE_OFF
 
+            }
+
+            //设置播放模式
+            val repeatMode = PREFS.getString("repeat_mode", "")
+            if (repeatMode == "one"){
+                controller.repeatMode = Player.REPEAT_MODE_ONE
+                vm.repeatMode = "one"
+            }else if (repeatMode == "all"){
+                controller.repeatMode = Player.REPEAT_MODE_ALL
+                vm.repeatMode = "all"
+            }else{
+                controller.repeatMode = Player.REPEAT_MODE_ONE
+                vm.repeatMode = "one"
             }
 
             controller.prepare()
 
         }, MoreExecutors.directExecutor())
+
     }
 
     private fun parseMediaItemsRobust(input: String): List<MediaItem>{
@@ -2185,9 +2023,22 @@ class PlayerActivity: AppCompatActivity(){
         val name = fieldMap["name"] ?: "无标题"
         val cover_img_path = File(cacheDir, "Media/${name.hashCode()}/cover/cover.jpg")
 
+        val cover_img_uri = if (vm.PREFS_InsertPreviewInMediaSession && cover_img_path.exists()) {
+            try {
+                FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
+            } catch (e: Exception) {
+                if (cover_img_path.canRead()) {
+                    cover_img_path.toUri()
+                } else {
+                    null
+                }
+            }
+        } else {
+            null
+        }
 
 
-        return if(vm.PREFS_InsertPreviewInMediaSession){
+        return if(vm.PREFS_InsertPreviewInMediaSession && cover_img_path.exists()){
             MediaItem.Builder()
                 .setMediaId(mediaId)
                 .setUri(uri)
@@ -2195,7 +2046,7 @@ class PlayerActivity: AppCompatActivity(){
                     MediaMetadata.Builder()
                         .setTitle(name)
                         .setDisplayTitle(name)
-                        .setArtworkUri(Uri.fromFile(cover_img_path))
+                        .setArtworkUri(cover_img_uri)
                         .build()
                 )
                 .setTag(fieldMap)
@@ -2253,11 +2104,11 @@ class PlayerActivity: AppCompatActivity(){
             //确保声音开启
             vm.player.volume = 1f
             //仅播放音频：关闭视频轨道
-            vm.selectAudioOnly()
+            vm.close_VideoTrack()
             if(flag_need_notice) notice("已开启仅播放音频", 1000)
         } else {
             //仅播放音频：打开视频轨道
-            vm.recoveryAllTrack()
+            vm.recovery_VideoTrack()
             if(flag_need_notice) notice("已关闭仅播放音频", 1000)
         }
         lifecycleScope.launch(Dispatchers.IO) {
@@ -2267,7 +2118,7 @@ class PlayerActivity: AppCompatActivity(){
     private fun changeStateVideoOnly(flag_need_notice: Boolean){
         if (vm.PREFS_OnlyVideo){
             //确保视频开启
-            vm.recoveryAllTrack()
+            vm.recovery_VideoTrack()
             //仅播放视频：关闭声音
             vm.player.volume = 0f
             if(flag_need_notice) notice("已开启仅播放视频", 1000)
@@ -2337,7 +2188,7 @@ class PlayerActivity: AppCompatActivity(){
                 scroller.stopScroll()
                 startScrollerSync()
                 stopVideoSeek()
-                PREFS.edit { putBoolean("PREFS_TapJump", true).apply() }
+                PREFS.edit { putBoolean("PREFS_LinkScroll", true).apply() }
             }
         }
     }
@@ -2679,7 +2530,7 @@ class PlayerActivity: AppCompatActivity(){
         closeVideoTrackJob?.cancel()
         closeVideoTrackJob = lifecycleScope.launch {
             delay(30_000)
-            vm.selectAudioOnly()
+            vm.close_VideoTrack()
             vm.closeVideoTrackJobRunning = false
         }
     }
@@ -3040,8 +2891,6 @@ class PlayerActivity: AppCompatActivity(){
     }
 
     private fun ReCreateScrollerThumb(){
-        //刷新进度条adapter(重榜)
-        vm.Flag_SavedThumbFlag = "00000000000000000000"
         lifecycleScope.launch(Dispatchers.IO) {
             //获取ViewModel
             val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
@@ -3123,12 +2972,6 @@ class PlayerActivity: AppCompatActivity(){
                         ScrollerInfo_EachPicDuration,
                         vm.PREFS_GenerateThumbSYNC,
                         scroller,
-                        vm.Flag_SavedThumbFlag,
-                        object : OnFlagUpdateListener {
-                            override fun onFlagUpdate(position: Int) {
-                                vm.Flag_SavedThumbFlag = vm.Flag_SavedThumbFlag.substring(0, position) + '1' + vm.Flag_SavedThumbFlag.substring(position + 1)
-                            }
-                        },
                         playerScrollerViewModel
                     )
                 }
@@ -3151,7 +2994,6 @@ class PlayerActivity: AppCompatActivity(){
             delay(200)
             startVideoTimeSync()
         }
-
     }
 
 
@@ -3553,7 +3395,6 @@ class PlayerActivity: AppCompatActivity(){
         }
     }
     //切换横屏
-    @SuppressLint("SourceLockedOrientationActivity")
     private fun ButtonChangeOrientation(){
         //自动旋转关闭
         if (rotationSetting == 0){
@@ -3562,24 +3403,24 @@ class PlayerActivity: AppCompatActivity(){
                 if (vm.OrientationValue == 1){
                     vm.FromManualPortrait = false
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                    setOrientation_LANDSCAPE()
                 }
                 else if (vm.OrientationValue == 2){
                     vm.FromManualPortrait = false
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                    setOrientation_REVERSE_LANDSCAPE()
                 }
                 else{
                     vm.FromManualPortrait = false
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                    setOrientation_LANDSCAPE()
                 }
             }
             //当前为横屏
             else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.FromManualPortrait = true
                 vm.onOrientationChanging = true
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                setOrientation_PORTRAIT()
             }
         }
         //自动旋转开启
@@ -3590,30 +3431,43 @@ class PlayerActivity: AppCompatActivity(){
                     vm.LastLandscapeOrientation = 1
                     vm.setManual()
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                    setOrientation_LANDSCAPE()
                 }
                 else if (vm.OrientationValue == 2){
                     vm.currentOrientation = 2
                     vm.LastLandscapeOrientation = 2
                     vm.setManual()
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                    setOrientation_REVERSE_LANDSCAPE()
                 }
                 else{
                     vm.currentOrientation = 1
                     vm.LastLandscapeOrientation = 1
                     vm.setManual()
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                    setOrientation_LANDSCAPE()
                 }
             }
             else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.currentOrientation = 0
                 vm.setManual()
                 vm.onOrientationChanging = true
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                setOrientation_PORTRAIT()
             }
         }
+    }
+    @SuppressLint("SourceLockedOrientationActivity")
+    private fun setOrientation_PORTRAIT(){
+        scroller.stopScroll()
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+    }
+    private fun setOrientation_LANDSCAPE(){
+        scroller.stopScroll()
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+    }
+    private fun setOrientation_REVERSE_LANDSCAPE(){
+        scroller.stopScroll()
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
     }
     @SuppressLint("SourceLockedOrientationActivity")
     private fun ExitByOrientation(){
@@ -3689,7 +3543,7 @@ class PlayerActivity: AppCompatActivity(){
     //回到前台恢复所有轨道
     private fun stopBackgroundPlay(){
         if (vm.PREFS_CloseVideoTrack){
-            vm.recoveryAllTrack()
+            vm.recovery_VideoTrack()
         }
     }
     //耳机插入和拔出监听
