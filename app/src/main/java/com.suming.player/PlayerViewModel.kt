@@ -210,6 +210,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var PREFS_SeekHandlerGap: Long = 0
 
+    var state_PlayListProcess_Complete: Boolean = false
+
 
 
 

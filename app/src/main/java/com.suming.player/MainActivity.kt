@@ -118,7 +118,6 @@ class MainActivity: AppCompatActivity() {
         }else{
             PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
         }
-
         if (!PREFS.contains("PREFS_UseTestingPlayer")){
             PREFS.edit { putBoolean("PREFS_UseTestingPlayer", false).apply() }
             PREFS_UseTestingPlayer = false
@@ -179,6 +178,7 @@ class MainActivity: AppCompatActivity() {
         //加载
         load()
 
+
         /*
         val uri = "content://media/external/video/media/781".toUri()
 
@@ -191,10 +191,7 @@ class MainActivity: AppCompatActivity() {
         }
 
          */
-
-
         PlayerSingleton.getPlayer(application)
-
 
 
         //按钮：刷新列表
@@ -252,8 +249,6 @@ class MainActivity: AppCompatActivity() {
             gestureDetectorToolbarTitle.onTouchEvent(event)
         }
 
-
-
         //媒体库设置返回值
         supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MediaStore", this) { _, bundle ->
             val ReceiveKey = bundle.getString("KEY")
@@ -264,15 +259,14 @@ class MainActivity: AppCompatActivity() {
 
         }
 
-
-
         //监听返回手势
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 finish()
             }
         })
-    }//onCreate END
+    //onCreate END
+    }
 
     override fun onResume() {
         super.onResume()
@@ -458,7 +452,6 @@ class MainActivity: AppCompatActivity() {
     private fun stopCheckPermission() {
         checkPermissionHandler.removeCallbacks(checkPermission)
     }
-
 
 
 //class END

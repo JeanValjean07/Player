@@ -36,26 +36,11 @@ import kotlin.math.abs
 
 @UnstableApi
 class PlayerFragmentVideoInfo: DialogFragment() {
-
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
-
-    private var videoWidth: Int = 0
-    private var videoHeight: Int = 0
-    private var videoDuration: Long = 0
-    private var videoFps: Float = 0f
-    private var captureFps: Float = 0f
-    private lateinit var videoMimeType: String
-    private var videoBitrate: Long = 0
-    private lateinit var videoFileName: String
-    private lateinit var videoTitle: String
-    private lateinit var videoArtist: String
-    private lateinit var videoDate: String
-
     //自动关闭标志位
     private var lockPage = false
-
-
+    //静态工厂
     companion object {
         private const val ARG_VIDEO_WIDTH = "video_width"
         private const val ARG_VIDEO_HEIGHT = "video_height"
@@ -97,7 +82,18 @@ class PlayerFragmentVideoInfo: DialogFragment() {
             )
         }
     }
-
+    //信息变量
+    private var videoWidth: Int = 0
+    private var videoHeight: Int = 0
+    private var videoDuration: Long = 0
+    private var videoFps: Float = 0f
+    private var captureFps: Float = 0f
+    private lateinit var videoMimeType: String
+    private var videoBitrate: Long = 0
+    private lateinit var videoFileName: String
+    private lateinit var videoTitle: String
+    private lateinit var videoArtist: String
+    private lateinit var videoDate: String
 
 
     override fun onStart() {
@@ -168,10 +164,8 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_player_fragment_video_info, container, false)
-
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
 
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
@@ -307,18 +301,20 @@ class PlayerFragmentVideoInfo: DialogFragment() {
             return@setOnKeyListener false
         }
 
-    } //onViewCreated END
+    }
 
 
 
     //Functions
     @Composable
     private fun PlayerComposeVideoInfo(){
+
         CompositionLocalProvider(
             LocalTextStyle provides TextStyle(
                 color = colorResource(R.color.HeadText)
             )
-        ) {
+        )
+        {
             Column(
                 Modifier
                     .padding(16.dp)
@@ -326,7 +322,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                 Text(text = "视频分辨率：$videoWidth x $videoHeight")
                 Text(text = "\n")
 
-                Text(text = "视频时长：${videoDuration / 1000} 秒丨${formatTime1(videoDuration)}")
+                Text(text = "视频时长：${videoDuration / 1000} 秒丨${FormatTime_withChar(videoDuration)}")
                 Text(text = "\n")
 
                 //视频实际帧率
@@ -365,17 +361,13 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                 //视频日期
                 if (videoDate == "19040101T000000.000Z"){ Text(text = "视频日期：未写入此条元数据") }else{ Text(text = "视频日期：$videoDate") }
 
-
-
-
             }
         }
-
 
     }
 
     @SuppressLint("DefaultLocale")
-    private fun formatTime1(milliseconds: Long): String {
+    private fun FormatTime_withChar(milliseconds: Long): String {
         val totalSeconds = milliseconds / 1000
         val hours = totalSeconds / 3600
         val minutes = (totalSeconds % 3600) / 60

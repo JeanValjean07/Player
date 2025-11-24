@@ -403,10 +403,10 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                 vm.PREFS_ExitWhenEnd = PREFS.getBoolean("PREFS_ExitWhenEnd", false)
             }
             if (!PREFS.contains("PREFS_UseMediaSession")){
-                PREFS.edit { putBoolean("PREFS_UseMediaSession", false).apply() }
-                vm.PREFS_UseMediaSession = false
+                PREFSEditor.putBoolean("PREFS_UseMediaSession", true)
+                vm.PREFS_UseMediaSession = true
             }else{
-                vm.PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", false)
+                vm.PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", true)
             }
             if (!PREFS.contains("PREFS_InsertPreviewInMediaSession")){
                 PREFSEditor.putBoolean("PREFS_InsertPreviewInMediaSession", true)

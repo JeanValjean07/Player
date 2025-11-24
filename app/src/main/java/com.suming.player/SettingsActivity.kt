@@ -245,14 +245,10 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
         }
         if (!PREFS.contains("PREFS_UseMediaSession")){
-            //预写入媒体会话配置
-            if (Build.BRAND == "samsung" || Build.BRAND == "Xiaomi"){
-                PREFS.edit { putBoolean("PREFS_UseMediaSession", true).apply() }
-            }else{
-                PREFS.edit { putBoolean("PREFS_UseMediaSession", false).apply() }
-            }
+            PREFS_Editor.putBoolean("PREFS_UseMediaSession", true)
+            PREFS_UseMediaSession = true
         } else {
-            PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", false)
+            PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", true)
         }
         if (!PREFS.contains("PREFS_InsertPreviewInMediaSession")){
             PREFS_Editor.putBoolean("PREFS_InsertPreviewInMediaSession", true)

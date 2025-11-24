@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,17 +48,13 @@ import kotlin.math.abs
 @SuppressLint("ComposableNaming")
 @UnstableApi
 class PlayerFragmentPlayList: DialogFragment() {
-
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
-
+    //协程作用域
     private val viewModelScope = CoroutineScope(Dispatchers.IO)
-
     //自动关闭标志位
     private var lockPage = false
-
-
-
+    //静态方法
     companion object {
         fun newInstance(): PlayerFragmentPlayList =
             PlayerFragmentPlayList().apply {
@@ -66,12 +63,11 @@ class PlayerFragmentPlayList: DialogFragment() {
                 )
             }
     }
-
+    //媒体data class
     data class MediaItem_video(
         val uri: String,
         val name: String
     )
-
 
 
     override fun onStart() {
@@ -129,7 +125,6 @@ class PlayerFragmentPlayList: DialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_player_fragment_play_list, container, false)
-
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "SuspiciousIndentation")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
@@ -171,7 +166,6 @@ class PlayerFragmentPlayList: DialogFragment() {
         }
 
 
-
         //声明式显示列表
         val playListString = vm.List_PlayList
         val composableView = view.findViewById<View>(R.id.composableView)
@@ -179,24 +173,6 @@ class PlayerFragmentPlayList: DialogFragment() {
         composeView.setContent {
             showVideoList(playListString)
         }
-
-        //读取播放列表：读取操作交给activity承担
-        /*
-        val PREFS_List = requireContext().getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
-        if (PREFS_List.contains("CurrentPlayList")){
-
-            val playListString = PREFS_List.getString("CurrentPlayList", "错误") ?: "错误"
-
-            val composableView = view.findViewById<View>(R.id.composableView)
-            val composeView = composableView as androidx.compose.ui.platform.ComposeView
-
-            composeView.setContent {
-                showVideoList(playListString)
-            }
-
-        }
-
-         */
 
 
         //面板下滑关闭(NestedScrollView)
@@ -304,10 +280,10 @@ class PlayerFragmentPlayList: DialogFragment() {
             return@setOnKeyListener false
         }
 
-    } //onViewCreated END
+    }
 
 
-
+    //声明式UI
     @Composable
     private fun showVideoList(playlistString: String) {
         val list = remember(playlistString) { parsePlaylistString(playlistString) }
@@ -369,9 +345,9 @@ class PlayerFragmentPlayList: DialogFragment() {
                     }
                 }
                 //分割线
-                Divider(
-                    color = colorResource(R.color.divider),
-                    thickness = 0.5.dp
+                HorizontalDivider(
+                    thickness = 0.5.dp,
+                    color = colorResource(R.color.divider)
                 )
 
             }//list.forEach

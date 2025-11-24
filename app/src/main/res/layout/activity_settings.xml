@@ -110,7 +110,7 @@
                             android:layout_gravity="center"
                             android:layout_marginEnd="10dp"
                             android:layout_weight="0"
-                            android:text="当前版本1.0"
+                            android:text="version"
                             android:textSize="11sp" />
 
                     </LinearLayout>
@@ -157,29 +157,7 @@
 
 
             </androidx.cardview.widget.CardView>
-            <!-- 软件开源免费提示 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="5dp">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp"
-                        android:text="本软件为开源项目"
-                        android:textSize="13sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
             <!--  卡片：通用  -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"

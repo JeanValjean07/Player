@@ -1,7 +1,10 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.app.ActivityManager
 import android.app.Dialog
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentResolver
@@ -70,6 +73,7 @@ import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -129,9 +133,6 @@ class PlayerActivityTest: AppCompatActivity(){
     private var maxVolume = 0
     private var currentVolume = 0
     private var originalVolume = 0
-    //点击和滑动状态标识 + onScrolled回调参数
-    private var singleTap = false
-    private var videoTimeTo = 0L
     //点击隐藏控件
     private var widgetsShowing = true
     //时间戳刷新间隔
@@ -140,7 +141,6 @@ class PlayerActivityTest: AppCompatActivity(){
     private var scrollParam2 = 0
     private var syncScrollRunnableGap = 16L
     //功能:倍速滚动
-    private var currentTime = 0L
     private var lastPlaySpeed = 0f
     private var forceSeekGap = 5000L
     //功能:VideoSeek
@@ -154,9 +154,7 @@ class PlayerActivityTest: AppCompatActivity(){
     private var videoSeekHandlerRunning = false
     private var smartScrollRunnableRunning = false
     private var syncScrollRunnableRunning = false
-
     //媒体信息
-    private lateinit var MediaInfo_VideoItem: MediaItem_video
     private lateinit var MediaInfo_VideoUri: Uri
     private var MediaInfo_VideoDuration = 0
     private var MediaInfo_AbsolutePath = ""
@@ -207,10 +205,8 @@ class PlayerActivityTest: AppCompatActivity(){
     private var headSet = false
     //方向监听器初始化
     private lateinit var OEL: OrientationEventListener
-
     //视频播放状态监听器
     private var PlayerStateListener: Player.Listener? = null
-
     //ViewModel
     private val vm: PlayerViewModel by viewModels { PlayerExoFactory.getInstance(application) }
     //视频尺寸
@@ -218,29 +214,18 @@ class PlayerActivityTest: AppCompatActivity(){
     private var videoSizeHeight = 0
 
     private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
-
-
     //空闲定时器
     private var IDLE_Timer: CountDownTimer? = null
     private val IDLE_MS = 5_000L
     //定时关闭定时器
     private var COUNT_Timer: CountDownTimer? = null
 
-    //来自查表恢复的设置
-    private var NeedSetSpeed = false
-    private var NeedSetSpeedValue = 1.0f
-
     private var EnterAnimationComplete = false
-
     private var fps = 0f
-
     //更新时间戳参数
     private var lastMillis = 0L
-    private var timeUpdateGap = 100L
-
     //倍速播放
     private var currentSpeed = 1.0f
-
     //进度条状态
     private var scrollerState_DraggingMoving = false
     private var scrollerState_DraggingStay = false
@@ -249,22 +234,18 @@ class PlayerActivityTest: AppCompatActivity(){
     private var scrollerState_Moving = true
     private var scrollerState_Pressed = true
     private var scrollerState_BackwardScroll = false
+    private var singleTap = false
 
     //播放结束需要定时关闭
     private var playEnd_NeedShutDown = false
-
     //全局SeekToMs
     private var global_SeekToMs = 0L
-
     //VideoSeekHandler
     private var videoSeekHandlerGap = 0L
-
+    //进度条参数
     private var sidePadding = 0
     private var screenWidth = 0
     private var screenHeight = 0
-
-
-
 
     //lateInitItem -控件
     private lateinit var scroller: RecyclerView
@@ -273,33 +254,28 @@ class PlayerActivityTest: AppCompatActivity(){
     private lateinit var NoticeCard : CardView
     private lateinit var ButtonExit : ImageButton
     private lateinit var TimeCard : CardView
-    private lateinit var RootConstraint: ConstraintLayout
     private lateinit var playerView: PlayerView
     private lateinit var timer_current : TextView
     private lateinit var timer_duration : TextView
-
     //lateInitItem -工具
     private lateinit var DisplayMetrics: DisplayMetrics
-
     //lateInitItem -复杂工具
     private lateinit var receiver: BroadcastReceiver
     private lateinit var localBroadcastManager: LocalBroadcastManager
     private lateinit var equalizer: Equalizer
 
-
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFSEditor: SharedPreferences.Editor
+    private lateinit var PREFS_List: SharedPreferences
 
     private lateinit var retriever: MediaMetadataRetriever
 
     private lateinit var scrollerLayoutManager: LinearLayoutManager
 
-
     private var NeedRecoverySettings = false
     private var NeedRecoverySetting_VideoOnly = false
     private var NeedRecoverySetting_SoundOnly = false
     private var NeedRecoverySetting_LastPosition = 0L
-
 
     private var onScroll_currentMillis = 0L
     private var onScroll_scrollPercent = 0f
@@ -312,14 +288,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
     private var videoTimeSyncHandler_currentPosition = 0L
 
-
-
     private var DataBaseProfile: MediaItemSetting? = null
-
-
-
-    private lateinit var controllerFuture : ListenableFuture<MediaController>
-
 
     private var state_ActivityState_onBackground = false
 
@@ -329,7 +298,12 @@ class PlayerActivityTest: AppCompatActivity(){
     private lateinit var controller: MediaController
 
     //</editor-fold>
+    //测试中变量
+    //<editor-fold desc="测试中变量">
 
+
+
+    //</editor-fold>
 
     @OptIn(UnstableApi::class)
     @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
@@ -339,8 +313,7 @@ class PlayerActivityTest: AppCompatActivity(){
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_player)
-
-
+        //初始化部分控件
         fun lateInitItem(){
             scroller = findViewById(R.id.rvThumbnails)
             DisplayMetrics = resources.displayMetrics
@@ -354,12 +327,11 @@ class PlayerActivityTest: AppCompatActivity(){
             ButtonExit = findViewById(R.id.TopBarArea_ButtonExit)
         }
         lateInitItem()
-
+        //连接ViewModel
         val vm = ViewModelProvider(this, PlayerExoFactory.getInstance(application))[PlayerViewModel::class.java]
 
         //其他预设
         preCheck()
-
 
         //提取uri并保存
         if (savedInstanceState == null) {
@@ -417,6 +389,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
         //读取设置
         PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
+        PREFS_List = getSharedPreferences("PREFS_List", MODE_PRIVATE)
         PREFSEditor = PREFS.edit()
         if(savedInstanceState == null){
             //固定项
@@ -433,10 +406,10 @@ class PlayerActivityTest: AppCompatActivity(){
                 vm.PREFS_ExitWhenEnd = PREFS.getBoolean("PREFS_ExitWhenEnd", false)
             }
             if (!PREFS.contains("PREFS_UseMediaSession")){
-                PREFS.edit { putBoolean("PREFS_UseMediaSession", false).apply() }
-                vm.PREFS_UseMediaSession = false
+                PREFS.edit { putBoolean("PREFS_UseMediaSession", true).apply() }
+                vm.PREFS_UseMediaSession = true
             }else{
-                vm.PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", false)
+                vm.PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", true)
             }
             if (!PREFS.contains("PREFS_InsertPreviewInMediaSession")){
                 PREFSEditor.putBoolean("PREFS_InsertPreviewInMediaSession", true)
@@ -1008,7 +981,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
                         //计算对应时间戳
                         onScroll_scrollPercent = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
-                        onScroll_seekToMs = (onScroll_scrollPercent * vm.global_videoDuration).toLong()
+                        onScroll_seekToMs = (onScroll_scrollPercent * MediaInfo_VideoDuration.toLong()).toLong()
 
                         //刷新时间显示
                         timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
@@ -1642,6 +1615,13 @@ class PlayerActivityTest: AppCompatActivity(){
             }
         }
 
+        //读取视频列表
+        val playListString = PREFS_List.getString("CurrentPlayList", "错误")
+        if (playListString != null) {
+            vm.List_PlayList = playListString
+        }else{
+            showCustomToast("读取播放列表失败", Toast.LENGTH_SHORT,3)
+        }
 
 
         //开启空闲倒计时
@@ -1658,6 +1638,30 @@ class PlayerActivityTest: AppCompatActivity(){
 
 
     //Testing Functions
+    private fun showNotification_NotPrepared(text: String) {
+        val channelId = "toast_replace"
+        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+        val channel = NotificationChannel(channelId, "提示", NotificationManager.IMPORTANCE_HIGH)
+            .apply {
+                setSound(null, null)
+                enableVibration(false)
+            }
+        nm.createNotificationChannel(channel)
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_player_service_notification)
+            .setContentTitle(null)
+            .setContentText(text)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(0)
+            .setAutoCancel(true)
+            .setTimeoutAfter(5_000)
+            .build()
+
+        nm.notify(System.currentTimeMillis().toInt(), notification)
+
+    }
     //RxJava事件总线
     private var disposable: io.reactivex.rxjava3.disposables.Disposable? = null
     private fun setupEventBus() {
@@ -1672,11 +1676,18 @@ class PlayerActivityTest: AppCompatActivity(){
     private fun handlePlayerEvent(event: String) {
         when (event) {
             "SessionController_Next" -> {
-                Log.d("SuMing", "NextMedia")
+                if (vm.state_PlayListProcess_Complete){
+                    vm.player.seekToNextMediaItem()
+                }else{
+                    showNotification_NotPrepared("播放列表还未处理完成,请稍后再试")
+                }
             }
-
             "SessionController_Previous" -> {
-                Log.d("SuMing", "PreviousMedia")
+                if (vm.state_PlayListProcess_Complete){
+                    vm.player.seekToPreviousMediaItem()
+                }else{
+                    showNotification_NotPrepared("播放列表还未处理完成,请稍后重试")
+                }
             }
         }
     }
@@ -1904,6 +1915,12 @@ class PlayerActivityTest: AppCompatActivity(){
             val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
 
 
+            //进度条边界设置
+            withContext(Dispatchers.Main){
+                setScrollerPadding()
+            }
+
+
             //绑定Adapter
             //使用超长进度条
             if (vm.PREFS_UseLongScroller){
@@ -1954,11 +1971,6 @@ class PlayerActivityTest: AppCompatActivity(){
             if(vm.PREFS_LinkScroll){ startScrollerSync() }
             delay(200)
             startVideoTimeSync()
-
-            //进度条边界设置
-            withContext(Dispatchers.Main){
-                setScrollerPadding()
-            }
 
         }
     }
@@ -2032,7 +2044,6 @@ class PlayerActivityTest: AppCompatActivity(){
         }
 
     }
-
     //解析播放列表
     private fun parseMediaItemsRobust(input: String): List<MediaItem>{
         return input.split("MediaItem_video(")
@@ -2121,19 +2132,6 @@ class PlayerActivityTest: AppCompatActivity(){
             .setUri(uri)
             .build()
     }
-
-    private fun readPlayListFromExoplayer(){
-        //列表条目数
-        val count = vm.player.mediaItemCount
-        if (count == 0) { return }
-        for (i in 0 until count) {
-            val mediaItem: MediaItem = vm.player.getMediaItemAt(i)
-            val uri = mediaItem.localConfiguration?.uri
-            val title = mediaItem.mediaMetadata.title ?: "无标题"
-        }
-    }
-
-
     //确认关闭操作
     private fun EnsureExit(){
         //保存播放进度
@@ -2166,6 +2164,19 @@ class PlayerActivityTest: AppCompatActivity(){
             MediaItemRepo.get(this@PlayerActivityTest).preset_all_row_default(MediaInfo_FileName)
         }
     }
+
+
+    private fun readPlayListFromExoplayer(){
+        //列表条目数
+        val count = vm.player.mediaItemCount
+        if (count == 0) { return }
+        for (i in 0 until count) {
+            val mediaItem: MediaItem = vm.player.getMediaItemAt(i)
+            val uri = mediaItem.localConfiguration?.uri
+            val title = mediaItem.mediaMetadata.title ?: "无标题"
+        }
+    }
+
 
 
 
@@ -3870,4 +3881,28 @@ class PlayerActivityTest: AppCompatActivity(){
     }
 
 }
+
+//封存的函数
+/*
+//拉到前台
+private fun pullActivity() {
+    val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
+    //<uses-permission android:name="android.permission.REORDER_TASKS"/>
+    val tasks = am.getRunningTasks(Int.MAX_VALUE)
+    for (task in tasks) {
+        if (task.topActivity?.packageName == packageName) {
+            am.moveTaskToFront(task.id, 0)
+            break
+        }
+    }
+
+    val intent = Intent(this, this::class.java).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+    }
+
+    startActivity(intent)
+}
+
+ */
 
