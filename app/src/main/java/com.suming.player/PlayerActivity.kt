@@ -769,7 +769,6 @@ class PlayerActivity: AppCompatActivity(){
         localBroadcastManager.registerReceiver(receiver, filter)
 
 
-
         //绑定播放器输出
         playerView.player = vm.player
         //播放器事件监听
@@ -823,8 +822,6 @@ class PlayerActivity: AppCompatActivity(){
                     }
                 }
             }
-
-
         }
         vm.player.addListener(PlayerStateListener!!)
 
@@ -843,7 +840,6 @@ class PlayerActivity: AppCompatActivity(){
 
         //控件初始化
         setScrollerPadding()
-
 
 
 
@@ -1656,10 +1652,12 @@ class PlayerActivity: AppCompatActivity(){
                 ExitByOrientation()
             }
         })
-    } //onCreate END
+
+    //onCreate END
+    }
 
 
-
+    //Testing Functions
     private fun RefreshTimeLine(){
         timer_duration.text = formatTime1(MediaInfo_VideoDuration.toLong())
     }
@@ -1672,19 +1670,9 @@ class PlayerActivity: AppCompatActivity(){
         lifecycleScope.launch(Dispatchers.IO) {
             DataBaseProfile = MediaItemRepo.get(applicationContext).getSetting(vm.MediaInfo_FileName)
             if (DataBaseProfile == null){
-                FlagsPreWrite()
                 DataBasePreWrite()
                 return@launch }
             val DataBaseSetting = DataBaseProfile!!
-            //进度条缩略图生成状态
-            if (DataBaseSetting.SaveFlag_Thumb != ""){
-                vm.Flag_SavedThumbFlag = DataBaseSetting.SaveFlag_Thumb
-            }else{
-                vm.Flag_SavedThumbFlag = "00000000000000000000"
-            }
-            if (DataBaseSetting.SavePath_Cover != ""){
-                vm.String_SavedCoverPath = DataBaseSetting.SavePath_Cover
-            }
             //视频强单项适用设置读取
             if (DataBaseSetting.PREFS_SoundOnly){ vm.PREFS_OnlyAudio = true }else{
                 vm.PREFS_OnlyAudio = false
@@ -1968,10 +1956,12 @@ class PlayerActivity: AppCompatActivity(){
             if (repeatMode == "one"){
                 controller.repeatMode = Player.REPEAT_MODE_ONE
                 vm.repeatMode = "one"
-            }else if (repeatMode == "all"){
+            }
+            else if (repeatMode == "all"){
                 controller.repeatMode = Player.REPEAT_MODE_ALL
                 vm.repeatMode = "all"
-            }else{
+            }
+            else{
                 controller.repeatMode = Player.REPEAT_MODE_ONE
                 vm.repeatMode = "one"
             }
@@ -2217,8 +2207,7 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
     }
-
-
+    //确认关闭操作
     private fun EnsureExit(){
         //保存播放进度
         if (vm.PREFS_SavePositionWhenExit){
@@ -2227,33 +2216,24 @@ class PlayerActivity: AppCompatActivity(){
                 MediaItemRepo.get(this@PlayerActivity).update_State_PositionWhenExit(MediaInfo_FileName,currentPosition)
             }
         }
-        //保存进度条缩略图生成状态
-        lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivity).update_Flag_SavedThumbPos(MediaInfo_FileName,vm.Flag_SavedThumbFlag)
-        }
-
-        //停止
+        //停止UI端操作
+        scroller.stopScroll()
+        stopVideoSmartScroll()
+        stopVideoSeek()
         stopScrollerSync()
+        stopVideoTimeSync()
+        //停止服务端操作
+        stopBackgroundServices()
         PlayerSingleton.releasePlayer()
         stopFloatingWindow()
-        stopBackgroundServices()
         finish()
     }
-
-    private fun FlagsPreWrite(){
-        vm.Flag_SavedThumbFlag = "00000000000000000000"
-        vm.String_SavedCoverPath = ""
-    }
-
+    //数据库预写
     private fun DataBasePreWrite(){
         lifecycleScope.launch(Dispatchers.IO) {
             MediaItemRepo.get(this@PlayerActivity).preset_all_row_default(MediaInfo_FileName)
         }
     }
-
-
-
-
 
 
 
@@ -2699,7 +2679,6 @@ class PlayerActivity: AppCompatActivity(){
         super.onUserInteraction()
         IDLE_Timer?.cancel()
     }
-
     //android:configChanges="orientation|screenSize|screenLayout"
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -2743,7 +2722,8 @@ class PlayerActivity: AppCompatActivity(){
     }
 
 
-
+    //Stable Functions
+    //状态栏配置
     @Suppress("DEPRECATION")
     private fun setStatusBarParams(){
         //竖屏
@@ -2815,13 +2795,13 @@ class PlayerActivity: AppCompatActivity(){
 
 
     }
-
+    //屏幕尺寸配置
     private fun displayMetricsLoad(){
         val displayMetrics = resources.displayMetrics
         screenWidth = displayMetrics.widthPixels
         screenHeight = displayMetrics.heightPixels
     }
-
+    //进度条端点配置
     private fun setScrollerPadding(){
         displayMetricsLoad()
         scroller.layoutManager = LinearLayoutManager(this@PlayerActivity, LinearLayoutManager.HORIZONTAL, false)
@@ -2869,7 +2849,7 @@ class PlayerActivity: AppCompatActivity(){
         stopScrollerSync()
         if (vm.PREFS_LinkScroll) startScrollerSync()
     }
-
+    //控件层移动
     private fun setControllerLayerPadding(flag_dodge_which_side: String){
         if (flag_dodge_which_side == "left"){
             (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
@@ -2889,7 +2869,7 @@ class PlayerActivity: AppCompatActivity(){
             (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (0)
         }
     }
-
+    //重建进度条截图
     private fun ReCreateScrollerThumb(){
         lifecycleScope.launch(Dispatchers.IO) {
             //获取ViewModel
@@ -2995,9 +2975,6 @@ class PlayerActivity: AppCompatActivity(){
             startVideoTimeSync()
         }
     }
-
-
-    //Functions
     //视频区域抬高
     private fun MoveYaxisCalculate(){
         val displayMetrics = DisplayMetrics()

@@ -23,7 +23,6 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.audiofx.Equalizer
-import android.media.session.MediaSessionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -94,14 +93,12 @@ import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.session.MediaController
-import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionToken
-import androidx.media3.session.legacy.MediaBrowserCompat
-import androidx.media3.session.legacy.MediaControllerCompat
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import data.MediaItemRepo
 import data.MediaItemSetting
@@ -220,6 +217,7 @@ class PlayerActivityTest: AppCompatActivity(){
     private var videoSizeWidth = 0
     private var videoSizeHeight = 0
 
+    private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 
 
     //空闲定时器
@@ -320,6 +318,10 @@ class PlayerActivityTest: AppCompatActivity(){
 
 
 
+    private lateinit var controllerFuture : ListenableFuture<MediaController>
+
+
+    private var state_ActivityState_onBackground = false
 
     private var play_list_default = ""
     private var index = 0
@@ -328,9 +330,6 @@ class PlayerActivityTest: AppCompatActivity(){
 
     //</editor-fold>
 
-    interface OnFlagUpdateListener {
-        fun onFlagUpdate(position: Int)
-    }
 
     @OptIn(UnstableApi::class)
     @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
@@ -575,7 +574,7 @@ class PlayerActivityTest: AppCompatActivity(){
         //读取数据库
         if (savedInstanceState == null){
             //读取数据库
-            ReadBasicRoomDataBase()
+            ReadRoomDataBase()
         }
         //基于设置的后续操作
         if (vm.PREFS_UseBlackBackground) {
@@ -616,161 +615,185 @@ class PlayerActivityTest: AppCompatActivity(){
             MoveYaxisCalculate()
         }                      //计算移动高度
 
-
-        //方向监听器
-        OEL = object : OrientationEventListener(this) {
-            override fun onOrientationChanged(orientation: Int) {
-                //把方向角数值映射为状态量
-                if (orientation > 260 && orientation < 280) { vm.OrientationValue = 1 }
-                else if (orientation > 80 && orientation < 100) { vm.OrientationValue = 2 }
-                else if (orientation > 340 && orientation < 360) { vm.OrientationValue = 0 }
-                //进入锁
-                orientationChangeTime = System.currentTimeMillis()
-                if (orientationChangeTime - LastOrientationChangeTime < 1) { return }
-                LastOrientationChangeTime = orientationChangeTime
-                //读取自动旋转状态
-                rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
-                //自动旋转开启
-                if (rotationSetting == 1){
-                    //当前为竖屏
-                    if (vm.currentOrientation == 0){
-                        //从 竖屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
-                        if (vm.OrientationValue == 1) {
-                            if (vm.Manual && vm.LastLandscapeOrientation == 1) return
-                            vm.currentOrientation = 1
-                            vm.LastLandscapeOrientation = 1
-                            vm.setAuto()
-                            vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        //监听注册
+        if (savedInstanceState == null) {
+            //方向监听器
+            OEL = object : OrientationEventListener(this) {
+                override fun onOrientationChanged(orientation: Int) {
+                    //把方向角数值映射为状态量
+                    if (orientation > 260 && orientation < 280) {
+                        vm.OrientationValue = 1
+                    } else if (orientation > 80 && orientation < 100) {
+                        vm.OrientationValue = 2
+                    } else if (orientation > 340 && orientation < 360) {
+                        vm.OrientationValue = 0
+                    }
+                    //进入锁
+                    orientationChangeTime = System.currentTimeMillis()
+                    if (orientationChangeTime - LastOrientationChangeTime < 1) {
+                        return
+                    }
+                    LastOrientationChangeTime = orientationChangeTime
+                    //读取自动旋转状态
+                    rotationSetting = Settings.System.getInt(
+                        contentResolver,
+                        Settings.System.ACCELEROMETER_ROTATION,
+                        0
+                    )
+                    //自动旋转开启
+                    if (rotationSetting == 1) {
+                        //当前为竖屏
+                        if (vm.currentOrientation == 0) {
+                            //从 竖屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
+                            if (vm.OrientationValue == 1) {
+                                if (vm.Manual && vm.LastLandscapeOrientation == 1) return
+                                vm.currentOrientation = 1
+                                vm.LastLandscapeOrientation = 1
+                                vm.setAuto()
+                                vm.onOrientationChanging = true
+                                setOrientation_LANDSCAPE()
+                            }
+                            //从 竖屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
+                            else if (vm.OrientationValue == 2) {
+                                if (vm.Manual && vm.LastLandscapeOrientation == 2) return
+                                vm.currentOrientation = 2
+                                vm.LastLandscapeOrientation = 2
+                                vm.setAuto()
+                                vm.onOrientationChanging = true
+                                setOrientation_REVERSE_LANDSCAPE()
+                            }
                         }
-                        //从 竖屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
-                        else if (vm.OrientationValue == 2) {
-                            if (vm.Manual && vm.LastLandscapeOrientation == 2) return
-                            vm.currentOrientation = 2
-                            vm.LastLandscapeOrientation = 2
-                            vm.setAuto()
-                            vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                        //当前为正向横屏
+                        else if (vm.currentOrientation == 1) {
+                            //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
+                            if (vm.OrientationValue == 2) {
+                                //按钮避让:横排按钮区&更多选项按钮
+                                setControllerLayerPadding("right")
+                                //更改状态并发起旋转
+                                vm.currentOrientation = 2
+                                vm.LastLandscapeOrientation = 2
+                                vm.setAuto()
+                                vm.onOrientationChanging = true
+                                setOrientation_REVERSE_LANDSCAPE()
+                            }
+                            //从 正向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
+                            else if (vm.OrientationValue == 0) {
+                                if (vm.Manual) return
+                                vm.currentOrientation = 0
+                                vm.setAuto()
+                                vm.onOrientationChanging = true
+                                setOrientation_PORTRAIT()
+                            }
+                        }
+                        //当前为反向横屏
+                        else if (vm.currentOrientation == 2) {
+                            //从 反向横屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
+                            if (vm.OrientationValue == 1) {
+                                //按钮避让时间框&退出按钮
+                                setControllerLayerPadding("left")
+                                //更改状态并发起旋转
+                                vm.currentOrientation = 1
+                                vm.LastLandscapeOrientation = 1
+                                vm.setAuto()
+                                vm.onOrientationChanging = true
+                                setOrientation_LANDSCAPE()
+                            }
+                            //从 反向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
+                            else if (vm.OrientationValue == 0) {
+                                if (vm.Manual) return
+                                vm.currentOrientation = 0
+                                vm.setAuto()
+                                vm.onOrientationChanging = true
+                                setOrientation_PORTRAIT()
+                            }
                         }
                     }
-                    //当前为正向横屏
-                    else if (vm.currentOrientation == 1){
-                        //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
-                        if (vm.OrientationValue == 2) {
-                            //按钮避让:横排按钮区&更多选项按钮
-                            setControllerLayerPadding("right")
-                            //更改状态并发起旋转
-                            vm.currentOrientation = 2
-                            vm.LastLandscapeOrientation = 2
-                            vm.setAuto()
-                            vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-                        }
-                        //从 正向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
-                        else if (vm.OrientationValue == 0) {
-                            if (vm.Manual) return
-                            vm.currentOrientation = 0
-                            vm.setAuto()
-                            vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-                        }
-                    }
-                    //当前为反向横屏
-                    else if (vm.currentOrientation == 2){
-                        //从 反向横屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
-                        if (vm.OrientationValue == 1) {
-                            //按钮避让时间框&退出按钮
-                            setControllerLayerPadding("left")
-                            //更改状态并发起旋转
-                            vm.currentOrientation = 1
-                            vm.LastLandscapeOrientation = 1
-                            vm.setAuto()
-                            vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-                        }
-                        //从 反向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
-                        else if (vm.OrientationValue == 0) {
-                            if (vm.Manual) return
-                            vm.currentOrientation = 0
-                            vm.setAuto()
-                            vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-                        }
-                    }
-                }
-                //自动旋转关闭
-                else if (rotationSetting == 0){
-                    if (!vm.FromManualPortrait){
-                        //从 反向横屏 转动到 正向横屏 ORIENTATION_REVERSE_LANDSCAPE
-                        if (vm.OrientationValue == 1) {
-                            //按钮避让时间框&退出按钮
-                            setControllerLayerPadding("left")
-                            //更改状态并发起旋转
-                            vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
-                        }
-                        //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
-                        else if (vm.OrientationValue == 2) {
-                            //按钮避让:横排按钮区&更多选项按钮
-                            setControllerLayerPadding("right")
-                            //更改状态并发起旋转
-                            vm.onOrientationChanging = true
-                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                    //自动旋转关闭
+                    else if (rotationSetting == 0) {
+                        if (!vm.FromManualPortrait) {
+                            //从 反向横屏 转动到 正向横屏 ORIENTATION_REVERSE_LANDSCAPE
+                            if (vm.OrientationValue == 1) {
+                                //按钮避让时间框&退出按钮
+                                setControllerLayerPadding("left")
+                                //更改状态并发起旋转
+                                vm.onOrientationChanging = true
+                                setOrientation_LANDSCAPE()
+                            }
+                            //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
+                            else if (vm.OrientationValue == 2) {
+                                //按钮避让:横排按钮区&更多选项按钮
+                                setControllerLayerPadding("right")
+                                //更改状态并发起旋转
+                                vm.onOrientationChanging = true
+                                setOrientation_REVERSE_LANDSCAPE()
+                            }
                         }
                     }
                 }
             }
-        }
-        if (vm.PREFS_SealOEL){
-            OEL.disable()
-        }else{
-            OEL.enable()
-        }
-        //音频设备监听
-        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        audioManager.registerAudioDeviceCallback(DeviceCallback, null)
-        //内部广播接收:退出时一定记得解除注册
-        localBroadcastManager = LocalBroadcastManager.getInstance(this)
-        val filter = IntentFilter("LOCAL_RECEIVER")
-        receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                val data = intent.getStringExtra("key")
-                if (data == "PLAYER_PLAY") {
-                    requestAudioFocus()
-                    if (vm.playEnd) {
-                        vm.playEnd = false
-                        vm.player.seekTo(0)
-                        vm.player.play()
-                    } else {
-                        vm.player.play()
+            if (vm.PREFS_SealOEL) {
+                OEL.disable()
+            } else {
+                OEL.enable()
+            }
+            //音频设备监听
+            audioManager.registerAudioDeviceCallback(DeviceCallback, null)
+            //内部广播接收
+            localBroadcastManager = LocalBroadcastManager.getInstance(this)
+            val filter = IntentFilter("LOCAL_RECEIVER")
+            receiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    val data = intent.getStringExtra("key")
+                    if (data == "PLAYER_PLAY") {
+                        requestAudioFocus()
+                        if (vm.playEnd) {
+                            vm.playEnd = false
+                            vm.player.seekTo(0)
+                            vm.player.play()
+                        } else {
+                            vm.player.play()
+                        }
+                        if (vm.PREFS_LinkScroll) startScrollerSync()
                     }
-                    if (vm.PREFS_LinkScroll) startScrollerSync()
-                }
-                if (data == "PLAYER_PAUSE") {
-                    vm.wasPlaying = vm.player.isPlaying
-                    vm.player.pause()
-                }
-                if (data == "PLAYER_EXIT") {
-                    val pid = Process.myPid()
-                    Process.killProcess(pid)
-                }
-                if (data == "PLAYER_NextMedia") {
-                    vm.player.seekToNextMediaItem()
-                }
-                if (data == "PLAYER_PreviousMedia") {
-                    vm.player.seekToPreviousMediaItem()
-                }
-                if (data == "PLAYER_PlayOrPause") {
-                    if (vm.player.isPlaying) {
+                    if (data == "PLAYER_PAUSE") {
+                        vm.wasPlaying = vm.player.isPlaying
                         vm.player.pause()
-                    } else {
-                        vm.player.play()
+                    }
+                    if (data == "PLAYER_EXIT") {
+                        val pid = Process.myPid()
+                        Process.killProcess(pid)
+                    }
+                    if (data == "PLAYER_NextMedia") {
+                        vm.player.seekToNextMediaItem()
+                    }
+                    if (data == "PLAYER_PreviousMedia") {
+                        vm.player.seekToPreviousMediaItem()
+                    }
+                    if (data == "PLAYER_PlayOrPause") {
+                        if (vm.player.isPlaying) {
+                            vm.player.pause()
+                        } else {
+                            vm.player.play()
+                        }
                     }
                 }
             }
+            localBroadcastManager.registerReceiver(receiver, filter)
+            //RxJava事件总线
+            setupEventBus()
         }
-        localBroadcastManager.registerReceiver(receiver, filter)
+        else{
+            val MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
 
+            getMediaInfo(MediaInfo_VideoUri)
+
+            refreshTimeLine()
+
+            ReadRoomDataBase()
+
+            scrollerAdapterUpdate()
+
+        }
 
 
         //绑定播放器输出
@@ -813,16 +836,16 @@ class PlayerActivityTest: AppCompatActivity(){
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 when (reason) {
                     Player.MEDIA_ITEM_TRANSITION_REASON_SEEK -> {
-                        MediaItemChange(mediaItem)
+                        onMediaItemChanged(mediaItem)
                     }
                     Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT -> {
-                        MediaItemChange(mediaItem)
+                        onMediaItemChanged(mediaItem)
                     }
                     Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> {
-                        MediaItemChange(mediaItem)
+                        onMediaItemChanged(mediaItem)
                     }
                     Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED -> {
-                        MediaItemChange(mediaItem)
+                        onMediaItemChanged(mediaItem)
                     }
                 }
             }
@@ -830,7 +853,6 @@ class PlayerActivityTest: AppCompatActivity(){
 
         }
         vm.player.addListener(PlayerStateListener!!)
-
 
 
         //传入视频链接
@@ -842,11 +864,6 @@ class PlayerActivityTest: AppCompatActivity(){
             val cover = findViewById<View>(R.id.cover)
             cover.visibility = View.GONE
         }
-
-
-        //控件初始化
-        setScrollerPadding()
-
 
 
 
@@ -877,7 +894,7 @@ class PlayerActivityTest: AppCompatActivity(){
                 }
                 //发送跳转命令
                 vm.player.seekTo(seekToMs)
-                notice("跳转至${formatTime2(seekToMs)}", 1000)
+                notice("跳转至${FormatTime_withChar(seekToMs)}", 1000)
                 lifecycleScope.launch {
                     startScrollerSync()
                     delay(20)
@@ -994,7 +1011,7 @@ class PlayerActivityTest: AppCompatActivity(){
                         onScroll_seekToMs = (onScroll_scrollPercent * vm.global_videoDuration).toLong()
 
                         //刷新时间显示
-                        timer_current.text = formatTime1(onScroll_seekToMs)
+                        timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
 
                     } else {
                         return
@@ -1037,9 +1054,6 @@ class PlayerActivityTest: AppCompatActivity(){
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
             vibrate()
-            connecToMediaSession()
-
-            return@setOnClickListener
 
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -1447,10 +1461,10 @@ class PlayerActivityTest: AppCompatActivity(){
                     }
                 }
                 "SoundOnly" -> {
-                    changeStateSoundOnly(true)
+                    changeStateSoundOnly()
                 }
                 "VideoOnly" -> {
-                    changeStateVideoOnly(true)
+                    changeStateVideoOnly()
                 }
                 "SavePositionWhenExit" -> {
                     if (vm.PREFS_SavePositionWhenExit){
@@ -1629,23 +1643,9 @@ class PlayerActivityTest: AppCompatActivity(){
         }
 
 
-        if (savedInstanceState != null){
-            val MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
-            getMediaInfo(MediaInfo_VideoUri)
-
-            RefreshTimeLine()
-
-            ReadBasicRoomDataBase()
-
-            scrollerAdapterUpdate()
-
-
-        }
 
         //开启空闲倒计时
         startIdleTimer()
-
-
 
         //系统手势监听：返回键重写
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
@@ -1653,35 +1653,45 @@ class PlayerActivityTest: AppCompatActivity(){
                 ExitByOrientation()
             }
         })
-    } //onCreate END
-
-
-
-    private fun RefreshTimeLine(){
-        timer_duration.text = formatTime1(MediaInfo_VideoDuration.toLong())
+    //onCreate END
     }
 
+
+    //Testing Functions
+    //RxJava事件总线
+    private var disposable: io.reactivex.rxjava3.disposables.Disposable? = null
+    private fun setupEventBus() {
+        disposable = ToolEventBus.events
+            .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
+            .subscribe({
+                handlePlayerEvent(it)
+            }, {
+                showCustomToast("事件总线注册失败:${it.message}", Toast.LENGTH_SHORT,3)
+            })
+    }
+    private fun handlePlayerEvent(event: String) {
+        when (event) {
+            "SessionController_Next" -> {
+                Log.d("SuMing", "NextMedia")
+            }
+
+            "SessionController_Previous" -> {
+                Log.d("SuMing", "PreviousMedia")
+            }
+        }
+    }
+    //构建完整uri
     private fun BuildNewUri(id: Long): Uri{
         return "content://media/external/video/media/$id".toUri()
     }
-
-    private fun ReadBasicRoomDataBase(){
+    //数据库读取+基于数据库的操作
+    private fun ReadRoomDataBase(){
         lifecycleScope.launch(Dispatchers.IO) {
             DataBaseProfile = MediaItemRepo.get(applicationContext).getSetting(vm.MediaInfo_FileName)
             if (DataBaseProfile == null){
-                FlagsPreWrite()
                 DataBasePreWrite()
                 return@launch }
             val DataBaseSetting = DataBaseProfile!!
-            //进度条缩略图生成状态
-            if (DataBaseSetting.SaveFlag_Thumb != ""){
-                vm.Flag_SavedThumbFlag = DataBaseSetting.SaveFlag_Thumb
-            }else{
-                vm.Flag_SavedThumbFlag = "00000000000000000000"
-            }
-            if (DataBaseSetting.SavePath_Cover != ""){
-                vm.String_SavedCoverPath = DataBaseSetting.SavePath_Cover
-            }
             //视频强单项适用设置读取
             if (DataBaseSetting.PREFS_SoundOnly){ vm.PREFS_OnlyAudio = true }else{
                 vm.PREFS_OnlyAudio = false
@@ -1698,7 +1708,7 @@ class PlayerActivityTest: AppCompatActivity(){
                 delay(100)
                 if (vm.state_firstReadyReached){
                     withContext(Dispatchers.Main) {
-                        changeStateSoundOnly(true)
+                        changeStateSoundOnly()
                     }
                 }else{
                     NeedRecoverySettings = true
@@ -1709,7 +1719,7 @@ class PlayerActivityTest: AppCompatActivity(){
                 delay(100)
                 if (vm.state_firstReadyReached){
                     withContext(Dispatchers.Main) {
-                        changeStateVideoOnly(true)
+                        changeStateVideoOnly()
                     }
                 }else{
                     NeedRecoverySettings = true
@@ -1753,116 +1763,94 @@ class PlayerActivityTest: AppCompatActivity(){
 
         }
     }
-
-    private fun MediaItemChange(mediaItem: MediaItem?){
+    //媒体项变更的后续操作
+    private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null){ return }
-
-
 
         //更新视频uri存档
         vm.MediaInfo_VideoUri = MediaInfo_VideoUri
         //更新全局媒体信息变量
         getMediaInfo(MediaInfo_VideoUri)
-        //读取数据库
-        ReadBasicRoomDataBase()
-
-
+        //重新读取数据库+覆盖关键值
+        ReadRoomDataBase()
+        //刷新：视频总长度
+        refreshTimeLine()
+        //刷新：进度条更新
         scrollerAdapterUpdate()
 
-        RefreshTimeLine()
+        //开启服务的方式
+        startServiceOrSession()
 
-        if (!vm.PREFS_UseMediaSession) {
-            startBackgroundServices()
-        }
 
     }
+    //连接到媒体会话(不在会话中设置媒体项)
+    private fun connectToMediaSession() {
 
+        //startBackgroundServices()
 
-    private fun connecToMediaSession() {
-        try {
-            Log.d("SuMing", "开始连接 PlayerService...")
+        val sessionToken = SessionToken(this, ComponentName(this, PlayerServiceTest::class.java))
 
-            // 确保服务已启动
-            startBackgroundServices()
+        /*
+        controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+        controllerFuture.addListener({
 
-            // 给服务一点时间启动
-            //Handler(Looper.getMainLooper()).postDelayed({
                 try {
-                    val sessionToken = SessionToken(this, ComponentName(this, PlayerServiceTest::class.java))
-                    Log.d("SuMing", "SessionToken 创建成功")
+                   controller = controllerFuture.get()
+                    Log.d("SuMing", "MediaController 连接成功！对象: $controller")
+                    // 如果连接成功，onDisconnected 才可能被触发
+                } catch (e: Exception) {
+                    // 如果连接失败，会抛出异常
+                    Log.e("SuMing", "MediaController 连接失败！", e)
+                }
 
-                    val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
-                    Log.d("SuMing", "controllerFuture 创建成功")
 
-                    controllerFuture.addListener({
-                        try {
-                            val mediaController = controllerFuture.get()
 
-                            Log.d("SuMing", "MediaController 连接成功!")
+        }, MoreExecutors.directExecutor())
+         */
 
-                            // 进行媒体操作
-                            //performMediaOperations(mediaController)
+        /*
+        MediaController.Builder(applicationContext, sessionToken)
+            .setListener(
+                object : MediaController.Listener {
+                    override fun onCustomCommand(controller: MediaController, command: SessionCommand, args: Bundle, ): ListenableFuture<SessionResult> {
+                        // Handle custom command.
+                        Log.d("SuMing", "自定义命令: $command")
 
-                        }
-                        catch (e: Exception) {
-                            Log.e("SuMing", "MediaController 获取失败: ${e.message}")
-                            e.printStackTrace()
-                            showError("连接失败: ${e.message}")
-                        }
-                    }, MoreExecutors.directExecutor())
+                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                    }
+                    override fun onDisconnected(controller: MediaController) {
+                        // Handle disconnection.
 
-                    Log.d("SuMing", "controllerFuture 完成监听器添加")
+                        Log.d("SuMing", "已断开与媒体会话的连接")
+
+
+                    }
 
                 }
-                catch (e: Exception) {
-                    Log.e("SuMing", "SessionToken 创建失败: ${e.message}")
-                    e.printStackTrace()
-                    showError("服务配置错误: ${e.message}")
-                }
-            //}, 300) // 延迟300ms确保服务启动
-
-        }
-        catch (e: Exception) {
-            Log.e("SuMing", "连接过程异常: ${e.message}")
-            e.printStackTrace()
-        }
-    }
-
-    private fun performMediaOperations(controller: MediaController) {
-        try {
-            Log.d("SuMing", "开始设置媒体项目...")
-
-            controller.setMediaItem(
-                MediaItem.Builder()
-                    .setUri(MediaInfo_VideoUri)
-                    .setMediaMetadata(
-                        MediaMetadata.Builder()
-                            .setTitle(MediaInfo_FileName)
-                            .setArtist(MediaInfo_VideoArtist)
-                            .build()
-                    )
-                    .build()
             )
+            .buildAsync()
 
-            Log.d("SuMing", "媒体项目设置完成，调用 prepare()")
-            controller.prepare()
+         */
+
+        val SessionToken = SessionToken(this, ComponentName(this, PlayerServiceTest::class.java))
+        val MediaSessionController = MediaController.Builder(this, SessionToken).buildAsync()
+        MediaSessionController.addListener({
+            controller = MediaSessionController.get()
 
 
-            Log.d("SuMing", "媒体操作完成")
+        }, MoreExecutors.directExecutor())
 
-        }
-        catch (e: Exception) {
-            Log.e("SuMing", "媒体操作失败: ${e.message}")
-            e.printStackTrace()
+
+    }
+    //开启服务:使用自定义通知或媒体会话
+    private fun startServiceOrSession(){
+        if (vm.PREFS_UseMediaSession){
+            connectToMediaSession()
+        }else{
+            startBackgroundServices()
         }
     }
-
-    private fun showError(message: String) {
-        runOnUiThread {
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        }
-    }
-
+    //绑定进度条adapter,可重复刷新
     private fun scrollerAdapterUpdate(){
         lifecycleScope.launch(Dispatchers.IO) {
             //获取ViewModel
@@ -1966,9 +1954,15 @@ class PlayerActivityTest: AppCompatActivity(){
             if(vm.PREFS_LinkScroll){ startScrollerSync() }
             delay(200)
             startVideoTimeSync()
+
+            //进度条边界设置
+            withContext(Dispatchers.Main){
+                setScrollerPadding()
+            }
+
         }
     }
-
+    //重读媒体信息并覆盖对应全局变量
     private fun getMediaInfo(uri: Uri){
         retriever = MediaMetadataRetriever()
         try { retriever.setDataSource(this@PlayerActivityTest   , uri) }
@@ -1989,10 +1983,12 @@ class PlayerActivityTest: AppCompatActivity(){
         vm.MediaInfo_FileName = MediaInfo_FileName
         retriever.release()
     }
-
+    //开启播放新媒体项
     private fun startPlayNewItem(){
+        //仅传入媒体uri (不推荐并弃用)
         //vm.setMediaUri(MediaInfo_VideoUri)
 
+        //构建并传入完整媒体项
         val cover_img_path = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/cover/cover.jpg")
         val cover_img_uri = if (vm.PREFS_InsertPreviewInMediaSession && cover_img_path.exists()) {
             try {
@@ -2037,50 +2033,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
     }
 
-    private fun MediaSessionControl(){
-
-
-        startBackgroundServices()
-
-        val SessionToken = SessionToken(this, ComponentName(this, PlayerServiceTest::class.java))
-
-        val MediaSessionController = MediaController.Builder(this, SessionToken).buildAsync()
-        MediaSessionController.addListener({
-            controller = MediaSessionController.get()
-
-
-            play_list_default = PREFS.getString("play_list_default", "")!!
-
-            //获取播放列表失败,降级为单个媒体
-            if (play_list_default == "" || vm.state_FromSysStart){
-
-                controller.setMediaItem(
-                    MediaItem.Builder()
-                        .setUri(MediaInfo_VideoUri)
-                        .setMediaMetadata(
-                            MediaMetadata.Builder()
-                                .setTitle(MediaInfo_FileName)
-                                .setArtist(MediaInfo_VideoArtist)
-                                .build()
-                        )
-                        .build()
-                )
-
-            }
-            //获取播放列表成功,传入列表
-            else{
-
-                val robustMediaItems = parseMediaItemsRobust(play_list_default)
-                controller.setMediaItems(robustMediaItems,index,0)
-                controller.repeatMode = REPEAT_MODE_OFF
-
-            }
-
-            controller.prepare()
-
-        }, MoreExecutors.directExecutor())
-    }
-
+    //解析播放列表
     private fun parseMediaItemsRobust(input: String): List<MediaItem>{
         return input.split("MediaItem_video(")
             .drop(1)
@@ -2169,10 +2122,6 @@ class PlayerActivityTest: AppCompatActivity(){
             .build()
     }
 
-    private fun MediaNotification(){
-       startBackgroundServices()
-    }
-
     private fun readPlayListFromExoplayer(){
         //列表条目数
         val count = vm.player.mediaItemCount
@@ -2184,127 +2133,8 @@ class PlayerActivityTest: AppCompatActivity(){
         }
     }
 
-    //设置修改封装函数
-    private fun changeStateSoundOnly(flag_need_notice: Boolean){
-        if (vm.PREFS_OnlyAudio){
-            //确保声音开启
-            vm.player.volume = 1f
-            //仅播放音频：关闭视频轨道
-            vm.close_VideoTrack()
-            if(flag_need_notice) notice("已开启仅播放音频", 1000)
-        } else {
-            //仅播放音频：打开视频轨道
-            vm.recovery_VideoTrack()
-            if(flag_need_notice) notice("已关闭仅播放音频", 1000)
-        }
-        lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_SoundOnly(MediaInfo_FileName,vm.PREFS_OnlyAudio)
-        }
-    }
-    private fun changeStateVideoOnly(flag_need_notice: Boolean){
-        if (vm.PREFS_OnlyVideo){
-            //确保视频开启
-            vm.recovery_VideoTrack()
-            //仅播放视频：关闭声音
-            vm.player.volume = 0f
-            if(flag_need_notice) notice("已开启仅播放视频", 1000)
-        } else {
-            vm.player.volume = 1f
-            if(flag_need_notice) notice("已关闭仅播放视频", 1000)
-        }
-        lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_VideoOnly(MediaInfo_FileName,vm.PREFS_OnlyVideo)
-        }
-    }
-    private fun changeStateAlwaysSeek(){
-        if (vm.PREFS_UseDataBaseForScrollerSetting){
-            if (vm.PREFS_AlwaysSeek){
-                vm.PREFS_AlwaysSeek = false
-                notice("已关闭AlwaysSeek", 3000)
-            } else {
-                vm.PREFS_AlwaysSeek = true
-                notice("已开启AlwaysSeek", 3000)
-            }
-            lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_AlwaysSeek(MediaInfo_FileName,vm.PREFS_AlwaysSeek)
-            }
-        }
-        else{
-            if (vm.PREFS_AlwaysSeek){
-                vm.PREFS_AlwaysSeek = false
-                PREFS.edit { putBoolean("PREFS_AlwaysSeek", false).apply() }
-                notice("已关闭AlwaysSeek", 3000)
-            } else {
-                vm.PREFS_AlwaysSeek = true
-                PREFS.edit { putBoolean("PREFS_AlwaysSeek", true).apply() }
-                notice("已开启AlwaysSeek", 3000)
-            }
-        }
-    }
-    private fun changeStateLinkScroll(){
-        if (vm.PREFS_UseDataBaseForScrollerSetting){
-            if (vm.PREFS_LinkScroll) {
-                vm.PREFS_LinkScroll = false
-                stopScrollerSync()
-                scroller.stopScroll()
-                notice("已关闭链接滚动条与视频进度", 2500)
-            } else {
-                vm.PREFS_LinkScroll = true
-                notice("已将进度条与视频进度同步", 1000)
-                isSeekReady = true
-                scroller.stopScroll()
-                startScrollerSync()
-                stopVideoSeek()
-            }
-            lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_LinkScroll(MediaInfo_FileName,vm.PREFS_LinkScroll)
-            }
-        }
-        else{
-            if (vm.PREFS_LinkScroll) {
-                vm.PREFS_LinkScroll = false
-                stopScrollerSync()
-                scroller.stopScroll()
-                PREFS.edit { putBoolean("PREFS_LinkScroll", false).apply() }
-                notice("已关闭链接滚动条与视频进度", 2500)
-            } else {
-                vm.PREFS_LinkScroll = true
-                notice("已将进度条与视频进度同步", 1000)
-                isSeekReady = true
-                scroller.stopScroll()
-                startScrollerSync()
-                stopVideoSeek()
-                PREFS.edit { putBoolean("PREFS_TapJump", true).apply() }
-            }
-        }
-    }
-    private fun changeStateTapJump(){
-        if (vm.PREFS_UseDataBaseForScrollerSetting){
-            if (vm.PREFS_TapJump){
-                vm.PREFS_TapJump = false
-                notice("已关闭TapJump", 3000)
-            } else {
-                vm.PREFS_TapJump = true
-                notice("已开启TapJump", 3000)
-            }
-            lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_TapJump(MediaInfo_FileName,vm.PREFS_TapJump)
-            }
-        }
-        else{
-            if (vm.PREFS_TapJump){
-                vm.PREFS_TapJump = false
-                PREFS.edit { putBoolean("PREFS_TapJump", false).apply() }
-                notice("已关闭TapJump", 3000)
-            } else {
-                vm.PREFS_TapJump = true
-                PREFS.edit { putBoolean("PREFS_TapJump", true).apply() }
-                notice("已开启TapJump", 3000)
-            }
-        }
-    }
 
-
+    //确认关闭操作
     private fun EnsureExit(){
         //保存播放进度
         if (vm.PREFS_SavePositionWhenExit){
@@ -2313,31 +2143,29 @@ class PlayerActivityTest: AppCompatActivity(){
                 MediaItemRepo.get(this@PlayerActivityTest).update_State_PositionWhenExit(MediaInfo_FileName,currentPosition)
             }
         }
-        //保存进度条缩略图生成状态
-        lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivityTest).update_Flag_SavedThumbPos(MediaInfo_FileName,vm.Flag_SavedThumbFlag)
-        }
-
-        //停止
+        //停止监听操作
+        disposable?.dispose()
+        OEL.disable()
+        audioManager.unregisterAudioDeviceCallback(DeviceCallback)
+        localBroadcastManager.unregisterReceiver(receiver)
+        //停止UI端操作
+        scroller.stopScroll()
+        stopVideoSmartScroll()
+        stopVideoSeek()
         stopScrollerSync()
+        stopVideoTimeSync()
+        //停止服务端操作
+        stopBackgroundServices()
         PlayerSingleton.releasePlayer()
         stopFloatingWindow()
-        stopBackgroundServices()
         finish()
     }
-
-    private fun FlagsPreWrite(){
-        vm.Flag_SavedThumbFlag = "00000000000000000000"
-        vm.String_SavedCoverPath = ""
-    }
-
+    //数据库预写
     private fun DataBasePreWrite(){
         lifecycleScope.launch(Dispatchers.IO) {
             MediaItemRepo.get(this@PlayerActivityTest).preset_all_row_default(MediaInfo_FileName)
         }
     }
-
-
 
 
 
@@ -2384,7 +2212,7 @@ class PlayerActivityTest: AppCompatActivity(){
         override fun run() {
             videoTimeSyncHandler_currentPosition = vm.player.currentPosition
 
-            timer_current.text = formatTime1(videoTimeSyncHandler_currentPosition)
+            timer_current.text = FormatTime_onlyNum(videoTimeSyncHandler_currentPosition)
 
             videoTimeSyncHandler.postDelayed(this, videoTimeSyncGap)
         }
@@ -2637,6 +2465,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
     override fun onStop() {
         super.onStop()
+        state_ActivityState_onBackground = true
         //退出应用
         if (!vm.onOrientationChanging){
             //关闭旋转监听器
@@ -2659,6 +2488,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
     override fun onResume() {
         super.onResume()
+        state_ActivityState_onBackground = false
         //如果关闭视频轨道倒计时正在运行
         if (vm.closeVideoTrackJobRunning){
             vm.closeVideoTrackJobRunning = false
@@ -2700,7 +2530,6 @@ class PlayerActivityTest: AppCompatActivity(){
 
     override fun onDestroy() {
         super.onDestroy()
-        localBroadcastManager.unregisterReceiver(receiver)
         //onDestroy来自旋转屏幕
         if (vm.onOrientationChanging){
             stopVideoSeek()
@@ -2708,13 +2537,18 @@ class PlayerActivityTest: AppCompatActivity(){
             stopVideoTimeSync()
             stopScrollerSync()
         }
-
+        //在后台播放时划走卡片
+        else if (!state_ActivityState_onBackground){
+            disposable?.dispose()
+            OEL.disable()
+            audioManager.unregisterAudioDeviceCallback(DeviceCallback)
+            localBroadcastManager.unregisterReceiver(receiver)
+        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         return when (keyCode) {
             KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN -> {
-                val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
                 currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                 originalVolume = currentVolume
                 false
@@ -2772,7 +2606,6 @@ class PlayerActivityTest: AppCompatActivity(){
         super.onUserInteraction()
         IDLE_Timer?.cancel()
     }
-
     //android:configChanges="orientation|screenSize|screenLayout"
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -2816,7 +2649,131 @@ class PlayerActivityTest: AppCompatActivity(){
     }
 
 
-
+    //Stable Functions
+    //设置项修改封装函数
+    private fun changeStateSoundOnly(){
+        if (vm.PREFS_OnlyAudio){
+            //确保声音开启
+            vm.recovery_AudioTrack()
+            //仅播放音频：关闭视频轨道
+            vm.close_VideoTrack()
+            notice("已开启仅播放音频", 1000)
+        } else {
+            //仅播放音频：打开视频轨道
+            vm.recovery_VideoTrack()
+            notice("已关闭仅播放音频", 1000)
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_SoundOnly(MediaInfo_FileName,vm.PREFS_OnlyAudio)
+        }
+    }
+    private fun changeStateVideoOnly(){
+        if (vm.PREFS_OnlyVideo){
+            //确保视频开启
+            vm.recovery_VideoTrack()
+            //仅播放视频：关闭声音
+            vm.close_AudioTrack()
+            notice("已开启仅播放视频", 1000)
+        } else {
+            vm.recovery_AudioTrack()
+            notice("已关闭仅播放视频", 1000)
+        }
+        lifecycleScope.launch(Dispatchers.IO) {
+            MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_VideoOnly(MediaInfo_FileName,vm.PREFS_OnlyVideo)
+        }
+    }
+    private fun changeStateAlwaysSeek(){
+        if (vm.PREFS_UseDataBaseForScrollerSetting){
+            if (vm.PREFS_AlwaysSeek){
+                vm.PREFS_AlwaysSeek = false
+                notice("已关闭AlwaysSeek", 3000)
+            } else {
+                vm.PREFS_AlwaysSeek = true
+                notice("已开启AlwaysSeek", 3000)
+            }
+            lifecycleScope.launch(Dispatchers.IO) {
+                MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_AlwaysSeek(MediaInfo_FileName,vm.PREFS_AlwaysSeek)
+            }
+        }
+        else{
+            if (vm.PREFS_AlwaysSeek){
+                vm.PREFS_AlwaysSeek = false
+                PREFS.edit { putBoolean("PREFS_AlwaysSeek", false).apply() }
+                notice("已关闭AlwaysSeek", 3000)
+            } else {
+                vm.PREFS_AlwaysSeek = true
+                PREFS.edit { putBoolean("PREFS_AlwaysSeek", true).apply() }
+                notice("已开启AlwaysSeek", 3000)
+            }
+        }
+    }
+    private fun changeStateLinkScroll(){
+        if (vm.PREFS_UseDataBaseForScrollerSetting){
+            if (vm.PREFS_LinkScroll) {
+                vm.PREFS_LinkScroll = false
+                stopScrollerSync()
+                scroller.stopScroll()
+                notice("已关闭链接滚动条与视频进度", 2500)
+            } else {
+                vm.PREFS_LinkScroll = true
+                notice("已将进度条与视频进度同步", 1000)
+                isSeekReady = true
+                scroller.stopScroll()
+                startScrollerSync()
+                stopVideoSeek()
+            }
+            lifecycleScope.launch(Dispatchers.IO) {
+                MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_LinkScroll(MediaInfo_FileName,vm.PREFS_LinkScroll)
+            }
+        }
+        else{
+            if (vm.PREFS_LinkScroll) {
+                vm.PREFS_LinkScroll = false
+                stopScrollerSync()
+                scroller.stopScroll()
+                PREFS.edit { putBoolean("PREFS_LinkScroll", false).apply() }
+                notice("已关闭链接滚动条与视频进度", 2500)
+            } else {
+                vm.PREFS_LinkScroll = true
+                notice("已将进度条与视频进度同步", 1000)
+                isSeekReady = true
+                scroller.stopScroll()
+                startScrollerSync()
+                stopVideoSeek()
+                PREFS.edit { putBoolean("PREFS_TapJump", true).apply() }
+            }
+        }
+    }
+    private fun changeStateTapJump(){
+        if (vm.PREFS_UseDataBaseForScrollerSetting){
+            if (vm.PREFS_TapJump){
+                vm.PREFS_TapJump = false
+                notice("已关闭TapJump", 3000)
+            } else {
+                vm.PREFS_TapJump = true
+                notice("已开启TapJump", 3000)
+            }
+            lifecycleScope.launch(Dispatchers.IO) {
+                MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_TapJump(MediaInfo_FileName,vm.PREFS_TapJump)
+            }
+        }
+        else{
+            if (vm.PREFS_TapJump){
+                vm.PREFS_TapJump = false
+                PREFS.edit { putBoolean("PREFS_TapJump", false).apply() }
+                notice("已关闭TapJump", 3000)
+            } else {
+                vm.PREFS_TapJump = true
+                PREFS.edit { putBoolean("PREFS_TapJump", true).apply() }
+                notice("已开启TapJump", 3000)
+            }
+        }
+    }
+    //刷新视频总长度
+    private fun refreshTimeLine(){
+        timer_duration.text = FormatTime_onlyNum(MediaInfo_VideoDuration.toLong())
+    }
+    //状态栏配置
     @Suppress("DEPRECATION")
     private fun setStatusBarParams(){
         //竖屏
@@ -2841,7 +2798,7 @@ class PlayerActivityTest: AppCompatActivity(){
                 window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             } else {
                 window.decorView.systemUiVisibility = (
-                                  View.SYSTEM_UI_FLAG_FULLSCREEN
+                        View.SYSTEM_UI_FLAG_FULLSCREEN
                                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                                 or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         )
@@ -2885,16 +2842,14 @@ class PlayerActivityTest: AppCompatActivity(){
             ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityTest, R.color.ButtonBg))
         }
 
-
-
     }
-
+    //屏幕尺寸配置
     private fun displayMetricsLoad(){
         val displayMetrics = resources.displayMetrics
         screenWidth = displayMetrics.widthPixels
         screenHeight = displayMetrics.heightPixels
     }
-
+    //进度条端点配置
     private fun setScrollerPadding(){
         displayMetricsLoad()
         scroller.layoutManager = LinearLayoutManager(this@PlayerActivityTest, LinearLayoutManager.HORIZONTAL, false)
@@ -2942,7 +2897,7 @@ class PlayerActivityTest: AppCompatActivity(){
         stopScrollerSync()
         if (vm.PREFS_LinkScroll) startScrollerSync()
     }
-
+    //控件层移动
     private fun setControllerLayerPadding(flag_dodge_which_side: String){
         if (flag_dodge_which_side == "left"){
             (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
@@ -2962,11 +2917,8 @@ class PlayerActivityTest: AppCompatActivity(){
             (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (0)
         }
     }
-
+    //重建进度条截图
     private fun ReCreateScrollerThumb(){
-        /*
-        //刷新进度条adapter(重榜)
-        vm.Flag_SavedThumbFlag = "00000000000000000000"
         lifecycleScope.launch(Dispatchers.IO) {
             //获取ViewModel
             val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
@@ -3019,46 +2971,6 @@ class PlayerActivityTest: AppCompatActivity(){
             //移除查询参数
             val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
 
-            //绑定Adapter
-            //使用超长进度条
-            if (vm.PREFS_UseLongScroller){
-                withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivityTest,
-                        MediaInfo_AbsolutePath_clean,
-                        MediaInfo_FileName,
-                        playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
-                        vm.PREFS_GenerateThumbSYNC,
-                        scroller,
-                        playerScrollerViewModel
-                    )
-                }
-            }
-            //使用标准进度条
-            else{
-                withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivityTest,
-                        MediaInfo_AbsolutePath_clean,
-                        MediaInfo_FileName,
-                        playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
-                        vm.PREFS_GenerateThumbSYNC,
-                        scroller,
-                        vm.Flag_SavedThumbFlag,
-                        object : OnFlagUpdateListener {
-                            override fun onFlagUpdate(position: Int) {
-                                vm.Flag_SavedThumbFlag = vm.Flag_SavedThumbFlag.substring(0, position) + '1' + vm.Flag_SavedThumbFlag.substring(position + 1)
-                            }
-                        },
-                        playerScrollerViewModel
-                    )
-                }
-            }
-
 
             //开启被控
             fun startSyncScrollerGapControl(){
@@ -3076,13 +2988,7 @@ class PlayerActivityTest: AppCompatActivity(){
             delay(200)
             startVideoTimeSync()
         }
-
-         */
-
     }
-
-
-    //Functions
     //视频区域抬高
     private fun MoveYaxisCalculate(){
         val displayMetrics = DisplayMetrics()
@@ -3480,7 +3386,6 @@ class PlayerActivityTest: AppCompatActivity(){
         }
     }
     //切换横屏
-    @SuppressLint("SourceLockedOrientationActivity")
     private fun ButtonChangeOrientation(){
         //自动旋转关闭
         if (rotationSetting == 0){
@@ -3489,24 +3394,24 @@ class PlayerActivityTest: AppCompatActivity(){
                 if (vm.OrientationValue == 1){
                     vm.FromManualPortrait = false
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                    setOrientation_LANDSCAPE()
                 }
                 else if (vm.OrientationValue == 2){
                     vm.FromManualPortrait = false
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                    setOrientation_REVERSE_LANDSCAPE()
                 }
                 else{
                     vm.FromManualPortrait = false
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                    setOrientation_LANDSCAPE()
                 }
             }
             //当前为横屏
             else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.FromManualPortrait = true
                 vm.onOrientationChanging = true
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                setOrientation_PORTRAIT()
             }
         }
         //自动旋转开启
@@ -3517,30 +3422,43 @@ class PlayerActivityTest: AppCompatActivity(){
                     vm.LastLandscapeOrientation = 1
                     vm.setManual()
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                    setOrientation_LANDSCAPE()
                 }
                 else if (vm.OrientationValue == 2){
                     vm.currentOrientation = 2
                     vm.LastLandscapeOrientation = 2
                     vm.setManual()
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                    setOrientation_REVERSE_LANDSCAPE()
                 }
                 else{
                     vm.currentOrientation = 1
                     vm.LastLandscapeOrientation = 1
                     vm.setManual()
                     vm.onOrientationChanging = true
-                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                    setOrientation_LANDSCAPE()
                 }
             }
             else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.currentOrientation = 0
                 vm.setManual()
                 vm.onOrientationChanging = true
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                setOrientation_PORTRAIT()
             }
         }
+    }
+    @SuppressLint("SourceLockedOrientationActivity")
+    private fun setOrientation_PORTRAIT(){
+        scroller.stopScroll()
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+    }
+    private fun setOrientation_LANDSCAPE(){
+        scroller.stopScroll()
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+    }
+    private fun setOrientation_REVERSE_LANDSCAPE(){
+        scroller.stopScroll()
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
     }
     @SuppressLint("SourceLockedOrientationActivity")
     private fun ExitByOrientation(){
@@ -3593,7 +3511,7 @@ class PlayerActivityTest: AppCompatActivity(){
         }
 
     }
-    //开启后台播放服务
+    //开启/关闭后台播放服务
     private fun startBackgroundServices(){
         val intent = Intent(this, PlayerServiceTest::class.java)
         //传递媒体信息和配置信息
@@ -3602,18 +3520,16 @@ class PlayerActivityTest: AppCompatActivity(){
         //正式开启服务
         startService(intent)
     }
-    //关闭后台播放服务
     private fun stopBackgroundServices(){
         stopService(Intent(this, PlayerServiceTest::class.java))
     }
-    //后台播放只播音轨
+    //后台播放只播音轨+回到前台恢复音轨
     private fun startBackgroundPlay(){
         if (vm.PREFS_CloseVideoTrack && !vm.inFloatingWindow){
             CloseVideoTrackJob()
             vm.closeVideoTrackJobRunning = true
         }
     }
-    //回到前台恢复所有轨道
     private fun stopBackgroundPlay(){
         if (vm.PREFS_CloseVideoTrack){
             vm.recovery_VideoTrack()
@@ -3641,7 +3557,6 @@ class PlayerActivityTest: AppCompatActivity(){
             }
             if (relevant.isNotEmpty()) {
                 headSet = true
-                val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
                 currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                 if (currentVolume >= (maxVolume*0.6).toInt()){
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume, 0)
@@ -3654,7 +3569,6 @@ class PlayerActivityTest: AppCompatActivity(){
         }
     }
     //音频焦点
-    private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
     private fun requestAudioFocus(){
         val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
             .setAudioAttributes(AudioAttributes.Builder()
@@ -3713,12 +3627,13 @@ class PlayerActivityTest: AppCompatActivity(){
             stopScrollerSync()
             if (vm.PREFS_LinkScroll) startScrollerSync()
 
+            //恢复保存的设置
             if (NeedRecoverySettings){
                 if (NeedRecoverySetting_VideoOnly){
-                    changeStateVideoOnly(true)
+                    changeStateVideoOnly()
                 }
                 if (NeedRecoverySetting_SoundOnly){
-                    changeStateSoundOnly(true)
+                    changeStateSoundOnly()
                 }
                 if (NeedRecoverySetting_LastPosition != 0L){
                     vm.player.seekTo(NeedRecoverySetting_LastPosition)
@@ -3836,7 +3751,7 @@ class PlayerActivityTest: AppCompatActivity(){
             startActivity(intent)
         }
     }
-
+    //合成绝对路径
     private fun getAbsoluteFilePath(context: Context, uri: Uri): String? {
         val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
             Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
@@ -3898,7 +3813,6 @@ class PlayerActivityTest: AppCompatActivity(){
             window.attributes = windowInfo
         }
         //音量
-        val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
@@ -3931,19 +3845,12 @@ class PlayerActivityTest: AppCompatActivity(){
         if (vm.controllerHided){
             setControllerInvisibleNoAnimation()
         }
+        //显示参数读取
+        displayMetricsLoad()
     }
     //格式化时间显示
     @SuppressLint("DefaultLocale")
-    private fun formatTime(milliseconds: Long): String {
-        val totalSeconds = milliseconds / 1000
-        //val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        val seconds = totalSeconds % 60
-        val millis = milliseconds % 1000
-        return String.format("%02d:%02d.%03d",  minutes, seconds, millis)
-    }
-    @SuppressLint("DefaultLocale")
-    private fun formatTime1(milliseconds: Long): String {
+    private fun FormatTime_onlyNum(milliseconds: Long): String {
         val totalSeconds = milliseconds / 1000
         val hours = totalSeconds / 3600
         val minutes = (totalSeconds % 3600) / 60
@@ -3954,7 +3861,7 @@ class PlayerActivityTest: AppCompatActivity(){
             String.format("%02d:%02d:%02d",  hours, minutes, seconds)
         }
     }
-    private fun formatTime2(raw: Long): String {
+    private fun FormatTime_withChar(raw: Long): String {
         val cent  = raw % 1000
         val totalSec = raw / 1000
         val min  = totalSec / 60

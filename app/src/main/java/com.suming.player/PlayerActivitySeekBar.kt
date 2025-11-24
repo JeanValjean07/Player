@@ -116,7 +116,7 @@ import kotlin.math.pow
 import kotlin.system.exitProcess
 
 @UnstableApi
-//@Suppress("unused")
+@Suppress("unused")
 class PlayerActivitySeekBar: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -506,7 +506,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         //读取数据库
         if (savedInstanceState == null){
             //读取数据库
-            ReadBasicRoomDataBase()
+            ReadRoomDataBase()
         }
         //基于设置的后续操作
         if (vm.PREFS_UseBlackBackground) {
@@ -1353,7 +1353,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
 
             RefreshTimeLine()
 
-            ReadBasicRoomDataBase()
+            ReadRoomDataBase()
 
 
         }
@@ -1368,7 +1368,9 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                 ExitByOrientation()
             }
         })
-    } //onCreate END
+
+    //onCreate END
+    }
 
 
 
@@ -1380,17 +1382,13 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         return "content://media/external/video/media/$id".toUri()
     }
 
-    private fun ReadBasicRoomDataBase(){
+    private fun ReadRoomDataBase(){
         lifecycleScope.launch(Dispatchers.IO) {
             DataBaseProfile = MediaItemRepo.get(applicationContext).getSetting(vm.MediaInfo_FileName)
             if (DataBaseProfile == null){
                 DataBasePreWrite()
                 return@launch }
             val DataBaseSetting = DataBaseProfile!!
-            //进度条缩略图生成状态
-            if (DataBaseSetting.SavePath_Cover != ""){
-                vm.String_SavedCoverPath = DataBaseSetting.SavePath_Cover
-            }
             //视频强单项适用设置读取
             if (DataBaseSetting.PREFS_SoundOnly){ vm.PREFS_OnlyAudio = true }else{
                 vm.PREFS_OnlyAudio = false
@@ -1477,7 +1475,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         //更新全局媒体信息变量
         getMediaInfo(MediaInfo_VideoUri)
         //读取数据库
-        ReadBasicRoomDataBase()
+        ReadRoomDataBase()
 
         RefreshTimeLine()
 
@@ -1692,8 +1690,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             MediaItemRepo.get(this@PlayerActivitySeekBar).update_PREFS_VideoOnly(MediaInfo_FileName,vm.PREFS_OnlyVideo)
         }
     }
-
-
+    //确认关闭操作
     private fun EnsureExit(){
         //保存播放进度
         if (vm.PREFS_SavePositionWhenExit){
@@ -1702,26 +1699,21 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                 MediaItemRepo.get(this@PlayerActivitySeekBar).update_State_PositionWhenExit(MediaInfo_FileName,currentPosition)
             }
         }
-
-
-        //停止
+        //停止UI端操作
         stopSeekBarSync()
+        stopVideoTimeSync()
+        //停止服务端操作
+        stopBackgroundServices()
         PlayerSingleton.releasePlayer()
         stopFloatingWindow()
-        stopBackgroundServices()
         finish()
     }
-
+    //数据库预写
     private fun DataBasePreWrite(){
         lifecycleScope.launch(Dispatchers.IO) {
             MediaItemRepo.get(this@PlayerActivitySeekBar).preset_all_row_default(MediaInfo_FileName)
         }
     }
-
-
-
-
-
 
 
     //Runnable:根据视频时间更新进度条位置
@@ -1817,6 +1809,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             MovePlayArea_up()
         }
     }
+
 
 
     override fun onEnterAnimationComplete() {
@@ -1969,7 +1962,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         super.onUserInteraction()
         IDLE_Timer?.cancel()
     }
-
     //android:configChanges="orientation|screenSize|screenLayout"
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -2013,7 +2005,8 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     }
 
 
-
+    //Stable Functions
+    //状态栏配置
     @Suppress("DEPRECATION")
     private fun setStatusBarParams(){
         //竖屏
@@ -2085,7 +2078,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
 
 
     }
-
+    //控件层移动
     private fun setControllerLayerPadding(flag_dodge_which_side: String){
         if (flag_dodge_which_side == "left"){
             (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
@@ -2105,9 +2098,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (0)
         }
     }
-
-
-    //Functions
     //视频区域抬高
     private fun MoveYaxisCalculate(){
         val displayMetrics = DisplayMetrics()

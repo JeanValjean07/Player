@@ -11,7 +11,6 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -39,11 +38,6 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
 class SettingsActivity: AppCompatActivity() {
-
-    //震动时间
-    private var PREFS_VibrateMillis = 0L
-    private var PREFS_UseSysVibrate = false
-
     //开关初始化
     private lateinit var Switch_CloseVideoTrack: SwitchCompat
     private lateinit var Switch_SwitchPortraitWhenExit: SwitchCompat
@@ -85,13 +79,14 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UseTestingPlayer = false
     private var PREFS_UseSyncFrameWhenScrollerStop = false
 
-
     //按钮循环：清除所有视频缓存
     private var ButtonRemoveAllThumbPathIndex = 0
-
     //设置清单
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_Editor: SharedPreferences.Editor
+    //震动时间
+    private var PREFS_VibrateMillis = 0L
+    private var PREFS_UseSysVibrate = false
 
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
@@ -436,6 +431,7 @@ class SettingsActivity: AppCompatActivity() {
             }
         }
         Switch_UseTestingPlayer.setOnCheckedChangeListener { _, isChecked ->
+            vibrate()
             PREFS_UseTestingPlayer = isChecked
             check_PREFS_UseTestingPlayer()
         }
@@ -569,14 +565,17 @@ class SettingsActivity: AppCompatActivity() {
         }
 
 
-    } //onCreate END
+    //onCreate END
+    }
 
     override fun onDestroy() {
         super.onDestroy()
 
     }
 
+
     //Functions
+    //测试版可用性检查
     private fun turnOFF_Switch_UseTestPlayer(){
         PREFS_UseTestingPlayer = false
         Switch_UseTestingPlayer.isChecked = false
@@ -626,8 +625,7 @@ class SettingsActivity: AppCompatActivity() {
         }
 
     }
-
-
+    //数值设置
     @SuppressLint("SetTextI18n")
     private fun chooseSeekHandlerGap(gap: Long) {
         vibrate()
@@ -825,8 +823,6 @@ class SettingsActivity: AppCompatActivity() {
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
         }
     }
-
-
     //震动控制
     @Suppress("DEPRECATION")
     private fun Context.vibrator(): Vibrator =
@@ -850,7 +846,5 @@ class SettingsActivity: AppCompatActivity() {
             vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
         }
     }
-
-
 
 }
