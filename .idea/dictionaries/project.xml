@@ -14,7 +14,9 @@
       <w>fingerup</w>
       <w>floatingwindow</w>
       <w>fmpeg</w>
+      <w>getprop</w>
       <w>hmmss</w>
+      <w>iqoo</w>
       <w>lateinit</w>
       <w>libavcodec</w>
       <w>libavfilter</w>
@@ -23,6 +25,8 @@
       <w>libswresample</w>
       <w>libswscale</w>
       <w>ondown</w>
+      <w>oneplus</w>
+      <w>realme</w>
       <w>repic</w>
       <w>safegap</w>
       <w>savedinstance</w>
@@ -34,6 +38,7 @@
       <w>svgrepo</w>
       <w>swresample</w>
       <w>valjean</w>
+      <w>vivo</w>
       <w>xjvm</w>
     </words>
   </dictionary>

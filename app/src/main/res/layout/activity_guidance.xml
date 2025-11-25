@@ -1,4 +1,5 @@
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_guidance"
@@ -8,7 +9,6 @@
     android:fitsSystemWindows="false"
     tools:context=".GuidanceActivity"
     tools:ignore="HardcodedText" >
-    <!-- AppBar -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -51,7 +51,7 @@
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
-    <!-- 滚动区域 -->
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -60,7 +60,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
-            <!-- 卡片1：作者酷安主页 -->
+            <!-- 卡片1：反馈渠道 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -95,7 +95,7 @@
                         android:textSize="11sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-            <!-- 卡片2：素材来源 -->
+            <!-- 卡片2：素材来源公益链接 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -140,9 +140,9 @@
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-            <!-- 老机型警告 -->
+            <!-- 警告1：安卓10解码能力警告 -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/cardViewOldDevice"
+                android:id="@+id/AlertCard_Android10Decoding"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
@@ -150,18 +150,46 @@
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="5dp">
+                app:cardElevation="5dp"
+                android:visibility="gone">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
                     <TextView
-                        android:id="@+id/textViewOldDevice"
+                        android:id="@+id/AlertCardText_Android10Decoding"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="0"
                         android:padding="16dp"
-                        android:text="无兼容性提示时,此卡片应当被隐藏"
+                        android:text="提示信息1"
+                        android:textSize="13sp"
+                        tools:ignore="InefficientWeight" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            <!-- 警告2：无法清理进程警告 -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/AlertCard_CannotCleanProcess"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="1dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="5dp"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/AlertCardText_CannotCleanProcess"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
+                        android:padding="16dp"
+                        android:text="提示信息2"
                         android:textSize="13sp"
                         tools:ignore="InefficientWeight" />
                 </LinearLayout>

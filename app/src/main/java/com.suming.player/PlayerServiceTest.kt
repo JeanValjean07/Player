@@ -92,15 +92,14 @@ class PlayerServiceTest(): MediaSessionService() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+
         mediaSession?.player?.pause()
+        mediaSession?.release()
 
         stopForeground(STOP_FOREGROUND_REMOVE)
-        stopForeground(true)
-
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIF_ID)
 
         stopSelf()
+
     }
     //接收Intent额外信息
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)

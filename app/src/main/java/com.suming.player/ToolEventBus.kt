@@ -7,11 +7,10 @@ object ToolEventBus {
 
     private val eventSubject = PublishSubject.create<String>()
 
-    //暴露Observable
     val events: Observable<String> = eventSubject.hide()
-
 
     fun sendEvent(event: String) {
         eventSubject.onNext(event)
     }
+
 }

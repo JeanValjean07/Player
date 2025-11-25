@@ -326,6 +326,8 @@ class PlayerActivity: AppCompatActivity(){
 
     //</editor-fold>
 
+    private var clickMillis_MoreOptionPage = 0L
+
 
     @OptIn(UnstableApi::class)
     @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
@@ -1055,6 +1057,12 @@ class PlayerActivity: AppCompatActivity(){
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
             vibrate()
+
+            if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
+                return@setOnClickListener
+            }
+            clickMillis_MoreOptionPage = System.currentTimeMillis()
+
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 MovePlayAreaJob()
@@ -1107,6 +1115,12 @@ class PlayerActivity: AppCompatActivity(){
         val buttonMoreOptions = findViewById<FrameLayout>(R.id.buttonActualMoreButton)
         buttonMoreOptions.setOnClickListener {
             vibrate()
+
+            if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
+                return@setOnClickListener
+            }
+            clickMillis_MoreOptionPage = System.currentTimeMillis()
+
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 MovePlayAreaJob()

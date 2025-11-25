@@ -30,7 +30,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     fun setMediaItem(mediaItem: MediaItem) {
         player.setMediaItem(mediaItem)
     }
-
+    //清除现有媒体
+    fun clearMediaItem() {
+        player.clearMediaItems()
+    }
     //关闭和开启视频轨道
     fun close_VideoTrack() {
         trackSelector.parameters = trackSelector
@@ -44,7 +47,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
             .build()
     }
-
     //关闭和开启音频轨道
     fun close_AudioTrack() {
         trackSelector.parameters = trackSelector
@@ -82,13 +84,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //视频播放状态
     var playEnd: Boolean = false
 
-
     //浮窗相关
     var inFloatingWindow = false
 
     //视频时长
     var global_videoDuration = 0L
-
 
 
     //屏幕旋转相关
@@ -103,14 +103,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         Manual = false
     }
 
-
     //音量相关
     var NOTICED_VolumeIsZero: Boolean = false
     var NOTICED_HeadSetInsert: Boolean = false
     //亮度相关
     var BrightnessChanged: Boolean = false
     var BrightnessValue: Float = 0f
-
 
 
     var onOrientationChanging: Boolean = false
@@ -127,13 +125,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
 
     //设置项
-
     var PREFS_AlwaysSeek: Boolean = false
     var PREFS_BackgroundPlay: Boolean = false
     var PREFS_TapJump: Boolean = false
     var PREFS_LinkScroll: Boolean = true
     var PREFS_SealOEL: Boolean = false
-
     var PREFS_GenerateThumbSYNC : Boolean = false
     var PREFS_ExitWhenEnd : Boolean = false
     var PREFS_UseLongScroller : Boolean = false
@@ -151,16 +147,19 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_SavePositionWhenExit: Boolean = false
     var PREFS_SwitchPortraitWhenExit: Boolean = true
     var PREFS_EnablePlayAreaMove: Boolean = false
-
     var PREFS_UseDataBaseForScrollerSetting: Boolean = false
-
     var PREFS_UseMediaSession: Boolean = false
     var PREFS_InsertPreviewInMediaSession: Boolean = false
+    var PREFS_UseSyncFrameWhenScrollerStop: Boolean = false
+    var PREFS_OnlyAudio: Boolean = false
+    var PREFS_OnlyVideo: Boolean = false
+    var PREFS_SeekHandlerGap: Long = 0
 
 
     var state_playerWithSeekBar : Boolean = false
     //进度条停止时使用关键帧
-    var PREFS_UseSyncFrameWhenScrollerStop: Boolean = false
+
+    var seekToLastPositionExecuted: Boolean = false
 
 
 
@@ -178,10 +177,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var wasPlaying: Boolean = false
 
-
-    //以下开关不固化
-    var PREFS_OnlyAudio: Boolean = false
-    var PREFS_OnlyVideo: Boolean = false
 
     //Intent保存
     var originIntent : Intent? = null
@@ -208,7 +203,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var shutDownTime = ""
 
 
-    var PREFS_SeekHandlerGap: Long = 0
+
 
     var state_PlayListProcess_Complete: Boolean = false
 
