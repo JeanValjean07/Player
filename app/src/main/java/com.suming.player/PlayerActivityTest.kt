@@ -626,7 +626,6 @@ class PlayerActivityTest: AppCompatActivity(){
                             vm.currentOrientation = 1
                             vm.LastLandscapeOrientation = 1
                             vm.setAuto()
-                            vm.onOrientationChanging = true
                             setOrientation_LANDSCAPE()
                         }
                         //从 竖屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
@@ -635,7 +634,6 @@ class PlayerActivityTest: AppCompatActivity(){
                             vm.currentOrientation = 2
                             vm.LastLandscapeOrientation = 2
                             vm.setAuto()
-                            vm.onOrientationChanging = true
                             setOrientation_REVERSE_LANDSCAPE()
                         }
                     }
@@ -649,7 +647,6 @@ class PlayerActivityTest: AppCompatActivity(){
                             vm.currentOrientation = 2
                             vm.LastLandscapeOrientation = 2
                             vm.setAuto()
-                            vm.onOrientationChanging = true
                             setOrientation_REVERSE_LANDSCAPE()
                         }
                         //从 正向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
@@ -657,7 +654,6 @@ class PlayerActivityTest: AppCompatActivity(){
                             if (vm.Manual) return
                             vm.currentOrientation = 0
                             vm.setAuto()
-                            vm.onOrientationChanging = true
                             setOrientation_PORTRAIT()
                         }
                     }
@@ -671,7 +667,6 @@ class PlayerActivityTest: AppCompatActivity(){
                             vm.currentOrientation = 1
                             vm.LastLandscapeOrientation = 1
                             vm.setAuto()
-                            vm.onOrientationChanging = true
                             setOrientation_LANDSCAPE()
                         }
                         //从 反向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
@@ -679,7 +674,6 @@ class PlayerActivityTest: AppCompatActivity(){
                             if (vm.Manual) return
                             vm.currentOrientation = 0
                             vm.setAuto()
-                            vm.onOrientationChanging = true
                             setOrientation_PORTRAIT()
                         }
                     }
@@ -692,7 +686,6 @@ class PlayerActivityTest: AppCompatActivity(){
                             //按钮避让时间框&退出按钮
                             setControllerLayerPadding("left")
                             //更改状态并发起旋转
-                            vm.onOrientationChanging = true
                             setOrientation_LANDSCAPE()
                         }
                         //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
@@ -700,7 +693,6 @@ class PlayerActivityTest: AppCompatActivity(){
                             //按钮避让:横排按钮区&更多选项按钮
                             setControllerLayerPadding("right")
                             //更改状态并发起旋转
-                            vm.onOrientationChanging = true
                             setOrientation_REVERSE_LANDSCAPE()
                         }
                     }
@@ -3388,24 +3380,20 @@ class PlayerActivityTest: AppCompatActivity(){
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
                 if (vm.OrientationValue == 1){
                     vm.FromManualPortrait = false
-                    vm.onOrientationChanging = true
                     setOrientation_LANDSCAPE()
                 }
                 else if (vm.OrientationValue == 2){
                     vm.FromManualPortrait = false
-                    vm.onOrientationChanging = true
                     setOrientation_REVERSE_LANDSCAPE()
                 }
                 else{
                     vm.FromManualPortrait = false
-                    vm.onOrientationChanging = true
                     setOrientation_LANDSCAPE()
                 }
             }
             //当前为横屏
             else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.FromManualPortrait = true
-                vm.onOrientationChanging = true
                 setOrientation_PORTRAIT()
             }
         }
@@ -3416,28 +3404,24 @@ class PlayerActivityTest: AppCompatActivity(){
                     vm.currentOrientation = 1
                     vm.LastLandscapeOrientation = 1
                     vm.setManual()
-                    vm.onOrientationChanging = true
                     setOrientation_LANDSCAPE()
                 }
                 else if (vm.OrientationValue == 2){
                     vm.currentOrientation = 2
                     vm.LastLandscapeOrientation = 2
                     vm.setManual()
-                    vm.onOrientationChanging = true
                     setOrientation_REVERSE_LANDSCAPE()
                 }
                 else{
                     vm.currentOrientation = 1
                     vm.LastLandscapeOrientation = 1
                     vm.setManual()
-                    vm.onOrientationChanging = true
                     setOrientation_LANDSCAPE()
                 }
             }
             else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.currentOrientation = 0
                 vm.setManual()
-                vm.onOrientationChanging = true
                 setOrientation_PORTRAIT()
             }
         }
@@ -3445,14 +3429,17 @@ class PlayerActivityTest: AppCompatActivity(){
     @SuppressLint("SourceLockedOrientationActivity")
     private fun setOrientation_PORTRAIT(){
         scroller.stopScroll()
+        vm.onOrientationChanging = true
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
     }
     private fun setOrientation_LANDSCAPE(){
         scroller.stopScroll()
+        vm.onOrientationChanging = true
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
     }
     private fun setOrientation_REVERSE_LANDSCAPE(){
         scroller.stopScroll()
+        vm.onOrientationChanging = true
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
     }
     @SuppressLint("SourceLockedOrientationActivity")
@@ -3461,15 +3448,17 @@ class PlayerActivityTest: AppCompatActivity(){
         if (vm.PREFS_SwitchPortraitWhenExit){
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 vm.setManual()
-                vm.onOrientationChanging = true
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                setOrientation_PORTRAIT()
             }
             else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
                 if (vm.controllerHided){
                     notice("再按一次退出",2000)
-                    vibrate()
                     setControllerVisible()
                     vm.controllerHided = false
+                    lifecycleScope.launch{
+                        delay(75)
+                        vibrate()
+                    }
                 }
                 //确认退出
                 else{
@@ -3489,9 +3478,12 @@ class PlayerActivityTest: AppCompatActivity(){
         else{
             if (vm.controllerHided){
                 notice("再按一次退出",2000)
-                vibrate()
                 setControllerVisible()
                 vm.controllerHided = false
+                lifecycleScope.launch{
+                    delay(75)
+                    vibrate()
+                }
             }
             //确认退出
             else{

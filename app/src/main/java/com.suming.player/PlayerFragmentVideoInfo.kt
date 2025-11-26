@@ -1,10 +1,16 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Context.VIBRATOR_MANAGER_SERVICE
+import android.content.Context.VIBRATOR_SERVICE
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -170,16 +176,17 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
         buttonExit.setOnClickListener {
-            Dismiss()
+            Dismiss(true)
         }
         //按钮：点击空白区域退出
         val topArea = view.findViewById<View>(R.id.topArea)
         topArea.setOnClickListener {
-            Dismiss()
+            Dismiss(true)
         }
         //按钮：锁定页面
         val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
         ButtonLock.setOnClickListener {
+            vibrate()
             lockPage = !lockPage
             if (lockPage) {
                 ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
@@ -229,7 +236,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                         }
                         MotionEvent.ACTION_UP -> {
                             if (deltaY >= 400f){
-                                Dismiss()
+                                Dismiss(true)
                             }else{
                                 RootCard.animate()
                                     .translationY(0f)
@@ -279,7 +286,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                                 return@setOnTouchListener false
                             }
                             if (deltaX >= 200f){
-                                Dismiss()
+                                Dismiss(true)
                             }else{
                                 RootCard.animate()
                                     .translationX(0f)
@@ -295,7 +302,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         //监听返回手势(DialogFragment)
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                Dismiss()
+                Dismiss(false)
                 return@setOnKeyListener true
             }
             return@setOnKeyListener false
@@ -379,18 +386,39 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         }
     }
 
+    //震动控制
+    @Suppress("DEPRECATION")
+    private fun Context.vibrator(): Vibrator =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
+        } else {
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
+    private fun vibrate() {
+        if (vm.PREFS_VibrateMillis <= 0L) {
+            return
+        }
+        val vib = requireContext().vibrator()
+        if (vm.PREFS_UseSysVibrate) {
+            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+            vib.vibrate(effect)
+        }
+        else{
+            vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
+    }
+
     //自定义退出逻辑
     private fun customDismiss(){
-        /*
         if (!lockPage) {
-            Dismiss()
+            Dismiss(false)
         }
-
-         */
     }
-    private fun Dismiss(){
+    private fun Dismiss(flag_need_vibrate: Boolean = true){
+        if (flag_need_vibrate){ vibrate() }
         val result = bundleOf("KEY" to "Dismiss")
-        setFragmentResult("FROM_FRAGMENT_VIDEO_INFO", result)
+        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
         dismiss()
 
     }
