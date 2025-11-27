@@ -149,45 +149,48 @@
                             android:layout_marginStart="5dp"
                             android:orientation="vertical">
                             <!-- 开关：后台播放 -->
+                            <!-- 菜单：循环播放 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:minHeight="40dp"
                                 android:orientation="horizontal">
+
                                 <ImageView
                                     android:layout_width="19dp"
                                     android:layout_height="19dp"
-                                    android:src="@drawable/ic_more_button_background_play"
-                                    android:scaleType="centerCrop"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:layout_marginTop="1dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_more_button_background_play"
                                     tools:ignore="ContentDescription" />
+
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="后台播放"
-                                    android:textSize="16sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
+                                    android:text="后台播放"
                                     android:textColor="@color/Text2"
-                                    />
+                                    android:textSize="16sp" />
+
                                 <View
                                     android:layout_width="0dp"
                                     android:layout_height="0dp"
-                                    android:layout_weight="1"/>
+                                    android:layout_weight="1" />
+
                                 <androidx.appcompat.widget.SwitchCompat
                                     android:id="@+id/Switch_BackgroundPlay"
                                     android:layout_width="wrap_content"
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
                                     app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight"
-                                    />
+                                    app:trackTint="@color/switchTrackColor"
+                                    tools:ignore="InefficientWeight" />
                             </LinearLayout>
-                            <!-- 菜单：循环播放 -->
+
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"

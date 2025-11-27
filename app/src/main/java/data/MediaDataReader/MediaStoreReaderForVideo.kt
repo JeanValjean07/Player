@@ -3,7 +3,9 @@ package data.MediaDataReader
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.content.SharedPreferences
 import android.provider.MediaStore
+import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.PlayListManager
@@ -16,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.content.edit
 
 class MediaStoreReaderForVideo(
     private val context: Context,
@@ -23,9 +26,26 @@ class MediaStoreReaderForVideo(
 ) {
     //协程作用域：保存到数据库
     private val coroutineScope_save_to_room = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    //设置项
+    private lateinit var PREFS_MediaStore: SharedPreferences
+    private var PREFS_EnableFileExistCheck: Boolean = false
 
+
+    fun preCheck() {
+        PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)
+        if (!PREFS_MediaStore.contains("PREFS_EnableFileExistCheck")) {
+            PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", false) }
+            PREFS_EnableFileExistCheck = false
+        }else{
+            PREFS_EnableFileExistCheck = PREFS_MediaStore.getBoolean("PREFS_EnableFileExistCheck", false)
+        }
+
+    }
 
     suspend fun readAllVideos(): List<MediaItemForVideo> {
+        //读取设置
+        preCheck()
+
         // 查询结果列表
         val list = mutableListOf<MediaItemForVideo>()
         // 排序方式
@@ -59,15 +79,36 @@ class MediaStoreReaderForVideo(
                     val size = cursor.getLong(sizeCol)
                     val dateAdded = cursor.getLong(dateCol)
 
-                    list += MediaItemForVideo(
-                        id = id,
-                        uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
-                        name = name,
-                        durationMs = dur,
-                        sizeBytes = size,
-                        dateAdded = dateAdded,
-                    )
+                    //使用存在检查
+                    if (PREFS_EnableFileExistCheck) {
+                        //检查文件是否存在
+                        val fileExist = isFileExist(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id))
+                        //文件不存在，跳过
+                        if (fileExist && dur > 0 && size > 0 ) {
+                            list += MediaItemForVideo(
+                                id = id,
+                                uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
+                                name = name,
+                                durationMs = dur,
+                                sizeBytes = size,
+                                dateAdded = dateAdded,
+                            )
+                        }
+                    }
+                    //不使用存在检查
+                    else{
+                        list += MediaItemForVideo(
+                            id = id,
+                            uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
+                            name = name,
+                            durationMs = dur,
+                            sizeBytes = size,
+                            dateAdded = dateAdded,
+                        )
+                    }
+
                 }
+                //读取完后发布通知消息
                 ToolEventBus.sendEvent("MediaStore_Video_Query_Complete")
                 //return
                 list
@@ -78,6 +119,7 @@ class MediaStoreReaderForVideo(
 
 
     //Functions
+    //保存到数据库
     suspend fun saveVideosToDatabase(videos: List<MediaItemForVideo>) {
         val mediaStoreSettings = videos.map {
             MediaStoreSetting(
@@ -96,7 +138,7 @@ class MediaStoreReaderForVideo(
             MediaStoreRepo.get(context).saveAllVideos(mediaStoreSettings)
         }
     }
-
+    //类功能主入口：读取所有视频并保存到数据库
     suspend fun readAndSaveAllVideos(): List<MediaItemForVideo> {
         val videos = readAllVideos()
         saveVideosToDatabase(videos)
@@ -105,6 +147,16 @@ class MediaStoreReaderForVideo(
         PlayListManager.getInstance(context).initPlayList_byMediaStore(videos)
 
         return videos
+    }
+    //存在检查
+    private fun isFileExist(uri: android.net.Uri): Boolean {
+        return try {
+            contentResolver.openInputStream(uri)?.use {
+                return true
+            }
+            false
+        }
+        catch (e: Exception) { false }
     }
 
 

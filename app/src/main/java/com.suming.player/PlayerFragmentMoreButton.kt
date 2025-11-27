@@ -756,7 +756,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
             vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
         }
     }
-
     //自定义退出逻辑
     private fun customDismiss(){
         if (!lockPage) {

@@ -304,6 +304,8 @@ class PlayerActivityTest: AppCompatActivity(){
 
     private var onDestroy_fromEnsureExit = false
 
+    private var state_onBackground = false
+
     private var clickMillis_MoreOptionPage = 0L
 
     private lateinit var focusRequest: AudioFocusRequest
@@ -1692,6 +1694,14 @@ class PlayerActivityTest: AppCompatActivity(){
                     showNotification_NotPrepared("播放列表还未处理完成,请稍后重试")
                 }
             }
+            "SessionController_Play" -> {
+                if (vm.PREFS_LinkScroll && !state_onBackground ) startScrollerSync()
+                startVideoTimeSync()
+            }
+            "SessionController_Pause" -> {
+                stopScrollerSync()
+                stopVideoTimeSync()
+            }
         }
     }
     //构建完整uri
@@ -2127,297 +2137,7 @@ class PlayerActivityTest: AppCompatActivity(){
     }
 
 
-    private fun readPlayListFromExoplayer(){
-        //列表条目数
-        val count = vm.player.mediaItemCount
-        if (count == 0) { return }
-        for (i in 0 until count) {
-            val mediaItem: MediaItem = vm.player.getMediaItemAt(i)
-            val uri = mediaItem.localConfiguration?.uri
-            val title = mediaItem.mediaMetadata.title ?: "无标题"
-        }
-    }
-
-
-
-
-    //Runnable:根据视频时间更新进度条位置
-    private val syncScrollTaskHandler = Handler(Looper.getMainLooper())
-    private val syncScrollTask = object : Runnable {
-        @SuppressLint("ServiceCast")
-        override fun run() {
-
-            syncScrollRunnableRunning = true
-            if (ScrollerInfo_EachPicDuration == 0){ return }
-
-            scrollParam1 = ( vm.player.currentPosition / ScrollerInfo_EachPicDuration ).toInt()
-            scrollParam2 = (( vm.player.currentPosition - scrollParam1 * ScrollerInfo_EachPicDuration ) * ScrollerInfo_EachPicWidth / ScrollerInfo_EachPicDuration ).toInt()
-
-            if (vm.playEnd && !vm.player.isPlaying){
-                scrollParam1 = scrollParam1 - 1
-                scrollParam2 = 150
-                scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
-                syncScrollRunnableRunning = false
-            }
-            else{
-
-                scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
-
-                syncScrollTaskHandler.postDelayed(this, 1)
-            }
-        }
-    }
-    private fun startScrollerSync() {
-        if (syncScrollRunnableRunning){
-            return
-        }
-        scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
-        syncScrollTaskHandler.post(syncScrollTask)
-    }
-    private fun stopScrollerSync() {
-        syncScrollRunnableRunning = false
-        syncScrollTaskHandler.removeCallbacks(syncScrollTask)
-    }
-    //Runnable:根据视频时间更新时间戳
-    private val videoTimeSyncHandler = Handler(Looper.getMainLooper())
-    private var videoTimeSync = object : Runnable{
-        override fun run() {
-            videoTimeSyncHandler_currentPosition = vm.player.currentPosition
-
-            timer_current.text = FormatTime_onlyNum(videoTimeSyncHandler_currentPosition)
-
-            videoTimeSyncHandler.postDelayed(this, videoTimeSyncGap)
-        }
-    }
-    private fun startVideoTimeSync() {
-        videoTimeSyncHandler.post(videoTimeSync)
-    }
-    private fun stopVideoTimeSync() {
-        videoTimeSyncHandler.removeCallbacks(videoTimeSync)
-    }
-    //Runnable:视频倍速滚动
-    var lastSeekExecuted = false
-    private val videoSmartScrollHandler = Handler(Looper.getMainLooper())
-    private var videoSmartScroll = object : Runnable{
-        override fun run() {
-            vm.allowRecord_wasPlaying = false
-            val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-            var delayGap = if (scrollerState_Pressed){ 30L } else{ 30L }
-            val videoPosition = vm.player.currentPosition
-            val scrollerPosition =  vm.player.duration * (recyclerView.computeHorizontalScrollOffset().toFloat()/recyclerView.computeHorizontalScrollRange())
-            vm.player.volume = 0f
-            if (scrollerState_Moving) {
-                if (vm.player.currentPosition > scrollerPosition - 100) {
-                    vm.player.pause()
-                }else{
-                    val positionGap = scrollerPosition - videoPosition
-                    var speed5 = (((positionGap / 100).toInt()) /10.0).toFloat()
-
-                    if (speed5 > lastPlaySpeed){
-                        speed5 = speed5 + 0.2f
-                    }else if(speed5 < lastPlaySpeed){
-                        speed5 = speed5 - 0.2f
-                    }
-
-
-                    val MAX_EFFICIENT_SPEED = 20.0f
-                    speed5 = speed5.coerceAtMost(MAX_EFFICIENT_SPEED)
-
-
-                    if (speed5 > 0f){ vm.player.setPlaybackSpeed(speed5) }
-                }
-                videoSmartScrollHandler.postDelayed(this,delayGap)
-            }
-            else{
-                if (lastSeekExecuted) return
-                lastSeekExecuted = true
-
-                global_SeekToMs = scrollerPosition.toLong()
-                vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
-                smartScrollRunnableRunning = false
-                playerReadyFrom_SmartScrollLastSeek = true
-                startSmartScrollLastSeek()
-            }
-        }
-    }
-    private fun startVideoSmartScroll() {
-        stopScrollerSync()
-        stopVideoTimeSync()
-        vm.player.volume = 0f
-        vm.player.play()
-        if (singleTap){
-            singleTap = false
-            return
-        }
-        if (smartScrollRunnableRunning) return
-        smartScrollRunnableRunning = true
-        videoSmartScrollHandler.post(videoSmartScroll)
-    }
-    private fun stopVideoSmartScroll() {
-        smartScrollRunnableRunning = false
-        videoSmartScrollHandler.removeCallbacks(videoSmartScroll)
-    }
-    //Runnable:视频Seek滚动
-    private val videoSeekHandler = Handler(Looper.getMainLooper())
-    private var videoSeek = object : Runnable{
-        override fun run() {
-            //标记位更改
-            videoSeekHandlerRunning = true
-
-            //计算目标位置
-            VideoSeekHandler_totalWidth = scroller.computeHorizontalScrollRange()
-            VideoSeekHandler_offset = scroller.computeHorizontalScrollOffset()
-            VideoSeekHandler_percent = VideoSeekHandler_offset.toFloat() / VideoSeekHandler_totalWidth
-            VideoSeekHandler_seekToMs = (VideoSeekHandler_percent * vm.player.duration).toLong()
-            //反向滚动时防止seek到前面
-            if (scrollerState_BackwardScroll){
-                if (vm.PREFS_AlwaysSeek) {
-                    if (VideoSeekHandler_seekToMs < vm.player.currentPosition){
-                        vm.player.pause()
-                        if (VideoSeekHandler_seekToMs < 50){
-                            playerReadyFrom_LastSeek = true
-                            vm.player.seekTo(0)
-                        }
-                        else{
-                            if (isSeekReady){
-                                isSeekReady = false
-                                playerReadyFrom_NormalSeek = true
-                                vm.player.seekTo(VideoSeekHandler_seekToMs)
-                            }
-                        }
-                    }
-                }
-                else{
-                    vm.player.pause()
-                    if (VideoSeekHandler_seekToMs < 50){
-                        playerReadyFrom_LastSeek = true
-                        vm.player.seekTo(0)
-                    }
-                    else{
-                        if (isSeekReady){
-                            isSeekReady = false
-                            playerReadyFrom_NormalSeek = true
-                            vm.player.seekTo(VideoSeekHandler_seekToMs)
-                        }
-                    }
-                }
-            }
-            //正向seek
-            else{
-                vm.player.pause()
-                if (isSeekReady){
-                    isSeekReady = false
-                    playerReadyFrom_NormalSeek = true
-                    vm.player.seekTo(VideoSeekHandler_seekToMs)
-                }
-            }
-
-
-            //决定继续运行或是结束
-            if (scrollerState_Pressed || scrollerState_Moving) {
-                videoSeekHandler.postDelayed(this, videoSeekHandlerGap)
-            }else{
-                global_SeekToMs = VideoSeekHandler_seekToMs
-                startLastSeek()
-                videoSeekHandlerRunning = false
-            }
-
-        }
-    }
-    private fun startVideoSeek() {
-        vm.playEnd = false
-        if (videoSeekHandlerRunning) return
-        //开启后不再允许记录播放状态
-        vm.allowRecord_wasPlaying = false
-        videoSeekHandler.post(videoSeek)
-    }
-    private fun stopVideoSeek() {
-        videoSeekHandlerRunning = false
-        videoSeekHandler.removeCallbacks(videoSeek)
-    }
-    //Runnable:lastSeek
-    private val lastSeekHandler = Handler(Looper.getMainLooper())
-    private var lastSeek = object : Runnable{
-        override fun run() {
-            if (isSeekReady){
-                isSeekReady = false
-                vm.player.setSeekParameters(SeekParameters.EXACT)
-                playerReadyFrom_LastSeek = true
-                vm.player.seekTo(global_SeekToMs)
-            }
-            else{ videoSeekHandler.post(this) }
-        }
-    }
-    private fun startLastSeek() {
-        lastSeekHandler.post(lastSeek)
-    }
-    //Runnable:SmartScrollLastSeek
-    private val SmartScrollLastSeekHandler = Handler(Looper.getMainLooper())
-    private var SmartScrollLastSeek = object : Runnable{
-        override fun run() {
-            if (isSeekReady){
-                isSeekReady = false
-                playerReadyFrom_SmartScrollLastSeek = true
-                vm.player.seekTo(global_SeekToMs)
-            }else{
-                videoSeekHandler.post(this)
-            }
-        }
-    }
-    private fun startSmartScrollLastSeek() {
-        SmartScrollLastSeekHandler.post(SmartScrollLastSeek)
-    }
-    //Job:显示通知
-    private var showNoticeJob: Job? = null
-    private var showNoticeJobLong: Job? = null
-    private fun showNoticeJob(text: String, duration: Long) {
-        showNoticeJob?.cancel()
-        showNoticeJob = lifecycleScope.launch {
-            val NoticeCardText = findViewById<TextView>(R.id.NoticeCardText)
-            val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
-            NoticeCard.visibility = View.VISIBLE
-            NoticeCardText.text = text
-            delay(duration)
-            NoticeCard.visibility = View.GONE
-        }
-    }
-    private fun showNoticeJobLong(text: String) {
-        showNoticeJobLong?.cancel()
-        showNoticeJobLong = lifecycleScope.launch {
-            val NoticeCardText = findViewById<TextView>(R.id.NoticeCardText)
-            val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
-            NoticeCard.visibility = View.VISIBLE
-            NoticeCardText.text = text
-        }
-    }
-    private fun notice(text: String, duration: Long) {
-        if (duration > 114513){
-            showNoticeJobLong(text)
-        }else{
-            showNoticeJob(text, duration)
-        }
-    }
-    //Job:关闭视频轨道倒计时
-    private var closeVideoTrackJob: Job? = null
-    private fun CloseVideoTrackJob() {
-        closeVideoTrackJob?.cancel()
-        closeVideoTrackJob = lifecycleScope.launch {
-            delay(30_000)
-            vm.close_VideoTrack()
-            vm.closeVideoTrackJobRunning = false
-        }
-    }
-    //Job:播放区域上移
-    private var MovePlayAreaJob: Job? = null
-    private fun MovePlayAreaJob() {
-        MovePlayAreaJob?.cancel()
-        MovePlayAreaJob = lifecycleScope.launch {
-            delay(500)
-            MovePlayArea_up()
-        }
-    }
-
-
+    //Some CallBacks
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
         EnterAnimationComplete = true
@@ -2437,6 +2157,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
     override fun onStop() {
         super.onStop()
+        state_onBackground = true
         //退出应用
         if (!vm.onOrientationChanging){
             //关闭旋转监听器
@@ -2459,6 +2180,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
     override fun onResume() {
         super.onResume()
+        state_onBackground = false
         //如果关闭视频轨道倒计时正在运行
         if (vm.closeVideoTrackJobRunning){
             vm.closeVideoTrackJobRunning = false
@@ -3855,6 +3577,282 @@ class PlayerActivityTest: AppCompatActivity(){
         val min  = totalSec / 60
         val sec  = totalSec % 60
         return "%02d:%02d.%03d".format(min, sec, cent)
+    }
+
+    //Runnable:根据视频时间更新进度条位置
+    private val syncScrollTaskHandler = Handler(Looper.getMainLooper())
+    private val syncScrollTask = object : Runnable {
+        @SuppressLint("ServiceCast")
+        override fun run() {
+
+            syncScrollRunnableRunning = true
+            if (ScrollerInfo_EachPicDuration == 0){ return }
+
+            scrollParam1 = ( vm.player.currentPosition / ScrollerInfo_EachPicDuration ).toInt()
+            scrollParam2 = (( vm.player.currentPosition - scrollParam1 * ScrollerInfo_EachPicDuration ) * ScrollerInfo_EachPicWidth / ScrollerInfo_EachPicDuration ).toInt()
+
+            if (vm.playEnd && !vm.player.isPlaying){
+                scrollParam1 = scrollParam1 - 1
+                scrollParam2 = 150
+                scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
+                syncScrollRunnableRunning = false
+            }
+            else{
+
+                scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
+
+                syncScrollTaskHandler.postDelayed(this, 1)
+            }
+        }
+    }
+    private fun startScrollerSync() {
+        if (syncScrollRunnableRunning){
+            return
+        }
+        scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
+        syncScrollTaskHandler.post(syncScrollTask)
+    }
+    private fun stopScrollerSync() {
+        syncScrollRunnableRunning = false
+        syncScrollTaskHandler.removeCallbacks(syncScrollTask)
+    }
+    //Runnable:根据视频时间更新时间戳
+    private val videoTimeSyncHandler = Handler(Looper.getMainLooper())
+    private var videoTimeSync = object : Runnable{
+        override fun run() {
+            videoTimeSyncHandler_currentPosition = vm.player.currentPosition
+
+            timer_current.text = FormatTime_onlyNum(videoTimeSyncHandler_currentPosition)
+
+            videoTimeSyncHandler.postDelayed(this, videoTimeSyncGap)
+        }
+    }
+    private fun startVideoTimeSync() {
+        videoTimeSyncHandler.post(videoTimeSync)
+    }
+    private fun stopVideoTimeSync() {
+        videoTimeSyncHandler.removeCallbacks(videoTimeSync)
+    }
+    //Runnable:视频倍速滚动
+    var lastSeekExecuted = false
+    private val videoSmartScrollHandler = Handler(Looper.getMainLooper())
+    private var videoSmartScroll = object : Runnable{
+        override fun run() {
+            vm.allowRecord_wasPlaying = false
+            val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
+            var delayGap = if (scrollerState_Pressed){ 30L } else{ 30L }
+            val videoPosition = vm.player.currentPosition
+            val scrollerPosition =  vm.player.duration * (recyclerView.computeHorizontalScrollOffset().toFloat()/recyclerView.computeHorizontalScrollRange())
+            vm.player.volume = 0f
+            if (scrollerState_Moving) {
+                if (vm.player.currentPosition > scrollerPosition - 100) {
+                    vm.player.pause()
+                }else{
+                    val positionGap = scrollerPosition - videoPosition
+                    var speed5 = (((positionGap / 100).toInt()) /10.0).toFloat()
+
+                    if (speed5 > lastPlaySpeed){
+                        speed5 = speed5 + 0.2f
+                    }else if(speed5 < lastPlaySpeed){
+                        speed5 = speed5 - 0.2f
+                    }
+
+
+                    val MAX_EFFICIENT_SPEED = 20.0f
+                    speed5 = speed5.coerceAtMost(MAX_EFFICIENT_SPEED)
+
+
+                    if (speed5 > 0f){ vm.player.setPlaybackSpeed(speed5) }
+                }
+                videoSmartScrollHandler.postDelayed(this,delayGap)
+            }
+            else{
+                if (lastSeekExecuted) return
+                lastSeekExecuted = true
+
+                global_SeekToMs = scrollerPosition.toLong()
+                vm.player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                smartScrollRunnableRunning = false
+                playerReadyFrom_SmartScrollLastSeek = true
+                startSmartScrollLastSeek()
+            }
+        }
+    }
+    private fun startVideoSmartScroll() {
+        stopScrollerSync()
+        stopVideoTimeSync()
+        vm.player.volume = 0f
+        vm.player.play()
+        if (singleTap){
+            singleTap = false
+            return
+        }
+        if (smartScrollRunnableRunning) return
+        smartScrollRunnableRunning = true
+        videoSmartScrollHandler.post(videoSmartScroll)
+    }
+    private fun stopVideoSmartScroll() {
+        smartScrollRunnableRunning = false
+        videoSmartScrollHandler.removeCallbacks(videoSmartScroll)
+    }
+    //Runnable:视频Seek滚动
+    private val videoSeekHandler = Handler(Looper.getMainLooper())
+    private var videoSeek = object : Runnable{
+        override fun run() {
+            //标记位更改
+            videoSeekHandlerRunning = true
+
+            //计算目标位置
+            VideoSeekHandler_totalWidth = scroller.computeHorizontalScrollRange()
+            VideoSeekHandler_offset = scroller.computeHorizontalScrollOffset()
+            VideoSeekHandler_percent = VideoSeekHandler_offset.toFloat() / VideoSeekHandler_totalWidth
+            VideoSeekHandler_seekToMs = (VideoSeekHandler_percent * vm.player.duration).toLong()
+            //反向滚动时防止seek到前面
+            if (scrollerState_BackwardScroll){
+                if (vm.PREFS_AlwaysSeek) {
+                    if (VideoSeekHandler_seekToMs < vm.player.currentPosition){
+                        vm.player.pause()
+                        if (VideoSeekHandler_seekToMs < 50){
+                            playerReadyFrom_LastSeek = true
+                            vm.player.seekTo(0)
+                        }
+                        else{
+                            if (isSeekReady){
+                                isSeekReady = false
+                                playerReadyFrom_NormalSeek = true
+                                vm.player.seekTo(VideoSeekHandler_seekToMs)
+                            }
+                        }
+                    }
+                }
+                else{
+                    vm.player.pause()
+                    if (VideoSeekHandler_seekToMs < 50){
+                        playerReadyFrom_LastSeek = true
+                        vm.player.seekTo(0)
+                    }
+                    else{
+                        if (isSeekReady){
+                            isSeekReady = false
+                            playerReadyFrom_NormalSeek = true
+                            vm.player.seekTo(VideoSeekHandler_seekToMs)
+                        }
+                    }
+                }
+            }
+            //正向seek
+            else{
+                vm.player.pause()
+                if (isSeekReady){
+                    isSeekReady = false
+                    playerReadyFrom_NormalSeek = true
+                    vm.player.seekTo(VideoSeekHandler_seekToMs)
+                }
+            }
+
+
+            //决定继续运行或是结束
+            if (scrollerState_Pressed || scrollerState_Moving) {
+                videoSeekHandler.postDelayed(this, videoSeekHandlerGap)
+            }else{
+                global_SeekToMs = VideoSeekHandler_seekToMs
+                startLastSeek()
+                videoSeekHandlerRunning = false
+            }
+
+        }
+    }
+    private fun startVideoSeek() {
+        vm.playEnd = false
+        if (videoSeekHandlerRunning) return
+        //开启后不再允许记录播放状态
+        vm.allowRecord_wasPlaying = false
+        videoSeekHandler.post(videoSeek)
+    }
+    private fun stopVideoSeek() {
+        videoSeekHandlerRunning = false
+        videoSeekHandler.removeCallbacks(videoSeek)
+    }
+    //Runnable:lastSeek
+    private val lastSeekHandler = Handler(Looper.getMainLooper())
+    private var lastSeek = object : Runnable{
+        override fun run() {
+            if (isSeekReady){
+                isSeekReady = false
+                vm.player.setSeekParameters(SeekParameters.EXACT)
+                playerReadyFrom_LastSeek = true
+                vm.player.seekTo(global_SeekToMs)
+            }
+            else{ videoSeekHandler.post(this) }
+        }
+    }
+    private fun startLastSeek() {
+        lastSeekHandler.post(lastSeek)
+    }
+    //Runnable:SmartScrollLastSeek
+    private val SmartScrollLastSeekHandler = Handler(Looper.getMainLooper())
+    private var SmartScrollLastSeek = object : Runnable{
+        override fun run() {
+            if (isSeekReady){
+                isSeekReady = false
+                playerReadyFrom_SmartScrollLastSeek = true
+                vm.player.seekTo(global_SeekToMs)
+            }else{
+                videoSeekHandler.post(this)
+            }
+        }
+    }
+    private fun startSmartScrollLastSeek() {
+        SmartScrollLastSeekHandler.post(SmartScrollLastSeek)
+    }
+    //Job:显示通知
+    private var showNoticeJob: Job? = null
+    private var showNoticeJobLong: Job? = null
+    private fun showNoticeJob(text: String, duration: Long) {
+        showNoticeJob?.cancel()
+        showNoticeJob = lifecycleScope.launch {
+            val NoticeCardText = findViewById<TextView>(R.id.NoticeCardText)
+            val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
+            NoticeCard.visibility = View.VISIBLE
+            NoticeCardText.text = text
+            delay(duration)
+            NoticeCard.visibility = View.GONE
+        }
+    }
+    private fun showNoticeJobLong(text: String) {
+        showNoticeJobLong?.cancel()
+        showNoticeJobLong = lifecycleScope.launch {
+            val NoticeCardText = findViewById<TextView>(R.id.NoticeCardText)
+            val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
+            NoticeCard.visibility = View.VISIBLE
+            NoticeCardText.text = text
+        }
+    }
+    private fun notice(text: String, duration: Long) {
+        if (duration > 114513){
+            showNoticeJobLong(text)
+        }else{
+            showNoticeJob(text, duration)
+        }
+    }
+    //Job:关闭视频轨道倒计时
+    private var closeVideoTrackJob: Job? = null
+    private fun CloseVideoTrackJob() {
+        closeVideoTrackJob?.cancel()
+        closeVideoTrackJob = lifecycleScope.launch {
+            delay(30_000)
+            vm.close_VideoTrack()
+            vm.closeVideoTrackJobRunning = false
+        }
+    }
+    //Job:播放区域上移
+    private var MovePlayAreaJob: Job? = null
+    private fun MovePlayAreaJob() {
+        MovePlayAreaJob?.cancel()
+        MovePlayAreaJob = lifecycleScope.launch {
+            delay(500)
+            MovePlayArea_up()
+        }
     }
 
 }

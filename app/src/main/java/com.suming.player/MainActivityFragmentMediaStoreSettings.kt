@@ -2,10 +2,17 @@ package com.suming.player
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Context.VIBRATOR_MANAGER_SERVICE
+import android.content.Context.VIBRATOR_SERVICE
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -17,6 +24,7 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.edit
 import androidx.core.os.bundleOf
@@ -26,6 +34,7 @@ import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.util.UnstableApi
+import kotlinx.coroutines.Dispatchers
 import kotlin.math.abs
 
 @UnstableApi
@@ -37,11 +46,15 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
     }
     //自动关闭标志位
     private var lockPage = false
-
-    private var current_sort_orientation_value = 0
-
+    //开关
+    private lateinit var switch_EnableFileExistCheck: SwitchCompat
+    //设置项
+    private lateinit var PREFS: SharedPreferences
+    private lateinit var PREFS_MediaStore: SharedPreferences
+    private var PREFS_EnableFileExistCheck: Boolean = false
     private var PREFS_CloseFragmentGesture = false
 
+    private var current_sort_orientation_value = 0
 
 
     override fun onStart() {
@@ -96,6 +109,31 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
 
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        //开关实例初始化
+        switch_EnableFileExistCheck = view.findViewById(R.id.switch_EnableFileExistCheck)
+
+        //读取设置
+        PREFS = context?.getSharedPreferences("PREFS", Context.MODE_PRIVATE)!!
+        PREFS_MediaStore = context?.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)!!
+        if (!PREFS.contains("PREFS_CloseFragmentGesture")) {
+            PREFS.edit { putBoolean("PREFS_CloseFragmentGesture", false) }
+            PREFS_CloseFragmentGesture = false
+        } else {
+            PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
+        }
+        if (!PREFS_MediaStore.contains("PREFS_EnableFileExistCheck")) {
+            PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", false) }
+            PREFS_EnableFileExistCheck = false
+        } else {
+            PREFS_EnableFileExistCheck = PREFS_MediaStore.getBoolean("PREFS_EnableFileExistCheck", false)
+        }
+
+        //开关置位
+        switch_EnableFileExistCheck.isChecked = PREFS_EnableFileExistCheck
+        //开关点击事件
+        switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", isChecked) }
+        }
 
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
@@ -118,15 +156,16 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                 buttonLock.setImageResource(R.drawable.ic_more_button_lock_off)
             }
         }
-
-        //配置1
-        val PREFS_Player = context?.getSharedPreferences("PREFS", Context.MODE_PRIVATE) ?: return
-        if (!PREFS_Player.contains("PREFS_CloseFragmentGesture")) {
-            PREFS_Player.edit { putBoolean("PREFS_CloseFragmentGesture", false) }
-            PREFS_CloseFragmentGesture = false
-        } else {
-            PREFS_CloseFragmentGesture = PREFS_Player.getBoolean("PREFS_CloseFragmentGesture", false)
+        //按钮：重读媒体库
+        val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
+        ButtonReLoadFromMediaStore.setOnClickListener {
+            val result = bundleOf("KEY" to "ReLoadFromMediaStore")
+            setFragmentResult("FROM_FRAGMENT_MediaStore", result)
+            customDismiss()
         }
+
+
+
 
 
         //排序方法预读
@@ -190,15 +229,6 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
             }
         }
 
-        //按钮：重读媒体库
-        val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
-        ButtonReLoadFromMediaStore.setOnClickListener {
-            val result = bundleOf("KEY" to "ReLoadFromMediaStore")
-            setFragmentResult("FROM_FRAGMENT_MediaStore", result)
-            dismiss()
-        }
-
-
 
 
         //面板下滑关闭(NestedScrollView)
@@ -206,6 +236,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
                 var down_y = 0f
                 var deltaY = 0f
+                var deltaY_ReachPadding = false
                 val RootCard = view.findViewById<CardView>(R.id.mainCard)
                 val RootCardOriginY = RootCard.translationY
                 val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
@@ -213,6 +244,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                 NestedScrollView.setOnTouchListener { _, event ->
                     when (event.actionMasked) {
                         MotionEvent.ACTION_DOWN -> {
+                            deltaY_ReachPadding = false
                             if (NestedScrollView.scrollY != 0){
                                 NestedScrollViewAtTop = false
                                 return@setOnTouchListener false
@@ -229,12 +261,18 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                             if (deltaY < 0){
                                 return@setOnTouchListener false
                             }
+                            if (deltaY >= 400f){
+                                if (!deltaY_ReachPadding){
+                                    deltaY_ReachPadding = true
+                                    vibrate()
+                                }
+                            }
                             RootCard.translationY = RootCardOriginY + deltaY
                             return@setOnTouchListener true
                         }
                         MotionEvent.ACTION_UP -> {
                             if (deltaY >= 400f){
-                                dismiss()
+                                Dismiss(false)
                             }else{
                                 RootCard.animate()
                                     .translationY(0f)
@@ -252,6 +290,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                 var deltaY = 0f
                 var down_x = 0f
                 var deltaX = 0f
+                var deltaX_ReachPadding = false
                 var Y_move_ensure = false
                 val RootCard = view.findViewById<CardView>(R.id.mainCard)
                 val RootCardOriginX = RootCard.translationX
@@ -262,12 +301,19 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                             down_x = event.rawX
                             down_y = event.rawY
                             Y_move_ensure = false
+                            deltaX_ReachPadding = false
                         }
                         MotionEvent.ACTION_MOVE -> {
                             deltaY = event.rawY - down_y
                             deltaX = event.rawX - down_x
                             if (deltaX < 0){
                                 return@setOnTouchListener false
+                            }
+                            if (deltaX >= 200f){
+                                if (!deltaX_ReachPadding){
+                                    deltaX_ReachPadding = true
+                                    vibrate()
+                                }
                             }
                             if (Y_move_ensure){
                                 return@setOnTouchListener false
@@ -284,7 +330,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                                 return@setOnTouchListener false
                             }
                             if (deltaX >= 200f){
-                                dismiss()
+                                Dismiss(false)
                             }else{
                                 RootCard.animate()
                                     .translationX(0f)
@@ -297,9 +343,17 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                 }
             }
         }
+        //监听返回手势(DialogFragment)
+        dialog?.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                Dismiss(false)
+                return@setOnKeyListener true
+            }
+            return@setOnKeyListener false
+        }
 
-    } //onViewCreated END
-
+    //onViewCreated END
+    }
 
 
     //Functions
@@ -397,12 +451,32 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         }
     }
 
-
-
-
+    //震动控制
+    @Suppress("DEPRECATION")
+    private fun Context.vibrator(): Vibrator =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
+        } else {
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
+    private fun vibrate() {
+        val vib = requireContext().vibrator()
+        val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+        vib.vibrate(effect)
+    }
     //自定义退出逻辑
     private fun customDismiss(){
-        if (!lockPage) { dismiss() }
+        if (!lockPage) {
+            Dismiss()
+        }
+    }
+    private fun Dismiss(flag_need_vibrate: Boolean = true){
+        if (flag_need_vibrate){ vibrate() }
+        val result = bundleOf("KEY" to "Dismiss")
+        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+        dismiss()
+
     }
 
 }

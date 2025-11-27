@@ -109,7 +109,7 @@
                             android:layout_marginBottom="7dp"
                             android:gravity="center"
                             android:layout_gravity="center"
-                            android:text="重读媒体库"
+                            android:text="重读本机媒体"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
                     </androidx.cardview.widget.CardView>
@@ -274,7 +274,7 @@
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
-                    <!-- 筛选 -->
+                    <!-- 卡片：筛选 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -313,6 +313,62 @@
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:textColor="@color/Text2" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                    <!-- 卡片：开关 -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@color/Background4"
+                        app:cardCornerRadius="15dp"
+                        app:cardElevation="0dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginStart="5dp"
+                            android:orientation="vertical">
+                            <!-- 开关：视频有效性检查 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_main_fragment_file_check"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:text="读取时检查文件有效性"
+                                    android:textColor="@color/Text2"
+                                    android:textSize="16sp" />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1" />
+                                <androidx.appcompat.widget.SwitchCompat
+                                    android:id="@+id/switch_EnableFileExistCheck"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="20dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="5dp"
+                                    app:thumbTint="@color/switchThumbColor"
+                                    app:trackTint="@color/switchTrackColor"
+                                    tools:ignore="InefficientWeight" />
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>

@@ -1,5 +1,6 @@
 package com.suming.player
 
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.Player
@@ -18,23 +19,32 @@ class ToolPlayerWrapper(player: ExoPlayer) : ForwardingPlayer(player) {
             .build()
 
 
-    //内部列表无下一个媒体时触发seekToNextMediaItem()，有下一个媒体时触发seekToNext()
+    //下一曲
     override fun seekToNext() {
         super.seekToNext()
         ToolEventBus.sendEvent("SessionController_Next")
     }
-
     override fun seekToNextMediaItem() {
         super.seekToNextMediaItem()
         ToolEventBus.sendEvent("SessionController_Next")
     }
-
+    //上一曲
     override fun seekToPrevious() {
         super.seekToPrevious()
         ToolEventBus.sendEvent("SessionController_Previous")
     }
-
-
-
+    override fun seekToPreviousMediaItem() {
+        super.seekToPreviousMediaItem()
+        ToolEventBus.sendEvent("SessionController_Previous")
+    }
+    //播放或暂停
+    override fun play() {
+        super.play()
+        ToolEventBus.sendEvent("SessionController_Play")
+    }
+    override fun pause() {
+        super.pause()
+        ToolEventBus.sendEvent("SessionController_Pause")
+    }
 
 }
