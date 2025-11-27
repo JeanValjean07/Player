@@ -1,9 +1,9 @@
-package data
+package data.DataBaseMediaItem
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "video_settings")
+@Entity(tableName = "MediaItemSetting")
 data class MediaItemSetting(
     @PrimaryKey
     val MARK_FileName: String,
@@ -17,7 +17,6 @@ data class MediaItemSetting(
     val PREFS_PlaySpeed: Float = 1.0f,
     val PREFS_SavePositionWhenExit: Boolean = false,
     val SaveState_ExitPosition: Long = 0L,
-    val SaveFlag_Thumb: String = "00000000000000000000",
     val SavePath_Cover: String = "",
     val PREFS_Hide: Boolean = false,
 ) {
@@ -36,7 +35,6 @@ data class MediaItemSetting(
                 PREFS_PlaySpeed == other.PREFS_PlaySpeed &&
                 PREFS_SavePositionWhenExit == other.PREFS_SavePositionWhenExit &&
                 SaveState_ExitPosition == other.SaveState_ExitPosition &&
-                SaveFlag_Thumb == other.SaveFlag_Thumb &&
                 SavePath_Cover == other.SavePath_Cover &&
                 PREFS_Hide == other.PREFS_Hide
     }

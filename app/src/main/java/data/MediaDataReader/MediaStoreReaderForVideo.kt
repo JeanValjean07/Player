@@ -1,0 +1,111 @@
+package data.MediaDataReader
+
+import android.content.ContentResolver
+import android.content.ContentUris
+import android.content.Context
+import android.provider.MediaStore
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
+import com.suming.player.PlayListManager
+import com.suming.player.ToolEventBus
+import data.DataBaseMediaStore.MediaStoreRepo
+import data.DataBaseMediaStore.MediaStoreSetting
+import data.MediaModel.MediaItemForVideo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+class MediaStoreReaderForVideo(
+    private val context: Context,
+    private val contentResolver: ContentResolver,
+) {
+    //协程作用域：保存到数据库
+    private val coroutineScope_save_to_room = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+
+    suspend fun readAllVideos(): List<MediaItemForVideo> {
+        // 查询结果列表
+        val list = mutableListOf<MediaItemForVideo>()
+        // 排序方式
+        val sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
+        // 查询投影
+        val projection = arrayOf(
+            MediaStore.Video.Media._ID,
+            MediaStore.Video.Media.DISPLAY_NAME,
+            MediaStore.Video.Media.DURATION,
+            MediaStore.Video.Media.SIZE,
+            MediaStore.Video.Media.DATE_ADDED
+        )
+
+        //在IO线程执行查询
+        return withContext(Dispatchers.IO) {
+            contentResolver.query(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                projection, null, null, sortOrder
+            )?.use { cursor ->
+                //获取列索引
+                val idCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+                val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+                val durCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+                val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+                val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+                //读取
+                while (cursor.moveToNext()) {
+                    val id = cursor.getLong(idCol)
+                    val name = cursor.getString(nameCol).orEmpty()
+                    val dur = cursor.getLong(durCol)
+                    val size = cursor.getLong(sizeCol)
+                    val dateAdded = cursor.getLong(dateCol)
+
+                    list += MediaItemForVideo(
+                        id = id,
+                        uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
+                        name = name,
+                        durationMs = dur,
+                        sizeBytes = size,
+                        dateAdded = dateAdded,
+                    )
+                }
+                ToolEventBus.sendEvent("MediaStore_Video_Query_Complete")
+                //return
+                list
+            } ?: emptyList()
+        }
+
+    }
+
+
+    //Functions
+    suspend fun saveVideosToDatabase(videos: List<MediaItemForVideo>) {
+        val mediaStoreSettings = videos.map {
+            MediaStoreSetting(
+                MARK_Uri_numOnly = it.id.toString(),
+                info_title = it.name,
+                info_duration = it.durationMs,
+                info_file_size = it.sizeBytes,
+                info_uri_full = it.uri.toString(),
+                info_date_added = it.dateAdded,
+                info_is_hidden = false,
+                info_artwork_path = ""
+            )
+        }
+
+        withContext(Dispatchers.IO) {
+            MediaStoreRepo.get(context).saveAllVideos(mediaStoreSettings)
+        }
+    }
+
+    suspend fun readAndSaveAllVideos(): List<MediaItemForVideo> {
+        val videos = readAllVideos()
+        saveVideosToDatabase(videos)
+
+        // 初始化播放列表
+        PlayListManager.getInstance(context).initPlayList_byMediaStore(videos)
+
+        return videos
+    }
+
+
+}

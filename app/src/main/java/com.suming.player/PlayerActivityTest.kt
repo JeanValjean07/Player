@@ -102,9 +102,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.MoreExecutors
-import data.MediaItemRepo
-import data.MediaItemSetting
-import data.MediaModel.MediaItem_video
+import data.DataBaseMediaItem.MediaItemRepo
+import data.DataBaseMediaItem.MediaItemSetting
+import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -363,18 +363,15 @@ class PlayerActivityTest: AppCompatActivity(){
                     //正常打开
                     else ->  {
                         vm.PREFS_ExitWhenEnd = false
-                        val uri = IntentCompat.getParcelableExtra(intent, "video", MediaItem_video::class.java)?.uri
+                        val uri = IntentCompat.getParcelableExtra(intent, "video", MediaItemForVideo::class.java)?.uri
                         try { MediaInfo_VideoUri = uri!! }
                         catch (_: NullPointerException) {
-                            showCustomToast("这条视频已被关闭,退回主页", Toast.LENGTH_SHORT, 3)
+                            showCustomToast("视频已被关闭", Toast.LENGTH_SHORT, 3)
+                            showCustomToast("播放失败", Toast.LENGTH_SHORT, 3)
                             onDestroy_fromErrorExit = true
-                            //val intent = Intent(this, MainActivity::class.java)
-                            //intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-                            //startActivity(intent)
                             finish()
                             return
                         }
-                        index = IntentCompat.getParcelableExtra(intent, "video", MediaItem_video::class.java)?.index ?: 0
                     }
                 }
                 //保存intent至ViewModel
@@ -395,7 +392,7 @@ class PlayerActivityTest: AppCompatActivity(){
         PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         PREFS_List = getSharedPreferences("PREFS_List", MODE_PRIVATE)
         PREFSEditor = PREFS.edit()
-        if(savedInstanceState == null){
+        if (savedInstanceState == null){
             //固定项
             if (!PREFS.contains("PREFS_GenerateThumbSYNC")) {
                 PREFSEditor.putBoolean("PREFS_GenerateThumbSYNC", true)
@@ -1940,7 +1937,9 @@ class PlayerActivityTest: AppCompatActivity(){
         retriever = MediaMetadataRetriever()
         try { retriever.setDataSource(this@PlayerActivityTest   , uri) }
         catch (_: Exception) {
-            showCustomToast("无法解码该视频信息", Toast.LENGTH_SHORT, 3)
+            onDestroy_fromErrorExit = true
+            showCustomToast("无法解码视频信息", Toast.LENGTH_SHORT, 3)
+            showCustomToast("播放失败", Toast.LENGTH_SHORT, 3)
             val data = Intent().apply {
                 putExtra("key", "NEED_REFRESH")
             }
@@ -2509,16 +2508,13 @@ class PlayerActivityTest: AppCompatActivity(){
             stopScrollerSync()
         }
         //错误自动关闭:此状态下,监听器等内容并没有加载
-        else if (onDestroy_fromErrorExit){
-            finish()
+        if (!onDestroy_fromErrorExit){
+            disposable?.dispose()
+            OEL.disable()
+            audioManager.unregisterAudioDeviceCallback(DeviceCallback)
+            audioManager.abandonAudioFocusRequest(focusRequest)
+            localBroadcastManager.unregisterReceiver(receiver)
         }
-        //在后台播放时划走卡片
-        disposable?.dispose()
-        OEL.disable()
-        audioManager.unregisterAudioDeviceCallback(DeviceCallback)
-        audioManager.abandonAudioFocusRequest(focusRequest)
-        localBroadcastManager.unregisterReceiver(receiver)
-
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {

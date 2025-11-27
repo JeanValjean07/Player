@@ -170,6 +170,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center|top"
         android:layout_marginTop="100dp"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
         app:cardElevation="10dp"
         app:cardCornerRadius="50dp"
         android:visibility="gone">
@@ -187,7 +189,31 @@
             />
 
     </androidx.cardview.widget.CardView>
-
+    <!-- 加载中卡片 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/loadingCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|top"
+        android:layout_marginTop="95dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        app:cardElevation="5dp"
+        app:cardCornerRadius="8dp"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="正在加载媒体"
+            android:textColor="@color/HeadText"
+            android:textSize="12sp"
+            />
+    </androidx.cardview.widget.CardView>
     <!-- 正在播放卡片 -->
     <androidx.cardview.widget.CardView
         android:id="@+id/card_playing_now"

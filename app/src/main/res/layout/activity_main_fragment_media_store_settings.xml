@@ -91,6 +91,28 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
+                    <!-- 重读媒体库 -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/ButtonReLoadFromMediaStore"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="10dp"
+                        app:cardBackgroundColor="@color/Background4"
+                        app:cardCornerRadius="10dp"
+                        app:cardElevation="3dp">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="7dp"
+                            android:layout_marginBottom="7dp"
+                            android:gravity="center"
+                            android:layout_gravity="center"
+                            android:text="重读媒体库"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                    </androidx.cardview.widget.CardView>
                     <!-- 排序方式 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"

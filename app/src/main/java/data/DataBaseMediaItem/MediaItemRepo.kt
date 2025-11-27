@@ -1,8 +1,17 @@
-package data
+package data.DataBaseMediaItem
 
 import android.content.Context
 
 class MediaItemRepo private constructor(context: Context) {
+
+    companion object {
+        @Volatile
+        private var INSTANCE: MediaItemRepo? = null
+        fun get(context: Context) =
+            INSTANCE ?: synchronized(this) {
+                MediaItemRepo(context.applicationContext).also { INSTANCE = it }
+            }
+    }
 
     private val dao = MediaItemDataBase.get(context).mediaItemDao()
 
@@ -24,8 +33,6 @@ class MediaItemRepo private constructor(context: Context) {
 
     suspend fun update_State_PositionWhenExit(filename: String,position_when_exit: Long) = dao.update_State_PositionWhenExit(filename,position_when_exit)
 
-    suspend fun update_Flag_SavedThumbPos(filename: String,flag_saved_thumb: String) = dao.update_Flag_SavedThumbPos(filename,flag_saved_thumb)
-
     suspend fun update_PREFS_SavePositionWhenExit(filename: String,flag_save_position_when_exit: Boolean) = dao.update_PREFS_SavePositionWhenExit(filename,flag_save_position_when_exit)
 
     suspend fun update_cover_path(filename: String, savePathCover: String) = dao.update_cover_path(filename, savePathCover)
@@ -37,17 +44,9 @@ class MediaItemRepo private constructor(context: Context) {
     suspend fun preset_all_row_without_cover_path(filename: String, savePathCover: String) = dao.preset_all_row_without_cover_path(filename, savePathCover)
 
 
-
     suspend fun get_saved_cover_path(filename: String): String? = dao.get_saved_cover_path(filename)
 
 
 
-    companion object {
-        @Volatile
-        private var INSTANCE: MediaItemRepo? = null
-        fun get(context: Context) =
-            INSTANCE ?: synchronized(this) {
-                MediaItemRepo(context.applicationContext).also { INSTANCE = it }
-            }
-    }
+
 }

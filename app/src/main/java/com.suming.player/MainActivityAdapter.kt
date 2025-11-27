@@ -4,11 +4,9 @@ import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,9 +19,9 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
-import data.MediaItemRepo
-import data.MediaItemSetting
-import data.MediaModel.MediaItem_video
+import data.DataBaseMediaItem.MediaItemRepo
+import data.DataBaseMediaItem.MediaItemSetting
+import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,20 +31,20 @@ import java.io.File
 
 class MainActivityAdapter(
     private val context: Context,
-    private val onItemClick: (MediaItem_video) -> Unit,
-    private val onDurationClick: (MediaItem_video) -> Unit,
-    private val onOptionClick: (MediaItem_video) -> Unit,
+    private val onItemClick: (MediaItemForVideo) -> Unit,
+    private val onDurationClick: (MediaItemForVideo) -> Unit,
+    private val onOptionClick: (MediaItemForVideo) -> Unit,
     private val onItemHideClick: (String, Boolean) -> Unit
-):PagingDataAdapter<MediaItem_video, MainActivityAdapter.ViewHolder>(diffCallback) {
+):PagingDataAdapter<MediaItemForVideo, MainActivityAdapter.ViewHolder>(diffCallback) {
 
     //比较器
     companion object {
-        val diffCallback = object : DiffUtil.ItemCallback<MediaItem_video>() {
-            override fun areItemsTheSame(oldItem: MediaItem_video, newItem: MediaItem_video): Boolean {
+        val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
+            override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
                 return oldItem.id == newItem.id
             }
 
-            override fun areContentsTheSame(oldItem: MediaItem_video, newItem: MediaItem_video): Boolean {
+            override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
                 return oldItem == newItem
             }
         }
@@ -79,7 +77,7 @@ class MainActivityAdapter(
         val item = getItem(position) ?: return
         holder.tvName.text = item.name
         holder.tvDuration.text = format_time_for_show(item.durationMs)
-        holder.tvThumb.load(item.Media_Cover_Path)
+        //holder.tvThumb.load(item.Media_Cover_Path)
         //点击事件设定
         holder.TouchPad.setOnClickListener { onItemClick(item) }
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
@@ -128,6 +126,7 @@ class MainActivityAdapter(
         val position = holder.bindingAdapterPosition
         val item = getItem(position) ?: return
 
+        /*
         coroutineScopeGenerateCover.launch(Dispatchers.IO) {
             //需要生成缩略图
             if (item.Media_Cover_Path == ""){
@@ -200,6 +199,8 @@ class MainActivityAdapter(
                  */
             }
         }
+
+         */
 
     }
 

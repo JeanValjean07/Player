@@ -6,17 +6,13 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.annotation.WorkerThread
 import androidx.core.content.edit
-import androidx.datastore.core.FileStorage
-import data.MediaModel.MediaItem_video
+import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
-import java.io.ObjectOutputStream
 import java.util.*
 
 @Suppress("unused")
-class PlayListManager private constructor(private val context: Context) {
+class PlayListManager private constructor(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "PREFS_List"
@@ -34,6 +30,7 @@ class PlayListManager private constructor(private val context: Context) {
                 INSTANCE ?: PlayListManager(context).also { INSTANCE = it }
             }
         }
+
     }
 
     //播放模式枚举
@@ -47,8 +44,8 @@ class PlayListManager private constructor(private val context: Context) {
     private val PREFS_List_Editor: SharedPreferences.Editor = PREFS_List.edit()
 
     //当前播放列表
-    private var currentPlayList: MutableList<MediaItem_video> = mutableListOf()
-    private var currentPlayList2: MutableList<MutableList<MediaItem_video>> = mutableListOf()
+    private var currentPlayList: MutableList<MediaItemForVideo> = mutableListOf()
+    private var currentPlayList2: MutableList<MutableList<MediaItemForVideo>> = mutableListOf()
     //当前播放索引
     private var currentPlayingIndex: Int = -1
     //当前播放模式
@@ -63,21 +60,21 @@ class PlayListManager private constructor(private val context: Context) {
         loadPlayList()
     }
 
-    suspend fun updatePlayList(videos: List<MediaItem_video>) {
+    suspend fun updatePlayList(videos: List<MediaItemForVideo>) {
         currentPlayList.clear()
         currentPlayList.addAll(videos)
         currentPlayingIndex = -1
         savePlayList()
     }
 
-    suspend fun updatePlayList_MediaStore(videos: List<MediaItem_video>) {
+    suspend fun updatePlayList_MediaStore(videos: List<MediaItemForVideo>) {
         currentPlayList.clear()
         currentPlayList.addAll(videos)
         currentPlayingIndex = -1
         savePlayList_MediaStore()
     }
 
-    suspend fun addToPlayList(video: MediaItem_video) {
+    suspend fun addToPlayList(video: MediaItemForVideo) {
         if (!currentPlayList.any { it.id == video.id }) {
             currentPlayList.add(video)
             savePlayList()
@@ -109,7 +106,7 @@ class PlayListManager private constructor(private val context: Context) {
         return false
     }
 
-    fun getCurrentPlayingVideo(): MediaItem_video? {
+    fun getCurrentPlayingVideo(): MediaItemForVideo? {
         return if (currentPlayingIndex >= 0 && currentPlayingIndex < currentPlayList.size) {
             currentPlayList[currentPlayingIndex]
         } else {
@@ -117,7 +114,7 @@ class PlayListManager private constructor(private val context: Context) {
         }
     }
 
-    fun getNextVideo(): MediaItem_video? {
+    fun getNextVideo(): MediaItemForVideo? {
         if (currentPlayList.isEmpty()) return null
 
         return when (currentPlayMode) {
@@ -153,7 +150,7 @@ class PlayListManager private constructor(private val context: Context) {
         }
     }
 
-    fun getPreviousVideo(): MediaItem_video? {
+    fun getPreviousVideo(): MediaItemForVideo? {
         if (currentPlayList.isEmpty()) return null
 
         return when (currentPlayMode) {
@@ -190,7 +187,7 @@ class PlayListManager private constructor(private val context: Context) {
         return currentPlayMode
     }
 
-    fun getCurrentPlayList(): List<MediaItem_video> {
+    fun getCurrentPlayList(): List<MediaItemForVideo> {
         return currentPlayList.toList()
     }
 
@@ -218,7 +215,7 @@ class PlayListManager private constructor(private val context: Context) {
     }
 
 
-    fun initPlayList_byMediaStore(playList: List<MediaItem_video>) {
+    fun initPlayList_byMediaStore(playList: List<MediaItemForVideo>) {
         currentPlayList2.clear()
 
         //val list = arrayOf(playList)

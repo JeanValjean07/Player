@@ -97,9 +97,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.MoreExecutors
-import data.MediaItemRepo
-import data.MediaItemSetting
-import data.MediaModel.MediaItem_video
+import data.DataBaseMediaItem.MediaItemRepo
+import data.DataBaseMediaItem.MediaItemSetting
+import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -151,7 +151,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     private var syncScrollRunnableRunning = false
 
     //媒体信息
-    private lateinit var MediaInfo_VideoItem: MediaItem_video
+    private lateinit var MediaInfo_VideoItem: MediaItemForVideo
     private lateinit var MediaInfo_VideoUri: Uri
     private var MediaInfo_VideoDuration = 0
     private var MediaInfo_AbsolutePath = ""
@@ -362,7 +362,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                     //正常打开
                     else ->  {
                         vm.PREFS_ExitWhenEnd = false
-                        val uri = IntentCompat.getParcelableExtra(intent, "video", MediaItem_video::class.java)?.uri
+                        val uri = IntentCompat.getParcelableExtra(intent, "video", MediaItemForVideo::class.java)?.uri
                         try { MediaInfo_VideoUri = uri!! }
                         catch (_: NullPointerException) {
                             if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI") {
@@ -374,7 +374,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                             finish()
                             return
                         }
-                        index = IntentCompat.getParcelableExtra(intent, "video", MediaItem_video::class.java)?.index ?: 0
                     }
                 }
                 //保存intent至ViewModel

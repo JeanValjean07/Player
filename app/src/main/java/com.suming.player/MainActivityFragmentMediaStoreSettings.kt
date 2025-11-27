@@ -30,7 +30,11 @@ import kotlin.math.abs
 
 @UnstableApi
 class MainActivityFragmentMediaStoreSettings: DialogFragment() {
-
+    //静态
+    companion object {
+        fun newInstance():
+                MainActivityFragmentMediaStoreSettings = MainActivityFragmentMediaStoreSettings().apply { arguments = bundleOf(  ) }
+    }
     //自动关闭标志位
     private var lockPage = false
 
@@ -38,8 +42,6 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
 
     private var PREFS_CloseFragmentGesture = false
 
-    //companion object
-    companion object { fun newInstance(): MainActivityFragmentMediaStoreSettings = MainActivityFragmentMediaStoreSettings().apply { arguments = bundleOf(  ) } }
 
 
     override fun onStart() {
@@ -188,6 +190,14 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
             }
         }
 
+        //按钮：重读媒体库
+        val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
+        ButtonReLoadFromMediaStore.setOnClickListener {
+            val result = bundleOf("KEY" to "ReLoadFromMediaStore")
+            setFragmentResult("FROM_FRAGMENT_MediaStore", result)
+            dismiss()
+        }
+
 
 
 
@@ -291,6 +301,8 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
     } //onViewCreated END
 
 
+
+    //Functions
     fun expand(view: LinearLayout) {
         //设置初始高度为0
         view.measure(
@@ -384,7 +396,6 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
             }
         }
     }
-
 
 
 
