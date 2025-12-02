@@ -183,6 +183,7 @@ class PlayerActivityTest: AppCompatActivity(){
     private var finger1y = 0f
     private var finger2x = 0f
     private var finger2y = 0f
+    private var vibrated = false
     //自动旋转状态
     private var rotationSetting = 0
     //PlayerReady
@@ -310,6 +311,8 @@ class PlayerActivityTest: AppCompatActivity(){
 
     private lateinit var focusRequest: AudioFocusRequest
 
+    private var state_need_return = false
+
     //</editor-fold>
 
     @OptIn(UnstableApi::class)
@@ -371,6 +374,7 @@ class PlayerActivityTest: AppCompatActivity(){
                             showCustomToast("视频已被关闭", Toast.LENGTH_SHORT, 3)
                             showCustomToast("播放失败", Toast.LENGTH_SHORT, 3)
                             onDestroy_fromErrorExit = true
+                            state_need_return = true
                             finish()
                             return
                         }
@@ -388,6 +392,10 @@ class PlayerActivityTest: AppCompatActivity(){
         }
         //根据uri提取基础视频信息
         getMediaInfo(MediaInfo_VideoUri)
+        if (state_need_return){
+            finish()
+            return
+        }
 
 
         //读取设置
@@ -1135,26 +1143,37 @@ class PlayerActivityTest: AppCompatActivity(){
                     //亮度修改操作
                     vm.BrightnessChanged = true
                     var newBrightness: Float
+                    //上滑
                     if (scrollDistance > 50) {
-
                         newBrightness = (vm.BrightnessValue + 0.01f).toBigDecimal().setScale(2, RoundingMode.HALF_UP).toFloat()
-
                         if (newBrightness <= 1.0 && newBrightness >= 0.0) {
                             windowInfo.screenBrightness = newBrightness
                             window.attributes = windowInfo
                             vm.BrightnessValue = newBrightness
                             notice("亮度 +1 (${(newBrightness*100).toInt()}/100)", 1000)
-                        }else{
-                            notice("亮度已到上限", 1000)
                         }
-                    }else if (scrollDistance < -50){
+                        else{
+                            notice("亮度已到上限", 1000)
+                            if (!vibrated) {
+                                vibrated = true
+                                vibrate()
+                            }
+                        }
+                    }
+                    //下滑
+                    else if (scrollDistance < -50){
                         newBrightness = (vm.BrightnessValue - 0.01f).toBigDecimal().setScale(2, RoundingMode.HALF_UP).toFloat()
                         if (newBrightness <= 1.0 && newBrightness >= 0.0) {
                             windowInfo.screenBrightness = newBrightness
                             window.attributes = windowInfo
                             vm.BrightnessValue = newBrightness
                             notice("亮度 -1 (${(newBrightness*100).toInt()}/100)", 1000)
-                        }else{
+                        }
+                        else{
+                            if (!vibrated) {
+                                vibrated = true
+                                vibrate()
+                            }
                             notice("亮度已到下限", 1000)
                         }
                     }
@@ -1179,21 +1198,40 @@ class PlayerActivityTest: AppCompatActivity(){
                                 if (currentVolume <= (maxVolume*0.6).toInt()){
                                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume, 0)
                                     notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
-                                }else{
+                                }
+                                else{
+                                    if (!vibrated) {
+                                        vibrated = true
+                                        vibrate()
+                                    }
                                     notice("佩戴耳机时,音量不能超过${(maxVolume*0.6).toInt()},除非使用音量键调整", 1000)
                                 }
-                            }else{
+                            }
+                            else{
                                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume, 0)
                                 notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
                             }
                         }
-                    }else if (scrollDistance< -volumeChangeGap){
+                        else{
+                            if (!vibrated) {
+                                vibrated = true
+                                vibrate()
+                            }
+                            notice("音量已到最高", 1000)
+                        }
+                    }
+                    else if (scrollDistance< -volumeChangeGap){
                         var currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         currentVolume = currentVolume - 1
                         if (currentVolume >= 0){
                             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume, 0)
                             notice("音量 -1 ($currentVolume/$maxVolume)", 1000)
-                        }else{
+                        }
+                        else{
+                            if (!vibrated) {
+                                vibrated = true
+                                vibrate()
+                            }
                             notice("音量已到最低", 1000)
                         }
                     }
@@ -1212,6 +1250,8 @@ class PlayerActivityTest: AppCompatActivity(){
                     //变更状态标记
                     ACTION_POINTER_DOWN = false
                     STATE_2Fingers = false
+                    //重置振动标志位
+                    vibrated = false
                     //记录1指初始坐标
                     finger1x = event.x
                     finger1y = event.y
@@ -1581,8 +1621,8 @@ class PlayerActivityTest: AppCompatActivity(){
                 "Equalizer" -> {
                     PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
                 }
-                "ReCreateThumb" -> {
-                    ReCreateScrollerThumb()
+                "clearMiniature" -> {
+                    clearMiniature()
                 }
                 //退出事件
                 "Dismiss" -> {
@@ -1767,7 +1807,9 @@ class PlayerActivityTest: AppCompatActivity(){
             }
             if (vm.PREFS_UseDataBaseForScrollerSetting){
                 lifecycleScope.launch(Dispatchers.IO) {
-                    if (DataBaseProfile == null){ return@launch }
+                    if (DataBaseProfile == null){
+                        return@launch
+                    }
                     val DataBaseSetting = DataBaseProfile!!
                     if (DataBaseSetting.PREFS_AlwaysSeek){
                         vm.PREFS_AlwaysSeek = true
@@ -1954,6 +1996,7 @@ class PlayerActivityTest: AppCompatActivity(){
                 putExtra("key", "NEED_REFRESH")
             }
             setResult(RESULT_OK, data)
+            state_need_return = true
             finish()
             return
         }
@@ -2397,6 +2440,7 @@ class PlayerActivityTest: AppCompatActivity(){
                 notice("已开启AlwaysSeek", 3000)
             }
             lifecycleScope.launch(Dispatchers.IO) {
+                Log.d("SuMing", "存入数据库: ${vm.PREFS_AlwaysSeek}")
                 MediaItemRepo.get(this@PlayerActivityTest).update_PREFS_AlwaysSeek(MediaInfo_FileName,vm.PREFS_AlwaysSeek)
             }
         }
@@ -2445,7 +2489,7 @@ class PlayerActivityTest: AppCompatActivity(){
                 scroller.stopScroll()
                 startScrollerSync()
                 stopVideoSeek()
-                PREFS.edit { putBoolean("PREFS_TapJump", true).apply() }
+                PREFS.edit { putBoolean("PREFS_LinkScroll", true).apply() }
             }
         }
     }
@@ -2622,77 +2666,9 @@ class PlayerActivityTest: AppCompatActivity(){
             (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (0)
         }
     }
-    //重建进度条截图
-    private fun ReCreateScrollerThumb(){
-        lifecycleScope.launch(Dispatchers.IO) {
-            //获取ViewModel
-            val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
-            //预先规划文件夹结构并创建 + 基于文件名哈希区分
-            val SubDir_ThisMedia = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller")
-            if (!SubDir_ThisMedia.exists()){
-                SubDir_ThisMedia.mkdirs()
-            }
-            //传入参数预处理
-            if (ScrollerInfo_EachPicDuration > 1000){
-                vm.PREFS_GenerateThumbSYNC = true
-            }
-            //进度条绘制参数计算
-            //使用超长进度条
-            if (vm.PREFS_UseLongScroller) {
-                ScrollerInfo_EachPicWidth = (47 * DisplayMetrics.density).toInt()
-                if (MediaInfo_VideoDuration > 1_0000_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 500.0).toInt()
-                    ScrollerInfo_PicNumber = 500
-                }
-                else if (MediaInfo_VideoDuration > 7500_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 400.0).toInt()
-                    ScrollerInfo_PicNumber = 400
-                }
-                else if (MediaInfo_VideoDuration > 5000_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 300.0).toInt()
-                    ScrollerInfo_PicNumber = 300
-                }
-                else if (MediaInfo_VideoDuration > 500_000L) {
-                    ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration / 200.0).toInt()
-                    ScrollerInfo_PicNumber = 200
-                }
-                else {
-                    ScrollerInfo_EachPicDuration = 1000
-                    ScrollerInfo_PicNumber = min((max((MediaInfo_VideoDuration / 1000), 1)), 500)
-                }
-            }
-            //使用普通进度条
-            else if (MediaInfo_VideoDuration / 1000 > ScrollerInfo_MaxPicNumber) {
-                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_MaxPicNumber
-                ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
-            }
-            else {
-                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                ScrollerInfo_PicNumber = (MediaInfo_VideoDuration / 1000) + 1
-                ScrollerInfo_EachPicDuration = (MediaInfo_VideoDuration.div(100) * 100) / ScrollerInfo_PicNumber
-            }
-
-            //移除查询参数
-            val MediaInfo_AbsolutePath_clean = MediaInfo_AbsolutePath.substringBefore("?")
-
-
-            //开启被控
-            fun startSyncScrollerGapControl(){
-                syncScrollRunnableGap = 0L
-                lifecycleScope.launch {
-                    delay(3000)
-                    syncScrollRunnableGap = ((MediaInfo_VideoDuration / 1000) * (1000.0 / 3600)).toLong()
-                    if (vm.PREFS_UseLongScroller){
-                        syncScrollRunnableGap = 10L
-                    }
-                }
-            }
-            startSyncScrollerGapControl()
-            if(vm.PREFS_LinkScroll){ startScrollerSync() }
-            delay(200)
-            startVideoTimeSync()
-        }
+    //清除进度条截图
+    private fun clearMiniature(){
+        File(filesDir, "miniature/${MediaInfo_FileName.hashCode()}/scroller").deleteRecursively()
     }
     //视频区域抬高
     private fun MoveYaxisCalculate(){
@@ -2871,7 +2847,7 @@ class PlayerActivityTest: AppCompatActivity(){
         }
 
     }
-    //分享视频(已知Uri)
+    //分享视频by uri
     private fun shareVideo(context: Context, videoUri: Uri) {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "video/*"

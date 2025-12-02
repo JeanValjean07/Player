@@ -544,7 +544,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
             requireContext().showCustomToast("重新打开视频后生效", Toast.LENGTH_SHORT, 3)
 
-            val result = bundleOf("KEY" to "ReCreateThumb")
+            val result = bundleOf("KEY" to "clearMiniature")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
             Dismiss()
@@ -673,7 +673,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
             return@setOnKeyListener false
         }
 
-    } //onViewCreated END
+    //onViewCreated END
+    }
 
 
 

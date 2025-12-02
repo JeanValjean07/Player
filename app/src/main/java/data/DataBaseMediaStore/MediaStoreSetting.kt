@@ -14,7 +14,7 @@ data class MediaStoreSetting(
     val info_date_added : Long = 0L,
     val info_is_hidden: Boolean = false,
     val info_file_size: Long = 0L,
-
+    val info_format: String = "",
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -27,7 +27,8 @@ data class MediaStoreSetting(
                 info_duration == other.info_duration &&
                 info_date_added == other.info_date_added &&
                 info_is_hidden == other.info_is_hidden &&
-                info_file_size == other.info_file_size
+                info_file_size == other.info_file_size &&
+                info_format == other.info_format
 
     }
 

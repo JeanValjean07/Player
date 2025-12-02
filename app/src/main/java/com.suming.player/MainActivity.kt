@@ -306,11 +306,9 @@ class MainActivity: AppCompatActivity() {
         }
     }
     private fun loadFromMediaStore(){
-        //读取之前先把库清了
         lifecycleScope.launch(Dispatchers.IO) {
-
-            MediaStoreRepo.get(this@MainActivity).clearAll()
-
+            //读取之前不能清库,否则丢失隐藏属性
+            //MediaStoreRepo.get(this@MainActivity).clearAll()
             withContext(Dispatchers.Main){
                 //权限检查
                 val requiredPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -360,7 +358,7 @@ class MainActivity: AppCompatActivity() {
                 popup.show()
             },
             onItemHideClick = { filename,flag_need_hide ->
-                HideItem(filename,flag_need_hide)
+                HideItem(filename)
             }
         )
         recyclerview1.adapter = adapter
@@ -433,11 +431,21 @@ class MainActivity: AppCompatActivity() {
         }
     }
     //隐藏
-    private fun HideItem(filename: String,flag_need_hide: Boolean) {
-        //更新数据库
+    private fun HideItem(filename: String) {
         lifecycleScope.launch {
-            //根据flag_need_hide来判断是否隐藏
-            MediaItemRepo.get(this@MainActivity).update_PREFS_HideThisItem(filename,flag_need_hide)
+            val isHidden = MediaStoreRepo.get(this@MainActivity).getHideStatus(filename) ?: return@launch
+
+            if (isHidden){
+                showCustomToast("已取消隐藏", Toast.LENGTH_SHORT, 3)
+            }
+            else{
+                showCustomToast("已隐藏", Toast.LENGTH_SHORT, 3)
+            }
+            MediaStoreRepo.get(this@MainActivity).updateHiddenStatus(filename,!isHidden)
+
+            withContext(Dispatchers.Main){
+                loadFromDataBase()
+            }
         }
 
     }

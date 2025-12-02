@@ -44,22 +44,53 @@
         <!-- 视频文件名 -->
         <TextView
             android:id="@+id/tvName"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:maxLines="2"
             android:ellipsize="end"
             android:padding="8dp"
             android:textSize="14sp"
-            android:layout_marginStart="4dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="15dp"
+            android:layout_marginBottom="5dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toEndOf="@+id/ivThumbCard"
+            app:layout_constraintEnd_toEndOf="parent"
             />
+        <!-- 视频格式 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/tvFormatCard"
+            android:layout_width="wrap_content"
+            android:layout_height="25dp"
+            android:minWidth="30dp"
+            android:backgroundTint="@color/Background2"
+            android:layout_marginBottom="5dp"
+            android:layout_marginEnd="5dp"
+            app:layout_constraintEnd_toStartOf="@+id/tvDurationCard"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:cardCornerRadius="7dp"
+            app:cardElevation="0dp">
+            <TextView
+                android:id="@+id/tvFormat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/HeadText"
+                android:textSize="12sp"
+                android:text="格式"
+                android:layout_gravity="center"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                app:layout_constraintBottom_toBottomOf="@id/ivThumb"
+                app:layout_constraintEnd_toEndOf="@id/ivThumb"/>
+        </androidx.cardview.widget.CardView>
         <!-- 视频时长 -->
         <androidx.cardview.widget.CardView
             android:id="@+id/tvDurationCard"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="25dp"
             android:minWidth="30dp"
             android:backgroundTint="@color/Background2"
             android:layout_marginBottom="5dp"
@@ -75,6 +106,7 @@
                 android:textColor="@color/HeadText"
                 android:textSize="12sp"
                 android:text="00:00"
+                android:layout_gravity="center"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
                 android:paddingTop="2dp"
@@ -86,7 +118,7 @@
         <androidx.cardview.widget.CardView
             android:id="@+id/options"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="25dp"
             android:minWidth="30dp"
             android:backgroundTint="@color/Background2"
             android:layout_marginBottom="5dp"
@@ -100,6 +132,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/HeadText"
                 android:text="选项"
+                android:layout_gravity="center"
                 android:textSize="12sp"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"

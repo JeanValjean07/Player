@@ -49,26 +49,29 @@ interface MediaItemDao {
 
 
     //快速预写
-    @Query("""UPDATE MediaItemSetting SET
-            PREFS_BackgroundPlay = :PREFS_BackgroundPlay,
-            PREFS_LoopPlay = :PREFS_LoopPlay,
-            PREFS_TapJump = :PREFS_TapJump,
-            PREFS_LinkScroll = :PREFS_LinkScroll,
-            PREFS_AlwaysSeek = :PREFS_AlwaysSeek,
-            PREFS_VideoOnly = :PREFS_VideoOnly,
-            PREFS_SoundOnly = :PREFS_SoundOnly,
-            PREFS_PlaySpeed = :PREFS_PlaySpeed,
-            PREFS_SavePositionWhenExit = :PREFS_SavePositionWhenExit,
-            SaveState_ExitPosition = :SaveState_ExitPosition,
-            SavePath_Cover = :SavePath_Cover,
-            PREFS_Hide = :PREFS_Hide
-            WHERE MARK_FileName = :MARK_FileName
-    """)
     suspend fun preset_all_row(
         MARK_FileName: String, PREFS_BackgroundPlay: Boolean, PREFS_LoopPlay: Boolean, PREFS_TapJump : Boolean, PREFS_LinkScroll : Boolean, PREFS_AlwaysSeek : Boolean,
         PREFS_VideoOnly: Boolean, PREFS_SoundOnly: Boolean, PREFS_PlaySpeed: Float, PREFS_SavePositionWhenExit: Boolean, SaveState_ExitPosition: Long,
         SavePath_Cover: String, PREFS_Hide: Boolean
-    )
+    ){
+        insertOrUpdate(
+            MediaItemSetting(
+                MARK_FileName = MARK_FileName,
+                PREFS_BackgroundPlay = PREFS_BackgroundPlay,
+                PREFS_LoopPlay = PREFS_LoopPlay,
+                PREFS_TapJump = PREFS_TapJump,
+                PREFS_LinkScroll = PREFS_LinkScroll,
+                PREFS_AlwaysSeek = PREFS_AlwaysSeek,
+                PREFS_VideoOnly = PREFS_VideoOnly,
+                PREFS_SoundOnly = PREFS_SoundOnly,
+                PREFS_PlaySpeed = PREFS_PlaySpeed,
+                PREFS_SavePositionWhenExit = PREFS_SavePositionWhenExit,
+                SaveState_ExitPosition = SaveState_ExitPosition,
+                SavePath_Cover = SavePath_Cover,
+                PREFS_Hide = PREFS_Hide
+            )
+        )
+    }
     suspend fun preset_all_row_default(MARK_FileName: String){
         with(PresetRoomRows.Preset()){
             preset_all_row(
@@ -111,9 +114,8 @@ interface MediaItemDao {
     @Query("SELECT SavePath_Cover FROM MediaItemSetting WHERE MARK_FileName = :filename LIMIT 1")
     suspend fun get_saved_cover_path(filename: String): String?
 
-
-
-
+    @Query("SELECT PREFS_Hide FROM MediaItemSetting WHERE MARK_FileName = :filename LIMIT 1")
+    suspend fun get_saved_PREFS_Hide(filename: String): Boolean?
 
 
 

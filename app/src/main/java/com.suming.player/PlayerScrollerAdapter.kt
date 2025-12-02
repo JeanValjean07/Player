@@ -46,16 +46,17 @@ class PlayerScrollerAdapter(
     private val coroutineScopeGenerateThumb = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutineScopeLoadFrame = CoroutineScope(Dispatchers.IO + SupervisorJob()) //可选,禁止删除
     //缩略图内存缓存
-    private val memoryCache = LruCache<Int, Bitmap>(10 * 1024 * 1024)
+    private val BitmapCache = LruCache<Int, Bitmap>(10 * 1024 * 1024)
+    private lateinit var HolderBitmap : Bitmap
 
     inner class ThumbViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var generateThumbJob: Job? = null
         val ivThumbnail: ImageView = itemView.findViewById(R.id.iv_thumbnail)
     }
 
-    //初始化
+    //主线程初始化操作
     init {
-        //列表监听器
+        //列表监听器(必选)
         thumbItems.addOnListChangedCallback(object : ObservableList.OnListChangedCallback<ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>>() {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChanged(sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>) =
@@ -110,7 +111,7 @@ class PlayerScrollerAdapter(
                 }
             }
         })
-
+        //添加自定义的初始化时操作
         //加载已有图
         loadFrame()
 
@@ -148,8 +149,13 @@ class PlayerScrollerAdapter(
         //指定单图宽度
         holder.itemView.updateLayoutParams<ViewGroup.LayoutParams> { this.width = eachPicWidth }
         //绑定图片
-        val frame = memoryCache.get(position)
-        holder.ivThumbnail.setImageBitmap(frame)
+        val frame = BitmapCache.get(position)
+        if (frame == null){
+            holder.ivThumbnail.setImageBitmap(HolderBitmap)
+        }else{
+            holder.ivThumbnail.setImageBitmap(frame)
+        }
+
 
     }
 
@@ -157,7 +163,7 @@ class PlayerScrollerAdapter(
         super.onViewAttachedToWindow(holder)
         val position = holder.bindingAdapterPosition
 
-        if (memoryCache.get(position) == null){
+        if (BitmapCache.get(position) == null){
             holder.generateThumbJob = coroutineScopeGenerateThumb.launch(Dispatchers.IO) { generateThumb(position) }
         }
 
@@ -167,9 +173,17 @@ class PlayerScrollerAdapter(
     //Functions
     //一次性加载缩略图到内存
     private fun loadFrame(){
+        fun preparePlaceholder(){
+            if (BitmapCache[0] == null){
+                generatePlaceholder()
+            } else{
+                HolderBitmap = BitmapCache[0]
+            }
+        }
+
         fun loadBitmapFromPosition(position: Int): Bitmap? {
             return try {
-                val thumbPath = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/${position}.jpg")
+                val thumbPath = File(context.filesDir, "miniature/${MediaInfo_FileName.hashCode()}/scroller/${position}.jpg")
                 if (thumbPath.exists()) {
                     //return this bitmap
                     BitmapFactory.decodeFile(thumbPath.absolutePath)
@@ -193,10 +207,10 @@ class PlayerScrollerAdapter(
 
             }.forEach { (position, bitmap) ->
                 bitmap?.let {
-                    memoryCache.put(position, it)
+                    BitmapCache.put(position, it)
                 }
             }
-
+            preparePlaceholder()
         }
         loadBitmapAll_single_thread((0 until picNumber).toList())
 
@@ -210,10 +224,11 @@ class PlayerScrollerAdapter(
                 }.awaitAll().forEach { (position, bitmap) ->
                     bitmap?.let {
                         withContext(Dispatchers.Main) {
-                            memoryCache.put(position, it)
+                            BitmapCache.put(position, it)
                         }
                     }
                 }
+                preparePlaceholder()
             }
         }
         //loadBitmapAll_multi_thread((0 until picNumber).toList())
@@ -275,7 +290,7 @@ class PlayerScrollerAdapter(
     private suspend fun saveThumb(ratio: Float, position: Int, frame: Bitmap?) {
         val item = thumbItems[position]
         if (frame != null) {
-            val save_file_path = File(context.cacheDir, "Media/${MediaInfo_FileName.hashCode()}/scroller/${position}.jpg")
+            val save_file_path = File(context.filesDir, "miniature/${MediaInfo_FileName.hashCode()}/scroller/${position}.jpg")
             save_file_path.parentFile?.mkdirs()
             save_file_path.outputStream().use {
                 val targetCoverWidth = 200
@@ -284,7 +299,7 @@ class PlayerScrollerAdapter(
                 val success = scaledBitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
                 if (!success) { scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 15, it) }
 
-                memoryCache.put(position, scaledBitmap)
+                BitmapCache.put(position, scaledBitmap)
 
             }
             //修改item中的缩略图链接
@@ -296,6 +311,33 @@ class PlayerScrollerAdapter(
 
         }
     }
+    //生成和使用占位图
+    private fun generatePlaceholder() {
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(MediaInfo_AbsolutePath)
+        try {
+            var wStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+            var hStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+            val rotateStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+            if (rotateStr == "90"){
+                val temp = wStr
+                wStr = hStr
+                hStr = temp
+            }
+            val videoWidth = wStr?.toFloat() ?: 0f
+            val videoHeight = hStr?.toFloat() ?: 0f
+            val ratio = videoHeight.div(videoWidth)
+            val frame = retriever.getFrameAtTime((0), MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+            if (frame != null) {
+                HolderBitmap = frame.scale(200, (200 * ratio).toInt())
+            }else{
+                return
+            }
+        }
+        catch (_: Exception) {  }
+        finally {
+            retriever.release()
+        }
 
-
+    }
 }

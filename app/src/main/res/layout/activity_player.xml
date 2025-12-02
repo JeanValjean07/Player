@@ -367,7 +367,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:adjustViewBounds="false"
-                android:backgroundTint="@color/CardViewRV"
                 android:clipToPadding="false"
                 android:orientation="horizontal"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
@@ -377,7 +376,6 @@
                 app:layout_constraintTop_toTopOf="parent"
                 android:layout_marginTop="3dp"
                 android:layout_marginBottom="3dp"
-                android:elevation="1dp"
                 />
         </androidx.constraintlayout.widget.ConstraintLayout>
 

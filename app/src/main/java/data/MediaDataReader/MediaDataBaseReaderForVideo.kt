@@ -37,7 +37,8 @@ class MediaDataBaseReaderForVideo(
                     name = setting.info_title,
                     durationMs = setting.info_duration,
                     sizeBytes = setting.info_file_size,
-                    dateAdded = setting.info_date_added
+                    dateAdded = setting.info_date_added,
+                    format = setting.info_format
                 )
             }
 

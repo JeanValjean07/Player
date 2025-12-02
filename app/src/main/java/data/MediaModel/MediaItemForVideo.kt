@@ -12,7 +12,7 @@ data class MediaItemForVideo (
     val durationMs: Long,
     val sizeBytes: Long,
     val dateAdded: Long = 0,
-
+    val format: String = "",
 ): Parcelable{
 
     companion object CREATOR : Parcelable.Creator<MediaItemForVideo> {
@@ -44,6 +44,7 @@ data class MediaItemForVideo (
         dest.writeLong(durationMs)
         dest.writeLong(sizeBytes)
         dest.writeLong(dateAdded)
+        dest.writeString(format)
     }
 
 }
