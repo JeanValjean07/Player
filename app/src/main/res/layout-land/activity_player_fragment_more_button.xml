@@ -967,7 +967,7 @@
                                     android:layout_weight="1"/>
                                 <TextView
                                     android:id="@+id/ButtonReCreateThumb"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="35dp"
                                     android:layout_height="20dp"
                                     android:text="重置"
                                     android:textSize="14sp"
