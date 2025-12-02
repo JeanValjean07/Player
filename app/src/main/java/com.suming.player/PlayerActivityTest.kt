@@ -2803,7 +2803,7 @@ class PlayerActivityTest: AppCompatActivity(){
     private fun updateCover(filename: String) {
         fun handleSuccess(bitmap: Bitmap) {
             //创建目录
-            val saveCover = File(cacheDir, "Media/${filename.hashCode()}/cover/cover.jpg")
+            val saveCover = File(filesDir, "miniature/cover/${filename.hashCode()}.webp")
             saveCover.parentFile?.mkdirs()
             //保存图片
             saveCover.outputStream().use {

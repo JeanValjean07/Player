@@ -80,7 +80,8 @@ class MediaStoreReaderForVideo(
                     val dur = cursor.getLong(durCol)
                     val size = cursor.getLong(sizeCol)
                     val dateAdded = cursor.getLong(dateCol)
-                    val format = cursor.getString(mimeTypeCol).orEmpty()
+                    val mimeType = cursor.getString(mimeTypeCol).orEmpty()
+                    val format = if (mimeType.contains('/')) mimeType.substringAfterLast('/') else mimeType
                     //使用存在检查
                     if (PREFS_EnableFileExistCheck) {
                         //检查文件是否存在
@@ -110,7 +111,6 @@ class MediaStoreReaderForVideo(
                             format = format,
                         )
                     }
-
                 }
                 //读取完后发布通知消息
                 ToolEventBus.sendEvent("MediaStore_Video_Query_Complete")

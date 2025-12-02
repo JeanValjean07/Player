@@ -156,7 +156,6 @@ class PlayerScrollerAdapter(
             holder.ivThumbnail.setImageBitmap(frame)
         }
 
-
     }
 
     override fun onViewAttachedToWindow(holder: ThumbViewHolder) {
@@ -232,7 +231,6 @@ class PlayerScrollerAdapter(
             }
         }
         //loadBitmapAll_multi_thread((0 until picNumber).toList())
-
     }
     //截取实际缩略图
     val retrieverMap = mutableMapOf<Int, MediaMetadataRetriever>()

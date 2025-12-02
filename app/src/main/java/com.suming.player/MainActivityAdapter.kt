@@ -4,9 +4,11 @@ import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,9 +20,6 @@ import androidx.cardview.widget.CardView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
-import data.DataBaseMediaItem.MediaItemRepo
-import data.DataBaseMediaItem.MediaItemSetting
 import data.DataBaseMediaStore.MediaStoreRepo
 import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
@@ -37,7 +36,6 @@ class MainActivityAdapter(
     private val onOptionClick: (MediaItemForVideo) -> Unit,
     private val onItemHideClick: (String, Boolean) -> Unit
 ):PagingDataAdapter<MediaItemForVideo, MainActivityAdapter.ViewHolder>(diffCallback) {
-
     //比较器
     companion object {
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
@@ -59,15 +57,17 @@ class MainActivityAdapter(
         val tvThumb: ImageView = itemView.findViewById(R.id.ivThumb)
         val tvOption: CardView = itemView.findViewById(R.id.options)
     }
-
     //协程作用域
     private val coroutineScopeGenerateCover = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutineScopeSaveRoom = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutineScopeReadRoom = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    //图片池
+    private val CoverBitmapCache = LruCache<Int, Bitmap>(30 * 1024 * 1024)
 
 
-
-
+    init {
+        loadAllCoverFrame()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_adapter_items, parent, false)
@@ -80,7 +80,9 @@ class MainActivityAdapter(
         holder.tvName.text = item.name
         holder.tvDuration.text = format_time_for_show(item.durationMs)
         holder.tvFormat.text = item.format.ifEmpty { "未知" }
-        //holder.tvThumb.load(item.Media_Cover_Path)
+        val frame = CoverBitmapCache.get(item.name.hashCode())
+        if (frame == null) {generateCoverFrame(item, holder)}
+        else{ holder.tvThumb.setImageBitmap(frame) }
         //点击事件设定
         holder.TouchPad.setOnClickListener { onItemClick(item) }
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
@@ -126,82 +128,6 @@ class MainActivityAdapter(
         val position = holder.bindingAdapterPosition
         val item = getItem(position) ?: return
 
-        /*
-        coroutineScopeGenerateCover.launch(Dispatchers.IO) {
-            //需要生成缩略图
-            if (item.Media_Cover_Path == ""){
-
-                val retriever = MediaMetadataRetriever()
-                //核心逻辑:::
-                try {
-                    //生成封面缩略图
-                    retriever.setDataSource(getAbsoluteFilePath(context, item.uri) ?: item.uri.toString())
-
-                    //Log.d("SuMing", "生成缩略图: ${item.uri}")
-
-
-
-                    val bitmap = retriever.getFrameAtTime(1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-
-                    //生成成功
-                    if (bitmap != null){
-                        //创建目录
-                        val saveCover = File(context.cacheDir, "Media/${item.name.hashCode()}/cover/cover.jpg")
-                        saveCover.parentFile?.mkdirs()
-                        //保存图片
-                        saveCover.outputStream().use {
-                            val success = bitmap.compress(Bitmap.CompressFormat.WEBP, 10, it)
-                            if (!success) { bitmap.compress(Bitmap.CompressFormat.JPEG, 10, it) }
-                        }
-                        //刷新页面
-                        withContext(Dispatchers.Main){
-                            holder.tvThumb.setImageBitmap(bitmap)
-                        }
-
-                        //修改item中的缩略图链接
-                        item.Media_Cover_Path = saveCover.path
-                        //存入数据库
-                        coroutineScopeSaveRoom.launch {
-
-
-                            val newSetting = MediaItemSetting(MARK_FileName = item.name, SavePath_Cover = saveCover.path,)
-                            MediaItemRepo.get(context).saveSetting(newSetting)
-
-
-
-                           // MediaItemRepo.get(context).update_cover_path(item.name, saveCover.path)
-
-                            //MediaItemRepo.get(context).preset_all_row_without_cover_path(item.name, saveCover.path)
-                        }
-                    }
-                    //生成失败
-                    else{
-                        Toast.makeText(context, "存在无法生成缩略图的视频,请手动为其截取", Toast.LENGTH_SHORT).show()
-                    }
-
-                }
-                catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    retriever.release()
-                }
-
-            }
-            //已有缩略图可直接绑定
-            else{
-                return@launch
-                //交给BindViewHolder来承担
-                /*
-                Log.d("MediaReader", "${item.name}:可直接绑定已有缩略图")
-                val BitmapExist = BitmapFactory.decodeFile(item.Media_Cover_Path!!)
-                holder.tvThumb.setImageBitmap(BitmapExist)
-
-                 */
-            }
-        }
-
-         */
-
     }
 
 
@@ -244,5 +170,57 @@ class MainActivityAdapter(
         }
         return null
     }
+    //读取所有封面图
+    private fun loadAllCoverFrame(){
+        val covers_path = File(context.filesDir, "miniature/cover")
+        covers_path.mkdirs()
+        val files = covers_path.listFiles { file -> file.extension in listOf("webp") }
+        files?.forEach { file ->
+            val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+            val key = (file.name.removeSuffix(".webp")).toInt()
+            CoverBitmapCache.put(key, bitmap)
+        }
+    }
+    //生成缩略图
+    private fun generateCoverFrame(item: MediaItemForVideo, holder: ViewHolder){
+        coroutineScopeGenerateCover.launch(Dispatchers.IO){
+            val retriever = MediaMetadataRetriever()
+            try {
+                retriever.setDataSource(getAbsoluteFilePath(context, item.uri) ?: item.uri.toString())
+                val bitmap = retriever.getFrameAtTime(1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                //生成成功
+                if (bitmap != null){
+                    //创建目录
+                    val covers_path = File(context.filesDir, "miniature/cover")
+                    if (!covers_path.exists()) {
+                        covers_path.mkdirs()
+                    }
+                    //保存图片
+                    val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
+                    cover_item_file.outputStream().use {
+                        bitmap.compress(Bitmap.CompressFormat.WEBP, 10, it)
+                        //缓存
+                        val key = item.name.hashCode()
+                        CoverBitmapCache.put(key, bitmap)
+                    }
+                    //刷新页面
+                    withContext(Dispatchers.Main){
+                        holder.tvThumb.setImageBitmap(bitmap)
+                    }
+                }
+                //生成失败
+                else{
+                    Toast.makeText(context, "存在无法生成缩略图的视频,请手动为其截取", Toast.LENGTH_SHORT).show()
+                }
+            }
+            catch (e: Exception) {
+                e.printStackTrace()
+            }
+            finally {
+                retriever.release()
+            }
+        }
+    }
+
 
 }
