@@ -313,6 +313,9 @@ class PlayerActivityTest: AppCompatActivity(){
 
     private var state_need_return = false
 
+    private var switchLandscape_downMillis = 0L
+    private var switchLandscape_upMillis = 0L
+
     //</editor-fold>
 
     @OptIn(UnstableApi::class)
@@ -1077,9 +1080,25 @@ class PlayerActivityTest: AppCompatActivity(){
         }
         //按钮：切换横屏
         val buttonSwitchLandscape = findViewById<FrameLayout>(R.id.buttonActualSwitchLandscape)
-        buttonSwitchLandscape.setOnClickListener {
-            vibrate()
-            ButtonChangeOrientation()
+        buttonSwitchLandscape.setOnTouchListener { _, event ->
+            when (event.actionMasked){
+                MotionEvent.ACTION_DOWN -> {
+                    vibrate()
+                    switchLandscape_upMillis = 0L
+                    switchLandscape_downMillis = System.currentTimeMillis()
+                    SwitchLandscapeJob()
+                    return@setOnTouchListener true
+                }
+                MotionEvent.ACTION_UP -> {
+                    SwitchLandscapeJob?.cancel()
+                    switchLandscape_upMillis = System.currentTimeMillis()
+                    if (switchLandscape_upMillis - switchLandscape_downMillis < 300){
+                        ButtonChangeOrientation("short")
+                    }
+                    return@setOnTouchListener true
+                }
+            }
+            onTouchEvent(event)
         }
         //按钮：更多选项
         val buttonMoreOptions = findViewById<FrameLayout>(R.id.buttonActualMoreButton)
@@ -2378,7 +2397,8 @@ class PlayerActivityTest: AppCompatActivity(){
             setScrollerPadding()
             //通知卡片
             (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (50)
-
+            //启动隐藏控件倒计时
+            startIdleTimer()
 
         }
 
@@ -2819,7 +2839,7 @@ class PlayerActivityTest: AppCompatActivity(){
                 MediaItemRepo.get(this@PlayerActivityTest).saveSetting(newSetting)
             }
 
-            notice("截取封面完成", 3000)
+            showCustomToast("截取封面完成", Toast.LENGTH_SHORT,3)
 
             if (vm.wasPlaying){ vm.player.play() }
 
@@ -2997,7 +3017,8 @@ class PlayerActivityTest: AppCompatActivity(){
         if (!checkOverlayPermission()){
             notice("请先开启悬浮窗权限", 1000)
             return
-        }else{
+        }
+        else{
             notice("尝试启动小窗", 1000)
             //启动小窗服务
             val displayMetrics = resources.displayMetrics
@@ -3006,6 +3027,7 @@ class PlayerActivityTest: AppCompatActivity(){
             intentFloatingWindow.putExtra("VIDEO_SIZE_WIDTH", videoSizeWidth)
             intentFloatingWindow.putExtra("VIDEO_SIZE_HEIGHT", videoSizeHeight)
             intentFloatingWindow.putExtra("SCREEN_WIDTH", screenWidth)
+            intentFloatingWindow.putExtra("SOURCE", "PlayerActivityTest")
             startService(intentFloatingWindow)
 
 
@@ -3067,12 +3089,16 @@ class PlayerActivityTest: AppCompatActivity(){
         }
     }
     //切换横屏
-    private fun ButtonChangeOrientation(){
+    private fun ButtonChangeOrientation(flag_short_or_long: String){
         //自动旋转关闭
         if (rotationSetting == 0){
             //当前为竖屏
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-                if (vm.OrientationValue == 1){
+                if (flag_short_or_long == "long"){
+                    vm.FromManualPortrait = true
+                    setOrientation_REVERSE_LANDSCAPE()
+                }
+                else if (vm.OrientationValue == 1){
                     vm.FromManualPortrait = false
                     setOrientation_LANDSCAPE()
                 }
@@ -3094,7 +3120,11 @@ class PlayerActivityTest: AppCompatActivity(){
         //自动旋转开启
         else if (rotationSetting == 1){
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-                if (vm.OrientationValue == 1){
+                if (flag_short_or_long == "long"){
+                    vm.FromManualPortrait = true
+                    setOrientation_REVERSE_LANDSCAPE()
+                }
+                else if (vm.OrientationValue == 1){
                     vm.currentOrientation = 1
                     vm.LastLandscapeOrientation = 1
                     vm.setManual()
@@ -3828,6 +3858,15 @@ class PlayerActivityTest: AppCompatActivity(){
         MovePlayAreaJob = lifecycleScope.launch {
             delay(500)
             MovePlayArea_up()
+        }
+    }
+    //Job:长按横屏按钮
+    private var SwitchLandscapeJob: Job? = null
+    private fun SwitchLandscapeJob() {
+        SwitchLandscapeJob?.cancel()
+        SwitchLandscapeJob = lifecycleScope.launch {
+            delay(500)
+            ButtonChangeOrientation("long")
         }
     }
 

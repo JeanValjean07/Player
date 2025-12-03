@@ -275,12 +275,13 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //开关：关闭方向监听器(OEL：OrientationEventListener)
         Switch_SealOEL.setOnCheckedChangeListener { _, isChecked ->
             vibrate()
-
             vm.PREFS_SealOEL = isChecked
+            if (isChecked) {
+                context?.showCustomToast("短按或长按横屏按钮可切换至不同方向", Toast.LENGTH_SHORT,3)
+            }
 
             val result = bundleOf("KEY" to "SealOEL")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
             customDismiss()
         }
         //开关：仅播放音频

@@ -34,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
@@ -88,7 +89,6 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_VibrateMillis = 0L
     private var PREFS_UseSysVibrate = false
 
-
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,14 +106,14 @@ class SettingsActivity: AppCompatActivity() {
         val versionText = findViewById<TextView>(R.id.version)
         versionText.text = "版本: $version"
         //按钮：返回
-        val buttonBack = findViewById<ImageButton>(R.id.buttonExit)
-        buttonBack.setOnClickListener {
+        val ButtonBack = findViewById<ImageButton>(R.id.buttonExit)
+        ButtonBack.setOnClickListener {
             vibrate()
             finish()
         }
         //按钮：前往项目Github仓库页
-        val buttonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
-        buttonGoGithub.setOnClickListener {
+        val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
+        ButtonGoGithub.setOnClickListener {
             vibrate()
 
             val url = "https://github.com/JeanValjean07/Player/releases"
@@ -551,11 +551,9 @@ class SettingsActivity: AppCompatActivity() {
             else if (ButtonRemoveAllThumbPathIndex == 1) {
                 ButtonRemoveAllThumbPathIndex = 0
                 ButtonRemoveAllThumbPath.text = "已确认重新生成"
-                lifecycleScope.launch {
-                    val db = MediaItemDataBase.get(this@SettingsActivity)
-                    val dao = db.mediaItemDao()
-                    dao.removeAllThumbPath("")
-                }
+
+                File(filesDir, "miniature/cover").deleteRecursively()
+
                 showCustomToast("重启APP后会重新截取封面", Toast.LENGTH_SHORT, 3)
             }
         }
@@ -563,12 +561,6 @@ class SettingsActivity: AppCompatActivity() {
 
     //onCreate END
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-    }
-
 
     //Functions
     //测试版可用性检查

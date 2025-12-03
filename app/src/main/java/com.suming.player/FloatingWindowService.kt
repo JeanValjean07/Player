@@ -1,6 +1,8 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -13,7 +15,9 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
@@ -22,8 +26,9 @@ class FloatingWindowService : Service() {
     private var mWindowManager: WindowManager? = null
     private var mFloatingView: View? = null
     private var mParams: WindowManager.LayoutParams? = null
-
-     //视频尺寸
+    //启动来源
+    private var source = ""
+    //视频尺寸
     private var videoSizeWidth = 0
     private var videoSizeHeight = 0
     //屏幕宽度
@@ -59,7 +64,6 @@ class FloatingWindowService : Service() {
 
 
     override fun onBind(intent: Intent?): IBinder? {
-        Log.d("SuMing","FloatingWindowService onBind:$intent")
         //获取视频尺寸
         videoSizeWidth = intent?.getIntExtra("VIDEO_SIZE_WIDTH", 0) ?: 0
         videoSizeHeight = intent?.getIntExtra("VIDEO_SIZE_HEIGHT", 0) ?: 0
@@ -73,6 +77,7 @@ class FloatingWindowService : Service() {
         videoSizeWidth = intent?.getIntExtra("VIDEO_SIZE_WIDTH", 0) ?: 0
         videoSizeHeight = intent?.getIntExtra("VIDEO_SIZE_HEIGHT", 0) ?: 0
         screenWidth = intent?.getIntExtra("SCREEN_WIDTH", 0) ?: 0
+        source = intent?.getStringExtra("SOURCE") ?: "PlayerActivity"
         //动态设置尺寸
         videoSizeWidthD = screenWidth / 2
         videoSizeHeightD = (videoSizeWidthD * (videoSizeHeight.toFloat() / videoSizeWidth)).toInt()
@@ -112,8 +117,21 @@ class FloatingWindowService : Service() {
                 mWindowManager?.updateViewLayout(mFloatingView, mParams!!)
                 isFolded = false
             }else {
-                val intent = Intent(this, PlayerActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
-                startActivity(intent)
+                if (source == "PlayerActivityTest"){
+                    val intent = Intent(this, PlayerActivityTest::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                    startActivity(intent)
+                }
+                else if (source == "PlayerActivity"){
+                    val intent = Intent(this, PlayerActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                    startActivity(intent)
+                }
+                else if (source == "PlayerActivitySeekBar"){
+                    val intent = Intent(this, PlayerActivitySeekBar::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                    startActivity(intent)
+                }
+                else {
+                    showNotification_noSource("未知服务来源,拉起失败,请手动回到APP")
+                }
             }
 
 
@@ -262,4 +280,31 @@ class FloatingWindowService : Service() {
             mWindowManager!!.removeView(mFloatingView)
         }
     }
+
+    //Functions
+    private fun showNotification_noSource(text: String) {
+        val channelId = "toast_replace"
+        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+        val channel = NotificationChannel(channelId, "提示", NotificationManager.IMPORTANCE_HIGH)
+            .apply {
+                setSound(null, null)
+                enableVibration(false)
+            }
+        nm.createNotificationChannel(channel)
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_player_service_notification)
+            .setContentTitle(null)
+            .setContentText(text)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(0)
+            .setAutoCancel(true)
+            .setTimeoutAfter(5_000)
+            .build()
+
+        nm.notify(System.currentTimeMillis().toInt(), notification)
+
+    }
+
 }
