@@ -3,6 +3,7 @@ package data.MediaDataReader
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.provider.MediaStore
 import android.util.Log
@@ -125,6 +126,7 @@ class MediaStoreReaderForVideo(
     //Functions
     //保存到数据库
     suspend fun saveVideosToDatabase(videos: List<MediaItemForVideo>) {
+
         val mediaStoreRepo = MediaStoreRepo.get(context)
 
         val mediaStoreSettings = videos.map { video ->
@@ -172,11 +174,9 @@ class MediaStoreReaderForVideo(
         }
         catch (e: Exception) { false }
     }
-
+    //去除数据库中已无对应视频的条目
     private suspend fun cleanupDeletedVideos(currentVideoIds: List<String>, mediaStoreRepo: MediaStoreRepo) {
-
         val allVideos = mediaStoreRepo.getAllVideos()
-
         //找出数据库中存在但不在当前读取列表中的视频ID
         val deletedVideoIds = allVideos
             .map { it.MARK_Uri_numOnly }
@@ -189,6 +189,8 @@ class MediaStoreReaderForVideo(
                 }
             }
         }
+        //发布删除完成通知
+        ToolEventBus.sendEvent("MediaStore_NoExist_Delete_Complete")
     }
 
 

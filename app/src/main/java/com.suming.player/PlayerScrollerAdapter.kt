@@ -34,9 +34,9 @@ class PlayerScrollerAdapter(
     private val MediaInfo_AbsolutePath: String,
     private val MediaInfo_FileName: String,
     private val thumbItems: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
-    private val eachPicWidth: Int,
-    private val picNumber: Int,
-    private val eachPicDuration: Int,
+    private val scrollerParam_EachPicWidth: Int,
+    private val scrollerParam_PicNumber: Int,
+    private val scrollerParam_EachPicDuration: Int,
     private val PREFS_GenerateThumbSYNC: Boolean,
     private var recyclerView: RecyclerView? = null,
     private var PlayerScrollerVM: PlayerScrollerViewModel
@@ -117,7 +117,7 @@ class PlayerScrollerAdapter(
 
     }
 
-    override fun getItemCount() = (picNumber)
+    override fun getItemCount() = (scrollerParam_PicNumber)
 
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThumbViewHolder {
@@ -127,7 +127,7 @@ class PlayerScrollerAdapter(
         if (MediaInfo_FileName != PlayerScrollerVM.last_MediaInfo_FileName){
             PlayerScrollerVM.last_MediaInfo_FileName = MediaInfo_FileName
 
-            val newList = List(picNumber) {
+            val newList = List(scrollerParam_PicNumber) {
                 PlayerScrollerViewModel.ThumbScrollerItem(
                     currentThumbType = false,
                     thumbGeneratingRunning = false
@@ -147,7 +147,7 @@ class PlayerScrollerAdapter(
 
     override fun onBindViewHolder(holder: ThumbViewHolder, position: Int) {
         //指定单图宽度
-        holder.itemView.updateLayoutParams<ViewGroup.LayoutParams> { this.width = eachPicWidth }
+        holder.itemView.updateLayoutParams<ViewGroup.LayoutParams> { this.width = scrollerParam_EachPicWidth }
         //绑定图片
         val frame = BitmapCache.get(position)
         if (frame == null){
@@ -211,7 +211,7 @@ class PlayerScrollerAdapter(
             }
             preparePlaceholder()
         }
-        loadBitmapAll_single_thread((0 until picNumber).toList())
+        loadBitmapAll_single_thread((0 until scrollerParam_PicNumber).toList())
 
         fun loadBitmapAll_multi_thread(positions: List<Int>) {
             CoroutineScope(Dispatchers.IO).launch {
@@ -256,19 +256,28 @@ class PlayerScrollerAdapter(
             coroutineContext.ensureActive()
             //使用关键帧缩略图
             if (PREFS_GenerateThumbSYNC){
-                val frame = retrieverMap[position]?.getFrameAtTime(
-                    (position * eachPicDuration * 1000L),
-                    MediaMetadataRetriever.OPTION_CLOSEST_SYNC
-                )
+                if (position == 0){
+                    val frame = retrieverMap[position]?.getFrameAtTime(
+                        (scrollerParam_EachPicDuration / 2 * 1000L),
+                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+                    )
+                    saveThumb(ratio, position, frame)
+                }  //首张不截取0位置,防止第一帧可能是纯黑图
+                else{
+                    val frame = retrieverMap[position]?.getFrameAtTime(
+                        (position * scrollerParam_EachPicDuration * 1000L),
+                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+                    )
+                    saveThumb(ratio, position, frame)
+                }
                 coroutineContext.ensureActive()
                 retrieverMap[position]?.release()
-                saveThumb(ratio, position, frame)
                 coroutineContext.ensureActive()
             }
             //使用精确帧缩略图
             else{
                 val frame = retrieverMap[position]?.getFrameAtTime(
-                    (position * eachPicDuration * 1000L),
+                    (position * scrollerParam_EachPicDuration * 1000L),
                     MediaMetadataRetriever.OPTION_CLOSEST
                 )
                 coroutineContext.ensureActive()
@@ -325,7 +334,8 @@ class PlayerScrollerAdapter(
             val videoWidth = wStr?.toFloat() ?: 0f
             val videoHeight = hStr?.toFloat() ?: 0f
             val ratio = videoHeight.div(videoWidth)
-            val frame = retriever.getFrameAtTime((0), MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+            val duration = scrollerParam_EachPicDuration * scrollerParam_PicNumber
+            val frame = retriever.getFrameAtTime((duration / 2) * 1000L, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
             if (frame != null) {
                 HolderBitmap = frame.scale(200, (200 * ratio).toInt())
             }else{

@@ -1,16 +1,22 @@
 package data.MediaDataReader
 
 import android.content.Context
-import android.net.Uri
+import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
+import android.provider.MediaStore
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import data.DataBaseMediaStore.MediaStoreRepo
 import data.MediaModel.MediaItemForVideo
 import androidx.core.net.toUri
+import androidx.core.content.edit
 
 class MediaDataBaseReaderForVideo(
     private val context: Context,
 ) : PagingSource<Int, MediaItemForVideo>() {
+
+    private lateinit var PREFS_MediaStore: SharedPreferences
+    private var PREFS_showHideItems = false
 
     override fun getRefreshKey(state: PagingState<Int, MediaItemForVideo>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
@@ -26,21 +32,39 @@ class MediaDataBaseReaderForVideo(
             //读取数据库
             val mediaStoreRepo = MediaStoreRepo.get(context)
             val totalCount = mediaStoreRepo.getTotalCount()
+            //排序字段
+            val sortOrder = "info_title ASC"
+
+
+            //读取媒体库设置
+            PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
+            if (PREFS_MediaStore.contains("PREFS_showHideItems")){
+                PREFS_showHideItems = PREFS_MediaStore.getBoolean("PREFS_showHideItems", false)
+            }else{
+                PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
+            }
+
+
             //按页获取数据
-            val mediaStoreSettings = mediaStoreRepo.getVideosPaged(page, limit)
+            val mediaStoreSettings = mediaStoreRepo.getVideosPagedByOrder(page, limit, sortOrder)
 
             //合成MediaItem
-            val mediaItems = mediaStoreSettings.map { setting ->
-                MediaItemForVideo(
-                    id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,
-                    uri = setting.info_uri_full.toUri(),
-                    name = setting.info_title,
-                    durationMs = setting.info_duration,
-                    sizeBytes = setting.info_file_size,
-                    dateAdded = setting.info_date_added,
-                    format = setting.info_format
-                )
-            }
+            val mediaItems = mediaStoreSettings
+                .filter { setting ->
+                    PREFS_showHideItems || !setting.info_is_hidden
+                }
+                .map { setting ->
+                    MediaItemForVideo(
+                        id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,
+                        uri = setting.info_uri_full.toUri(),
+                        name = setting.info_title,
+                        durationMs = setting.info_duration,
+                        sizeBytes = setting.info_file_size,
+                        dateAdded = setting.info_date_added,
+                        format = setting.info_format,
+                        isHidden = setting.info_is_hidden
+                    )
+                }
 
             //计算下页键
             val nextKey = if ((page * limit) + mediaItems.size < totalCount) page + 1 else null

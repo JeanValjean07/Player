@@ -5,7 +5,6 @@ import android.os.Parcel
 import android.os.Parcelable
 
 data class MediaItemForVideo (
-
     val id: Long = 0,
     val uri: Uri,
     val name: String,
@@ -13,6 +12,7 @@ data class MediaItemForVideo (
     val sizeBytes: Long,
     val dateAdded: Long = 0,
     val format: String = "",
+    var isHidden: Boolean = false
 ): Parcelable{
 
     companion object CREATOR : Parcelable.Creator<MediaItemForVideo> {
@@ -45,6 +45,7 @@ data class MediaItemForVideo (
         dest.writeLong(sizeBytes)
         dest.writeLong(dateAdded)
         dest.writeString(format)
+        dest.writeBoolean(isHidden)
     }
 
 }

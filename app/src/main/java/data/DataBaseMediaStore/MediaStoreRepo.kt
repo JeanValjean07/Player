@@ -34,11 +34,25 @@ class MediaStoreRepo private constructor(context: Context) {
     //获取所有视频信息
     suspend fun getAllVideos(): List<MediaStoreSetting> = dao.getAllVideos()
 
-    //分页获取视频信息
-    suspend fun getVideosPaged(page: Int, pageSize: Int): List<MediaStoreSetting> {
+    //根据排序方式读取,不支持动态传入排序参数,全部列出
+    suspend fun getVideosPagedByOrder(page: Int, pageSize: Int, sortOrder: String): List<MediaStoreSetting> {
         val offset = page * pageSize
-        return dao.getAllVideosPaged(pageSize, offset)
+
+        return when (sortOrder) {
+            "info_title ASC" -> dao.getAllVideosPagedByTitleAsc(pageSize, offset)
+            "info_title DESC" -> dao.getAllVideosPagedByTitleDesc(pageSize, offset)
+            "info_date_added ASC" -> dao.getAllVideosPagedByDateAddedAsc(pageSize, offset)
+            "info_date_added DESC" -> dao.getAllVideosPagedByDateAddedDesc(pageSize, offset)
+            "info_duration ASC" -> dao.getAllVideosPagedByDurationAsc(pageSize, offset)
+            "info_duration DESC" -> dao.getAllVideosPagedByDurationDesc(pageSize, offset)
+            "info_file_size ASC" -> dao.getAllVideosPagedByFileSizeAsc(pageSize, offset)
+            "info_file_size DESC" -> dao.getAllVideosPagedByFileSizeDesc(pageSize, offset)
+            "info_format ASC" -> dao.getAllVideosPagedByFormatAsc(pageSize, offset)
+            "info_format DESC" -> dao.getAllVideosPagedByFormatDesc(pageSize, offset)
+            else -> dao.getAllVideosPagedByTitleDesc(pageSize, offset)
+        }
     }
+
 
     //搜索视频
     suspend fun searchVideos(query: String): List<MediaStoreSetting> = dao.searchVideos(query)

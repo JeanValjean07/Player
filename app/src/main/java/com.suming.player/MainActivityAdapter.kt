@@ -12,6 +12,7 @@ import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AlphaAnimation
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -34,13 +35,13 @@ class MainActivityAdapter(
     private val onItemClick: (MediaItemForVideo) -> Unit,
     private val onDurationClick: (MediaItemForVideo) -> Unit,
     private val onOptionClick: (MediaItemForVideo) -> Unit,
-    private val onItemHideClick: (String, Boolean) -> Unit
+    private val onItemHideClick: (Uri, Boolean) -> Unit
 ):PagingDataAdapter<MediaItemForVideo, MainActivityAdapter.ViewHolder>(diffCallback) {
-    //比较器
+    //条目比较器
     companion object {
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
             override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
-                return oldItem.id == newItem.id
+                return oldItem.name == newItem.name
             }
 
             override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
@@ -59,14 +60,17 @@ class MainActivityAdapter(
     }
     //协程作用域
     private val coroutineScopeGenerateCover = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val coroutineScopeSaveRoom = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutineScopeReadRoom = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    //图片池
+    //图片池和加载动画
     private val CoverBitmapCache = LruCache<Int, Bitmap>(30 * 1024 * 1024)
+    private var FadeInAnimation: AlphaAnimation
+
 
 
     init {
         loadAllCoverFrame()
+        FadeInAnimation = AlphaAnimation(0.0f, 1.0f)
+        FadeInAnimation.duration = 300
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -78,48 +82,36 @@ class MainActivityAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
         holder.tvName.text = item.name
-        holder.tvDuration.text = format_time_for_show(item.durationMs)
+        holder.tvDuration.text = FormatTime_numOnly(item.durationMs)
         holder.tvFormat.text = item.format.ifEmpty { "未知" }
         val frame = CoverBitmapCache.get(item.name.hashCode())
         if (frame == null) {generateCoverFrame(item, holder)}
-        else{ holder.tvThumb.setImageBitmap(frame) }
+        else{
+            holder.tvThumb.setImageBitmap(frame)
+            holder.tvThumb.startAnimation(FadeInAnimation)
+        }
         //点击事件设定
         holder.TouchPad.setOnClickListener { onItemClick(item) }
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
         holder.tvOption.setOnClickListener {
+            //显示菜单
             val popup = PopupMenu(holder.itemView.context, holder.tvOption)
             popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
-            popup.show()
+            val popup_update_cover = popup.menu.findItem(R.id.MenuAction_Repic)
             val popup_hide_text = popup.menu.findItem(R.id.MenuAction_Hide)
-            coroutineScopeReadRoom.launch {
-                val isHidden = MediaStoreRepo.get(context).getHideStatus((item.uri.toString().removePrefix("content://media/external/video/media/"))) ?: false
-
-                withContext(Dispatchers.Main){
-                    popup_hide_text.title = if (isHidden) "取消隐藏" else "隐藏"
-                    popup.setOnMenuItemClickListener { menu_item ->
-                        when(menu_item.itemId){
-                            R.id.MenuAction_Repic -> {
-                                context.showCustomToast( "进入视频后,在更多按钮面板可重新截取封面", Toast.LENGTH_SHORT,3)
-                                true
-                            }
-                            R.id.MenuAction_Hide -> {
-                                if (!isHidden) {
-                                    context.showCustomToast( "已取消隐藏,刷新后生效", Toast.LENGTH_SHORT,3)
-                                    //interface
-                                    onItemHideClick(item.name, false)
-                                }else{
-                                    context.showCustomToast( "仅能在本APP中隐藏,刷新后生效", Toast.LENGTH_SHORT,3)
-                                    //interface
-                                    onItemHideClick(item.name, true)
-                                }
-                                true
-                            }
-                            else -> true
-                        }
-                    }
-                }
+            val local_isHidden = item.isHidden
+            popup_hide_text.title = if (local_isHidden) "取消隐藏" else "隐藏"
+            popup.show()
+            //注册点击
+            popup_hide_text.setOnMenuItemClickListener {
+                onItemHideClick(item.uri, !local_isHidden)
+                item.isHidden = !local_isHidden
+                true
             }
-
+            popup_update_cover.setOnMenuItemClickListener {
+                context.showCustomToast("进入视频后,可在更多选项面板更新封面", Toast.LENGTH_SHORT, 3)
+                true
+            }
         }
     }
 
@@ -130,10 +122,36 @@ class MainActivityAdapter(
 
     }
 
+    override fun onViewDetachedFromWindow(holder: ViewHolder) {
+        super.onViewDetachedFromWindow(holder)
+        val position = holder.bindingAdapterPosition
+    }
+
+
 
     //Functions
+    //更新指定位置的封面
+    fun updateCoverForVideo(videoName: String) {
+        //先检查新图是否存在
+        val covers_path = File(context.filesDir, "miniature/cover")
+        val cover_file = File(covers_path, "${videoName.hashCode()}.webp")
+        if (cover_file.exists()) {
+            CoverBitmapCache.remove(videoName.hashCode())
+            val bitmap = BitmapFactory.decodeFile(cover_file.absolutePath)
+            if (bitmap != null) {
+                CoverBitmapCache.put(videoName.hashCode(), bitmap)
+            }
+        }
+        //遍历列表并换图
+        snapshot().forEachIndexed { index, mediaItem ->
+            if (mediaItem?.name == videoName) {
+                notifyItemChanged(index)
+            }
+        }
+    }
+    //内部Functions
     @SuppressLint("DefaultLocale")
-    private fun format_time_for_show(milliseconds: Long): String {
+    private fun FormatTime_numOnly(milliseconds: Long): String {
         val totalSeconds = milliseconds / 1000
         val hours = totalSeconds / 3600
         val minutes = (totalSeconds % 3600) / 60
@@ -206,6 +224,7 @@ class MainActivityAdapter(
                     //刷新页面
                     withContext(Dispatchers.Main){
                         holder.tvThumb.setImageBitmap(bitmap)
+                        holder.tvThumb.startAnimation(FadeInAnimation)
                     }
                 }
                 //生成失败

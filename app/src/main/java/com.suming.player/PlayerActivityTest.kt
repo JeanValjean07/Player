@@ -1686,8 +1686,7 @@ class PlayerActivityTest: AppCompatActivity(){
         }
 
 
-        //开启空闲倒计时
-        startIdleTimer()
+
 
         //系统手势监听：返回键重写
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
@@ -1754,10 +1753,12 @@ class PlayerActivityTest: AppCompatActivity(){
                 }
             }
             "SessionController_Play" -> {
+                vm.wasPlaying = true
                 if (vm.PREFS_LinkScroll && !state_onBackground ) startScrollerSync()
                 startVideoTimeSync()
             }
             "SessionController_Pause" -> {
+                vm.wasPlaying = false
                 stopScrollerSync()
                 stopVideoTimeSync()
             }
@@ -2376,7 +2377,7 @@ class PlayerActivityTest: AppCompatActivity(){
     //android:configChanges="orientation|screenSize|screenLayout"
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-
+        //横屏
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             //横屏时隐藏状态栏
             setStatusBarParams()
@@ -2396,12 +2397,12 @@ class PlayerActivityTest: AppCompatActivity(){
             //进度条端点
             setScrollerPadding()
             //通知卡片
-            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (50)
+            setNoticeCardPosition("landscape")
             //启动隐藏控件倒计时
             startIdleTimer()
 
         }
-
+        //竖屏
         else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             //取消隐藏状态栏
             setStatusBarParams()
@@ -2410,7 +2411,7 @@ class PlayerActivityTest: AppCompatActivity(){
             //控件
             setControllerLayerPadding("recover")
             //通知卡片
-            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (500)
+            setNoticeCardPosition("portrait")
 
 
         }
@@ -2418,6 +2419,19 @@ class PlayerActivityTest: AppCompatActivity(){
 
 
     //Stable Functions
+    //通知卡片位置设置:接收px值,需把dp转px
+    private fun setNoticeCardPosition(type_portrait_or_landscape: String){
+        if (type_portrait_or_landscape == "landscape"){
+            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(5f))
+        }else if (type_portrait_or_landscape == "portrait") {
+            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(100f))
+        }
+    }
+    //px转dp
+    private fun dp2px(dpValue: Float): Int {
+        val scale = resources.displayMetrics.density
+        return (dpValue * scale + 0.5f).toInt()
+    }
     //设置项修改封装函数
     private fun changeStateSoundOnly(){
         if (vm.PREFS_OnlyAudio){
@@ -2822,33 +2836,22 @@ class PlayerActivityTest: AppCompatActivity(){
     @SuppressLint("UseKtx")
     private fun updateCover(filename: String) {
         fun handleSuccess(bitmap: Bitmap) {
-            //创建目录
-            val saveCover = File(filesDir, "miniature/cover/${filename.hashCode()}.webp")
-            saveCover.parentFile?.mkdirs()
-            //保存图片
-            saveCover.outputStream().use {
-                val success = bitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
-                if (!success) { bitmap.compress(JPEG, 80, it) }
+            //创建文件占位并保存
+            val cover_file = File(filesDir, "miniature/cover/${filename.hashCode()}.webp")
+            cover_file.parentFile?.mkdirs()
+            cover_file.outputStream().use {
+                bitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
             }
-            //存入数据库
-            lifecycleScope.launch {
-                val newSetting = MediaItemSetting(
-                    MARK_FileName = filename,
-                    SavePath_Cover = saveCover.toString()
-                )
-                MediaItemRepo.get(this@PlayerActivityTest).saveSetting(newSetting)
-            }
-
+            //发布完成消息
+            ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", filename))
             showCustomToast("截取封面完成", Toast.LENGTH_SHORT,3)
-
+            //恢复播放状态
             if (vm.wasPlaying){ vm.player.play() }
-
         }
-
-        showCustomToast("提示截取完成前请勿退出", Toast.LENGTH_SHORT,3)
+        //记录原本的播放状态
         vm.wasPlaying = vm.player.isPlaying
         vm.player.pause()
-
+        //发起截图
         lifecycleScope.launch(Dispatchers.IO) {
             delay(500)
             val Bitmap = createBitmap(videoSizeWidth, videoSizeHeight)
@@ -2865,7 +2868,6 @@ class PlayerActivityTest: AppCompatActivity(){
                 Handler(Looper.getMainLooper())
             )
         }
-
     }
     //分享视频by uri
     private fun shareVideo(context: Context, videoUri: Uri) {
@@ -3050,7 +3052,7 @@ class PlayerActivityTest: AppCompatActivity(){
     private fun stopFloatingWindow() {
         stopService(Intent(applicationContext, FloatingWindowService::class.java))
     }
-    //设置状态栏样式:横屏时隐藏状态栏
+    //设置状态栏样式:横屏时隐藏状态栏,包含通知卡片设置
     @Suppress("DEPRECATION")
     private fun AppBarSetting() {
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -3086,6 +3088,9 @@ class PlayerActivityTest: AppCompatActivity(){
                 setControllerLayerPadding("right")
             }
 
+        }
+        else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            setNoticeCardPosition("portrait")
         }
     }
     //切换横屏

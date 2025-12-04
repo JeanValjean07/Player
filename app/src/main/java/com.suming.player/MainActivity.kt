@@ -4,9 +4,9 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.Loader
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -41,14 +41,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingSource
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import data.MediaModel.MediaItemForVideo
 import data.MediaDataReader.MediaStoreReaderForVideo
-import data.DataBaseMediaItem.MediaItemRepo
 import data.DataBaseMediaStore.MediaStoreRepo
-import data.DataBaseMediaStore.MediaStoreSetting
 import data.MediaDataReader.MediaDataBaseReaderForVideo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -58,13 +55,13 @@ import kotlinx.coroutines.withContext
 
 @Suppress("unused")
 class MainActivity: AppCompatActivity() {
-
-    //成员变量
-    private lateinit var adapter: MainActivityAdapter
+    //RecyclerView
+    private lateinit var Main_ContentList_Adapter: MainActivityAdapter
+    private lateinit var Main_ContentList_RecyclerView: RecyclerView
+    //设置
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_MediaStore: SharedPreferences
     private lateinit var PREFS_Main: SharedPreferences
-
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
     //状态栏高度
@@ -153,8 +150,8 @@ class MainActivity: AppCompatActivity() {
         }
         //读取媒体库设置
         PREFS_MediaStore = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
+        PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
         PREFS_Main = getSharedPreferences("PREFS_Main", MODE_PRIVATE)
-
 
         if (!PREFS_Main.contains("state_MediaStoreReaded")){
             PREFS_Main.edit { putBoolean("state_MediaStoreReaded", false).apply() }
@@ -162,7 +159,6 @@ class MainActivity: AppCompatActivity() {
         }else{
             state_MediaStoreReaded = PREFS_Main.getBoolean("state_MediaStoreReaded", false)
         }
-
         if (!state_MediaStoreReaded){
             loadFromMediaStore()
         }else{
@@ -173,33 +169,34 @@ class MainActivity: AppCompatActivity() {
 
 
 
-
         //按钮：刷新列表
         val ButtonRefresh = findViewById<Button>(R.id.buttonRefresh)
+        ButtonRefresh.visibility = View.GONE
         ButtonRefresh.setOnClickListener {
             vibrate()
-            notice("仅从本地数据库刷新,如需重新读取本机媒体,请点击\"安卓媒体库\"页签的设置齿轮", 5000)
-            loadFromDataBase()
+            //Main_ContentList_Adapter.refresh()
+            //notice("仅从本地数据库刷新,如需重新读取本机媒体,请点击\"安卓媒体库\"页签的设置齿轮", 5000)
+            //loadFromDataBase()
         }
         //按钮：指南
-        val button2 = findViewById<Button>(R.id.buttonGuidance)
-        button2.setOnClickListener {
+        val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
+        ButtonGuidance.setOnClickListener {
             vibrate()
             val intent = Intent(this, GuidanceActivity::class.java)
             startActivity(intent)
         }
         //按钮：设置
-        val buttonSettings= findViewById<Button>(R.id.buttonSetting)
-        buttonSettings.setOnClickListener {
+        val ButtonSettings= findViewById<Button>(R.id.buttonSetting)
+        ButtonSettings.setOnClickListener {
             vibrate()
             val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
         }
         //提示卡点击时关闭
-        val noticeCard = findViewById<CardView>(R.id.noticeCard)
-        noticeCard.setOnClickListener {
+        val NoticeCard = findViewById<CardView>(R.id.noticeCard)
+        NoticeCard.setOnClickListener {
             vibrate()
-            noticeCard.visibility = View.GONE
+            NoticeCard.visibility = View.GONE
         }
         //按钮：安卓媒体库设置
         val ButtonMediaStoreSettings = findViewById<ImageButton>(R.id.ButtonMediaStoreSettings)
@@ -212,13 +209,18 @@ class MainActivity: AppCompatActivity() {
             override fun onLongPress(e: MotionEvent) {
                 vibrate()
                 //逻辑修改
-                val show_hide_items = PREFS_MediaStore.getBoolean("show_hide_items", false)
+                val show_hide_items = PREFS_MediaStore.getBoolean("PREFS_showHideItems", false)
                 if (show_hide_items){
-                    PREFS_MediaStore.edit { putBoolean("show_hide_items", false).apply() }
-                    notice("不显示隐藏的视频,刷新后生效", 2000)
+                    PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
+                    showCustomToast("不显示已被隐藏的视频", Toast.LENGTH_SHORT, 3)
+                    //刷新列表
+                    Main_ContentList_Adapter.refresh()
                 }else{
-                    PREFS_MediaStore.edit { putBoolean("show_hide_items", true).apply() }
-                    notice("将显示隐藏的视频,刷新后生效", 2000)
+                    PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", true).apply() }
+                    showCustomToast("显示已被隐藏的视频", Toast.LENGTH_SHORT, 3)
+                    //刷新列表
+                    Main_ContentList_Adapter.refresh()
+                    Main_ContentList_RecyclerView.smoothScrollToPosition(0)
                 }
                 super.onLongPress(e)
             }
@@ -338,12 +340,12 @@ class MainActivity: AppCompatActivity() {
     //从本地数据库加载
     private fun loadFromDataBase() {
 
-        val recyclerview1 = findViewById<RecyclerView>(R.id.recyclerview1)
-        recyclerview1.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        Main_ContentList_RecyclerView = findViewById<RecyclerView>(R.id.recyclerview1)
+        Main_ContentList_RecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
 
 
-        //注册adapter
-        adapter = MainActivityAdapter(
+        //注册点击事件
+        Main_ContentList_Adapter = MainActivityAdapter(
             context = this,
             onItemClick = { item ->
                 startPlayer(item)
@@ -352,16 +354,18 @@ class MainActivity: AppCompatActivity() {
                 notice("视频时长:${FormatTime_withChar(item.durationMs)}", 2000)
             },
             onOptionClick = { item ->
-                val popup = PopupMenu(this, recyclerview1)
+                val popup = PopupMenu(this, Main_ContentList_RecyclerView)
                 popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
                 popup.setOnMenuItemClickListener { /*handle*/; true }
                 popup.show()
             },
-            onItemHideClick = { filename,flag_need_hide ->
-                HideItem(filename)
+            onItemHideClick = { uri,flag_need_hide ->
+                HideItem(uri, flag_need_hide)
             }
         )
-        recyclerview1.adapter = adapter
+
+
+        Main_ContentList_RecyclerView.adapter = Main_ContentList_Adapter
 
 
         val pager = Pager(PagingConfig(pageSize = 20)) {
@@ -370,7 +374,7 @@ class MainActivity: AppCompatActivity() {
 
         lifecycleScope.launch {
             pager.flow.collect { pagingData ->
-                adapter.submitData(pagingData)
+                Main_ContentList_Adapter.submitData(pagingData)
             }
         }
 
@@ -431,23 +435,20 @@ class MainActivity: AppCompatActivity() {
         }
     }
     //隐藏
-    private fun HideItem(filename: String) {
-        lifecycleScope.launch {
-            val isHidden = MediaStoreRepo.get(this@MainActivity).getHideStatus(filename) ?: return@launch
-
-            if (isHidden){
-                showCustomToast("已取消隐藏", Toast.LENGTH_SHORT, 3)
-            }
-            else{
-                showCustomToast("已隐藏", Toast.LENGTH_SHORT, 3)
-            }
-            MediaStoreRepo.get(this@MainActivity).updateHiddenStatus(filename,!isHidden)
-
-            withContext(Dispatchers.Main){
-                loadFromDataBase()
-            }
+    private fun HideItem(uri: Uri, flag_need_hide: Boolean) {
+        val uriNumOnly = uri.toString().replace(Regex("[^0-9]"), "")
+        if (flag_need_hide){
+            showCustomToast("已隐藏", Toast.LENGTH_SHORT, 3)
         }
-
+        else{
+            showCustomToast("已取消隐藏", Toast.LENGTH_SHORT, 3)
+        }
+        //保存到数据库
+        lifecycleScope.launch(Dispatchers.IO){
+            MediaStoreRepo.get(this@MainActivity).updateHiddenStatus(uriNumOnly,flag_need_hide)
+        }
+        //刷新列表
+        Main_ContentList_Adapter.refresh()
     }
     //显示通知
     private var showNoticeJob: Job? = null
@@ -520,7 +521,20 @@ class MainActivity: AppCompatActivity() {
                 //修改是否完成过加载记录
                 saveLoadState()
                 //数据已经保存到数据库,开始从数据库解析
-                loadFromDataBase()
+                //loadFromDataBase()
+                //Main_ContentList_Adapter.refresh()
+            }
+            "MediaStore_NoExist_Delete_Complete" -> {
+                Main_ContentList_Adapter.refresh()
+            }
+        }
+    }
+    private val disposable_withExtraString = ToolEventBus.events_withExtraString.subscribe {
+        when (it.type) {
+            "PlayerActivity_CoverChanged" -> {
+                it.fileName?.let { fileName ->
+                    Main_ContentList_Adapter.updateCoverForVideo(fileName)
+                }
             }
         }
     }
