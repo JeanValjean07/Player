@@ -208,6 +208,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
                 var down_y = 0f
                 var deltaY = 0f
+                var deltaY_ReachPadding = false
                 val RootCard = view.findViewById<CardView>(R.id.mainCard)
                 val RootCardOriginY = RootCard.translationY
                 val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
@@ -215,6 +216,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                 NestedScrollView.setOnTouchListener { _, event ->
                     when (event.actionMasked) {
                         MotionEvent.ACTION_DOWN -> {
+                            deltaY_ReachPadding = false
                             if (NestedScrollView.scrollY != 0){
                                 NestedScrollViewAtTop = false
                                 return@setOnTouchListener false
@@ -231,12 +233,18 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                             if (deltaY < 0){
                                 return@setOnTouchListener false
                             }
+                            if (deltaY >= 400f){
+                                if (!deltaY_ReachPadding){
+                                    deltaY_ReachPadding = true
+                                    vibrate()
+                                }
+                            }
                             RootCard.translationY = RootCardOriginY + deltaY
                             return@setOnTouchListener true
                         }
                         MotionEvent.ACTION_UP -> {
                             if (deltaY >= 400f){
-                                Dismiss(true)
+                                Dismiss(false)
                             }else{
                                 RootCard.animate()
                                     .translationY(0f)
@@ -254,6 +262,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                 var deltaY = 0f
                 var down_x = 0f
                 var deltaX = 0f
+                var deltaX_ReachPadding = false
                 var Y_move_ensure = false
                 val RootCard = view.findViewById<CardView>(R.id.mainCard)
                 val RootCardOriginX = RootCard.translationX
@@ -264,12 +273,19 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                             down_x = event.rawX
                             down_y = event.rawY
                             Y_move_ensure = false
+                            deltaX_ReachPadding = false
                         }
                         MotionEvent.ACTION_MOVE -> {
                             deltaY = event.rawY - down_y
                             deltaX = event.rawX - down_x
                             if (deltaX < 0){
                                 return@setOnTouchListener false
+                            }
+                            if (deltaX >= 200f){
+                                if (!deltaX_ReachPadding){
+                                    deltaX_ReachPadding = true
+                                    vibrate()
+                                }
                             }
                             if (Y_move_ensure){
                                 return@setOnTouchListener false
@@ -286,7 +302,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                                 return@setOnTouchListener false
                             }
                             if (deltaX >= 200f){
-                                Dismiss(true)
+                                Dismiss(false)
                             }else{
                                 RootCard.animate()
                                     .translationX(0f)

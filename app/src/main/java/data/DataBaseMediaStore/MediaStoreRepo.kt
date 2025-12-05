@@ -47,8 +47,8 @@ class MediaStoreRepo private constructor(context: Context) {
             "info_duration DESC" -> dao.getAllVideosPagedByDurationDesc(pageSize, offset)
             "info_file_size ASC" -> dao.getAllVideosPagedByFileSizeAsc(pageSize, offset)
             "info_file_size DESC" -> dao.getAllVideosPagedByFileSizeDesc(pageSize, offset)
-            "info_format ASC" -> dao.getAllVideosPagedByFormatAsc(pageSize, offset)
-            "info_format DESC" -> dao.getAllVideosPagedByFormatDesc(pageSize, offset)
+            "info_mime_type ASC" -> dao.getAllVideosPagedByMimeTypeAsc(pageSize, offset)
+            "info_mime_type DESC" -> dao.getAllVideosPagedByMimeTypeDesc(pageSize, offset)
             else -> dao.getAllVideosPagedByTitleDesc(pageSize, offset)
         }
     }

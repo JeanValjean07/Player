@@ -40,6 +40,10 @@
 
     <color name="divider">#616161</color>
 
+    <color name="player_scroller_top_line">#424242</color>
+    <color name="player_scroller_top_line_black">#424242</color>
+    <color name="player_scroller_center_line">#FFFFFF</color>
+
     <color name="strokeLine">#424242</color>
     <color name="bottomArea">#000000</color>
 

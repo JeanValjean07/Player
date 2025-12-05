@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.REORDER_TASKS"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
 
 
     <application
@@ -144,6 +145,12 @@
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
         <activity android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
             android:theme="@style/THEME_OSS"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
+        <!-- 设备信息 -->
+        <activity android:name=".DeviceInfoActivity"
+            android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>

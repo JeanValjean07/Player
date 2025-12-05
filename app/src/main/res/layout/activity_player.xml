@@ -75,13 +75,36 @@
             android:translationZ="3dp"
             />
         <!-- 播放器遮罩 -->
-        <View
+        <LinearLayout
             android:id="@+id/cover"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:orientation="vertical"
             android:background="@color/Background"
+            android:gravity="center"
             android:translationZ="3dp"
-            android:visibility="visible" />
+            android:visibility="visible">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_player_loading"
+                android:padding="10dp"
+                android:elevation="10dp"
+                android:scaleType="fitCenter"
+                android:translationZ="3dp"
+                tools:ignore="ContentDescription" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="加载中"
+                android:textColor="@color/HeadText2"
+                android:textSize="12sp"
+                android:padding="10dp"
+                android:elevation="10dp"
+                android:scaleType="fitCenter"
+                android:translationZ="3dp"
+                />
+        </LinearLayout>
     </FrameLayout>
 
     <!-- 控件层 -->
@@ -346,17 +369,19 @@
             >
             <!-- 顶部分隔线 -->
             <View
+                android:id="@+id/player_scroller_top_line"
                 android:layout_width="match_parent"
                 android:layout_height="0.05dp"
-                android:background="@color/strokeLine"
+                android:background="@color/player_scroller_top_line"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
             <!-- 中间竖线 -->
             <View
+                android:id="@+id/player_scroller_center_line"
                 android:layout_width="2dp"
                 android:layout_height="match_parent"
-                android:background="@color/HeadText"
+                android:background="@color/player_scroller_center_line"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 android:elevation="2dp"

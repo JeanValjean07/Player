@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root"
@@ -113,11 +113,10 @@
                                 android:textSize="11sp" />
                             <ImageButton
                                 android:id="@+id/ButtonMediaStoreSettings"
-                                android:layout_width="15dp"
-                                android:layout_height="15dp"
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
                                 android:layout_gravity="center"
-                                android:layout_margin="4dp"
-                                android:layout_marginEnd="15dp"
+                                android:padding="5dp"
                                 android:background="?attr/selectableItemBackgroundBorderless"
                                 android:contentDescription="安卓媒体库"
                                 android:scaleType="centerCrop"
@@ -126,6 +125,7 @@
                     </androidx.cardview.widget.CardView>
                     <!-- 视频陈列架 -->
                     <androidx.cardview.widget.CardView
+                        android:id="@+id/ButtonGallery"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
@@ -145,7 +145,7 @@
                                 android:layout_marginTop="5dp"
                                 android:layout_marginEnd="10dp"
                                 android:layout_marginBottom="5dp"
-                                android:text="视频陈列架"
+                                android:text="陈列架"
                                 android:textColor="@color/HeadText"
                                 android:textSize="11sp" />
                         </LinearLayout>
@@ -169,6 +169,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center|top"
+        android:backgroundTint="@color/Background3"
         android:layout_marginTop="100dp"
         android:layout_marginStart="25dp"
         android:layout_marginEnd="25dp"
@@ -187,7 +188,6 @@
             android:textColor="@color/HeadText"
             android:textSize="12sp"
             />
-
     </androidx.cardview.widget.CardView>
     <!-- 加载中卡片 -->
     <androidx.cardview.widget.CardView

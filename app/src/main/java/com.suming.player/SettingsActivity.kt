@@ -5,12 +5,14 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -22,6 +24,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
@@ -35,6 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
@@ -124,12 +128,27 @@ class SettingsActivity: AppCompatActivity() {
         val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
         openSourceLicense.paint.isUnderlineText = true
         openSourceLicense.setOnClickListener {
-            startActivity(
-                Intent(
-                    this,
+            vibrate()
+            val isMicroG_Exist = checkMicroG()
+            if (packageNumber == 1){
+                showCustomToast("无法读取应用列表,拒绝打开此页面",Toast.LENGTH_SHORT,3)
+                return@setOnClickListener
+            }
+            if (isMicroG_Exist){
+                showCustomToast("已安装MicroG服务的设备不支持打开此页",Toast.LENGTH_SHORT,3)
+            }
+            else{
+                startActivity(Intent(this,
                     com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java
-                )
-            )
+                ))
+            }
+        }
+        //超链接：设备信息
+        val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
+        DeviceInfoPage.paint.isUnderlineText = true
+        DeviceInfoPage.setOnClickListener {
+            vibrate()
+            startActivity(Intent(this, DeviceInfoActivity::class.java))
         }
 
         //静态操作部分:::
@@ -833,6 +852,26 @@ class SettingsActivity: AppCompatActivity() {
         else{
             vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
         }
+    }
+    //检查应用列表
+    private var packageNumber = 0
+    private fun checkMicroG(): Boolean {
+        packageNumber = 0
+        val packageManager = packageManager
+        val installedPackages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
+        var packageName = ""
+        for (packageInfo in installedPackages) {
+            packageName = packageInfo.packageName
+            packageNumber++
+            if (packageName == "com.google.android.gms"){
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                val label = appInfo.loadLabel(packageManager).toString()
+                if (label.contains("microG")){
+                    return true
+                }
+            }
+        }
+        return false
     }
 
 }

@@ -371,15 +371,20 @@ class PlayerActivityTest: AppCompatActivity(){
                     //正常打开
                     else ->  {
                         vm.PREFS_ExitWhenEnd = false
-                        val uri = IntentCompat.getParcelableExtra(intent, "video", MediaItemForVideo::class.java)?.uri
-                        try { MediaInfo_VideoUri = uri!! }
-                        catch (_: NullPointerException) {
-                            showCustomToast("视频已被关闭", Toast.LENGTH_SHORT, 3)
-                            showCustomToast("播放失败", Toast.LENGTH_SHORT, 3)
-                            onDestroy_fromErrorExit = true
-                            state_need_return = true
-                            finish()
-                            return
+                        val uri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)
+                        if (uri == null){
+                            val uri2 = vm.MediaInfo_VideoUri
+                            if (uri2 == null){
+                                showCustomToast("视频链接无效", Toast.LENGTH_SHORT, 3)
+                                showCustomToast("播放失败", Toast.LENGTH_SHORT, 3)
+                                onDestroy_fromErrorExit = true
+                                state_need_return = true
+                                finish()
+                                return
+                            }
+                        }else{
+                            MediaInfo_VideoUri = uri
+                            vm.MediaInfo_VideoUri = MediaInfo_VideoUri
                         }
                     }
                 }
@@ -837,7 +842,7 @@ class PlayerActivityTest: AppCompatActivity(){
 
             ButtonRefresh()
             //移除遮罩
-            val cover = findViewById<View>(R.id.cover)
+            val cover = findViewById<LinearLayout>(R.id.cover)
             cover.visibility = View.GONE
         }
 
@@ -1873,14 +1878,12 @@ class PlayerActivityTest: AppCompatActivity(){
     }
     //连接到媒体会话(不在会话中设置媒体项)
     private fun connectToMediaSession() {
-
         val SessionToken = SessionToken(this, ComponentName(this, PlayerServiceTest::class.java))
         val MediaSessionController = MediaController.Builder(this, SessionToken).buildAsync()
         MediaSessionController.addListener({
             controller = MediaSessionController.get()
 
         }, MoreExecutors.directExecutor())
-
 
     }
     //开启服务:使用自定义通知或媒体会话
@@ -2034,7 +2037,8 @@ class PlayerActivityTest: AppCompatActivity(){
         //vm.setMediaUri(MediaInfo_VideoUri)
 
         //构建并传入完整媒体项
-        val cover_img_path = File(cacheDir, "Media/${MediaInfo_FileName.hashCode()}/cover/cover.jpg")
+        val covers_path = File(filesDir, "miniature/cover")
+        val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
         val cover_img_uri = if (vm.PREFS_InsertPreviewInMediaSession && cover_img_path.exists()) {
             try {
                 FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
@@ -3000,14 +3004,19 @@ class PlayerActivityTest: AppCompatActivity(){
         val playerViewContainer = findViewById<FrameLayout>(R.id.playerContainer)
         playerViewContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
 
-        val cover = findViewById<View>(R.id.cover)
+        val cover = findViewById<LinearLayout>(R.id.cover)
         cover.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
 
         val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-        val ScrollerRootAreaConstraint = findViewById<View>(R.id.ScrollerRootAreaConstraint)
+        val scroller_area = findViewById<View>(R.id.scroller_area)
 
         recyclerView.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
-        ScrollerRootAreaConstraint.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
+        scroller_area.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
+
+        val top_line = findViewById<View>(R.id.player_scroller_top_line)
+        val middle_line = findViewById<View>(R.id.player_scroller_center_line)
+        top_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.player_scroller_top_line_black))
+        middle_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
 
 
     }

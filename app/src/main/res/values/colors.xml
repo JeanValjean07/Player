@@ -43,6 +43,9 @@
     <color name="strokeLine">#EEEEEE</color>
     <color name="bottomArea">#FFFFFF</color>
 
+    <color name="player_scroller_top_line">#EEEEEE</color>
+    <color name="player_scroller_top_line_black">#424242</color>
+    <color name="player_scroller_center_line">#000000</color>
 
 
     <color name="HeadText111">#000000</color>

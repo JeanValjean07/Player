@@ -234,7 +234,8 @@ class MainActivity: AppCompatActivity() {
         supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MediaStore", this) { _, bundle ->
             val ReceiveKey = bundle.getString("KEY")
             if (ReceiveKey == "Refresh Now"){
-
+                //loadFromDataBase()
+                Main_ContentList_Adapter.refresh()
             }
             if (ReceiveKey == "ReLoadFromMediaStore"){
                 loadFromMediaStore()
@@ -347,8 +348,8 @@ class MainActivity: AppCompatActivity() {
         //注册点击事件
         Main_ContentList_Adapter = MainActivityAdapter(
             context = this,
-            onItemClick = { item ->
-                startPlayer(item)
+            onItemClick = { uri ->
+                startPlayer(uri)
             },
             onDurationClick = { item ->
                 notice("视频时长:${FormatTime_withChar(item.durationMs)}", 2000)
@@ -361,6 +362,9 @@ class MainActivity: AppCompatActivity() {
             },
             onItemHideClick = { uri,flag_need_hide ->
                 HideItem(uri, flag_need_hide)
+            },
+            onFormatClick = { item,format ->
+                notice("视频格式:${item.format}", 3000)
             }
         )
 
@@ -403,12 +407,12 @@ class MainActivity: AppCompatActivity() {
     }
     //启动播放器
     @OptIn(UnstableApi::class)
-    private fun startPlayer(item: MediaItemForVideo){
+    private fun startPlayer(uri: Uri){
         vibrate()
         //使用测试播放页
         if (PREFS_UseTestingPlayer){
             val intent = Intent(this, PlayerActivityTest::class.java).apply {
-                putExtra("video", item)
+                putExtra("uri", uri)
             }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             detailLauncher.launch(intent)
             return
@@ -416,7 +420,7 @@ class MainActivity: AppCompatActivity() {
         //使用传统播放页
         if (PREFS_UsePlayerWithSeekBar){
             val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
-                putExtra("video", item)
+                putExtra("video", uri)
             }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
@@ -426,7 +430,7 @@ class MainActivity: AppCompatActivity() {
         else{
             val intent = Intent(this, PlayerActivity::class.java)
                 .apply {
-                    putExtra("video", item)
+                    putExtra("video", uri)
                 }
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)

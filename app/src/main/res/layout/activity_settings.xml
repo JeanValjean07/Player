@@ -452,7 +452,6 @@
                 android:layout_marginBottom="10dp"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="3dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1033,13 +1032,24 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+            <!--  超链接样式:设备信息  -->
+            <TextView
+                android:id="@+id/DeviceInfoPage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="30dp"
+                android:clickable="true"
+                android:text="设备信息"
+                android:textColor="@color/Text2"
+                android:textSize="12sp" />
             <!--  超链接样式:开源许可  -->
             <TextView
                 android:id="@+id/openSourceLicense"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="2dp"
                 android:clickable="true"
                 android:text="开放源代码许可"
                 android:textColor="@color/Text2"

@@ -33,9 +33,8 @@ class MediaDataBaseReaderForVideo(
             val mediaStoreRepo = MediaStoreRepo.get(context)
             val totalCount = mediaStoreRepo.getTotalCount()
             //排序字段
-            val sortOrder = "info_title ASC"
-
-
+            var sortOrder = "info_title"
+            var sortOrientation = "DESC"
             //读取媒体库设置
             PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
             if (PREFS_MediaStore.contains("PREFS_showHideItems")){
@@ -43,10 +42,21 @@ class MediaDataBaseReaderForVideo(
             }else{
                 PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
             }
+            if (PREFS_MediaStore.contains("PREFS_SortType")){
+                sortOrder = PREFS_MediaStore.getString("PREFS_SortType", "info_title") ?: "info_title"
+            }else{
+                PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title").apply() }
+            }
+            if (PREFS_MediaStore.contains("PREFS_SortOrientation")){
+                sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
+            }else{
+                PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC").apply() }
+            }
+            val sortMethod = "$sortOrder $sortOrientation"
 
 
             //按页获取数据
-            val mediaStoreSettings = mediaStoreRepo.getVideosPagedByOrder(page, limit, sortOrder)
+            val mediaStoreSettings = mediaStoreRepo.getVideosPagedByOrder(page, limit, sortMethod)
 
             //合成MediaItem
             val mediaItems = mediaStoreSettings

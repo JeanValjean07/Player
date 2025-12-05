@@ -43,9 +43,9 @@ interface MediaStoreDao {
     @Query("SELECT * FROM MediaStore ORDER BY info_file_size DESC LIMIT :limit OFFSET :offset")
     suspend fun getAllVideosPagedByFileSizeDesc(limit: Int, offset: Int): List<MediaStoreSetting>
     @Query("SELECT * FROM MediaStore ORDER BY info_format ASC LIMIT :limit OFFSET :offset")
-    suspend fun getAllVideosPagedByFormatAsc(limit: Int, offset: Int): List<MediaStoreSetting>
+    suspend fun getAllVideosPagedByMimeTypeAsc(limit: Int, offset: Int): List<MediaStoreSetting>
     @Query("SELECT * FROM MediaStore ORDER BY info_format DESC LIMIT :limit OFFSET :offset")
-    suspend fun getAllVideosPagedByFormatDesc(limit: Int, offset: Int): List<MediaStoreSetting>
+    suspend fun getAllVideosPagedByMimeTypeDesc(limit: Int, offset: Int): List<MediaStoreSetting>
 
     //根据URI获取隐藏状态
     @Query("SELECT info_is_hidden FROM MediaStore WHERE MARK_Uri_numOnly = :uriNumOnly LIMIT 1")

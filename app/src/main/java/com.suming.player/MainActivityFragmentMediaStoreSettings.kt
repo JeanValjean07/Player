@@ -26,6 +26,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
@@ -48,13 +49,13 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
     private var lockPage = false
     //开关
     private lateinit var switch_EnableFileExistCheck: SwitchCompat
-    //设置项
-    private lateinit var PREFS: SharedPreferences
+    //常规设置项
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
-    private var PREFS_CloseFragmentGesture = false
-
-    private var current_sort_orientation_value = 0
+    private var PREFS_CloseFragmentGesture: Boolean = false
+    //排序设置项
+    private var PREFS_SortType: String = "info_title"
+    private var PREFS_SortOrientation: String = "DESC"
 
 
     override fun onStart() {
@@ -111,121 +112,124 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //开关实例初始化
         switch_EnableFileExistCheck = view.findViewById(R.id.switch_EnableFileExistCheck)
-
         //读取设置
-        PREFS = context?.getSharedPreferences("PREFS", Context.MODE_PRIVATE)!!
         PREFS_MediaStore = context?.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)!!
-        if (!PREFS.contains("PREFS_CloseFragmentGesture")) {
-            PREFS.edit { putBoolean("PREFS_CloseFragmentGesture", false) }
-            PREFS_CloseFragmentGesture = false
-        } else {
-            PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
-        }
         if (!PREFS_MediaStore.contains("PREFS_EnableFileExistCheck")) {
             PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", false) }
             PREFS_EnableFileExistCheck = false
         } else {
             PREFS_EnableFileExistCheck = PREFS_MediaStore.getBoolean("PREFS_EnableFileExistCheck", false)
         }
-
         //开关置位
         switch_EnableFileExistCheck.isChecked = PREFS_EnableFileExistCheck
         //开关点击事件
         switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
+            vibrate()
             PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", isChecked) }
         }
 
+
         //按钮：退出
-        val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
-        buttonExit.setOnClickListener {
+        val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
+        ButtonExit.setOnClickListener {
+            vibrate()
             dismiss()
         }
         //按钮：点击空白区域退出
         val topArea = view.findViewById<View>(R.id.topArea)
         topArea.setOnClickListener {
+            vibrate()
             dismiss()
         }
         //按钮：锁定页面
-        val buttonLock = view.findViewById<ImageButton>(R.id.buttonLock)
-        buttonLock.setOnClickListener {
+        val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
+        ButtonLock.setOnClickListener {
+            vibrate()
             lockPage = !lockPage
             if (lockPage){
-                buttonLock.setImageResource(R.drawable.ic_more_button_lock_on)
+                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
             }
             else{
-                buttonLock.setImageResource(R.drawable.ic_more_button_lock_off)
+                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
             }
         }
         //按钮：重读媒体库
         val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
         ButtonReLoadFromMediaStore.setOnClickListener {
+            vibrate()
             val result = bundleOf("KEY" to "ReLoadFromMediaStore")
             setFragmentResult("FROM_FRAGMENT_MediaStore", result)
             customDismiss()
         }
 
 
-
-
-
         //排序方法预读
-        val PREFS = context?.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE) ?: return
-        showSortType("")
-        showOrientationType("")
+        setAndShowSortType("")
+        setAndShowOrientationType("")
 
 
-        //排序方法修改
+        //排序区域
         val SortTypeArea = view.findViewById<LinearLayout>(R.id.sort_type_area)
         SortTypeArea.visibility = View.GONE
         val ButtonChangeSortType = view.findViewById<TextView>(R.id.ButtonChangeSort)
         ButtonChangeSortType.setOnClickListener {
+            vibrate()
             if (ButtonChangeSortType.text == "更改"){
                 ButtonChangeSortType.text = "立即刷新"
                 expand(SortTypeArea)
             }
             else if(ButtonChangeSortType.text == "立即刷新"){
-
                 val result = bundleOf("KEY" to "Refresh Now")
                 setFragmentResult("FROM_FRAGMENT_MediaStore", result)
-
                 dismiss()
-
             }
-
-
-
         }
-        val sort_name = view.findViewById<TextView>(R.id.sort_name)
-        sort_name.setOnClickListener {
-            PREFS.edit { putString("sort_type", "DISPLAY_NAME") }
-            showSortType("DISPLAY_NAME")
+        //排序方法
+        val SortType_info_title = view.findViewById<TextView>(R.id.sort_name)
+        val SortType_info_duration = view.findViewById<TextView>(R.id.sort_duration)
+        val SortType_info_date_added = view.findViewById<TextView>(R.id.sort_date_added)
+        val SortType_info_file_size = view.findViewById<TextView>(R.id.sort_file_size)
+        val SortType_info_mime_type = view.findViewById<TextView>(R.id.sort_mime_type)
+        SortType_info_title.setOnClickListener {
+            vibrate()
+            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title") }
+            setAndShowSortType("info_title")
         }
-        val sort_duration = view.findViewById<TextView>(R.id.sort_duration)
-        sort_duration.setOnClickListener {
-            PREFS.edit { putString("sort_type", "DURATION") }
-            showSortType("DURATION")
+        SortType_info_duration.setOnClickListener {
+            vibrate()
+            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_duration") }
+            setAndShowSortType("info_duration")
         }
-        val sort_date_added = view.findViewById<TextView>(R.id.sort_date_added)
-        sort_date_added.setOnClickListener {
-            PREFS.edit { putString("sort_type", "DATE_ADDED") }
-            showSortType("DATE_ADDED")
+        SortType_info_date_added.setOnClickListener {
+            vibrate()
+            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_date_added") }
+            setAndShowSortType("info_date_added")
         }
-        val sort_resolution = view.findViewById<TextView>(R.id.sort_resolution)
-        sort_resolution.setOnClickListener {
-            PREFS.edit { putString("sort_type", "RESOLUTION") }
-            showSortType("RESOLUTION")
+        SortType_info_file_size.setOnClickListener {
+            vibrate()
+            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_file_size") }
+            setAndShowSortType("info_file_size")
         }
+        SortType_info_mime_type.setOnClickListener {
+            vibrate()
+            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_mime_type") }
+            setAndShowSortType("info_mime_type")
+        }
+        //降序和升序
         val ButtonChangeSortOrientation = view.findViewById<TextView>(R.id.ButtonChangeSortOrientation)
         ButtonChangeSortOrientation.setOnClickListener {
-            if (current_sort_orientation_value == 0){
-                //升序改降序
-                PREFS.edit { putString("sort_orientation", "DESC") }
-                showOrientationType("DESC")
+            vibrate()
+            //升序改降序
+            if (PREFS_SortOrientation == "ASC"){
+                PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC") }
+                PREFS_SortOrientation = "DESC"
+                setAndShowOrientationType("DESC")
             }
-            else if (current_sort_orientation_value == 1){
-                //降序改升序
-                PREFS.edit { putString("sort_orientation", "ASC") }
-                showOrientationType("ASC")
+            //降序改升序
+            else if (PREFS_SortOrientation == "DESC"){
+                PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "ASC") }
+                PREFS_SortOrientation = "ASC"
+                setAndShowOrientationType("ASC")
             }
         }
 
@@ -357,7 +361,8 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
 
 
     //Functions
-    fun expand(view: LinearLayout) {
+    //展开动画
+    private fun expand(view: LinearLayout) {
         //设置初始高度为0
         view.measure(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -387,70 +392,101 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
 
         animator.start()
     }
-
-    private fun showSortType(type: String){
+    //文本显示
+    private fun setAndShowSortType(type: String){
         val current_sort_type = view?.findViewById<TextView>(R.id.current_sort)
         when(type){
-            "DISPLAY_NAME" -> {
+            "info_title" -> {
                 current_sort_type?.text = "已选择：文件名"
+                PREFS_SortType = "info_title"
             }
-            "DURATION" -> {
+            "info_duration" -> {
                 current_sort_type?.text = "已选择：时长"
+                PREFS_SortType = "info_duration"
             }
-            "DATE_ADDED" -> {
+            "info_date_added" -> {
                 current_sort_type?.text = "已选择：添加日期"
+                PREFS_SortType = "info_date_added"
             }
-            "RESOLUTION" -> {
-                current_sort_type?.text = "已选择：分辨率"
+            "info_file_size" -> {
+                current_sort_type?.text = "已选择：文件大小"
+                PREFS_SortType = "info_file_size"
+            }
+            "info_mime_type" -> {
+                current_sort_type?.text = "已选择：文件格式"
+                PREFS_SortType = "info_mime_type"
             }
             "" -> {
-                val PREFS = context?.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)
-                if (PREFS == null) {
-                    current_sort_type?.text = "读取失败"
-                    return
+                if (PREFS_MediaStore.contains("PREFS_SortType")){
+                    if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_title"){
+                        current_sort_type?.text = "文件名"
+                        PREFS_SortType = "info_title"
+                    }
+                    else if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_duration"){
+                        current_sort_type?.text = "时长"
+                        PREFS_SortType = "info_duration"
+                    }
+                    else if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_date_added"){
+                        current_sort_type?.text = "添加日期"
+                        PREFS_SortType = "info_date_added"
+                    }
+                    else if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_file_size"){
+                        current_sort_type?.text = "文件大小"
+                        PREFS_SortType = "info_file_size"
+                    }
+                    else if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_mime_type"){
+                        current_sort_type?.text = "文件格式"
+                        PREFS_SortType = "info_mime_type"
+                    }
+                    else {
+                        PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title") }
+                        current_sort_type?.text = "文件名"
+                        PREFS_SortType = "info_title"
+                    }
                 }
-                if (PREFS.getString("sort_type", "DISPLAY_NAME") == "DISPLAY_NAME"){
+                else{
+                    PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title") }
                     current_sort_type?.text = "文件名"
-                }else if (PREFS.getString("sort_type", "DISPLAY_NAME") == "DURATION"){
-                    current_sort_type?.text = "时长"
-                }else if (PREFS.getString("sort_type", "DISPLAY_NAME") == "DATE_ADDED"){
-                    current_sort_type?.text = "添加日期"
-                }else if (PREFS.getString("sort_type", "DISPLAY_NAME") == "RESOLUTION"){
-                    current_sort_type?.text = "分辨率"
+                    PREFS_SortType = "info_title"
                 }
             }
         }
     }
-
-    private fun showOrientationType(type: String){
+    private fun setAndShowOrientationType(type_DESC_or_ASC: String){
         val current_sort_orientation = view?.findViewById<TextView>(R.id.current_sort_orientation)
-        when(type){
+        when(type_DESC_or_ASC){
             "DESC" -> {
                 current_sort_orientation?.text = "已修改为降序"
-                current_sort_orientation_value = 1
+                PREFS_SortOrientation = "DESC"
             }
             "ASC" -> {
                 current_sort_orientation?.text = "已修改为升序"
-                current_sort_orientation_value = 0
+                PREFS_SortOrientation = "ASC"
             }
             "" -> {
-                val PREFS = context?.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)
-                if (PREFS == null) {
-                    current_sort_orientation?.text = "读取失败"
-                    return
+                if (PREFS_MediaStore.contains("PREFS_SortOrientation")){
+                    if (PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") == "DESC"){
+                        current_sort_orientation?.text = "降序"
+                        PREFS_SortOrientation = "DESC"
+                    }
+                    else if (PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") == "ASC"){
+                        current_sort_orientation?.text = "升序"
+                        PREFS_SortOrientation = "ASC"
+                    }
+                    else {
+                        PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC") }
+                        current_sort_orientation?.text = "降序"
+                        PREFS_SortOrientation = "DESC"
+                    }
                 }
-                if (PREFS.getString("sort_orientation", "DESC") == "DESC"){
+                else{
+                    PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC") }
                     current_sort_orientation?.text = "降序"
-                    current_sort_orientation_value = 1
-                }
-                else if (PREFS.getString("sort_orientation", "DESC") == "ASC"){
-                    current_sort_orientation?.text = "升序"
-                    current_sort_orientation_value = 0
+                    PREFS_SortOrientation = "DESC"
                 }
             }
         }
     }
-
     //震动控制
     @Suppress("DEPRECATION")
     private fun Context.vibrator(): Vibrator =

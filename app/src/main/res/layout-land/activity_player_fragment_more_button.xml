@@ -947,7 +947,7 @@
                                 <ImageView
                                     android:layout_width="18dp"
                                     android:layout_height="18dp"
-                                    android:src="@drawable/ic_more_button_capture"
+                                    android:src="@drawable/ic_more_button_frames"
                                     android:scaleType="centerCrop"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"

@@ -32,10 +32,11 @@ import java.io.File
 
 class MainActivityAdapter(
     private val context: Context,
-    private val onItemClick: (MediaItemForVideo) -> Unit,
+    private val onItemClick: (Uri) -> Unit,
     private val onDurationClick: (MediaItemForVideo) -> Unit,
     private val onOptionClick: (MediaItemForVideo) -> Unit,
-    private val onItemHideClick: (Uri, Boolean) -> Unit
+    private val onItemHideClick: (Uri, Boolean) -> Unit,
+    private val onFormatClick: (MediaItemForVideo, String) -> Unit
 ):PagingDataAdapter<MediaItemForVideo, MainActivityAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
@@ -81,17 +82,16 @@ class MainActivityAdapter(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
-        holder.tvName.text = item.name
+        holder.tvName.text = item.name.substringBeforeLast(".")
         holder.tvDuration.text = FormatTime_numOnly(item.durationMs)
         holder.tvFormat.text = item.format.ifEmpty { "未知" }
         val frame = CoverBitmapCache.get(item.name.hashCode())
         if (frame == null) {generateCoverFrame(item, holder)}
         else{
             holder.tvThumb.setImageBitmap(frame)
-            holder.tvThumb.startAnimation(FadeInAnimation)
         }
         //点击事件设定
-        holder.TouchPad.setOnClickListener { onItemClick(item) }
+        holder.TouchPad.setOnClickListener { onItemClick(item.uri) }
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
         holder.tvOption.setOnClickListener {
             //显示菜单
@@ -113,6 +113,7 @@ class MainActivityAdapter(
                 true
             }
         }
+        holder.tvFormat.setOnClickListener { onFormatClick(item, item.format) }
     }
 
     override fun onViewAttachedToWindow(holder: ViewHolder) {
