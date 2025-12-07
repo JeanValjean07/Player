@@ -3,42 +3,35 @@ package com.suming.player
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ActivityManager
-import android.app.WallpaperManager
-import android.app.admin.DevicePolicyManager
-import android.content.Context
-import android.hardware.Sensor
-import android.hardware.SensorManager
-import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.storage.StorageManager
-import android.provider.Settings
-import android.telephony.CellIdentityNr
-import android.telephony.CellInfoNr
-import android.telephony.TelephonyManager
-import android.util.Log
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresPermission
-import androidx.core.content.getSystemService
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.media3.exoplayer.SeekParameters
 import com.google.android.material.button.MaterialButton
 
 class DeviceInfoActivity: AppCompatActivity() {
+    //内存值
     private var MemMaxByte = 0L
     private var MemAvailByte = 0L
     private var MemNowByte = 0L
     private lateinit var memoryMax: TextView
     private lateinit var memoryUsed: TextView
     private lateinit var memoryAvailable: TextView
+    //服务状态
     private var state_MemoryFreshRunning = false
-
+    private var state_FloatWindowRunning = false
+    //设置
+    private lateinit var PREFS_DeviceInfo: SharedPreferences
+    private var PREFS_MemoryFreshGap = 0L
 
 
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.READ_PHONE_STATE])
@@ -53,7 +46,16 @@ class DeviceInfoActivity: AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        //控件
+        //设置读取
+        PREFS_DeviceInfo = getSharedPreferences("PREFS_DeviceInfo", MODE_PRIVATE)
+        if (PREFS_DeviceInfo.contains("PREFS_MemoryFreshGap")) {
+            PREFS_MemoryFreshGap = PREFS_DeviceInfo.getLong("PREFS_MemoryFreshGap", 1000L)
+        }else{
+            PREFS_DeviceInfo.edit { putLong("PREFS_MemoryFreshGap", 1000L) }
+            PREFS_MemoryFreshGap = 1000L
+        }
+
+
         //按钮：返回
         val ButtonBack = findViewById<ImageButton>(R.id.buttonExit)
         ButtonBack.setOnClickListener {
@@ -70,45 +72,10 @@ class DeviceInfoActivity: AppCompatActivity() {
         }
 
 
-
         startMemRefresh()
 
 
-        /*
-        //是否有刘海屏
-        val hasCutout = windowManager.defaultDisplay.cutout != null
-        Log.d("SuMing", "是否为刘海屏: $hasCutout")
-        //是否支持OpenGL ES 3.0
-        val activityManager = getSystemService<ActivityManager>()!!
-        val configInfo = activityManager.deviceConfigurationInfo
-        val gl = configInfo.reqGlEsVersion
-        val glVersion = "${gl shr 16}.${gl and 0xffff}"
-        Log.d("SuMing", "OpenGL版本: $glVersion")
-        //是否有陀螺仪
-        val sensorManager = getSystemService<SensorManager>()!!
-        val gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-        val hasGyro = gyro != null
-        Log.d("SuMing", "本机是否支持陀螺仪: $hasGyro")
-        //是否有工作配置文件
-        val dpm = getSystemService<DevicePolicyManager>()!!
-        val admins = dpm.activeAdmins
-        val hasWorkProfile = admins?.any { dpm.isProfileOwnerApp(it.packageName) } == true
-        Log.d("SuMing", "当前系统是否创建了工作配置文件: $hasWorkProfile")
-        //是否有外部存储
-        val storage = getSystemService<StorageManager>()!!
-        val uuid = StorageManager.UUID_DEFAULT
-        val avail = storage.getAllocatableBytes(uuid)
-        val gigs = avail / (1024.0 * 1024 * 1024)
-        Log.d("SuMing", "设备可用存储空间: $gigs GB")
-        //指纹key
-        val fingerprint = Build.FINGERPRINT
-        Log.d("SuMing", "指纹key: $fingerprint")
-        //最高刷新率
-        val mode = windowManager.defaultDisplay.mode
-        val refresh = mode?.refreshRate ?: 60f
-        Log.d("SuMing", "设备最高刷新率: $refresh")
 
-         */
 
     }
 
@@ -127,7 +94,7 @@ class DeviceInfoActivity: AppCompatActivity() {
 
             setMemValue()
 
-            MemRefreshHandler.postDelayed(this,1000)
+            MemRefreshHandler.postDelayed(this, PREFS_MemoryFreshGap)
         }
     }
     private fun startMemRefresh() {
@@ -172,3 +139,40 @@ class DeviceInfoActivity: AppCompatActivity() {
 
 
 }
+
+//停用的代码
+/*
+       //是否有刘海屏
+       val hasCutout = windowManager.defaultDisplay.cutout != null
+       Log.d("SuMing", "是否为刘海屏: $hasCutout")
+       //是否支持OpenGL ES 3.0
+       val activityManager = getSystemService<ActivityManager>()!!
+       val configInfo = activityManager.deviceConfigurationInfo
+       val gl = configInfo.reqGlEsVersion
+       val glVersion = "${gl shr 16}.${gl and 0xffff}"
+       Log.d("SuMing", "OpenGL版本: $glVersion")
+       //是否有陀螺仪
+       val sensorManager = getSystemService<SensorManager>()!!
+       val gyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+       val hasGyro = gyro != null
+       Log.d("SuMing", "本机是否支持陀螺仪: $hasGyro")
+       //是否有工作配置文件
+       val dpm = getSystemService<DevicePolicyManager>()!!
+       val admins = dpm.activeAdmins
+       val hasWorkProfile = admins?.any { dpm.isProfileOwnerApp(it.packageName) } == true
+       Log.d("SuMing", "当前系统是否创建了工作配置文件: $hasWorkProfile")
+       //是否有外部存储
+       val storage = getSystemService<StorageManager>()!!
+       val uuid = StorageManager.UUID_DEFAULT
+       val avail = storage.getAllocatableBytes(uuid)
+       val gigs = avail / (1024.0 * 1024 * 1024)
+       Log.d("SuMing", "设备可用存储空间: $gigs GB")
+       //指纹key
+       val fingerprint = Build.FINGERPRINT
+       Log.d("SuMing", "指纹key: $fingerprint")
+       //最高刷新率
+       val mode = windowManager.defaultDisplay.mode
+       val refresh = mode?.refreshRate ?: 60f
+       Log.d("SuMing", "设备最高刷新率: $refresh")
+
+        */

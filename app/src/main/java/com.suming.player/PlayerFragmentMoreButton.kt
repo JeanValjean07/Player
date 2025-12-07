@@ -21,6 +21,7 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
@@ -380,7 +381,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         ButtonUpdateCover.setOnClickListener {
             val result = bundleOf("KEY" to "UpdateCover")
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
             Dismiss()
         }
         //按钮：提取帧
@@ -397,12 +397,23 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
              */
         }
-
+        //使用传统进度条页面时隐藏滚动条控制卡片
         val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
         if(vm.state_playerWithSeekBar){
             CardScrollerStuff.visibility = View.GONE
         }
-
+        //解除亮度控制卡片+按钮
+        val CardBrightness = view.findViewById<LinearLayout>(R.id.ContainerUnBindBrightness)
+        val ButtonUnBindBrightness = view.findViewById<TextView>(R.id.ButtonUnBindBrightness)
+        if (!vm.BrightnessChanged){
+            CardBrightness.visibility = View.GONE
+        }
+        ButtonUnBindBrightness.setOnClickListener {
+            vibrate()
+            val result = bundleOf("KEY" to "UnBindBrightness")
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+            Dismiss()
+        }
 
         //按钮：AlwaysSeek
         val ButtonAlwaysSeek = view.findViewById<FrameLayout>(R.id.buttonActualAlwaysSeek)
@@ -676,7 +687,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     //onViewCreated END
     }
-
 
 
     //Functions

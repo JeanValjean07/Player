@@ -1648,6 +1648,9 @@ class PlayerActivityTest: AppCompatActivity(){
                 "clearMiniature" -> {
                     clearMiniature()
                 }
+                "UnBindBrightness" -> {
+                    unBindBrightness()
+                }
                 //退出事件
                 "Dismiss" -> {
                     MovePlayArea_down()
@@ -2423,6 +2426,17 @@ class PlayerActivityTest: AppCompatActivity(){
 
 
     //Stable Functions
+    //解除亮度控制
+    private fun unBindBrightness(){
+        val windowInfo = window.attributes
+
+        windowInfo.screenBrightness = -1f
+        window.attributes = windowInfo
+
+        vm.BrightnessChanged = false
+
+        showCustomToast("已解除亮度控制,现在您可以使用系统亮度控制了", Toast.LENGTH_SHORT, 3)
+    }
     //通知卡片位置设置:接收px值,需把dp转px
     private fun setNoticeCardPosition(type_portrait_or_landscape: String){
         if (type_portrait_or_landscape == "landscape"){
@@ -2431,7 +2445,7 @@ class PlayerActivityTest: AppCompatActivity(){
             (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(100f))
         }
     }
-    //px转dp
+    //dp转px
     private fun dp2px(dpValue: Float): Int {
         val scale = resources.displayMetrics.density
         return (dpValue * scale + 0.5f).toInt()

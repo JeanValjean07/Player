@@ -183,10 +183,36 @@
                             android:layout_height="1dp"
                             android:layout_weight="1"/>
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/ButtonMemory"
-                            android:layout_width="80dp"
+                            android:id="@+id/ButtonMemoryRefreshGap"
+                            android:layout_width="53dp"
                             android:layout_height="30dp"
-                            android:layout_marginEnd="15dp"
+                            android:layout_marginEnd="5dp"
+                            android:backgroundTint="@color/ButtonBg"
+                            android:layout_gravity="center"
+                            android:padding="1dp"
+                            android:text="刷新间隔"
+                            android:textColor="@color/ButtonText"
+                            android:textSize="10sp"
+                            app:cornerRadius="5dp"
+                            tools:ignore="SmallSp" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/ButtonMemoryFloat"
+                            android:layout_width="40dp"
+                            android:layout_height="30dp"
+                            android:layout_marginEnd="5dp"
+                            android:backgroundTint="@color/ButtonBg"
+                            android:layout_gravity="center"
+                            android:padding="1dp"
+                            android:text="悬浮窗"
+                            android:textColor="@color/ButtonText"
+                            android:textSize="10sp"
+                            app:cornerRadius="5dp"
+                            tools:ignore="SmallSp" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/ButtonMemory"
+                            android:layout_width="73dp"
+                            android:layout_height="30dp"
+                            android:layout_marginEnd="10dp"
                             android:backgroundTint="@color/ButtonBg"
                             android:layout_gravity="center"
                             android:padding="1dp"
@@ -270,8 +296,6 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
-
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

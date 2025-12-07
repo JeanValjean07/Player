@@ -2403,14 +2403,19 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         val playerViewContainer = findViewById<FrameLayout>(R.id.playerContainer)
         playerViewContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
 
-        val cover = findViewById<View>(R.id.cover)
+        val cover = findViewById<LinearLayout>(R.id.cover)
         cover.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
 
         val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-        val ScrollerRootAreaConstraint = findViewById<View>(R.id.ScrollerRootAreaConstraint)
+        val scroller_area = findViewById<View>(R.id.scroller_area)
 
         recyclerView.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
-        ScrollerRootAreaConstraint.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
+        scroller_area.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
+
+        val top_line = findViewById<View>(R.id.player_scroller_top_line)
+        val middle_line = findViewById<View>(R.id.player_scroller_center_line)
+        top_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.player_scroller_top_line_black))
+        middle_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
 
 
     }
