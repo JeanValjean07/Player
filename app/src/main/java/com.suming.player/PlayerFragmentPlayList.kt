@@ -1,10 +1,17 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Context.VIBRATOR_MANAGER_SERVICE
+import android.content.Context.VIBRATOR_SERVICE
 import android.content.res.Configuration
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -13,6 +20,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,6 +51,7 @@ import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import java.net.URI
 import kotlin.math.abs
 
 @SuppressLint("ComposableNaming")
@@ -63,11 +72,6 @@ class PlayerFragmentPlayList: DialogFragment() {
                 )
             }
     }
-    //媒体data class
-    data class MediaItem_video(
-        val uri: String,
-        val name: String
-    )
 
 
     override fun onStart() {
@@ -164,14 +168,22 @@ class PlayerFragmentPlayList: DialogFragment() {
 
             customDismiss()
         }
-
-
+        //循环模式
+        val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
+        if (vm.repeatMode == "OFF"){ ButtonLoopMode.text = "播完暂停" }
+        else if (vm.repeatMode == "ONE"){ ButtonLoopMode.text = "单集循环" }
+        else if (vm.repeatMode == "ALL"){ ButtonLoopMode.text = "顺序播放" }
+        ButtonLoopMode.setOnClickListener {
+            vibrate()
+            if (vm.repeatMode == "OFF"){ setRepeatMode("ALL") }
+            else if (vm.repeatMode == "ALL"){ setRepeatMode("ONE") }
+            else if (vm.repeatMode == "ONE"){ setRepeatMode("OFF") }
+        }
         //声明式显示列表
-        val playListString = vm.List_PlayList
         val composableView = view.findViewById<View>(R.id.composableView)
         val composeView = composableView as androidx.compose.ui.platform.ComposeView
         composeView.setContent {
-            showVideoList(playListString)
+            showVideoList()
         }
 
 
@@ -180,6 +192,7 @@ class PlayerFragmentPlayList: DialogFragment() {
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
                 var down_y = 0f
                 var deltaY = 0f
+                var deltaY_ReachPadding = false
                 val RootCard = view.findViewById<CardView>(R.id.mainCard)
                 val RootCardOriginY = RootCard.translationY
                 val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
@@ -187,6 +200,7 @@ class PlayerFragmentPlayList: DialogFragment() {
                 NestedScrollView.setOnTouchListener { _, event ->
                     when (event.actionMasked) {
                         MotionEvent.ACTION_DOWN -> {
+                            deltaY_ReachPadding = false
                             if (NestedScrollView.scrollY != 0){
                                 NestedScrollViewAtTop = false
                                 return@setOnTouchListener false
@@ -203,12 +217,18 @@ class PlayerFragmentPlayList: DialogFragment() {
                             if (deltaY < 0){
                                 return@setOnTouchListener false
                             }
+                            if (deltaY >= 400f){
+                                if (!deltaY_ReachPadding){
+                                    deltaY_ReachPadding = true
+                                    vibrate()
+                                }
+                            }
                             RootCard.translationY = RootCardOriginY + deltaY
                             return@setOnTouchListener true
                         }
                         MotionEvent.ACTION_UP -> {
                             if (deltaY >= 400f){
-                                Dismiss()
+                                Dismiss(false)
                             }else{
                                 RootCard.animate()
                                     .translationY(0f)
@@ -226,6 +246,7 @@ class PlayerFragmentPlayList: DialogFragment() {
                 var deltaY = 0f
                 var down_x = 0f
                 var deltaX = 0f
+                var deltaX_ReachPadding = false
                 var Y_move_ensure = false
                 val RootCard = view.findViewById<CardView>(R.id.mainCard)
                 val RootCardOriginX = RootCard.translationX
@@ -236,12 +257,19 @@ class PlayerFragmentPlayList: DialogFragment() {
                             down_x = event.rawX
                             down_y = event.rawY
                             Y_move_ensure = false
+                            deltaX_ReachPadding = false
                         }
                         MotionEvent.ACTION_MOVE -> {
                             deltaY = event.rawY - down_y
                             deltaX = event.rawX - down_x
                             if (deltaX < 0){
                                 return@setOnTouchListener false
+                            }
+                            if (deltaX >= 200f){
+                                if (!deltaX_ReachPadding){
+                                    deltaX_ReachPadding = true
+                                    vibrate()
+                                }
                             }
                             if (Y_move_ensure){
                                 return@setOnTouchListener false
@@ -258,7 +286,7 @@ class PlayerFragmentPlayList: DialogFragment() {
                                 return@setOnTouchListener false
                             }
                             if (deltaX >= 200f){
-                                Dismiss()
+                                Dismiss(false)
                             }else{
                                 RootCard.animate()
                                     .translationX(0f)
@@ -274,24 +302,24 @@ class PlayerFragmentPlayList: DialogFragment() {
         //监听返回手势(DialogFragment)
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                Dismiss()
+                Dismiss(false)
                 return@setOnKeyListener true
             }
             return@setOnKeyListener false
         }
-
+    //onViewCreated END
     }
 
 
     //声明式UI
     @Composable
-    private fun showVideoList(playlistString: String) {
-        val list = remember(playlistString) { parsePlaylistString(playlistString) }
+    private fun showVideoList() {
+        val mediaItems = vm.mediaItems
 
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            list.forEach { item ->
+            mediaItems.forEach { item ->
 
                 Row(
                     modifier = Modifier
@@ -309,8 +337,9 @@ class PlayerFragmentPlayList: DialogFragment() {
                             modifier = Modifier
                                 .padding(0.dp)
                         )
+
                         Text(
-                            text = item.uri,
+                            text = item.uri.toString(),
                             color = colorResource(R.color.HeadText2),
                             fontSize = 8.sp,
                             style = MaterialTheme.typography.bodyMedium,
@@ -319,7 +348,7 @@ class PlayerFragmentPlayList: DialogFragment() {
                         )
                     }
                     IconButton(
-                        onClick = { onDeleteClick(item) },
+                        onClick = { onDeleteClick(item.uri) },
                         modifier = Modifier
                             .padding(5.dp,0.dp,0.dp,0.dp)
                             .size(25.dp)
@@ -331,7 +360,7 @@ class PlayerFragmentPlayList: DialogFragment() {
                         )
                     }
                     IconButton(
-                        onClick = { onPlayClick(item) },
+                        onClick = { onPlayClick(item.uri, item.name) },
                         modifier = Modifier
                             .padding(5.dp,0.dp,0.dp,0.dp)
                             .size(25.dp)
@@ -349,50 +378,72 @@ class PlayerFragmentPlayList: DialogFragment() {
                     thickness = 0.5.dp,
                     color = colorResource(R.color.divider)
                 )
-
             }//list.forEach
         }
     }
 
-    private fun onPlayClick(item: MediaItem_video) {
-
-        val itemString = item.toString()
-        val itemUri = item.uri
-        val result = bundleOf("KEY" to "switchItem", "new_item" to itemString, "new_item_uri" to itemUri)
+    private fun onPlayClick(uri: Uri, name: String) {
+        val itemUri = uri.toString()
+        val result = bundleOf("KEY" to "switchItem", "new_item_uri" to itemUri, "new_item_name" to name)
         setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
-
-        customDismiss()
-
+        dismiss()
     }
 
-    private fun onDeleteClick(item: MediaItem_video) {
-
-
-    }
+    private fun onDeleteClick(uri: Uri) {  }
 
     //Functions
-    //字符串转list<MediaItem_video>
-    private fun parsePlaylistString(str: String): List<MediaItem_video> {
-        val regex = """MediaItem_video\(uri=([^,]+),\s*name=([^)]+)\)""".toRegex()
-        return regex.findAll(str).map {
-            MediaItem_video(
-                uri = it.groupValues[1],
-                name = it.groupValues[2]
-            )
-        }.toList()
+    //设置循环模式
+    private fun setRepeatMode(target_mode: String){
+        val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
+        when (target_mode){
+            "OFF" -> {
+                vm.repeatMode = "OFF"
+                ButtonLoopMode?.text = "播完暂停"
+            }
+            "ONE" -> {
+                vm.repeatMode = "ONE"
+                ButtonLoopMode?.text = "单集循环"
+            }
+            "ALL" -> {
+                vm.repeatMode = "ALL"
+                ButtonLoopMode?.text = "顺序播放"
+            }
+        }
     }
-
     //自定义退出逻辑
     private fun customDismiss(){
-        if (!lockPage) { Dismiss() }
+        if (!lockPage) {
+            Dismiss()
+        }
     }
-    private fun Dismiss(){
+    private fun Dismiss(flag_need_vibrate: Boolean = true){
+        if (flag_need_vibrate){ vibrate() }
         val result = bundleOf("KEY" to "Dismiss")
-        setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
+        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
         dismiss()
 
     }
-
-
+    //震动控制
+    @Suppress("DEPRECATION")
+    private fun Context.vibrator(): Vibrator =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator
+        } else {
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
+    private fun vibrate() {
+        if (vm.PREFS_VibrateMillis <= 0L) {
+            return
+        }
+        val vib = requireContext().vibrator()
+        if (vm.PREFS_UseSysVibrate) {
+            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+            vib.vibrate(effect)
+        }
+        else{
+            vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
+        }
+    }
 
 }

@@ -3,13 +3,9 @@ package data.MediaDataReader
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.provider.MediaStore
-import android.util.Log
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
-import com.suming.player.PlayListManager
+import androidx.core.content.edit
 import com.suming.player.ToolEventBus
 import data.DataBaseMediaStore.MediaStoreRepo
 import data.DataBaseMediaStore.MediaStoreSetting
@@ -17,9 +13,7 @@ import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.core.content.edit
 
 class MediaStoreReaderForVideo(
     private val context: Context,
@@ -158,9 +152,6 @@ class MediaStoreReaderForVideo(
     suspend fun readAndSaveAllVideos(): List<MediaItemForVideo> {
         val videos = readAllVideos()
         saveVideosToDatabase(videos)
-
-        // 初始化播放列表
-        PlayListManager.getInstance(context).initPlayList_byMediaStore(videos)
 
         return videos
     }

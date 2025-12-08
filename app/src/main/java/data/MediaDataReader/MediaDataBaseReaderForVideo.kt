@@ -3,20 +3,20 @@ package data.MediaDataReader
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
-import android.provider.MediaStore
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import data.DataBaseMediaStore.MediaStoreRepo
 import data.MediaModel.MediaItemForVideo
-import androidx.core.net.toUri
-import androidx.core.content.edit
 
 class MediaDataBaseReaderForVideo(
     private val context: Context,
 ) : PagingSource<Int, MediaItemForVideo>() {
-
+    //设置和设置项
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_showHideItems = false
+
 
     override fun getRefreshKey(state: PagingState<Int, MediaItemForVideo>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
@@ -42,18 +42,19 @@ class MediaDataBaseReaderForVideo(
             }else{
                 PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
             }
-            if (PREFS_MediaStore.contains("PREFS_SortType")){
-                sortOrder = PREFS_MediaStore.getString("PREFS_SortType", "info_title") ?: "info_title"
+            if (PREFS_MediaStore.contains("PREFS_SortOrder")){
+                sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
             }else{
-                PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title").apply() }
+                sortOrder = "info_title"
+                PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_title").apply() }
             }
             if (PREFS_MediaStore.contains("PREFS_SortOrientation")){
                 sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
             }else{
+                sortOrientation = "DESC"
                 PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC").apply() }
             }
             val sortMethod = "$sortOrder $sortOrientation"
-
 
             //按页获取数据
             val mediaStoreSettings = mediaStoreRepo.getVideosPagedByOrder(page, limit, sortMethod)
@@ -76,6 +77,7 @@ class MediaDataBaseReaderForVideo(
                     )
                 }
 
+
             //计算下页键
             val nextKey = if ((page * limit) + mediaItems.size < totalCount) page + 1 else null
 
@@ -89,4 +91,5 @@ class MediaDataBaseReaderForVideo(
             return LoadResult.Error(e)
         }
     }
+
 }

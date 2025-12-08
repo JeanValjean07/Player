@@ -5,6 +5,8 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RawQuery
+import androidx.sqlite.db.SupportSQLiteQuery
 
 @Dao
 interface MediaStoreDao {
@@ -25,7 +27,7 @@ interface MediaStoreDao {
     @Query("SELECT * FROM MediaStore")
     suspend fun getAllVideos(): List<MediaStoreSetting>
 
-    //居然不支持动态传入排序
+    //分页+排序
     @Query("SELECT * FROM MediaStore ORDER BY info_title ASC LIMIT :limit OFFSET :offset")
     suspend fun getAllVideosPagedByTitleAsc(limit: Int, offset: Int): List<MediaStoreSetting>
     @Query("SELECT * FROM MediaStore ORDER BY info_title DESC LIMIT :limit OFFSET :offset")
@@ -46,6 +48,11 @@ interface MediaStoreDao {
     suspend fun getAllVideosPagedByMimeTypeAsc(limit: Int, offset: Int): List<MediaStoreSetting>
     @Query("SELECT * FROM MediaStore ORDER BY info_format DESC LIMIT :limit OFFSET :offset")
     suspend fun getAllVideosPagedByMimeTypeDesc(limit: Int, offset: Int): List<MediaStoreSetting>
+
+    //根据排序方法获取所有视频
+    @RawQuery(observedEntities = [MediaStoreSetting::class])
+    suspend fun getAllVideosSorted(query: SupportSQLiteQuery): List<MediaStoreSetting>
+
 
     //根据URI获取隐藏状态
     @Query("SELECT info_is_hidden FROM MediaStore WHERE MARK_Uri_numOnly = :uriNumOnly LIMIT 1")

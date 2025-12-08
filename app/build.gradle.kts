@@ -33,7 +33,7 @@ android {
         minSdk = 29
         targetSdk = 36
         versionCode = 1
-        versionName = "3.6.4"
+        versionName = "3.6.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -82,6 +82,9 @@ dependencies {
     implementation("io.reactivex.rxjava3:rxjava:3.1.5")
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
     implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
+
+    //Gson
+    implementation("com.google.code.gson:gson:2.10.1")
 
 
 

@@ -14,7 +14,6 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
@@ -43,10 +42,9 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import data.MediaModel.MediaItemForVideo
-import data.MediaDataReader.MediaStoreReaderForVideo
 import data.DataBaseMediaStore.MediaStoreRepo
 import data.MediaDataReader.MediaDataBaseReaderForVideo
+import data.MediaDataReader.MediaStoreReaderForVideo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -340,11 +338,9 @@ class MainActivity: AppCompatActivity() {
     }
     //从本地数据库加载
     private fun loadFromDataBase() {
-
-        Main_ContentList_RecyclerView = findViewById<RecyclerView>(R.id.recyclerview1)
+        //初始化RecyclerView
+        Main_ContentList_RecyclerView = findViewById(R.id.recyclerview1)
         Main_ContentList_RecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-
-
         //注册点击事件
         Main_ContentList_Adapter = MainActivityAdapter(
             context = this,
@@ -352,9 +348,15 @@ class MainActivity: AppCompatActivity() {
                 startPlayer(uri)
             },
             onDurationClick = { item ->
+                vibrate()
                 notice("视频时长:${FormatTime_withChar(item.durationMs)}", 2000)
             },
+            onFormatClick = { item,format ->
+                vibrate()
+                notice("视频格式:${item.format}", 3000)
+            },
             onOptionClick = { item ->
+                vibrate()
                 val popup = PopupMenu(this, Main_ContentList_RecyclerView)
                 popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
                 popup.setOnMenuItemClickListener { /*handle*/; true }
@@ -362,15 +364,10 @@ class MainActivity: AppCompatActivity() {
             },
             onItemHideClick = { uri,flag_need_hide ->
                 HideItem(uri, flag_need_hide)
-            },
-            onFormatClick = { item,format ->
-                notice("视频格式:${item.format}", 3000)
             }
         )
-
-
+        //设置Adapter
         Main_ContentList_RecyclerView.adapter = Main_ContentList_Adapter
-
 
         val pager = Pager(PagingConfig(pageSize = 20)) {
             MediaDataBaseReaderForVideo(context = this@MainActivity)

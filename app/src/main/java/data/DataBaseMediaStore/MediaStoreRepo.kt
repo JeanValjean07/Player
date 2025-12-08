@@ -1,6 +1,7 @@
 package data.DataBaseMediaStore
 
 import android.content.Context
+import androidx.sqlite.db.SimpleSQLiteQuery
 
 class MediaStoreRepo private constructor(context: Context) {
 
@@ -51,6 +52,41 @@ class MediaStoreRepo private constructor(context: Context) {
             "info_mime_type DESC" -> dao.getAllVideosPagedByMimeTypeDesc(pageSize, offset)
             else -> dao.getAllVideosPagedByTitleDesc(pageSize, offset)
         }
+    }
+
+    //根据排序方法获取所有视频
+    suspend fun getAllVideosSorted11(sortField: String = "info_title", sortOrientation: String = "ASC"): List<MediaStoreSetting> {
+        //白名单防注入
+        val safeField = when (sortField) {
+            "info_title", "info_date_added", "info_file_size", "info_duration", "info_mime_type" -> sortField
+            else -> "info_title"
+        }
+        val safeOrder = when (sortOrientation) {
+            "ASC", "DESC" -> sortOrientation
+            else -> "ASC"
+        }
+        val sql = "SELECT * FROM MediaStore ORDER BY $safeField $safeOrder"
+        val query = SimpleSQLiteQuery(sql)
+        return dao.getAllVideosSorted(query)
+    }
+    //排序方式: info_title / info_date_added / info_file_size / info_duration / info_mime_type
+    //排序方向: ASC / DESC
+    suspend fun getAllVideosSorted(
+        sortOrder: String,
+        sortOrientation: String
+    ): List<MediaStoreSetting> {
+        //白名单防注入
+        val safeField = when (sortOrder) {
+            "info_title", "info_date_added", "info_file_size", "info_duration", "info_mime_type" -> sortOrder
+            else -> "info_title"
+        }
+        val safeOrder = when (sortOrientation) {
+            "ASC", "DESC" -> sortOrientation
+            else -> "ASC"
+        }
+        val sql = "SELECT * FROM MediaStore ORDER BY $safeField $safeOrder"
+        val query = SimpleSQLiteQuery(sql)
+        return dao.getAllVideosSorted(query)
     }
 
 

@@ -192,27 +192,27 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         val SortType_info_mime_type = view.findViewById<TextView>(R.id.sort_mime_type)
         SortType_info_title.setOnClickListener {
             vibrate()
-            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title") }
+            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_title") }
             setAndShowSortType("info_title")
         }
         SortType_info_duration.setOnClickListener {
             vibrate()
-            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_duration") }
+            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_duration") }
             setAndShowSortType("info_duration")
         }
         SortType_info_date_added.setOnClickListener {
             vibrate()
-            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_date_added") }
+            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_date_added") }
             setAndShowSortType("info_date_added")
         }
         SortType_info_file_size.setOnClickListener {
             vibrate()
-            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_file_size") }
+            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_file_size") }
             setAndShowSortType("info_file_size")
         }
         SortType_info_mime_type.setOnClickListener {
             vibrate()
-            PREFS_MediaStore.edit { putString("PREFS_SortType", "info_mime_type") }
+            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_mime_type") }
             setAndShowSortType("info_mime_type")
         }
         //降序和升序

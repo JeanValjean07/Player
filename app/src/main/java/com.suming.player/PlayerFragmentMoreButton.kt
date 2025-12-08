@@ -218,9 +218,13 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
         ButtonPlayList.setOnClickListener {
             vibrate()
-            val result = bundleOf("KEY" to "PlayList")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-            dismiss()
+            if (vm.state_PlayListProcess_Complete){
+                val result = bundleOf("KEY" to "PlayList")
+                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                dismiss()
+            }else{
+                context?.applicationContext?.showCustomToast("播放列表还未准备完成，请稍后重试", Toast.LENGTH_SHORT, 3)
+            }
         }
         //按钮：回到开头
         val ButtonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
@@ -261,6 +265,17 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 }
             }
             popup.show()
+        }
+        //循环模式
+        val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
+        if (vm.repeatMode == "OFF"){ ButtonLoopMode.text = "播完暂停" }
+        else if (vm.repeatMode == "ONE"){ ButtonLoopMode.text = "单集循环" }
+        else if (vm.repeatMode == "ALL"){ ButtonLoopMode.text = "顺序播放" }
+        ButtonLoopMode.setOnClickListener {
+            vibrate()
+            if (vm.repeatMode == "OFF"){ setRepeatMode("ALL") }
+            else if (vm.repeatMode == "ALL"){ setRepeatMode("ONE") }
+            else if (vm.repeatMode == "ONE"){ setRepeatMode("OFF") }
         }
         //开关：后台播放
         Switch_BackgroundPlay.setOnCheckedChangeListener { _, isChecked ->
@@ -684,12 +699,29 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
             return@setOnKeyListener false
         }
-
     //onViewCreated END
     }
 
 
     //Functions
+    //设置循环模式
+    private fun setRepeatMode(target_mode: String){
+        val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
+        when (target_mode){
+            "OFF" -> {
+                vm.repeatMode = "OFF"
+                ButtonLoopMode?.text = "播完暂停"
+            }
+            "ONE" -> {
+                vm.repeatMode = "ONE"
+                ButtonLoopMode?.text = "单集循环"
+            }
+            "ALL" -> {
+                vm.repeatMode = "ALL"
+                ButtonLoopMode?.text = "顺序播放"
+            }
+        }
+    }
     //设置倍速
     private fun chooseSpeed(speed: Float){
         vibrate()
