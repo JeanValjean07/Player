@@ -32,33 +32,25 @@ class FloatingWindowService : Service() {
     //屏幕宽度
     private var screenWidth = 0
 
-
-
     private var ACTION_DOWN_F_X = 0
     private var ACTION_DOWN_F_Y = 0
 
     private var ACTION_DOWN_W_X = 0
     private var ACTION_DOWN_W_Y = 0
 
-
     private var ACTION_MOVE_X  = 0
     private var ACTION_MOVE_Y  = 0
 
-     //原始尺寸
+    //原始尺寸
     private var originWidth = 0
     private var originHeight = 0
-
+    //
     private var isFolded = false
-
-     //视频尺寸动态尺寸
+    //视频尺寸动态尺寸
     private var videoSizeWidthD = 0
     private var videoSizeHeightD = 0
-
-
-
     //视频尺寸标志位
     private var sizeSign = 0
-
 
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -85,7 +77,6 @@ class FloatingWindowService : Service() {
 
         return super.onStartCommand(intent, flags, startId)
     }
-
 
 
     @OptIn(UnstableApi::class)

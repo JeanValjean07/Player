@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Context.VIBRATOR_MANAGER_SERVICE
 import android.content.Context.VIBRATOR_SERVICE
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
@@ -41,6 +42,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -57,6 +59,8 @@ import kotlin.math.abs
 @SuppressLint("ComposableNaming")
 @UnstableApi
 class PlayerFragmentPlayList: DialogFragment() {
+    //设置
+    private lateinit var PREFS: SharedPreferences
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
     //协程作用域
@@ -123,6 +127,8 @@ class PlayerFragmentPlayList: DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
+        //读取设置
+        PREFS = requireContext().getSharedPreferences("PREFS", Context.MODE_PRIVATE)
     }
 
     override fun onCreateView(
@@ -174,7 +180,7 @@ class PlayerFragmentPlayList: DialogFragment() {
         else if (vm.repeatMode == "ONE"){ ButtonLoopMode.text = "单集循环" }
         else if (vm.repeatMode == "ALL"){ ButtonLoopMode.text = "顺序播放" }
         ButtonLoopMode.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             if (vm.repeatMode == "OFF"){ setRepeatMode("ALL") }
             else if (vm.repeatMode == "ALL"){ setRepeatMode("ONE") }
             else if (vm.repeatMode == "ONE"){ setRepeatMode("OFF") }
@@ -220,7 +226,7 @@ class PlayerFragmentPlayList: DialogFragment() {
                             if (deltaY >= 400f){
                                 if (!deltaY_ReachPadding){
                                     deltaY_ReachPadding = true
-                                    vibrate()
+                                    ToolVibrate().vibrate(requireContext())
                                 }
                             }
                             RootCard.translationY = RootCardOriginY + deltaY
@@ -268,7 +274,7 @@ class PlayerFragmentPlayList: DialogFragment() {
                             if (deltaX >= 200f){
                                 if (!deltaX_ReachPadding){
                                     deltaX_ReachPadding = true
-                                    vibrate()
+                                    ToolVibrate().vibrate(requireContext())
                                 }
                             }
                             if (Y_move_ensure){
@@ -398,14 +404,17 @@ class PlayerFragmentPlayList: DialogFragment() {
         when (target_mode){
             "OFF" -> {
                 vm.repeatMode = "OFF"
+                PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode) }
                 ButtonLoopMode?.text = "播完暂停"
             }
             "ONE" -> {
                 vm.repeatMode = "ONE"
+                PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode) }
                 ButtonLoopMode?.text = "单集循环"
             }
             "ALL" -> {
                 vm.repeatMode = "ALL"
+                PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode) }
                 ButtonLoopMode?.text = "顺序播放"
             }
         }
@@ -417,33 +426,11 @@ class PlayerFragmentPlayList: DialogFragment() {
         }
     }
     private fun Dismiss(flag_need_vibrate: Boolean = true){
-        if (flag_need_vibrate){ vibrate() }
+        if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
         val result = bundleOf("KEY" to "Dismiss")
         setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
         dismiss()
 
-    }
-    //震动控制
-    @Suppress("DEPRECATION")
-    private fun Context.vibrator(): Vibrator =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vm.defaultVibrator
-        } else {
-            getSystemService(VIBRATOR_SERVICE) as Vibrator
-        }
-    private fun vibrate() {
-        if (vm.PREFS_VibrateMillis <= 0L) {
-            return
-        }
-        val vib = requireContext().vibrator()
-        if (vm.PREFS_UseSysVibrate) {
-            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
-            vib.vibrate(effect)
-        }
-        else{
-            vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
-        }
     }
 
 }

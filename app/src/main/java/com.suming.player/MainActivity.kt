@@ -171,7 +171,7 @@ class MainActivity: AppCompatActivity() {
         val ButtonRefresh = findViewById<Button>(R.id.buttonRefresh)
         ButtonRefresh.visibility = View.GONE
         ButtonRefresh.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@MainActivity)
             //Main_ContentList_Adapter.refresh()
             //notice("仅从本地数据库刷新,如需重新读取本机媒体,请点击\"安卓媒体库\"页签的设置齿轮", 5000)
             //loadFromDataBase()
@@ -179,33 +179,33 @@ class MainActivity: AppCompatActivity() {
         //按钮：指南
         val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
         ButtonGuidance.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@MainActivity)
             val intent = Intent(this, GuidanceActivity::class.java)
             startActivity(intent)
         }
         //按钮：设置
         val ButtonSettings= findViewById<Button>(R.id.buttonSetting)
         ButtonSettings.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@MainActivity)
             val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
         }
         //提示卡点击时关闭
         val NoticeCard = findViewById<CardView>(R.id.noticeCard)
         NoticeCard.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@MainActivity)
             NoticeCard.visibility = View.GONE
         }
         //按钮：安卓媒体库设置
         val ButtonMediaStoreSettings = findViewById<ImageButton>(R.id.ButtonMediaStoreSettings)
         ButtonMediaStoreSettings.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@MainActivity)
             MainActivityFragmentMediaStoreSettings.newInstance().show(supportFragmentManager, "MainActivityFragmentMediaStoreSettings")
         }
         //显示隐藏的视频
         val gestureDetectorToolbarTitle = GestureDetector(this, object : SimpleOnGestureListener() {
             override fun onLongPress(e: MotionEvent) {
-                vibrate()
+                ToolVibrate().vibrate(this@MainActivity)
                 //逻辑修改
                 val show_hide_items = PREFS_MediaStore.getBoolean("PREFS_showHideItems", false)
                 if (show_hide_items){
@@ -348,15 +348,15 @@ class MainActivity: AppCompatActivity() {
                 startPlayer(uri)
             },
             onDurationClick = { item ->
-                vibrate()
+                ToolVibrate().vibrate(this@MainActivity)
                 notice("视频时长:${FormatTime_withChar(item.durationMs)}", 2000)
             },
             onFormatClick = { item,format ->
-                vibrate()
+                ToolVibrate().vibrate(this@MainActivity)
                 notice("视频格式:${item.format}", 3000)
             },
             onOptionClick = { item ->
-                vibrate()
+                ToolVibrate().vibrate(this@MainActivity)
                 val popup = PopupMenu(this, Main_ContentList_RecyclerView)
                 popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
                 popup.setOnMenuItemClickListener { /*handle*/; true }
@@ -380,32 +380,10 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
-    //震动控制
-    @Suppress("DEPRECATION")
-    private fun Context.vibrator(): Vibrator =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vm.defaultVibrator
-        } else {
-            getSystemService(VIBRATOR_SERVICE) as Vibrator
-        }
-    private fun vibrate() {
-        if (PREFS_VibrateMillis <= 0L) {
-            return
-        }
-        val vib = this@MainActivity.vibrator()
-        if (PREFS_UseSysVibrate) {
-            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
-            vib.vibrate(effect)
-        }
-        else{
-            vib.vibrate(VibrationEffect.createOneShot(PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
-        }
-    }
     //启动播放器
     @OptIn(UnstableApi::class)
     private fun startPlayer(uri: Uri){
-        vibrate()
+        ToolVibrate().vibrate(this@MainActivity)
         //使用测试播放页
         if (PREFS_UseTestingPlayer){
             /*

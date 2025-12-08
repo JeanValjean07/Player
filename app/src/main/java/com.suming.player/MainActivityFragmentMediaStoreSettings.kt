@@ -124,7 +124,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         switch_EnableFileExistCheck.isChecked = PREFS_EnableFileExistCheck
         //开关点击事件
         switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", isChecked) }
         }
 
@@ -132,19 +132,19 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         //按钮：退出
         val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
         ButtonExit.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             dismiss()
         }
         //按钮：点击空白区域退出
         val topArea = view.findViewById<View>(R.id.topArea)
         topArea.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             dismiss()
         }
         //按钮：锁定页面
         val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
         ButtonLock.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             lockPage = !lockPage
             if (lockPage){
                 ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
@@ -156,7 +156,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         //按钮：重读媒体库
         val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
         ButtonReLoadFromMediaStore.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             val result = bundleOf("KEY" to "ReLoadFromMediaStore")
             setFragmentResult("FROM_FRAGMENT_MediaStore", result)
             customDismiss()
@@ -173,7 +173,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         SortTypeArea.visibility = View.GONE
         val ButtonChangeSortType = view.findViewById<TextView>(R.id.ButtonChangeSort)
         ButtonChangeSortType.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             if (ButtonChangeSortType.text == "更改"){
                 ButtonChangeSortType.text = "立即刷新"
                 expand(SortTypeArea)
@@ -191,34 +191,34 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         val SortType_info_file_size = view.findViewById<TextView>(R.id.sort_file_size)
         val SortType_info_mime_type = view.findViewById<TextView>(R.id.sort_mime_type)
         SortType_info_title.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_title") }
             setAndShowSortType("info_title")
         }
         SortType_info_duration.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_duration") }
             setAndShowSortType("info_duration")
         }
         SortType_info_date_added.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_date_added") }
             setAndShowSortType("info_date_added")
         }
         SortType_info_file_size.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_file_size") }
             setAndShowSortType("info_file_size")
         }
         SortType_info_mime_type.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_mime_type") }
             setAndShowSortType("info_mime_type")
         }
         //降序和升序
         val ButtonChangeSortOrientation = view.findViewById<TextView>(R.id.ButtonChangeSortOrientation)
         ButtonChangeSortOrientation.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             //升序改降序
             if (PREFS_SortOrientation == "ASC"){
                 PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC") }
@@ -268,7 +268,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                             if (deltaY >= 400f){
                                 if (!deltaY_ReachPadding){
                                     deltaY_ReachPadding = true
-                                    vibrate()
+                                    ToolVibrate().vibrate(requireContext())
                                 }
                             }
                             RootCard.translationY = RootCardOriginY + deltaY
@@ -316,7 +316,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                             if (deltaX >= 200f){
                                 if (!deltaX_ReachPadding){
                                     deltaX_ReachPadding = true
-                                    vibrate()
+                                    ToolVibrate().vibrate(requireContext())
                                 }
                             }
                             if (Y_move_ensure){
@@ -487,20 +487,6 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
             }
         }
     }
-    //震动控制
-    @Suppress("DEPRECATION")
-    private fun Context.vibrator(): Vibrator =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vm.defaultVibrator
-        } else {
-            getSystemService(VIBRATOR_SERVICE) as Vibrator
-        }
-    private fun vibrate() {
-        val vib = requireContext().vibrator()
-        val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
-        vib.vibrate(effect)
-    }
     //自定义退出逻辑
     private fun customDismiss(){
         if (!lockPage) {
@@ -508,7 +494,8 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         }
     }
     private fun Dismiss(flag_need_vibrate: Boolean = true){
-        if (flag_need_vibrate){ vibrate() }
+        if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
+
         val result = bundleOf("KEY" to "Dismiss")
         setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
         dismiss()

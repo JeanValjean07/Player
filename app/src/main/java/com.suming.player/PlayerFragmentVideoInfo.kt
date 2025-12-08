@@ -186,7 +186,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         //按钮：锁定页面
         val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
         ButtonLock.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(requireContext())
             lockPage = !lockPage
             if (lockPage) {
                 ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
@@ -236,7 +236,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                             if (deltaY >= 400f){
                                 if (!deltaY_ReachPadding){
                                     deltaY_ReachPadding = true
-                                    vibrate()
+                                    ToolVibrate().vibrate(requireContext())
                                 }
                             }
                             RootCard.translationY = RootCardOriginY + deltaY
@@ -284,7 +284,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                             if (deltaX >= 200f){
                                 if (!deltaX_ReachPadding){
                                     deltaX_ReachPadding = true
-                                    vibrate()
+                                    ToolVibrate().vibrate(requireContext())
                                 }
                             }
                             if (Y_move_ensure){
@@ -401,30 +401,6 @@ class PlayerFragmentVideoInfo: DialogFragment() {
             String.format("%02d时%02d分%02d秒",  hours, minutes, seconds)
         }
     }
-
-    //震动控制
-    @Suppress("DEPRECATION")
-    private fun Context.vibrator(): Vibrator =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vm.defaultVibrator
-        } else {
-            getSystemService(VIBRATOR_SERVICE) as Vibrator
-        }
-    private fun vibrate() {
-        if (vm.PREFS_VibrateMillis <= 0L) {
-            return
-        }
-        val vib = requireContext().vibrator()
-        if (vm.PREFS_UseSysVibrate) {
-            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
-            vib.vibrate(effect)
-        }
-        else{
-            vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
-        }
-    }
-
     //自定义退出逻辑
     private fun customDismiss(){
         if (!lockPage) {
@@ -432,7 +408,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         }
     }
     private fun Dismiss(flag_need_vibrate: Boolean = true){
-        if (flag_need_vibrate){ vibrate() }
+        if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
         val result = bundleOf("KEY" to "Dismiss")
         setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
         dismiss()

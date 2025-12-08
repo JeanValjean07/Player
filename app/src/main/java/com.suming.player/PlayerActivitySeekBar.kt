@@ -835,13 +835,13 @@ class PlayerActivitySeekBar: AppCompatActivity(){
 
         //退出按钮
         ButtonExit.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@PlayerActivitySeekBar)
             EnsureExit()
         }
         //更多选项
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@PlayerActivitySeekBar)
             if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                 return@setOnClickListener
             }
@@ -855,13 +855,13 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.NoticeCard)
         noticeCard.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@PlayerActivitySeekBar)
             noticeCard.visibility = View.GONE
         }
         //按钮：暂停/继续播放
         val buttonPause = findViewById<FrameLayout>(R.id.buttonPause)
         buttonPause.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@PlayerActivitySeekBar)
             if (vm.player.isPlaying) {
                 pauseVideo()
                 stopSeekBarSync()
@@ -891,7 +891,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         buttonSwitchLandscape.setOnTouchListener { _, event ->
             when (event.actionMasked){
                 MotionEvent.ACTION_DOWN -> {
-                    vibrate()
+                    ToolVibrate().vibrate(this@PlayerActivitySeekBar)
                     switchLandscape_upMillis = 0L
                     switchLandscape_downMillis = System.currentTimeMillis()
                     SwitchLandscapeJob()
@@ -911,7 +911,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         //按钮：更多选项
         val buttonMoreOptions = findViewById<FrameLayout>(R.id.buttonActualMoreButton)
         buttonMoreOptions.setOnClickListener {
-            vibrate()
+            ToolVibrate().vibrate(this@PlayerActivitySeekBar)
 
             if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                 return@setOnClickListener
@@ -960,7 +960,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                 vm.player.setPlaybackSpeed(currentSpeed * 2.0f)
                 notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
                 longPress = true
-                vibrate()
+                ToolVibrate().vibrate(this@PlayerActivitySeekBar)
                 super.onLongPress(e)
             }
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
@@ -983,7 +983,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                             notice("亮度已到上限", 1000)
                             if (!vibrated) {
                                 vibrated = true
-                                vibrate()
+                                ToolVibrate().vibrate(this@PlayerActivitySeekBar)
                             }
                         }
                     }
@@ -999,7 +999,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                         else{
                             if (!vibrated) {
                                 vibrated = true
-                                vibrate()
+                                ToolVibrate().vibrate(this@PlayerActivitySeekBar)
                             }
                             notice("亮度已到下限", 1000)
                         }
@@ -1029,7 +1029,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                                 else{
                                     if (!vibrated) {
                                         vibrated = true
-                                        vibrate()
+                                        ToolVibrate().vibrate(this@PlayerActivitySeekBar)
                                     }
                                     notice("佩戴耳机时,音量不能超过${(maxVolume*0.6).toInt()},除非使用音量键调整", 1000)
                                 }
@@ -1042,7 +1042,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                         else{
                             if (!vibrated) {
                                 vibrated = true
-                                vibrate()
+                                ToolVibrate().vibrate(this@PlayerActivitySeekBar)
                             }
                             notice("音量已到最高", 1000)
                         }
@@ -1057,7 +1057,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                         else{
                             if (!vibrated) {
                                 vibrated = true
-                                vibrate()
+                                ToolVibrate().vibrate(this@PlayerActivitySeekBar)
                             }
                             notice("音量已到最低", 1000)
                         }
@@ -1988,14 +1988,16 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     //播放模式
     private fun getRepeatMode(){
         if (PREFS.contains("PREFS_RepeatMode")){
-                vm.repeatMode = PREFS.getString("PREFS_RepeatMode","") ?: ""
-                if (vm.repeatMode == ""){
-                    vm.repeatMode = "OFF"
-                }
-            }else{
+            vm.repeatMode = PREFS.getString("PREFS_RepeatMode","") ?: ""
+            if (vm.repeatMode != "OFF" && vm.repeatMode != "ALL" && vm.repeatMode != "ONE"){
                 vm.repeatMode = "OFF"
                 PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode).apply() }
             }
+        }else{
+            vm.repeatMode = "OFF"
+            PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode).apply() }
+        }
+
     }
     //确认关闭操作
     private fun EnsureExit(){
@@ -2520,28 +2522,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             MovePlayArea_up()
         }
     }
-    //震动控制
-    @Suppress("DEPRECATION")
-    private fun Context.vibrator(): Vibrator =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vm = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vm.defaultVibrator
-        } else {
-            getSystemService(VIBRATOR_SERVICE) as Vibrator
-        }
-    private fun vibrate() {
-        if (vm.PREFS_VibrateMillis <= 0L) {
-            return
-        }
-        val vib = this@PlayerActivitySeekBar.vibrator()
-        if (vm.PREFS_UseSysVibrate) {
-            val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
-            vib.vibrate(effect)
-        }
-        else{
-            vib.vibrate(VibrationEffect.createOneShot(vm.PREFS_VibrateMillis, VibrationEffect.DEFAULT_AMPLITUDE))
-        }
-    }
     //提取帧函数
     private fun ExtractFrame(videoPath: String, filename: String) {
         val frameExtractor = FrameExtractor(object : FrameListener {
@@ -2967,7 +2947,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                     vm.controllerHided = false
                     lifecycleScope.launch{
                         delay(75)
-                        vibrate()
+                        ToolVibrate().vibrate(this@PlayerActivitySeekBar)
                     }
                 }
                 //确认退出
@@ -2992,7 +2972,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                 vm.controllerHided = false
                 lifecycleScope.launch{
                     delay(75)
-                    vibrate()
+                    ToolVibrate().vibrate(this@PlayerActivitySeekBar)
                 }
             }
             //确认退出
