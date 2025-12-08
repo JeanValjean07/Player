@@ -408,16 +408,19 @@ class MainActivity: AppCompatActivity() {
         vibrate()
         //使用测试播放页
         if (PREFS_UseTestingPlayer){
-            val intent = Intent(this, PlayerActivityTest::class.java).apply {
+            /*
+            val intent = Intent(this, PlayerActivity::class.java).apply {
                 putExtra("uri", uri)
             }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             detailLauncher.launch(intent)
             return
+
+             */
         }
         //使用传统播放页
         if (PREFS_UsePlayerWithSeekBar){
             val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
-                putExtra("video", uri)
+                putExtra("uri", uri)
             }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
@@ -427,7 +430,7 @@ class MainActivity: AppCompatActivity() {
         else{
             val intent = Intent(this, PlayerActivity::class.java)
                 .apply {
-                    putExtra("video", uri)
+                    putExtra("uri", uri)
                 }
                 .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)

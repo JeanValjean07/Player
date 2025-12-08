@@ -12,11 +12,9 @@ import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import androidx.media3.session.SessionCommands
 
 @UnstableApi
 class PlayerService(): MediaSessionService() {
@@ -40,16 +38,12 @@ class PlayerService(): MediaSessionService() {
         //读取配置
         PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", false)
-
-        //启用播控中心
+        //是否启用播控中心
         if (PREFS_UseMediaSession) {
-
             //获取播放器实例
             val player = PlayerSingleton.getPlayer(application)
-
             //指定通知provider
             setMediaNotificationProvider(ToolCustomNotificationSession(this))
-
             //创建媒体会话包装器
             val wrapper = ToolPlayerWrapper(player)
 
@@ -74,10 +68,8 @@ class PlayerService(): MediaSessionService() {
                     }
                 })
                 .build()
-
             //设置会话点击意图
             mediaSession?.setSessionActivity(createPendingIntent())
-
         }
 
     }
@@ -95,15 +87,14 @@ class PlayerService(): MediaSessionService() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+
         mediaSession?.player?.pause()
+        mediaSession?.release()
 
         stopForeground(STOP_FOREGROUND_REMOVE)
-        stopForeground(true)
-
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIF_ID)
 
         stopSelf()
+
     }
     //接收Intent额外信息
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -114,13 +105,11 @@ class PlayerService(): MediaSessionService() {
             info_MediaTitle = it.getStringExtra("info_to_service_MediaTitle")
         }
 
-        //启用通知
+        //是否启用自定义通知
         if (!PREFS_UseMediaSession){
-
             val NotificationCustomized = BuildCustomizeNotification()
             createNotificationChannel()
             startForeground(NOTIF_ID, NotificationCustomized)
-
         }
 
         //END
@@ -128,8 +117,8 @@ class PlayerService(): MediaSessionService() {
     }
 
 
-
-    //自定义通知:构建通知
+    //Functions
+    //自定义通知:构建常规通知
     private fun BuildCustomizeNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentIntent(createPendingIntent())
@@ -168,7 +157,7 @@ class PlayerService(): MediaSessionService() {
 
         // 3. 动态文字/图片
         remoteView.setTextViewText(R.id.tvTitle, info_MediaTitle)
-       // remoteView.setImageViewResource(R.id.ivCover, R.drawable.ic_player_service_notification)
+        // remoteView.setImageViewResource(R.id.ivCover, R.drawable.ic_player_service_notification)
 
         // 4. 构建 Notification
         return NotificationCompat.Builder(this, CHANNEL_ID)
@@ -245,6 +234,7 @@ class PlayerService(): MediaSessionService() {
         }
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
+
 
 
 

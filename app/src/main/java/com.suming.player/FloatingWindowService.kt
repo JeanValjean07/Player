@@ -7,7 +7,6 @@ import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.IBinder
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -15,7 +14,6 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -118,7 +116,7 @@ class FloatingWindowService : Service() {
                 isFolded = false
             }else {
                 if (source == "PlayerActivityTest"){
-                    val intent = Intent(this, PlayerActivityTest::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                    val intent = Intent(this, PlayerActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
                     startActivity(intent)
                 }
                 else if (source == "PlayerActivity"){

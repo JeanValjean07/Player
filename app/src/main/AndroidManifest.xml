@@ -95,30 +95,6 @@
                 android:value="true"/>
         </activity>
 
-        <!-- 播放页(测试版) -->
-        <activity android:name=".PlayerActivityTest"
-            android:theme="@style/THEME_Player"
-            android:label="播放器(测试版)"
-            android:screenOrientation="unspecified"
-            android:configChanges="orientation|screenSize|screenLayout"
-            android:launchMode="singleTask"
-            android:exported="true"
-            tools:ignore="DiscouragedApi,LockedOrientationActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="video/*" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="video/*" />
-            </intent-filter>
-            <meta-data
-                android:name="android.notch_support"
-                android:value="true"/>
-        </activity>
-
 
 
         <!-- 设置 -->
@@ -170,7 +146,7 @@
 
         <!-- 后台播放服务test -->
         <service
-            android:name=".PlayerServiceTest"
+            android:name=".PlayerService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
