@@ -125,7 +125,7 @@ import kotlin.math.pow
 import kotlin.system.exitProcess
 
 @UnstableApi
-//@Suppress("unused")
+@Suppress("unused")
 class PlayerActivitySeekBar: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -1490,8 +1490,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             }
         }
 
-        //表明seekBar状态
-        vm.state_playerWithSeekBar = true
 
         //读取播放列表
         lifecycleScope.launch(Dispatchers.IO) {
@@ -1533,6 +1531,8 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             vm.state_PlayListProcess_Complete = true
         }
 
+        //表明页面状态 需要区分页面类型 flag_page_type
+        vm.state_playerWithSeekBar = true
         //检查播放器状态
         checkPlayerState(3000)
         //系统手势监听：返回键重写
@@ -1567,7 +1567,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             try {
                 FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
             }
-            catch (e: Exception) {
+            catch (_: Exception) {
                 if (cover_img_path.canRead()) {
                     cover_img_path.toUri()
                 } else {
@@ -1961,7 +1961,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             try {
                 FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
             }
-            catch (e: Exception) {
+            catch (_: Exception) {
                 if (cover_img_path.canRead()) {
                     cover_img_path.toUri()
                 } else {
@@ -2757,24 +2757,10 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     }
     private fun setPageToDark(){
         val playerViewContainer = findViewById<FrameLayout>(R.id.playerContainer)
-        playerViewContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-
         val cover = findViewById<LinearLayout>(R.id.cover)
+        playerViewContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
         cover.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-
-        val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-        val scroller_area = findViewById<View>(R.id.scroller_area)
-
-        recyclerView.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
-        scroller_area.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
-
-        val top_line = findViewById<View>(R.id.player_scroller_top_line)
-        val middle_line = findViewById<View>(R.id.player_scroller_center_line)
-        top_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.player_scroller_top_line_black))
-        middle_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
-
-
-    }
+    }  //该函数需要区分页面类型 flag_page_type
     //启动和关闭小窗
     private fun startFloatingWindow() {
         fun checkOverlayPermission(): Boolean {
@@ -2793,7 +2779,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             intentFloatingWindow.putExtra("VIDEO_SIZE_WIDTH", videoSizeWidth)
             intentFloatingWindow.putExtra("VIDEO_SIZE_HEIGHT", videoSizeHeight)
             intentFloatingWindow.putExtra("SCREEN_WIDTH", screenWidth)
-            intentFloatingWindow.putExtra("SOURCE", "PlayerActivityTest")
+            intentFloatingWindow.putExtra("SOURCE", "PlayerActivitySeekBar")   //该传入值需要区分页面类型 flag_page_type
             startService(intentFloatingWindow)
 
 

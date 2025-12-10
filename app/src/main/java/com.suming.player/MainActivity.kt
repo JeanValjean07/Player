@@ -2,7 +2,6 @@ package com.suming.player
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -11,9 +10,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
@@ -53,30 +49,24 @@ import kotlinx.coroutines.withContext
 
 @Suppress("unused")
 class MainActivity: AppCompatActivity() {
-    //RecyclerView
+    //界面控件元素
     private lateinit var Main_ContentList_Adapter: MainActivityAdapter
     private lateinit var Main_ContentList_RecyclerView: RecyclerView
-    //设置
+    private lateinit var loadingCard: CardView
+    private lateinit var loadingText: TextView
+    //设置和设置项
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_MediaStore: SharedPreferences
-    private lateinit var PREFS_Main: SharedPreferences
+    private var PREFS_ReadNewOnEachStart = false
+    private var PREFS_UsePlayerWithSeekBar = false
+    private var PREFS_UseTestingPlayer = false
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
     //状态栏高度
     private var statusBarHeight = 0
-    //震动时间
-    private var PREFS_VibrateMillis = 0L
-    private var PREFS_UseSysVibrate = false
-    //基本设置项
-    private var PREFS_UsePlayerWithSeekBar = false
-    private var PREFS_UseTestingPlayer = false
-
-    //是否已读取媒体库
-    private var state_MediaStoreReaded = false
-
-    //界面内容
-    private lateinit var loadingCard: CardView
-    private lateinit var loadingText: TextView
+    //状态信息
+    private var state_MediaStoreReaded = false  //是否已读取媒体库
+    private var state_FromFirstMediaStoreRead = false
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -89,53 +79,22 @@ class MainActivity: AppCompatActivity() {
         //界面实例获取
         preCheckAndInit()
 
-        //读取设置
+        //读取播放设置
         PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
-        if (!PREFS.contains("PREFS_VibrateMillis")){
-            PREFS.edit { putLong("PREFS_VibrateMillis", 10L).apply() }
-            PREFS_VibrateMillis = 10L
-        }else{
-            PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 10L)
-        }
-        if (!PREFS.contains("PREFS_UseSysVibrate")){
-            PREFS.edit { putBoolean("PREFS_UseSysVibrate", true).apply() }
-            PREFS_UseSysVibrate = true
-        }else{
-            PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
-        }
-        if (!PREFS.contains("PREFS_UseTestingPlayer")){
-            PREFS.edit { putBoolean("PREFS_UseTestingPlayer", false).apply() }
-            PREFS_UseTestingPlayer = false
-        }else{
-            PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
-        }
-        //基于设备信息
-        if (!PREFS.contains("PREFS_UsePlayerWithSeekBar")){
-            if (Build.BRAND.equals("xiaomi",ignoreCase = true) || Build.BRAND.equals("redmi",ignoreCase = true)){
-                PREFS.edit { putBoolean("PREFS_UsePlayerWithSeekBar", true).apply() }
-                PREFS_UsePlayerWithSeekBar = true
-            }else{
-                PREFS.edit { putBoolean("PREFS_UsePlayerWithSeekBar", false).apply() }
-                PREFS_UsePlayerWithSeekBar = false
-            }
-        }else{
-            PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
-        }
-        //基于设备信息的预写入
         if (!PREFS.contains("PREFS_EnablePlayAreaMove")){
             if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
                 PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", false).apply() }
             }else{
                 PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", true).apply() }
             }
-        }
+        } //基于设备信息
         if (!PREFS.contains("PREFS_UseHighRefreshRate")) {
             if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
                 PREFS.edit { putBoolean("PREFS_UseHighRefreshRate", true).apply() }
             }else{
                 PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", false).apply() }
             }
-        }
+        } //基于设备信息
         //内容避让状态栏并预读取状态栏高度写入设置
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -149,20 +108,48 @@ class MainActivity: AppCompatActivity() {
         //读取媒体库设置
         PREFS_MediaStore = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
         PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
-        PREFS_Main = getSharedPreferences("PREFS_Main", MODE_PRIVATE)
-
-        if (!PREFS_Main.contains("state_MediaStoreReaded")){
-            PREFS_Main.edit { putBoolean("state_MediaStoreReaded", false).apply() }
+        if (PREFS_MediaStore.contains("PREFS_UseTestingPlayer")){
+            PREFS_UseTestingPlayer = PREFS_MediaStore.getBoolean("PREFS_UseTestingPlayer", false)
+        }else{
+            PREFS_MediaStore.edit { putBoolean("PREFS_UseTestingPlayer", false).apply() }
+            PREFS_UseTestingPlayer = false
+        }
+        if (PREFS_MediaStore.contains("PREFS_UsePlayerWithSeekBar")){
+            PREFS_UsePlayerWithSeekBar = PREFS_MediaStore.getBoolean("PREFS_UsePlayerWithSeekBar", false)
+        }else{
+            if (Build.BRAND.equals("xiaomi",ignoreCase = true) || Build.BRAND.equals("redmi",ignoreCase = true)){
+                PREFS_MediaStore.edit { putBoolean("PREFS_UsePlayerWithSeekBar", true).apply() }
+                PREFS_UsePlayerWithSeekBar = true
+            }else{
+                PREFS_MediaStore.edit { putBoolean("PREFS_UsePlayerWithSeekBar", false).apply() }
+                PREFS_UsePlayerWithSeekBar = false
+            }
+        } //基于设备信息
+        if (PREFS_MediaStore.contains("PREFS_ReadNewOnEachStart")){
+            PREFS_ReadNewOnEachStart = PREFS_MediaStore.getBoolean("PREFS_ReadNewOnEachStart", false)
+        }else{
+            PREFS_MediaStore.edit { putBoolean("PREFS_ReadNewOnEachStart", false).apply() }
+            PREFS_ReadNewOnEachStart = false
+        }
+        if (PREFS_MediaStore.contains("state_MediaStoreReaded")){
+            state_MediaStoreReaded = PREFS_MediaStore.getBoolean("state_MediaStoreReaded", false)
+        }else{
+            PREFS_MediaStore.edit { putBoolean("state_MediaStoreReaded", false).apply() }
             state_MediaStoreReaded = false
-        }else{
-            state_MediaStoreReaded = PREFS_Main.getBoolean("state_MediaStoreReaded", false)
-        }
-        if (!state_MediaStoreReaded){
-            loadFromMediaStore()
-        }else{
-            loadFromDataBase()
         }
 
+        //判断需要读取新视频或是读取本地记录数据
+        if (PREFS_ReadNewOnEachStart){
+            state_FromFirstMediaStoreRead = true
+            loadFromMediaStore()
+        }
+        else{
+            if (state_MediaStoreReaded){ loadFromDataBase() }
+            else{
+                state_FromFirstMediaStoreRead = true
+                loadFromMediaStore()
+            }
+        }
 
 
 
@@ -247,7 +234,6 @@ class MainActivity: AppCompatActivity() {
         })
     //onCreate END
     }
-
     //错误接收器:detailLauncher
     @SuppressLint("UnsafeOptInUsageError")
     private val detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -503,8 +489,12 @@ class MainActivity: AppCompatActivity() {
                 //修改是否完成过加载记录
                 saveLoadState()
                 //数据已经保存到数据库,开始从数据库解析
-                //loadFromDataBase()
-                //Main_ContentList_Adapter.refresh()
+                if (state_FromFirstMediaStoreRead){
+                    state_FromFirstMediaStoreRead = false
+                    loadFromDataBase()
+                }else{
+                    Main_ContentList_Adapter.refresh()
+                }
             }
             "MediaStore_NoExist_Delete_Complete" -> {
                 Main_ContentList_Adapter.refresh()
@@ -522,7 +512,7 @@ class MainActivity: AppCompatActivity() {
     }
     //保存加载状态
     private fun saveLoadState() {
-        PREFS_Main.edit { putBoolean("state_MediaStoreReaded", true).apply() }
+        PREFS_MediaStore.edit { putBoolean("state_MediaStoreReaded", true).apply() }
     }
 
 //class END

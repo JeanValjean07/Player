@@ -1733,6 +1733,9 @@ class PlayerActivity: AppCompatActivity(){
             //保存完后公布状态
             vm.state_PlayListProcess_Complete = true
         }
+
+        //表明页面状态 需要区分页面类型 flag_page_type
+        vm.state_playerWithSeekBar = false
         //检查播放器状态
         checkPlayerState(3000)
         //系统手势监听：返回键重写
@@ -3159,7 +3162,7 @@ class PlayerActivity: AppCompatActivity(){
         middle_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
 
 
-    }
+    }  //该函数需要区分页面类型 flag_page_type
     //启动和关闭小窗
     private fun startFloatingWindow() {
         fun checkOverlayPermission(): Boolean {
@@ -3178,7 +3181,7 @@ class PlayerActivity: AppCompatActivity(){
             intentFloatingWindow.putExtra("VIDEO_SIZE_WIDTH", videoSizeWidth)
             intentFloatingWindow.putExtra("VIDEO_SIZE_HEIGHT", videoSizeHeight)
             intentFloatingWindow.putExtra("SCREEN_WIDTH", screenWidth)
-            intentFloatingWindow.putExtra("SOURCE", "PlayerActivityTest")
+            intentFloatingWindow.putExtra("SOURCE", "PlayerActivity")   //该传入值需要区分页面类型 flag_page_type
             startService(intentFloatingWindow)
 
 

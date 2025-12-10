@@ -62,6 +62,7 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UsePlayerWithSeekBar: SwitchCompat
     private lateinit var Switch_UseTestingPlayer: SwitchCompat
     private lateinit var Switch_UseSyncFrameWhenScrollerStop: SwitchCompat
+    private lateinit var Switch_ReadNewOnEachStart: SwitchCompat
     //开关变量 + 数值量
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
@@ -83,12 +84,13 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UsePlayerWithSeekBar = false
     private var PREFS_UseTestingPlayer = false
     private var PREFS_UseSyncFrameWhenScrollerStop = false
-
+    private var PREFS_ReadNewOnEachStart = false
     //按钮循环：清除所有视频缓存
     private var ButtonRemoveAllThumbPathIndex = 0
     //设置清单
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_Editor: SharedPreferences.Editor
+    private lateinit var PREFS_MediaStore: SharedPreferences
     //震动时间
     private var PREFS_VibrateMillis = 0L
     private var PREFS_UseSysVibrate = false
@@ -294,6 +296,14 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_UseSyncFrameWhenScrollerStop = PREFS.getBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
         }
         PREFS_Editor.apply()
+        PREFS_MediaStore = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
+        if (PREFS_MediaStore.contains("PREFS_ReadNewOnEachStart")){
+            PREFS_ReadNewOnEachStart = PREFS_MediaStore.getBoolean("PREFS_ReadNewOnEachStart", false)
+        }else{
+            PREFS_MediaStore.edit { putBoolean("PREFS_ReadNewOnEachStart", false).apply() }
+            PREFS_ReadNewOnEachStart = false
+        }
+
 
         //开关初始化
         Switch_CloseVideoTrack = findViewById(R.id.closeVideoTrack)
@@ -314,6 +324,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UsePlayerWithSeekBar = findViewById(R.id.UsePlayerWithSeekBar)
         Switch_UseTestingPlayer = findViewById(R.id.UseTestingPlayer)
         Switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
+        Switch_ReadNewOnEachStart = findViewById(R.id.ReadNewOnEachStart)
         //开关预置位
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
         Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
@@ -333,6 +344,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UsePlayerWithSeekBar.isChecked = PREFS_UsePlayerWithSeekBar
         Switch_UseTestingPlayer.isChecked = PREFS_UseTestingPlayer
         Switch_UseSyncFrameWhenScrollerStop.isChecked = PREFS_UseSyncFrameWhenScrollerStop
+        Switch_ReadNewOnEachStart.isChecked = PREFS_ReadNewOnEachStart
 
 
         //文本信息预写
@@ -455,6 +467,12 @@ class SettingsActivity: AppCompatActivity() {
             ToolVibrate().vibrate(this)
             PREFS_Editor.putBoolean("PREFS_UseSyncFrameWhenScrollerStop", isChecked).apply()
         }
+        Switch_ReadNewOnEachStart.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_ReadNewOnEachStart = isChecked
+            ToolVibrate().vibrate(this)
+            PREFS_MediaStore.edit { putBoolean("PREFS_ReadNewOnEachStart", isChecked).apply() }
+        }
+
 
         //seek间隔
         val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
