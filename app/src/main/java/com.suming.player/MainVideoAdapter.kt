@@ -21,7 +21,6 @@ import androidx.cardview.widget.CardView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import data.DataBaseMediaStore.MediaStoreRepo
 import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,14 +29,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class MainActivityAdapter(
+class MainVideoAdapter(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
     private val onDurationClick: (MediaItemForVideo) -> Unit,
     private val onOptionClick: (MediaItemForVideo) -> Unit,
     private val onItemHideClick: (Uri, Boolean) -> Unit,
     private val onFormatClick: (MediaItemForVideo, String) -> Unit
-):PagingDataAdapter<MediaItemForVideo, MainActivityAdapter.ViewHolder>(diffCallback) {
+):PagingDataAdapter<MediaItemForVideo, MainVideoAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
@@ -75,7 +74,7 @@ class MainActivityAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_adapter_items, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_adapter_video_items, parent, false)
         return ViewHolder(view)
     }
 

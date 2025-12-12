@@ -52,6 +52,8 @@
     <color name="HeadText11">#000000</color>
     <color name="HeadText312">#000000</color>
 
+    <color name="ButtonCard_ON">#B39DDB</color>
+    <color name="ButtonCard_OFF">#FFFFFF</color>
 
 
 

@@ -50,6 +50,8 @@ object PlayerSingleton {
         val trackSelector = getTrackSelector(app)
         val rendererFactory = getRendererFactory(app)
 
+        singleton_player_built = true
+
 
         return ExoPlayer.Builder(app)
             .setSeekParameters(SeekParameters.CLOSEST_SYNC)
@@ -86,46 +88,63 @@ object PlayerSingleton {
     var singleton_media_url = ""
     var singleton_media_cover_path = ""
 
+    var singleton_player_built = false
 
 
 
+
+
+    fun getPlayerState(): Int {
+        if (singleton_player_built){
+            return 1
+        }else{
+            return 0
+        }
+    }
+    fun getCurrentMediaItem(): MediaItem? {
+        return _player?.currentMediaItem
+    }
 
 
     //功能1
     fun setMediaUri(uri: Uri) {
         _player?.setMediaItem(MediaItem.fromUri(uri))
     }
-
     fun setMediaItem(item: MediaItem) {
         _player?.setMediaItem(item)
     }
-
-    fun setMediaInfo(type: String, title: String, url: String, coverPath: String) {
+    fun setMediaInfo(type: String, title: String, url: String) {
         singleton_media_type = type
         singleton_media_title = title
         singleton_media_url = url
-        singleton_media_cover_path = coverPath
     }
-
+    fun getMediaInfo(): Triple<String, String, String> {
+        return Triple(singleton_media_type, singleton_media_title, singleton_media_url)
+    }
     fun playPlayer() {
         _player?.play()
     }
-
     fun pausePlayer() {
         _player?.pause()
     }
-    //清除媒体,触发playEnd事件
     fun clearMediaItem() {
         _player?.clearMediaItems()
+    }
+    fun clearMediaInfo() {
+        singleton_media_type = ""
+        singleton_media_title = ""
+        singleton_media_url = ""
     }
 
 
     //功能2
     fun stopPlayer() {
+        singleton_player_built = false
         _player?.stop()
     }
 
     fun releasePlayer() {
+        singleton_player_built = false
         _player?.release()
         _player = null
         _trackSelector = null

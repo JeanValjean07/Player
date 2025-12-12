@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -23,6 +24,7 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
@@ -53,8 +55,9 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
     private var PREFS_CloseFragmentGesture: Boolean = false
+    private var PREFS_DefaultTab: String = ""
     //排序设置项
-    private var PREFS_SortType: String = "info_title"
+    private var PREFS_SortOrder: String = "info_title"
     private var PREFS_SortOrientation: String = "DESC"
 
 
@@ -120,6 +123,16 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         } else {
             PREFS_EnableFileExistCheck = PREFS_MediaStore.getBoolean("PREFS_EnableFileExistCheck", false)
         }
+        if (PREFS_MediaStore.contains("PREFS_DefaultTab")){
+            PREFS_DefaultTab = PREFS_MediaStore.getString("PREFS_DefaultTab", "video")?: "error"
+            if (PREFS_DefaultTab == "error"){
+                PREFS_DefaultTab = "video"
+                PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+            }
+        }else{
+            PREFS_DefaultTab = "video"
+            PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+        }
         //开关置位
         switch_EnableFileExistCheck.isChecked = PREFS_EnableFileExistCheck
         //开关点击事件
@@ -155,65 +168,118 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         }
         //按钮：重读媒体库
         val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
+        val ButtonTextReLoadFromMediaStore = view.findViewById<TextView>(R.id.ButtonTextReLoadFromMediaStore)
         ButtonReLoadFromMediaStore.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             val result = bundleOf("KEY" to "ReLoadFromMediaStore")
             setFragmentResult("FROM_FRAGMENT_MediaStore", result)
             customDismiss()
         }
+        //默认页签
+        val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
+        if (PREFS_DefaultTab == "video"){
+            ButtonTextChangeDefaultTab.text = "视频"
+        }
+        else if (PREFS_DefaultTab == "music"){
+            ButtonTextChangeDefaultTab.text = "音乐"
+        }
+        else if (PREFS_DefaultTab == "gallery"){
+            ButtonTextChangeDefaultTab.text = "陈列架"
+        }
+        else if (PREFS_DefaultTab == "last"){
+            ButtonTextChangeDefaultTab.text = "上一次的页面"
+        }
+        ButtonTextChangeDefaultTab.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            //显示默认页签选择弹窗
+            val popupMenu = PopupMenu(requireContext(), it)
+            popupMenu.menuInflater.inflate(R.menu.activity_main_popup_default_page, popupMenu.menu)
+            popupMenu.show()
+            //默认页签选择弹窗点击事件
+            popupMenu.setOnMenuItemClickListener { item ->
+                ToolVibrate().vibrate(requireContext())
+                when (item.itemId) {
+                    R.id.page_video -> {
+                        PREFS_DefaultTab = "video"
+                        ButtonTextChangeDefaultTab.text = "视频"
+                        PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.page_music -> {
+                        PREFS_DefaultTab = "music"
+                        ButtonTextChangeDefaultTab.text = "音乐"
+                        PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.page_gallery -> {
+                        PREFS_DefaultTab = "gallery"
+                        ButtonTextChangeDefaultTab.text = "陈列架"
+                        PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.page_last -> {
+                        PREFS_DefaultTab = "last"
+                        ButtonTextChangeDefaultTab.text = "上一次的页面"
+                        PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+                        return@setOnMenuItemClickListener true
+                    }
+                }
+                false
+            }
+        }
 
 
         //排序方法预读
-        setAndShowSortType("")
+        setAndShowSortOrder("")
         setAndShowOrientationType("")
 
 
         //排序区域
-        val SortTypeArea = view.findViewById<LinearLayout>(R.id.sort_type_area)
-        SortTypeArea.visibility = View.GONE
-        val ButtonChangeSortType = view.findViewById<TextView>(R.id.ButtonChangeSort)
-        ButtonChangeSortType.setOnClickListener {
+        val SortOrderArea = view.findViewById<LinearLayout>(R.id.sort_type_area)
+        SortOrderArea.visibility = View.GONE
+        val ButtonChangeSortOrder = view.findViewById<TextView>(R.id.ButtonChangeSort)
+        ButtonChangeSortOrder.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            if (ButtonChangeSortType.text == "更改"){
-                ButtonChangeSortType.text = "立即刷新"
-                expand(SortTypeArea)
+            if (ButtonChangeSortOrder.text == "更改"){
+                ButtonChangeSortOrder.text = "保存并刷新"
+                expand(SortOrderArea)
             }
-            else if(ButtonChangeSortType.text == "立即刷新"){
-                val result = bundleOf("KEY" to "Refresh Now")
+            else if(ButtonChangeSortOrder.text == "保存并刷新"){
+                val result = bundleOf("KEY" to "RefreshByChangeMSSetting")
                 setFragmentResult("FROM_FRAGMENT_MediaStore", result)
                 dismiss()
             }
         }
         //排序方法
-        val SortType_info_title = view.findViewById<TextView>(R.id.sort_name)
-        val SortType_info_duration = view.findViewById<TextView>(R.id.sort_duration)
-        val SortType_info_date_added = view.findViewById<TextView>(R.id.sort_date_added)
-        val SortType_info_file_size = view.findViewById<TextView>(R.id.sort_file_size)
-        val SortType_info_mime_type = view.findViewById<TextView>(R.id.sort_mime_type)
-        SortType_info_title.setOnClickListener {
+        val SortOrder_info_title = view.findViewById<TextView>(R.id.sort_name)
+        val SortOrder_info_duration = view.findViewById<TextView>(R.id.sort_duration)
+        val SortOrder_info_date_added = view.findViewById<TextView>(R.id.sort_date_added)
+        val SortOrder_info_file_size = view.findViewById<TextView>(R.id.sort_file_size)
+        val SortOrder_info_mime_type = view.findViewById<TextView>(R.id.sort_mime_type)
+        SortOrder_info_title.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_title") }
-            setAndShowSortType("info_title")
+            setAndShowSortOrder("info_title")
         }
-        SortType_info_duration.setOnClickListener {
+        SortOrder_info_duration.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_duration") }
-            setAndShowSortType("info_duration")
+            setAndShowSortOrder("info_duration")
         }
-        SortType_info_date_added.setOnClickListener {
+        SortOrder_info_date_added.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_date_added") }
-            setAndShowSortType("info_date_added")
+            setAndShowSortOrder("info_date_added")
         }
-        SortType_info_file_size.setOnClickListener {
+        SortOrder_info_file_size.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_file_size") }
-            setAndShowSortType("info_file_size")
+            setAndShowSortOrder("info_file_size")
         }
-        SortType_info_mime_type.setOnClickListener {
+        SortOrder_info_mime_type.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_mime_type") }
-            setAndShowSortType("info_mime_type")
+            setAndShowSortOrder("info_mime_type")
         }
         //降序和升序
         val ButtonChangeSortOrientation = view.findViewById<TextView>(R.id.ButtonChangeSortOrientation)
@@ -393,61 +459,61 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         animator.start()
     }
     //文本显示
-    private fun setAndShowSortType(type: String){
+    private fun setAndShowSortOrder(type: String){
         val current_sort_type = view?.findViewById<TextView>(R.id.current_sort)
         when(type){
             "info_title" -> {
                 current_sort_type?.text = "已选择：文件名"
-                PREFS_SortType = "info_title"
+                PREFS_SortOrder = "info_title"
             }
             "info_duration" -> {
                 current_sort_type?.text = "已选择：时长"
-                PREFS_SortType = "info_duration"
+                PREFS_SortOrder = "info_duration"
             }
             "info_date_added" -> {
                 current_sort_type?.text = "已选择：添加日期"
-                PREFS_SortType = "info_date_added"
+                PREFS_SortOrder = "info_date_added"
             }
             "info_file_size" -> {
                 current_sort_type?.text = "已选择：文件大小"
-                PREFS_SortType = "info_file_size"
+                PREFS_SortOrder = "info_file_size"
             }
             "info_mime_type" -> {
                 current_sort_type?.text = "已选择：文件格式"
-                PREFS_SortType = "info_mime_type"
+                PREFS_SortOrder = "info_mime_type"
             }
             "" -> {
-                if (PREFS_MediaStore.contains("PREFS_SortType")){
-                    if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_title"){
+                if (PREFS_MediaStore.contains("PREFS_SortOrder")){
+                    if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_title"){
                         current_sort_type?.text = "文件名"
-                        PREFS_SortType = "info_title"
+                        PREFS_SortOrder = "info_title"
                     }
-                    else if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_duration"){
+                    else if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_duration"){
                         current_sort_type?.text = "时长"
-                        PREFS_SortType = "info_duration"
+                        PREFS_SortOrder = "info_duration"
                     }
-                    else if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_date_added"){
+                    else if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_date_added"){
                         current_sort_type?.text = "添加日期"
-                        PREFS_SortType = "info_date_added"
+                        PREFS_SortOrder = "info_date_added"
                     }
-                    else if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_file_size"){
+                    else if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_file_size"){
                         current_sort_type?.text = "文件大小"
-                        PREFS_SortType = "info_file_size"
+                        PREFS_SortOrder = "info_file_size"
                     }
-                    else if (PREFS_MediaStore.getString("PREFS_SortType", "info_title") == "info_mime_type"){
+                    else if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_mime_type"){
                         current_sort_type?.text = "文件格式"
-                        PREFS_SortType = "info_mime_type"
+                        PREFS_SortOrder = "info_mime_type"
                     }
                     else {
                         PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title") }
                         current_sort_type?.text = "文件名"
-                        PREFS_SortType = "info_title"
+                        PREFS_SortOrder = "info_title"
                     }
                 }
                 else{
                     PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title") }
                     current_sort_type?.text = "文件名"
-                    PREFS_SortType = "info_title"
+                    PREFS_SortOrder = "info_title"
                 }
             }
         }

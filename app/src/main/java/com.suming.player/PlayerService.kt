@@ -7,6 +7,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
@@ -18,26 +20,31 @@ import androidx.media3.session.MediaSessionService
 
 @UnstableApi
 class PlayerService(): MediaSessionService() {
-    //媒体会话实例
-    private var mediaSession: MediaSession? = null
-    //媒体信息和配置信息
-    private var info_MediaTitle: String? = null
-    //设置
-    private lateinit var PREFS: SharedPreferences
-    private var PREFS_UseMediaSession: Boolean = true
     //通知标识变量
     companion object {
         const val NOTIF_ID = 1
         const val CHANNEL_ID = "playback"
     }
+    //媒体会话实例
+    private var mediaSession: MediaSession? = null
+    //服务专项设置和媒体信息
+    private lateinit var PREFS_Service: SharedPreferences
+    private var PREFS_UseMediaSession: Boolean = true
+    private var state_playerType: Int = 0   //0:传统进度条页面 1:新型页面
+    private var MediaInfo_VideoUri: String? = null
+    private var MediaInfo_FileName: String? = null
 
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        //读取配置
-        PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
-        PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", false)
+        //读取配置文件
+        PREFS_Service = getSharedPreferences("PREFS_Service", MODE_PRIVATE)
+        PREFS_UseMediaSession = PREFS_Service.getBoolean("PREFS_UseMediaSession", false)
+        state_playerType = PREFS_Service.getInt("state_playerType", 1)
+        MediaInfo_VideoUri = PREFS_Service.getString("MediaInfo_VideoUri", "error")
+        MediaInfo_FileName = PREFS_Service.getString("MediaInfo_FileName", "error")
+
         //是否启用播控中心
         if (PREFS_UseMediaSession) {
             //获取播放器实例
@@ -69,7 +76,14 @@ class PlayerService(): MediaSessionService() {
                 })
                 .build()
             //设置会话点击意图
-            mediaSession?.setSessionActivity(createPendingIntent())
+            if (state_playerType == 1){mediaSession?.setSessionActivity(createPendingIntentScroller())}
+            else{mediaSession?.setSessionActivity(createPendingIntentSeekBar())}
+
+        }
+        else{
+            val NotificationCustomized = BuildCustomizeNotification()
+            createNotificationChannel()
+            startForeground(NOTIF_ID, NotificationCustomized)
         }
 
     }
@@ -97,38 +111,47 @@ class PlayerService(): MediaSessionService() {
 
     }
     //接收Intent额外信息
+    /*
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         //取出数据
         intent?.let {
-            info_MediaTitle = it.getStringExtra("info_to_service_MediaTitle")
-        }
-
-        //是否启用自定义通知
-        if (!PREFS_UseMediaSession){
-            val NotificationCustomized = BuildCustomizeNotification()
-            createNotificationChannel()
-            startForeground(NOTIF_ID, NotificationCustomized)
+            MediaInfo_VideoTitle = it.getStringExtra("info_to_service_MediaTitle")
+            MediaInfo_VideoUri = it.getStringExtra("info_to_service_MediaUri")
         }
 
         //END
-        return START_NOT_STICKY
+        return START_REDELIVER_INTENT
     }
+
+     */
 
 
     //Functions
     //自定义通知:构建常规通知
     private fun BuildCustomizeNotification(): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentIntent(createPendingIntent())
-            .setContentText(info_MediaTitle)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setSmallIcon(R.drawable.ic_player_service_notification)
-            .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
-            .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
-            .setAutoCancel(false)
-            .build()
+        if (state_playerType == 0){
+            return NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentIntent(createPendingIntentSeekBar())
+                .setContentText(MediaInfo_FileName)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSmallIcon(R.drawable.ic_player_service_notification)
+                .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
+                .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
+                .setAutoCancel(false)
+                .build()
+        }else{
+            return NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentIntent(createPendingIntentScroller())
+                .setContentText(MediaInfo_FileName)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSmallIcon(R.drawable.ic_player_service_notification)
+                .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
+                .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
+                .setAutoCancel(false)
+                .build()
+        }
     }
     //自定义通知:构建自定布局通知
     private fun BuildCustomViewNotification(): Notification {
@@ -156,7 +179,7 @@ class PlayerService(): MediaSessionService() {
         )
 
         // 3. 动态文字/图片
-        remoteView.setTextViewText(R.id.tvTitle, info_MediaTitle)
+        remoteView.setTextViewText(R.id.tvTitle, MediaInfo_FileName)
         // remoteView.setImageViewResource(R.id.ivCover, R.drawable.ic_player_service_notification)
 
         // 4. 构建 Notification
@@ -182,10 +205,19 @@ class PlayerService(): MediaSessionService() {
 
     //通知卡片和媒体会话卡片:点击拉起
     @OptIn(UnstableApi::class)
-    private fun createPendingIntent(): PendingIntent {
+    private fun createPendingIntentScroller(): PendingIntent {
         val intent = Intent(this, PlayerActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }.putExtra("SOURCE","FROM_PENDING" )
+        }
+            .putExtra("MediaInfo_VideoUri", MediaInfo_VideoUri.toString())
+        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+    private fun createPendingIntentSeekBar(): PendingIntent {
+        val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+            .putExtra("SOURCE","FROM_PENDING" )
+            .putExtra("MediaInfo_VideoUri", MediaInfo_VideoUri.toString())
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
     //自定义通知:播放指令

@@ -267,9 +267,13 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     private var playEnd_fromClearMediaItem = false
     private var onDestroy_fromErrorExit = false
 
+    private var onDestroy_fromExitButKeepPlaying = false
     private var onDestroy_fromEnsureExit = false
 
     private var state_onBackground = false
+
+    private var ExitJob_downMillis = 0L
+    private var ExitJob_upMillis = 0L
 
     private var clickMillis_MoreOptionPage = 0L
 
@@ -834,9 +838,25 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         })
 
         //退出按钮
-        ButtonExit.setOnClickListener {
-            ToolVibrate().vibrate(this@PlayerActivitySeekBar)
-            EnsureExit()
+        ButtonExit.setOnTouchListener { _, event ->
+            when (event.actionMasked){
+                MotionEvent.ACTION_DOWN -> {
+                    ToolVibrate().vibrate(this@PlayerActivitySeekBar)
+                    ExitJob_upMillis = 0L
+                    ExitJob_downMillis = System.currentTimeMillis()
+                    ExitJob()
+                    return@setOnTouchListener true
+                }
+                MotionEvent.ACTION_UP -> {
+                    ExitJob?.cancel()
+                    ExitJob_upMillis = System.currentTimeMillis()
+                    if (ExitJob_upMillis - ExitJob_downMillis < 300){
+                        EnsureExit_close_all_stuff()
+                    }
+                    return@setOnTouchListener true
+                }
+            }
+            onTouchEvent(event)
         }
         //更多选项
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
@@ -2000,7 +2020,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
 
     }
     //确认关闭操作
-    private fun EnsureExit(){
+    private fun EnsureExit_close_all_stuff(){
         onDestroy_fromEnsureExit = true
         //保存播放进度
         if (vm.PREFS_SavePositionWhenExit){
@@ -2021,6 +2041,22 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         stopBackgroundServices()
         PlayerSingleton.releasePlayer()
         stopFloatingWindow()
+        finish()
+    }
+    private fun EnsureExit_but_keep_playing(){
+        onDestroy_fromExitButKeepPlaying = true
+        //停止监听操作
+        disposable?.dispose()
+        OEL.disable()
+        audioManager.unregisterAudioDeviceCallback(DeviceCallback)
+        localBroadcastManager.unregisterReceiver(receiver)
+        //停止UI端操作
+        stopSeekBarSync()
+        stopVideoTimeSync()
+        //不停止服务端操作
+        //stopBackgroundServices()
+        //PlayerSingleton.releasePlayer()
+        //stopFloatingWindow()
         finish()
     }
     //数据库预写
@@ -2939,7 +2975,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                 //确认退出
                 else{
                     if (EnterAnimationComplete){
-                        EnsureExit()
+                        EnsureExit_close_all_stuff()
                     } else{
                         EnterAnimationComplete = true
                         val data = Intent().apply { putExtra("NEED_CLOSE", "NEED_CLOSE") }
@@ -2963,7 +2999,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             }
             //确认退出
             else{
-                if (EnterAnimationComplete){ EnsureExit() }else{
+                if (EnterAnimationComplete){ EnsureExit_close_all_stuff() }else{
                     EnterAnimationComplete = true
                     val data = Intent().apply { putExtra("NEED_CLOSE", "NEED_CLOSE") }
                     setResult(RESULT_OK, data)
@@ -3440,6 +3476,15 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         SwitchLandscapeJob = lifecycleScope.launch {
             delay(500)
             ButtonChangeOrientation("long")
+        }
+    }
+    //长按退出按钮(含Job)
+    private var ExitJob: Job? = null
+    private fun ExitJob() {
+        ExitJob?.cancel()
+        ExitJob = lifecycleScope.launch {
+            delay(500)
+            EnsureExit_but_keep_playing()
         }
     }
 

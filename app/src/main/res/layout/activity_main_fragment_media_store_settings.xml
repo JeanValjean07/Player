@@ -61,7 +61,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="媒体库设置"
+                        android:text="媒体库和列表设置"
                         android:textColor="@color/HeadText"
                         android:textSize="20sp" />
                     <View
@@ -103,6 +103,7 @@
                         app:cardCornerRadius="10dp"
                         app:cardElevation="3dp">
                         <TextView
+                            android:id="@+id/ButtonTextReLoadFromMediaStore"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="7dp"
@@ -309,12 +310,12 @@
                                 android:orientation="horizontal">
                                 <ImageView
                                     android:layout_width="21dp"
-                                    android:layout_height="21dp"
-                                    android:src="@drawable/ic_main_fragment_filter"
-                                    android:scaleType="centerCrop"
+                                    android:layout_height="22dp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:layout_marginTop="1dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_main_fragment_filter"
                                     tools:ignore="ContentDescription" />
                                 <TextView
                                     android:layout_width="wrap_content"
@@ -324,6 +325,64 @@
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:textColor="@color/Text2" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                    <!-- 卡片：默认页签 -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@color/Background4"
+                        app:cardCornerRadius="15dp"
+                        app:cardElevation="0dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginStart="5dp"
+                            android:orientation="vertical">
+                            <!-- 列表选项：默认启动时页签 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_main_fragment_tab"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:text="启动时的默认页签"
+                                    android:textColor="@color/Text2"
+                                    android:textSize="16sp" />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1" />
+                                <TextView
+                                    android:id="@+id/ButtonTextChangeDefaultTab"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="#当前默认页签"
+                                    android:textSize="14sp"
+                                    android:gravity="center"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="12dp"
+                                    android:textColor="@color/Text2"
+                                    tools:ignore="SmallSp" />
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>

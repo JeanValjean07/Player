@@ -34,49 +34,43 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
+                    <!-- 标题 -->
                     <TextView
                         android:id="@+id/toolbar_title"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="45dp"
                         android:layout_gravity="center"
+                        android:gravity="center"
                         android:layout_marginStart="15dp"
-                        android:text="视频列表"
+                        android:text="媒体列表"
                         android:textColor="@color/HeadText"
                         android:textSize="24sp" />
+                    <!-- 占位 -->
                     <View
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1"/>
-                    <Button
-                        android:id="@+id/buttonRefresh"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_gravity="end"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:textColor="@color/TextButtonText"
-                        android:padding="8dp"
-                        android:contentDescription="刷新"
-                        android:tooltipText="刷新"
-                        android:text="刷新" />
+                    <!-- 指南按钮 -->
                     <Button
                         android:id="@+id/buttonGuidance"
                         android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_gravity="end"
+                        android:layout_height="45dp"
+                        android:layout_gravity="center"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:textColor="@color/TextButtonText"
-                        android:padding="8dp"
+                        android:padding="0dp"
                         android:contentDescription="指南"
                         android:tooltipText="指南"
                         android:text="指南" />
+                    <!-- 设置按钮 -->
                     <Button
                         android:id="@+id/buttonSetting"
                         android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_gravity="end"
+                        android:layout_height="45dp"
+                        android:layout_gravity="center"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:layout_marginEnd="8dp"
-                        android:padding="8dp"
+                        android:padding="0dp"
                         android:contentDescription="设置"
                         android:tooltipText="设置"
                         android:textColor="@color/TextButtonText"
@@ -87,14 +81,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
-                    <!-- 视频MediaStore -->
+                    <!-- 视频 -->
                     <androidx.cardview.widget.CardView
+                        android:id="@+id/ButtonCardVideo"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:layout_marginBottom="8dp"
                         android:layout_marginStart="10dp"
-                        app:cardElevation="5dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="8dp"
+                        android:backgroundTint="@color/ButtonCard_OFF"
+                        app:cardElevation="2dp"
                         app:cardCornerRadius="5dp">
                         <LinearLayout
                             android:layout_width="wrap_content"
@@ -106,32 +102,51 @@
                                 android:layout_gravity="center"
                                 android:layout_marginStart="10dp"
                                 android:layout_marginTop="5dp"
-                                android:layout_marginEnd="1dp"
+                                android:layout_marginEnd="10dp"
                                 android:layout_marginBottom="5dp"
-                                android:text="安卓媒体库"
+                                android:text="视频库"
                                 android:textColor="@color/HeadText"
                                 android:textSize="11sp" />
-                            <ImageButton
-                                android:id="@+id/ButtonMediaStoreSettings"
-                                android:layout_width="25dp"
-                                android:layout_height="25dp"
-                                android:layout_gravity="center"
-                                android:padding="5dp"
-                                android:background="?attr/selectableItemBackgroundBorderless"
-                                android:contentDescription="安卓媒体库"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/ic_main_activity_settings" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
-                    <!-- 视频陈列架 -->
+                    <!-- 音乐 -->
                     <androidx.cardview.widget.CardView
-                        android:id="@+id/ButtonGallery"
+                        android:id="@+id/ButtonCardMusic"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
+                        android:layout_marginTop="2dp"
                         android:layout_marginBottom="8dp"
                         android:layout_marginStart="10dp"
-                        app:cardElevation="5dp"
+                        android:backgroundTint="@color/ButtonCard_OFF"
+                        app:cardElevation="2dp"
+                        app:cardCornerRadius="5dp">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="5dp"
+                                android:layout_marginEnd="10dp"
+                                android:layout_marginBottom="5dp"
+                                android:text="音乐库"
+                                android:textColor="@color/HeadText"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                    <!-- 陈列架 -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/ButtonCardGallery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginStart="10dp"
+                        android:backgroundTint="@color/ButtonCard_OFF"
+                        app:cardElevation="2dp"
                         app:cardCornerRadius="5dp">
                         <LinearLayout
                             android:layout_width="wrap_content"
@@ -150,6 +165,20 @@
                                 android:textSize="11sp" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
+                    <!-- 媒体库设置 -->
+                    <ImageButton
+                        android:id="@+id/ButtonMediaStoreSetting"
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="6dp"
+                        android:layout_marginStart="5dp"
+                        android:padding="5dp"
+                        android:src="@drawable/ic_main_activity_settings"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="媒体库设置"
+                        android:tooltipText="媒体库设置" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
@@ -222,7 +251,7 @@
         android:layout_gravity="bottom"
         app:cardElevation="10dp"
         app:cardCornerRadius="0dp"
-        android:visibility="gone">
+        android:visibility="visible">
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
