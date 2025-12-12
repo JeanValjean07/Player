@@ -9,7 +9,7 @@
     android:fitsSystemWindows="false"
     tools:context=".MainActivity"
     tools:ignore="HardcodedText" >
-    <!-- AppBarLayout -->
+    <!-- 标题栏 -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -183,7 +183,7 @@
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
-    <!-- RV -->
+    <!-- 列表区 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerview1"
         android:layout_width="match_parent"
@@ -192,7 +192,7 @@
         />
 
 
-    <!-- Notice卡片 -->
+    <!-- 通知胶囊 -->
     <androidx.cardview.widget.CardView
         android:id="@+id/noticeCard"
         android:layout_width="wrap_content"
@@ -245,36 +245,114 @@
     </androidx.cardview.widget.CardView>
     <!-- 正在播放卡片 -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/card_playing_now"
+        android:id="@+id/PlayingCard"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="70dp"
         android:layout_gravity="bottom"
+        android:backgroundTint="@color/Background3"
         app:cardElevation="10dp"
         app:cardCornerRadius="0dp"
         android:visibility="visible">
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:id="@+id/playing_now_cover"
-                android:layout_marginStart="10dp"
-                android:contentDescription="media_cover"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/playing_now_title"
-                android:text="正在播放"
-                android:layout_marginStart="10dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/playing_now_cover" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/PlayingCard_BottomView">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.3dp"
+                    android:background="@color/strokeLine"
+                    app:layout_constraintTop_toTopOf="parent"
+                    />
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/PlayingCard_ImageContainer"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginEnd="1dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="2dp"
+                    android:backgroundTint="@color/Background4"
+                    app:cardElevation="0dp"
+                    app:cardCornerRadius="8dp"
+                    app:layout_constraintDimensionRatio="H,5:8"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent">
+                    <androidx.media3.ui.PlayerView
+                        android:id="@+id/PlayingCard_Video"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="bottom"
+                        app:resize_mode="fill"
+                        app:use_controller="false"
+                        app:surface_type="surface_view"
+                        android:contentDescription="media_cover"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"/>
+                    <ImageView
+                        android:id="@+id/PlayingCard_Image"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="start"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="15dp"
+                        android:contentDescription="media_cover"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
+                </androidx.cardview.widget.CardView>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/PlayingCard_ImageContainer"
+                    app:layout_constraintEnd_toStartOf="@+id/PlayingCard_Button"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/PlayingCard_MediaName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="正在播放"
+                        android:textSize="15sp"
+                        android:textColor="@color/HeadText"
+                        android:layout_marginStart="10dp"
+                        />
+                    <TextView
+                        android:id="@+id/PlayingCard_MediaArtist"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="10sp"
+                        android:textColor="@color/HeadText"
+                        android:text="xxxx"
+                        android:layout_marginStart="10dp"
+                        />
+                </LinearLayout>
+                <ImageButton
+                    android:id="@+id/PlayingCard_Button"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:padding="15dp"
+                    android:layout_marginEnd="10dp"
+                    android:src="@drawable/ic_main_controller_play"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:scaleType="centerCrop"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintDimensionRatio="H,1:1"
+                    />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
     </androidx.cardview.widget.CardView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

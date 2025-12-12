@@ -167,7 +167,6 @@
                 android:layout_marginBottom="10dp"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="3dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -272,6 +271,37 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="平板电脑需关闭此选项，否则不能正常使用横屏播放"
+                        android:textSize="12sp" />
+                    <!--  开关：退出时持续播放  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="0"
+                            android:text="退出视频时保持继续播放"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/SwitchKeepPlayingWhenExit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
+                    </LinearLayout>
+                    <!--  描述：退出时持续播放  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="开启后，退出视频时，视频将在列表底部播放卡片中继续播放，长按退出按钮则为退出并停止播放。若不开启，单击退出按钮为退出并停止播放，长按则为退出但继续播放。"
                         android:textSize="12sp" />
                     <!--  选单按钮：播放器seek间隔  -->
                     <LinearLayout
@@ -1006,7 +1036,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="传统播放页面使用传统进度条，而不是缩略图组成的进度条"
+                        android:text="传统播放页面使用传统进度条，而不是缩略图组成的进度条。传统页面无法获得标准播放页面的功能更新频率。"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

@@ -159,6 +159,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_OnlyAudio: Boolean = false
     var PREFS_OnlyVideo: Boolean = false
     var PREFS_SeekHandlerGap: Long = 0
+    var PREFS_KeepPlayingWhenExit: Boolean = false
 
 
     var state_playerWithSeekBar : Boolean = false

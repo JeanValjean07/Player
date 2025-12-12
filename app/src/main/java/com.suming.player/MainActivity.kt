@@ -16,9 +16,11 @@ import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
+import android.view.SurfaceView
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -37,6 +39,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.PlayerView
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -81,6 +84,14 @@ class MainActivity: AppCompatActivity() {
     private var state_FromFirstMediaStoreRead = false
     private var state_currentPage = ""
     private var state_lastPage = ""
+    //播放中卡片
+    private var state_PlayingCard_inited = false
+    private lateinit var PlayingCard: CardView
+    private lateinit var PlayingCard_MediaName: TextView
+    private lateinit var PlayingCard_MediaArtist: TextView
+    private lateinit var PlayingCard_Image: ImageView
+    private lateinit var PlayingCard_Video: PlayerView
+    private lateinit var PlayingCard_Button: ImageButton
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -369,6 +380,24 @@ class MainActivity: AppCompatActivity() {
 
             //loadGallery()
         }
+        //播放卡片
+        PlayingCard = findViewById(R.id.PlayingCard)
+        PlayingCard.setOnClickListener {
+            ToolVibrate().vibrate(this@MainActivity)
+            val uri = PlayerSingleton.getMediaInfoUri()
+            startPlayer(Uri.parse(uri))
+        }
+        PlayingCard_Button = findViewById(R.id.PlayingCard_Button)
+        PlayingCard_Button.setOnClickListener {
+            ToolVibrate().vibrate(this@MainActivity)
+            if (PlayerSingleton.getIsPlaying()){
+                PlayerSingleton.pausePlayer()
+            }else{
+                PlayerSingleton.playPlayer()
+            }
+            setPlayingCardButton()
+        }
+
 
         //媒体库设置返回值
         supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MediaStore", this) { _, bundle ->
@@ -385,10 +414,6 @@ class MainActivity: AppCompatActivity() {
                 "ReLoadFromMediaStore" -> {
                     startReLoad()
                 }
-                "EnsureExitButKeepPlaying" -> {
-
-                }
-
             }
         }
         //监听返回手势
@@ -405,11 +430,14 @@ class MainActivity: AppCompatActivity() {
         result: ActivityResult ->
         if (result.resultCode == RESULT_OK) {
             when(result.data?.getStringExtra("key")){
-                "NEED_REFRESH" -> {
-                    //loadFromDataBase()
+                "EnsureExitCloseAllStuff" -> {
+
                 }
-                "NEED_CLOSE" -> {
-                    //PlayerSingleton.clearMediaItem()
+                "EnsureExitButKeepPlaying" -> {
+
+                }
+                "ClosedBeforePlayerReady" -> {
+                    Log.d("SuMing", "ClosedBeforePlayerReady : ${result.data?.getStringExtra("ClosedBeforePlayerReady") ?: "null"}")
                 }
             }
         }
@@ -420,10 +448,10 @@ class MainActivity: AppCompatActivity() {
         PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
         PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
 
-        //从单例获取信息
-
-
-
+        //检查播放状态
+        checkMediaPlaying()
+        //刷新按钮
+        setPlayingCardButton()
 
     }
 
@@ -434,6 +462,63 @@ class MainActivity: AppCompatActivity() {
 
 
     //Functions
+    //播放卡片按钮刷新
+    private fun setPlayingCardButton(){
+        if (PlayerSingleton.getIsPlaying()){
+            PlayingCard_Button.setImageResource(R.drawable.ic_main_controller_pause)
+        }else{
+            PlayingCard_Button.setImageResource(R.drawable.ic_main_controller_play)
+        }
+    }
+    //检查是否有媒体播放并完成接下来所有决策
+    private fun checkMediaPlaying() {
+        if (PlayerSingleton.getExitBeforeRead()){ return }
+        val currentMediaItem = PlayerSingleton.getCurrentMediaItem()
+        if (currentMediaItem == null){
+            closePlayingCard()
+        }else{
+            showPlayingCard()
+        }
+    }
+    //初始化播放中卡片
+    private fun getInfoFromSingleton(): Triple<String, String, String>{
+        val (type, title, artist) = PlayerSingleton.getMediaInfoForMain()
+        return Triple(type, title, artist)
+    }
+    private fun initPlayingCard(){
+        if (state_PlayingCard_inited){ return }
+        PlayingCard_MediaName = findViewById(R.id.PlayingCard_MediaName)
+        PlayingCard_MediaArtist = findViewById(R.id.PlayingCard_MediaArtist)
+        PlayingCard_Image = findViewById(R.id.PlayingCard_Image)
+        PlayingCard_Video = findViewById(R.id.PlayingCard_Video)
+        state_PlayingCard_inited = true
+    }
+    //显示并设定播放中卡片
+    private fun showPlayingCard(){
+        initPlayingCard()
+        val (type, title, artist) = getInfoFromSingleton()
+        if (type == "video"){
+            PlayingCard_Image.visibility = View.GONE
+            PlayingCard_Video.visibility = View.VISIBLE
+            PlayingCard_Video.player = null
+            PlayingCard_Video.player = PlayerSingleton.getPlayer(application)
+        }else if (type == "music"){
+            PlayingCard_Image.visibility = View.VISIBLE
+            PlayingCard_Video.visibility = View.GONE
+        }
+        PlayingCard_MediaName.text = if (title == "") "未知媒体" else title
+        PlayingCard_MediaArtist.text = if (artist == "") "未知艺术家" else artist
+        PlayingCard.visibility = View.VISIBLE
+    }
+    //隐藏并重置播放中卡片
+    private fun closePlayingCard(){
+        initPlayingCard()
+
+        PlayingCard_MediaName.text = "暂未播放任何内容"
+        PlayingCard_MediaArtist.text = "暂未播放"
+        PlayingCard.visibility = View.GONE
+    }
+    //页签切换
     private fun startReLoad(){
         if (PREFS_DefaultTab == "video"){
             loadFromMediaStoreByCheck("video")

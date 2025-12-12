@@ -35,7 +35,6 @@ import android.os.Process
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -99,7 +98,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
-import com.suming.player.PlayerSingleton.singleton_media_type
 import data.DataBaseMediaItem.MediaItemRepo
 import data.DataBaseMediaItem.MediaItemSetting
 import data.DataBaseMediaStore.MediaStoreRepo
@@ -218,7 +216,7 @@ class PlayerActivity: AppCompatActivity(){
     //定时关闭定时器
     private var COUNT_Timer: CountDownTimer? = null
 
-    private var EnterAnimationComplete = false
+    private var state_EnterAnimationCompleted = false
     private var fps = 0f
     //更新时间戳参数
     private var lastMillis = 0L
@@ -429,6 +427,12 @@ class PlayerActivity: AppCompatActivity(){
         PREFSEditor = PREFS.edit()
         if (savedInstanceState == null){
             //固定项
+            if (PREFS.contains("PREFS_KeepPlayingWhenExit")) {
+                vm.PREFS_KeepPlayingWhenExit = PREFS.getBoolean("PREFS_KeepPlayingWhenExit", false)
+            } else {
+                PREFSEditor.putBoolean("PREFS_KeepPlayingWhenExit", false)
+                vm.PREFS_KeepPlayingWhenExit = false
+            }
             if (!PREFS.contains("PREFS_GenerateThumbSYNC")) {
                 PREFSEditor.putBoolean("PREFS_GenerateThumbSYNC", true)
                 vm.PREFS_GenerateThumbSYNC = true
@@ -578,7 +582,7 @@ class PlayerActivity: AppCompatActivity(){
             //状态预置位
             vm.allowRecord_wasPlaying = true
             playerReadyFrom_FirstEntry = false
-            EnterAnimationComplete = true
+            state_EnterAnimationCompleted = true
         }
         //读取数据库
         if (savedInstanceState == null){
@@ -844,20 +848,22 @@ class PlayerActivity: AppCompatActivity(){
 
         //传入视频链接
         if(savedInstanceState == null){ startPlayNewItem() }
-        //刷新按钮+移除遮罩
+        //此分支通常来自于切换深色模式,开关小窗导致的重启
         else {
-            val MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
-
+            //状态置位
+            state_EnterAnimationCompleted = true
+            //重新获取媒体信息
+            MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
             getMediaInfo(MediaInfo_VideoUri)
-
+            //刷新时间显示
             refreshTimeLine()
-
+            //读取数据库:不要再次操作可执行项
             ReadRoomDataBase(true)
-
+            //绑定进度条
             scrollerAdapterUpdate()
-
+            //刷新按钮
             ButtonRefresh()
-
+            //移除遮罩
             closeCover(0,0)
 
         }
@@ -1054,7 +1060,7 @@ class PlayerActivity: AppCompatActivity(){
                     ExitJob?.cancel()
                     ExitJob_upMillis = System.currentTimeMillis()
                     if (ExitJob_upMillis - ExitJob_downMillis < 300){
-                        EnsureExit_close_all_stuff()
+                        EnsureExit(true)
                     }
                     return@setOnTouchListener true
                 }
@@ -1751,7 +1757,6 @@ class PlayerActivity: AppCompatActivity(){
                 getRepeatMode()
             }
 
-
             //保存完后公布状态
             vm.state_PlayListProcess_Complete = true
         }
@@ -1763,7 +1768,7 @@ class PlayerActivity: AppCompatActivity(){
         //监听系统手势返回
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                ExitByOrientation()
+                ExitByCheckOrientation()
             }
         })
     //onCreate END
@@ -1775,7 +1780,7 @@ class PlayerActivity: AppCompatActivity(){
     private fun checkSingletonPlayerState(): Boolean{
         val currentMediaItem = PlayerSingleton.getCurrentMediaItem()
         if (currentMediaItem != null){
-            val (_, _, uri) = PlayerSingleton.getMediaInfo()
+            val uri = PlayerSingleton.getMediaInfoUri()
             if (uri != MediaInfo_VideoUri.toString()){
                 PlayerSingleton.releasePlayer()
                 return true
@@ -2133,7 +2138,7 @@ class PlayerActivity: AppCompatActivity(){
     }
     //发送媒体信息给播放器单例
     private fun setMediaInfotoSingleton(){
-        PlayerSingleton.setMediaInfo("video", MediaInfo_FileName, MediaInfo_VideoUri.toString())
+        PlayerSingleton.setMediaInfo("video", MediaInfo_FileName, MediaInfo_VideoArtist,MediaInfo_VideoUri.toString())
     }
     //媒体项变更的后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?){
@@ -2388,6 +2393,22 @@ class PlayerActivity: AppCompatActivity(){
 
     }
     //确认关闭操作
+    private fun EnsureExit(flag_close_all: Boolean){
+        if (vm.PREFS_KeepPlayingWhenExit){
+            if (flag_close_all){
+                EnsureExit_but_keep_playing()
+            }else{
+                EnsureExit_close_all_stuff()
+            }
+        }
+        else{
+            if (flag_close_all){
+                EnsureExit_close_all_stuff()
+            }else{
+                EnsureExit_but_keep_playing()
+            }
+        }
+    }
     private fun EnsureExit_close_all_stuff(){
         onDestroy_fromEnsureExit = true
         //保存播放进度
@@ -2397,6 +2418,11 @@ class PlayerActivity: AppCompatActivity(){
                 MediaItemRepo.get(this@PlayerActivity).update_State_PositionWhenExit(MediaInfo_FileName,currentPosition)
             }
         }
+        //发信息回主列表
+        val DetailData = Intent().apply {
+            putExtra("key", "EnsureExitCloseAllStuff")
+        }
+        setResult(RESULT_OK, DetailData)
         //停止监听操作
         disposable?.dispose()
         OEL.disable()
@@ -2417,6 +2443,11 @@ class PlayerActivity: AppCompatActivity(){
     }
     private fun EnsureExit_but_keep_playing(){
         onDestroy_fromExitButKeepPlaying = true
+        //发信息回主列表
+        val DetailData = Intent().apply {
+            putExtra("key", "EnsureExitButKeepPlaying")
+        }
+        setResult(RESULT_OK, DetailData)
         //停止监听操作
         disposable?.dispose()
         OEL.disable()
@@ -2461,7 +2492,7 @@ class PlayerActivity: AppCompatActivity(){
     //Some CallBacks
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
-        EnterAnimationComplete = true
+        state_EnterAnimationCompleted = true
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -3330,7 +3361,7 @@ class PlayerActivity: AppCompatActivity(){
                             )
                 }
 
-            EnterAnimationComplete = true
+            state_EnterAnimationCompleted = true
 
             //控件位置动态调整
             val displayManager = this.getSystemService(DISPLAY_SERVICE) as DisplayManager
@@ -3429,7 +3460,7 @@ class PlayerActivity: AppCompatActivity(){
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
     }
     @SuppressLint("SourceLockedOrientationActivity")
-    private fun ExitByOrientation(){
+    private fun ExitByCheckOrientation(){
         //退出前先转为竖屏
         if (vm.PREFS_SwitchPortraitWhenExit){
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
@@ -3448,13 +3479,14 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 //确认退出
                 else{
-                    if (EnterAnimationComplete){
-                        EnsureExit_close_all_stuff()
-                    } else{
-                        EnterAnimationComplete = true
-                        val data = Intent().apply { putExtra("NEED_CLOSE", "NEED_CLOSE") }
-                        setResult(RESULT_OK, data)
-                        finish()
+                    if (state_EnterAnimationCompleted){ EnsureExit(true) }
+                    else{
+                        state_EnterAnimationCompleted = true
+                        notice("再按一次退出",2000)
+                        //PlayerSingleton.setExitBeforeRead(true)
+                        //val DetailData = Intent().apply { putExtra("ClosedBeforePlayerReady", "YesThatsWhatYouThink") }
+                        //setResult(RESULT_OK, DetailData)
+                        //finish()
                         return
                     }
                 }
@@ -3473,11 +3505,16 @@ class PlayerActivity: AppCompatActivity(){
             }
             //确认退出
             else{
-                if (EnterAnimationComplete){ EnsureExit_close_all_stuff() }else{
-                    EnterAnimationComplete = true
-                    val data = Intent().apply { putExtra("NEED_CLOSE", "NEED_CLOSE") }
-                    setResult(RESULT_OK, data)
-                    finish()
+                if (state_EnterAnimationCompleted){
+                    EnsureExit(true)
+                }
+                else{
+                    state_EnterAnimationCompleted = true
+                    notice("再按一次退出",2000)
+                    //PlayerSingleton.setExitBeforeRead(true)
+                    //val DetailData = Intent().apply { putExtra("ClosedBeforePlayerReady", "YesThatsWhatYouThink") }
+                    //setResult(RESULT_OK, DetailData)
+                    //finish()
                     return
                 }
             }
@@ -4135,7 +4172,7 @@ class PlayerActivity: AppCompatActivity(){
         ExitJob = lifecycleScope.launch {
             delay(500)
             ToolVibrate().vibrate(this@PlayerActivity)
-            EnsureExit_but_keep_playing()
+            EnsureExit(false)
         }
     }
 
