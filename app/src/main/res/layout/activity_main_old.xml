@@ -184,12 +184,33 @@
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
     <!-- 列表区 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerview1"
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerview1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:paddingTop="50dp"
+                android:text="我疑似是有底线的"
+                android:gravity="top|center"
+                android:layout_gravity="center"
+                android:layout_marginBottom="200dp"
+                android:textColor="@color/TextLevel3"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
 
 
     <!-- 通知胶囊 -->
@@ -291,7 +312,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_gravity="bottom"
-                        app:resize_mode="fill"
+                        app:resize_mode="zoom"
                         app:use_controller="false"
                         app:surface_type="surface_view"
                         android:contentDescription="media_cover"
@@ -322,8 +343,9 @@
                         android:id="@+id/PlayingCard_MediaName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:maxLines="1"
                         android:text="正在播放"
-                        android:textSize="15sp"
+                        android:textSize="13sp"
                         android:textColor="@color/HeadText"
                         android:layout_marginStart="10dp"
                         />

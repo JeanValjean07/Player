@@ -35,7 +35,8 @@ class MainVideoAdapter(
     private val onDurationClick: (MediaItemForVideo) -> Unit,
     private val onOptionClick: (MediaItemForVideo) -> Unit,
     private val onItemHideClick: (Uri, Boolean) -> Unit,
-    private val onFormatClick: (MediaItemForVideo, String) -> Unit
+    private val onFormatClick: (MediaItemForVideo, String) -> Unit,
+    private val onSmallCardPlay: (Uri, String) -> Unit
 ):PagingDataAdapter<MediaItemForVideo, MainVideoAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
@@ -93,22 +94,31 @@ class MainVideoAdapter(
         holder.TouchPad.setOnClickListener { onItemClick(item.uri) }
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
         holder.tvOption.setOnClickListener {
+            ToolVibrate().vibrate(context)
             //显示菜单
             val popup = PopupMenu(holder.itemView.context, holder.tvOption)
             popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
             val popup_update_cover = popup.menu.findItem(R.id.MenuAction_Repic)
             val popup_hide_text = popup.menu.findItem(R.id.MenuAction_Hide)
+            val popup_onSmallCardPlay = popup.menu.findItem(R.id.MenuAction_onSmallCardPlay)
             val local_isHidden = item.isHidden
             popup_hide_text.title = if (local_isHidden) "取消隐藏" else "隐藏"
             popup.show()
             //注册点击
             popup_hide_text.setOnMenuItemClickListener {
+                ToolVibrate().vibrate(context)
                 onItemHideClick(item.uri, !local_isHidden)
                 item.isHidden = !local_isHidden
                 true
             }
             popup_update_cover.setOnMenuItemClickListener {
+                ToolVibrate().vibrate(context)
                 context.showCustomToast("进入视频后,可在更多选项面板更新封面", Toast.LENGTH_SHORT, 3)
+                true
+            }
+            popup_onSmallCardPlay.setOnMenuItemClickListener {
+                ToolVibrate().vibrate(context)
+                onSmallCardPlay(item.uri, item.name)
                 true
             }
         }

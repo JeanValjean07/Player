@@ -1,17 +1,13 @@
 package com.suming.player
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
-import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
-import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
@@ -28,7 +24,7 @@ class PlayerService(): MediaSessionService() {
     //媒体会话实例
     private var mediaSession: MediaSession? = null
     //服务专项设置和媒体信息
-    private lateinit var PREFS_Service: SharedPreferences
+    private lateinit var INFO_PlayerSingleton: SharedPreferences
     private var PREFS_UseMediaSession: Boolean = true
     private var state_playerType: Int = 0   //0:传统进度条页面 1:新型页面
     private var MediaInfo_VideoUri: String? = null
@@ -39,12 +35,11 @@ class PlayerService(): MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
         //读取配置文件
-        PREFS_Service = getSharedPreferences("PREFS_Service", MODE_PRIVATE)
-        PREFS_UseMediaSession = PREFS_Service.getBoolean("PREFS_UseMediaSession", false)
-        state_playerType = PREFS_Service.getInt("state_playerType", 1)
-        MediaInfo_VideoUri = PREFS_Service.getString("MediaInfo_VideoUri", "error")
-        MediaInfo_FileName = PREFS_Service.getString("MediaInfo_FileName", "error")
-
+        INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
+        PREFS_UseMediaSession = INFO_PlayerSingleton.getBoolean("PREFS_UseMediaSession", false)
+        state_playerType = INFO_PlayerSingleton.getInt("state_playerType", 1)
+        MediaInfo_VideoUri = INFO_PlayerSingleton.getString("MediaInfo_VideoUri", "error")
+        MediaInfo_FileName = INFO_PlayerSingleton.getString("MediaInfo_FileName", "error")
         //是否启用播控中心
         if (PREFS_UseMediaSession) {
             //获取播放器实例

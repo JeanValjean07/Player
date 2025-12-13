@@ -2,6 +2,8 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.content.ComponentName
+import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -14,12 +16,14 @@ import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.mediacodec.MediaCodecAdapter
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import okhttp3.internal.http2.Http2Reader
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
 
 @UnstableApi
 @Suppress("unused")
 object PlayerSingleton {
-
     //播放器参数
     var _player: ExoPlayer? = null
     @SuppressLint("StaticFieldLeak")
@@ -50,7 +54,6 @@ object PlayerSingleton {
 
         singleton_player_built = true
 
-
         return ExoPlayer.Builder(app)
             .setSeekParameters(SeekParameters.CLOSEST_SYNC)
             .setWakeMode(WAKE_MODE_NETWORK)
@@ -61,9 +64,31 @@ object PlayerSingleton {
             .build()
             .apply {
                 prepare()
-                playWhenReady = true
+                playWhenReady = false
             }
     }
+
+    fun JustBuildPlayer(app: Application){
+        val trackSelector = getTrackSelector(app)
+        val rendererFactory = getRendererFactory(app)
+        _player = ExoPlayer.Builder(app)
+            .setSeekParameters(SeekParameters.CLOSEST_SYNC)
+            .setWakeMode(WAKE_MODE_NETWORK)
+            .setMaxSeekToPreviousPositionMs(1_000_000L)
+            //.setLoadControl(loadControl)
+            .setTrackSelector(trackSelector)
+            .setRenderersFactory(rendererFactory)
+            .build()
+    }
+
+    fun isPlayerBuilt(): Boolean{
+        if (_player == null){
+            return false
+        }else{
+            return true
+        }
+    }
+
     //播放器回调接口
     private val initializationCallbacks = mutableListOf<() -> Unit>()
     private var isPlayerInitialized = false
@@ -77,7 +102,6 @@ object PlayerSingleton {
         }
     }
 
-
     //播放器状态变量
     var singleton_media_type = ""
     var singleton_media_title = ""
@@ -86,49 +110,53 @@ object PlayerSingleton {
     var singleton_media_cover_path = ""
     var singleton_player_built = false
     var singleton_exit_before_read = false
+
     //播放列表
 
+    //外部发起创建播放器
+    fun BuildPlayer(context: Context){
+        _player = buildPlayer(context as Application)
+    }
+    //媒体会话控制器
+    var controller: MediaController? = null
+    var MediaSessionController: ListenableFuture<MediaController>? = null
+    //连接到媒体会话控制器
+    fun connectToMediaSession(context: Context){
+        val SessionToken = SessionToken(context as Application, ComponentName(context, PlayerService::class.java))
+        MediaSessionController = MediaController.Builder(context, SessionToken).buildAsync()
+        MediaSessionController?.addListener({
+            controller = MediaSessionController?.get()
+        }, MoreExecutors.directExecutor())
+    }
+    //关闭媒体会话控制器:同时在活动关闭服务和在单例断开控制器,才能确保播控中心消失
+    fun stopMediaSessionController(context: Context){
+        MediaSessionController?.get()?.run { release() }
+    }
 
-
-
-
-    fun getPlayerState(): Int {
+    //获取播放器存在状态
+    fun getIsPlayerBuilt(): Int {
         if (singleton_player_built){
             return 1
         }else{
             return 0
         }
     }
+    //在页面未打开完成就退出了
     fun getExitBeforeRead(): Boolean {
         return singleton_exit_before_read
     }
-    fun getCurrentMediaItem(): MediaItem? {
-        return _player?.currentMediaItem
-    }
-    fun getIsPlaying(): Boolean {
-        return _player?.isPlaying ?: false
-    }
-
     fun setExitBeforeRead(exit: Boolean = true) {
         singleton_exit_before_read = exit
         Handler(Looper.getMainLooper()).postDelayed({
             singleton_exit_before_read = false
         }, 500)
     }
-
-
-    //功能1
-    fun setMediaUri(uri: Uri) {
-        _player?.setMediaItem(MediaItem.fromUri(uri))
+    //获取播放器媒体状态
+    fun getIsPlaying(): Boolean {
+        return _player?.isPlaying ?: false
     }
-    fun setMediaItem(item: MediaItem) {
-        _player?.setMediaItem(item)
-    }
-    fun setMediaInfo(type: String, title: String, artist: String, url: String) {
-        singleton_media_type = type
-        singleton_media_title = title
-        singleton_media_artist = artist
-        singleton_media_url = url
+    fun getCurrentMediaItem(): MediaItem? {
+        return _player?.currentMediaItem
     }
     fun getMediaInfoUri(): String {
         return singleton_media_url
@@ -136,13 +164,31 @@ object PlayerSingleton {
     fun getMediaInfoForMain(): Triple<String, String, String> {
         return Triple(singleton_media_type, singleton_media_title, singleton_media_artist)
     }
+    //主动设置媒体自定义状态
+    fun setMediaInfo(type: String, title: String, artist: String, url: String) {
+        singleton_media_type = type
+        singleton_media_title = title
+        singleton_media_artist = artist
+        singleton_media_url = url
+    }
+    fun setMediaInfoUri(uri: String) {
+        singleton_media_url = uri
+    }
+    //设置媒体项
+    fun setMediaUri(uri: Uri) {
+        _player?.setMediaItem(MediaItem.fromUri(uri))
+    }
+    fun setMediaItem(item: MediaItem) {
+        _player?.setMediaItem(item)
+    }
+    //播放和暂停
     fun playPlayer() {
         _player?.play()
     }
     fun pausePlayer() {
         _player?.pause()
     }
-
+    //清除媒体项和自定义信息
     fun clearMediaItem() {
         _player?.clearMediaItems()
     }
@@ -151,13 +197,11 @@ object PlayerSingleton {
         singleton_media_title = ""
         singleton_media_url = ""
     }
-
-    //暂停播放
+    //挂起和释放播放器
     fun stopPlayer() {
         singleton_player_built = false
         _player?.stop()
     }
-    //释放播放器
     fun releasePlayer() {
         singleton_player_built = false
         _player?.release()

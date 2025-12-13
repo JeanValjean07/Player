@@ -16,7 +16,6 @@ import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
-import android.view.SurfaceView
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
@@ -54,8 +53,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import java.io.File
 
 @Suppress("unused")
+@OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
     //界面控件元素
     private lateinit var main_video_list_adapter: MainVideoAdapter
@@ -73,7 +76,7 @@ class MainActivity: AppCompatActivity() {
     private var PREFS_ReadNewOnEachStart = false
     private var PREFS_UsePlayerWithSeekBar = false
     private var PREFS_UseTestingPlayer = false
-    private var PREFS_DefaultTab = "Video"
+    private var PREFS_DefaultTab = "video"
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
     //状态栏高度
@@ -84,8 +87,11 @@ class MainActivity: AppCompatActivity() {
     private var state_FromFirstMediaStoreRead = false
     private var state_currentPage = ""
     private var state_lastPage = ""
-    //播放中卡片
     private var state_PlayingCard_inited = false
+    private var state_onFirstStart = false
+    private var state_PlayingCard_showing = false
+    private var state_PlayingCard_gone = true
+    //播放中卡片
     private lateinit var PlayingCard: CardView
     private lateinit var PlayingCard_MediaName: TextView
     private lateinit var PlayingCard_MediaArtist: TextView
@@ -103,7 +109,12 @@ class MainActivity: AppCompatActivity() {
         setContentView(R.layout.activity_main_old)
         //界面实例获取
         preCheckAndInit()
-
+        //表明首次启动信息
+        if (savedInstanceState == null){
+            state_onFirstStart = true
+        }else{
+            state_onFirstStart = false
+        }
         //读取播放设置
         PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         if (!PREFS.contains("PREFS_EnablePlayAreaMove")){
@@ -198,64 +209,6 @@ class MainActivity: AppCompatActivity() {
             PREFS_MediaStore.edit { putString("state_lastPage", "video").apply() }
             state_lastPage = "video"
         }
-
-        //判断使用何种页签
-        if (savedInstanceState != null){
-            state_currentPage = savedInstanceState.getString("state_currentPage", "video")?: "error"
-            if (state_currentPage == "video"){
-                setVideoElement()
-                loadVideo()
-            }
-            else if (state_currentPage == "music"){
-                setMusicElement()
-                loadMusic()
-            }
-            else if (state_currentPage == "gallery"){
-                setGalleryElement()
-                //loadGallery()
-            }
-            else{
-                setVideoElement()
-                loadVideo()
-            }
-        }
-        else{
-            if (PREFS_DefaultTab == "last"){
-                when (state_lastPage){
-                    "video" -> {
-                        setVideoElement()
-                        loadVideo()
-                    }
-                    "music" -> {
-                        setMusicElement()
-                        loadMusic()
-                    }
-                    "gallery" -> {
-                        setGalleryElement()
-                        //loadGallery()
-                    }
-                }
-            }
-            else if (PREFS_DefaultTab == "video"){
-                setVideoElement()
-                loadVideo()
-            }
-            else if (PREFS_DefaultTab == "music"){
-                setMusicElement()
-                loadMusic()
-            }
-            else if (PREFS_DefaultTab == "gallery"){
-                setGalleryElement()
-                //loadGallery()
-            }
-            else{
-                setVideoElement()
-                loadVideo()
-            }
-        }
-
-
-
 
         //按钮：指南
         val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
@@ -399,6 +352,66 @@ class MainActivity: AppCompatActivity() {
         }
 
 
+        //判断使用何种页签
+        if (savedInstanceState != null){
+            state_currentPage = savedInstanceState.getString("state_currentPage", "video")?: "error"
+            if (state_currentPage == "video"){
+                setVideoElement()
+                loadVideo()
+            }
+            else if (state_currentPage == "music"){
+                setMusicElement()
+                loadMusic()
+            }
+            else if (state_currentPage == "gallery"){
+                setGalleryElement()
+                //loadGallery()
+            }
+            else{
+                setVideoElement()
+                loadVideo()
+            }
+        }
+        else{
+            if (PREFS_DefaultTab == "last"){
+                when (state_lastPage){
+                    "video" -> {
+                        setVideoElement()
+                        loadVideo()
+                    }
+                    "music" -> {
+                        setMusicElement()
+                        loadMusic()
+                    }
+                    "gallery" -> {
+                        setGalleryElement()
+                        //loadGallery()
+                    }
+                }
+            }
+            else if (PREFS_DefaultTab == "video"){
+                setVideoElement()
+                loadVideo()
+            }
+            else if (PREFS_DefaultTab == "music"){
+                setMusicElement()
+                loadMusic()
+            }
+            else if (PREFS_DefaultTab == "gallery"){
+                setGalleryElement()
+                //loadGallery()
+            }
+            else{
+                setVideoElement()
+                loadVideo()
+            }
+        }
+        //检查上次播放的媒体
+        if (savedInstanceState == null){
+            getLastMediaItemInfoAndPlay()
+        }
+
+
         //媒体库设置返回值
         supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MediaStore", this) { _, bundle ->
             val ReceiveKey = bundle.getString("KEY")
@@ -448,8 +461,15 @@ class MainActivity: AppCompatActivity() {
         PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
         PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
 
+        if (state_onFirstStart){
+            state_onFirstStart = false
+            //读取上次播放状态
+            //getLastMediaItemInfo()
+
+            //startMediaSession()
+        }
         //检查播放状态
-        checkMediaPlaying()
+        checkPlayingMediaThenDecide()
         //刷新按钮
         setPlayingCardButton()
 
@@ -462,6 +482,103 @@ class MainActivity: AppCompatActivity() {
 
 
     //Functions
+    //获取和保存上次播放信息到键值对表
+    private fun getLastMediaItemInfoAndPlay(){
+        //从键值表读取信息
+        val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
+        val state_MediaType = INFO_PlayerSingleton.getString("state_MediaType", "error") ?: "error"
+        var MediaInfo_FileName = INFO_PlayerSingleton.getString("MediaInfo_FileName", "error") ?: "error"
+        var MediaInfo_VideoArtist = INFO_PlayerSingleton.getString("MediaInfo_VideoArtist", "error") ?: "error"
+        val MediaInfo_VideoUri = INFO_PlayerSingleton.getString("MediaInfo_VideoUri", "error") ?: "error"
+        //检查上次播放媒体信息
+        if (MediaInfo_VideoUri == "error"){
+            return
+        }
+        if (MediaInfo_FileName == "error"){
+            MediaInfo_FileName = "未知媒体标题"
+        }
+        if (MediaInfo_VideoArtist == "error"){
+            MediaInfo_VideoArtist = "未知艺术家"
+        }
+        //比对上次播放媒体信息与当前播放媒体信息
+        val currentUri = PlayerSingleton.getMediaInfoUri()
+        //覆写媒体信息到播放器单例
+        PlayerSingleton.setMediaInfo(state_MediaType, MediaInfo_FileName, MediaInfo_VideoArtist, MediaInfo_VideoUri)
+        //启动播放
+        if (currentUri != MediaInfo_VideoUri){
+            PlayerSingleton.getPlayer(application)
+
+            val covers_path = File(filesDir, "miniature/cover")
+            val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(MediaInfo_VideoUri)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(MediaInfo_FileName)
+                        .setArtist(MediaInfo_VideoArtist)
+                        .setArtworkUri( Uri.parse(cover_img_path.toString()) )
+                        .build()
+                )
+                .build()
+
+            PlayerSingleton.setMediaItem(mediaItem)
+        }
+        //链接媒体会话
+        PlayerSingleton.connectToMediaSession(application)
+        //检查播放状态
+        checkPlayingMediaThenDecide()
+
+    }
+    private fun saveLastMediaItemInfo(type: String, title: String, artist: String, uri: String){
+        val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
+        INFO_PlayerSingleton.edit {
+            putString("state_MediaType", type)
+            putString("MediaInfo_FileName", title)
+            putString("MediaInfo_VideoArtist", artist)
+            putString("MediaInfo_VideoUri", uri)
+        }
+    }
+    //从选项菜单中发起后台播放
+    private fun startSmallCardPlay(uri: Uri, title: String){
+        //比对上次播放媒体信息与当前播放媒体信息
+        val newUri = uri.toString()
+        val currentUri = PlayerSingleton.getMediaInfoUri()
+        if (newUri == currentUri){
+            showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
+            return
+        }
+        //设置新播放项
+        else{
+            PlayerSingleton.getPlayer(application)
+
+            val covers_path = File(filesDir, "miniature/cover")
+            val cover_img_path = File(covers_path, "${title.hashCode()}.webp")
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(newUri)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(title)
+                        .setArtist("未知艺术家")
+                        .setArtworkUri( Uri.parse(cover_img_path.toString()) )
+                        .build()
+                )
+                .build()
+
+            PlayerSingleton.setMediaItem(mediaItem)
+        }
+        //写入新媒体信息到播放器单例
+        PlayerSingleton.setMediaInfo("video", title, "未知艺术家", newUri)
+        //写入新媒体信息到键值对表
+        saveLastMediaItemInfo("video", title, "未知艺术家", newUri)
+        //链接媒体会话
+        stopService(Intent(this, PlayerService::class.java))
+        PlayerSingleton.stopMediaSessionController(application)
+        PlayerSingleton.connectToMediaSession(application)
+        //检查播放状态
+        checkPlayingMediaThenDecide()
+    }
     //播放卡片按钮刷新
     private fun setPlayingCardButton(){
         if (PlayerSingleton.getIsPlaying()){
@@ -471,13 +588,14 @@ class MainActivity: AppCompatActivity() {
         }
     }
     //检查是否有媒体播放并完成接下来所有决策
-    private fun checkMediaPlaying() {
+    private fun checkPlayingMediaThenDecide() {
         if (PlayerSingleton.getExitBeforeRead()){ return }
         val currentMediaItem = PlayerSingleton.getCurrentMediaItem()
         if (currentMediaItem == null){
-            closePlayingCard()
+            closePlayingCardWithAnimation()
         }else{
-            showPlayingCard()
+            showPlayingCardWithAnimation()
+            getInfoThenDecide()
         }
     }
     //初始化播放中卡片
@@ -485,38 +603,64 @@ class MainActivity: AppCompatActivity() {
         val (type, title, artist) = PlayerSingleton.getMediaInfoForMain()
         return Triple(type, title, artist)
     }
-    private fun initPlayingCard(){
-        if (state_PlayingCard_inited){ return }
-        PlayingCard_MediaName = findViewById(R.id.PlayingCard_MediaName)
-        PlayingCard_MediaArtist = findViewById(R.id.PlayingCard_MediaArtist)
-        PlayingCard_Image = findViewById(R.id.PlayingCard_Image)
-        PlayingCard_Video = findViewById(R.id.PlayingCard_Video)
-        state_PlayingCard_inited = true
-    }
-    //显示并设定播放中卡片
-    private fun showPlayingCard(){
-        initPlayingCard()
+    private fun getInfoThenDecide(){
+        //从播放器单例获取媒体信息
         val (type, title, artist) = getInfoFromSingleton()
+        Log.d("SuMing", "type: $type, title: $title, artist: $artist")
+        //根据媒体类型判断是否需要绑定播放器
+        if (type == "video"){ BindPlayingCardSmallPlayer(type) }
+        else if (type == "music"){ BindPlayingCardSmallPlayer(type) }
+        //显示播放中卡片
+        showPlayingCardWithAnimation()
+        //设置文本
+        setPlayingCardTextInfo(title, artist)
+    }
+    private fun BindPlayingCardSmallPlayer(type: String){
+        if (!state_PlayingCard_inited){ initPlayingCard() }
+        if (!state_PlayingCard_showing){ return }
+
         if (type == "video"){
             PlayingCard_Image.visibility = View.GONE
             PlayingCard_Video.visibility = View.VISIBLE
             PlayingCard_Video.player = null
             PlayingCard_Video.player = PlayerSingleton.getPlayer(application)
-        }else if (type == "music"){
+        }
+        else if (type == "music"){
             PlayingCard_Image.visibility = View.VISIBLE
             PlayingCard_Video.visibility = View.GONE
         }
-        PlayingCard_MediaName.text = if (title == "") "未知媒体" else title
-        PlayingCard_MediaArtist.text = if (artist == "") "未知艺术家" else artist
-        PlayingCard.visibility = View.VISIBLE
-    }
-    //隐藏并重置播放中卡片
-    private fun closePlayingCard(){
-        initPlayingCard()
 
-        PlayingCard_MediaName.text = "暂未播放任何内容"
-        PlayingCard_MediaArtist.text = "暂未播放"
-        PlayingCard.visibility = View.GONE
+    } //绑定播放器或视频视图
+    private fun setPlayingCardTextInfo(title: String, artist: String){
+        if (!state_PlayingCard_inited){ initPlayingCard() }
+        if (!state_PlayingCard_showing){ return }
+
+        PlayingCard_MediaName.text = title
+        PlayingCard_MediaArtist.text = artist
+
+    } //设置文本
+    private fun showPlayingCardWithAnimation(){
+        if (state_PlayingCard_showing){ return }
+        state_PlayingCard_showing = true
+
+        PlayingCard.visibility = View.VISIBLE
+        PlayingCard.translationY = 300f
+        PlayingCard.animate().translationY(0f).setDuration(500).start()
+    }
+    private fun closePlayingCardWithAnimation(){
+        if (!state_PlayingCard_showing){ return }
+        state_PlayingCard_showing = false
+
+        PlayingCard.animate().translationY(300f).withEndAction {
+            PlayingCard.visibility = View.GONE
+        }.setDuration(500).start()
+    }
+    private fun initPlayingCard(){
+        PlayingCard_MediaName = findViewById(R.id.PlayingCard_MediaName)
+        PlayingCard_MediaArtist = findViewById(R.id.PlayingCard_MediaArtist)
+        PlayingCard_Image = findViewById(R.id.PlayingCard_Image)
+        PlayingCard_Video = findViewById(R.id.PlayingCard_Video)
+        state_PlayingCard_inited = true
     }
     //页签切换
     private fun startReLoad(){
@@ -525,6 +669,7 @@ class MainActivity: AppCompatActivity() {
         }else if (PREFS_DefaultTab == "music"){
             loadFromMediaStoreByCheck("music")
         }else{
+            loadFromMediaStoreByCheck("video")
             showCustomToast("传入参数错误,传入了${PREFS_DefaultTab}", Toast.LENGTH_SHORT, 3)
         }
     }
@@ -673,11 +818,11 @@ class MainActivity: AppCompatActivity() {
             }
         }
     }
-    //从本地数据库加载
+    //从本地数据库加载+绑定列表+点击事件
     private fun loadFromDataBase(flag_video_or_music: String) {
         //recyclerview设置布局管理器
         main_media_list_adapter_RecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-
+        //使用视频adapter
         if (flag_video_or_music == "video"){
             //注册点击事件
             main_video_list_adapter = MainVideoAdapter(
@@ -702,6 +847,9 @@ class MainActivity: AppCompatActivity() {
                 },
                 onItemHideClick = { uri,flag_need_hide ->
                     HideItem(uri, flag_need_hide)
+                },
+                onSmallCardPlay = { uri, title ->
+                    startSmallCardPlay(uri, title)
                 }
             )
             //设置adapter
@@ -717,7 +865,9 @@ class MainActivity: AppCompatActivity() {
                 }
             }
 
-        }else if(flag_video_or_music == "music"){
+        }
+        //使用音乐adapter
+        else if(flag_video_or_music == "music"){
             //注册点击事件
             main_music_list_adapter = MainMusicAdapter(
                 context = this
@@ -757,9 +907,10 @@ class MainActivity: AppCompatActivity() {
         if (PREFS_UsePlayerWithSeekBar){
             val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
                 putExtra("uri", uri)
-            }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-
+                .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
             detailLauncher.launch(intent)
         }
         //使用新晋播放页

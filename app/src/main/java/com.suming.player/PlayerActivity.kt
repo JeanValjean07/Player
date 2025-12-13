@@ -35,6 +35,7 @@ import android.os.Process
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -323,7 +324,7 @@ class PlayerActivity: AppCompatActivity(){
 
     private lateinit var MediaSessionController: ListenableFuture<MediaController>
 
-    private var state_existingItem = false
+    private var state_need_start_new_item = false
 
 
     //</editor-fold>
@@ -399,11 +400,8 @@ class PlayerActivity: AppCompatActivity(){
                         MediaInfo_VideoUri = originalUri
                         vm.MediaInfo_VideoUri = MediaInfo_VideoUri
                     }
-                    //比对播放器信息
-                    state_existingItem = checkSingletonPlayerState()
-                    if (state_existingItem){
-                        PlayerSingleton.releasePlayer()
-                    }
+                    //比对已有媒体信息并执行对应操作
+                    checkSingletonPlayerState()
                 }
             }
             //保存intent至ViewModel
@@ -851,6 +849,7 @@ class PlayerActivity: AppCompatActivity(){
         //此分支通常来自于切换深色模式,开关小窗导致的重启
         else {
             //状态置位
+            playerReadyFrom_FirstEntry = true
             state_EnterAnimationCompleted = true
             //重新获取媒体信息
             MediaInfo_VideoUri = vm.MediaInfo_VideoUri!!
@@ -1776,19 +1775,51 @@ class PlayerActivity: AppCompatActivity(){
 
 
     //Testing Functions
+    //写入新媒体信息到键值对表
+    private fun saveLastMediaItemInfo(type: String, title: String, artist: String, uri: String){
+        val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
+        INFO_PlayerSingleton.edit {
+            putString("state_MediaType", type)
+            putString("MediaInfo_FileName", title)
+            putString("MediaInfo_VideoArtist", artist)
+            putString("MediaInfo_VideoUri", uri)
+        }
+    }
     //检查正在播放状态: 返回true需要重播  返回false不需重播
-    private fun checkSingletonPlayerState(): Boolean{
+    private fun checkSingletonPlayerState(){
         val currentMediaItem = PlayerSingleton.getCurrentMediaItem()
+        //当前单例中已有正在播放的媒体
         if (currentMediaItem != null){
+            //检查已有媒体信息
             val uri = PlayerSingleton.getMediaInfoUri()
+            //已有媒体不是目标媒体,需要重播
             if (uri != MediaInfo_VideoUri.toString()){
+               // Log.d("SuMing", "单例已有媒体但并非目标媒体")
+              // Log.d("SuMing", "新uri: ${MediaInfo_VideoUri}   正在播放uri: ${uri}")
+               // showCustomToast("单例已有媒体但并非目标媒体", Toast.LENGTH_SHORT, 3)
+                state_need_start_new_item = true
+                stopBackgroundServices()
+                PlayerSingleton.stopMediaSessionController(application)
                 PlayerSingleton.releasePlayer()
-                return true
-            }else{
-                return false
             }
-        }else{
-            return true
+            //已有媒体正是目标媒体,直接绑定
+            else{
+              // Log.d("SuMing", "目标媒体已在单例中播放")
+              //  showCustomToast("目标媒体已在单例中播放", Toast.LENGTH_SHORT, 3)
+                //重置状态
+                vm.state_firstReadyReached = true
+                playerReadyFrom_FirstEntry = true
+                PlayerSingleton.playPlayer()
+                ButtonRefresh()
+                //直接连接到媒体会话
+                connectToMediaSession()
+            }
+        }
+        //当前单例中没有正在播放的媒体
+        else{
+            state_need_start_new_item = true
+           // Log.d("SuMing", "当前单例中没有正在播放的媒体,需要启动新项")
+           // showCustomToast("当前单例中没有正在播放的媒体,需要启动新项", Toast.LENGTH_SHORT, 3)
         }
     }
     //确认切换媒体
@@ -2159,31 +2190,33 @@ class PlayerActivity: AppCompatActivity(){
         setMediaInfotoSingleton()
         //刷新按钮
         ButtonRefresh()
+        //写入新媒体信息到键值对表
+        saveLastMediaItemInfo("video", MediaInfo_FileName, MediaInfo_VideoArtist,MediaInfo_VideoUri.toString())
 
     }
     //服务设置写入
     private fun setServiceSetting( UseMediaSession: Boolean){
-        val PREFS_Service = getSharedPreferences("PREFS_Service", MODE_PRIVATE)
-        PREFS_Service.edit{ putBoolean("PREFS_UseMediaSession", UseMediaSession).apply() }
-        PREFS_Service.edit{ putInt("state_playerType", 1 ).apply() }
-        PREFS_Service.edit{ putString("MediaInfo_VideoUri", MediaInfo_VideoUri.toString()).apply() }
-        PREFS_Service.edit{ putString("MediaInfo_FileName", MediaInfo_FileName).apply() }
+        val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
+        INFO_PlayerSingleton.edit{ putBoolean("PREFS_UseMediaSession", UseMediaSession).apply() }
+        INFO_PlayerSingleton.edit{ putInt("state_PlayerType", 1 ).apply() }
+        INFO_PlayerSingleton.edit{ putString("state_MediaType", "video").apply() }
+        INFO_PlayerSingleton.edit{ putString("MediaInfo_VideoUri", MediaInfo_VideoUri.toString()).apply() }
+        INFO_PlayerSingleton.edit{ putString("MediaInfo_FileName", MediaInfo_FileName).apply() }
+        INFO_PlayerSingleton.edit{ putString("MediaInfo_Artist", MediaInfo_VideoArtist).apply() }
     }
-    //连接到媒体会话(不在会话中设置媒体项)(会自动启动服务)
-    @SuppressLint("UseKtx")
-    private fun connectToMediaSession() {
-        val SessionToken = SessionToken(this, ComponentName(this, PlayerService::class.java))
-        MediaSessionController = MediaController.Builder(this, SessionToken).buildAsync()
-        MediaSessionController.addListener({
-            controller = MediaSessionController.get()
-        }, MoreExecutors.directExecutor())
+    private fun connectToMediaSession(){
+        stopBackgroundServices()
+        PlayerSingleton.stopMediaSessionController(application)
+        Handler(Looper.getMainLooper()).postDelayed({
+            PlayerSingleton.connectToMediaSession(application)
+        }, 500)
     }
     //开启服务:使用自定义通知或媒体会话
     private fun startServiceOrSession(){
+        //写入服务配置
+        setServiceSetting(vm.PREFS_UseMediaSession)
+        //判断使用媒体会话或自定义通知
         if (vm.PREFS_UseMediaSession){
-            //写入服务配置
-            setServiceSetting(vm.PREFS_UseMediaSession)
-            //写入后再开启
             connectToMediaSession()
         }else{
             startBackgroundServices()
@@ -2315,11 +2348,17 @@ class PlayerActivity: AppCompatActivity(){
             return
         }
         MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivity, MediaInfo_VideoUri).toString()
-        MediaInfo_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
-        MediaInfo_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
+        MediaInfo_VideoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: "error"
+        MediaInfo_VideoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: "error"
         MediaInfo_VideoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
-        MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name
+        MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name ?: "error"
         vm.MediaInfo_FileName = MediaInfo_FileName
+        if (MediaInfo_FileName == "error"){
+            MediaInfo_VideoArtist = "未知媒体标题"
+        }
+        if (MediaInfo_VideoArtist == "error"){
+            MediaInfo_VideoArtist = "未知艺术家"
+        }
         retriever.release()
     }
     //播放已有媒:直接绑定画面输出,不再使用itemChange来触发
@@ -2342,7 +2381,7 @@ class PlayerActivity: AppCompatActivity(){
     //开启播放新媒体项
     private fun startPlayNewItem(){
         //构建并传入完整媒体项
-        if (state_existingItem){
+        if (state_need_start_new_item){
             val covers_path = File(filesDir, "miniature/cover")
             val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
             val cover_img_uri = if (vm.PREFS_InsertPreviewInMediaSession && cover_img_path.exists()) {
@@ -2359,6 +2398,7 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 null
             }
+
             val mediaItem = MediaItem.Builder()
                 .setUri(MediaInfo_VideoUri)
                 .setMediaMetadata(
@@ -2436,6 +2476,7 @@ class PlayerActivity: AppCompatActivity(){
         stopVideoTimeSync()
         //停止服务端操作
         stopBackgroundServices()
+        PlayerSingleton.stopMediaSessionController(application)
         PlayerSingleton.clearMediaInfo()
         PlayerSingleton.releasePlayer()
         stopFloatingWindow()
