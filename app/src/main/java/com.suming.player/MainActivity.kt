@@ -492,6 +492,7 @@ class MainActivity: AppCompatActivity() {
         val MediaInfo_VideoUri = INFO_PlayerSingleton.getString("MediaInfo_VideoUri", "error") ?: "error"
         //检查上次播放媒体信息
         if (MediaInfo_VideoUri == "error"){
+            closePlayingCard()
             return
         }
         if (MediaInfo_FileName == "error"){
@@ -654,6 +655,10 @@ class MainActivity: AppCompatActivity() {
         PlayingCard.animate().translationY(300f).withEndAction {
             PlayingCard.visibility = View.GONE
         }.setDuration(500).start()
+    }
+    private fun closePlayingCard(){
+        state_PlayingCard_showing = false
+        PlayingCard.visibility = View.GONE
     }
     private fun initPlayingCard(){
         PlayingCard_MediaName = findViewById(R.id.PlayingCard_MediaName)

@@ -344,7 +344,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
-                        android:text="正在播放"
+                        android:text="未知媒体标题"
                         android:textSize="13sp"
                         android:textColor="@color/HeadText"
                         android:layout_marginStart="10dp"
@@ -355,7 +355,7 @@
                         android:layout_height="wrap_content"
                         android:textSize="10sp"
                         android:textColor="@color/HeadText"
-                        android:text="xxxx"
+                        android:text="未知艺术家"
                         android:layout_marginStart="10dp"
                         />
                 </LinearLayout>
