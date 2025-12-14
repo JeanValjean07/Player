@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.media.AudioFocusRequest
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -31,6 +32,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.session.MediaController
+import com.google.common.util.concurrent.ListenableFuture
 import data.DataBaseMediaItem.MediaItemDataBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +47,7 @@ import java.security.cert.X509Certificate
 
 class SettingsActivity: AppCompatActivity() {
     //开关初始化
+    //<editor-fold desc="开关初始化">
     private lateinit var Switch_ReadNewOnEachStart: SwitchCompat
     private lateinit var Switch_CloseVideoTrack: SwitchCompat
     private lateinit var Switch_SwitchPortraitWhenExit: SwitchCompat
@@ -64,7 +68,9 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UsePlayerWithSeekBar: SwitchCompat
     private lateinit var Switch_UseTestingPlayer: SwitchCompat
     private lateinit var Switch_UseSyncFrameWhenScrollerStop: SwitchCompat
-    //开关变量 + 数值量
+    //</editor-fold>
+    //开关变量数值量
+    //<editor-fold desc="开关变量数值量">
     private var PREFS_ReadNewOnEachStart = false
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
@@ -87,6 +93,7 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UsePlayerWithSeekBar = false
     private var PREFS_UseTestingPlayer = false
     private var PREFS_UseSyncFrameWhenScrollerStop = false
+    //</editor-fold>
     //按钮循环：清除所有视频缓存
     private var ButtonRemoveAllThumbPathIndex = 0
     //设置清单
@@ -166,16 +173,16 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_CloseVideoTrack = PREFS.getBoolean("PREFS_CloseVideoTrack", false)
         }
         if (!PREFS.contains("PREFS_SwitchPortraitWhenExit")) {
-            PREFS_Editor.putBoolean("PREFS_SwitchPortraitWhenExit", true)
-            PREFS_SwitchPortraitWhenExit = true
+            PREFS_Editor.putBoolean("PREFS_SwitchPortraitWhenExit", false)
+            PREFS_SwitchPortraitWhenExit = false
         } else {
-            PREFS_SwitchPortraitWhenExit = PREFS.getBoolean("PREFS_SwitchPortraitWhenExit", true)
+            PREFS_SwitchPortraitWhenExit = PREFS.getBoolean("PREFS_SwitchPortraitWhenExit", false)
         }
         if (PREFS.contains("PREFS_KeepPlayingWhenExit")) {
-            PREFS_KeepPlayingWhenExit = PREFS.getBoolean("PREFS_KeepPlayingWhenExit", false)
+            PREFS_KeepPlayingWhenExit = PREFS.getBoolean("PREFS_KeepPlayingWhenExit", true)
         } else {
-            PREFS_Editor.putBoolean("PREFS_KeepPlayingWhenExit", false)
-            PREFS_KeepPlayingWhenExit = false
+            PREFS_Editor.putBoolean("PREFS_KeepPlayingWhenExit", true)
+            PREFS_KeepPlayingWhenExit = true
         }
         if (!PREFS.contains("PREFS_SeekHandlerGap")) {
             PREFS_Editor.putLong("PREFS_SeekHandlerGap", 0L)

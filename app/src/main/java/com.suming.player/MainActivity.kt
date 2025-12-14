@@ -2,6 +2,7 @@ package com.suming.player
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.ActivityOptions
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -31,6 +32,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
@@ -56,11 +58,13 @@ import kotlinx.coroutines.withContext
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import java.io.File
+import androidx.core.net.toUri
 
 @Suppress("unused")
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
     //界面控件元素
+    //<editor-fold desc="界面控件元素">
     private lateinit var main_video_list_adapter: MainVideoAdapter
     private lateinit var main_music_list_adapter: MainMusicAdapter
     private lateinit var main_media_list_adapter_RecyclerView: RecyclerView
@@ -70,18 +74,22 @@ class MainActivity: AppCompatActivity() {
     private lateinit var ButtonCardMusic: CardView
     private lateinit var ButtonCardVideo: CardView
     private lateinit var ButtonCardGallery: CardView
+    //</editor-fold>
     //设置和设置项
+    //<editor-fold desc="设置和设置项">
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_ReadNewOnEachStart = false
     private var PREFS_UsePlayerWithSeekBar = false
     private var PREFS_UseTestingPlayer = false
     private var PREFS_DefaultTab = "video"
+    //</editor-fold>
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
     //状态栏高度
     private var statusBarHeight = 0
     //状态信息
+    //<editor-fold desc="状态信息">
     private var state_VideoMediaStoreReaded = false
     private var state_MusicMediaStoreReaded = false
     private var state_FromFirstMediaStoreRead = false
@@ -91,13 +99,16 @@ class MainActivity: AppCompatActivity() {
     private var state_onFirstStart = false
     private var state_PlayingCard_showing = false
     private var state_PlayingCard_gone = true
+    //</editor-fold>
     //播放中卡片
+    //<editor-fold desc="播放中卡片">
     private lateinit var PlayingCard: CardView
     private lateinit var PlayingCard_MediaName: TextView
     private lateinit var PlayingCard_MediaArtist: TextView
     private lateinit var PlayingCard_Image: ImageView
     private lateinit var PlayingCard_Video: PlayerView
     private lateinit var PlayingCard_Button: ImageButton
+    //</editor-fold>
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -338,7 +349,7 @@ class MainActivity: AppCompatActivity() {
         PlayingCard.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
             val uri = PlayerSingleton.getMediaInfoUri()
-            startPlayer(Uri.parse(uri))
+            startPlayerBySmallCard(uri.toUri())
         }
         PlayingCard_Button = findViewById(R.id.PlayingCard_Button)
         PlayingCard_Button.setOnClickListener {
@@ -518,7 +529,7 @@ class MainActivity: AppCompatActivity() {
                     MediaMetadata.Builder()
                         .setTitle(MediaInfo_FileName)
                         .setArtist(MediaInfo_VideoArtist)
-                        .setArtworkUri( Uri.parse(cover_img_path.toString()) )
+                        .setArtworkUri(cover_img_path.toString().toUri() )
                         .build()
                 )
                 .build()
@@ -547,6 +558,7 @@ class MainActivity: AppCompatActivity() {
         val currentUri = PlayerSingleton.getMediaInfoUri()
         if (newUri == currentUri){
             showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
+            PlayerSingleton.playPlayer()
             return
         }
         //设置新播放项
@@ -562,7 +574,7 @@ class MainActivity: AppCompatActivity() {
                     MediaMetadata.Builder()
                         .setTitle(title)
                         .setArtist("未知艺术家")
-                        .setArtworkUri( Uri.parse(cover_img_path.toString()) )
+                        .setArtworkUri(cover_img_path.toString().toUri() )
                         .build()
                 )
                 .build()
@@ -773,7 +785,7 @@ class MainActivity: AppCompatActivity() {
     }
     private fun closeLoadingCard(){
         loadingText.text = "加载完成"
-        Handler().postDelayed({
+        Handler(Looper.getMainLooper()).postDelayed({
             loadingCard.visibility = View.GONE
         }, 500)
     }
@@ -898,6 +910,7 @@ class MainActivity: AppCompatActivity() {
     private fun startPlayer(uri: Uri){
         ToolVibrate().vibrate(this@MainActivity)
         //使用测试播放页
+        /*
         if (PREFS_UseTestingPlayer){
             /*
             val intent = Intent(this, PlayerActivity::class.java).apply {
@@ -908,6 +921,8 @@ class MainActivity: AppCompatActivity() {
 
              */
         }
+
+         */
         //使用传统播放页
         if (PREFS_UsePlayerWithSeekBar){
             val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
@@ -928,6 +943,58 @@ class MainActivity: AppCompatActivity() {
                 .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
             detailLauncher.launch(intent)
+        }
+    }
+    //启动播放器
+    @OptIn(UnstableApi::class)
+    private fun startPlayerBySmallCard(uri: Uri){
+        //使用测试播放页
+        /*
+        if (PREFS_UseTestingPlayer){
+            /*
+            val intent = Intent(this, PlayerActivity::class.java).apply {
+                putExtra("uri", uri)
+            }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            detailLauncher.launch(intent)
+            return
+
+             */
+        }
+
+         */
+        //使用传统播放页
+        if (PREFS_UsePlayerWithSeekBar){
+            val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
+                putExtra("uri", uri)
+            }
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+
+            val options = ActivityOptionsCompat.makeCustomAnimation(
+                this,
+                R.anim.slide_in,
+                R.anim.slide_dont_move
+            )
+
+            detailLauncher.launch(intent, options)
+        }
+        //使用新晋播放页
+        else{
+            val intent = Intent(this, PlayerActivity::class.java)
+                .apply {
+                    putExtra("uri", uri)
+                }
+                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
+            val options = ActivityOptionsCompat.makeCustomAnimation(
+                this,
+                R.anim.slide_in,
+                R.anim.slide_dont_move
+            )
+
+            detailLauncher.launch(intent, options)
         }
     }
     //隐藏

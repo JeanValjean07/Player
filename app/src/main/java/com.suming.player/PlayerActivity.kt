@@ -192,6 +192,7 @@ class PlayerActivity: AppCompatActivity(){
     private var longPress = false
     private var touchLeft = false
     private var touchRight = false
+    private var touchCenter = false
     private var scrollDistance = 0
     //方向回调
     private var orientationChangeTime = 0L
@@ -254,6 +255,7 @@ class PlayerActivity: AppCompatActivity(){
     private lateinit var playerView: PlayerView
     private lateinit var timer_current : TextView
     private lateinit var timer_duration : TextView
+    private lateinit var RootConstraint : ConstraintLayout
     //lateInitItem -工具
     private lateinit var DisplayMetrics: DisplayMetrics
     //lateInitItem -复杂工具
@@ -287,13 +289,6 @@ class PlayerActivity: AppCompatActivity(){
 
     private var DataBaseProfile: MediaItemSetting? = null
 
-    private var state_ActivityState_onBackground = false
-
-    private var play_list_default = ""
-    private var index = 0
-
-    private lateinit var controller: MediaController
-
     //</editor-fold>
     //测试中变量
     //<editor-fold desc="测试中变量">
@@ -322,9 +317,12 @@ class PlayerActivity: AppCompatActivity(){
 
     private var state_switch_item = false
 
-    private lateinit var MediaSessionController: ListenableFuture<MediaController>
 
     private var state_need_start_new_item = false
+
+    private var state_RootCardClosing = false
+
+    private var touchCenterDistance = 0f
 
 
     //</editor-fold>
@@ -341,6 +339,7 @@ class PlayerActivity: AppCompatActivity(){
         fun lateInitItem(){
             scroller = findViewById(R.id.rvThumbnails)
             DisplayMetrics = resources.displayMetrics
+            RootConstraint = findViewById(R.id.RootConstraint)
             NoticeCard = findViewById(R.id.NoticeCard)
             TopBarArea = findViewById(R.id.TopBarArea)
             ButtonArea = findViewById(R.id.ButtonArea)
@@ -426,10 +425,10 @@ class PlayerActivity: AppCompatActivity(){
         if (savedInstanceState == null){
             //固定项
             if (PREFS.contains("PREFS_KeepPlayingWhenExit")) {
-                vm.PREFS_KeepPlayingWhenExit = PREFS.getBoolean("PREFS_KeepPlayingWhenExit", false)
+                vm.PREFS_KeepPlayingWhenExit = PREFS.getBoolean("PREFS_KeepPlayingWhenExit", true)
             } else {
-                PREFSEditor.putBoolean("PREFS_KeepPlayingWhenExit", false)
-                vm.PREFS_KeepPlayingWhenExit = false
+                PREFSEditor.putBoolean("PREFS_KeepPlayingWhenExit", true)
+                vm.PREFS_KeepPlayingWhenExit = true
             }
             if (!PREFS.contains("PREFS_GenerateThumbSYNC")) {
                 PREFSEditor.putBoolean("PREFS_GenerateThumbSYNC", true)
@@ -507,10 +506,10 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_UseDataBaseForScrollerSetting = PREFS.getBoolean("PREFS_UseDataBaseForScrollerSetting", false)
             }
             if (!PREFS.contains("PREFS_SwitchPortraitWhenExit")) {
-                PREFSEditor.putBoolean("PREFS_SwitchPortraitWhenExit", true)
-                vm.PREFS_SwitchPortraitWhenExit = true
+                PREFSEditor.putBoolean("PREFS_SwitchPortraitWhenExit", false)
+                vm.PREFS_SwitchPortraitWhenExit = false
             } else {
-                vm.PREFS_SwitchPortraitWhenExit = PREFS.getBoolean("PREFS_SwitchPortraitWhenExit", true)
+                vm.PREFS_SwitchPortraitWhenExit = PREFS.getBoolean("PREFS_SwitchPortraitWhenExit", false)
             }
             if (!PREFS.contains("PREFS_CloseVideoTrack")) {
                 PREFSEditor.putBoolean("PREFS_CloseVideoTrack", true)
@@ -864,6 +863,8 @@ class PlayerActivity: AppCompatActivity(){
             ButtonRefresh()
             //移除遮罩
             closeCover(0,0)
+            //隐藏顶部分割线
+            HideTopLine()
 
         }
 
@@ -1298,6 +1299,13 @@ class PlayerActivity: AppCompatActivity(){
                         scrollDistance = 0
                     }
                 }
+                if (touchCenter){
+                    state_RootCardClosing = true
+                    touchCenterDistance += distanceY
+                    if (touchCenterDistance < -300){
+                        EnsureExit_but_keep_playing()
+                    }
+                }
                 return super.onScroll(e1, e2, distanceX, distanceY)
             }
         })
@@ -1313,15 +1321,24 @@ class PlayerActivity: AppCompatActivity(){
                     //记录1指初始坐标
                     finger1x = event.x
                     finger1y = event.y
-                    //点击区域屏蔽
+                    //屏蔽纵向误触区域
                     if (finger1y < screenHeight * 0.2 || finger1y > screenHeight * 0.95){
                         return@setOnTouchListener false
                     }
-                    if (finger1x < screenWidth / 2) {
+                    //分割横向功能区
+                    if (finger1x < screenWidth * 0.2) {
                         touchLeft = true
-                    } else {
-                        touchRight = true
+                        notice("在该区域上下滑动可调整亮度", 1000)
                     }
+                    else if(finger1x > screenWidth * 0.8){
+                        touchRight = true
+                        notice("在该区域上下滑动可调整音量", 1000)
+                    }
+                    else{
+                        touchCenter = true
+                        touchCenterDistance = 0f
+                    }
+
                     gestureDetectorPlayArea.onTouchEvent(event)
                 }
                 MotionEvent.ACTION_UP -> {
@@ -1329,14 +1346,10 @@ class PlayerActivity: AppCompatActivity(){
                     scrollDistance = 0
                     touchLeft = false
                     touchRight = false
-
                     center0x = playerView.pivotX
                     center0y = playerView.pivotY
-
                     playerView.pivotX = center0x
                     playerView.pivotY = center0y
-
-
                     originalScale = definiteScale
 
                     if (longPress) {
@@ -1344,6 +1357,11 @@ class PlayerActivity: AppCompatActivity(){
                         vm.player.setPlaybackSpeed(currentSpeed)
                         val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
                         NoticeCard.visibility = View.GONE
+                    }
+
+                    if (state_RootCardClosing){
+                        state_RootCardClosing = false
+                        RootConstraint.translationY = 0f
                     }
                     startIdleTimer()
                     gestureDetectorPlayArea.onTouchEvent(event)
@@ -1413,7 +1431,6 @@ class PlayerActivity: AppCompatActivity(){
                         if (!ACTION_POINTER_DOWN){
                             gestureDetectorPlayArea.onTouchEvent(event)
                         }
-
                     }
                 }
             }
@@ -2534,6 +2551,8 @@ class PlayerActivity: AppCompatActivity(){
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
         state_EnterAnimationCompleted = true
+        //隐藏顶部分割线
+        HideTopLine()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -2745,9 +2764,33 @@ class PlayerActivity: AppCompatActivity(){
 
         }
     }
+    @Suppress("DEPRECATION")
+    override fun finish() {
+        super.finish()
+        //判断退出方式
+        if (onDestroy_fromExitButKeepPlaying){
+            //显示顶部分割线
+            ShowTopLine()
+            //使用收起动画
+            overridePendingTransition(
+                R.anim.slide_just_appear,
+                R.anim.slide_out
+            )
+        }
+    }
+
 
 
     //Stable Functions
+    //隐藏顶部分割线
+    private fun HideTopLine(){
+        val TopLine = findViewById<View>(R.id.TopLine)
+        TopLine.visibility = View.GONE
+    }
+    private fun ShowTopLine(){
+        val TopLine = findViewById<View>(R.id.TopLine)
+        TopLine.visibility = View.VISIBLE
+    }
     //解除亮度控制
     private fun unBindBrightness(){
         val windowInfo = window.attributes

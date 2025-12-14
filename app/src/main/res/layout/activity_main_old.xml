@@ -336,6 +336,7 @@
                     android:layout_height="wrap_content"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
+                    android:layout_marginEnd="10dp"
                     app:layout_constraintStart_toEndOf="@+id/PlayingCard_ImageContainer"
                     app:layout_constraintEnd_toStartOf="@+id/PlayingCard_Button"
                     android:orientation="vertical">
@@ -363,15 +364,29 @@
                     android:id="@+id/PlayingCard_Button"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:padding="15dp"
-                    android:layout_marginEnd="10dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="playOrPause"
+                    android:padding="13dp"
+                    android:scaleType="centerCrop"
                     android:src="@drawable/ic_main_controller_play"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/PlayingCard_List"
+                    app:layout_constraintDimensionRatio="H,10:8"/>
+                <ImageButton
+                    android:id="@+id/PlayingCard_List"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:contentDescription="playOrPause"
+                    android:padding="13dp"
+                    android:layout_marginEnd="10dp"
+                    android:src="@drawable/ic_main_controller_list"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:scaleType="centerCrop"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintDimensionRatio="H,1:1"
+                    app:layout_constraintDimensionRatio="H,10:8"
                     />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>

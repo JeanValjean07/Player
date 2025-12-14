@@ -11,6 +11,7 @@ import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 
@@ -40,14 +41,18 @@ class PlayerService(): MediaSessionService() {
         state_playerType = INFO_PlayerSingleton.getInt("state_playerType", 1)
         MediaInfo_VideoUri = INFO_PlayerSingleton.getString("MediaInfo_VideoUri", "error")
         MediaInfo_FileName = INFO_PlayerSingleton.getString("MediaInfo_FileName", "error")
-        //是否启用播控中心
+        //启用媒体会话播控中心
         if (PREFS_UseMediaSession) {
             //获取播放器实例
             val player = PlayerSingleton.getPlayer(application)
+
+            val Notification = ToolCustomNotificationSession(this)
+
             //指定通知provider
             setMediaNotificationProvider(ToolCustomNotificationSession(this))
             //创建媒体会话包装器
             val wrapper = ToolPlayerWrapper(player)
+
 
             //创建基本媒体会话
             //mediaSession = MediaSession.Builder(this, player).build()
@@ -73,8 +78,11 @@ class PlayerService(): MediaSessionService() {
             //设置会话点击意图
             if (state_playerType == 1){mediaSession?.setSessionActivity(createPendingIntentScroller())}
             else{mediaSession?.setSessionActivity(createPendingIntentSeekBar())}
+            //
+
 
         }
+        //启用自定通知
         else{
             val NotificationCustomized = BuildCustomizeNotification()
             createNotificationChannel()
