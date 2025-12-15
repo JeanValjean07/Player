@@ -17,11 +17,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //播放器数据连接
     private val app = application
 
-    val player: ExoPlayer
-        get() = PlayerSingleton.getPlayer(app)
+    val player: ExoPlayer get() = PlayerSingleton.getPlayer(app)
 
-    val trackSelector: DefaultTrackSelector
-        get() = PlayerSingleton.getTrackSelector(app)
+    val trackSelector: DefaultTrackSelector get() = PlayerSingleton.getTrackSelector(app)
 
     //Functions
     //设置单链接或媒体项
@@ -68,11 +66,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var mediaItems: List<MediaItemForVideo> = emptyList()
     var currentMediaIndex = -1
     var maxMediaIndex = 0
-
-
-    var repeatMode = ""
-
-    var lastPositionLocated = false
 
 
 
@@ -170,8 +163,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
 
     var YaxisDestination = 800f
-
-    var List_PlayList = ""
 
 
     var MediaInfo_Uri_Saved: Boolean = false

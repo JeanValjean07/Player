@@ -63,6 +63,10 @@ import androidx.core.net.toUri
 @Suppress("unused")
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
+    //权限检查
+    private val REQUEST_STORAGE_PERMISSION = 1001
+    //状态栏高度
+    private var statusBarHeight = 0
     //界面控件元素
     //<editor-fold desc="界面控件元素">
     private lateinit var main_video_list_adapter: MainVideoAdapter
@@ -84,10 +88,6 @@ class MainActivity: AppCompatActivity() {
     private var PREFS_UseTestingPlayer = false
     private var PREFS_DefaultTab = "video"
     //</editor-fold>
-    //权限检查
-    private val REQUEST_STORAGE_PERMISSION = 1001
-    //状态栏高度
-    private var statusBarHeight = 0
     //状态信息
     //<editor-fold desc="状态信息">
     private var state_VideoMediaStoreReaded = false
@@ -108,6 +108,7 @@ class MainActivity: AppCompatActivity() {
     private lateinit var PlayingCard_Image: ImageView
     private lateinit var PlayingCard_Video: PlayerView
     private lateinit var PlayingCard_Button: ImageButton
+    private lateinit var PlayingCard_List: ImageButton
     //</editor-fold>
 
 
@@ -118,6 +119,8 @@ class MainActivity: AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main_old)
+        //初始化上下文
+        PlayerSingleton.setContext(application)
         //界面实例获取
         preCheckAndInit()
         //表明首次启动信息
@@ -346,12 +349,13 @@ class MainActivity: AppCompatActivity() {
         }
         //播放卡片
         PlayingCard = findViewById(R.id.PlayingCard)
+        PlayingCard_Button = findViewById(R.id.PlayingCard_Button)
+        PlayingCard_List = findViewById(R.id.PlayingCard_List)
         PlayingCard.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
             val uri = PlayerSingleton.getMediaInfoUri()
             startPlayerBySmallCard(uri.toUri())
         }
-        PlayingCard_Button = findViewById(R.id.PlayingCard_Button)
         PlayingCard_Button.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
             if (PlayerSingleton.getIsPlaying()){
@@ -360,6 +364,10 @@ class MainActivity: AppCompatActivity() {
                 PlayerSingleton.playPlayer()
             }
             setPlayingCardButton()
+        }
+        PlayingCard_List.setOnClickListener {
+            ToolVibrate().vibrate(this@MainActivity)
+            PlayerFragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
         }
 
 
@@ -491,6 +499,14 @@ class MainActivity: AppCompatActivity() {
         outState.putString("state_currentPage", state_currentPage)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        //关闭单例监听器
+        PlayerSingleton.releaseAudioFocus(application)
+        PlayerSingleton.stopAudioDeviceCallback(application)
+
+    }
+
 
     //Functions
     //获取和保存上次播放信息到键值对表
@@ -518,11 +534,11 @@ class MainActivity: AppCompatActivity() {
         PlayerSingleton.setMediaInfo(state_MediaType, MediaInfo_FileName, MediaInfo_VideoArtist, MediaInfo_VideoUri)
         //启动播放
         if (currentUri != MediaInfo_VideoUri){
+            //初始化播放器
             PlayerSingleton.getPlayer(application)
-
+            //设置媒体项
             val covers_path = File(filesDir, "miniature/cover")
             val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
-
             val mediaItem = MediaItem.Builder()
                 .setUri(MediaInfo_VideoUri)
                 .setMediaMetadata(
@@ -533,11 +549,17 @@ class MainActivity: AppCompatActivity() {
                         .build()
                 )
                 .build()
-
             PlayerSingleton.setMediaItem(mediaItem)
+            //播放器单例添加监听器
+            PlayerSingleton.addPlayerStateListener()
+            //读取媒体列表
+            PlayerSingleton.readDataBaseThenGatherPlayList(application)
         }
         //链接媒体会话
         PlayerSingleton.connectToMediaSession(application)
+        //请求音频焦点和注册设备监听
+        PlayerSingleton.requestAudioFocus(application)
+        PlayerSingleton.startAudioDeviceCallback(application)
         //检查播放状态
         checkPlayingMediaThenDecide()
 
@@ -589,6 +611,9 @@ class MainActivity: AppCompatActivity() {
         stopService(Intent(this, PlayerService::class.java))
         PlayerSingleton.stopMediaSessionController(application)
         PlayerSingleton.connectToMediaSession(application)
+        //请求音频焦点和注册设备监听
+        PlayerSingleton.requestAudioFocus(application)
+        PlayerSingleton.startAudioDeviceCallback(application)
         //检查播放状态
         checkPlayingMediaThenDecide()
     }
@@ -619,7 +644,6 @@ class MainActivity: AppCompatActivity() {
     private fun getInfoThenDecide(){
         //从播放器单例获取媒体信息
         val (type, title, artist) = getInfoFromSingleton()
-        Log.d("SuMing", "type: $type, title: $title, artist: $artist")
         //根据媒体类型判断是否需要绑定播放器
         if (type == "video"){ BindPlayingCardSmallPlayer(type) }
         else if (type == "music"){ BindPlayingCardSmallPlayer(type) }
@@ -1106,6 +1130,12 @@ class MainActivity: AppCompatActivity() {
             }
             "MediaStore_NoExist_Delete_Complete" -> {
                 main_video_list_adapter.refresh()
+            }
+            "PlayerSingleton_PlaybackStateChanged" -> {
+                setPlayingCardButton()
+            }
+            "PlayerSingleton_MediaItemChanged" -> {
+                checkPlayingMediaThenDecide()
             }
         }
     }

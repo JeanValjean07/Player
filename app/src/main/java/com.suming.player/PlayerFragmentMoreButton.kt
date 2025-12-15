@@ -125,53 +125,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        //信息预写
-        //1.倍速预写
-        val currentSpeed: Float = vm.player.playbackParameters.speed
-        val currentSpeedText = view.findViewById<TextView>(R.id.current_speed)
-        currentSpeedText.text = currentSpeed.toString()
-        val timerShutDown = view.findViewById<TextView>(R.id.StateTimerShutDown)
-        if (vm.PREFS_TimerShutDown) {
-            timerShutDown.text = "将在${vm.shutDownTime}关闭"
-        } else {
-            timerShutDown.text = "未开启"
-        }
-        //2.循环模式
-        val ButtonLoopModeWithText = view.findViewById<TextView>(R.id.ButtonLoopMode)
-        fun refreshLoopModeText(){
-            val currentRepeatMode=  vm.repeatMode
-            ButtonLoopModeWithText.text = when (currentRepeatMode) {
-                "one" -> "单集循环"
-                "all" -> "列表循环"
-                else -> "未知"
-            }
-        }
-        refreshLoopModeText()
-        ButtonLoopModeWithText.setOnClickListener {
-
-            if (!vm.PREFS_UseMediaSession){
-                    context?.applicationContext?.showCustomToast("当前模式无法切换", Toast.LENGTH_SHORT, 3)
-                    return@setOnClickListener
-                }
-
-            if (vm.repeatMode == "all"){
-                val result = bundleOf("KEY" to "RepeatMode", "mode" to "one")
-                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-                ButtonLoopModeWithText.text = "单集循环"
-            }
-            else if (vm.repeatMode == "one"){
-                val result = bundleOf("KEY" to "RepeatMode", "mode" to "all")
-                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-                ButtonLoopModeWithText.text = "列表循环"
-            }
-            else{
-                val result = bundleOf("KEY" to "RepeatMode", "mode" to "one")
-                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-                ButtonLoopModeWithText.text = "单集循环"
-            }
-
-        }
-
         //开关置位
         Switch_BackgroundPlay = view.findViewById(R.id.Switch_BackgroundPlay)
         Switch_SealOEL = view.findViewById(R.id.Switch_SealOEL)
@@ -186,7 +139,51 @@ class PlayerFragmentMoreButton: DialogFragment() {
         Switch_ExitWhenMediaEnd.isChecked = vm.PREFS_ShutDownWhenMediaEnd
         Switch_SavePositionWhenExit.isChecked = vm.PREFS_SavePositionWhenExit
 
-
+        //菜单选项
+        //播放倍速
+        val currentSpeed: Float = vm.player.playbackParameters.speed
+        val currentSpeedText = view.findViewById<TextView>(R.id.current_speed)
+        currentSpeedText.text = currentSpeed.toString()
+        val timerShutDown = view.findViewById<TextView>(R.id.StateTimerShutDown)
+        if (vm.PREFS_TimerShutDown) {
+            timerShutDown.text = "将在${vm.shutDownTime}关闭"
+        } else {
+            timerShutDown.text = "未开启"
+        }
+        //循环模式
+        val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
+        fun setLoopModeText(){
+            val currentRepeatMode = PlayerSingleton.getRepeatMode()
+            ButtonLoopMode.text = when (currentRepeatMode) {
+                "ONE" -> "单集循环"
+                "ALL" -> "列表循环"
+                "OFF" -> "播完暂停"
+                else -> "未知"
+            }
+        }
+        setLoopModeText()
+        ButtonLoopMode.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            val currentRepeatMode = PlayerSingleton.getRepeatMode()
+            when (currentRepeatMode) {
+                "OFF" -> {
+                    PlayerSingleton.setRepeatMode("ONE")
+                    setLoopModeText()
+                }
+                "ONE" -> {
+                    PlayerSingleton.setRepeatMode("ALL")
+                    setLoopModeText()
+                }
+                "ALL" -> {
+                    PlayerSingleton.setRepeatMode("OFF")
+                    setLoopModeText()
+                }
+                else -> {
+                    PlayerSingleton.setRepeatMode("OFF")
+                    setLoopModeText()
+                }
+            }
+        }
 
         //按钮：退出
         val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
@@ -223,13 +220,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
         ButtonPlayList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            if (vm.state_PlayListProcess_Complete){
-                val result = bundleOf("KEY" to "PlayList")
-                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-                dismiss()
-            }else{
-                context?.applicationContext?.showCustomToast("播放列表还未准备完成，请稍后重试", Toast.LENGTH_SHORT, 3)
-            }
+            val result = bundleOf("KEY" to "PlayList")
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+            dismiss()
         }
         //按钮：回到开头
         val ButtonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
@@ -270,17 +263,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 }
             }
             popup.show()
-        }
-        //循环模式
-        val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
-        if (vm.repeatMode == "OFF"){ ButtonLoopMode.text = "播完暂停" }
-        else if (vm.repeatMode == "ONE"){ ButtonLoopMode.text = "单集循环" }
-        else if (vm.repeatMode == "ALL"){ ButtonLoopMode.text = "顺序播放" }
-        ButtonLoopMode.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            if (vm.repeatMode == "OFF"){ setRepeatMode("ALL") }
-            else if (vm.repeatMode == "ALL"){ setRepeatMode("ONE") }
-            else if (vm.repeatMode == "ONE"){ setRepeatMode("OFF") }
         }
         //开关：后台播放
         Switch_BackgroundPlay.setOnCheckedChangeListener { _, isChecked ->
@@ -709,27 +691,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
     //Functions
-    //设置循环模式
-    private fun setRepeatMode(target_mode: String){
-        val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
-        when (target_mode){
-            "OFF" -> {
-                vm.repeatMode = "OFF"
-                PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode) }
-                ButtonLoopMode?.text = "播完暂停"
-            }
-            "ONE" -> {
-                vm.repeatMode = "ONE"
-                PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode) }
-                ButtonLoopMode?.text = "单集循环"
-            }
-            "ALL" -> {
-                vm.repeatMode = "ALL"
-                PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode) }
-                ButtonLoopMode?.text = "顺序播放"
-            }
-        }
-    }
     //设置倍速
     private fun chooseSpeed(speed: Float){
         ToolVibrate().vibrate(requireContext())

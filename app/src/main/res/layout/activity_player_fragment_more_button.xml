@@ -148,7 +148,6 @@
                             android:layout_marginStart="5dp"
                             android:orientation="vertical">
                             <!-- 开关：后台播放 -->
-                            <!-- 菜单：循环播放 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -189,7 +188,7 @@
                                     app:trackTint="@color/switchTrackColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
-
+                            <!-- 菜单：循环播放 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -216,14 +215,13 @@
                                     android:layout_width="0dp"
                                     android:layout_height="0dp"
                                     android:layout_weight="1"/>
-                                <!-- 循环模式 -->
                                 <TextView
                                     android:id="@+id/ButtonLoopMode"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="40dp"
+                                    android:layout_width="100dp"
+                                    android:layout_height="20dp"
                                     android:text="循环模式"
                                     android:layout_gravity="center"
-                                    android:gravity="center"
+                                    android:gravity="end"
                                     android:layout_marginEnd="10dp"
                                     android:paddingStart="10dp"
                                     android:textSize="14sp"
@@ -267,11 +265,11 @@
                                     android:layout_weight="1"/>
                                 <TextView
                                     android:id="@+id/buttonChangeSpeed"
-                                    android:layout_width="35dp"
+                                    android:layout_width="100dp"
                                     android:layout_height="20dp"
                                     android:text="更改"
                                     android:textSize="14sp"
-                                    android:gravity="center"
+                                    android:gravity="end"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="12dp"
                                     android:textColor="@color/Text2"
@@ -677,14 +675,14 @@
                                     tools:ignore="TooManyViews" />
                                 <TextView
                                     android:id="@+id/ButtonTimerShutDown"
-                                    android:layout_width="35dp"
+                                    android:layout_width="100dp"
                                     android:layout_height="20dp"
-                                    android:text="设置"
-                                    android:textSize="14sp"
-                                    android:gravity="center"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="12dp"
+                                    android:gravity="end"
+                                    android:text="设置"
                                     android:textColor="@color/Text2"
+                                    android:textSize="14sp"
                                     tools:ignore="SmallSp" />
                             </LinearLayout>
                             <!-- 开关：播完后才关闭 -->
@@ -761,7 +759,7 @@
                                     android:layout_height="20dp"
                                     android:text="开启"
                                     android:textSize="14sp"
-                                    android:gravity="center"
+                                    android:gravity="end"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="12dp"
                                     android:textColor="@color/Text2"

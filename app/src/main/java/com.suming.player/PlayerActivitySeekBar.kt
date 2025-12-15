@@ -1541,10 +1541,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             vm.currentMediaIndex = currentMediaIndex
             vm.maxMediaIndex = mediaItems.size - 1
 
-            //读取循环模式
-            if (vm.repeatMode == ""){
-                getRepeatMode()
-            }
 
 
             //保存完后公布状态
@@ -2003,20 +1999,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             .build()
 
         vm.setMediaItem(mediaItem)
-
-    }
-    //播放模式
-    private fun getRepeatMode(){
-        if (PREFS.contains("PREFS_RepeatMode")){
-            vm.repeatMode = PREFS.getString("PREFS_RepeatMode","") ?: ""
-            if (vm.repeatMode != "OFF" && vm.repeatMode != "ALL" && vm.repeatMode != "ONE"){
-                vm.repeatMode = "OFF"
-                PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode).apply() }
-            }
-        }else{
-            vm.repeatMode = "OFF"
-            PREFS.edit{ putString("PREFS_RepeatMode", vm.repeatMode).apply() }
-        }
 
     }
     //确认关闭操作
@@ -3201,37 +3183,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
 
          */
 
-        if (vm.repeatMode == "ONE"){
-            vm.player.seekTo(0)
-            vm.player.play()
-            notice("单集循环",3000)
-        }
-        else if (vm.repeatMode == "ALL"){
-            prepareNextMediaItem()
-        }
-        else if (vm.repeatMode == "OFF"){
-            vm.playEnd = true
-            notice("视频结束",1000)
-            vm.player.pause()
-            //停止被控控件
-            stopVideoTimeSync()
-            stopSeekBarSync()
-            //播放结束时让控件显示
-            setControllerVisible()
-            Handler(Looper.getMainLooper()).postDelayed({ stopSeekBarSync() }, 100)
-            IDLE_Timer?.cancel()
-            //自动退出和循环播放控制
-            if (vm.state_FromSysStart && vm.PREFS_ExitWhenEnd){
-                finish()
-            }
-            //播放结束时关闭
-            if (playEnd_NeedShutDown){
-                finishAndRemoveTask()
-                val pid = Process.myPid()
-                Process.killProcess(pid)
-                exitProcess(0)
-            }
-        }
     }
 
     private fun pauseVideo(){
