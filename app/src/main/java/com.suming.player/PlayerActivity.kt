@@ -864,6 +864,7 @@ class PlayerActivity: AppCompatActivity(){
             }
             override fun onPlayerError(error: PlaybackException) {
                 super.onPlayerError(error)
+                showCustomToast("播放错误: ${error.message}", Toast.LENGTH_SHORT, 3)
                 Log.d("SuMing", "onPlayerError: ${error.message}")
             }
 
@@ -1234,7 +1235,7 @@ class PlayerActivity: AppCompatActivity(){
                 if (touchLeft) {
                     //点击区域功能提示:仅一次
                     if (!touchState_left_noticed){
-                        notice("继续上下滑动可调整亮度", 1000)
+                        //notice("继续上下滑动可调整亮度", 1000)
                         touchState_left_noticed = true
                     }
                     //累积滑动距离
@@ -1285,7 +1286,7 @@ class PlayerActivity: AppCompatActivity(){
                 if (touchRight) {
                     //点击区域功能提示:仅一次
                     if (!touchState_right_noticed){
-                        notice("继续上下滑动可调整音量", 1000)
+                        //notice("继续上下滑动可调整音量", 1000)
                         touchState_right_noticed = true
                     }
                     //累积滑动距离
@@ -1788,8 +1789,6 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
 
-        //读取播放列表
-        PlayerSingleton.readDataBaseThenGatherPlayList(application)
         //读取循环模式
         PlayerSingleton.getRepeatMode()
 
@@ -1815,19 +1814,17 @@ class PlayerActivity: AppCompatActivity(){
         if (currentMediaItem != null){
             //检查已有媒体信息
             val currentUriString = PlayerSingleton.getMediaInfoUri()
+            Log.d("SuMing", "新uri: ${MediaInfo_MediaUriString}   正在播放uri: ${currentUriString}")
             //已有媒体不是目标媒体,需要重播
             if (currentUriString != MediaInfo_MediaUriString){
-                //Log.d("SuMing", "单例已有媒体但并非目标媒体")
-                //Log.d("SuMing", "新uri: ${MediaInfo_MediaUriString}   正在播放uri: ${currentUriString}")
+                Log.d("SuMing", "单例已有媒体但并非目标媒体")
                 //showCustomToast("单例已有媒体但并非目标媒体", Toast.LENGTH_SHORT, 3)
                 state_need_start_new_item = true
-                stopBackgroundServices()
-                PlayerSingleton.stopMediaSessionController(application)
-                PlayerSingleton.releasePlayer()
+                PlayerSingleton.ReleaseSingletonPlayer(application)
             }
             //已有媒体正是目标媒体,直接绑定
             else{
-                //Log.d("SuMing", "目标媒体已在单例中播放")
+                Log.d("SuMing", "目标媒体已在单例中播放")
                 //showCustomToast("目标媒体已在单例中播放", Toast.LENGTH_SHORT, 3)
                 //重置状态
                 vm.state_firstReadyReached = true
@@ -1838,6 +1835,7 @@ class PlayerActivity: AppCompatActivity(){
         //当前单例中没有正在播放的媒体
         else{
             state_need_start_new_item = true
+            PlayerSingleton.ReleaseSingletonPlayer(application)
             //Log.d("SuMing", "当前单例中没有正在播放的媒体,需要启动新项")
             //showCustomToast("当前单例中没有正在播放的媒体,需要启动新项", Toast.LENGTH_SHORT, 3)
         }
@@ -2265,7 +2263,8 @@ class PlayerActivity: AppCompatActivity(){
         refreshTimeLine()
         //刷新：进度条更新
         scrollerAdapterUpdate()
-
+        //刷新控制按钮
+        ButtonRefresh()
 
     }
     //开启播放新媒体项

@@ -1,5 +1,6 @@
 package com.suming.player
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -11,6 +12,7 @@ import android.os.IBinder
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
@@ -96,7 +98,7 @@ class PlayerService(): MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
         return mediaSession
     }
-
+    //手动关闭服务时调用
     override fun onDestroy() {
         super.onDestroy()
         mediaSession?.run {
@@ -104,55 +106,30 @@ class PlayerService(): MediaSessionService() {
             mediaSession = null
         }
     }
-
+    //仅在后台划卡时触发,而且前提是系统不执行强行停止
     override fun onTaskRemoved(rootIntent: Intent?) {
-
-        mediaSession?.player?.pause()
+        //销毁媒体会话
         mediaSession?.release()
-
+        //关闭服务
         stopForeground(STOP_FOREGROUND_REMOVE)
-
         stopSelf()
-
+        //释放播放器
+        PlayerSingleton.releasePlayer()
+        PlayerSingleton.onTaskRemoved()
     }
     //接收Intent额外信息
-    /*
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         //取出数据
         intent?.let {
-            MediaInfo_MediaTitle = it.getStringExtra("info_to_service_MediaTitle")
-            MediaInfo_MediaUri = it.getStringExtra("info_to_service_MediaUri")
+             //MediaInfo_MediaTitle = it.getStringExtra("info_to_service_MediaTitle")
         }
 
         //END
         return START_REDELIVER_INTENT
     }
 
-     */
-
-
-    /*
-    private var binder: LocalBinder? = null
-
-    inner class LocalBinder : Binder()
-
-
-    override fun onBind(intent: Intent?): IBinder {
-        super.onBind(intent)
-        // 3. 保证返回前已经初始化
-        return binder ?: LocalBinder().also { binder = it }
-    }
-
-     */
-
-
-
-
-    fun updateNotification(){
-        Log.d("SuMing", " PlayerService  updateNotification: ")
-    }
 
     //Functions
     //自定义通知:构建常规通知

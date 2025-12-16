@@ -2,17 +2,12 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Context.VIBRATOR_MANAGER_SERVICE
-import android.content.Context.VIBRATOR_SERVICE
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -29,21 +24,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -54,7 +46,6 @@ import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import java.net.URI
 import kotlin.math.abs
 
 @SuppressLint("ComposableNaming")
@@ -128,14 +119,15 @@ class PlayerFragmentPlayList: DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
+        //检查播放列表是否加载完成
+        val isMediaListProcessComplete = PlayerSingleton.isMediaListProcessComplete()
+        if (!isMediaListProcessComplete){
+            requireContext().showCustomToast("播放列表未加载完成", Toast.LENGTH_SHORT, 3)
+            dismiss()
+            return
+        }
         //读取设置
         PREFS = requireContext().getSharedPreferences("PREFS", Context.MODE_PRIVATE)
-        //检查播放列表是否加载完成
-        val isPlayListProcessComplete = PlayerSingleton.getPlayListProcessComplete()
-        if (!isPlayListProcessComplete){
-            requireContext().showCustomToast("播放列表未加载完成", Toast.LENGTH_SHORT, 3)
-            Dismiss()
-        }
     }
 
     override fun onCreateView(
@@ -168,18 +160,16 @@ class PlayerFragmentPlayList: DialogFragment() {
         //按钮：上一曲
         val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
         ButtonPreviousMedia.setOnClickListener {
-
+            ToolVibrate().vibrate(requireContext())
             PlayerSingleton.switchToPreviousMediaItem()
-
-            customDismiss()
+            customDismiss(false)
         }
         //按钮：下一曲
         val ButtonNextMedia = view.findViewById<ImageButton>(R.id.ButtonNextMedia)
         ButtonNextMedia.setOnClickListener {
-
+            ToolVibrate().vibrate(requireContext())
             PlayerSingleton.switchToNextMediaItem()
-
-            customDismiss()
+            customDismiss(false)
         }
         //循环模式
         val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
@@ -350,7 +340,7 @@ class PlayerFragmentPlayList: DialogFragment() {
     //声明式UI
     @Composable
     private fun showVideoList() {
-        val mediaItems = PlayerSingleton.getPlayList(requireContext())
+        val mediaItems = PlayerSingleton.getMediaList(requireContext())
 
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -429,9 +419,9 @@ class PlayerFragmentPlayList: DialogFragment() {
 
     //Functions
     //自定义退出逻辑
-    private fun customDismiss(){
+    private fun customDismiss(flag_need_vibrate: Boolean = true){
         if (!lockPage) {
-            Dismiss()
+            Dismiss(flag_need_vibrate)
         }
     }
     private fun Dismiss(flag_need_vibrate: Boolean = true){
