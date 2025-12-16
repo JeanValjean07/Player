@@ -6,6 +6,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Binder
+import android.os.IBinder
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
@@ -22,13 +25,14 @@ class PlayerService(): MediaSessionService() {
         const val NOTIF_ID = 1
         const val CHANNEL_ID = "playback"
     }
+
     //媒体会话实例
     private var mediaSession: MediaSession? = null
     //服务专项设置和媒体信息
     private lateinit var INFO_PlayerSingleton: SharedPreferences
     private var PREFS_UseMediaSession: Boolean = true
     private var state_playerType: Int = 0   //0:传统进度条页面 1:新型页面
-    private var MediaInfo_VideoUri: String? = null
+    private var MediaInfo_MediaUriString: String? = null
     private var MediaInfo_FileName: String? = null
 
 
@@ -39,7 +43,7 @@ class PlayerService(): MediaSessionService() {
         INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
         PREFS_UseMediaSession = INFO_PlayerSingleton.getBoolean("PREFS_UseMediaSession", false)
         state_playerType = INFO_PlayerSingleton.getInt("state_playerType", 1)
-        MediaInfo_VideoUri = INFO_PlayerSingleton.getString("MediaInfo_VideoUri", "error")
+        MediaInfo_MediaUriString = INFO_PlayerSingleton.getString("MediaInfo_MediaUriString", "error")
         MediaInfo_FileName = INFO_PlayerSingleton.getString("MediaInfo_FileName", "error")
         //启用媒体会话播控中心
         if (PREFS_UseMediaSession) {
@@ -76,7 +80,6 @@ class PlayerService(): MediaSessionService() {
             //设置会话点击意图
             if (state_playerType == 1){mediaSession?.setSessionActivity(createPendingIntentScroller())}
             else{mediaSession?.setSessionActivity(createPendingIntentSeekBar())}
-            //
 
 
         }
@@ -86,6 +89,7 @@ class PlayerService(): MediaSessionService() {
             createNotificationChannel()
             startForeground(NOTIF_ID, NotificationCustomized)
         }
+
 
     }
 
@@ -118,8 +122,8 @@ class PlayerService(): MediaSessionService() {
         super.onStartCommand(intent, flags, startId)
         //取出数据
         intent?.let {
-            MediaInfo_VideoTitle = it.getStringExtra("info_to_service_MediaTitle")
-            MediaInfo_VideoUri = it.getStringExtra("info_to_service_MediaUri")
+            MediaInfo_MediaTitle = it.getStringExtra("info_to_service_MediaTitle")
+            MediaInfo_MediaUri = it.getStringExtra("info_to_service_MediaUri")
         }
 
         //END
@@ -128,6 +132,27 @@ class PlayerService(): MediaSessionService() {
 
      */
 
+
+    /*
+    private var binder: LocalBinder? = null
+
+    inner class LocalBinder : Binder()
+
+
+    override fun onBind(intent: Intent?): IBinder {
+        super.onBind(intent)
+        // 3. 保证返回前已经初始化
+        return binder ?: LocalBinder().also { binder = it }
+    }
+
+     */
+
+
+
+
+    fun updateNotification(){
+        Log.d("SuMing", " PlayerService  updateNotification: ")
+    }
 
     //Functions
     //自定义通知:构建常规通知
@@ -210,15 +235,16 @@ class PlayerService(): MediaSessionService() {
         val intent = Intent(this, PlayerActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
-            .putExtra("MediaInfo_VideoUri", MediaInfo_VideoUri.toString())
+            .putExtra("IntentSource", "FromPendingIntent")
+            .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
     private fun createPendingIntentSeekBar(): PendingIntent {
         val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
-            .putExtra("SOURCE","FROM_PENDING" )
-            .putExtra("MediaInfo_VideoUri", MediaInfo_VideoUri.toString())
+            .putExtra("IntentSource", "FromPendingIntent")
+            .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
     //自定义通知:播放指令

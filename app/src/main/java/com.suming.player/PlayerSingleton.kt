@@ -7,6 +7,8 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Context.AUDIO_SERVICE
 import android.content.Context.MODE_PRIVATE
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
@@ -16,8 +18,10 @@ import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Handler
+import android.os.IBinder
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
@@ -133,15 +137,8 @@ object PlayerSingleton {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             ToolEventBus.sendEvent("PlayerSingleton_PlaybackStateChanged")
         }
-        override fun onVideoSizeChanged(videoSize: VideoSize) {
-            super.onVideoSizeChanged(videoSize)
-
-        }
-        override fun onTracksChanged(tracks: Tracks) {
-
-        }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
+            onMediaItemChanged(mediaItem)
         }
     }
     private var state_PlayerStateListenerAdded = false
@@ -174,37 +171,92 @@ object PlayerSingleton {
     var singleton_player_built = false
     var singleton_exit_before_read = false
     //媒体信息
-    var singleton_media_type = ""
-    var singleton_media_title = ""
-    var singleton_media_file_name = ""
-    var singleton_media_artist = ""
-    var singleton_media_uri = ""
-    var singleton_media_absolute_path = ""
-    var singleton_media_duration = 0
+    var MediaInfo_MediaType = ""
+    var MediaInfo_MediaTitle = ""
+    var MediaInfo_MediaArtist = ""
+    var MediaInfo_FileName = ""
+    var MediaInfo_AbsolutePath = ""
+    var MediaInfo_MediaUri = Uri.EMPTY!!
+    var MediaInfo_MediaUriString = ""
 
-    //媒体信息
-    private lateinit var retriever: MediaMetadataRetriever
-    private fun getMediaInfo(context: Context, uri: Uri){
-        retriever = MediaMetadataRetriever()
-        try { retriever.setDataSource(context, uri) }
-        catch (_: Exception) {
-            return
+
+    //媒体项变更的后续操作
+    private fun setServiceSetting( UseMediaSession: Boolean = true){
+        val INFO_PlayerSingleton = singletonContext.getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
+        INFO_PlayerSingleton.edit{ putBoolean("PREFS_UseMediaSession", UseMediaSession).apply() }
+        INFO_PlayerSingleton.edit{ putInt("state_PlayerType", 1 ).apply() }
+        INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaType", MediaInfo_MediaType).apply() }
+        INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaUriString", MediaInfo_MediaUriString).apply() }
+        INFO_PlayerSingleton.edit{ putString("MediaInfo_FileName", MediaInfo_FileName).apply() }
+        INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist).apply() }
+    }
+    private fun saveLastMediaItemInfo(type: String, fileName: String, artist: String, uri: String){
+        val INFO_PlayerSingleton = singletonContext.getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
+        INFO_PlayerSingleton.edit {
+            putString("MediaInfo_MediaType", type)
+            putString("MediaInfo_FileName", fileName)
+            putString("MediaInfo_MediaArtist", artist)
+            putString("MediaInfo_MediaUriString", uri)
         }
-        singleton_media_absolute_path = getAbsoluteFilePath(context, uri).toString()
-        singleton_media_title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: "error"
-        singleton_media_artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: "error"
-        singleton_media_duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
-        singleton_media_file_name = (File(singleton_media_absolute_path)).name ?: "error"
-        if (singleton_media_file_name == "error"){
-            singleton_media_title = "未知媒体标题"
-        }
-        if (singleton_media_artist == "error"){
-            singleton_media_artist = "未知艺术家"
-        }
-        retriever.release()
+    }  //播放信息保存到上次播放记录
+    private fun onMediaItemChanged(mediaItem: MediaItem?){
+        if (mediaItem == null){ return }
+        //Log.d("SuMing", "onMediaItemChange： ${mediaItem.mediaId}")
+        //更新单例环境媒体信息
+        getMediaInfo(singletonContext, mediaItem.mediaId.toUri())
+        //播放信息保存到上次播放记录
+        saveLastMediaItemInfo(MediaInfo_MediaType, MediaInfo_MediaTitle, MediaInfo_MediaArtist, MediaInfo_MediaUriString)
+        //写入服务信息
+        setServiceSetting(true)
+        //通告主界面
+        ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
+        //连接到媒体会话
+        Handler(Looper.getMainLooper()).postDelayed({
+            connectToMediaSession(singletonContext)
+        }, 500)
+        PlayerSingleton.registerEventBus(singletonContext)
+
+        //读取媒体列表
+        PlayerSingleton.readDataBaseThenGatherPlayList(singletonContext)
+        //链接媒体会话
+        PlayerSingleton.connectToMediaSession(singletonContext)
+        //请求音频焦点和注册设备监听
+        PlayerSingleton.requestAudioFocus(singletonContext)
+        PlayerSingleton.startAudioDeviceCallback(singletonContext)
+
 
     }
-    private fun getAbsoluteFilePath(context: Context, uri: Uri): String? {
+    //媒体信息
+    private lateinit var retriever: MediaMetadataRetriever
+    private fun getMediaInfo(context: Context, uri: Uri): Boolean{
+        retriever = MediaMetadataRetriever()
+        try { retriever.setDataSource(context, uri) }
+        catch (_: Exception) { return false }
+        //更新单例环境中的媒体信息变量
+        MediaInfo_MediaUri = uri
+        MediaInfo_MediaUriString = uri.toString()
+        MediaInfo_MediaType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: "error"
+        MediaInfo_MediaTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: "error"
+        MediaInfo_MediaArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: "error"
+        MediaInfo_AbsolutePath = getFilePath(context, uri).toString()
+        MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name ?: "error"
+        //处理值
+        if (MediaInfo_MediaType.contains("video")){
+            MediaInfo_MediaType = "video"
+        }
+        else if (MediaInfo_MediaType.contains("audio")){
+            MediaInfo_MediaType = "music"
+        }
+        if (MediaInfo_FileName == "error"){
+            MediaInfo_FileName = "未知媒体标题"
+        }
+        if (MediaInfo_MediaArtist == "error"){
+            MediaInfo_MediaArtist = "未知艺术家"
+        }
+        retriever.release()
+        return true
+    }
+    private fun getFilePath(context: Context, uri: Uri): String? {
         val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
             Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
         } else {
@@ -222,6 +274,9 @@ object PlayerSingleton {
         }
 
         return absolutePath?.takeIf { File(it).exists() }
+    }
+    fun getMediaInfoFromSingleton(){
+        getMediaInfo(singletonContext, MediaInfo_MediaUri)
     }
     //播放列表
     private val coroutineScope_getPlayList = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -260,7 +315,7 @@ object PlayerSingleton {
                     )
                 }
             //反定位当前媒体index
-            currentMediaIndex = mediaItems.indexOfFirst { it.uri.toString() == singleton_media_uri }
+            currentMediaIndex = mediaItems.indexOfFirst { it.uri.toString() == MediaInfo_MediaUriString }
             maxMediaIndex = mediaItems.size - 1
 
             //保存完后公布状态
@@ -280,17 +335,65 @@ object PlayerSingleton {
     fun getPlayListProcessComplete(): Boolean{
         return state_PlayListProcess_Complete
     }
-    private fun confirmSwitchMediaItem(itemUri: Uri){
-        //保存新视频链接
-        MediaInfo_VideoUri = itemUri
-        singleton_media_uri = itemUri.toString()
-        //获取新视频信息
-        getMediaInfo(singletonContext, MediaInfo_VideoUri)
 
+
+    private fun getTargetMediaUri(flag_next_or_previous: String): String{
+        if (!state_PlayListProcess_Complete){
+            singletonContext.showCustomToast("播放列表未加载完成", Toast.LENGTH_SHORT, 3)
+            return "error"
+        }
+
+        var indexCursor = currentMediaIndex
+        var indexTryCount = 0
+        val maxCursor = maxMediaIndex
+        var targetUriString = ""
+        if (flag_next_or_previous == "next"){
+            while (targetUriString == "" || targetUriString == "error"){
+                indexCursor++
+                if (indexCursor > maxCursor){
+                    indexCursor = 0
+                }
+                targetUriString = mediaItems.getOrNull(indexCursor)?.uri?.toString() ?: ""
+                indexTryCount++
+                if (indexTryCount > maxCursor){
+                    singletonContext.showCustomToast("已轮询所有媒体,未发现有效的媒体项",Toast.LENGTH_SHORT, 3)
+                    targetUriString = "error"
+                    break
+                }
+            }
+            currentMediaIndex = mediaItems.indexOfFirst { it.uri.toString() == targetUriString }
+            return targetUriString
+        }
+        else if (flag_next_or_previous == "previous"){
+            while (targetUriString == "" || targetUriString == "error"){
+                indexCursor--
+                if (indexCursor < 0){
+                    indexCursor = maxCursor
+                }
+                targetUriString = mediaItems.getOrNull(indexCursor)?.uri?.toString() ?: ""
+                indexTryCount++
+                if (indexTryCount > maxCursor){
+                    singletonContext.showCustomToast("已轮询所有媒体,未发现有效的媒体项",Toast.LENGTH_SHORT, 3)
+                    targetUriString = "error"
+                    break
+                }
+            }
+            currentMediaIndex = mediaItems.indexOfFirst { it.uri.toString() == targetUriString }
+            return targetUriString
+        }
+        else{
+            singletonContext.showCustomToast("未传入有效的上下参数",Toast.LENGTH_SHORT, 3)
+            return "error"
+        }
+    }
+    private fun switchToMediaItemByUri(itemUri: Uri){
+        //关闭服务
+        stopBackgroundServices()
+        stopMediaSessionController(singletonContext)
         //合成并设置媒体项
         val covers_path = File(singletonContext.filesDir, "miniature/cover")
-        val cover_img_path = File(covers_path, "${singleton_media_file_name.hashCode()}.webp")
-        val cover_img_uri = if (PREFS_InsertPreviewInMediaSession && cover_img_path.exists()) {
+        val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
+        val cover_img_uri = if (cover_img_path.exists()) {
             try {
                 FileProvider.getUriForFile(singletonContext, "${singletonContext.packageName}.provider", cover_img_path)
             }
@@ -305,11 +408,12 @@ object PlayerSingleton {
             null
         }
         val mediaItem = MediaItem.Builder()
-            .setUri(MediaInfo_VideoUri)
+            .setUri(MediaInfo_MediaUri)
+            .setMediaId(MediaInfo_MediaUriString)
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setTitle(singleton_media_title)
-                    .setArtist(singleton_media_artist)
+                    .setTitle(MediaInfo_FileName)
+                    .setArtist(MediaInfo_MediaArtist)
                     .setArtworkUri( cover_img_uri )
                     .build()
             )
@@ -317,77 +421,45 @@ object PlayerSingleton {
         _player?.setMediaItem(mediaItem)
         _player?.play()
 
-        //反定位当前媒体index
-        currentMediaIndex = mediaItems.indexOfFirst { it.uri == itemUri }
+
     }
-    private fun prepareSwitchMediaItem(itemUri: Uri, itemName: String){
-        //检测是否是当前媒体
-        if (itemName == singleton_media_file_name){
-            singletonContext.showCustomToast("您已在播放此视频",Toast.LENGTH_SHORT, 3)
-            ToolEventBus.sendEvent("restart_PlayerListFragment_From")
+    fun switchToNextMediaItem(){
+        //尝试获取目标uri
+        val targetUriString = getTargetMediaUri("next")
+        //检查uri是否有效
+        if (targetUriString == "error"){ return }
+        //获取目标uri
+        val targetUri = targetUriString.toUri()
+        //解码目标媒体信息
+        val getMediaInfoResult = getMediaInfo(singletonContext,targetUri)
+        if (!getMediaInfoResult){
+            singletonContext.showCustomToast("出错了",Toast.LENGTH_SHORT, 3)
             return
         }
-        else{
-            confirmSwitchMediaItem(itemUri)
-        }
+        //切换至目标媒体项
+        switchToMediaItemByUri(targetUri)
+
+
     }
-    private fun preparePreviousMediaItem(context: Context){
-        if (currentMediaIndex == 0) {
-            context.showCustomToast("已在列表起始，将切换至最后一曲",Toast.LENGTH_SHORT, 3)
-            val newUri = mediaItems.getOrNull(maxMediaIndex)?.uri
-            if (newUri != null) {
-                confirmSwitchMediaItem(newUri)
-            }
-            else{
-                context.showCustomToast("上一曲获取失败",Toast.LENGTH_SHORT, 3)
-            }
+    fun switchToPreviousMediaItem(){
+        //尝试获取目标uri
+        val targetUriString = getTargetMediaUri("previous")
+        //检查uri是否有效,若有效,刷新index
+        if (targetUriString == "error"){ return }
+        //获取目标uri
+        val targetUri = targetUriString.toUri()
+        //解码目标媒体信息
+        val getMediaInfoResult = getMediaInfo(singletonContext,targetUri)
+        if (!getMediaInfoResult){
+            singletonContext.showCustomToast("出错了",Toast.LENGTH_SHORT, 3)
+            return
         }
-        else{
-            val newUri = mediaItems.getOrNull(currentMediaIndex - 1)?.uri
-            if (newUri != null) {
-                confirmSwitchMediaItem(newUri)
-            }
-            else{
-                context.showCustomToast("上一曲获取失败",Toast.LENGTH_SHORT, 3)
-            }
-        }
+        //切换至目标媒体项
+        switchToMediaItemByUri(targetUri)
+
+
     }
-    private fun prepareNextMediaItem(context: Context){
-        if (currentMediaIndex == maxMediaIndex) {
-            context.showCustomToast("已在列表末尾，将切换至第一曲",Toast.LENGTH_SHORT, 3)
-            val newUri = mediaItems.getOrNull(0)?.uri
-            if (newUri != null) {
-                confirmSwitchMediaItem(newUri)
-            }
-            else{
-                context.showCustomToast("下一曲获取失败",Toast.LENGTH_SHORT, 3)
-            }
-        }
-        else{
-            val newUri = mediaItems.getOrNull(currentMediaIndex + 1)?.uri
-            if (newUri != null) {
-                confirmSwitchMediaItem(newUri)
-            }
-            else{
-                context.showCustomToast("下一曲获取失败",Toast.LENGTH_SHORT, 3)
-            }
-        }
-    }
-    private fun checkSource(source_activity_name: String){
-        switchMedia_source = source_activity_name
-        if (switchMedia_source != "MainActivity" && switchMedia_source != "PlayerActivity" && switchMedia_source != "PlayerActivitySeekBar"){
-            singletonContext.showCustomToast("切换媒体命令来源无法验证,已设为默认来源",Toast.LENGTH_SHORT, 3)
-            switchMedia_source = "PlayerActivity"
-        }
-    }
-    fun switchToPreviousMediaItem(source: String){
-        checkSource(source)
-        preparePreviousMediaItem(singletonContext)
-    }
-    fun switchToNextMediaItem(source: String){
-        checkSource(source)
-        prepareNextMediaItem(singletonContext)
-    }
+
 
     //循环模式:在playEnd()函数中处理
     private lateinit var PREFS: SharedPreferences
@@ -538,6 +610,9 @@ object PlayerSingleton {
         if (!state_focusRequest_Initialized){
             initFocusRequest(context)
         }
+        if (!state_AudioManager_Initialized){
+            initAudioManager(context)
+        }
         audioManager.abandonAudioFocusRequest(focusRequest)
     }
     //事件总线
@@ -565,10 +640,12 @@ object PlayerSingleton {
     private fun HandlePlayerEvent(event: String) {
         when (event) {
             "SessionController_Next" -> {
-                prepareNextMediaItem(singletonContext)
+                Log.d("SuMing", "SessionController_Next")
+                switchToNextMediaItem()
             }
             "SessionController_Previous" -> {
-                preparePreviousMediaItem(singletonContext)
+                Log.d("SuMing", "SessionController_Previous")
+                switchToPreviousMediaItem()
             }
             "SessionController_Play" -> {
                 playState_wasPlaying = true
@@ -618,6 +695,31 @@ object PlayerSingleton {
     fun stopMediaSessionController(context: Context){
         MediaSessionController?.get()?.run { release() }
     }
+    fun stopBackgroundServices(){
+        singletonContext.stopService(Intent(singletonContext, PlayerService::class.java))
+    }
+    /*
+    private var playerService: PlayerService? = null
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as PlayerService.serviceBinder
+            playerService = binder.getService()
+
+        }
+        override fun onServiceDisconnected(name: ComponentName?) {
+            playerService = null
+        }
+    }
+    fun connectToPlayerService(context: Context){
+        val service = PlayerService().serviceBinder()
+        connection.onServiceConnected(null, service)
+    }
+
+    fun aaa(){
+        playerService?.updateNotification()
+    }
+
+     */
 
     //获取播放器存在状态
     fun getIsPlayerBuilt(): Int {
@@ -645,25 +747,24 @@ object PlayerSingleton {
         return _player?.currentMediaItem
     }
     fun getMediaInfoUri(): String {
-        return singleton_media_uri
+        return MediaInfo_MediaUriString
     }
     fun getMediaInfoForMain(): Triple<String, String, String> {
-        return Triple(singleton_media_type, singleton_media_file_name, singleton_media_artist)
+        return Triple(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
     }
     //主动设置媒体自定义状态
-    fun setMediaInfo(type: String, title: String, artist: String, url: String) {
-        singleton_media_type = type
-        singleton_media_file_name = title
-        singleton_media_artist = artist
-        singleton_media_uri = url
+    fun setMediaInfo(type: String, filename: String, artist: String, url: String) {
+        MediaInfo_MediaType = type
+        MediaInfo_FileName = filename
+        MediaInfo_MediaArtist = artist
+        MediaInfo_MediaUriString = url
+        MediaInfo_MediaUri = Uri.parse(url)
     }
     fun setMediaInfoUri(uri: String) {
-        singleton_media_uri = uri
+        MediaInfo_MediaUriString = uri
+        MediaInfo_MediaUri = uri.toUri()
     }
     //设置媒体项
-    fun setMediaUri(uri: Uri) {
-        _player?.setMediaItem(MediaItem.fromUri(uri))
-    }
     fun setMediaItem(item: MediaItem) {
         _player?.setMediaItem(item)
     }
@@ -696,11 +797,12 @@ object PlayerSingleton {
                 _player?.play()
             }
             "ALL" -> {
-                prepareNextMediaItem(singletonContext)
+                switchToNextMediaItem()
             }
             "OFF" -> {
                 playState_playEnd = true
                 _player?.pause()
+                ToolEventBus.sendEvent("PlayerSingleton_PlaybackStateChanged")
             }
         }
     }
@@ -709,9 +811,13 @@ object PlayerSingleton {
         _player?.clearMediaItems()
     }
     fun clearMediaInfo() {
-        singleton_media_type = ""
-        singleton_media_title = ""
-        singleton_media_uri = ""
+        MediaInfo_MediaType = ""
+        MediaInfo_MediaTitle = ""
+        MediaInfo_MediaArtist = ""
+        MediaInfo_MediaUriString = ""
+        MediaInfo_MediaUri = Uri.EMPTY
+        //写入配置
+        saveLastMediaItemInfo(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist, MediaInfo_MediaUriString)
     }
     //挂起和释放播放器
     fun stopPlayer() {
@@ -749,7 +855,6 @@ object PlayerSingleton {
     fun createCustomCodecFactory(): MediaCodecAdapter.Factory {
         return MediaCodecAdapter.Factory.DEFAULT
     }
-
 
 
 

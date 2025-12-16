@@ -18,7 +18,6 @@ class ToolPlayerWrapper(player: ExoPlayer) : ForwardingPlayer(player) {
             .add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
             .build()
 
-
     //下一曲
     override fun seekToNext() {
         super.seekToNext()

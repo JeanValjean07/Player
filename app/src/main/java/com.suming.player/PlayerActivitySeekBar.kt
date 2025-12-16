@@ -1751,7 +1751,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
 
                 }
                 vm.player.addListener(PlayerStateListener!!)
-                PlayerSingleton.setMediaUri(MediaInfo_VideoUri)
+               // PlayerSingleton.setMediaUri(MediaInfo_VideoUri)
             }
 
         }
@@ -1968,7 +1968,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     //开启播放新媒体项
     private fun startPlayNewItem(){
         //仅传入媒体uri (不推荐并弃用)
-        //vm.setMediaUri(MediaInfo_VideoUri)
+        //vm.setMediaUri(MediaInfo_MediaUri)
 
         //构建并传入完整媒体项
         val covers_path = File(filesDir, "miniature/cover")

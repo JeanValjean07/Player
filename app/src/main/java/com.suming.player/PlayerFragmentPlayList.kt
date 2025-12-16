@@ -169,7 +169,7 @@ class PlayerFragmentPlayList: DialogFragment() {
         val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
         ButtonPreviousMedia.setOnClickListener {
 
-            PlayerSingleton.switchToPreviousMediaItem("xxx")
+            PlayerSingleton.switchToPreviousMediaItem()
 
             customDismiss()
         }
@@ -177,7 +177,7 @@ class PlayerFragmentPlayList: DialogFragment() {
         val ButtonNextMedia = view.findViewById<ImageButton>(R.id.ButtonNextMedia)
         ButtonNextMedia.setOnClickListener {
 
-            PlayerSingleton.switchToNextMediaItem("xxx")
+            PlayerSingleton.switchToNextMediaItem()
 
             customDismiss()
         }
