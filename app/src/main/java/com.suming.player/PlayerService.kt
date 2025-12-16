@@ -32,7 +32,6 @@ class PlayerService(): MediaSessionService() {
     private var mediaSession: MediaSession? = null
     //服务专项设置和媒体信息
     private lateinit var INFO_PlayerSingleton: SharedPreferences
-    private var PREFS_UseMediaSession: Boolean = true
     private var state_playerType: Int = 0   //0:传统进度条页面 1:新型页面
     private var MediaInfo_MediaUriString: String? = null
     private var MediaInfo_FileName: String? = null
@@ -43,54 +42,40 @@ class PlayerService(): MediaSessionService() {
         super.onCreate()
         //读取配置文件
         INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
-        PREFS_UseMediaSession = INFO_PlayerSingleton.getBoolean("PREFS_UseMediaSession", false)
         state_playerType = INFO_PlayerSingleton.getInt("state_playerType", 1)
         MediaInfo_MediaUriString = INFO_PlayerSingleton.getString("MediaInfo_MediaUriString", "error")
         MediaInfo_FileName = INFO_PlayerSingleton.getString("MediaInfo_FileName", "error")
-        //启用媒体会话播控中心
-        if (PREFS_UseMediaSession) {
-            //获取播放器实例
-            val player = PlayerSingleton.getPlayer(application)
 
-            //指定通知,包含设置自定义控制按钮和播控中心小图标
-            setMediaNotificationProvider(ToolCustomNotificationSession(this))
-            //创建媒体会话包装器
-            val wrapper = ToolPlayerWrapper(player)
+        //获取播放器实例
+        val player = PlayerSingleton.getPlayer(application)
 
+        //指定通知,包含设置自定义控制按钮和播控中心小图标
+        setMediaNotificationProvider(ToolCustomNotificationSession(this))
+        //创建媒体会话包装器
+        val wrapper = ToolPlayerWrapper(player)
 
-            //创建基本媒体会话
-            //mediaSession = MediaSession.Builder(this, player).build()
+        //创建自定义媒体会话
+        mediaSession = MediaSession.Builder(this, wrapper)
+            .setCallback(object : MediaSession.Callback {
+                override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
+                    return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                        .setAvailableSessionCommands(MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS)
+                        .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
+                        .build()
 
-            //创建自定义媒体会话
-            mediaSession = MediaSession.Builder(this, wrapper)
-                .setCallback(object : MediaSession.Callback {
-                    override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
-                        return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
-                            .setAvailableSessionCommands(MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS)
-                            .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
-                            .build()
+                    //使用默认按钮 .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
+                    //使用自定按钮 .setAvailablePlayerCommands(playerCommands)
+                }
+                override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
+                    super.onPostConnect(session, controller)
 
-                        //使用默认按钮 .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
-                        //使用自定按钮 .setAvailablePlayerCommands(playerCommands)
-                    }
-                    override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
-                        super.onPostConnect(session, controller)
+                }
+            })
+            .build()
 
-                    }
-                })
-                .build()
-            //设置会话点击意图
-            if (state_playerType == 1){mediaSession?.setSessionActivity(createPendingIntentScroller())}
-            else{mediaSession?.setSessionActivity(createPendingIntentSeekBar())}
-
-
-        }
-        //启用自定通知
-        else{
-            val NotificationCustomized = BuildCustomizeNotification()
-            createNotificationChannel()
-            startForeground(NOTIF_ID, NotificationCustomized)
-        }
+        //设置会话点击意图
+        if (state_playerType == 1){mediaSession?.setSessionActivity(createPendingIntentScroller())}
+        else{mediaSession?.setSessionActivity(createPendingIntentSeekBar())}
 
 
     }

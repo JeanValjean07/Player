@@ -400,18 +400,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             } else {
                 vm.PREFS_ExitWhenEnd = PREFS.getBoolean("PREFS_ExitWhenEnd", false)
             }
-            if (!PREFS.contains("PREFS_UseMediaSession")){
-                PREFS.edit { putBoolean("PREFS_UseMediaSession", true).apply() }
-                vm.PREFS_UseMediaSession = true
-            }else{
-                vm.PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", true)
-            }
-            if (!PREFS.contains("PREFS_InsertPreviewInMediaSession")){
-                PREFSEditor.putBoolean("PREFS_InsertPreviewInMediaSession", true)
-                vm.PREFS_InsertPreviewInMediaSession = true
-            } else {
-                vm.PREFS_InsertPreviewInMediaSession = PREFS.getBoolean("PREFS_InsertPreviewInMediaSession", false)
-            }
             if (!PREFS.contains("PREFS_UseLongScroller")) {
                 PREFSEditor.putBoolean("PREFS_UseLongScroller", false)
                 vm.PREFS_UseLongScroller = false
@@ -1579,7 +1567,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         //合成并设置媒体项
         val covers_path = File(filesDir, "miniature/cover")
         val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
-        val cover_img_uri = if (vm.PREFS_InsertPreviewInMediaSession && cover_img_path.exists()) {
+        val cover_img_uri = if (cover_img_path.exists()) {
             try {
                 FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
             }
@@ -1935,11 +1923,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     }
     //开启服务:使用自定义通知或媒体会话
     private fun startServiceOrSession(){
-        if (vm.PREFS_UseMediaSession){
-            connectToMediaSession()
-        }else{
-            startBackgroundServices()
-        }
+        connectToMediaSession()
     }
     //重读媒体信息并覆盖对应全局变量
     private fun getMediaInfo(uri: Uri){
@@ -1973,7 +1957,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         //构建并传入完整媒体项
         val covers_path = File(filesDir, "miniature/cover")
         val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
-        val cover_img_uri = if (vm.PREFS_InsertPreviewInMediaSession && cover_img_path.exists()) {
+        val cover_img_uri = if (cover_img_path.exists()) {
             try {
                 FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
             }
@@ -2997,7 +2981,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         val intent = Intent(this, PlayerService::class.java)
         //传递媒体信息和配置信息
         intent.putExtra("info_to_service_MediaTitle", MediaInfo_FileName)
-        intent.putExtra("info_to_service_PREFS_UseMediaSession", vm.PREFS_UseMediaSession)
         //正式开启服务
         startService(intent)
     }

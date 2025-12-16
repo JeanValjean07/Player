@@ -63,8 +63,6 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseHighRefreshRate: SwitchCompat
     private lateinit var Switch_CloseFragmentGesture: SwitchCompat
     private lateinit var Switch_EnablePlayAreaMove: SwitchCompat
-    private lateinit var Switch_UseMediaSession: SwitchCompat
-    private lateinit var Switch_InsertPreviewInMediaSession: SwitchCompat
     private lateinit var Switch_UsePlayerWithSeekBar: SwitchCompat
     private lateinit var Switch_UseTestingPlayer: SwitchCompat
     private lateinit var Switch_UseSyncFrameWhenScrollerStop: SwitchCompat
@@ -88,8 +86,6 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_SeekHandlerGap = 0L
     private var PREFS_CloseFragmentGesture = false
     private var PREFS_EnablePlayAreaMove = false
-    private var PREFS_UseMediaSession = false
-    private var PREFS_InsertPreviewInMediaSession = false
     private var PREFS_UsePlayerWithSeekBar = false
     private var PREFS_UseTestingPlayer = false
     private var PREFS_UseSyncFrameWhenScrollerStop = false
@@ -280,18 +276,6 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
         }
-        if (!PREFS.contains("PREFS_UseMediaSession")){
-            PREFS_Editor.putBoolean("PREFS_UseMediaSession", true)
-            PREFS_UseMediaSession = true
-        } else {
-            PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", true)
-        }
-        if (!PREFS.contains("PREFS_InsertPreviewInMediaSession")){
-            PREFS_Editor.putBoolean("PREFS_InsertPreviewInMediaSession", true)
-            PREFS_InsertPreviewInMediaSession = true
-        } else {
-            PREFS_InsertPreviewInMediaSession = PREFS.getBoolean("PREFS_InsertPreviewInMediaSession", false)
-        }
         if (!PREFS.contains("PREFS_UsePlayerWithSeekBar")){
             PREFS_Editor.putBoolean("PREFS_UsePlayerWithSeekBar", false)
             PREFS_UsePlayerWithSeekBar = false
@@ -336,8 +320,6 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
         Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
         Switch_EnablePlayAreaMove = findViewById(R.id.EnablePlayAreaMove)
-        Switch_UseMediaSession = findViewById(R.id.SwitchUseMediaSession)
-        Switch_InsertPreviewInMediaSession = findViewById(R.id.SwitchInsertPreviewInMediaSession)
         Switch_UsePlayerWithSeekBar = findViewById(R.id.UsePlayerWithSeekBar)
         Switch_UseTestingPlayer = findViewById(R.id.UseTestingPlayer)
         Switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
@@ -357,8 +339,6 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
         Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
         Switch_EnablePlayAreaMove.isChecked = PREFS_EnablePlayAreaMove
-        Switch_UseMediaSession.isChecked = PREFS_UseMediaSession
-        Switch_InsertPreviewInMediaSession.isChecked = PREFS_InsertPreviewInMediaSession
         Switch_UsePlayerWithSeekBar.isChecked = PREFS_UsePlayerWithSeekBar
         Switch_UseTestingPlayer.isChecked = PREFS_UseTestingPlayer
         Switch_UseSyncFrameWhenScrollerStop.isChecked = PREFS_UseSyncFrameWhenScrollerStop
@@ -465,16 +445,6 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_EnablePlayAreaMove = isChecked
             ToolVibrate().vibrate(this)
             PREFS_Editor.putBoolean("PREFS_EnablePlayAreaMove", isChecked).apply()
-        }
-        Switch_UseMediaSession.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseMediaSession = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UseMediaSession", isChecked).apply()
-        }
-        Switch_InsertPreviewInMediaSession.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_InsertPreviewInMediaSession = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_InsertPreviewInMediaSession", isChecked).apply()
         }
         Switch_UsePlayerWithSeekBar.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UsePlayerWithSeekBar = isChecked

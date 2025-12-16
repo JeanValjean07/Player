@@ -347,68 +347,6 @@
                         android:layout_height="wrap_content"
                         android:text="拖动进度条时，播放器的寻帧间隔可自行设定，默认无寻帧间隔。实际上，由于播放核心状态切换导致的开销，直接关闭寻帧间隔反而可能获得更流畅的体验，因为无寻帧间隔时播放核心的状态切换次数减少了。具体情况请自行测试。"
                         android:textSize="12sp" />
-                    <!--  开关：使用媒体会话  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_weight="0"
-                            android:text="使用媒体会话"
-                            android:textColor="@color/HeadText"
-                            android:textSize="14sp" />
-
-                        <View
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/SwitchUseMediaSession"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            app:thumbTint="@color/switchThumbColor"
-                            app:trackTint="@color/switchTrackColor" />
-                    </LinearLayout>
-                    <!--  开关：媒体会话插入媒体预览图  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_weight="0"
-                            android:text="媒体会话插入预览图"
-                            android:textColor="@color/HeadText"
-                            android:textSize="14sp" />
-
-                        <View
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/SwitchInsertPreviewInMediaSession"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            app:thumbTint="@color/switchThumbColor"
-                            app:trackTint="@color/switchTrackColor" />
-                    </LinearLayout>
-                    <!--  描述：使用媒体会话  -->
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="若使用媒体会话，播放时将启用播控中心，否则降级为普通通知。此选项在首次进入程序时自动识别您的设备是否支持媒体会话，您也可以自行控制。"
-                        android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  卡片：数据库  -->

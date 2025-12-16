@@ -112,7 +112,7 @@ import kotlin.math.pow
 import kotlin.system.exitProcess
 
 @UnstableApi
-//@Suppress("unused")
+@Suppress("unused")
 class PlayerActivity: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -417,7 +417,7 @@ class PlayerActivity: AppCompatActivity(){
                             }
                             //pendingIntent的uri存在:使用这个uri
                             else{
-                                Log.d("SuMing", "来自pendingIntent的uri存在 ")
+                                //Log.d("SuMing", "来自pendingIntent的uri存在 ")
                                 originalUri = Uri.parse(originalUriString)
                                 MediaInfo_MediaUri = originalUri
                                 MediaInfo_MediaUriString = MediaInfo_MediaUri.toString()
@@ -475,18 +475,6 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_ExitWhenEnd = false
             } else {
                 vm.PREFS_ExitWhenEnd = PREFS.getBoolean("PREFS_ExitWhenEnd", false)
-            }
-            if (!PREFS.contains("PREFS_UseMediaSession")){
-                PREFS.edit { putBoolean("PREFS_UseMediaSession", true).apply() }
-                vm.PREFS_UseMediaSession = true
-            }else{
-                vm.PREFS_UseMediaSession = PREFS.getBoolean("PREFS_UseMediaSession", true)
-            }
-            if (!PREFS.contains("PREFS_InsertPreviewInMediaSession")){
-                PREFSEditor.putBoolean("PREFS_InsertPreviewInMediaSession", true)
-                vm.PREFS_InsertPreviewInMediaSession = true
-            } else {
-                vm.PREFS_InsertPreviewInMediaSession = PREFS.getBoolean("PREFS_InsertPreviewInMediaSession", false)
             }
             if (!PREFS.contains("PREFS_UseLongScroller")) {
                 PREFSEditor.putBoolean("PREFS_UseLongScroller", false)
@@ -865,7 +853,7 @@ class PlayerActivity: AppCompatActivity(){
             override fun onPlayerError(error: PlaybackException) {
                 super.onPlayerError(error)
                 showCustomToast("播放错误: ${error.message}", Toast.LENGTH_SHORT, 3)
-                Log.d("SuMing", "onPlayerError: ${error.message}")
+                //Log.d("SuMing", "onPlayerError: ${error.message}")
             }
 
         }
@@ -1100,12 +1088,6 @@ class PlayerActivity: AppCompatActivity(){
         //更多选项
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
-            val duration = PlayerSingleton.player.duration
-            val currentPosition = PlayerSingleton.player.currentPosition
-            showCustomToast("检查: 视频时长 $duration 当前位置 $currentPosition", Toast.LENGTH_SHORT, 3)
-
-            return@setOnClickListener
-
             ToolVibrate().vibrate(this@PlayerActivity)
             if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                 return@setOnClickListener
@@ -1814,17 +1796,17 @@ class PlayerActivity: AppCompatActivity(){
         if (currentMediaItem != null){
             //检查已有媒体信息
             val currentUriString = PlayerSingleton.getMediaInfoUri()
-            Log.d("SuMing", "新uri: ${MediaInfo_MediaUriString}   正在播放uri: ${currentUriString}")
+            //Log.d("SuMing", "新uri: ${MediaInfo_MediaUriString}   正在播放uri: ${currentUriString}")
             //已有媒体不是目标媒体,需要重播
             if (currentUriString != MediaInfo_MediaUriString){
-                Log.d("SuMing", "单例已有媒体但并非目标媒体")
+                //Log.d("SuMing", "单例已有媒体但并非目标媒体")
                 //showCustomToast("单例已有媒体但并非目标媒体", Toast.LENGTH_SHORT, 3)
                 state_need_start_new_item = true
                 PlayerSingleton.ReleaseSingletonPlayer(application)
             }
             //已有媒体正是目标媒体,直接绑定
             else{
-                Log.d("SuMing", "目标媒体已在单例中播放")
+                //Log.d("SuMing", "目标媒体已在单例中播放")
                 //showCustomToast("目标媒体已在单例中播放", Toast.LENGTH_SHORT, 3)
                 //重置状态
                 vm.state_firstReadyReached = true
@@ -2093,9 +2075,8 @@ class PlayerActivity: AppCompatActivity(){
         ButtonRefresh()
     }
     //服务设置写入
-    private fun setServiceSetting( UseMediaSession: Boolean){
+    private fun setServiceSetting(){
         val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
-        INFO_PlayerSingleton.edit{ putBoolean("PREFS_UseMediaSession", UseMediaSession).apply() }
         INFO_PlayerSingleton.edit{ putInt("state_PlayerType", 1 ).apply() }
         INFO_PlayerSingleton.edit{ putString("state_MediaType", "video").apply() }
         INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaUri", MediaInfo_MediaUri.toString()).apply() }
@@ -3446,10 +3427,9 @@ class PlayerActivity: AppCompatActivity(){
         val intent = Intent(this, PlayerService::class.java)
         //不再使用intent传递媒体信息和配置信息,改为保存到键值表
         //intent.putExtra("info_to_service_MediaTitle", MediaInfo_FileName)
-        //intent.putExtra("info_to_service_PREFS_UseMediaSession", vm.PREFS_UseMediaSession)
         //intent.putExtra("info_to_service_MediaUri", MediaInfo_MediaUri.toString())
         //设置服务配置
-        setServiceSetting(vm.PREFS_UseMediaSession)
+        setServiceSetting()
         //正式开启服务
         startService(intent)
     }

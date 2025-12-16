@@ -472,6 +472,7 @@ class MainActivity: AppCompatActivity() {
     //onResume时更新一些设置变量
     override fun onResume() {
         super.onResume()
+        //Log.d("SuMing", "onResume")
         //注册事件总线监听器
         setupEventBus()
         //刷新设置
@@ -519,7 +520,6 @@ class MainActivity: AppCompatActivity() {
         //更新播放卡片
         updatePlayingCard(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
         //Log.d("SuMing", "ResetPlayingCard : $MediaInfo_MediaType, $MediaInfo_FileName, $MediaInfo_MediaArtist")
-
 
     } //!主链路入口
     //onCreate:每次启动检查上次在播放的媒体

@@ -139,9 +139,9 @@ object PlayerSingleton {
         }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-            Log.d("SuMing", "onPlayerError: ${error}")
-            Log.d("SuMing", "onPlayerError: ${error.errorCode}")
-            Log.d("SuMing", "onPlayerError: ${error.cause}")
+            //Log.d("SuMing", "onPlayerError: ${error}")
+            //Log.d("SuMing", "onPlayerError: ${error.errorCode}")
+            //Log.d("SuMing", "onPlayerError: ${error.cause}")
         }
     }
     private var state_PlayerStateListenerAdded = false
@@ -204,7 +204,7 @@ object PlayerSingleton {
     }  //播放信息保存到上次播放记录
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null){ return }
-        Log.d("SuMing", "单例 onMediaItemChange： ${mediaItem.mediaId}")
+        //Log.d("SuMing", "单例 onMediaItemChange： ${mediaItem.mediaId}")
         //更新单例环境媒体信息
         getMediaInfo(singletonContext, mediaItem.mediaId.toUri())
         //播放信息保存到上次播放记录

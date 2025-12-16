@@ -146,8 +146,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_SwitchPortraitWhenExit: Boolean = true
     var PREFS_EnablePlayAreaMove: Boolean = false
     var PREFS_UseDataBaseForScrollerSetting: Boolean = false
-    var PREFS_UseMediaSession: Boolean = false
-    var PREFS_InsertPreviewInMediaSession: Boolean = false
     var PREFS_UseSyncFrameWhenScrollerStop: Boolean = false
     var PREFS_OnlyAudio: Boolean = false
     var PREFS_OnlyVideo: Boolean = false
