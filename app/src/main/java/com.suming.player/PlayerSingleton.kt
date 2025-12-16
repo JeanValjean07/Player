@@ -184,9 +184,8 @@ object PlayerSingleton {
 
 
     //媒体项变更的后续操作
-    private fun setServiceSetting( UseMediaSession: Boolean = true){
+    private fun setServiceSetting(){
         val INFO_PlayerSingleton = singletonContext.getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
-        INFO_PlayerSingleton.edit{ putBoolean("PREFS_UseMediaSession", UseMediaSession).apply() }
         INFO_PlayerSingleton.edit{ putInt("state_PlayerType", 1 ).apply() }
         INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaType", MediaInfo_MediaType).apply() }
         INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaUriString", MediaInfo_MediaUriString).apply() }
@@ -210,7 +209,7 @@ object PlayerSingleton {
         //播放信息保存到上次播放记录
         saveLastMediaItemInfo(MediaInfo_MediaType, MediaInfo_MediaTitle, MediaInfo_MediaArtist, MediaInfo_MediaUriString)
         //写入服务信息
-        setServiceSetting(true)
+        setServiceSetting()
         //通告主界面
         ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
 
@@ -509,7 +508,7 @@ object PlayerSingleton {
     }
 
     //初始化上下文
-    private lateinit var singletonContext: Context
+    lateinit var singletonContext: Context
     private var state_ContextSet = false
     fun setContext(ctx: Context) {
         singletonContext = ctx.applicationContext

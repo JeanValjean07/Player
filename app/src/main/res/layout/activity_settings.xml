@@ -347,6 +347,37 @@
                         android:layout_height="wrap_content"
                         android:text="拖动进度条时，播放器的寻帧间隔可自行设定，默认无寻帧间隔。实际上，由于播放核心状态切换导致的开销，直接关闭寻帧间隔反而可能获得更流畅的体验，因为无寻帧间隔时播放核心的状态切换次数减少了。具体情况请自行测试。"
                         android:textSize="12sp" />
+                    <!--  开关：首页卡片不使用视频  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="0"
+                            android:text="首页播放卡片用缩略图代替视频"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/SwitchDisableSmallPlayer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            app:thumbTint="@color/switchThumbColor"
+                            app:trackTint="@color/switchTrackColor" />
+                    </LinearLayout>
+                    <!--  描述：首页卡片不使用视频  -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="在搭载麒麟9000系列设备上存在问题，故默认关闭。如果确认您的设备开次此选项后没有问题，可选择开启。"
+                        android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  卡片：数据库  -->

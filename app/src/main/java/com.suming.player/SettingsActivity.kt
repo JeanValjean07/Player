@@ -52,6 +52,7 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_CloseVideoTrack: SwitchCompat
     private lateinit var Switch_SwitchPortraitWhenExit: SwitchCompat
     private lateinit var Switch_KeepPlayingWhenExit: SwitchCompat
+    private lateinit var Switch_DisableSmallPlayer: SwitchCompat
     private lateinit var Switch_UseDataBaseForScrollerSetting: SwitchCompat
     private lateinit var Switch_ExitWhenEnd: SwitchCompat
     private lateinit var Switch_UseLongScroller: SwitchCompat
@@ -73,6 +74,7 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
     private var PREFS_KeepPlayingWhenExit = false
+    private var PREFS_DisableSmallPlayer = false
     private var PREFS_UseDataBaseForScrollerSetting = false
     private var PREFS_ExitWhenEnd = false
     private var PREFS_UseLongScroller = false
@@ -185,6 +187,11 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_SeekHandlerGap = 0L
         } else {
             PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0L)
+        }
+        if (PREFS.contains("PREFS_DisableSmallPlayer")){
+            PREFS_DisableSmallPlayer = PREFS.getBoolean("PREFS_DisableSmallPlayer", false)
+        }else{
+            PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", false).apply() }
         }
         if (!PREFS.contains("PREFS_UseDataBaseForScrollerSetting")) {
             PREFS_Editor.putBoolean("PREFS_UseDataBaseForScrollerSetting", false)
@@ -309,6 +316,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_CloseVideoTrack = findViewById(R.id.closeVideoTrack)
         Switch_SwitchPortraitWhenExit = findViewById(R.id.SwitchPortraitWhenExit)
         Switch_KeepPlayingWhenExit = findViewById(R.id.SwitchKeepPlayingWhenExit)
+        Switch_DisableSmallPlayer = findViewById(R.id.SwitchDisableSmallPlayer)
         Switch_UseDataBaseForScrollerSetting = findViewById(R.id.UseDataBaseForScrollerSetting)
         Switch_ExitWhenEnd = findViewById(R.id.exitWhenEnd)
         Switch_UseLongScroller = findViewById(R.id.useLongScroller)
@@ -328,6 +336,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
         Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
         Switch_KeepPlayingWhenExit.isChecked = PREFS_KeepPlayingWhenExit
+        Switch_DisableSmallPlayer.isChecked = PREFS_DisableSmallPlayer
         Switch_UseDataBaseForScrollerSetting.isChecked = PREFS_UseDataBaseForScrollerSetting
         Switch_ExitWhenEnd.isChecked = PREFS_ExitWhenEnd
         Switch_UseLongScroller.isChecked = PREFS_UseLongScroller
@@ -390,6 +399,11 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_KeepPlayingWhenExit = isChecked
             ToolVibrate().vibrate(this)
             PREFS_Editor.putBoolean("PREFS_KeepPlayingWhenExit", isChecked).apply()
+        }
+        Switch_DisableSmallPlayer.setOnCheckedChangeListener { _, isChecked ->
+            PREFS_DisableSmallPlayer = isChecked
+            ToolVibrate().vibrate(this)
+            PREFS_Editor.putBoolean("PREFS_DisableSmallPlayer", isChecked).apply()
         }
         Switch_UseDataBaseForScrollerSetting.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseDataBaseForScrollerSetting = isChecked

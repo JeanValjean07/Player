@@ -33,17 +33,22 @@ import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.PlayerSingleton.MediaInfo_FileName
 import data.DataBaseMediaStore.MediaStoreRepo
 import data.MediaDataReader.MediaDataBaseReaderForMusic
 import data.MediaDataReader.MediaDataBaseReaderForVideo
@@ -54,11 +59,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import java.io.File
-import androidx.core.net.toUri
-import kotlin.hashCode
 
 @Suppress("unused")
 @OptIn(UnstableApi::class)
@@ -85,7 +86,9 @@ class MainActivity: AppCompatActivity() {
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_ReadNewOnEachStart = false
     private var PREFS_UsePlayerWithSeekBar = false
+    private var PREFS_UseHighRefreshRate = true
     private var PREFS_UseTestingPlayer = false
+    private var PREFS_DisableSmallPlayer = false
     private var PREFS_DefaultTab = "video"
     //</editor-fold>
     //状态信息
@@ -145,6 +148,23 @@ class MainActivity: AppCompatActivity() {
                 PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", false).apply() }
             }
         } //基于设备信息
+        if (PREFS.contains("PREFS_UseHighRefreshRate")){
+            PREFS_UseHighRefreshRate = PREFS.getBoolean("PREFS_UseHighRefreshRate", true)
+        }else{
+            PREFS.edit { putBoolean("PREFS_UseHighRefreshRate", true).apply() }
+        }
+        if (PREFS.contains("PREFS_DisableSmallPlayer")){
+            PREFS_DisableSmallPlayer = PREFS.getBoolean("PREFS_DisableSmallPlayer", false)
+        }else{
+            if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
+                PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", false).apply() }
+            }else{
+                PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", true).apply() }
+            }
+
+        } //基于设备信息
+        //设置后续操作
+        setHighRefreshRate()
         //内容避让状态栏并预读取状态栏高度写入设置
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -478,12 +498,15 @@ class MainActivity: AppCompatActivity() {
         //刷新设置
         PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
         PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
+        PREFS_DisableSmallPlayer = PREFS.getBoolean("PREFS_DisableSmallPlayer", false)
         //判断首次启动
         if (state_onFirstStart){
             state_onFirstStart = false
             checkLastPlayingMedia()
         }
         else{ ResetPlayingCard() }
+
+        setHighRefreshRate()
 
     }
 
@@ -550,7 +573,7 @@ class MainActivity: AppCompatActivity() {
         //确保已显示播放中卡片
         showPlayingCardWithAnimation()
         //绑定播放器或者显示缩略图
-        BindPlayingCardSmallPlayer(MediaInfo_MediaType)
+        BindPlayingCardSmallPlayer(MediaInfo_MediaType, MediaInfo_FileName)
         //设置文本
         setPlayingCardTextInfo(MediaInfo_FileName, MediaInfo_MediaArtist)
         //播放卡片按钮刷新
@@ -576,15 +599,40 @@ class MainActivity: AppCompatActivity() {
             return true
         }
     } //检查是否在播放中
-    private fun BindPlayingCardSmallPlayer(type: String){
+    private fun BindPlayingCardSmallPlayer(type: String, filename: String){
         if (!state_PlayingCard_inited){ initPlayingCard() }
         if (!state_PlayingCard_showing){ return }
 
         if (type == "video"){
-            PlayingCard_Image.visibility = View.GONE
-            PlayingCard_Video.visibility = View.VISIBLE
-            PlayingCard_Video.player = null
-            PlayingCard_Video.player = PlayerSingleton.getPlayer(application)
+            if (PREFS_DisableSmallPlayer){
+                PlayingCard_Video.player = null
+                PlayingCard_Video.visibility = View.VISIBLE
+                PlayingCard_Image.visibility = View.VISIBLE
+                //获取封面图
+                val covers_path = File(filesDir, "miniature/cover")
+                val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
+                val cover_img_uri = if (cover_img_path.exists()) {
+                    try {
+                        FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
+                    }
+                    catch (e: Exception) {
+                        if (cover_img_path.canRead()) {
+                            cover_img_path.toUri()
+                        } else {
+                            null
+                        }
+                    }
+                } else {
+                    null
+                }
+
+                PlayingCard_Image.setImageURI(cover_img_uri)
+            }else{
+                PlayingCard_Image.visibility = View.GONE
+                PlayingCard_Video.visibility = View.VISIBLE
+                PlayingCard_Video.player = null
+                PlayingCard_Video.player = PlayerSingleton.getPlayer(application)
+            }
         }
         else if (type == "music"){
             PlayingCard_Image.visibility = View.VISIBLE
@@ -1128,6 +1176,7 @@ class MainActivity: AppCompatActivity() {
             }
             "PlayerSingleton_MediaItemChanged" -> {
                 ResetPlayingCard()
+                setHighRefreshRate()
             }
         }
     }
@@ -1148,6 +1197,18 @@ class MainActivity: AppCompatActivity() {
         else if (type == "music"){
             PREFS_MediaStore.edit { putBoolean("state_MusicMediaStoreReaded", true).apply() }
         }
+    }
+    //设置高刷新率
+    private fun setHighRefreshRate() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val wm = windowManager
+            val mode = wm.defaultDisplay.mode
+            val fps = mode.refreshRate
+            window.attributes = window.attributes.apply {
+                preferredRefreshRate = fps
+            }
+        }
+
     }
 
 //class END
