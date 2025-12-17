@@ -376,7 +376,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="在搭载麒麟9000系列设备上存在问题，故默认关闭。如果确认您的设备开次此选项后没有问题，可选择开启。"
+                        android:text="在部分机型上存在界面合成问题，导致含播放器的页面掉帧卡顿。如果确认您的设备开次此选项后没有问题，可选择开启。"
                         android:textSize="12sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

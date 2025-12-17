@@ -156,12 +156,12 @@ class MainActivity: AppCompatActivity() {
         if (PREFS.contains("PREFS_DisableSmallPlayer")){
             PREFS_DisableSmallPlayer = PREFS.getBoolean("PREFS_DisableSmallPlayer", false)
         }else{
-            if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
-                PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", false).apply() }
-            }else{
+            if (Build.BRAND.equals("huawei",ignoreCase = true)){
                 PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", true).apply() }
             }
-
+            else{
+                PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", false).apply() }
+            }
         } //基于设备信息
         //设置后续操作
         setHighRefreshRate()
@@ -387,6 +387,7 @@ class MainActivity: AppCompatActivity() {
         }
         PlayingCard_List.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
+            //UnBindSmallCardVideo()
             PlayerFragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
         }
 
@@ -463,6 +464,17 @@ class MainActivity: AppCompatActivity() {
                 }
             }
         }
+        //播放列表返回值 FROM_FRAGMENT_PLAY_LIST
+        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_PLAY_LIST", this) { _, bundle ->
+            val ReceiveKey = bundle.getString("KEY")
+            when(ReceiveKey){
+                //切换逻辑由播放器单例接管
+                //退出逻辑
+                "Dismiss" -> {
+
+                }
+            }
+        }
         //监听返回手势
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -495,7 +507,8 @@ class MainActivity: AppCompatActivity() {
         //Log.d("SuMing", "onResume")
         //注册事件总线监听器
         setupEventBus()
-        //刷新设置
+        //刷新状态和设置
+        state_MediaStore_refreshed = false
         PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
         PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
         PREFS_DisableSmallPlayer = PREFS.getBoolean("PREFS_DisableSmallPlayer", false)
@@ -506,7 +519,6 @@ class MainActivity: AppCompatActivity() {
         }
         else{ ResetPlayingCard() }
 
-        setHighRefreshRate()
 
     }
 
@@ -548,17 +560,23 @@ class MainActivity: AppCompatActivity() {
     //onCreate:每次启动检查上次在播放的媒体
     private fun checkLastPlayingMedia(){
         //从键值表读取信息
-        val (MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist) = getLastMediaItemInfo()
+        val (_, MediaInfo_FileName, MediaInfo_MediaArtist) = getLastMediaItemInfo()
         val MediaInfo_MediaUriString = getLastMediaItemUriString()
-        //保险:检查是否有正在播放的媒体
-        val currentPlayingUri = PlayerSingleton.getMediaInfoUri()
-        if (currentPlayingUri == MediaInfo_MediaUriString){
-            ResetPlayingCard()
+        if (MediaInfo_MediaUriString == ""){
+            //Log.d("SuMing", "checkLastPlayingMedia : MediaInfo_MediaUriString == \"\"")
+            closePlayingCard()
             return
         }
-        //设置当前媒体
-        setNewMediaItem(MediaInfo_MediaUriString, MediaInfo_FileName, MediaInfo_MediaArtist)
-        //Log.d("SuMing", "checkLastPlayingMedia : $MediaInfo_MediaUriString, $MediaInfo_FileName, $MediaInfo_MediaArtist")
+        //保险:检查是否有正在播放的媒体
+        val isNowPlying = checkPlayingItem()
+        if (isNowPlying){
+            ResetPlayingCard()
+            //Log.d("SuMing", "checkLastPlayingMedia : ResetPlayingCard()")
+        }else{
+            setNewMediaItem(MediaInfo_MediaUriString, MediaInfo_FileName, MediaInfo_MediaArtist, false)
+            //Log.d("SuMing", "checkLastPlayingMedia : setNewMediaItem $MediaInfo_MediaUriString, $MediaInfo_FileName, $MediaInfo_MediaArtist")
+        }
+
 
     } //!主链路入口
     //播放卡片功能方法
@@ -691,35 +709,23 @@ class MainActivity: AppCompatActivity() {
         return MediaInfo_MediaUriString
     }
     //设置新媒体项
-    private fun setNewMediaItem(MediaInfo_MediaUriString: String, MediaInfo_FileName: String, MediaInfo_MediaArtist: String){
+    private fun setNewMediaItem(MediaInfo_MediaUriString: String, MediaInfo_FileName: String, MediaInfo_MediaArtist: String, playWhenReady: Boolean){
         PlayerSingleton.getPlayer(application)
         PlayerSingleton.addPlayerStateListener()
         //设置媒体项
-        val covers_path = File(filesDir, "miniature/cover")
-        val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
-        val mediaItem = MediaItem.Builder()
-            .setUri(MediaInfo_MediaUriString.toUri())
-            .setMediaId(MediaInfo_MediaUriString)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(MediaInfo_FileName)
-                    .setArtist(MediaInfo_MediaArtist)
-                    .setArtworkUri(cover_img_path.toString().toUri() )
-                    .build()
-            )
-            .build()
-        PlayerSingleton.setMediaItem(mediaItem)
+        PlayerSingleton.setMediaItem(MediaInfo_MediaUriString.toUri(), playWhenReady)
         //Log.d("SuMing", "setNewMediaItem : $MediaInfo_MediaUriString, $MediaInfo_FileName, $MediaInfo_MediaArtist")
 
     }
     //保存上次播放的项信息
-    private fun saveLastMediaItemInfo(type: String, title: String, artist: String, uri: String){
+    private fun saveLastMediaItemInfo(type: String, title: String, artist: String, uriString: String){
+        if (uriString == ""){ return }
         val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
         INFO_PlayerSingleton.edit {
             putString("MediaInfo_MediaType", type)
             putString("MediaInfo_FileName", title)
             putString("MediaInfo_MediaArtist", artist)
-            putString("MediaInfo_MediaUriString", uri)
+            putString("MediaInfo_MediaUriString", uriString)
         }
     }
     //从选项菜单中发起后台播放
@@ -733,16 +739,22 @@ class MainActivity: AppCompatActivity() {
             return
         }
         //设置新播放项
-        setNewMediaItem(newUri, filename, "未知艺术家")
+        setNewMediaItem(newUri, filename, "未知艺术家", true)
 
+    }
+    //停止视频播放区域
+    private fun UnBindSmallCardVideo(){
+        PlayingCard_Video.player = null
     }
     //页签切换
     private fun startReLoad(){
         if (PREFS_DefaultTab == "video"){
             loadFromMediaStoreByCheck("video")
-        }else if (PREFS_DefaultTab == "music"){
+        }
+        else if (PREFS_DefaultTab == "music"){
             loadFromMediaStoreByCheck("music")
-        }else{
+        }
+        else{
             loadFromMediaStoreByCheck("video")
             showCustomToast("传入参数错误,传入了${PREFS_DefaultTab}", Toast.LENGTH_SHORT, 3)
         }
@@ -750,9 +762,11 @@ class MainActivity: AppCompatActivity() {
     private fun startLoad(){
         if (PREFS_DefaultTab == "video"){
             loadVideo()
-        }else if (PREFS_DefaultTab == "music"){
+        }
+        else if (PREFS_DefaultTab == "music"){
             loadMusic()
-        }else{
+        }
+        else{
             showCustomToast("传入参数错误,传入了${PREFS_DefaultTab}", Toast.LENGTH_SHORT, 3)
         }
     }
@@ -1154,6 +1168,7 @@ class MainActivity: AppCompatActivity() {
                 }else{
                     main_video_list_adapter.refresh()
                 }
+
             }
             "MediaStore_Music_Query_Complete" -> {
                 //关提示卡
@@ -1168,8 +1183,11 @@ class MainActivity: AppCompatActivity() {
                     main_music_list_adapter.refresh()
                 }
             }
-            "MediaStore_NoExist_Delete_Complete" -> {
+            "MediaStore_Refresh_Complete" -> {
                 main_video_list_adapter.refresh()
+                //让播放器重读媒体列表
+                //Log.d("SuMing", "HandlePlayerEvent: MediaStore_Video_Query_Complete")
+                PlayerSingleton.getMediaListByDataBaseChange(application)
             }
             "PlayerSingleton_PlaybackStateChanged" -> {
                 setPlayingCardButton()
@@ -1177,6 +1195,9 @@ class MainActivity: AppCompatActivity() {
             "PlayerSingleton_MediaItemChanged" -> {
                 ResetPlayingCard()
                 setHighRefreshRate()
+            }
+            "ExistInvalidMediaItem" -> {
+                existInvalidMediaItem()
             }
         }
     }
@@ -1188,6 +1209,14 @@ class MainActivity: AppCompatActivity() {
                 }
             }
         }
+    }
+    //刷新列表
+    private var state_MediaStore_refreshed = false
+    private fun existInvalidMediaItem(){
+        if (state_MediaStore_refreshed){ return }
+        state_MediaStore_refreshed = true
+        showCustomToast("存在已失效的媒体项,将刷新列表", Toast.LENGTH_SHORT,3)
+        startReLoad()
     }
     //保存加载状态
     private fun saveLoadState(type: String) {

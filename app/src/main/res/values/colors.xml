@@ -55,6 +55,8 @@
     <color name="ButtonCard_ON">#B39DDB</color>
     <color name="ButtonCard_OFF">#FFFFFF</color>
 
+    <color name="PlayListCard_ON">#F8BBD0</color>
+    <color name="PlayListCard_OFF">#FAFAFA</color>
 
 
 

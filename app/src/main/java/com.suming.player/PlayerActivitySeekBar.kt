@@ -439,12 +439,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             } else {
                 vm.PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", true)
             }
-            if (!PREFS.contains("PREFS_UseSysVibrate")){
-                PREFSEditor.putBoolean("PREFS_UseSysVibrate", true)
-                vm.PREFS_UseSysVibrate = true
-            }else{
-                vm.PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
-            }
             if (!PREFS.contains("PREFS_UseDataBaseForScrollerSetting")) {
                 PREFSEditor.putBoolean("PREFS_EnableRoomDatabase", false)
                 vm.PREFS_UseDataBaseForScrollerSetting = true
@@ -482,12 +476,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                 vm.PREFS_TimeUpdateGap = 66L
             } else {
                 vm.PREFS_TimeUpdateGap = PREFS.getLong("PREFS_TimeUpdateGap", 66L)
-            }
-            if (!PREFS.contains("PREFS_VibrateMillis")){
-                PREFS.edit { putLong("PREFS_VibrateMillis", 10L).apply() }
-                vm.PREFS_VibrateMillis = 10L
-            }else{
-                vm.PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 10L)
             }
             if (!PREFS.contains("INFO_STATUSBAR_HEIGHT")) {
                 vm.statusBarHeight = 200

@@ -27,7 +27,6 @@ class PlayerService(): MediaSessionService() {
         const val NOTIF_ID = 1
         const val CHANNEL_ID = "playback"
     }
-
     //媒体会话实例
     private var mediaSession: MediaSession? = null
     //服务专项设置和媒体信息
@@ -125,18 +124,19 @@ class PlayerService(): MediaSessionService() {
                 .setContentText(MediaInfo_FileName)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.ic_player_service_notification)
-                .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
-                .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
+                .addAction(android.R.drawable.ic_media_play, "播放", BroadcastPlay())
+                .addAction(android.R.drawable.ic_media_pause, "暂停", BroadcastPause())
                 .setAutoCancel(false)
                 .build()
-        }else{
+        }
+        else{
             return NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentIntent(createPendingIntentScroller())
                 .setContentText(MediaInfo_FileName)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.ic_player_service_notification)
-                .addAction(android.R.drawable.ic_media_play, "播放", broadcastPlay())
-                .addAction(android.R.drawable.ic_media_pause, "暂停", broadcastPause())
+                .addAction(android.R.drawable.ic_media_play, "播放", BroadcastPlay())
+                .addAction(android.R.drawable.ic_media_pause, "暂停", BroadcastPause())
                 .setAutoCancel(false)
                 .build()
         }
@@ -211,7 +211,7 @@ class PlayerService(): MediaSessionService() {
     }
     //自定义通知:播放指令
     @OptIn(UnstableApi::class)
-    private fun broadcastPlay(): PendingIntent {
+    private fun BroadcastPlay(): PendingIntent {
         val intent = Intent(this, PlayerActionReceiver::class.java).apply {
             action = "PLAYER_PLAY"
         }
@@ -219,45 +219,12 @@ class PlayerService(): MediaSessionService() {
     }
     //自定义通知:暂停指令
     @OptIn(UnstableApi::class)
-    private fun broadcastPause(): PendingIntent {
+    private fun BroadcastPause(): PendingIntent {
         val intent = Intent(this, PlayerActionReceiver::class.java).apply {
             action = "PLAYER_PAUSE"
         }
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
-    //自定义通知:退出指令
-    @OptIn(UnstableApi::class)
-    private fun broadcastExit(): PendingIntent {
-        val intent = Intent(this, PlayerActionReceiver::class.java).apply {
-            action = "PLAYER_EXIT"
-        }
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
-
-    private fun BroadcastPlayOrPause(): PendingIntent {
-        val intent = Intent(this, PlayerActionReceiver::class.java).apply {
-            action = "PLAYER_PlayOrPause"
-            data = "intent:playhouse/${System.currentTimeMillis()}".toUri()
-        }
-        return PendingIntent.getBroadcast(this, System.currentTimeMillis().toInt(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
-
-    private fun BroadcastNext(): PendingIntent {
-        val intent = Intent(this, PlayerActionReceiver::class.java).apply {
-            action = "PLAYER_NextMedia"
-        }
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
-
-    private fun BroadcastPrevious(): PendingIntent {
-        val intent = Intent(this, PlayerActionReceiver::class.java).apply {
-            action = "PLAYER_PreviousMedia"
-        }
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
-
-
-
 
 
 }

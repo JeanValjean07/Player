@@ -1,4 +1,5 @@
 package com.suming.player
+
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context

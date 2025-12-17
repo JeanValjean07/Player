@@ -176,7 +176,7 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_SwitchPortraitWhenExit = PREFS.getBoolean("PREFS_SwitchPortraitWhenExit", false)
         }
-        if (PREFS.contains("PREFS_KeepPlayingWhenExit")) {
+        if ( PREFS.contains("PREFS_KeepPlayingWhenExit")) {
             PREFS_KeepPlayingWhenExit = PREFS.getBoolean("PREFS_KeepPlayingWhenExit", true)
         } else {
             PREFS_Editor.putBoolean("PREFS_KeepPlayingWhenExit", true)
@@ -188,7 +188,7 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0L)
         }
-        if (PREFS.contains("PREFS_DisableSmallPlayer")){
+        if ( PREFS.contains("PREFS_DisableSmallPlayer")) {
             PREFS_DisableSmallPlayer = PREFS.getBoolean("PREFS_DisableSmallPlayer", false)
         }else{
             PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", false).apply() }

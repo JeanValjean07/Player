@@ -31,7 +31,6 @@ import android.os.Process
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -68,7 +67,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import androidx.core.content.edit
 import androidx.core.graphics.createBitmap
@@ -323,6 +321,8 @@ class PlayerActivity: AppCompatActivity(){
 
     private var touchCenterDistance = 0f
 
+    private var state_onPlayError = false
+
 
     //</editor-fold>
 
@@ -515,12 +515,6 @@ class PlayerActivity: AppCompatActivity(){
             } else {
                 vm.PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", true)
             }
-            if (!PREFS.contains("PREFS_UseSysVibrate")){
-                PREFSEditor.putBoolean("PREFS_UseSysVibrate", true)
-                vm.PREFS_UseSysVibrate = true
-            }else{
-                vm.PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
-            }
             if (!PREFS.contains("PREFS_UseDataBaseForScrollerSetting")) {
                 PREFSEditor.putBoolean("PREFS_EnableRoomDatabase", false)
                 vm.PREFS_UseDataBaseForScrollerSetting = true
@@ -558,12 +552,6 @@ class PlayerActivity: AppCompatActivity(){
                 vm.PREFS_TimeUpdateGap = 66L
             } else {
                 vm.PREFS_TimeUpdateGap = PREFS.getLong("PREFS_TimeUpdateGap", 66L)
-            }
-            if (!PREFS.contains("PREFS_VibrateMillis")){
-                PREFS.edit { putLong("PREFS_VibrateMillis", 10L).apply() }
-                vm.PREFS_VibrateMillis = 10L
-            }else{
-                vm.PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 10L)
             }
             if (!PREFS.contains("INFO_STATUSBAR_HEIGHT")) {
                 vm.statusBarHeight = 200
@@ -852,10 +840,11 @@ class PlayerActivity: AppCompatActivity(){
             }
             override fun onPlayerError(error: PlaybackException) {
                 super.onPlayerError(error)
+                state_onPlayError = true
                 showCustomToast("播放错误: ${error.message}", Toast.LENGTH_SHORT, 3)
                 //Log.d("SuMing", "onPlayerError: ${error.message}")
+                //RestartPlayer()
             }
-
         }
         vm.player.addListener(PlayerStateListener!!)
         PlayerSingleton.addPlayerStateListener()
@@ -1771,9 +1760,6 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
 
-        //读取循环模式
-        PlayerSingleton.getRepeatMode()
-
         //表明页面状态 需要区分页面类型 flag_page_type
         vm.state_playerWithSeekBar = false
         //开启播放器卡死检测
@@ -1808,9 +1794,15 @@ class PlayerActivity: AppCompatActivity(){
             else{
                 //Log.d("SuMing", "目标媒体已在单例中播放")
                 //showCustomToast("目标媒体已在单例中播放", Toast.LENGTH_SHORT, 3)
+                //检查是否播放错误
+                if (PlayerSingleton.isPlayerError()){
+                    state_need_start_new_item = true
+                    PlayerSingleton.ReleaseSingletonPlayer(application)
+                }
                 //重置状态
                 vm.state_firstReadyReached = true
                 playerReadyFrom_FirstEntry = true
+                //确保播放
                 PlayerSingleton.playPlayer()
             }
         }
@@ -1830,7 +1822,7 @@ class PlayerActivity: AppCompatActivity(){
         playErrorInfoText.setOnClickListener {
             ToolVibrate().vibrate(this)
             playErrorInfoText.text = "正在重试启动播放器"
-            restartPlayer()
+            RestartPlayer()
         }
     }
     private fun showPlayError_playFailed(){
@@ -1840,7 +1832,7 @@ class PlayerActivity: AppCompatActivity(){
         playErrorInfoText.setOnClickListener {
             ToolVibrate().vibrate(this)
             playErrorInfoText.text = "正在重试启动播放器"
-            restartPlayer()
+            RestartPlayer()
         }
     }
     private fun checkPlayerState(Millis: Long){
@@ -1853,12 +1845,13 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
     }
-    private fun restartPlayer(){
+    private fun RestartPlayer(){
         PlayerSingleton.releasePlayer()
         lifecycleScope.launch(Dispatchers.IO) {
             delay(1000)
             withContext(Dispatchers.Main){
                 //绑定播放器输出
+                playerView.player = null
                 playerView.player = vm.player
                 //播放器事件监听
                 PlayerStateListener = object : Player.Listener {
@@ -2268,20 +2261,7 @@ class PlayerActivity: AppCompatActivity(){
         PlayerSingleton.getPlayer(application)
         PlayerSingleton.addPlayerStateListener()
         //设置媒体项
-        val covers_path = File(filesDir, "miniature/cover")
-        val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
-        val mediaItem = MediaItem.Builder()
-            .setUri(MediaInfo_MediaUriString.toUri())
-            .setMediaId(MediaInfo_MediaUriString)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(MediaInfo_FileName)
-                    .setArtist(MediaInfo_MediaArtist)
-                    .setArtworkUri(cover_img_path.toString().toUri() )
-                    .build()
-            )
-            .build()
-        PlayerSingleton.setMediaItem(mediaItem)
+        PlayerSingleton.setMediaItem(MediaInfo_MediaUri, true)
 
     }
     //确认关闭操作
@@ -2289,6 +2269,7 @@ class PlayerActivity: AppCompatActivity(){
         if (vm.PREFS_KeepPlayingWhenExit){
             if (flag_close_all){
                 EnsureExit_but_keep_playing()
+                if (state_onPlayError){ PlayerSingleton.releasePlayer() }
             }else{
                 EnsureExit_close_all_stuff()
             }
@@ -2298,6 +2279,7 @@ class PlayerActivity: AppCompatActivity(){
                 EnsureExit_close_all_stuff()
             }else{
                 EnsureExit_but_keep_playing()
+                if (state_onPlayError){ PlayerSingleton.releasePlayer() }
             }
         }
     }
@@ -2586,15 +2568,18 @@ class PlayerActivity: AppCompatActivity(){
     override fun finish() {
         super.finish()
         //判断退出方式
-        if (onDestroy_fromExitButKeepPlaying){
-            //显示顶部分割线
-            ShowTopLine()
-            //使用收起动画
-            overridePendingTransition(
-                R.anim.slide_just_appear,
-                R.anim.slide_out
-            )
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            if (onDestroy_fromExitButKeepPlaying){
+                //显示顶部分割线
+                ShowTopLine()
+                //使用收起动画
+                overridePendingTransition(
+                    R.anim.slide_just_appear,
+                    R.anim.slide_out
+                )
+            }
         }
+
     }
 
 
@@ -3496,7 +3481,7 @@ class PlayerActivity: AppCompatActivity(){
             //启动播放
             playVideo()
             //隐藏遮罩
-            closeCover(0,0)
+            closeCover(1,20)
 
             return
         }
