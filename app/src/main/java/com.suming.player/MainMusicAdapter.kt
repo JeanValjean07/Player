@@ -48,9 +48,9 @@ class MainMusicAdapter(
     //ViewHolder
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val mediaTouchPad: View = itemView.findViewById(R.id.TouchPad)
-        val mediaThumb: ImageView = itemView.findViewById(R.id.ivThumb)
-        val mediaName: TextView = itemView.findViewById(R.id.tvName)
-        val mediaArtist: TextView = itemView.findViewById(R.id.tvArtist)
+        val mediaThumb: ImageView = itemView.findViewById(R.id.auThumb)
+        val mediaName: TextView = itemView.findViewById(R.id.auName)
+        val mediaArtist: TextView = itemView.findViewById(R.id.auArtist)
     }
     //协程作用域
     private val coroutineScopeGenerateCover = CoroutineScope(Dispatchers.IO + SupervisorJob())

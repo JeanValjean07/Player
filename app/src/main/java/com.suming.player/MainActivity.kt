@@ -20,7 +20,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -76,9 +75,8 @@ class MainActivity: AppCompatActivity() {
     private lateinit var main_music_list_adapter_RecyclerView: RecyclerView
     private lateinit var NestedScrollView_MusicList: NestedScrollView
     private lateinit var NestedScrollView_VideoList: NestedScrollView
-    private lateinit var loadingCard: CardView
-    private lateinit var loadingText: TextView
-    private lateinit var title_text: TextView
+    private lateinit var AppBarTitle: TextView
+    private lateinit var AppBarNoticeText: TextView
     private lateinit var ButtonCardMusic: CardView
     private lateinit var ButtonCardVideo: CardView
     private lateinit var ButtonCardGallery: CardView
@@ -308,7 +306,7 @@ class MainActivity: AppCompatActivity() {
                 return super.onSingleTapConfirmed(e)
             }
         })
-        val ToolbarTitle = findViewById<TextView>(R.id.toolbar_title)
+        val ToolbarTitle = findViewById<TextView>(R.id.AppBarTitle)
         ToolbarTitle.setOnTouchListener { _, event ->
             gestureDetectorToolbarTitle.onTouchEvent(event)
             true
@@ -793,7 +791,7 @@ class MainActivity: AppCompatActivity() {
     //页签切换变更页面信息
     private fun setMusicElement(){
         state_currentPage = "music"
-        title_text.text = "音乐"
+        AppBarTitle.text = "音乐"
         ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
 
         PREFS_MediaStore.edit{ putString("state_lastPage", "music") }
@@ -801,7 +799,7 @@ class MainActivity: AppCompatActivity() {
     }
     private fun setVideoElement(){
         state_currentPage = "video"
-        title_text.text = "视频"
+        AppBarTitle.text = "视频"
         ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
 
         PREFS_MediaStore.edit{ putString("state_lastPage", "video") }
@@ -840,9 +838,8 @@ class MainActivity: AppCompatActivity() {
         NestedScrollView_VideoList = findViewById(R.id.NestedScrollView_VideoList)
         main_video_list_adapter_RecyclerView = findViewById(R.id.recyclerview_video_list)
         main_music_list_adapter_RecyclerView = findViewById(R.id.recyclerview_music_list)
-        loadingCard = findViewById(R.id.loadingCard)
-        loadingText = findViewById(R.id.loading)
-        title_text = findViewById(R.id.toolbar_title)
+        AppBarNoticeText = findViewById(R.id.AppBarNoticeText)
+        AppBarTitle = findViewById(R.id.AppBarTitle)
         ButtonCardMusic = findViewById(R.id.ButtonCardMusic)
         ButtonCardVideo = findViewById(R.id.ButtonCardVideo)
         ButtonCardGallery = findViewById(R.id.ButtonCardGallery)
@@ -851,24 +848,31 @@ class MainActivity: AppCompatActivity() {
 
     }
     @OptIn(UnstableApi::class)
-    //显示/隐藏加载卡片
-    private fun showLoadingCard(){
-        loadingText.text = "正在加载媒体"
-        loadingCard.visibility = View.VISIBLE
+    //提示内容合集
+    private var setLoadingTextJob: Job? = null
+    private fun setLoadingText(text: String,delay_then_close: Boolean, delay_value_ms: Long){
+        AppBarNoticeText.text = text
+        AppBarNoticeText.visibility = View.VISIBLE
+        //延迟关闭
+        setLoadingTextJob?.cancel()
+        if (delay_then_close){
+            setLoadingTextJob = lifecycleScope.launch(Dispatchers.Main) {
+                delay(delay_value_ms)
+                removeLoadingText()
+            }
+        }
     }
-    private fun showNeedPermission(){
-        loadingText.text = "需要授予媒体访问权限后才能读取"
-        loadingCard.visibility = View.VISIBLE
+    private fun removeLoadingText(){
+        AppBarNoticeText.text = ""
+        AppBarNoticeText.visibility = View.GONE
     }
-    private fun closeLoadingCard(){
-        loadingText.text = "加载完成"
-        Handler(Looper.getMainLooper()).postDelayed({
-            loadingCard.visibility = View.GONE
-        }, 500)
+    private fun setNeedPermissionIcon(){
+
+
     }
     //从媒体库接口读取
     private fun startLoadFromMediaStore(flag_video_or_music: String){
-        showLoadingCard()
+        setLoadingText("正在读取媒体库", false, 0)
         //发起后台线程加载
         lifecycleScope.launch(Dispatchers.IO) {
             if (flag_video_or_music == "video"){
@@ -901,7 +905,7 @@ class MainActivity: AppCompatActivity() {
                         REQUEST_STORAGE_PERMISSION
                     )
                     //权限提示
-                    showNeedPermission()
+                    setNeedPermissionIcon()
 
                     startCheckPermission()
                 }
@@ -1172,7 +1176,7 @@ class MainActivity: AppCompatActivity() {
         when (event) {
             "MediaStore_Video_Query_Complete" -> {
                 //关提示卡
-                closeLoadingCard()
+                setLoadingText("读取完成", true, 5000)
                 //修改是否完成过加载记录
                 saveLoadState("video")
                 //数据已经保存到数据库,开始从数据库解析
@@ -1186,7 +1190,7 @@ class MainActivity: AppCompatActivity() {
             }
             "MediaStore_Music_Query_Complete" -> {
                 //关提示卡
-                closeLoadingCard()
+                setLoadingText("读取完成", true, 5000)
                 //修改是否完成过加载记录
                 saveLoadState("music")
                 //数据已经保存到数据库,开始从数据库解析

@@ -21,6 +21,7 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.edit
@@ -170,18 +171,18 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         }
         //默认页签
         val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
-        if (PREFS_AcquiesceTab == "video"){
-            ButtonTextChangeDefaultTab.text = "视频"
+        fun setAcquiesceTabText(){
+            if (PREFS_AcquiesceTab == "video"){
+                ButtonTextChangeDefaultTab.text = "视频"
+            }
+            else if (PREFS_AcquiesceTab == "music"){
+                ButtonTextChangeDefaultTab.text = "音乐"
+            }
+            else if (PREFS_AcquiesceTab == "last"){
+                ButtonTextChangeDefaultTab.text = "上一次的页面"
+            }
         }
-        else if (PREFS_AcquiesceTab == "music"){
-            ButtonTextChangeDefaultTab.text = "音乐"
-        }
-        else if (PREFS_AcquiesceTab == "gallery"){
-            ButtonTextChangeDefaultTab.text = "陈列架"
-        }
-        else if (PREFS_AcquiesceTab == "last"){
-            ButtonTextChangeDefaultTab.text = "上一次的页面"
-        }
+        setAcquiesceTabText()
         ButtonTextChangeDefaultTab.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             //显示默认页签选择弹窗
@@ -194,25 +195,23 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                 when (item.itemId) {
                     R.id.page_video -> {
                         PREFS_AcquiesceTab = "video"
-                        ButtonTextChangeDefaultTab.text = "视频"
+                        setAcquiesceTabText()
                         PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_music -> {
                         PREFS_AcquiesceTab = "music"
-                        ButtonTextChangeDefaultTab.text = "音乐"
+                        setAcquiesceTabText()
                         PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_gallery -> {
-                        PREFS_AcquiesceTab = "gallery"
-                        ButtonTextChangeDefaultTab.text = "陈列架"
-                        PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
+                        requireContext().showCustomToast("暂不支持设为陈列架", Toast.LENGTH_SHORT, 3)
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_last -> {
                         PREFS_AcquiesceTab = "last"
-                        ButtonTextChangeDefaultTab.text = "上一次的页面"
+                        setAcquiesceTabText()
                         PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
                         return@setOnMenuItemClickListener true
                     }
