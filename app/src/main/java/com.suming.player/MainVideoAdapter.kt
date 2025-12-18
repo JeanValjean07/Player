@@ -5,6 +5,10 @@ import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.drawable.Drawable
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
@@ -21,9 +25,15 @@ import androidx.cardview.widget.CardView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,21 +66,20 @@ class MainVideoAdapter(
         val tvName: TextView = itemView.findViewById(R.id.tvName)
         val tvDuration: TextView = itemView.findViewById(R.id.tvDuration)
         val tvFormat: TextView = itemView.findViewById(R.id.tvFormat)
-        val tvThumb: ImageView = itemView.findViewById(R.id.ivThumb)
+        val tvFrame: ImageView = itemView.findViewById(R.id.ivThumb)
+        var tvFrameLoadingJob: Job? = null
         val tvOption: CardView = itemView.findViewById(R.id.options)
     }
     //协程作用域
-    private val coroutineScopeGenerateCover = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val coroutineScopeReadRoom = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val CoroutineScope_GenerateCover = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val CoroutineScope_LoadCoverFrame = CoroutineScope(Dispatchers.IO + SupervisorJob())
     //图片池和加载动画
-    private val CoverBitmapCache = LruCache<Int, Bitmap>(30 * 1024 * 1024)
-    private var FadeInAnimation: AlphaAnimation
+    private var FadeInAnimation: AlphaAnimation = AlphaAnimation(0.0f, 1.0f)
+    private val covers_path = File(context.filesDir, "miniature/cover")
 
 
 
     init {
-        loadAllCoverFrame()
-        FadeInAnimation = AlphaAnimation(0.0f, 1.0f)
         FadeInAnimation.duration = 300
     }
 
@@ -85,11 +94,8 @@ class MainVideoAdapter(
         holder.tvName.text = item.name.substringBeforeLast(".")
         holder.tvDuration.text = FormatTime_numOnly(item.durationMs)
         holder.tvFormat.text = item.format.ifEmpty { "未知" }
-        val frame = CoverBitmapCache.get(item.name.hashCode())
-        if (frame == null) {generateCoverFrame(item, holder)}
-        else{
-            holder.tvThumb.setImageBitmap(frame)
-        }
+        holder.tvFrameLoadingJob?.cancel()
+        holder.tvFrameLoadingJob = CoroutineScope_LoadCoverFrame.launch(Dispatchers.IO) { setHolderFrame(item, holder) }
         //点击事件设定
         holder.TouchPad.setOnClickListener { onItemClick(item.uri) }
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
@@ -135,6 +141,9 @@ class MainVideoAdapter(
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
         super.onViewDetachedFromWindow(holder)
         val position = holder.bindingAdapterPosition
+        val item = getItem(position) ?: return
+        holder.tvFrameLoadingJob?.cancel()
+
     }
 
 
@@ -146,11 +155,7 @@ class MainVideoAdapter(
         val covers_path = File(context.filesDir, "miniature/cover")
         val cover_file = File(covers_path, "${videoName.hashCode()}.webp")
         if (cover_file.exists()) {
-            CoverBitmapCache.remove(videoName.hashCode())
             val bitmap = BitmapFactory.decodeFile(cover_file.absolutePath)
-            if (bitmap != null) {
-                CoverBitmapCache.put(videoName.hashCode(), bitmap)
-            }
         }
         //遍历列表并换图
         snapshot().forEachIndexed { index, mediaItem ->
@@ -198,20 +203,35 @@ class MainVideoAdapter(
         }
         return null
     }
-    //读取所有封面图
-    private fun loadAllCoverFrame(){
-        val covers_path = File(context.filesDir, "miniature/cover")
-        covers_path.mkdirs()
-        val files = covers_path.listFiles { file -> file.extension in listOf("webp") }
-        files?.forEach { file ->
-            val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-            val key = (file.name.removeSuffix(".webp")).toInt()
-            CoverBitmapCache.put(key, bitmap)
+    //检查缩略图
+    private suspend fun setHolderFrame(item: MediaItemForVideo, holder: ViewHolder) {
+        val imageTag = item.name.hashCode().toString()
+        //在主线程记录当前ViewHolder预期的图片标识
+        withContext(Dispatchers.Main) {
+            holder.tvFrame.tag = imageTag
         }
+        val covers_path = File(context.filesDir, "miniature/cover")
+        val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
+        //检查是否存在
+        if (cover_item_file.exists()){
+            val frame = BitmapFactory.decodeFile(cover_item_file.absolutePath)
+            withContext(Dispatchers.Main){
+                if (holder.tvFrame.tag == imageTag) {
+                    holder.tvFrame.setImageBitmap(frame)
+                } else {
+                    frame?.recycle()
+                }
+            }
+        }
+        //不存在,生成图片
+        else{
+            generateCoverFrame(item, holder)
+        }
+
     }
     //生成缩略图
     private fun generateCoverFrame(item: MediaItemForVideo, holder: ViewHolder){
-        coroutineScopeGenerateCover.launch(Dispatchers.IO){
+        CoroutineScope_GenerateCover.launch(Dispatchers.IO){
             val retriever = MediaMetadataRetriever()
             try {
                 retriever.setDataSource(getAbsoluteFilePath(context, item.uri) ?: item.uri.toString())
@@ -223,18 +243,25 @@ class MainVideoAdapter(
                     if (!covers_path.exists()) {
                         covers_path.mkdirs()
                     }
+
+                    val targetWidth = 400  // 示例值，根据你的 UI 需求设定
+                    val targetHeight = (targetWidth * 9 / 10)
+
+                    // 3. 执行 CenterCrop 裁剪与缩放
+                    val processedBitmap = processCenterCrop(bitmap, targetWidth, targetHeight)
                     //保存图片
                     val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
                     cover_item_file.outputStream().use {
-                        bitmap.compress(Bitmap.CompressFormat.WEBP, 10, it)
-                        //缓存
-                        val key = item.name.hashCode()
-                        CoverBitmapCache.put(key, bitmap)
+                        processedBitmap.compress(Bitmap.CompressFormat.WEBP, 50, it)
                     }
                     //刷新页面
                     withContext(Dispatchers.Main){
-                        holder.tvThumb.setImageBitmap(bitmap)
-                        holder.tvThumb.startAnimation(FadeInAnimation)
+                        holder.tvFrame.setImageBitmap(processedBitmap)
+                        //holder.tvFrame.startAnimation(FadeInAnimation)
+                    }
+
+                    if (bitmap != processedBitmap) {
+                        bitmap.recycle()
                     }
                 }
                 //生成失败
@@ -249,6 +276,31 @@ class MainVideoAdapter(
                 retriever.release()
             }
         }
+    }
+    private fun processCenterCrop(src: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
+        val srcWidth = src.width
+        val srcHeight = src.height
+
+        // 计算缩放比例
+        val scale = (targetWidth.toFloat() / srcWidth).coerceAtLeast(targetHeight.toFloat() / srcHeight)
+
+        // 计算缩放后的中间尺寸
+        val scaledWidth = scale * srcWidth
+        val scaledHeight = scale * srcHeight
+
+        // 计算裁剪起始点 (居中)
+        val left = (targetWidth - scaledWidth) / 2f
+        val top = (targetHeight - scaledHeight) / 2f
+
+        // 创建目标画布
+        val targetBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565) // 进一步节省内存
+        val canvas = Canvas(targetBitmap)
+        val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG)
+
+        val destRect = RectF(left, top, left + scaledWidth, top + scaledHeight)
+        canvas.drawBitmap(src, null, destRect, paint)
+
+        return targetBitmap
     }
 
 

@@ -74,6 +74,7 @@ class PlayerFragmentPlayListAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
         holder.tvName.text = item.name.substringBeforeLast(".")
+        /*
         holder.tvArtist.text = item.artist.ifEmpty { "未知" }
         val frame = CoverBitmapCache.get(item.name.hashCode())
         if (frame == null) {generateCoverFrame(item, holder)}
@@ -113,6 +114,8 @@ class PlayerFragmentPlayListAdapter(
             }
         }
         holder.tvFormat.setOnClickListener { onFormatClick(item, item.format) }
+
+         */
     }
 
     override fun onViewAttachedToWindow(holder: ViewHolder) {
@@ -199,47 +202,7 @@ class PlayerFragmentPlayListAdapter(
             CoverBitmapCache.put(key, bitmap)
         }
     }
-    //生成缩略图
-    private fun generateCoverFrame(item: MediaItemForVideo, holder: ViewHolder){
-        coroutineScopeGenerateCover.launch(Dispatchers.IO){
-            val retriever = MediaMetadataRetriever()
-            try {
-                retriever.setDataSource(getAbsoluteFilePath(context, item.uri) ?: item.uri.toString())
-                val bitmap = retriever.getFrameAtTime(1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                //生成成功
-                if (bitmap != null){
-                    //创建目录
-                    val covers_path = File(context.filesDir, "miniature/cover")
-                    if (!covers_path.exists()) {
-                        covers_path.mkdirs()
-                    }
-                    //保存图片
-                    val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
-                    cover_item_file.outputStream().use {
-                        bitmap.compress(Bitmap.CompressFormat.WEBP, 10, it)
-                        //缓存
-                        val key = item.name.hashCode()
-                        CoverBitmapCache.put(key, bitmap)
-                    }
-                    //刷新页面
-                    withContext(Dispatchers.Main){
-                        holder.tvThumb.setImageBitmap(bitmap)
-                        holder.tvThumb.startAnimation(FadeInAnimation)
-                    }
-                }
-                //生成失败
-                else{
-                    Toast.makeText(context, "存在无法生成缩略图的视频,请手动为其截取", Toast.LENGTH_SHORT).show()
-                }
-            }
-            catch (e: Exception) {
-                e.printStackTrace()
-            }
-            finally {
-                retriever.release()
-            }
-        }
-    }
+
 
 
 }

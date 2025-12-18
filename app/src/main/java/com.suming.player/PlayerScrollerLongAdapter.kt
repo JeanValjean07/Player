@@ -20,6 +20,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,7 +49,7 @@ class PlayerScrollerLongAdapter(
     private var coverExist = false
 
 
-    inner class ThumbViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class ThumbViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var generateThumbJob: Job? = null
         val ivThumbnail: ImageView = itemView.findViewById(R.id.iv_thumbnail)
     }
@@ -164,7 +165,7 @@ class PlayerScrollerLongAdapter(
                     (position * eachPicDuration * 1000L),
                     MediaMetadataRetriever.OPTION_CLOSEST
                 )
-                coroutineContext.ensureActive()
+                currentCoroutineContext().ensureActive()
                 retrieverMap[position]?.release()
                 saveThumb(ratio, position, frame)
                 coroutineContext.ensureActive()

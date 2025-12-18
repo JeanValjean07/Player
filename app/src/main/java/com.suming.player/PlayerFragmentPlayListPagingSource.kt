@@ -117,35 +117,13 @@ class PlayerFragmentPlayListPagingSource(
             //排序字段
             var sortOrder: String
             var sortOrientation: String
-            //读取媒体库设置
-            PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-            if (PREFS_MediaStore.contains("PREFS_showHideItems")){
-                PREFS_showHideItems = PREFS_MediaStore.getBoolean("PREFS_showHideItems", false)
-            }else{
-                PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
-            }
-            if (PREFS_MediaStore.contains("PREFS_SortOrder")){
-                sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
-            }else{
-                sortOrder = "info_title"
-                PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_title").apply() }
-            }
-            if (PREFS_MediaStore.contains("PREFS_SortOrientation")){
-                sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
-            }else{
-                sortOrientation = "DESC"
-                PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC").apply() }
-            }
-            val sortMethod = "$sortOrder $sortOrientation"
 
             //按页获取数据
-            val mediaStoreSettings = mediaStoreRepo.getVideosPagedByOrder(page, limit, sortMethod)
+            val mediaStoreSettings = mediaStoreRepo.getVideosPagedByOrder(page, limit, "info_title DESC")
 
             //合成MediaItem
             val mediaItems = mediaStoreSettings
-                .filter { setting ->
-                    PREFS_showHideItems || !setting.info_is_hidden
-                }
+
                 .map { setting ->
                     MediaItemForVideo(
                         id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,

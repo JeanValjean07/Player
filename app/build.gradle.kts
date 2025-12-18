@@ -63,13 +63,11 @@ dependencies {
 
     //Oss Licenses Plugin
     implementation("com.google.android.gms:play-services-oss-licenses:17.3.0")
-
     //Compose
     implementation(platform("androidx.compose:compose-bom:2024.09.00"))
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling")
-
     //数据库
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
@@ -78,15 +76,15 @@ dependencies {
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.compose.foundation.foundation.layout)
     ksp("androidx.room:room-compiler:2.6.1")
-
     //RxJava
     implementation("io.reactivex.rxjava3:rxjava:3.1.5")
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
     implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
-
     //Gson
     implementation("com.google.code.gson:gson:2.10.1")
-
+    //Glide
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
 
     implementation(libs.androidx.core.ktx)

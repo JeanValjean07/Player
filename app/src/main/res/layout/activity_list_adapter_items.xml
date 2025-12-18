@@ -78,6 +78,7 @@
                 android:ellipsize="end"
                 android:textSize="10sp"
                 android:text="参与创作的艺术家"
+                android:textColor="@color/HeadText2"
                 android:layout_marginStart="5dp"
                 android:layout_marginBottom="1dp"
                 app:layout_constraintTop_toTopOf="parent"

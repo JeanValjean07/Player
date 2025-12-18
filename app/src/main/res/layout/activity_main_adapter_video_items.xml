@@ -20,6 +20,7 @@
             android:layout_height="match_parent"
             />
         <!-- 视频预览图 -->
+        <!-- !!!!!如果要修改 视频预览图 的长宽比，必须同步修改MainVideoAdapter中processCenterCrop()函数的裁剪比例 -->
         <androidx.cardview.widget.CardView
             android:id="@+id/ivThumbCard"
             android:layout_width="0dp"
