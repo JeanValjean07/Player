@@ -3,17 +3,11 @@ package com.suming.player
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Context.VIBRATOR_MANAGER_SERVICE
-import android.content.Context.VIBRATOR_SERVICE
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -29,7 +23,6 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
@@ -38,7 +31,6 @@ import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.util.UnstableApi
-import kotlinx.coroutines.Dispatchers
 import kotlin.math.abs
 
 @UnstableApi
@@ -56,7 +48,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
     private var PREFS_CloseFragmentGesture: Boolean = false
-    private var PREFS_DefaultTab: String = ""
+    private var PREFS_AcquiesceTab: String = ""
     //排序设置项
     private var PREFS_SortOrder: String = "info_title"
     private var PREFS_SortOrientation: String = "DESC"
@@ -124,15 +116,15 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         } else {
             PREFS_EnableFileExistCheck = PREFS_MediaStore.getBoolean("PREFS_EnableFileExistCheck", false)
         }
-        if (PREFS_MediaStore.contains("PREFS_DefaultTab")){
-            PREFS_DefaultTab = PREFS_MediaStore.getString("PREFS_DefaultTab", "video")?: "error"
-            if (PREFS_DefaultTab == "error"){
-                PREFS_DefaultTab = "video"
-                PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+        if (PREFS_MediaStore.contains("PREFS_AcquiesceTab")){
+            PREFS_AcquiesceTab = PREFS_MediaStore.getString("PREFS_AcquiesceTab", "video")?: "error"
+            if (PREFS_AcquiesceTab == "error"){
+                PREFS_AcquiesceTab = "video"
+                PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
             }
         }else{
-            PREFS_DefaultTab = "video"
-            PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+            PREFS_AcquiesceTab = "video"
+            PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
         }
         //开关置位
         switch_EnableFileExistCheck.isChecked = PREFS_EnableFileExistCheck
@@ -178,16 +170,16 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         }
         //默认页签
         val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
-        if (PREFS_DefaultTab == "video"){
+        if (PREFS_AcquiesceTab == "video"){
             ButtonTextChangeDefaultTab.text = "视频"
         }
-        else if (PREFS_DefaultTab == "music"){
+        else if (PREFS_AcquiesceTab == "music"){
             ButtonTextChangeDefaultTab.text = "音乐"
         }
-        else if (PREFS_DefaultTab == "gallery"){
+        else if (PREFS_AcquiesceTab == "gallery"){
             ButtonTextChangeDefaultTab.text = "陈列架"
         }
-        else if (PREFS_DefaultTab == "last"){
+        else if (PREFS_AcquiesceTab == "last"){
             ButtonTextChangeDefaultTab.text = "上一次的页面"
         }
         ButtonTextChangeDefaultTab.setOnClickListener {
@@ -201,27 +193,27 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                 ToolVibrate().vibrate(requireContext())
                 when (item.itemId) {
                     R.id.page_video -> {
-                        PREFS_DefaultTab = "video"
+                        PREFS_AcquiesceTab = "video"
                         ButtonTextChangeDefaultTab.text = "视频"
-                        PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+                        PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_music -> {
-                        PREFS_DefaultTab = "music"
+                        PREFS_AcquiesceTab = "music"
                         ButtonTextChangeDefaultTab.text = "音乐"
-                        PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+                        PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_gallery -> {
-                        PREFS_DefaultTab = "gallery"
+                        PREFS_AcquiesceTab = "gallery"
                         ButtonTextChangeDefaultTab.text = "陈列架"
-                        PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+                        PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_last -> {
-                        PREFS_DefaultTab = "last"
+                        PREFS_AcquiesceTab = "last"
                         ButtonTextChangeDefaultTab.text = "上一次的页面"
-                        PREFS_MediaStore.edit { putString("PREFS_DefaultTab", PREFS_DefaultTab) }
+                        PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
                         return@setOnMenuItemClickListener true
                     }
                 }

@@ -20,6 +20,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -39,9 +40,8 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import androidx.paging.Pager
@@ -72,7 +72,10 @@ class MainActivity: AppCompatActivity() {
     //<editor-fold desc="界面控件元素">
     private lateinit var main_video_list_adapter: MainVideoAdapter
     private lateinit var main_music_list_adapter: MainMusicAdapter
-    private lateinit var main_media_list_adapter_RecyclerView: RecyclerView
+    private lateinit var main_video_list_adapter_RecyclerView: RecyclerView
+    private lateinit var main_music_list_adapter_RecyclerView: RecyclerView
+    private lateinit var NestedScrollView_MusicList: NestedScrollView
+    private lateinit var NestedScrollView_VideoList: NestedScrollView
     private lateinit var loadingCard: CardView
     private lateinit var loadingText: TextView
     private lateinit var title_text: TextView
@@ -89,11 +92,11 @@ class MainActivity: AppCompatActivity() {
     private var PREFS_UseHighRefreshRate = true
     private var PREFS_UseTestingPlayer = false
     private var PREFS_DisableSmallPlayer = false
-    private var PREFS_DefaultTab = "video"
+    private var PREFS_AcquiesceTab = "video"
     //</editor-fold>
     //状态信息
     //<editor-fold desc="状态信息">
-    private var state_VideoMediaStoreReaded = false
+    private var state_video_MediaStore_Readed = false
     private var state_MusicMediaStoreReaded = false
     private var state_FromFirstMediaStoreRead = false
     private var state_currentPage = ""
@@ -102,6 +105,12 @@ class MainActivity: AppCompatActivity() {
     private var state_onFirstStart = false
     private var state_PlayingCard_showing = false
     private var state_PlayingCard_gone = true
+    //页签首次加载
+    private var state_video_tab_firstLoad = true
+    private var state_music_tab_firstLoad = true
+    //列表是否已绑定适配器
+    private var state_music_adapter_Bind = false
+    private var state_video_adapter_Bind = false
     //</editor-fold>
     //播放中卡片
     //<editor-fold desc="播放中卡片">
@@ -201,11 +210,11 @@ class MainActivity: AppCompatActivity() {
             PREFS_MediaStore.edit { putBoolean("PREFS_ReadNewOnEachStart", false).apply() }
             PREFS_ReadNewOnEachStart = false
         }
-        if (PREFS_MediaStore.contains("state_VideoMediaStoreReaded")){
-            state_VideoMediaStoreReaded = PREFS_MediaStore.getBoolean("state_VideoMediaStoreReaded", false)
+        if (PREFS_MediaStore.contains("state_video_MediaStore_Readed")){
+            state_video_MediaStore_Readed = PREFS_MediaStore.getBoolean("state_video_MediaStore_Readed", false)
         }else{
-            PREFS_MediaStore.edit { putBoolean("state_VideoMediaStoreReaded", false).apply() }
-            state_VideoMediaStoreReaded = false
+            PREFS_MediaStore.edit { putBoolean("state_video_MediaStore_Readed", false).apply() }
+            state_video_MediaStore_Readed = false
         }
         if (PREFS_MediaStore.contains("state_MusicMediaStoreReaded")){
             state_MusicMediaStoreReaded = PREFS_MediaStore.getBoolean("state_MusicMediaStoreReaded", false)
@@ -213,20 +222,20 @@ class MainActivity: AppCompatActivity() {
             PREFS_MediaStore.edit { putBoolean("state_MusicMediaStoreReaded", false).apply() }
             state_MusicMediaStoreReaded = false
         }
-        if (PREFS_MediaStore.contains("PREFS_DefaultTab")){
-            PREFS_DefaultTab = PREFS_MediaStore.getString("PREFS_DefaultTab", "video")?: "error"
-            if (PREFS_DefaultTab == "error"){
-                PREFS_DefaultTab = "video"
-                PREFS_MediaStore.edit { putString("PREFS_DefaultTab", "video").apply() }
+        if (PREFS_MediaStore.contains("PREFS_AcquiesceTab")){
+            PREFS_AcquiesceTab = PREFS_MediaStore.getString("PREFS_AcquiesceTab", "video")?: "error"
+            if (PREFS_AcquiesceTab == "error"){
+                PREFS_AcquiesceTab = "video"
+                PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", "video").apply() }
             }
-            if (PREFS_DefaultTab != "video" && PREFS_DefaultTab != "music" && PREFS_DefaultTab != "gallery" && PREFS_DefaultTab != "last"){
-                PREFS_DefaultTab = "video"
-                PREFS_MediaStore.edit { putString("PREFS_DefaultTab", "video").apply() }
+            if (PREFS_AcquiesceTab != "video" && PREFS_AcquiesceTab != "music" && PREFS_AcquiesceTab != "gallery" && PREFS_AcquiesceTab != "last"){
+                PREFS_AcquiesceTab = "video"
+                PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", "video").apply() }
                 showCustomToast("修复了默认页签设置", Toast.LENGTH_SHORT, 3)
             }
         }else{
-            PREFS_MediaStore.edit { putString("PREFS_DefaultTab", "video").apply() }
-            PREFS_DefaultTab = "video"
+            PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", "video").apply() }
+            PREFS_AcquiesceTab = "video"
         }
         if (PREFS_MediaStore.contains("state_lastPage")){
             state_lastPage = PREFS_MediaStore.getString("state_lastPage", "video")?: "error"
@@ -292,7 +301,6 @@ class MainActivity: AppCompatActivity() {
                     showCustomToast("显示已被隐藏的视频", Toast.LENGTH_SHORT, 3)
                     //刷新列表
                     main_video_list_adapter.refresh()
-                    main_media_list_adapter_RecyclerView.smoothScrollToPosition(0)
                 }
                 super.onLongPress(e)
             }
@@ -305,67 +313,25 @@ class MainActivity: AppCompatActivity() {
             gestureDetectorToolbarTitle.onTouchEvent(event)
             true
         }
-        //页签
+        //页签按钮
         ButtonCardMusic.setOnClickListener {
             //处理交互
             ToolVibrate().vibrate(this@MainActivity)
-            if (state_currentPage == "music"){
-                main_media_list_adapter_RecyclerView.smoothScrollToPosition(0)
-                return@setOnClickListener
-            }
-            main_media_list_adapter_RecyclerView.adapter = null
-            setMusicElement()
-            resetElement("music")
-            state_lastPage = "music"
-            PREFS_MediaStore.edit { putString("state_lastPage", "music").apply() }
-
-            //加载业务
-            lifecycleScope.launch {
-                delay(50)
-                withContext(Dispatchers.Main){
-                    loadMusic()
-                }
-            }
+            //显示音乐列表
+            showMusicList(false)
         }
         ButtonCardVideo.setOnClickListener {
             //处理交互
             ToolVibrate().vibrate(this@MainActivity)
-            if (state_currentPage == "video"){
-                main_media_list_adapter_RecyclerView.smoothScrollToPosition(0)
-                return@setOnClickListener
-            }
-            main_media_list_adapter_RecyclerView.adapter = null
-            setVideoElement()
-            resetElement("video")
-            state_lastPage = "video"
-            PREFS_MediaStore.edit { putString("state_lastPage", "video").apply() }
-
-            //加载业务
-            lifecycleScope.launch {
-                delay(50)
-                withContext(Dispatchers.Main){
-                    loadVideo()
-                }
-            }
-
-
+            //显示视频列表
+            showVideoList(false)
 
         }
         ButtonCardGallery.setOnClickListener {
             //处理交互
             ToolVibrate().vibrate(this@MainActivity)
-            if (state_currentPage == "gallery"){
-                main_media_list_adapter_RecyclerView.smoothScrollToPosition(0)
-                return@setOnClickListener
-            }
-            main_media_list_adapter_RecyclerView.adapter = null
-            setGalleryElement()
-            resetElement("gallery")
-            state_lastPage = "gallery"
-            PREFS_MediaStore.edit { putString("state_lastPage", "gallery").apply() }
-
-
-            //loadGallery()
+            //需要重做为单独的页面
+            showCustomToast("陈列架功能暂未开放", Toast.LENGTH_SHORT, 3)
         }
         //播放卡片
         PlayingCard = findViewById(R.id.PlayingCard)
@@ -391,60 +357,45 @@ class MainActivity: AppCompatActivity() {
             PlayerFragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
         }
 
-
-        //判断使用何种页签
-        if (savedInstanceState != null){
-            state_currentPage = savedInstanceState.getString("state_currentPage", "video")?: "error"
-            if (state_currentPage == "video"){
-                setVideoElement()
-                loadVideo()
-            }
-            else if (state_currentPage == "music"){
-                setMusicElement()
-                loadMusic()
-            }
-            else if (state_currentPage == "gallery"){
-                setGalleryElement()
-                //loadGallery()
-            }
-            else{
-                setVideoElement()
-                loadVideo()
-            }
-        }
-        else{
-            if (PREFS_DefaultTab == "last"){
+        //初次启动:
+        if (savedInstanceState == null){
+            //使用上一次的页面
+            if (PREFS_AcquiesceTab == "last"){
                 when (state_lastPage){
                     "video" -> {
-                        setVideoElement()
-                        loadVideo()
+                        showVideoList(false)
                     }
                     "music" -> {
-                        setMusicElement()
-                        loadMusic()
-                    }
-                    "gallery" -> {
-                        setGalleryElement()
-                        //loadGallery()
+                        showMusicList(false)
                     }
                 }
             }
-            else if (PREFS_DefaultTab == "video"){
-                setVideoElement()
-                loadVideo()
+            //使用默认页面
+            else if (PREFS_AcquiesceTab == "video"){
+                showVideoList(false)
             }
-            else if (PREFS_DefaultTab == "music"){
-                setMusicElement()
-                loadMusic()
-            }
-            else if (PREFS_DefaultTab == "gallery"){
-                setGalleryElement()
-                //loadGallery()
+            else if (PREFS_AcquiesceTab == "music"){
+                showMusicList(false)
             }
             else{
-                setVideoElement()
-                loadVideo()
+                showCustomToast("默认加载页面标识符错误，不知道要加载哪个页面", Toast.LENGTH_SHORT, 3)
             }
+        }
+        //恢复状态启动:
+        else{
+            Log.d("SuMing", "恢复状态启动: ${savedInstanceState.getString("state_currentPage", "video")}")
+            state_currentPage = savedInstanceState.getString("state_currentPage", "video")?: "error"
+            if (state_currentPage == "video"){
+                showVideoList(true)
+            }
+            else if (state_currentPage == "music"){
+                showMusicList(true)
+            }
+            else{
+                showCustomToast("从Bundle中恢复了错误的页面标识", Toast.LENGTH_SHORT, 3)
+            }
+            //滚动到上次位置
+            //NestedScrollView_VideoList.post { NestedScrollView_VideoList.scrollY = savedInstanceState.getInt("state_NestedScrollView_Y", 0) }
         }
 
         //媒体库设置返回值
@@ -460,7 +411,8 @@ class MainActivity: AppCompatActivity() {
                     }
                 }
                 "ReLoadFromMediaStore" -> {
-                    startReLoad()
+                    startLoadFromMediaStore("video")
+                    startLoadFromMediaStore("music")
                 }
             }
         }
@@ -525,6 +477,7 @@ class MainActivity: AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
         super.onSaveInstanceState(outState, outPersistentState)
         outState.putString("state_currentPage", state_currentPage)
+        outState.putInt("state_NestedScrollView_Y", NestedScrollView_VideoList.scrollY)
     }
 
     override fun onPause() {
@@ -545,6 +498,53 @@ class MainActivity: AppCompatActivity() {
 
 
     //Functions
+    //显示视频列表 !主链路入口
+    private fun showVideoList(flag_re_onCreate: Boolean){
+        //页面标识防重复
+        if (state_currentPage == "video" && !flag_re_onCreate){
+            listGoTop()
+            return
+        }
+        state_currentPage = "video"
+        //界面切换
+        NestedScrollView_VideoList.visibility = View.VISIBLE
+        NestedScrollView_MusicList.visibility = View.GONE
+        main_video_list_adapter_RecyclerView.visibility = View.VISIBLE
+        main_music_list_adapter_RecyclerView.visibility = View.GONE
+        setVideoElement()
+        resetElement("video")
+        //加载事务
+        lifecycleScope.launch {
+            delay(50)
+            withContext(Dispatchers.Main){
+                generalLoadVideo()
+            }
+        }
+
+    }  //!主链路入口
+    //显示音乐列表 !主链路入口
+    private fun showMusicList(flag_re_onCreate: Boolean){
+        //页面标识防重复
+        if (state_currentPage == "music"){
+            listGoTop()
+            return
+        }
+        state_currentPage = "music"
+        //界面切换
+        NestedScrollView_VideoList.visibility = View.GONE
+        NestedScrollView_MusicList.visibility = View.VISIBLE
+        main_video_list_adapter_RecyclerView.visibility = View.GONE
+        main_music_list_adapter_RecyclerView.visibility = View.VISIBLE
+        setMusicElement()
+        resetElement("music")
+        //加载事务
+        lifecycleScope.launch {
+            delay(50)
+            generalLoadMusic()
+        }
+
+    }  //!主链路入口
+
     //onResume:检查正在播放的媒体并更新播放卡片
     private fun ResetPlayingCard(){
         //检查正在播放的媒体
@@ -556,7 +556,7 @@ class MainActivity: AppCompatActivity() {
         updatePlayingCard(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
         //Log.d("SuMing", "ResetPlayingCard : $MediaInfo_MediaType, $MediaInfo_FileName, $MediaInfo_MediaArtist")
 
-    } //!主链路入口
+    }  //!主链路入口
     //onCreate:每次启动检查上次在播放的媒体
     private fun checkLastPlayingMedia(){
         //从键值表读取信息
@@ -578,7 +578,7 @@ class MainActivity: AppCompatActivity() {
         }
 
 
-    } //!主链路入口
+    }  //!主链路入口
     //播放卡片功能方法
     private fun setPlayingCardButton(){
         if (PlayerSingleton.getIsPlaying()){
@@ -747,64 +747,56 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_Video.player = null
     }
     //页签切换
-    private fun startReLoad(){
-        if (PREFS_DefaultTab == "video"){
-            loadFromMediaStoreByCheck("video")
-        }
-        else if (PREFS_DefaultTab == "music"){
-            loadFromMediaStoreByCheck("music")
-        }
-        else{
-            loadFromMediaStoreByCheck("video")
-            showCustomToast("传入参数错误,传入了${PREFS_DefaultTab}", Toast.LENGTH_SHORT, 3)
-        }
-    }
-    private fun startLoad(){
-        if (PREFS_DefaultTab == "video"){
-            loadVideo()
-        }
-        else if (PREFS_DefaultTab == "music"){
-            loadMusic()
-        }
-        else{
-            showCustomToast("传入参数错误,传入了${PREFS_DefaultTab}", Toast.LENGTH_SHORT, 3)
-        }
-    }
-    private fun loadMusic(){
-        //按设置加载音乐
+    private fun generalLoadMusic(){
+
         if (PREFS_ReadNewOnEachStart){
             state_FromFirstMediaStoreRead = true
             loadFromMediaStoreByCheck("video")
-        }else{
+        }
+        else{
             if (state_MusicMediaStoreReaded){ loadFromDataBase("music") }
             else{
                 state_FromFirstMediaStoreRead = true
                 loadFromMediaStoreByCheck("music")
             }
         }
-
-    }
-    private fun loadVideo(){
-
-        //按设置加载视频
-        if (PREFS_ReadNewOnEachStart){
-            state_FromFirstMediaStoreRead = true
-            loadFromMediaStoreByCheck("video")
-        }else{
-            if (state_VideoMediaStoreReaded){ loadFromDataBase("video") }
-            else{
-                state_FromFirstMediaStoreRead = true
+    }  //!主链路入口
+    private fun generalLoadVideo(){
+        //第一次加载视频
+        if (state_video_tab_firstLoad){
+            state_video_tab_firstLoad = false
+            //设置了每次都从媒体库加载
+            if (PREFS_ReadNewOnEachStart){
                 loadFromMediaStoreByCheck("video")
+            }
+            //无需每次从媒体库加载,直接读取数据库
+            else{
+                //已读取过媒体库,可直接读数据库
+                if (state_video_MediaStore_Readed){
+                    loadFromDataBase("video")
+                }
+                //未读取过媒体库,需先读媒体库
+                else{
+                    loadFromMediaStoreByCheck("video")
+                    state_FromFirstMediaStoreRead = true
+                }
+            }
+        }
+        //非第一次加载视频:刷新列表即可
+        else{
+            if (state_video_adapter_Bind){
+                main_video_list_adapter.refresh()
             }
         }
 
-    }
+    }  //!主链路入口
+    //页签切换变更页面信息
     private fun setMusicElement(){
         state_currentPage = "music"
         title_text.text = "音乐"
         ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
 
-
+        PREFS_MediaStore.edit{ putString("state_lastPage", "music") }
 
     }
     private fun setVideoElement(){
@@ -812,28 +804,42 @@ class MainActivity: AppCompatActivity() {
         title_text.text = "视频"
         ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
 
-    }
-    private fun setGalleryElement(){
-        state_currentPage = "gallery"
-        title_text.text = "陈列架"
-        ButtonCardGallery.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
+        PREFS_MediaStore.edit{ putString("state_lastPage", "video") }
+
     }
     private fun resetElement(avoid: String){
         if (avoid == "music"){
             ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
             ButtonCardGallery.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
-        }else if (avoid == "video"){
+        }
+        else if (avoid == "video"){
             ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
             ButtonCardGallery.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
-        }else if (avoid == "gallery"){
-            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
-            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
+        }
+        else{
+            showCustomToast("界面重置函数接收到预期外的参数", Toast.LENGTH_SHORT, 3)
+        }
+    }
+    private fun listGoTop(){
+        if (state_currentPage == "music"){
+            if (state_music_adapter_Bind){ main_music_list_adapter.refresh() }
+            NestedScrollView_MusicList.smoothScrollTo(0,0)
+        }
+        else if (state_currentPage == "video"){
+            if (state_video_adapter_Bind){ main_video_list_adapter.refresh() }
+            NestedScrollView_VideoList.smoothScrollTo(0,0)
+        }
+        else{
+            showCustomToast("列表回顶函数接收到预期外的参数", Toast.LENGTH_SHORT, 3)
         }
     }
     //初始化
     private fun preCheckAndInit(){
         //界面实例获取
-        main_media_list_adapter_RecyclerView = findViewById(R.id.recyclerview1)
+        NestedScrollView_MusicList = findViewById(R.id.NestedScrollView_MusicList)
+        NestedScrollView_VideoList = findViewById(R.id.NestedScrollView_VideoList)
+        main_video_list_adapter_RecyclerView = findViewById(R.id.recyclerview_video_list)
+        main_music_list_adapter_RecyclerView = findViewById(R.id.recyclerview_music_list)
         loadingCard = findViewById(R.id.loadingCard)
         loadingText = findViewById(R.id.loading)
         title_text = findViewById(R.id.toolbar_title)
@@ -908,10 +914,12 @@ class MainActivity: AppCompatActivity() {
     }
     //从本地数据库加载+绑定列表+点击事件
     private fun loadFromDataBase(flag_video_or_music: String) {
-        //recyclerview设置布局管理器
-        main_media_list_adapter_RecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         //使用视频adapter
         if (flag_video_or_music == "video"){
+            if (state_video_adapter_Bind){ return }
+            state_video_adapter_Bind = true
+            //设置列表布局管理器
+            main_video_list_adapter_RecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
             //注册点击事件
             main_video_list_adapter = MainVideoAdapter(
                 context = this,
@@ -928,7 +936,7 @@ class MainActivity: AppCompatActivity() {
                 },
                 onOptionClick = { item ->
                     ToolVibrate().vibrate(this@MainActivity)
-                    val popup = PopupMenu(this, main_media_list_adapter_RecyclerView)
+                    val popup = PopupMenu(this, main_video_list_adapter_RecyclerView)
                     popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
                     popup.setOnMenuItemClickListener { /*handle*/; true }
                     popup.show()
@@ -941,7 +949,7 @@ class MainActivity: AppCompatActivity() {
                 }
             )
             //设置adapter
-            main_media_list_adapter_RecyclerView.adapter = main_video_list_adapter
+            main_video_list_adapter_RecyclerView.adapter = main_video_list_adapter
             //分页加载
             val pager = Pager(PagingConfig(pageSize = 20)) {
                 MediaDataBaseReaderForVideo(context = this@MainActivity)
@@ -956,12 +964,14 @@ class MainActivity: AppCompatActivity() {
         }
         //使用音乐adapter
         else if(flag_video_or_music == "music"){
+            if (state_music_adapter_Bind){ return }
+            state_music_adapter_Bind = true
+            //设置列表布局管理器
+            main_music_list_adapter_RecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
             //注册点击事件
-            main_music_list_adapter = MainMusicAdapter(
-                context = this
-            )
+            main_music_list_adapter = MainMusicAdapter(context = this)
             //设置adapter
-            main_media_list_adapter_RecyclerView.adapter = main_music_list_adapter
+            main_music_list_adapter_RecyclerView.adapter = main_music_list_adapter
             //分页加载
             val pager = Pager(PagingConfig(pageSize = 20)) {
                 MediaDataBaseReaderForMusic(context = this@MainActivity)
@@ -974,7 +984,10 @@ class MainActivity: AppCompatActivity() {
             }
 
         }
-
+        //严重错误
+        else{
+            notice("严重错误:未知的加载板块flag", 5000)
+        }
     }
     //启动播放器
     @OptIn(UnstableApi::class)
@@ -1126,7 +1139,8 @@ class MainActivity: AppCompatActivity() {
                 checkPermissionHandler.postDelayed(this, 100)
             }else{
                 //进行最终读取操作
-                startLoad()
+                startLoadFromMediaStore("video")
+                startLoadFromMediaStore("music")
             }
         }
     }
@@ -1216,12 +1230,12 @@ class MainActivity: AppCompatActivity() {
         if (state_MediaStore_refreshed){ return }
         state_MediaStore_refreshed = true
         showCustomToast("存在已失效的媒体项,将刷新列表", Toast.LENGTH_SHORT,3)
-        startReLoad()
+
     }
     //保存加载状态
     private fun saveLoadState(type: String) {
         if (type == "video"){
-            PREFS_MediaStore.edit { putBoolean("state_VideoMediaStoreReaded", true).apply() }
+            PREFS_MediaStore.edit { putBoolean("state_video_MediaStore_Readed", true).apply() }
         }
         else if (type == "music"){
             PREFS_MediaStore.edit { putBoolean("state_MusicMediaStoreReaded", true).apply() }

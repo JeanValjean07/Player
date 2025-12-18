@@ -634,7 +634,7 @@ class PlayerActivity: AppCompatActivity(){
             MoveYaxisCalculate()
         }                      //计算移动高度
 
-        //监听注册
+
         //方向监听器
         OEL = object : OrientationEventListener(this) {
             override fun onOrientationChanged(orientation: Int) {
@@ -750,49 +750,6 @@ class PlayerActivity: AppCompatActivity(){
         PlayerSingleton.startAudioDeviceCallback(application)
         //音频焦点监听
         PlayerSingleton.requestAudioFocus(application)
-        //内部广播接收:需改进为使用事件总线
-        localBroadcastManager = LocalBroadcastManager.getInstance(this)
-        val filter = IntentFilter("LOCAL_RECEIVER")
-        receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                val data = intent.getStringExtra("key")
-                if (data == "PLAYER_PLAY") {
-                    PlayerSingleton.requestAudioFocus(application)
-                    if (vm.playEnd) {
-                        vm.playEnd = false
-                        vm.player.seekTo(0)
-                        vm.player.play()
-                    } else {
-                        vm.player.play()
-                    }
-                    PlayerSingleton.setWasPlaying(true)
-                    if (vm.PREFS_LinkScroll) startScrollerSync()
-                }
-                if (data == "PLAYER_PAUSE") {
-                    vm.wasPlaying = vm.player.isPlaying
-                    PlayerSingleton.setWasPlaying(false)
-                    vm.player.pause()
-                }
-                if (data == "PLAYER_EXIT") {
-                    val pid = Process.myPid()
-                    Process.killProcess(pid)
-                }
-                if (data == "PLAYER_NextMedia") {
-                    vm.player.seekToNextMediaItem()
-                }
-                if (data == "PLAYER_PreviousMedia") {
-                    vm.player.seekToPreviousMediaItem()
-                }
-                if (data == "PLAYER_PlayOrPause") {
-                    if (vm.player.isPlaying) {
-                        vm.player.pause()
-                    } else {
-                        vm.player.play()
-                    }
-                }
-            }
-        }
-        localBroadcastManager.registerReceiver(receiver, filter)
         //RxJava事件总线
         setupEventBus()
 
@@ -911,7 +868,6 @@ class PlayerActivity: AppCompatActivity(){
                         stopScrollerSync()
                     }
                 }
-
 
 
                 if (vm.wasPlaying) {
@@ -1178,7 +1134,6 @@ class PlayerActivity: AppCompatActivity(){
                         notice("视频已结束,开始重播", 1000)
                     } else {
                         playVideo()
-                        startScrollerSync()
                         notice("继续播放", 1000)
                         ButtonRefresh()
                     }
@@ -1503,7 +1458,7 @@ class PlayerActivity: AppCompatActivity(){
                 "BackToStart" -> {
                     vm.player.seekTo(0)
                     vm.player.play()
-                    if (vm.PREFS_LinkScroll) startScrollerSync()
+                    startScrollerSync()
                     notice("回到视频起始", 3000)
                 }
                 "PlayList" -> {
@@ -2183,7 +2138,7 @@ class PlayerActivity: AppCompatActivity(){
                 }
             }
             startSyncScrollerGapControl()
-            if(vm.PREFS_LinkScroll){ startScrollerSync() }
+            startScrollerSync()
             delay(200)
             startVideoTimeSync()
 
@@ -2300,7 +2255,6 @@ class PlayerActivity: AppCompatActivity(){
         //停止监听操作
         disposable?.dispose()
         OEL.disable()
-        localBroadcastManager.unregisterReceiver(receiver)
         //停止UI端操作
         scroller.stopScroll()
         stopVideoSmartScroll()
@@ -2325,7 +2279,6 @@ class PlayerActivity: AppCompatActivity(){
         //停止监听操作
         disposable?.dispose()
         OEL.disable()
-        localBroadcastManager.unregisterReceiver(receiver)
         //停止UI端操作
         scroller.stopScroll()
         stopVideoSmartScroll()
@@ -2459,7 +2412,6 @@ class PlayerActivity: AppCompatActivity(){
         if (!onDestroy_fromErrorExit){
             disposable?.dispose()
             OEL.disable()
-            localBroadcastManager.unregisterReceiver(receiver)
         }
     }
 
@@ -2862,7 +2814,7 @@ class PlayerActivity: AppCompatActivity(){
 
         scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
         stopScrollerSync()
-        if (vm.PREFS_LinkScroll) startScrollerSync()
+        startScrollerSync()
     }
     //控件层移动
     private fun setControllerLayerPadding(flag_dodge_which_side: String){
@@ -3134,7 +3086,7 @@ class PlayerActivity: AppCompatActivity(){
         widgetsShowing = true
         vm.controllerHided = false
         //被控控件控制
-        if(vm.PREFS_LinkScroll) { startScrollerSync() }
+        startScrollerSync()
         startVideoTimeSync()
         //显示控制
         //<editor-fold desc="显示控制(显示)">
@@ -3457,7 +3409,7 @@ class PlayerActivity: AppCompatActivity(){
             isSeekReady = true
 
             stopScrollerSync()
-            if (vm.PREFS_LinkScroll) startScrollerSync()
+            startScrollerSync()
 
             //恢复保存的设置
             if (NeedRecoverySettings){
@@ -3557,15 +3509,13 @@ class PlayerActivity: AppCompatActivity(){
         PlayerSingleton.setWasPlaying(true)
         PlayerSingleton.requestAudioFocus(application)
         vm.player.setPlaybackSpeed(1f)
-        PlayerSingleton.playPlayer()
-        if (vm.PREFS_LinkScroll){ startScrollerSync() }
         if (!vm.PREFS_OnlyVideo) {
             vm.player.volume = 1f
         }
-        lifecycleScope.launch {
-            delay(100)
-            startVideoTimeSync()
-        }
+        PlayerSingleton.playPlayer()
+        //界面控件操作
+        startScrollerSync()
+        startVideoTimeSync()
     }
     //检查通知权限
     private fun checkNotificationPermission(){
@@ -3723,6 +3673,7 @@ class PlayerActivity: AppCompatActivity(){
         }
     }
     private fun startScrollerSync() {
+        if (!vm.PREFS_LinkScroll){ return }
         if (syncScrollRunnableRunning){
             return
         }
@@ -3981,7 +3932,6 @@ class PlayerActivity: AppCompatActivity(){
             EnsureExit(false)
         }
     }
-
 
 
 }

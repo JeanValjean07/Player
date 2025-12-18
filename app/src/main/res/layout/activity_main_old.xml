@@ -183,26 +183,63 @@
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
-    <!-- 列表区 -->
+
+    <!-- 视频库列表 -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/NestedScrollView_VideoList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <LinearLayout
+                android:id="@+id/LinearLayout_VideoList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerview_video_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:nestedScrollingEnabled="false"
+                    android:scrollbars="vertical"
+                    android:overScrollMode="always"
+                    />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="130dp"
+                    android:paddingTop="50dp"
+                    android:text="我疑似是有底线的"
+                    android:gravity="top|center"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="150dp"
+                    android:textColor="@color/TextLevel3"
+                    android:textSize="12sp" />
+            </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+    <!-- 音乐库列表 -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/NestedScrollView_MusicList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerview1"
+                android:id="@+id/recyclerview_music_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:nestedScrollingEnabled="false"
+                android:scrollbars="vertical"
                 android:overScrollMode="always"
                 />
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="130dp"
                 android:paddingTop="50dp"
-                android:text="我疑似是有底线的"
+                android:text="我是有底线的"
                 android:gravity="top|center"
                 android:layout_gravity="center"
                 android:layout_marginBottom="150dp"
@@ -210,7 +247,6 @@
                 android:textSize="12sp" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
 
 
     <!-- 通知胶囊 -->

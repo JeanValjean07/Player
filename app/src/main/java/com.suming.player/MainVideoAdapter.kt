@@ -80,7 +80,7 @@ class MainVideoAdapter(
 
 
     init {
-        FadeInAnimation.duration = 300
+        FadeInAnimation.duration = 100
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -206,10 +206,11 @@ class MainVideoAdapter(
     //检查缩略图
     private suspend fun setHolderFrame(item: MediaItemForVideo, holder: ViewHolder) {
         val imageTag = item.name.hashCode().toString()
-        //在主线程记录当前ViewHolder预期的图片标识
+        //记录holder的tag
         withContext(Dispatchers.Main) {
             holder.tvFrame.tag = imageTag
         }
+        //设置文件
         val covers_path = File(context.filesDir, "miniature/cover")
         val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
         //检查是否存在
@@ -218,6 +219,7 @@ class MainVideoAdapter(
             withContext(Dispatchers.Main){
                 if (holder.tvFrame.tag == imageTag) {
                     holder.tvFrame.setImageBitmap(frame)
+                    holder.tvFrame.startAnimation(FadeInAnimation)
                 } else {
                     frame?.recycle()
                 }
