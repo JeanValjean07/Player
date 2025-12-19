@@ -180,29 +180,6 @@ class MainVideoAdapter(
             String.format("%02d:%02d:%02d",  hours, minutes, seconds)
         }
     }
-    //uri转绝对路径
-    private fun getAbsoluteFilePath(context: Context, uri: Uri): String? {
-        var absolutePath: String? = null
-
-        if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
-            val projection = arrayOf(MediaStore.Video.Media.DATA)
-            val cursor = context.contentResolver.query(uri, projection, null, null, null)
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val columnIndex = it.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
-                    absolutePath = it.getString(columnIndex)
-                }
-            }
-        }
-        else if (uri.scheme == ContentResolver.SCHEME_FILE) {
-            absolutePath = uri.path
-        }
-
-        if (absolutePath != null && File(absolutePath).exists()) {
-            return absolutePath
-        }
-        return null
-    }
     //检查缩略图
     private suspend fun setHolderFrame(item: MediaItemForVideo, holder: ViewHolder) {
         val imageTag = item.name.hashCode().toString()
@@ -211,7 +188,6 @@ class MainVideoAdapter(
             holder.tvFrame.tag = imageTag
         }
         //设置文件
-        val covers_path = File(context.filesDir, "miniature/cover")
         val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
         //检查是否存在
         if (cover_item_file.exists()){
@@ -236,20 +212,21 @@ class MainVideoAdapter(
         CoroutineScope_GenerateCover.launch(Dispatchers.IO){
             val retriever = MediaMetadataRetriever()
             try {
-                retriever.setDataSource(getAbsoluteFilePath(context, item.uri) ?: item.uri.toString())
+                //需要使用数据源作为参数,不能使用绝对路径,否则会因为安卓13及以上权限限制而无法访问除.mp4之外的视频文件
+                context.contentResolver.openFileDescriptor(item.uri, "r")?.use { pfd ->
+                    retriever.setDataSource(pfd.fileDescriptor)
+                }
+                //获取视频封面帧：需升级
                 val bitmap = retriever.getFrameAtTime(1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                 //生成成功
                 if (bitmap != null){
                     //创建目录
-                    val covers_path = File(context.filesDir, "miniature/cover")
                     if (!covers_path.exists()) {
                         covers_path.mkdirs()
                     }
-
-                    val targetWidth = 400  // 示例值，根据你的 UI 需求设定
+                    //图片裁剪：最好裁剪成ImageView一样的比例
+                    val targetWidth = 400
                     val targetHeight = (targetWidth * 9 / 10)
-
-                    // 3. 执行 CenterCrop 裁剪与缩放
                     val processedBitmap = processCenterCrop(bitmap, targetWidth, targetHeight)
                     //保存图片
                     val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")

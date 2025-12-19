@@ -93,9 +93,6 @@ class MusicStoreRepo private constructor(context: Context) {
     //搜索视频
     suspend fun searchMusics(query: String): List<MusicStoreSetting> = dao.searchMusics(query)
 
-    //更新视频隐藏状态
-    suspend fun getHideStatus(uriNumOnly: String): Boolean? = dao.getHideStatus(uriNumOnly)
-    suspend fun updateHiddenStatus(uriNumOnly: String, isHidden: Boolean) = dao.updateHiddenStatus(uriNumOnly, isHidden)
 
     //获取音乐总数
     suspend fun getTotalMusicCount(): Int = dao.getTotalMusicCount()

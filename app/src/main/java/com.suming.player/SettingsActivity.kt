@@ -596,6 +596,7 @@ class SettingsActivity: AppCompatActivity() {
                 ButtonRemoveAllThumbPath.text = "已确认重新生成"
 
                 File(filesDir, "miniature/cover").deleteRecursively()
+                File(filesDir, "miniature/music_cover").deleteRecursively()
 
                 showCustomToast("重启APP后会重新截取封面", Toast.LENGTH_SHORT, 3)
             }

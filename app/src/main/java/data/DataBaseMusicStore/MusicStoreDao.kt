@@ -54,17 +54,10 @@ interface MusicStoreDao {
     suspend fun getAllMusicsSorted(query: SupportSQLiteQuery): List<MusicStoreSetting>
 
 
-    //根据URI获取隐藏状态
-    @Query("SELECT info_is_hidden FROM MusicStore WHERE MARK_Uri_numOnly = :uriNumOnly LIMIT 1")
-    suspend fun getHideStatus(uriNumOnly: String): Boolean?
 
     //根据标题搜索视频
     @Query("SELECT * FROM MusicStore WHERE info_title LIKE '%' || :searchQuery || '%'")
     suspend fun searchMusics(searchQuery: String): List<MusicStoreSetting>
-
-    //更新视频的隐藏状态
-    @Query("UPDATE MusicStore SET info_is_hidden = :isHidden WHERE MARK_Uri_numOnly = :uriNumOnly")
-    suspend fun updateHiddenStatus(uriNumOnly: String, isHidden: Boolean)
 
     //获取视频总数
     @Query("SELECT COUNT(*) FROM MusicStore")

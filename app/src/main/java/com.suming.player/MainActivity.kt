@@ -980,6 +980,13 @@ class MainActivity: AppCompatActivity() {
                     ToolVibrate().vibrate(this@MainActivity)
                     startMusicPlayer(uri)
                 },
+                onOptionsClick = { item, view ->
+                    ToolVibrate().vibrate(this@MainActivity)
+                    val popup = PopupMenu(this, view)
+                    popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
+                    popup.setOnMenuItemClickListener { /*handle*/; true }
+                    popup.show()
+                },
             )
             //设置adapter
             main_music_list_adapter_RecyclerView.adapter = main_music_list_adapter

@@ -39,11 +39,6 @@ class MediaDataBaseReaderForMusic(
             var sortOrientation = "DESC"
             //读取媒体库设置
             PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-            if (PREFS_MediaStore.contains("PREFS_showHideItems")){
-                PREFS_showHideItems = PREFS_MediaStore.getBoolean("PREFS_showHideItems", false)
-            }else{
-                PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
-            }
             if (PREFS_MediaStore.contains("PREFS_SortOrder")){
                 sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
             }else{
@@ -63,23 +58,19 @@ class MediaDataBaseReaderForMusic(
 
             //合成MediaItem
             val musicItems = musicStoreSettings
-                .filter { setting ->
-                    PREFS_showHideItems || !setting.info_is_hidden
-                }
                 .map { setting ->
                     MediaItemForMusic(
                         id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,
                         uri = setting.info_uri_full.toUri(),
                         name = setting.info_filename.substringBeforeLast("."),
+                        title = setting.info_title,
+                        artist = setting.info_artist,
                         durationMs = setting.info_duration,
                         sizeBytes = setting.info_file_size,
                         dateAdded = setting.info_date_added,
                         format = setting.info_format,
-                        isHidden = setting.info_is_hidden,
-                        artist = setting.info_artist,
                         album = setting.info_album,
                         albumId = setting.info_album_id,
-                        title = setting.info_title,
                     )
                 }
 

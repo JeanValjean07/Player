@@ -150,17 +150,15 @@ class MediaStoreReaderForMusic(
             MusicStoreSetting(
                 MARK_Uri_numOnly = video.id.toString(),
                 info_filename = video.name,
+                info_title = video.title,
+                info_artist = video.artist,
                 info_duration = video.durationMs,
                 info_file_size = video.sizeBytes,
                 info_uri_full = video.uri.toString(),
                 info_date_added = video.dateAdded,
-                info_is_hidden = existingSetting?.info_is_hidden ?: false,
-                info_artwork_path = existingSetting?.info_artwork_path ?: "",
-                info_format = video.format, //格式
-                info_album_id = video.albumId, //专辑ID
-                info_artist = video.artist, //艺术家
-                info_album = video.album, //专辑
-                info_title = video.title, //标题
+                info_format = video.format,
+                info_album_id = video.albumId,
+                info_album = video.album,
             )
         }
 
@@ -187,7 +185,7 @@ class MediaStoreReaderForMusic(
             }
             false
         }
-        catch (e: Exception) { false }
+        catch (_: Exception) { false }
     }
     //去除数据库中已无对应视频的条目
     private suspend fun cleanupDeletedMusics(currentMusicIds: List<String>, musicStoreRepo: MusicStoreRepo) {
