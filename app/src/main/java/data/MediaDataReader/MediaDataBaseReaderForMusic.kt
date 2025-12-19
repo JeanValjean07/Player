@@ -70,12 +70,16 @@ class MediaDataBaseReaderForMusic(
                     MediaItemForMusic(
                         id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,
                         uri = setting.info_uri_full.toUri(),
-                        name = setting.info_title,
+                        name = setting.info_filename.substringBeforeLast("."),
                         durationMs = setting.info_duration,
                         sizeBytes = setting.info_file_size,
                         dateAdded = setting.info_date_added,
                         format = setting.info_format,
-                        isHidden = setting.info_is_hidden
+                        isHidden = setting.info_is_hidden,
+                        artist = setting.info_artist,
+                        album = setting.info_album,
+                        albumId = setting.info_album_id,
+                        title = setting.info_title,
                     )
                 }
 

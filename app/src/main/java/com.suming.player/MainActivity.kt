@@ -2,6 +2,7 @@ package com.suming.player
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -48,6 +49,7 @@ import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.PlayerSingleton.MediaInfo_FileName
+import com.suming.player.PlayerSingleton.MediaInfo_MediaType
 import data.DataBaseMediaStore.MediaStoreRepo
 import data.MediaDataReader.MediaDataBaseReaderForMusic
 import data.MediaDataReader.MediaDataBaseReaderForVideo
@@ -338,7 +340,7 @@ class MainActivity: AppCompatActivity() {
         PlayingCard.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
             val uri = PlayerSingleton.getMediaInfoUri()
-            startPlayerBySmallCard(uri.toUri())
+            startPlayerFromSmallCard(uri.toUri())
         }
         PlayingCard_Button.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
@@ -752,7 +754,7 @@ class MainActivity: AppCompatActivity() {
             loadFromMediaStoreByCheck("video")
         }
         else{
-            if (state_MusicMediaStoreReaded){ loadFromDataBase("music") }
+            if (state_MusicMediaStoreReaded){ BindAdapter("music") }
             else{
                 state_FromFirstMediaStoreRead = true
                 loadFromMediaStoreByCheck("music")
@@ -771,7 +773,7 @@ class MainActivity: AppCompatActivity() {
             else{
                 //已读取过媒体库,可直接读数据库
                 if (state_video_MediaStore_Readed){
-                    loadFromDataBase("video")
+                    BindAdapter("video")
                 }
                 //未读取过媒体库,需先读媒体库
                 else{
@@ -847,7 +849,6 @@ class MainActivity: AppCompatActivity() {
         setupEventBus()
 
     }
-    @OptIn(UnstableApi::class)
     //提示内容合集
     private var setLoadingTextJob: Job? = null
     private fun setLoadingText(text: String,delay_then_close: Boolean, delay_value_ms: Long){
@@ -916,8 +917,8 @@ class MainActivity: AppCompatActivity() {
             }
         }
     }
-    //从本地数据库加载+绑定列表+点击事件
-    private fun loadFromDataBase(flag_video_or_music: String) {
+    //从本地数据库加载+绑定列表+点击事件+包含视频和音频
+    private fun BindAdapter(flag_video_or_music: String) {
         //使用视频adapter
         if (flag_video_or_music == "video"){
             if (state_video_adapter_Bind){ return }
@@ -928,7 +929,7 @@ class MainActivity: AppCompatActivity() {
             main_video_list_adapter = MainVideoAdapter(
                 context = this,
                 onItemClick = { uri ->
-                    startPlayer(uri)
+                    startVideoPlayer(uri)
                 },
                 onDurationClick = { item ->
                     ToolVibrate().vibrate(this@MainActivity)
@@ -973,7 +974,13 @@ class MainActivity: AppCompatActivity() {
             //设置列表布局管理器
             main_music_list_adapter_RecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
             //注册点击事件
-            main_music_list_adapter = MainMusicAdapter(context = this)
+            main_music_list_adapter = MainMusicAdapter(
+                context = this,
+                onItemClick = { uri ->
+                    ToolVibrate().vibrate(this@MainActivity)
+                    startMusicPlayer(uri)
+                },
+            )
             //设置adapter
             main_music_list_adapter_RecyclerView.adapter = main_music_list_adapter
             //分页加载
@@ -994,95 +1001,131 @@ class MainActivity: AppCompatActivity() {
         }
     }
     //启动播放器
-    @OptIn(UnstableApi::class)
-    private fun startPlayer(uri: Uri){
+    private fun startVideoPlayer(uri: Uri){
         ToolVibrate().vibrate(this@MainActivity)
-        //使用测试播放页
-        /*
-        if (PREFS_UseTestingPlayer){
-            /*
-            val intent = Intent(this, PlayerActivity::class.java).apply {
-                putExtra("uri", uri)
-            }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            detailLauncher.launch(intent)
-            return
-
-             */
-        }
-
-         */
-        //使用传统播放页
-        if (PREFS_UsePlayerWithSeekBar){
-            val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
-                putExtra("uri", uri)
-            }
-                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-            detailLauncher.launch(intent)
-        }
-        //使用新晋播放页
-        else{
-            val intent = Intent(this, PlayerActivity::class.java)
-                .apply {
+        if (state_PlayingCard_showing){
+            if (PREFS_UsePlayerWithSeekBar){
+                val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
                     putExtra("uri", uri)
                 }
-                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                    .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
 
-            detailLauncher.launch(intent)
+                val options = ActivityOptionsCompat.makeCustomAnimation(
+                    this,
+                    R.anim.slide_in,
+                    R.anim.slide_dont_move
+                )
+
+                detailLauncher.launch(intent, options)
+            }else{
+                val intent = Intent(this, PlayerActivity::class.java)
+                    .apply {
+                        putExtra("uri", uri)
+                    }
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
+                val options = ActivityOptionsCompat.makeCustomAnimation(
+                    this,
+                    R.anim.slide_in,
+                    R.anim.slide_dont_move
+                )
+
+                detailLauncher.launch(intent, options)
+            }
+        }else{
+            if (PREFS_UsePlayerWithSeekBar){
+                val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
+                    putExtra("uri", uri)
+                }
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                    .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                detailLauncher.launch(intent)
+            }else{
+                val intent = Intent(this, PlayerActivity::class.java)
+                    .apply {
+                        putExtra("uri", uri)
+                    }
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
+                detailLauncher.launch(intent)
+            }
         }
     }
-    //启动播放器
-    @OptIn(UnstableApi::class)
-    private fun startPlayerBySmallCard(uri: Uri){
-        //使用测试播放页
-        /*
-        if (PREFS_UseTestingPlayer){
-            /*
-            val intent = Intent(this, PlayerActivity::class.java).apply {
-                putExtra("uri", uri)
-            }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            detailLauncher.launch(intent)
-            return
+    private fun startMusicPlayer(uri: Uri){
+        Log.d("SuMing", "startMusicPlayer: $uri")
+        try {
 
-             */
-        }
-
-         */
-        //使用传统播放页
-        if (PREFS_UsePlayerWithSeekBar){
-            val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
-                putExtra("uri", uri)
+            val playIntent = Intent().apply {
+                action = Intent.ACTION_VIEW
+                setDataAndType(uri, "audio/*")  // 关键：设置类型为audio/*
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
             }
-                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
 
-            val options = ActivityOptionsCompat.makeCustomAnimation(
-                this,
-                R.anim.slide_in,
-                R.anim.slide_dont_move
-            )
-
-            detailLauncher.launch(intent, options)
+            val packageManager = this.packageManager
+            if (playIntent.resolveActivity(packageManager) != null) {
+                this.startActivity(playIntent)
+            }else{
+                Toast.makeText(this, "未找到可用的音乐播放器", Toast.LENGTH_SHORT).show()
+            }
         }
-        //使用新晋播放页
-        else{
-            val intent = Intent(this, PlayerActivity::class.java)
-                .apply {
-                    putExtra("uri", uri)
+        catch (e: ActivityNotFoundException) {
+            Log.e("SuMing", "未找到可用的播放器应用", e)
+            Toast.makeText(this, "无法播放：未找到播放器应用", Toast.LENGTH_SHORT).show()
+        }
+        catch (e: SecurityException) {
+            Log.e("SuMing", "权限不足，无法播放", e)
+            Toast.makeText(this, "权限不足，无法访问此文件", Toast.LENGTH_SHORT).show()
+        }
+        catch (e: Exception) {
+            Log.e("SuMing", "播放失败", e)
+            Toast.makeText(this, "播放失败：${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    private fun startPlayerFromSmallCard(uri: Uri){
+        MediaInfo_MediaType = PlayerSingleton.getMediaInfoType()
+        if (MediaInfo_MediaType == "video"){
+            if (PREFS_UsePlayerWithSeekBar){
+                    val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
+                        putExtra("uri", uri)
+                    }
+                        .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                        .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+
+                    val options = ActivityOptionsCompat.makeCustomAnimation(
+                        this,
+                        R.anim.slide_in,
+                        R.anim.slide_dont_move
+                    )
+
+                    detailLauncher.launch(intent, options)
+                }else{
+                    val intent = Intent(this, PlayerActivity::class.java)
+                        .apply {
+                            putExtra("uri", uri)
+                        }
+                        .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
+                    val options = ActivityOptionsCompat.makeCustomAnimation(
+                        this,
+                        R.anim.slide_in,
+                        R.anim.slide_dont_move
+                    )
+
+                    detailLauncher.launch(intent, options)
                 }
-                .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        }
+        else if (MediaInfo_MediaType == "music"){
 
-            val options = ActivityOptionsCompat.makeCustomAnimation(
-                this,
-                R.anim.slide_in,
-                R.anim.slide_dont_move
-            )
-
-            detailLauncher.launch(intent, options)
+        }
+        else{
+            showCustomToast("严重错误:未知的媒体类型", Toast.LENGTH_SHORT, 3)
         }
     }
     //隐藏
@@ -1182,7 +1225,7 @@ class MainActivity: AppCompatActivity() {
                 //数据已经保存到数据库,开始从数据库解析
                 if (state_FromFirstMediaStoreRead){
                     state_FromFirstMediaStoreRead = false
-                    loadFromDataBase("video")
+                    BindAdapter("video")
                 }else{
                     main_video_list_adapter.refresh()
                 }
@@ -1196,7 +1239,7 @@ class MainActivity: AppCompatActivity() {
                 //数据已经保存到数据库,开始从数据库解析
                 if (state_FromFirstMediaStoreRead){
                     state_FromFirstMediaStoreRead = false
-                    loadFromDataBase("music")
+                    BindAdapter("music")
                 }else{
                     main_music_list_adapter.refresh()
                 }

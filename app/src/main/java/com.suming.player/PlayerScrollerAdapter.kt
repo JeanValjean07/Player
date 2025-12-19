@@ -22,11 +22,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.coroutines.coroutineContext
 
 @UnstableApi
 class PlayerScrollerAdapter(
@@ -241,7 +241,7 @@ class PlayerScrollerAdapter(
         retrieverMap[position] = MediaMetadataRetriever()
         try {
             retrieverMap[position]?.setDataSource(MediaInfo_AbsolutePath)
-            coroutineContext.ensureActive()
+            currentCoroutineContext().ensureActive()
             var wStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
             var hStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
             val rotateStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
@@ -253,7 +253,7 @@ class PlayerScrollerAdapter(
             val videoWidth = wStr?.toFloat() ?: 0f
             val videoHeight = hStr?.toFloat() ?: 0f
             val ratio = videoHeight.div(videoWidth)
-            coroutineContext.ensureActive()
+            currentCoroutineContext().ensureActive()
             //使用关键帧缩略图
             if (PREFS_GenerateThumbSYNC){
                 if (position == 0){
@@ -270,9 +270,9 @@ class PlayerScrollerAdapter(
                     )
                     saveThumb(ratio, position, frame)
                 }
-                coroutineContext.ensureActive()
+                currentCoroutineContext().ensureActive()
                 retrieverMap[position]?.release()
-                coroutineContext.ensureActive()
+                currentCoroutineContext().ensureActive()
             }
             //使用精确帧缩略图
             else{
@@ -280,10 +280,10 @@ class PlayerScrollerAdapter(
                     (position * scrollerParam_EachPicDuration * 1000L),
                     MediaMetadataRetriever.OPTION_CLOSEST
                 )
-                coroutineContext.ensureActive()
+                currentCoroutineContext().ensureActive()
                 retrieverMap[position]?.release()
                 saveThumb(ratio, position, frame)
-                coroutineContext.ensureActive()
+                currentCoroutineContext().ensureActive()
             }
             item.thumbGeneratingRunning = false
         }

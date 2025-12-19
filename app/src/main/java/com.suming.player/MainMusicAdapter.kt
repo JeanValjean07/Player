@@ -2,12 +2,14 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.content.ContentResolver
+import android.content.ContentUris
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
@@ -29,9 +31,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import androidx.core.net.toUri
 
 class MainMusicAdapter(
     private val context: Context,
+    private val onItemClick: (Uri) -> Unit,
 ):PagingDataAdapter<MediaItemForMusic, MainMusicAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
@@ -52,16 +56,13 @@ class MainMusicAdapter(
         val mediaName: TextView = itemView.findViewById(R.id.auName)
         val mediaArtist: TextView = itemView.findViewById(R.id.auArtist)
     }
-    //协程作用域
-    private val coroutineScopeGenerateCover = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val coroutineScopeReadRoom = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    //图片池和加载动画
-    private val CoverBitmapCache = LruCache<Int, Bitmap>(30 * 1024 * 1024)
+    //加载动画
     private var FadeInAnimation: AlphaAnimation = AlphaAnimation(0.0f, 1.0f)
 
 
+
     init {
-        FadeInAnimation.duration = 300
+        FadeInAnimation.duration = 100
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -73,64 +74,24 @@ class MainMusicAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
         holder.mediaName.text = item.name.substringBeforeLast(".")
+        holder.mediaArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
+        val albumArtUri = ContentUris.withAppendedId(
+            "content://media/external/audio/albumart".toUri(),
+            item.albumId
+        )
+        holder.mediaThumb.setImageURI(albumArtUri)
         //点击事件设定
-        holder.mediaTouchPad.setOnClickListener {  }
+        holder.mediaTouchPad.setOnClickListener {
+            onItemClick(item.uri)
+        }
     }
 
-    override fun onViewAttachedToWindow(holder: ViewHolder) {
-        super.onViewAttachedToWindow(holder)
-        val position = holder.bindingAdapterPosition
-        val item = getItem(position) ?: return
 
-    }
-
-    override fun onViewDetachedFromWindow(holder: ViewHolder) {
-        super.onViewDetachedFromWindow(holder)
-        val position = holder.bindingAdapterPosition
-    }
 
 
 
     //Functions
-    //内部Functions
-    @SuppressLint("DefaultLocale")
-    private fun FormatTime_numOnly(milliseconds: Long): String {
-        val totalSeconds = milliseconds / 1000
-        val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        val seconds = totalSeconds % 60
-        //不显示时
-        return if (hours == 0L){
-            String.format("%02d:%02d",  minutes, seconds)
-        }
-        //显示时
-        else{
-            String.format("%02d:%02d:%02d",  hours, minutes, seconds)
-        }
-    }
-    //uri转绝对路径
-    private fun getAbsoluteFilePath(context: Context, uri: Uri): String? {
-        var absolutePath: String? = null
 
-        if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
-            val projection = arrayOf(MediaStore.Video.Media.DATA)
-            val cursor = context.contentResolver.query(uri, projection, null, null, null)
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val columnIndex = it.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
-                    absolutePath = it.getString(columnIndex)
-                }
-            }
-        }
-        else if (uri.scheme == ContentResolver.SCHEME_FILE) {
-            absolutePath = uri.path
-        }
-
-        if (absolutePath != null && File(absolutePath).exists()) {
-            return absolutePath
-        }
-        return null
-    }
 
 
 

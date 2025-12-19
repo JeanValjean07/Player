@@ -854,6 +854,9 @@ object PlayerSingleton {
     fun getMediaInfoForMain(): Triple<String, String, String> {
         return Triple(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
     }
+    fun getMediaInfoType(): String {
+        return MediaInfo_MediaType
+    }
     //主动设置媒体自定义状态
     fun setMediaInfo(type: String, filename: String, artist: String, url: String) {
         MediaInfo_MediaType = type

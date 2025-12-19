@@ -48,11 +48,15 @@ class MediaStoreReaderForMusic(
         //查询投影
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
-            MediaStore.Audio.Media.DISPLAY_NAME,
+            MediaStore.Audio.Media.DISPLAY_NAME, //文件名
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.SIZE,
             MediaStore.Audio.Media.DATE_ADDED,
-            MediaStore.Audio.Media.MIME_TYPE
+            MediaStore.Audio.Media.MIME_TYPE,
+            MediaStore.Audio.Media.ALBUM_ID, //专辑ID
+            MediaStore.Audio.Media.ARTIST, //艺术家
+            MediaStore.Audio.Media.ALBUM, //专辑
+            MediaStore.Audio.Media.TITLE //标题
         )
 
         //在IO线程执行查询
@@ -68,6 +72,10 @@ class MediaStoreReaderForMusic(
                 val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
                 val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
                 val mimeTypeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
+                val albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID) //专辑ID
+                val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST) //艺术家
+                val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM) //专辑
+                val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE) //标题
                 //读取
                 while (cursor.moveToNext()) {
                     val id = cursor.getLong(idCol)
@@ -77,6 +85,10 @@ class MediaStoreReaderForMusic(
                     val dateAdded = cursor.getLong(dateCol)
                     val mimeType = cursor.getString(mimeTypeCol).orEmpty()
                     val format = if (mimeType.contains('/')) mimeType.substringAfterLast('/') else mimeType
+                    val albumId = cursor.getLong(albumIdCol) //专辑ID
+                    val artist = cursor.getString(artistCol).orEmpty() //艺术家
+                    val album = cursor.getString(albumCol).orEmpty() //专辑
+                    val title = cursor.getString(titleCol).orEmpty() //标题
                     //使用存在检查
                     if (PREFS_EnableFileExistCheck) {
                         //检查文件是否存在
@@ -91,6 +103,10 @@ class MediaStoreReaderForMusic(
                                 sizeBytes = size,
                                 dateAdded = dateAdded,
                                 format = format,
+                                albumId = albumId, //专辑ID
+                                artist = artist, //艺术家
+                                album = album, //专辑
+                                title = title, //标题
                             )
                         }
                     }
@@ -104,6 +120,10 @@ class MediaStoreReaderForMusic(
                             sizeBytes = size,
                             dateAdded = dateAdded,
                             format = format,
+                            albumId = albumId, //专辑ID
+                            artist = artist, //艺术家
+                            album = album, //专辑
+                            title = title, //标题
                         )
                     }
                 }
@@ -129,14 +149,18 @@ class MediaStoreReaderForMusic(
 
             MusicStoreSetting(
                 MARK_Uri_numOnly = video.id.toString(),
-                info_title = video.name,
+                info_filename = video.name,
                 info_duration = video.durationMs,
                 info_file_size = video.sizeBytes,
                 info_uri_full = video.uri.toString(),
                 info_date_added = video.dateAdded,
                 info_is_hidden = existingSetting?.info_is_hidden ?: false,
                 info_artwork_path = existingSetting?.info_artwork_path ?: "",
-                info_format = video.format
+                info_format = video.format, //格式
+                info_album_id = video.albumId, //专辑ID
+                info_artist = video.artist, //艺术家
+                info_album = video.album, //专辑
+                info_title = video.title, //标题
             )
         }
 

@@ -192,8 +192,6 @@ class PlayerActivity: AppCompatActivity(){
     private var volumeRecExecuted = false
     //耳机链接状态
     private var headSet = false
-    //方向监听器初始化
-    private lateinit var OEL: OrientationEventListener
     //视频播放状态监听器
     private var PlayerStateListener: Player.Listener? = null
     //ViewModel
@@ -443,13 +441,13 @@ class PlayerActivity: AppCompatActivity(){
             MediaInfo_MediaUri = vm.MediaInfo_VideoUri!!
             intent = vm.originIntent
         }
+        //根据uri提取基础视频信息
+        getMediaInfo(MediaInfo_MediaUri)
         //检查是否需要返回
         if (state_need_return){
             finish()
             return
         }
-        //根据uri提取基础视频信息
-        getMediaInfo(MediaInfo_MediaUri)
 
 
         //读取设置
@@ -635,123 +633,13 @@ class PlayerActivity: AppCompatActivity(){
         }                      //计算移动高度
 
 
-        //方向监听器
-        OEL = object : OrientationEventListener(this) {
-            override fun onOrientationChanged(orientation: Int) {
-                //把方向角数值映射为状态量
-                if (orientation > 260 && orientation < 280) {
-                    vm.OrientationValue = 1
-                } else if (orientation > 80 && orientation < 100) {
-                    vm.OrientationValue = 2
-                } else if (orientation > 340 && orientation < 360) {
-                    vm.OrientationValue = 0
-                }
-                //进入锁
-                orientationChangeTime = System.currentTimeMillis()
-                if (orientationChangeTime - LastOrientationChangeTime < 1) {
-                    return
-                }
-                LastOrientationChangeTime = orientationChangeTime
-                //读取自动旋转状态
-                rotationSetting = Settings.System.getInt(
-                    contentResolver,
-                    Settings.System.ACCELEROMETER_ROTATION,
-                    0
-                )
-                //自动旋转开启
-                if (rotationSetting == 1) {
-                    //当前为竖屏
-                    if (vm.currentOrientation == 0) {
-                        //从 竖屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
-                        if (vm.OrientationValue == 1) {
-                            if (vm.Manual && vm.LastLandscapeOrientation == 1) return
-                            vm.currentOrientation = 1
-                            vm.LastLandscapeOrientation = 1
-                            vm.setAuto()
-                            setOrientation_LANDSCAPE()
-                        }
-                        //从 竖屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
-                        else if (vm.OrientationValue == 2) {
-                            if (vm.Manual && vm.LastLandscapeOrientation == 2) return
-                            vm.currentOrientation = 2
-                            vm.LastLandscapeOrientation = 2
-                            vm.setAuto()
-                            setOrientation_REVERSE_LANDSCAPE()
-                        }
-                    }
-                    //当前为正向横屏
-                    else if (vm.currentOrientation == 1) {
-                        //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
-                        if (vm.OrientationValue == 2) {
-                            //按钮避让:横排按钮区&更多选项按钮
-                            setControllerLayerPadding("right")
-                            //更改状态并发起旋转
-                            vm.currentOrientation = 2
-                            vm.LastLandscapeOrientation = 2
-                            vm.setAuto()
-                            setOrientation_REVERSE_LANDSCAPE()
-                        }
-                        //从 正向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
-                        else if (vm.OrientationValue == 0) {
-                            if (vm.Manual) return
-                            vm.currentOrientation = 0
-                            vm.setAuto()
-                            setOrientation_PORTRAIT()
-                        }
-                    }
-                    //当前为反向横屏
-                    else if (vm.currentOrientation == 2) {
-                        //从 反向横屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
-                        if (vm.OrientationValue == 1) {
-                            //按钮避让时间框&退出按钮
-                            setControllerLayerPadding("left")
-                            //更改状态并发起旋转
-                            vm.currentOrientation = 1
-                            vm.LastLandscapeOrientation = 1
-                            vm.setAuto()
-                            setOrientation_LANDSCAPE()
-                        }
-                        //从 反向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
-                        else if (vm.OrientationValue == 0) {
-                            if (vm.Manual) return
-                            vm.currentOrientation = 0
-                            vm.setAuto()
-                            setOrientation_PORTRAIT()
-                        }
-                    }
-                }
-                //自动旋转关闭
-                else if (rotationSetting == 0) {
-                    if (!vm.FromManualPortrait) {
-                        //从 反向横屏 转动到 正向横屏 ORIENTATION_REVERSE_LANDSCAPE
-                        if (vm.OrientationValue == 1) {
-                            //按钮避让时间框&退出按钮
-                            setControllerLayerPadding("left")
-                            //更改状态并发起旋转
-                            setOrientation_LANDSCAPE()
-                        }
-                        //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
-                        else if (vm.OrientationValue == 2) {
-                            //按钮避让:横排按钮区&更多选项按钮
-                            setControllerLayerPadding("right")
-                            //更改状态并发起旋转
-                            setOrientation_REVERSE_LANDSCAPE()
-                        }
-                    }
-                }
-            }
-        }
-        if (vm.PREFS_SealOEL) {
-            OEL.disable()
-        } else {
-            OEL.enable()
-        }
+        //RxJava事件总线
+        registerEventBus()
         //音频设备监听
         PlayerSingleton.startAudioDeviceCallback(application)
         //音频焦点监听
         PlayerSingleton.requestAudioFocus(application)
-        //RxJava事件总线
-        setupEventBus()
+
 
 
         //绑定播放器输出
@@ -1529,11 +1417,11 @@ class PlayerActivity: AppCompatActivity(){
                 "SealOEL" -> {
                     if (vm.PREFS_SealOEL){
                         PREFS.edit { putBoolean("PREFS_SealOEL", true).apply() }
-                        OEL.disable()
+                        stopOrientationListener()
                         notice("已关闭方向监听器", 1000)
                     } else {
                         PREFS.edit { putBoolean("PREFS_SealOEL", false).apply() }
-                        OEL.enable()
+                        startOrientationListener()
                         notice("已开启方向监听器", 1000)
                     }
                 }
@@ -1893,6 +1781,16 @@ class PlayerActivity: AppCompatActivity(){
 
     }
     //RxJava事件总线:界面端减少参与播放器单例的控制
+    private var state_EventBus_Registered = false
+    private fun registerEventBus(){
+        if (state_EventBus_Registered) return
+        setupEventBus()
+        state_EventBus_Registered = true
+    }
+    private fun unregisterEventBus(){
+        disposable?.dispose()
+        state_EventBus_Registered = false
+    }
     private var disposable: io.reactivex.rxjava3.disposables.Disposable? = null
     private fun setupEventBus() {
         disposable = ToolEventBus.events
@@ -2252,9 +2150,6 @@ class PlayerActivity: AppCompatActivity(){
             putExtra("key", "EnsureExitCloseAllStuff")
         }
         setResult(RESULT_OK, DetailData)
-        //停止监听操作
-        disposable?.dispose()
-        OEL.disable()
         //停止UI端操作
         scroller.stopScroll()
         stopVideoSmartScroll()
@@ -2276,9 +2171,6 @@ class PlayerActivity: AppCompatActivity(){
             putExtra("key", "EnsureExitButKeepPlaying")
         }
         setResult(RESULT_OK, DetailData)
-        //停止监听操作
-        disposable?.dispose()
-        OEL.disable()
         //停止UI端操作
         scroller.stopScroll()
         stopVideoSmartScroll()
@@ -2313,6 +2205,135 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
     }
+    //方向监听器
+    private lateinit var orientationListener : OrientationEventListener
+    private fun setupOrientationListener() {
+        if (state_orientationListenerInitialized) return
+        state_orientationListenerInitialized = true
+
+        orientationListener = object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientation: Int) {
+                //把方向角数值映射为状态量
+                if (orientation in 261..<280) {
+                    vm.OrientationValue = 1
+                } else if (orientation in 81..<100) {
+                    vm.OrientationValue = 2
+                } else if (orientation in 341..<360) {
+                    vm.OrientationValue = 0
+                }
+                //进入锁
+                orientationChangeTime = System.currentTimeMillis()
+                if (orientationChangeTime - LastOrientationChangeTime < 1) {
+                    return
+                }
+                LastOrientationChangeTime = orientationChangeTime
+                //读取自动旋转状态
+                rotationSetting = Settings.System.getInt(
+                    contentResolver,
+                    Settings.System.ACCELEROMETER_ROTATION,
+                    0
+                )
+                //自动旋转开启
+                if (rotationSetting == 1) {
+                    //当前为竖屏
+                    if (vm.currentOrientation == 0) {
+                        //从 竖屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
+                        if (vm.OrientationValue == 1) {
+                            if (vm.Manual && vm.LastLandscapeOrientation == 1) return
+                            vm.currentOrientation = 1
+                            vm.LastLandscapeOrientation = 1
+                            vm.setAuto()
+                            setOrientation_LANDSCAPE()
+                        }
+                        //从 竖屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
+                        else if (vm.OrientationValue == 2) {
+                            if (vm.Manual && vm.LastLandscapeOrientation == 2) return
+                            vm.currentOrientation = 2
+                            vm.LastLandscapeOrientation = 2
+                            vm.setAuto()
+                            setOrientation_REVERSE_LANDSCAPE()
+                        }
+                    }
+                    //当前为正向横屏
+                    else if (vm.currentOrientation == 1) {
+                        //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
+                        if (vm.OrientationValue == 2) {
+                            //按钮避让:横排按钮区&更多选项按钮
+                            setControllerLayerPadding("right")
+                            //更改状态并发起旋转
+                            vm.currentOrientation = 2
+                            vm.LastLandscapeOrientation = 2
+                            vm.setAuto()
+                            setOrientation_REVERSE_LANDSCAPE()
+                        }
+                        //从 正向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
+                        else if (vm.OrientationValue == 0) {
+                            if (vm.Manual) return
+                            vm.currentOrientation = 0
+                            vm.setAuto()
+                            setOrientation_PORTRAIT()
+                        }
+                    }
+                    //当前为反向横屏
+                    else if (vm.currentOrientation == 2) {
+                        //从 反向横屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
+                        if (vm.OrientationValue == 1) {
+                            //按钮避让时间框&退出按钮
+                            setControllerLayerPadding("left")
+                            //更改状态并发起旋转
+                            vm.currentOrientation = 1
+                            vm.LastLandscapeOrientation = 1
+                            vm.setAuto()
+                            setOrientation_LANDSCAPE()
+                        }
+                        //从 反向横屏 转动到 竖屏 ORIENTATION_PORTRAIT
+                        else if (vm.OrientationValue == 0) {
+                            if (vm.Manual) return
+                            vm.currentOrientation = 0
+                            vm.setAuto()
+                            setOrientation_PORTRAIT()
+                        }
+                    }
+                }
+                //自动旋转关闭
+                else if (rotationSetting == 0) {
+                    if (!vm.FromManualPortrait) {
+                        //从 反向横屏 转动到 正向横屏 ORIENTATION_REVERSE_LANDSCAPE
+                        if (vm.OrientationValue == 1) {
+                            //按钮避让时间框&退出按钮
+                            setControllerLayerPadding("left")
+                            //更改状态并发起旋转
+                            setOrientation_LANDSCAPE()
+                        }
+                        //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
+                        else if (vm.OrientationValue == 2) {
+                            //按钮避让:横排按钮区&更多选项按钮
+                            setControllerLayerPadding("right")
+                            //更改状态并发起旋转
+                            setOrientation_REVERSE_LANDSCAPE()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private var state_orientationListenerInitialized = false
+    private var state_orientationListenerEnabled = false
+    private fun startOrientationListener(){
+        if (vm.PREFS_SealOEL) return
+        if (state_orientationListenerEnabled) return
+
+        if (!state_orientationListenerInitialized) setupOrientationListener()
+
+        orientationListener.enable()
+        state_orientationListenerEnabled = true
+    }
+    private fun stopOrientationListener(){
+        if (!state_orientationListenerEnabled) return
+        orientationListener.disable()
+        state_orientationListenerEnabled = false
+    }
+
 
 
     //Some CallBacks
@@ -2341,7 +2362,7 @@ class PlayerActivity: AppCompatActivity(){
         //退出应用
         if (!vm.onOrientationChanging && !onDestroy_fromExitButKeepPlaying){
             //关闭旋转监听器
-            OEL.disable()
+            stopOrientationListener()
             //记录播放状态
             vm.wasPlaying = vm.player.isPlaying
             //是否后台播放
@@ -2363,8 +2384,8 @@ class PlayerActivity: AppCompatActivity(){
         state_onBackground = false
         //如果关闭视频轨道倒计时正在运行
         if (vm.closeVideoTrackJobRunning){
-            vm.closeVideoTrackJobRunning = false
             closeVideoTrackJob?.cancel()
+            vm.closeVideoTrackJobRunning = false
             //重新绑定播放器以防万一
             playerView.player = null
             playerView.player = vm.player
@@ -2375,8 +2396,6 @@ class PlayerActivity: AppCompatActivity(){
         }
         //onResume来自桌面进入
         else{
-            //开启旋转监听器
-            if (!vm.PREFS_SealOEL) { OEL.enable() }
             //后台播放操作:恢复播放状态
             if (vm.wasPlaying) { vm.player.play() }
             //后台播放操作:恢复视频轨道
@@ -2387,6 +2406,8 @@ class PlayerActivity: AppCompatActivity(){
             startVideoTimeSync()
             if (vm.PREFS_LinkScroll && vm.player.isPlaying) startScrollerSync()
         }
+        //开启旋转监听器
+        startOrientationListener()
         //onResume来自浮窗
         if (vm.inFloatingWindow){
             vm.inFloatingWindow = false
@@ -2401,18 +2422,10 @@ class PlayerActivity: AppCompatActivity(){
 
     override fun onDestroy() {
         super.onDestroy()
-        //onDestroy来自旋转屏幕
-        if (vm.onOrientationChanging){
-            stopVideoSeek()
-            stopVideoSmartScroll()
-            stopVideoTimeSync()
-            stopScrollerSync()
-        }
-        //错误自动关闭:此状态下,监听器等内容并没有加载
-        if (!onDestroy_fromErrorExit){
-            disposable?.dispose()
-            OEL.disable()
-        }
+        //关闭本地监听器
+        unregisterEventBus()
+        stopOrientationListener()
+
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
