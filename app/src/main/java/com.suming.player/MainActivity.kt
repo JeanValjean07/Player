@@ -65,6 +65,8 @@ import java.io.File
 @Suppress("unused")
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
+    //ViewModel
+    private lateinit var MainViewModel: MainViewModel
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
     //状态栏高度
@@ -282,10 +284,14 @@ class MainActivity: AppCompatActivity() {
         val ButtonMediaStoreSetting = findViewById<ImageButton>(R.id.ButtonMediaStoreSetting)
         ButtonMediaStoreSetting.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
-
-            MainActivityFragmentMediaStoreSettings.newInstance().show(supportFragmentManager, "MainActivityFragmentMediaStoreSettings")
+            if (state_currentPage == "video"){
+                MainFragVideoStoreSetting.newInstance().show(supportFragmentManager, "MainFragVideoStoreSetting")
+            }
+            else if (state_currentPage == "music"){
+                MainFragMusicStoreSetting.newInstance().show(supportFragmentManager, "MainFragMusicStoreSetting")
+            }
         }
-        //显示隐藏的视频
+        //显示隐藏的媒体
         val gestureDetectorToolbarTitle = GestureDetector(this, object : SimpleOnGestureListener() {
             override fun onLongPress(e: MotionEvent) {
                 ToolVibrate().vibrate(this@MainActivity)
@@ -398,20 +404,26 @@ class MainActivity: AppCompatActivity() {
             //NestedScrollView_VideoList.post { NestedScrollView_VideoList.scrollY = savedInstanceState.getInt("state_NestedScrollView_Y", 0) }
         }
 
-        //媒体库设置返回值
-        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MediaStore", this) { _, bundle ->
+        //视频媒体库设置返回值
+        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_VIDEO_MediaStore", this) { _, bundle ->
             val ReceiveKey = bundle.getString("KEY")
             when(ReceiveKey){
-                "RefreshByChangeMSSetting" -> {
-                    if (state_currentPage == "music"){
-                        main_music_list_adapter.refresh()
-                    }
-                    else if (state_currentPage == "video"){
-                        main_video_list_adapter.refresh()
-                    }
+                "RenovateAdapter" -> {
+                    main_video_list_adapter.refresh()
                 }
-                "ReLoadFromMediaStore" -> {
+                "QueryFromMediaStoreVideo" -> {
                     startLoadFromMediaStore("video")
+                }
+            }
+        }
+        //音乐媒体库设置返回值
+        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MUSIC_MediaStore", this) { _, bundle ->
+            val ReceiveKey = bundle.getString("KEY")
+            when(ReceiveKey){
+                "RenovateAdapter" -> {
+                    main_music_list_adapter.refresh()
+                }
+                "QueryFromMediaStoreMusic" -> {
                     startLoadFromMediaStore("music")
                 }
             }
@@ -501,7 +513,7 @@ class MainActivity: AppCompatActivity() {
     //显示视频列表 !主链路入口
     private fun showVideoList(flag_re_onCreate: Boolean){
         //页面标识防重复
-        if (state_currentPage == "video" && !flag_re_onCreate){
+        if (state_currentPage == "video"){
             listGoTop()
             return
         }
@@ -876,13 +888,18 @@ class MainActivity: AppCompatActivity() {
         setLoadingText("正在读取媒体库", false, 0)
         //发起后台线程加载
         lifecycleScope.launch(Dispatchers.IO) {
+            //视频
             if (flag_video_or_music == "video"){
                 val mediaReader = MediaStoreReaderForVideo(this@MainActivity, contentResolver)
                 mediaReader.readAndSaveAllVideos()
-            }else if(flag_video_or_music == "music"){
+            }
+            //音乐
+            else if(flag_video_or_music == "music"){
                 val musicReader = MediaStoreReaderForMusic(this@MainActivity, contentResolver)
                 musicReader.readAndSaveAllMusics()
-            }else{
+            }
+            //类型未命中
+            else{
                 showCustomToast("加载类型输入错误", Toast.LENGTH_SHORT, 3)
             }
         }
@@ -1129,7 +1146,7 @@ class MainActivity: AppCompatActivity() {
                 }
         }
         else if (MediaInfo_MediaType == "music"){
-
+            startMusicPlayer(uri)
         }
         else{
             showCustomToast("严重错误:未知的媒体类型", Toast.LENGTH_SHORT, 3)
@@ -1224,7 +1241,8 @@ class MainActivity: AppCompatActivity() {
     }
     private fun HandlePlayerEvent(event: String) {
         when (event) {
-            "MediaStore_Video_Query_Complete" -> {
+            //视频更新完成
+            "QueryFromMediaStoreVideoComplete" -> {
                 //关提示卡
                 setLoadingText("读取完成", true, 5000)
                 //修改是否完成过加载记录
@@ -1238,7 +1256,8 @@ class MainActivity: AppCompatActivity() {
                 }
 
             }
-            "MediaStore_Music_Query_Complete" -> {
+            //音乐更新完成
+            "QueryFromMediaStoreMusicComplete" -> {
                 //关提示卡
                 setLoadingText("读取完成", true, 5000)
                 //修改是否完成过加载记录
@@ -1248,9 +1267,12 @@ class MainActivity: AppCompatActivity() {
                     state_FromFirstMediaStoreRead = false
                     BindAdapter("music")
                 }else{
+                    Log.d("SuMing", "HandlePlayerEvent: MediaStore_Music_Query_Complete")
                     main_music_list_adapter.refresh()
                 }
             }
+
+            //????
             "MediaStore_Refresh_Complete" -> {
                 main_video_list_adapter.refresh()
                 //让播放器重读媒体列表

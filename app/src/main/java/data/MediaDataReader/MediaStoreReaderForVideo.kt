@@ -107,8 +107,6 @@ class MediaStoreReaderForVideo(
                         )
                     }
                 }
-                //读取完后发布通知消息
-                ToolEventBus.sendEvent("MediaStore_Video_Query_Complete")
                 //return
                 list
             } ?: emptyList()
@@ -146,8 +144,6 @@ class MediaStoreReaderForVideo(
 
             cleanupDeletedVideos(videos.map { it.id.toString() }, mediaStoreRepo)
 
-            //完成后通知
-            ToolEventBus.sendEvent("MediaStore_Refresh_Complete")
         }
     }
     //类功能主入口：读取所有视频并保存到数据库
@@ -182,6 +178,8 @@ class MediaStoreReaderForVideo(
                 }
             }
         }
+        //发布删除完成通知
+        ToolEventBus.sendEvent("QueryFromMediaStoreVideoComplete")
 
     }
 

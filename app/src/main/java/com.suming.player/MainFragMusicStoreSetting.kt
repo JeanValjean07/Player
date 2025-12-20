@@ -35,11 +35,11 @@ import androidx.media3.common.util.UnstableApi
 import kotlin.math.abs
 
 @UnstableApi
-class MainActivityFragmentMediaStoreSettings: DialogFragment() {
+class MainFragMusicStoreSetting: DialogFragment() {
     //静态
     companion object {
         fun newInstance():
-                MainActivityFragmentMediaStoreSettings = MainActivityFragmentMediaStoreSettings().apply { arguments = bundleOf(  ) }
+                MainFragMusicStoreSetting = MainFragMusicStoreSetting().apply { arguments = bundleOf(  ) }
     }
     //自动关闭标志位
     private var lockPage = false
@@ -48,11 +48,10 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
     //常规设置项
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
-    private var PREFS_CloseFragmentGesture: Boolean = false
     private var PREFS_AcquiesceTab: String = ""
     //排序设置项
-    private var PREFS_SortOrder: String = "info_title"
-    private var PREFS_SortOrientation: String = "DESC"
+    private var PREFS_music_sortOrder: String = "info_title"
+    private var PREFS_music_sortOrientation: String = "DESC"
 
 
     override fun onStart() {
@@ -103,7 +102,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.activity_main_fragment_media_store_settings, container, false)
+    ): View = inflater.inflate(R.layout.activity_main_frag_music_media_store_setting, container, false)
 
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -162,11 +161,10 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         }
         //按钮：重读媒体库
         val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
-        val ButtonTextReLoadFromMediaStore = view.findViewById<TextView>(R.id.ButtonTextReLoadFromMediaStore)
         ButtonReLoadFromMediaStore.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            val result = bundleOf("KEY" to "ReLoadFromMediaStore")
-            setFragmentResult("FROM_FRAGMENT_MediaStore", result)
+            val result = bundleOf("KEY" to "QueryFromMediaStoreMusic")
+            setFragmentResult("FROM_FRAGMENT_MUSIC_MediaStore", result)
             customDismiss()
         }
         //默认页签
@@ -219,6 +217,12 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                 false
             }
         }
+        //通用设置提示
+        val SyncSettingsCard = view.findViewById<LinearLayout>(R.id.SyncSettingsCard)
+        SyncSettingsCard.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            requireContext().showCustomToast("这些设置会在音乐库和视频库之间同步", Toast.LENGTH_SHORT, 3)
+        }
 
 
         //排序方法预读
@@ -226,9 +230,10 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         setAndShowOrientationType("")
 
 
-        //排序区域
+        //展开排序区域
         val SortOrderArea = view.findViewById<LinearLayout>(R.id.sort_type_area)
         SortOrderArea.visibility = View.GONE
+        //刷新
         val ButtonChangeSortOrder = view.findViewById<TextView>(R.id.ButtonChangeSort)
         ButtonChangeSortOrder.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
@@ -237,8 +242,8 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                 expand(SortOrderArea)
             }
             else if(ButtonChangeSortOrder.text == "保存并刷新"){
-                val result = bundleOf("KEY" to "RefreshByChangeMSSetting")
-                setFragmentResult("FROM_FRAGMENT_MediaStore", result)
+                val result = bundleOf("KEY" to "RenovateAdapter")
+                setFragmentResult("FROM_FRAGMENT_MUSIC_MediaStore", result)
                 dismiss()
             }
         }
@@ -250,27 +255,27 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         val SortOrder_info_mime_type = view.findViewById<TextView>(R.id.sort_mime_type)
         SortOrder_info_title.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_title") }
+            PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_title") }
             setAndShowSortOrder("info_title")
         }
         SortOrder_info_duration.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_duration") }
+            PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_duration") }
             setAndShowSortOrder("info_duration")
         }
         SortOrder_info_date_added.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_date_added") }
+            PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_date_added") }
             setAndShowSortOrder("info_date_added")
         }
         SortOrder_info_file_size.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_file_size") }
+            PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_file_size") }
             setAndShowSortOrder("info_file_size")
         }
         SortOrder_info_mime_type.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_mime_type") }
+            PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_mime_type") }
             setAndShowSortOrder("info_mime_type")
         }
         //降序和升序
@@ -278,15 +283,15 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         ButtonChangeSortOrientation.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             //升序改降序
-            if (PREFS_SortOrientation == "ASC"){
-                PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC") }
-                PREFS_SortOrientation = "DESC"
+            if (PREFS_music_sortOrientation == "ASC"){
+                PREFS_MediaStore.edit { putString("PREFS_music_sortOrientation", "DESC") }
+                PREFS_music_sortOrientation = "DESC"
                 setAndShowOrientationType("DESC")
             }
             //降序改升序
-            else if (PREFS_SortOrientation == "DESC"){
-                PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "ASC") }
-                PREFS_SortOrientation = "ASC"
+            else if (PREFS_music_sortOrientation == "DESC"){
+                PREFS_MediaStore.edit { putString("PREFS_music_sortOrientation", "ASC") }
+                PREFS_music_sortOrientation = "ASC"
                 setAndShowOrientationType("ASC")
             }
         }
@@ -294,8 +299,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
 
 
         //面板下滑关闭(NestedScrollView)
-        if (!PREFS_CloseFragmentGesture){
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
                 var down_y = 0f
                 var deltaY = 0f
                 var deltaY_ReachPadding = false
@@ -347,7 +351,7 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                     return@setOnTouchListener false
                 }
             }
-            else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+        else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
                 var down_y = 0f
                 var deltaY = 0f
                 var down_x = 0f
@@ -404,7 +408,6 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
                     return@setOnTouchListener false
                 }
             }
-        }
         //监听返回手势(DialogFragment)
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
@@ -413,7 +416,6 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
             }
             return@setOnKeyListener false
         }
-
     //onViewCreated END
     }
 
@@ -456,56 +458,56 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         when(type){
             "info_title" -> {
                 current_sort_type?.text = "已选择：文件名"
-                PREFS_SortOrder = "info_title"
+                PREFS_music_sortOrder = "info_title"
             }
             "info_duration" -> {
                 current_sort_type?.text = "已选择：时长"
-                PREFS_SortOrder = "info_duration"
+                PREFS_music_sortOrder = "info_duration"
             }
             "info_date_added" -> {
                 current_sort_type?.text = "已选择：添加日期"
-                PREFS_SortOrder = "info_date_added"
+                PREFS_music_sortOrder = "info_date_added"
             }
             "info_file_size" -> {
                 current_sort_type?.text = "已选择：文件大小"
-                PREFS_SortOrder = "info_file_size"
+                PREFS_music_sortOrder = "info_file_size"
             }
             "info_mime_type" -> {
                 current_sort_type?.text = "已选择：文件格式"
-                PREFS_SortOrder = "info_mime_type"
+                PREFS_music_sortOrder = "info_mime_type"
             }
             "" -> {
-                if (PREFS_MediaStore.contains("PREFS_SortOrder")){
-                    if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_title"){
+                if (PREFS_MediaStore.contains("PREFS_music_sortOrder")){
+                    if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_title"){
                         current_sort_type?.text = "文件名"
-                        PREFS_SortOrder = "info_title"
+                        PREFS_music_sortOrder = "info_title"
                     }
-                    else if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_duration"){
+                    else if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_duration"){
                         current_sort_type?.text = "时长"
-                        PREFS_SortOrder = "info_duration"
+                        PREFS_music_sortOrder = "info_duration"
                     }
-                    else if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_date_added"){
+                    else if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_date_added"){
                         current_sort_type?.text = "添加日期"
-                        PREFS_SortOrder = "info_date_added"
+                        PREFS_music_sortOrder = "info_date_added"
                     }
-                    else if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_file_size"){
+                    else if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_file_size"){
                         current_sort_type?.text = "文件大小"
-                        PREFS_SortOrder = "info_file_size"
+                        PREFS_music_sortOrder = "info_file_size"
                     }
-                    else if (PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") == "info_mime_type"){
+                    else if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_mime_type"){
                         current_sort_type?.text = "文件格式"
-                        PREFS_SortOrder = "info_mime_type"
+                        PREFS_music_sortOrder = "info_mime_type"
                     }
                     else {
-                        PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title") }
+                        PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_title") }
                         current_sort_type?.text = "文件名"
-                        PREFS_SortOrder = "info_title"
+                        PREFS_music_sortOrder = "info_title"
                     }
                 }
                 else{
-                    PREFS_MediaStore.edit { putString("PREFS_SortType", "info_title") }
+                    PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_title") }
                     current_sort_type?.text = "文件名"
-                    PREFS_SortOrder = "info_title"
+                    PREFS_music_sortOrder = "info_title"
                 }
             }
         }
@@ -515,32 +517,32 @@ class MainActivityFragmentMediaStoreSettings: DialogFragment() {
         when(type_DESC_or_ASC){
             "DESC" -> {
                 current_sort_orientation?.text = "已修改为降序"
-                PREFS_SortOrientation = "DESC"
+                PREFS_music_sortOrientation = "DESC"
             }
             "ASC" -> {
                 current_sort_orientation?.text = "已修改为升序"
-                PREFS_SortOrientation = "ASC"
+                PREFS_music_sortOrientation = "ASC"
             }
             "" -> {
-                if (PREFS_MediaStore.contains("PREFS_SortOrientation")){
-                    if (PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") == "DESC"){
+                if (PREFS_MediaStore.contains("PREFS_music_sortOrientation")){
+                    if (PREFS_MediaStore.getString("PREFS_music_sortOrientation", "DESC") == "DESC"){
                         current_sort_orientation?.text = "降序"
-                        PREFS_SortOrientation = "DESC"
+                        PREFS_music_sortOrientation = "DESC"
                     }
-                    else if (PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") == "ASC"){
+                    else if (PREFS_MediaStore.getString("PREFS_music_sortOrientation", "DESC") == "ASC"){
                         current_sort_orientation?.text = "升序"
-                        PREFS_SortOrientation = "ASC"
+                        PREFS_music_sortOrientation = "ASC"
                     }
                     else {
-                        PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC") }
+                        PREFS_MediaStore.edit { putString("PREFS_music_sortOrientation", "DESC") }
                         current_sort_orientation?.text = "降序"
-                        PREFS_SortOrientation = "DESC"
+                        PREFS_music_sortOrientation = "DESC"
                     }
                 }
                 else{
-                    PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC") }
+                    PREFS_MediaStore.edit { putString("PREFS_music_sortOrientation", "DESC") }
                     current_sort_orientation?.text = "降序"
-                    PREFS_SortOrientation = "DESC"
+                    PREFS_music_sortOrientation = "DESC"
                 }
             }
         }

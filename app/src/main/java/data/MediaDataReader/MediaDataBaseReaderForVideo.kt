@@ -43,17 +43,17 @@ class MediaDataBaseReaderForVideo(
             }else{
                 PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
             }
-            if (PREFS_MediaStore.contains("PREFS_SortOrder")){
-                sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
+            if (PREFS_MediaStore.contains("PREFS_video_sortOrder")){
+                sortOrder = PREFS_MediaStore.getString("PREFS_video_sortOrder", "info_title") ?: "info_title"
             }else{
                 sortOrder = "info_title"
-                PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_title").apply() }
+                PREFS_MediaStore.edit { putString("PREFS_video_sortOrder", "info_title").apply() }
             }
-            if (PREFS_MediaStore.contains("PREFS_SortOrientation")){
-                sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
+            if (PREFS_MediaStore.contains("PREFS_video_sortOrientation")){
+                sortOrientation = PREFS_MediaStore.getString("PREFS_video_sortOrientation", "DESC") ?: "DESC"
             }else{
                 sortOrientation = "DESC"
-                PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC").apply() }
+                PREFS_MediaStore.edit { putString("PREFS_video_sortOrientation", "DESC").apply() }
             }
             val sortMethod = "$sortOrder $sortOrientation"
 

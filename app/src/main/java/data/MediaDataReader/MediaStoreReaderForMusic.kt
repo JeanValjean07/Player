@@ -5,6 +5,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.content.SharedPreferences
 import android.provider.MediaStore
+import android.util.Log
 import androidx.core.content.edit
 import com.suming.player.ToolEventBus
 import data.DataBaseMusicStore.MusicStoreRepo
@@ -19,8 +20,6 @@ class MediaStoreReaderForMusic(
     private val context: Context,
     private val contentResolver: ContentResolver,
 ) {
-    //协程作用域：保存到数据库
-    private val coroutineScope_save_to_room = CoroutineScope(Dispatchers.IO + SupervisorJob())
     //设置项
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
@@ -127,8 +126,6 @@ class MediaStoreReaderForMusic(
                         )
                     }
                 }
-                //读取完后发布通知消息
-                ToolEventBus.sendEvent("MediaStore_Music_Query_Complete")
                 //return
                 list
             } ?: emptyList()
@@ -139,34 +136,33 @@ class MediaStoreReaderForMusic(
 
     //Functions
     //保存到数据库
-    suspend fun saveMusicsToDatabase(videos: List<MediaItemForMusic>) {
+    suspend fun saveMusicsToDatabase(musics: List<MediaItemForMusic>) {
 
         val musicStoreRepo = MusicStoreRepo.get(context)
 
-        val musicStoreSettings = videos.map { video ->
-            //查询是否已存在该记录
-            val existingSetting = musicStoreRepo.getMusic(video.id.toString())
-
+        val musicStoreSettings = musics.map { music ->
+            Log.d("SuMing", "saveMusicsToDatabase: $music")
             MusicStoreSetting(
-                MARK_Uri_numOnly = video.id.toString(),
-                info_filename = video.name,
-                info_title = video.title,
-                info_artist = video.artist,
-                info_duration = video.durationMs,
-                info_file_size = video.sizeBytes,
-                info_uri_full = video.uri.toString(),
-                info_date_added = video.dateAdded,
-                info_format = video.format,
-                info_album_id = video.albumId,
-                info_album = video.album,
+                MARK_Uri_numOnly = music.id.toString(),
+                info_filename = music.name,
+                info_title = music.title,
+                info_artist = music.artist,
+                info_duration = music.durationMs,
+                info_file_size = music.sizeBytes,
+                info_uri_full = music.uri.toString(),
+                info_date_added = music.dateAdded,
+                info_format = music.format,
+                info_album_id = music.albumId,
+                info_album = music.album,
             )
+
         }
 
         withContext(Dispatchers.IO) {
 
             musicStoreRepo.saveAllMusics(musicStoreSettings)
 
-            cleanupDeletedMusics(videos.map { it.id.toString() }, musicStoreRepo)
+            cleanupDeletedMusics(musics.map { it.id.toString() }, musicStoreRepo)
 
         }
     }
@@ -203,8 +199,7 @@ class MediaStoreReaderForMusic(
             }
         }
         //发布删除完成通知
-        ToolEventBus.sendEvent("MediaStore_NoExist_Delete_Complete")
+        ToolEventBus.sendEvent("QueryFromMediaStoreMusicComplete")
     }
-
 
 }

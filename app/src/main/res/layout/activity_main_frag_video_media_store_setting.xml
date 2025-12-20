@@ -53,7 +53,7 @@
                         android:gravity="start"
                         android:backgroundTint="@android:color/transparent"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/ic_more_button_exit"
+                        android:src="@drawable/ic_main_fragment_video_icon"
                         android:contentDescription="关闭本页面"
                         android:tooltipText="关闭本页面" />
                     <!-- 标题文本：设置 -->
@@ -61,7 +61,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="媒体库和列表设置"
+                        android:text="视频库选项"
                         android:textColor="@color/HeadText"
                         android:textSize="20sp" />
                     <View
@@ -86,7 +86,6 @@
                 android:id="@+id/NestedScrollView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
-                <!-- 滚动区域 -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -110,7 +109,7 @@
                             android:layout_marginBottom="7dp"
                             android:gravity="center"
                             android:layout_gravity="center"
-                            android:text="重读本机媒体"
+                            android:text="重读本机视频"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
                     </androidx.cardview.widget.CardView>
@@ -328,7 +327,7 @@
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
-                    <!-- 卡片：默认页签 -->
+                    <!-- 卡片：通用设置 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -345,6 +344,31 @@
                             android:layout_marginBottom="5dp"
                             android:layout_marginStart="5dp"
                             android:orientation="vertical">
+                            <!-- 标题：媒体储存提示 -->
+                            <LinearLayout
+                                android:id="@+id/SyncSettingsCard"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_main_fragment_sync_link"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="通用设置"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2" />
+                            </LinearLayout>
                             <!-- 列表选项：默认启动时页签 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -384,25 +408,6 @@
                                     android:textColor="@color/Text2"
                                     tools:ignore="SmallSp" />
                             </LinearLayout>
-                        </LinearLayout>
-                    </androidx.cardview.widget.CardView>
-                    <!-- 卡片：开关 -->
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/Background4"
-                        app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
-                            android:layout_marginBottom="5dp"
-                            android:layout_marginStart="5dp"
-                            android:orientation="vertical">
                             <!-- 开关：视频有效性检查 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -459,7 +464,8 @@
                             android:layout_marginTop="5dp"
                             android:layout_marginBottom="5dp"
                             android:layout_marginStart="5dp"
-                            android:orientation="vertical">
+                            android:orientation="vertical"
+                            tools:ignore="SmallSp" >
                             <!-- 标题：媒体储存提示 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -478,33 +484,52 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="媒体储存提示"
+                                    android:text="媒体储存和权限提示"
                                     android:textSize="16sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:textColor="@color/Text2" />
                             </LinearLayout>
-                            <!-- 标题：媒体储存提示 -->
+                            <!-- 文本区域：权限提示 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:minHeight="20dp"
+                                android:layout_marginBottom="15dp"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="如果您的系统版本达到安卓13及以上，请务必开启管理所有文件权限，否则无法读取部分目录下的视频文件，无法解码除.mp4外的视频文件媒体信息。安卓12及以下只需开启基本“仅媒体”权限即可。"
+                                    android:textSize="10sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginEnd="10dp"
+                                    android:textColor="@color/Text2"
+                                    />
+                            </LinearLayout>
+                            <!-- 文本区域：媒体储存提示 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="20dp"
+                                android:layout_marginBottom="10dp"
                                 android:orientation="horizontal">
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="基于安卓媒体库的读取方法依赖系统内容提供器“媒体储存”。请勿卸载或冻结系统“媒体储存”应用程序,请勿清除其数据或缓存。(com.android.providers.media.module)"
-                                    android:textSize="12sp"
+                                    android:textSize="10sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
+                                    android:layout_marginEnd="10dp"
+                                    android:textColor="@color/Text2"
+                                    />
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
-
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
-
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

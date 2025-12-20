@@ -200,6 +200,7 @@ class PlayerFragmentPlayList: DialogFragment() {
         //按钮：锁定页面
         val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
         ButtonLock.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
             lockPage = !lockPage
             if (lockPage) {
                 ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
@@ -278,7 +279,118 @@ class PlayerFragmentPlayList: DialogFragment() {
 
 
 
+        //面板下滑关闭(NestedScrollView)
+        if (!vm.PREFS_CloseFragmentGesture){
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+                var down_y = 0f
+                var deltaY = 0f
+                var deltaY_ReachPadding = false
+                val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                val RootCardOriginY = RootCard.translationY
+                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+                var NestedScrollViewAtTop = true
+                NestedScrollView.setOnTouchListener { _, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            deltaY_ReachPadding = false
+                            if (NestedScrollView.scrollY != 0){
+                                NestedScrollViewAtTop = false
+                                return@setOnTouchListener false
+                            }else{
+                                NestedScrollViewAtTop = true
+                                down_y = event.rawY
+                            }
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            if (!NestedScrollViewAtTop){
+                                return@setOnTouchListener false
+                            }
+                            deltaY = event.rawY - down_y
+                            if (deltaY < 0){
+                                return@setOnTouchListener false
+                            }
+                            if (deltaY >= 400f){
+                                if (!deltaY_ReachPadding){
+                                    deltaY_ReachPadding = true
+                                    ToolVibrate().vibrate(requireContext())
+                                }
+                            }
+                            RootCard.translationY = RootCardOriginY + deltaY
+                            return@setOnTouchListener true
+                        }
+                        MotionEvent.ACTION_UP -> {
+                            if (deltaY >= 400f){
+                                Dismiss(false)
+                            }else{
+                                RootCard.animate()
+                                    .translationY(0f)
+                                    .setInterpolator(DecelerateInterpolator(1f))
+                                    .duration = 300
+                            }
 
+                        }
+                    }
+                    return@setOnTouchListener false
+                }
+            }
+            else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                var down_y = 0f
+                var deltaY = 0f
+                var down_x = 0f
+                var deltaX = 0f
+                var deltaX_ReachPadding = false
+                var Y_move_ensure = false
+                val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                val RootCardOriginX = RootCard.translationX
+                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+                NestedScrollView.setOnTouchListener { _, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            down_x = event.rawX
+                            down_y = event.rawY
+                            Y_move_ensure = false
+                            deltaX_ReachPadding = false
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            deltaY = event.rawY - down_y
+                            deltaX = event.rawX - down_x
+                            if (deltaX < 0){
+                                return@setOnTouchListener false
+                            }
+                            if (deltaX >= 200f){
+                                if (!deltaX_ReachPadding){
+                                    deltaX_ReachPadding = true
+                                    ToolVibrate().vibrate(requireContext())
+                                }
+                            }
+                            if (Y_move_ensure){
+                                return@setOnTouchListener false
+                            }
+                            if (abs(deltaY) > abs(deltaX)){
+                                Y_move_ensure = true
+                                return@setOnTouchListener false
+                            }
+                            RootCard.translationX = RootCardOriginX + deltaX
+                            return@setOnTouchListener true
+                        }
+                        MotionEvent.ACTION_UP -> {
+                            if (Y_move_ensure){
+                                return@setOnTouchListener false
+                            }
+                            if (deltaX >= 200f){
+                                Dismiss(false)
+                            }else{
+                                RootCard.animate()
+                                    .translationX(0f)
+                                    .setInterpolator(DecelerateInterpolator(1f))
+                                    .duration = 300
+                            }
+                        }
+                    }
+                    return@setOnTouchListener false
+                }
+            }
+        }
         //监听返回手势(DialogFragment)
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
@@ -289,6 +401,7 @@ class PlayerFragmentPlayList: DialogFragment() {
         }
     //onViewCreated END
     }
+
 
     private fun initRecyclerView(){
 

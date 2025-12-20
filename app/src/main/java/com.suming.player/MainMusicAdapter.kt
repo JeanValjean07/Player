@@ -38,11 +38,12 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import androidx.core.net.toUri
 import kotlinx.coroutines.Job
+import androidx.core.graphics.createBitmap
 
 class MainMusicAdapter(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
-    private val onOptionsClick: (MediaItemForMusic, View) -> Unit
+    private val onOptionsClick: (MediaItemForMusic, View) -> Unit,
 ):PagingDataAdapter<MediaItemForMusic, MainMusicAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
@@ -147,9 +148,7 @@ class MainMusicAdapter(
                         covers_path.mkdirs()
                     }
                     //图片裁剪：最好裁剪成ImageView一样的比例
-                    val targetWidth = 400
-                    val targetHeight = (targetWidth * 1 / 1)
-                    val processedBitmap = processCenterCrop(bitmap, targetWidth, targetHeight)
+                    val processedBitmap = processCenterCrop(bitmap)
                     //保存图片
                     val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
                     cover_item_file.outputStream().use {
@@ -194,23 +193,24 @@ class MainMusicAdapter(
             }
         }
     }
-    private fun processCenterCrop(src: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
+    private fun processCenterCrop(src: Bitmap): Bitmap {
+        //以后可以添加为传入量
+        //processCenterCrop(src: Bitmap, targetWidth: Int = 300, targetHeight: Int): Bitmap {
+        val targetWidth = 400
+        val targetHeight = (targetWidth * 1 / 1)
+
         val srcWidth = src.width
         val srcHeight = src.height
 
-        // 计算缩放比例
         val scale = (targetWidth.toFloat() / srcWidth).coerceAtLeast(targetHeight.toFloat() / srcHeight)
 
-        // 计算缩放后的中间尺寸
         val scaledWidth = scale * srcWidth
         val scaledHeight = scale * srcHeight
 
-        // 计算裁剪起始点 (居中)
         val left = (targetWidth - scaledWidth) / 2f
         val top = (targetHeight - scaledHeight) / 2f
 
-        // 创建目标画布
-        val targetBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565) // 进一步节省内存
+        val targetBitmap = createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565)
         val canvas = Canvas(targetBitmap)
         val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG)
 
@@ -224,7 +224,7 @@ class MainMusicAdapter(
     private fun vectorToBitmap(context: Context, @DrawableRes resId: Int): Bitmap? {
         val drawable = AppCompatResources.getDrawable(context, resId) ?: return null
 
-        val bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(100, 100)
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)

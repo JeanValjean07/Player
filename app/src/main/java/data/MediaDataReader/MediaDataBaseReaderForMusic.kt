@@ -35,21 +35,21 @@ class MediaDataBaseReaderForMusic(
             val musicStoreRepo = MusicStoreRepo.get(context)
             val totalCount = musicStoreRepo.getTotalMusicCount()
             //排序字段
-            var sortOrder = "info_title"
-            var sortOrientation = "DESC"
+            var sortOrder: String
+            var sortOrientation: String
             //读取媒体库设置
             PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-            if (PREFS_MediaStore.contains("PREFS_SortOrder")){
-                sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
+            if (PREFS_MediaStore.contains("PREFS_music_sortOrder")){
+                sortOrder = PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") ?: "info_title"
             }else{
                 sortOrder = "info_title"
-                PREFS_MediaStore.edit { putString("PREFS_SortOrder", "info_title").apply() }
+                PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_title").apply() }
             }
-            if (PREFS_MediaStore.contains("PREFS_SortOrientation")){
-                sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
+            if (PREFS_MediaStore.contains("PREFS_music_sortOrientation")){
+                sortOrientation = PREFS_MediaStore.getString("PREFS_music_sortOrientation", "DESC") ?: "DESC"
             }else{
                 sortOrientation = "DESC"
-                PREFS_MediaStore.edit { putString("PREFS_SortOrientation", "DESC").apply() }
+                PREFS_MediaStore.edit { putString("PREFS_music_sortOrientation", "DESC").apply() }
             }
             val sortMethod = "$sortOrder $sortOrientation"
 

@@ -38,6 +38,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.get
 
 class MainVideoAdapter(
     private val context: Context,
@@ -46,7 +48,7 @@ class MainVideoAdapter(
     private val onOptionClick: (MediaItemForVideo) -> Unit,
     private val onItemHideClick: (Uri, Boolean) -> Unit,
     private val onFormatClick: (MediaItemForVideo, String) -> Unit,
-    private val onSmallCardPlay: (Uri, String) -> Unit
+    private val onSmallCardPlay: (Uri, String) -> Unit,
 ):PagingDataAdapter<MediaItemForVideo, MainVideoAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
@@ -141,7 +143,7 @@ class MainVideoAdapter(
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
         super.onViewDetachedFromWindow(holder)
         val position = holder.bindingAdapterPosition
-        val item = getItem(position) ?: return
+        if (position == RecyclerView.NO_POSITION) return
         holder.tvFrameLoadingJob?.cancel()
 
     }
@@ -216,36 +218,41 @@ class MainVideoAdapter(
                 context.contentResolver.openFileDescriptor(item.uri, "r")?.use { pfd ->
                     retriever.setDataSource(pfd.fileDescriptor)
                 }
-                //获取视频封面帧：需升级
-                val bitmap = retriever.getFrameAtTime(1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                //生成成功
+                //获取视频封面帧
+                var bitmap = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                //检查是否为黑屏
                 if (bitmap != null){
-                    //创建目录
-                    if (!covers_path.exists()) {
-                        covers_path.mkdirs()
+                    if (isDarkFrame(bitmap)) {
+                        bitmap = retriever.getFrameAtTime(item.durationMs * 1000 / 2, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                     }
-                    //图片裁剪：最好裁剪成ImageView一样的比例
-                    val targetWidth = 400
-                    val targetHeight = (targetWidth * 9 / 10)
-                    val processedBitmap = processCenterCrop(bitmap, targetWidth, targetHeight)
-                    //保存图片
-                    val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
-                    cover_item_file.outputStream().use {
-                        processedBitmap.compress(Bitmap.CompressFormat.WEBP, 50, it)
-                    }
-                    //刷新页面
-                    withContext(Dispatchers.Main){
-                        holder.tvFrame.setImageBitmap(processedBitmap)
-                        //holder.tvFrame.startAnimation(FadeInAnimation)
-                    }
+                    if (bitmap != null) {
+                        //创建目录
+                        if (!covers_path.exists()) {
+                            covers_path.mkdirs()
+                        }
+                        //图片裁剪：最好裁剪成ImageView一样的比例
+                        val targetWidth = 400
+                        val targetHeight = (targetWidth * 9 / 10)
+                        val processedBitmap = processCenterCrop(bitmap)
+                        //保存图片
+                        val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
+                        cover_item_file.outputStream().use {
+                            processedBitmap.compress(Bitmap.CompressFormat.WEBP, 50, it)
+                        }
+                        //刷新页面
+                        withContext(Dispatchers.Main) {
+                            holder.tvFrame.setImageBitmap(processedBitmap)
+                            //holder.tvFrame.startAnimation(FadeInAnimation)
+                        }
 
-                    if (bitmap != processedBitmap) {
-                        bitmap.recycle()
+                        if (bitmap != processedBitmap) {
+                            bitmap.recycle()
+                        }
                     }
                 }
-                //生成失败
+                //使用默认占位图
                 else{
-                    Toast.makeText(context, "存在无法生成缩略图的视频,请手动为其截取", Toast.LENGTH_SHORT).show()
+
                 }
             }
             catch (e: Exception) {
@@ -256,23 +263,24 @@ class MainVideoAdapter(
             }
         }
     }
-    private fun processCenterCrop(src: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
+    private fun processCenterCrop(src: Bitmap): Bitmap {
+        //以后可以添加为传入量
+        //processCenterCrop(src: Bitmap, targetWidth: Int = 300, targetHeight: Int): Bitmap {
+        val targetWidth = 400
+        val targetHeight = (targetWidth * 9 / 10)
+
         val srcWidth = src.width
         val srcHeight = src.height
 
-        // 计算缩放比例
         val scale = (targetWidth.toFloat() / srcWidth).coerceAtLeast(targetHeight.toFloat() / srcHeight)
 
-        // 计算缩放后的中间尺寸
         val scaledWidth = scale * srcWidth
         val scaledHeight = scale * srcHeight
 
-        // 计算裁剪起始点 (居中)
         val left = (targetWidth - scaledWidth) / 2f
         val top = (targetHeight - scaledHeight) / 2f
 
-        // 创建目标画布
-        val targetBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565) // 进一步节省内存
+        val targetBitmap = createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565)
         val canvas = Canvas(targetBitmap)
         val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG)
 
@@ -280,6 +288,33 @@ class MainVideoAdapter(
         canvas.drawBitmap(src, null, destRect, paint)
 
         return targetBitmap
+    }
+
+    //黑屏评估
+    private fun isDarkFrame(bmp: Bitmap, darkThreshold: Int = 20, ratioThreshold: Float = 0.9f, sampleStep: Int = 4): Boolean {
+        val w = bmp.width
+        val h = bmp.height
+        //
+        val left = (w / 3)
+        val right = 2 * w / 3
+        val top = h / 3
+        val bottom = 2 * h / 3
+
+        var darkCount = 0
+        var totalCount = 0
+
+        for (y in top until bottom step sampleStep) {
+            for (x in left until right step sampleStep) {
+                val pixel = bmp[x, y]
+                val r = (pixel shr 16) and 0xff
+                val g = (pixel shr 8) and 0xff
+                val b = pixel and 0xff
+                val brightness = (0.299 * r + 0.587 * g + 0.114 * b).toInt()
+                if (brightness <= darkThreshold) darkCount++
+                totalCount++
+            }
+        }
+        return darkCount.toFloat() / totalCount >= ratioThreshold
     }
 
 
