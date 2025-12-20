@@ -999,10 +999,7 @@ class MainActivity: AppCompatActivity() {
                 },
                 onOptionsClick = { item, view ->
                     ToolVibrate().vibrate(this@MainActivity)
-                    val popup = PopupMenu(this, view)
-                    popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
-                    popup.setOnMenuItemClickListener { /*handle*/; true }
-                    popup.show()
+
                 },
             )
             //设置adapter
@@ -1271,6 +1268,14 @@ class MainActivity: AppCompatActivity() {
                     main_music_list_adapter.refresh()
                 }
             }
+            //播放器状态变更
+            "PlayerSingleton_PlaybackStateChanged" -> {
+                setPlayingCardButton()
+            }
+            "PlayerSingleton_MediaItemChanged" -> {
+                ResetPlayingCard()
+                setHighRefreshRate()
+            }
 
             //????
             "MediaStore_Refresh_Complete" -> {
@@ -1278,13 +1283,6 @@ class MainActivity: AppCompatActivity() {
                 //让播放器重读媒体列表
                 //Log.d("SuMing", "HandlePlayerEvent: MediaStore_Video_Query_Complete")
                 PlayerSingleton.getMediaListByDataBaseChange(application)
-            }
-            "PlayerSingleton_PlaybackStateChanged" -> {
-                setPlayingCardButton()
-            }
-            "PlayerSingleton_MediaItemChanged" -> {
-                ResetPlayingCard()
-                setHighRefreshRate()
             }
             "ExistInvalidMediaItem" -> {
                 existInvalidMediaItem()

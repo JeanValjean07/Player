@@ -1,8 +1,6 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
-import android.content.ContentResolver
-import android.content.ContentUris
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -11,32 +9,26 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.provider.MediaStore
 import android.util.Log
-import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import data.MediaModel.MediaItemForMusic
-import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import androidx.core.net.toUri
 import kotlinx.coroutines.Job
 import androidx.core.graphics.createBitmap
 
@@ -166,7 +158,7 @@ class MainMusicAdapter(
                 }
                 //生成失败:把默认占位图做成缩略图
                 else{
-                    val defaultBitmap = vectorToBitmap(context, R.drawable.ic_music_music_album) ?: return@launch
+                    val defaultBitmap = vectorToBitmap(context, R.drawable.ic_album_music_album) ?: return@launch
                     //val processedBitmap = processCenterCrop(defaultBitmap, 50, 50)
                     //创建目录
                     if (!covers_path.exists()) {

@@ -3,7 +3,6 @@ package data.MediaDataReader
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.paging.PagingSource

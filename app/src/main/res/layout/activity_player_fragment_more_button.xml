@@ -895,7 +895,7 @@
                                     android:id="@+id/buttonUpdateCover"
                                     android:layout_width="35dp"
                                     android:layout_height="20dp"
-                                    android:text="截取"
+                                    android:text="选择"
                                     android:textSize="14sp"
                                     android:gravity="center"
                                     android:layout_gravity="center"

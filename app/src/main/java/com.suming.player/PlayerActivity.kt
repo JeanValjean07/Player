@@ -9,13 +9,15 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat.JPEG
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
 import android.hardware.display.DisplayManager
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
@@ -60,8 +62,10 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.NotificationCompat
@@ -79,7 +83,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
@@ -1564,8 +1567,19 @@ class PlayerActivity: AppCompatActivity(){
                         shareVideo(this@PlayerActivity, MediaInfo_MediaUri)
                     }
                 }
-                "UpdateCover" -> {
-                    updateCover(MediaInfo_FileName)
+                "updateCoverFrame" -> {
+                    val Method = bundle.getString("Method")
+                    when(Method){
+                        "useCurrentFrame" -> {
+                            CaptureCurrentFrameAsCover(MediaInfo_FileName)
+                        }
+                        "useDefaultCover" -> {
+                            useDefaultCover(MediaInfo_FileName)
+                        }
+                        "pickFromLocal" -> {
+                            showCustomToast("暂不支持此功能", Toast.LENGTH_SHORT, 3)
+                        }
+                    }
                 }
                 "Equalizer" -> {
                     PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
@@ -2969,7 +2983,7 @@ class PlayerActivity: AppCompatActivity(){
     }
     //更新封面
     @SuppressLint("UseKtx")
-    private fun updateCover(filename: String) {
+    private fun CaptureCurrentFrameAsCover(filename: String) {
         fun handleSuccess(bitmap: Bitmap) {
             //创建文件占位并保存
             val cover_file = File(filesDir, "miniature/cover/${filename.hashCode()}.webp")
@@ -3004,6 +3018,61 @@ class PlayerActivity: AppCompatActivity(){
             )
         }
     }
+    private fun useDefaultCover(filename: String){
+        val defaultCoverBitmap = vectorToBitmap(this, R.drawable.ic_album_video_album)
+        if (defaultCoverBitmap == null) {
+            showCustomToast("从本地文件提取默认封面素材失败", Toast.LENGTH_SHORT,3)
+            return
+        }
+        val processedBitmap = processCenterCrop(defaultCoverBitmap)
+        //创建目录
+        val covers_path = File(filesDir, "miniature/cover")
+        if (!covers_path.exists()) { covers_path.mkdirs() }
+        //保存图片
+        val cover_item_file = File(covers_path, "${filename.hashCode()}.webp")
+        cover_item_file.outputStream().use {
+            processedBitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
+        }
+        //发布完成消息
+        ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", filename))
+        showCustomToast("已完成", Toast.LENGTH_SHORT,3)
+    }
+    private fun processCenterCrop(src: Bitmap): Bitmap {
+        //以后可以添加为传入量
+        //processCenterCrop(src: Bitmap, targetWidth: Int = 300, targetHeight: Int): Bitmap {
+        val targetWidth = 400
+        val targetHeight = (targetWidth * 10 / 9)
+
+        val srcWidth = src.width
+        val srcHeight = src.height
+
+        val scale = (targetWidth.toFloat() / srcWidth).coerceAtLeast(targetHeight.toFloat() / srcHeight)
+
+        val scaledWidth = scale * srcWidth
+        val scaledHeight = scale * srcHeight
+
+        val left = (targetWidth - scaledWidth) / 2f
+        val top = (targetHeight - scaledHeight) / 2f
+
+        val targetBitmap = createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565)
+        val canvas = Canvas(targetBitmap)
+        val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG)
+
+        val destRect = RectF(left, top, left + scaledWidth, top + scaledHeight)
+        canvas.drawBitmap(src, null, destRect, paint)
+
+        return targetBitmap
+    }
+    private fun vectorToBitmap(context: Context, @DrawableRes resId: Int): Bitmap? {
+        val drawable = AppCompatResources.getDrawable(context, resId) ?: return null
+
+        val bitmap = createBitmap(400, 600)
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+
+        return bitmap
+    } //矢量图转Bitmap
     //分享视频by uri
     private fun shareVideo(context: Context, videoUri: Uri) {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {

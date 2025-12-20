@@ -1,0 +1,14 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText" >
+    <item
+        android:id="@+id/item_useCurrentFrame"
+        android:title="截取视频当前帧" />
+    <item
+        android:id="@+id/item_useDefaultCover"
+        android:title="不展示封面丨使用默认封面" />
+    <item
+        android:id="@+id/item_pickFromLocal"
+        android:title="从本地相册选择" />
+</menu>

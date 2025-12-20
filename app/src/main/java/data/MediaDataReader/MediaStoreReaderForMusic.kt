@@ -5,15 +5,12 @@ import android.content.ContentUris
 import android.content.Context
 import android.content.SharedPreferences
 import android.provider.MediaStore
-import android.util.Log
 import androidx.core.content.edit
 import com.suming.player.ToolEventBus
 import data.DataBaseMusicStore.MusicStoreRepo
 import data.DataBaseMusicStore.MusicStoreSetting
 import data.MediaModel.MediaItemForMusic
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 
 class MediaStoreReaderForMusic(
@@ -141,7 +138,7 @@ class MediaStoreReaderForMusic(
         val musicStoreRepo = MusicStoreRepo.get(context)
 
         val musicStoreSettings = musics.map { music ->
-            Log.d("SuMing", "saveMusicsToDatabase: $music")
+
             MusicStoreSetting(
                 MARK_Uri_numOnly = music.id.toString(),
                 info_filename = music.name,

@@ -381,9 +381,43 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //按钮：更新封面
         val ButtonUpdateCover = view.findViewById<TextView>(R.id.buttonUpdateCover)
         ButtonUpdateCover.setOnClickListener {
-            val result = bundleOf("KEY" to "UpdateCover")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-            Dismiss()
+            ToolVibrate().vibrate(requireContext())
+            val popup = PopupMenu(requireContext(), ButtonUpdateCover)
+            popup.menuInflater.inflate(R.menu.activity_player_popup_change_cover, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.item_useCurrentFrame -> {
+                        ToolVibrate().vibrate(requireContext())
+
+                        val result = bundleOf("KEY" to "updateCoverFrame", "Method" to "useCurrentFrame")
+                        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
+                        Dismiss();true
+                    }
+
+                    R.id.item_useDefaultCover -> {
+                        ToolVibrate().vibrate(requireContext())
+
+                        val result = bundleOf("KEY" to "updateCoverFrame", "Method" to "useDefaultCover")
+                        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
+                        customDismiss();true
+                    }
+
+                    R.id.item_pickFromLocal -> {
+                        ToolVibrate().vibrate(requireContext())
+
+                        val result = bundleOf("KEY" to "updateCoverFrame", "Method" to "pickFromLocal")
+                        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
+                        customDismiss();true
+                    }
+
+                    else -> true
+                }
+            }
+            popup.show()
+
         }
         //按钮：提取帧
         val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
