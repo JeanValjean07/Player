@@ -2,46 +2,38 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.app.Dialog
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.media.AudioFocusRequest
-import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.media3.session.MediaController
-import com.google.common.util.concurrent.ListenableFuture
-import data.DataBaseMediaItem.MediaItemDataBase
+import androidx.media3.common.util.UnstableApi
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
 import java.io.File
-import java.security.MessageDigest
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
@@ -102,6 +94,7 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_VibrateMillis = 0L
     private var PREFS_UseSysVibrate = false
 
+    @OptIn(UnstableApi::class)
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -582,23 +575,27 @@ class SettingsActivity: AppCompatActivity() {
             }
             popup.show()
         }
-
         //重新生成封面
         val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
-        ButtonRemoveAllThumbPath.setOnClickListener { item ->
+        ButtonRemoveAllThumbPath.setOnClickListener {
             ToolVibrate().vibrate(this)
-            if (ButtonRemoveAllThumbPathIndex == 0) {
-                ButtonRemoveAllThumbPathIndex = 1
-                ButtonRemoveAllThumbPath.text = "请再次点击确认重新生成"
-            }
-            else if (ButtonRemoveAllThumbPathIndex == 1) {
-                ButtonRemoveAllThumbPathIndex = 0
-                ButtonRemoveAllThumbPath.text = "已确认重新生成"
+            SettingsFragmentDeleteCover.newInstance().show(supportFragmentManager, "SettingsFragmentDeleteCover")
+        }
 
-                File(filesDir, "miniature/cover").deleteRecursively()
-                File(filesDir, "miniature/music_cover").deleteRecursively()
 
-                showCustomToast("重启APP后会重新截取封面", Toast.LENGTH_SHORT, 3)
+        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_DELETE_COVER", this) { _, bundle ->
+            val ReceiveKey = bundle.getString("KEY")
+            when (ReceiveKey) {
+                "DeleteAllCover" -> {
+                    File(filesDir, "miniature/cover").deleteRecursively()
+                    File(filesDir, "miniature/music_cover").deleteRecursively()
+                }
+                "DeleteVideoCover" -> {
+                    File(filesDir, "miniature/cover").deleteRecursively()
+                }
+                "DeleteMusicCover" -> {
+                    File(filesDir, "miniature/music_cover").deleteRecursively()
+                }
             }
         }
 
