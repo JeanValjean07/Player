@@ -45,9 +45,11 @@ class MainFragVideoStoreSetting: DialogFragment() {
     private var lockPage = false
     //开关
     private lateinit var switch_EnableFileExistCheck: SwitchCompat
+    private lateinit var switch_QueryNewVideoOnStart: SwitchCompat
     //常规设置项
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
+    private var PREFS_QueryNewVideoOnStart: Boolean = false
     private var PREFS_AcquiesceTab: String = ""
     //排序设置项
     private var PREFS_video_sortOrder: String = "info_title"
@@ -108,6 +110,7 @@ class MainFragVideoStoreSetting: DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //开关实例初始化
         switch_EnableFileExistCheck = view.findViewById(R.id.switch_EnableFileExistCheck)
+        switch_QueryNewVideoOnStart = view.findViewById(R.id.switch_QueryNewVideoOnStart)
         //读取设置
         PREFS_MediaStore = context?.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)!!
         if (!PREFS_MediaStore.contains("PREFS_EnableFileExistCheck")) {
@@ -116,6 +119,13 @@ class MainFragVideoStoreSetting: DialogFragment() {
         } else {
             PREFS_EnableFileExistCheck = PREFS_MediaStore.getBoolean("PREFS_EnableFileExistCheck", false)
         }
+        if (!PREFS_MediaStore.contains("PREFS_QueryNewVideoOnStart")) {
+            PREFS_MediaStore.edit { putBoolean("PREFS_QueryNewVideoOnStart", false) }
+            PREFS_QueryNewVideoOnStart = false
+        } else {
+            PREFS_QueryNewVideoOnStart = PREFS_MediaStore.getBoolean("PREFS_QueryNewVideoOnStart", false)
+        }
+
         if (PREFS_MediaStore.contains("PREFS_AcquiesceTab")){
             PREFS_AcquiesceTab = PREFS_MediaStore.getString("PREFS_AcquiesceTab", "video")?: "error"
             if (PREFS_AcquiesceTab == "error"){
@@ -128,10 +138,15 @@ class MainFragVideoStoreSetting: DialogFragment() {
         }
         //开关置位
         switch_EnableFileExistCheck.isChecked = PREFS_EnableFileExistCheck
+        switch_QueryNewVideoOnStart.isChecked = PREFS_QueryNewVideoOnStart
         //开关点击事件
         switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
             PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", isChecked) }
+        }
+        switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
+            ToolVibrate().vibrate(requireContext())
+            PREFS_MediaStore.edit { putBoolean("PREFS_QueryNewVideoOnStart", isChecked) }
         }
 
 
@@ -243,7 +258,7 @@ class MainFragVideoStoreSetting: DialogFragment() {
             else if(ButtonChangeSortOrder.text == "保存并刷新"){
                 val result = bundleOf("KEY" to "RenovateAdapter")
                 setFragmentResult("FROM_FRAGMENT_VIDEO_MediaStore", result)
-                dismiss()
+                customDismiss()
             }
         }
         //排序方法

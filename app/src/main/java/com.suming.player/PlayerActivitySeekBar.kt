@@ -1376,7 +1376,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
 
                         //计算总分钟数
                         val totalMinutes = hour * 60 + minute
-                        startTimerShutDown(totalMinutes, true)
+
 
                         dialog.dismiss()
                     }
@@ -1390,7 +1390,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                 }
                 "chooseShutDownTime" -> {
                     val time = bundle.getInt("TIME")
-                    startTimerShutDown(time, true)
+
                 }
                 "StartPiP" -> {
                     startFloatingWindow()
@@ -2629,39 +2629,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         }
         val chooser = Intent.createChooser(shareIntent, "分享视频")
         context.startActivity(chooser)
-    }
-    //定时关闭倒计时:接收参数time是分钟
-    private fun startTimerShutDown(time: Int ,flag_need_notice: Boolean){
-        val ShotDownTime = time * 60_000L
-        if (flag_need_notice) { notice("${time}分钟后自动关闭", 3000) }
-        COUNT_Timer?.cancel()
-        COUNT_Timer = object : CountDownTimer(ShotDownTime, 1000000L) {
-            override fun onTick(millisUntilFinished: Long) {}
-            override fun onFinish() { timerShutDown() }
-        }.start()
-    }
-    private fun timerShutDown() {
-        if (playEnd_NeedShutDown) {
-            playEnd_NeedShutDown = false
-            finishAndRemoveTask()
-            val pid = Process.myPid()
-            Process.killProcess(pid)
-            exitProcess(0)
-        }
-        if (vm.PREFS_ShutDownWhenMediaEnd) {
-            notice("本次播放结束后将关闭", 3000)
-            playEnd_NeedShutDown = true
-            val currentPosition = vm.player.currentPosition
-            val duration = vm.player.duration
-            val countSecond = (duration - currentPosition) / 1000L
-            startTimerShutDown(countSecond.toInt(), false)
-        }
-        else{
-            finishAndRemoveTask()
-            val pid = Process.myPid()
-            Process.killProcess(pid)
-            exitProcess(0)
-        }
     }
     //空闲倒计时
     private fun startIdleTimer() {

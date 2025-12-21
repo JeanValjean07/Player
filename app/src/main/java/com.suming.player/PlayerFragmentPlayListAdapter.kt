@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView
 import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,10 +49,11 @@ class PlayerFragmentPlayListAdapter(
     }
     //ViewHolder
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val TouchPad: View = itemView.findViewById(R.id.TouchPad)
-        val tvThumb: ImageView = itemView.findViewById(R.id.tvThumb)
-        val tvName: TextView = itemView.findViewById(R.id.tvName)
-        val tvArtist: TextView = itemView.findViewById(R.id.tvArtist)
+        val itemTouchPad: View = itemView.findViewById(R.id.TouchPad)
+        val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
+        var itemFrameJob: Job? = null
+        val itemName: TextView = itemView.findViewById(R.id.tvName)
+        val itemArtist: TextView = itemView.findViewById(R.id.tvArtist)
         val ButtonDelete: ImageView = itemView.findViewById(R.id.ButtonDelete)
         val ButtonPlay: ImageView = itemView.findViewById(R.id.ButtonPlay)
     }
@@ -73,7 +75,8 @@ class PlayerFragmentPlayListAdapter(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
-        holder.tvName.text = item.name.substringBeforeLast(".")
+        holder.itemName.text = item.name.substringBeforeLast(".")
+
         /*
         holder.tvArtist.text = item.artist.ifEmpty { "未知" }
         val frame = CoverBitmapCache.get(item.name.hashCode())

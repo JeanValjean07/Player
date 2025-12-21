@@ -123,7 +123,6 @@ class PlayerFragmentPlayListPagingSource(
 
             //合成MediaItem
             val mediaItems = mediaStoreSettings
-
                 .map { setting ->
                     MediaItemForVideo(
                         id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,

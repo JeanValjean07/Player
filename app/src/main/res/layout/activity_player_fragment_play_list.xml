@@ -27,6 +27,7 @@
             android:id="@+id/playListArea"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+            <!-- AppBar -->
             <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/AppBar"
                 android:layout_width="wrap_content"
@@ -194,7 +195,6 @@
                                     tools:ignore="ContentDescription" />
                             </LinearLayout>
                         </androidx.cardview.widget.CardView>
-
                     </LinearLayout>
                     <View
                         android:layout_width="match_parent"
@@ -202,6 +202,7 @@
                         android:background="@color/player_scroller_top_line" />
                 </LinearLayout>
             </com.google.android.material.appbar.AppBarLayout>
+            <!-- 滚动区域 -->
             <androidx.core.widget.NestedScrollView
                 android:id="@+id/NestedScrollView"
                 android:layout_width="match_parent"
@@ -217,8 +218,7 @@
                     android:layout_height="match_parent">
                 </androidx.recyclerview.widget.RecyclerView>
             </androidx.core.widget.NestedScrollView>
-
-
+            <!-- compose测试区 -->
             <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/composableView"
                 android:layout_width="match_parent"

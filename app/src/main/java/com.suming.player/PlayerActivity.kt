@@ -207,9 +207,6 @@ class PlayerActivity: AppCompatActivity(){
     //空闲定时器
     private var IDLE_Timer: CountDownTimer? = null
     private val IDLE_MS = 5_000L
-    //定时关闭定时器
-    private var COUNT_Timer: CountDownTimer? = null
-
     private var state_EnterAnimationCompleted = false
     private var fps = 0f
     //更新时间戳参数
@@ -930,6 +927,7 @@ class PlayerActivity: AppCompatActivity(){
             }
             clickMillis_MoreOptionPage = System.currentTimeMillis()
 
+            stopScrollerSync()
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 MovePlayAreaJob()
@@ -1004,6 +1002,7 @@ class PlayerActivity: AppCompatActivity(){
             }
             clickMillis_MoreOptionPage = System.currentTimeMillis()
 
+            stopScrollerSync()
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 MovePlayAreaJob()
@@ -1508,7 +1507,7 @@ class PlayerActivity: AppCompatActivity(){
 
                         //计算总分钟数
                         val totalMinutes = hour * 60 + minute
-                        startTimerShutDown(totalMinutes, true)
+                        //startTimerShutDown(totalMinutes, true)
 
                         dialog.dismiss()
                     }
@@ -1519,10 +1518,6 @@ class PlayerActivity: AppCompatActivity(){
                         EditTextHour.requestFocus()
                         imm.showSoftInput(EditTextHour, InputMethodManager.SHOW_IMPLICIT)
                     }
-                }
-                "chooseShutDownTime" -> {
-                    val time = bundle.getInt("TIME")
-                    startTimerShutDown(time, true)
                 }
                 "StartPiP" -> {
                     startFloatingWindow()
@@ -1592,6 +1587,7 @@ class PlayerActivity: AppCompatActivity(){
                 }
                 //退出事件
                 "Dismiss" -> {
+                    startScrollerSync()
                     MovePlayArea_down()
                 }
             }
@@ -1603,6 +1599,7 @@ class PlayerActivity: AppCompatActivity(){
                 //切换逻辑由播放器单例接管
                 //退出逻辑
                 "Dismiss" -> {
+                    startScrollerSync()
                     MovePlayArea_down()
                 }
             }
@@ -1612,6 +1609,7 @@ class PlayerActivity: AppCompatActivity(){
             val ReceiveKey = bundle.getString("KEY")
             when(ReceiveKey){
                 "Dismiss" -> {
+                    startScrollerSync()
                     MovePlayArea_down()
                 }
             }
@@ -1768,31 +1766,6 @@ class PlayerActivity: AppCompatActivity(){
                 checkPlayerState(3100)
             }
         }
-    }
-    //显示未准备通知
-    private fun showNotification_NotPrepared(text: String) {
-        val channelId = "toast_replace"
-        val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        val channel = NotificationChannel(channelId, "提示", NotificationManager.IMPORTANCE_HIGH)
-            .apply {
-                setSound(null, null)
-                enableVibration(false)
-            }
-        nm.createNotificationChannel(channel)
-
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_player_service_notification)
-            .setContentTitle(null)
-            .setContentText(text)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setDefaults(0)
-            .setAutoCancel(true)
-            .setTimeoutAfter(5_000)
-            .build()
-
-        nm.notify(System.currentTimeMillis().toInt(), notification)
-
     }
     //RxJava事件总线:界面端减少参与播放器单例的控制
     private var state_EventBus_Registered = false
@@ -3082,39 +3055,6 @@ class PlayerActivity: AppCompatActivity(){
         }
         val chooser = Intent.createChooser(shareIntent, "分享视频")
         context.startActivity(chooser)
-    }
-    //定时关闭倒计时:接收参数time是分钟
-    private fun startTimerShutDown(time: Int ,flag_need_notice: Boolean){
-        val ShotDownTime = time * 60_000L
-        if (flag_need_notice) { notice("${time}分钟后自动关闭", 3000) }
-        COUNT_Timer?.cancel()
-        COUNT_Timer = object : CountDownTimer(ShotDownTime, 1000000L) {
-            override fun onTick(millisUntilFinished: Long) {}
-            override fun onFinish() { timerShutDown() }
-        }.start()
-    }
-    private fun timerShutDown() {
-        if (playEnd_NeedShutDown) {
-            playEnd_NeedShutDown = false
-            finishAndRemoveTask()
-            val pid = Process.myPid()
-            Process.killProcess(pid)
-            exitProcess(0)
-        }
-        if (vm.PREFS_ShutDownWhenMediaEnd) {
-            notice("本次播放结束后将关闭", 3000)
-            playEnd_NeedShutDown = true
-            val currentPosition = vm.player.currentPosition
-            val duration = vm.player.duration
-            val countSecond = (duration - currentPosition) / 1000L
-            startTimerShutDown(countSecond.toInt(), false)
-        }
-        else{
-            finishAndRemoveTask()
-            val pid = Process.myPid()
-            Process.killProcess(pid)
-            exitProcess(0)
-        }
     }
     //空闲倒计时
     private fun startIdleTimer() {

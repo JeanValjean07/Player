@@ -675,7 +675,7 @@
                                     tools:ignore="TooManyViews" />
                                 <TextView
                                     android:id="@+id/ButtonTimerShutDown"
-                                    android:layout_width="100dp"
+                                    android:layout_width="40dp"
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="12dp"

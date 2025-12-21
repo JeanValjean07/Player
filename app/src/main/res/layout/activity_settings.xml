@@ -179,31 +179,6 @@
                         android:text="通用"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp" />
-                    <!--  开关：每次启动时都读取新视频  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_weight="0"
-                            android:text="每次启动时都读取新视频"
-                            android:textColor="@color/HeadText"
-                            android:textSize="14sp" />
-                        <View
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1" />
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/ReadNewOnEachStart"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            app:thumbTint="@color/switchThumbColor"
-                            app:trackTint="@color/switchTrackColor" />
-                    </LinearLayout>
                     <!--  开关：后台播放时关闭视频轨道  -->
                     <LinearLayout
                         android:layout_width="wrap_content"

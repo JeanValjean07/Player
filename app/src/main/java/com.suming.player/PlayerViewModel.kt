@@ -121,6 +121,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var state_FromSysStart: Boolean = false
 
+    var PREFS_ExitWhenEnd: Boolean = false
+
+
 
     //设置项
     var PREFS_AlwaysSeek: Boolean = false
@@ -129,7 +132,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_LinkScroll: Boolean = true
     var PREFS_SealOEL: Boolean = false
     var PREFS_GenerateThumbSYNC : Boolean = false
-    var PREFS_ExitWhenEnd : Boolean = false
     var PREFS_UseLongScroller : Boolean = false
     var PREFS_UseLongSeekGap : Boolean = false
     var PREFS_UseBlackBackground : Boolean = false
@@ -138,7 +140,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_CloseVideoTrack : Boolean = false
     var PREFS_CloseFragmentGesture : Boolean = false
     var PREFS_UseOnlySyncFrame : Boolean = false
-    var PREFS_ShutDownWhenMediaEnd: Boolean = false
     var PREFS_TimeUpdateGap: Long = 20L
     var PREFS_SavePositionWhenExit: Boolean = false
     var PREFS_SwitchPortraitWhenExit: Boolean = true
@@ -191,10 +192,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         PREFS_PlaySpeed = speed
         player.setPlaybackSpeed(speed)
     }
-    //定时关闭
-    var PREFS_TimerShutDown: Boolean = false
-    var shutDownTime = ""
-
 
 
 

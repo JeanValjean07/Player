@@ -6,6 +6,9 @@
         android:id="@+id/MenuAction_1"
         android:title="(测试)1分钟" />
     <item
+        android:id="@+id/MenuAction_0"
+        android:title="关闭" />
+    <item
         android:id="@+id/MenuAction_15"
         android:title="15分钟" />
     <item

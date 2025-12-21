@@ -208,13 +208,22 @@ class PlayerFragmentPlayList: DialogFragment() {
                 ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
             }
         }
-        //按钮：刷新
-        val ButtonRefreshMediaList = view.findViewById<ImageButton>(R.id.ButtonRefreshMediaList)
-        ButtonRefreshMediaList.setOnClickListener {
+        //按钮：刷新视频列表
+        val ButtonRefreshVideoList = view.findViewById<ImageButton>(R.id.ButtonRefreshVideoList)
+        ButtonRefreshVideoList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             PlayerSingleton.updateMediaList(requireContext())
-            composeView.setContent {  }
-            startShowVideoListRunnable()
+
+
+
+        }
+        //按钮：刷新音乐列表
+        val ButtonRefreshMusicList = view.findViewById<ImageButton>(R.id.ButtonRefreshMusicList)
+        ButtonRefreshMusicList.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            PlayerSingleton.updateMediaList(requireContext())
+
+
         }
         //按钮：上一曲
         val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
@@ -404,19 +413,19 @@ class PlayerFragmentPlayList: DialogFragment() {
 
 
     private fun initRecyclerView(){
-
+        //初始化RecyclerView
         play_list_recyclerView = view!!.findViewById(R.id.PlayListRecyclerView)
-
+        //设置布局管理器
         play_list_recyclerView.layoutManager = LinearLayoutManager(requireContext())
     }
     private fun setPlayListRecyclerViewAdapter(){
-
+        //设置点击事件
         play_list_recyclerView_adapter = PlayerFragmentPlayListAdapter(
             requireContext(),
             onPlayClick = { itemUri -> onPlayClick(itemUri) },
             onDeleteClick = { itemUri -> onDeleteClick(itemUri) }
         )
-
+        //设置适配器
         play_list_recyclerView.adapter = play_list_recyclerView_adapter
         //分页加载
         val pager = Pager(PagingConfig(pageSize = 20)) {

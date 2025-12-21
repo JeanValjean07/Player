@@ -136,20 +136,18 @@ class PlayerFragmentMoreButton: DialogFragment() {
         Switch_SealOEL.isChecked = vm.PREFS_SealOEL
         Switch_OnlyAudio.isChecked = vm.PREFS_OnlyAudio
         Switch_OnlyVideo.isChecked = vm.PREFS_OnlyVideo
-        Switch_ExitWhenMediaEnd.isChecked = vm.PREFS_ShutDownWhenMediaEnd
+
         Switch_SavePositionWhenExit.isChecked = vm.PREFS_SavePositionWhenExit
 
-        //菜单选项
+
         //播放倍速
         val currentSpeed: Float = vm.player.playbackParameters.speed
         val currentSpeedText = view.findViewById<TextView>(R.id.current_speed)
         currentSpeedText.text = currentSpeed.toString()
-        val timerShutDown = view.findViewById<TextView>(R.id.StateTimerShutDown)
-        if (vm.PREFS_TimerShutDown) {
-            timerShutDown.text = "将在${vm.shutDownTime}关闭"
-        } else {
-            timerShutDown.text = "未开启"
-        }
+        //定时关闭
+        setShutDownTimeText()
+        val PREFS_ShutDownWhenMediaEnd = PlayerSingleton.getPREFS_ShutDownWhenMediaEnd()
+        Switch_ExitWhenMediaEnd.isChecked = PREFS_ShutDownWhenMediaEnd
         //循环模式
         val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
         fun setLoopModeText(){
@@ -330,7 +328,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //开关：播放结束时关闭
         Switch_ExitWhenMediaEnd.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
-            vm.PREFS_ShutDownWhenMediaEnd = isChecked
+            PlayerSingleton.setPREFS_ShutDownWhenMediaEnd(isChecked)
         }
         //定时关闭
         val ButtonTimerShutDown = view.findViewById<TextView>(R.id.ButtonTimerShutDown)
@@ -342,23 +340,27 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 when (item.itemId) {
 
                     R.id.MenuAction_1 -> {
-                        chooseShutDownTime(1); true
+                        chooseCountDownDuration(1); true
+                    }
+
+                    R.id.MenuAction_0 -> {
+                        chooseCountDownDuration(0); true
                     }
 
                     R.id.MenuAction_15 -> {
-                        chooseShutDownTime(15); true
+                        chooseCountDownDuration(15); true
                     }
 
                     R.id.MenuAction_30 -> {
-                        chooseShutDownTime(30); true
+                        chooseCountDownDuration(30); true
                     }
 
                     R.id.MenuAction_60 -> {
-                        chooseShutDownTime(60); true
+                        chooseCountDownDuration(60); true
                     }
 
                     R.id.MenuAction_90 -> {
-                        chooseShutDownTime(90); true
+                        chooseCountDownDuration(90); true
                     }
 
                     R.id.MenuAction_Input -> {
@@ -751,29 +753,28 @@ class PlayerFragmentMoreButton: DialogFragment() {
     }
     //设置自动关闭倒计时
     @SuppressLint("SetTextI18n")
-    private fun chooseShutDownTime(time: Int){
+    private fun chooseCountDownDuration(countDownDuration_Min: Int){
         ToolVibrate().vibrate(requireContext())
 
-        val result = bundleOf("KEY" to "chooseShutDownTime", "TIME" to time)
-        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+        PlayerSingleton.setCountDownTimer(countDownDuration_Min)
 
-        //计算关闭时间
-        val nowDateTime: String = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        val nowMillis = System.currentTimeMillis()
-        val shutDownMillis = nowMillis + (time * 60_000L)  //分钟转毫秒
-        //val pattern = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
-        val pattern = java.text.SimpleDateFormat("HH时mm分ss秒", java.util.Locale.getDefault())
-        val shutDownTime = pattern.format(java.util.Date(shutDownMillis))
-        //更改ViewModel标志位状态
-        vm.shutDownTime = shutDownTime
-        vm.PREFS_TimerShutDown = true
-
-        //更改显示文本
-        val timerShutDown = view?.findViewById<TextView>(R.id.StateTimerShutDown)
-        timerShutDown?.text = "将在${shutDownTime}关闭"
+        setShutDownTimeText()
 
         customDismiss()
     }
+    private fun setShutDownTimeText(){
+        val timerShutDown = view?.findViewById<TextView>(R.id.StateTimerShutDown)
+        val shutDownMoment = PlayerSingleton.getShutDownMoment()
+        if (shutDownMoment == ""){
+            timerShutDown?.text = "未设置"
+        }
+        else if (shutDownMoment == "shutdown_when_end"){
+            timerShutDown?.text = "本次播放结束后关闭"
+        }
+        else{
+            timerShutDown?.text = "将在${shutDownMoment}关闭"
+        }
+    } //更改显示文本
     private fun setShutDownTime(){
 
         val result = bundleOf("KEY" to "setShutDownTime")

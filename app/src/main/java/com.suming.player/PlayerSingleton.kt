@@ -2,11 +2,14 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Context.AUDIO_SERVICE
 import android.content.Context.MODE_PRIVATE
+import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
 import android.content.SharedPreferences
 import android.media.AudioAttributes
@@ -16,24 +19,25 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
+import android.os.Process
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.core.net.toUri
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.Tracks
-import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -43,7 +47,6 @@ import androidx.media3.exoplayer.mediacodec.MediaCodecAdapter
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.privacysandbox.tools.core.proto.LazyStringArrayList.emptyList
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import data.DataBaseMediaStore.MediaStoreRepo
@@ -51,10 +54,10 @@ import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
+import java.time.format.DateTimeFormatter
+import kotlin.system.exitProcess
 
 @SuppressLint("StaticFieldLeak")
 @UnstableApi
@@ -428,6 +431,30 @@ object PlayerSingleton {
         }
         return true
     }
+    private fun showNotification_MediaListNotPrepared(text: String) {
+        val channelId = "toast_replace"
+        val nm = singletonContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+        val channel = NotificationChannel(channelId, "提示", NotificationManager.IMPORTANCE_HIGH)
+            .apply {
+                setSound(null, null)
+                enableVibration(false)
+            }
+        nm.createNotificationChannel(channel)
+
+        val notification = NotificationCompat.Builder(singletonContext, channelId)
+            .setSmallIcon(R.drawable.ic_player_service_notification)
+            .setContentTitle(null)
+            .setContentText(text)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(0)
+            .setAutoCancel(true)
+            .setTimeoutAfter(5_000)
+            .build()
+
+        nm.notify(System.currentTimeMillis().toInt(), notification)
+
+    }  //显示未准备通知
     //播放列表:切换媒体
     private fun getTargetMediaUri(flag_next_or_previous: String): String{
         if (!state_MediaListProcess_complete){
@@ -621,6 +648,16 @@ object PlayerSingleton {
             singleton_repeat_mode = "OFF"
             PREFS.edit{ putString("PREFS_RepeatMode", singleton_repeat_mode).apply() }
         }
+    }
+    private fun getShutDownWhenMediaEndFromPreference(context: Context){
+        PREFS = context.getSharedPreferences("PREFS", MODE_PRIVATE)
+        if (PREFS.contains("PREFS_ShutDownWhenMediaEnd")){
+            PREFS_ShutDownWhenMediaEnd = PREFS.getBoolean("PREFS_ShutDownWhenMediaEnd", false)
+        }else{
+            PREFS_ShutDownWhenMediaEnd = false
+            PREFS.edit{ putBoolean("PREFS_ShutDownWhenMediaEnd", PREFS_ShutDownWhenMediaEnd).apply() }
+        }
+        state_autoShutDown_PrefsReaded = true
     }
 
     //初始化上下文
@@ -898,6 +935,17 @@ object PlayerSingleton {
         if (singleton_repeat_mode == ""){
             singleton_repeat_mode = "OFF"
         }
+        if (state_autoShutDown_Reach){
+            state_autoShutDown_Reach = false
+            countDownDuration_Ms = 0
+            _player?.stop()
+            onTaskRemoved()
+            ReleaseSingletonPlayer(singletonContext)
+            //结束进程
+            val pid = Process.myPid()
+            Process.killProcess(pid)
+            exitProcess(0)
+        }
         //判断
         when (singleton_repeat_mode) {
             "ONE" -> {
@@ -949,6 +997,101 @@ object PlayerSingleton {
         unregisterEventBus()
         stopAudioDeviceCallback(singletonContext)
         releaseAudioFocus(singletonContext)
+    }
+    //定时关闭倒计时：time：分钟
+    private var autoShutDown_Timer: CountDownTimer? = null
+    private var countDownDuration_Ms = 0
+    private var shutDownMoment = ""
+    private var state_autoShutDown_Reach = false
+    private var state_autoShutDown_PrefsReaded = false
+    private var PREFS_ShutDownWhenMediaEnd = false
+    private fun showNotification_AboutToShutDown() {
+        val channelId = "toast_replace"
+        val nm = singletonContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+        val channel = NotificationChannel(channelId, "提示", NotificationManager.IMPORTANCE_HIGH)
+            .apply {
+                setSound(null, null)
+                enableVibration(false)
+            }
+        nm.createNotificationChannel(channel)
+
+        val notification = NotificationCompat.Builder(singletonContext, channelId)
+            .setSmallIcon(R.drawable.ic_player_service_notification)
+            .setContentTitle(null)
+            .setContentText("本次播放完毕后将自动关闭")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(0)
+            .build()
+
+        nm.notify(System.currentTimeMillis().toInt(), notification)
+
+    }
+    private fun clearTimerShutDown(){
+        countDownDuration_Ms = 0
+        shutDownMoment = ""
+        state_autoShutDown_Reach = false
+        autoShutDown_Timer?.cancel()
+    }
+    private fun startTimerShutDown(countDownDuration_Ms: Int){
+        if (!state_autoShutDown_PrefsReaded){
+            getShutDownWhenMediaEndFromPreference(singletonContext)
+        }
+
+        autoShutDown_Timer?.cancel()
+        autoShutDown_Timer = object : CountDownTimer(countDownDuration_Ms.toLong(), 1000000L) {
+            override fun onTick( millisUntilFinished: Long) {}
+            override fun onFinish() { autoShutDown_Reach() }
+        }.start()
+    }
+    private fun autoShutDown_Reach() {
+        if (PREFS_ShutDownWhenMediaEnd) {
+            countDownDuration_Ms = 0
+            shutDownMoment = "shutdown_when_end"
+            state_autoShutDown_Reach = true
+            showNotification_AboutToShutDown()
+        }
+        //直接关闭
+        else{
+            countDownDuration_Ms = 0
+            _player?.stop()
+            onTaskRemoved()
+            ReleaseSingletonPlayer(singletonContext)
+            //结束进程
+            Process.killProcess(Process.myPid())
+            exitProcess(0)
+        }
+    }
+    fun setCountDownTimer(CountDownDuration_Min: Int){
+        //传入0即为关闭
+        if (CountDownDuration_Min == 0){
+            clearTimerShutDown()
+            return
+        }
+        //记录倒计时时长,单位：毫秒
+        countDownDuration_Ms = (CountDownDuration_Min * 60_000L).toInt()
+        //计算关闭时间
+        //val nowDateTime: String = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val nowMillis = System.currentTimeMillis()
+        val shutDownMillis = nowMillis + countDownDuration_Ms.toLong()  //分钟转毫秒
+        val pattern = java.text.SimpleDateFormat("HH时mm分ss秒", java.util.Locale.getDefault())
+        shutDownMoment = pattern.format(java.util.Date(shutDownMillis))
+        //启动倒计时
+        startTimerShutDown(countDownDuration_Ms)
+    }
+    fun getShutDownMoment(): String{
+        return shutDownMoment
+    }
+    fun getPREFS_ShutDownWhenMediaEnd(): Boolean{
+        if (!state_autoShutDown_PrefsReaded){
+            getShutDownWhenMediaEndFromPreference(singletonContext)
+        }
+        return PREFS_ShutDownWhenMediaEnd
+    }
+    fun setPREFS_ShutDownWhenMediaEnd(isChecked: Boolean){
+        PREFS_ShutDownWhenMediaEnd = isChecked
+        state_autoShutDown_PrefsReaded = true
+        PREFS.edit{ putBoolean("PREFS_ShutDownWhenMediaEnd", isChecked) }
     }
 
 

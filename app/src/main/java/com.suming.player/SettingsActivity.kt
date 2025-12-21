@@ -40,7 +40,6 @@ import java.security.cert.X509Certificate
 class SettingsActivity: AppCompatActivity() {
     //开关初始化
     //<editor-fold desc="开关初始化">
-    private lateinit var Switch_ReadNewOnEachStart: SwitchCompat
     private lateinit var Switch_CloseVideoTrack: SwitchCompat
     private lateinit var Switch_SwitchPortraitWhenExit: SwitchCompat
     private lateinit var Switch_KeepPlayingWhenExit: SwitchCompat
@@ -60,9 +59,8 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseTestingPlayer: SwitchCompat
     private lateinit var Switch_UseSyncFrameWhenScrollerStop: SwitchCompat
     //</editor-fold>
-    //开关变量数值量
+    //开关变量和数值量
     //<editor-fold desc="开关变量数值量">
-    private var PREFS_ReadNewOnEachStart = false
     private var PREFS_CloseVideoTrack = false
     private var PREFS_SwitchPortraitWhenExit = true
     private var PREFS_KeepPlayingWhenExit = false
@@ -83,16 +81,14 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UsePlayerWithSeekBar = false
     private var PREFS_UseTestingPlayer = false
     private var PREFS_UseSyncFrameWhenScrollerStop = false
-    //</editor-fold>
-    //按钮循环：清除所有视频缓存
-    private var ButtonRemoveAllThumbPathIndex = 0
-    //设置清单
-    private lateinit var PREFS: SharedPreferences
-    private lateinit var PREFS_Editor: SharedPreferences.Editor
-    private lateinit var PREFS_MediaStore: SharedPreferences
     //震动时间
     private var PREFS_VibrateMillis = 0L
     private var PREFS_UseSysVibrate = false
+    //</editor-fold>
+    //设置清单
+    private lateinit var PREFS: SharedPreferences
+    private lateinit var PREFS_Editor: SharedPreferences.Editor
+
 
     @OptIn(UnstableApi::class)
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
@@ -295,17 +291,9 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_UseSyncFrameWhenScrollerStop = PREFS.getBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
         }
         PREFS_Editor.apply()
-        PREFS_MediaStore = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-        if (PREFS_MediaStore.contains("PREFS_ReadNewOnEachStart")){
-            PREFS_ReadNewOnEachStart = PREFS_MediaStore.getBoolean("PREFS_ReadNewOnEachStart", false)
-        }else{
-            PREFS_MediaStore.edit { putBoolean("PREFS_ReadNewOnEachStart", false).apply() }
-            PREFS_ReadNewOnEachStart = false
-        }
 
 
         //开关初始化
-        Switch_ReadNewOnEachStart = findViewById(R.id.ReadNewOnEachStart)
         Switch_CloseVideoTrack = findViewById(R.id.closeVideoTrack)
         Switch_SwitchPortraitWhenExit = findViewById(R.id.SwitchPortraitWhenExit)
         Switch_KeepPlayingWhenExit = findViewById(R.id.SwitchKeepPlayingWhenExit)
@@ -325,7 +313,6 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseTestingPlayer = findViewById(R.id.UseTestingPlayer)
         Switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
         //开关预置位
-        Switch_ReadNewOnEachStart.isChecked = PREFS_ReadNewOnEachStart
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
         Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
         Switch_KeepPlayingWhenExit.isChecked = PREFS_KeepPlayingWhenExit
@@ -373,11 +360,6 @@ class SettingsActivity: AppCompatActivity() {
 
         //动态操作部分:::
         //开关更改操作
-        Switch_ReadNewOnEachStart.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_ReadNewOnEachStart = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_MediaStore.edit { putBoolean("PREFS_ReadNewOnEachStart", isChecked).apply() }
-        }
         Switch_CloseVideoTrack.setOnCheckedChangeListener { _, isChecked ->
             PREFS_CloseVideoTrack = isChecked
             ToolVibrate().vibrate(this)
@@ -581,8 +563,6 @@ class SettingsActivity: AppCompatActivity() {
             ToolVibrate().vibrate(this)
             SettingsFragmentDeleteCover.newInstance().show(supportFragmentManager, "SettingsFragmentDeleteCover")
         }
-
-
         supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_DELETE_COVER", this) { _, bundle ->
             val ReceiveKey = bundle.getString("KEY")
             when (ReceiveKey) {
@@ -598,6 +578,7 @@ class SettingsActivity: AppCompatActivity() {
                 }
             }
         }
+
 
     //onCreate END
     }
