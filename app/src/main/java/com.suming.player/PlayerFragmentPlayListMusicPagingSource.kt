@@ -40,17 +40,21 @@ class PlayerFragmentPlayListMusicPagingSource(
             val musicItems = musicStoreSettings
                 .map { setting ->
                     MediaItemForMusic(
-                        id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,
-                        uri = setting.info_uri_full.toUri(),
-                        name = setting.info_filename.substringBeforeLast("."),
+                        id = setting.MARK_ID.toLongOrNull() ?: 0,
+                        uriString = setting.info_uri_string,
+                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
+                        filename = setting.info_filename,
                         title = setting.info_title,
                         artist = setting.info_artist,
                         durationMs = setting.info_duration,
+                        //音频专属
+                        albumId = setting.info_album_id,
+                        album = setting.info_album,
+                        //其他
+                        path = setting.info_path,
                         sizeBytes = setting.info_file_size,
                         dateAdded = setting.info_date_added,
                         format = setting.info_format,
-                        album = setting.info_album,
-                        albumId = setting.info_album_id,
                     )
                 }
                 //计算下页键

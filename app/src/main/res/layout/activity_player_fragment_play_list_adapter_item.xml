@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="50dp"
-    android:layout_marginTop="1dp"
+    android:layout_marginTop="3dp"
     android:layout_marginStart="10dp"
     android:layout_marginEnd="10dp"
-    android:layout_marginBottom="5dp"
+    android:layout_marginBottom="2dp"
     android:backgroundTint="@color/Background4"
     app:cardCornerRadius="10dp"
     app:cardElevation="5dp"
@@ -51,7 +51,7 @@
             app:layout_constraintStart_toEndOf="@+id/ivThumbCard"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/ButtonDelete"
+            app:layout_constraintEnd_toStartOf="@+id/ButtonAddToList"
             android:orientation="vertical">
             <!-- 标题 -->
             <TextView
@@ -59,10 +59,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="1"
-                android:ellipsize="end"
                 android:textSize="14sp"
                 android:text="标题"
                 android:textColor="@color/HeadText"
+                android:singleLine="true"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="1"
+                android:scrollHorizontally="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:layout_marginStart="5dp"
                 android:layout_marginTop="1dp"
                 android:layout_marginEnd="15dp"
@@ -89,11 +94,11 @@
         </LinearLayout>
         <!-- 操作按钮 -->
         <ImageView
-            android:id="@+id/ButtonDelete"
+            android:id="@+id/ButtonAddToList"
             android:layout_width="35dp"
             android:layout_height="35dp"
-            android:padding="9dp"
-            android:src="@drawable/ic_play_list_delete"
+            android:padding="8dp"
+            android:src="@drawable/ic_play_list_add_to_list"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="删除"
             app:layout_constraintTop_toTopOf="parent"

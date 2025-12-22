@@ -1,13 +1,9 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
-import android.content.ContentResolver
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.provider.MediaStore
-import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,7 +12,6 @@ import android.widget.TextView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import data.MediaModel.MediaItemForMusic
 import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,14 +23,14 @@ import java.io.File
 
 class PlayerFragmentPlayListVideoAdapter(
     private val context: Context,
-    private val onDeleteClick: (Uri, Int) -> Unit,
-    private val onPlayClick: (Uri) -> Unit
+    private val onAddToListClick: (String) -> Unit,
+    private val onPlayClick: (String) -> Unit
 ):PagingDataAdapter<MediaItemForVideo, PlayerFragmentPlayListVideoAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
             override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
-                return oldItem.name == newItem.name
+                return oldItem.uriNumOnly == newItem.uriNumOnly
             }
 
             override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
@@ -50,32 +45,31 @@ class PlayerFragmentPlayListVideoAdapter(
         var itemFrameJob: Job? = null
         val itemName: TextView = itemView.findViewById(R.id.tvName)
         val itemArtist: TextView = itemView.findViewById(R.id.tvArtist)
-        val ButtonDelete: ImageView = itemView.findViewById(R.id.ButtonDelete)
+        val ButtonAddToList: ImageView = itemView.findViewById(R.id.ButtonAddToList)
         val ButtonPlay: ImageView = itemView.findViewById(R.id.ButtonPlay)
     }
     //协程作用域
     private val coroutineScope_LoadFrame = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val covers_path = File(context.filesDir, "miniature/cover")
+    private val covers_path = File(context.filesDir, "miniature/video_cover")
 
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_list_adapter_items, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_adapter_item, parent, false)
         return ViewHolder(view)
     }
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
-        holder.itemName.text = item.name.substringBeforeLast(".")
+        holder.itemName.isSelected = true
+        holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = "未知艺术家"
         holder.itemFrameJob?.cancel()
         holder.itemFrameJob = coroutineScope_LoadFrame.launch { setHolderFrame(item, holder) }
         //点击事件设定
-        holder.ButtonDelete.setOnClickListener { onDeleteClick(item.uri, 0) }
-        holder.ButtonPlay.setOnClickListener { onPlayClick(item.uri) }
-
-
+        holder.ButtonAddToList.setOnClickListener { onAddToListClick(item.uriString) }
+        holder.ButtonPlay.setOnClickListener { onPlayClick(item.uriString) }
     }
 
     override fun onViewAttachedToWindow(holder: ViewHolder) {
@@ -99,13 +93,13 @@ class PlayerFragmentPlayListVideoAdapter(
     //内部Functions
     //检查缩略图
     private suspend fun setHolderFrame(item: MediaItemForVideo, holder: ViewHolder) {
-        val imageTag = item.name.hashCode().toString()
+        val imageTag = item.uriNumOnly.toString()
         //记录holder的tag
         withContext(Dispatchers.Main) {
             holder.itemFrame.tag = imageTag
         }
         //设置文件
-        val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
+        val cover_item_file = File(covers_path, "${item.uriNumOnly}.webp")
         //检查是否存在
         if (cover_item_file.exists()){
             val frame = BitmapFactory.decodeFile(cover_item_file.absolutePath)

@@ -31,6 +31,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import kotlinx.coroutines.Job
 import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 
 class MainMusicAdapter(
     private val context: Context,
@@ -40,8 +41,8 @@ class MainMusicAdapter(
     //条目比较器
     companion object {
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForMusic>() {
-            override fun areItemsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean {
-                return oldItem.name == newItem.name
+            override fun areItemsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean  {
+                return oldItem.uriNumOnly == newItem.uriNumOnly
             }
 
             override fun areContentsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean {
@@ -51,11 +52,11 @@ class MainMusicAdapter(
     }
     //ViewHolder
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val mediaTouchPad: View = itemView.findViewById(R.id.TouchPad)
-        val mediaThumb: ImageView = itemView.findViewById(R.id.auThumb)
-        var mediaThumbJob: Job? = null
-        val mediaName: TextView = itemView.findViewById(R.id.auName)
-        val mediaArtist: TextView = itemView.findViewById(R.id.auArtist)
+        val itemHandle: View = itemView.findViewById(R.id.TouchPad)
+        val itemFrame: ImageView = itemView.findViewById(R.id.auThumb)
+        var itemFrameJob: Job? = null
+        val itemName: TextView = itemView.findViewById(R.id.auName)
+        val itemArtist: TextView = itemView.findViewById(R.id.auArtist)
         val ButtonOptions: CardView = itemView.findViewById(R.id.ButtonOptions)
     }
     //加载动画
@@ -77,13 +78,14 @@ class MainMusicAdapter(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
-        holder.mediaName.text = item.name.substringBeforeLast(".")
-        holder.mediaArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
-        holder.mediaThumbJob?.cancel()
-        holder.mediaThumbJob = CoroutineScope_LoadCoverFrame.launch { setHolderFrame(item, holder) }
+        holder.itemName.isSelected = true
+        holder.itemName.text = item.filename.substringBeforeLast(".")
+        holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
+        holder.itemFrameJob?.cancel()
+        holder.itemFrameJob = CoroutineScope_LoadCoverFrame.launch { setHolderFrame(item, holder) }
         //点击事件设定
-        holder.mediaTouchPad.setOnClickListener {
-            onItemClick(item.uri)
+        holder.itemHandle.setOnClickListener {
+            onItemClick(item.uriString.toUri())
         }
         holder.ButtonOptions.setOnClickListener {
             onOptionsClick(item, it)
@@ -94,21 +96,21 @@ class MainMusicAdapter(
 
     //Functions
     //检查缩略图
-    private suspend fun setHolderFrame(item: MediaItemForMusic, holder: ViewHolder) {
-        val imageTag = item.name.hashCode().toString()
+    private suspend fun setHolderFrame(item: MediaItemForMusic, holder: ViewHolder)  {
+        val imageTag = item.uriNumOnly.hashCode().toString()
         //记录holder的tag
         withContext(Dispatchers.Main) {
-            holder.mediaThumb.tag = imageTag
+            holder.itemFrame.tag = imageTag
         }
         //设置文件
-        val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
+        val cover_item_file = File(covers_path, "${item.uriNumOnly.hashCode()}.webp")
         //检查是否存在
         if (cover_item_file.exists()){
             val frame = BitmapFactory.decodeFile(cover_item_file.absolutePath)
             withContext(Dispatchers.Main){
-                if (holder.mediaThumb.tag == imageTag) {
-                    holder.mediaThumb.setImageBitmap(frame)
-                    holder.mediaThumb.startAnimation(FadeInAnimation)
+                if (holder.itemFrame.tag == imageTag) {
+                    holder.itemFrame.setImageBitmap(frame)
+                    holder.itemFrame.startAnimation(FadeInAnimation)
                 } else {
                     frame?.recycle()
                 }
@@ -126,7 +128,7 @@ class MainMusicAdapter(
             val retriever = MediaMetadataRetriever()
             try {
                 //需要使用数据源作为参数,不能使用绝对路径,否则会因为安卓13及以上权限限制而无法访问除.mp3之外的音频文件
-                context.contentResolver.openFileDescriptor(item.uri, "r")?.use { pfd ->
+                context.contentResolver.openFileDescriptor(item.uriString.toUri(), "r")?.use { pfd ->
                     retriever.setDataSource(pfd.fileDescriptor)
                 }
                 //mp3封面图片:retriever.embeddedPicture
@@ -142,13 +144,13 @@ class MainMusicAdapter(
                     //图片裁剪：最好裁剪成ImageView一样的比例
                     val processedBitmap = processCenterCrop(bitmap)
                     //保存图片
-                    val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
+                    val cover_item_file = File(covers_path, "${item.uriNumOnly}.webp")
                     cover_item_file.outputStream().use {
                         processedBitmap.compress(Bitmap.CompressFormat.WEBP, 50, it)
                     }
                     //刷新页面
                     withContext(Dispatchers.Main){
-                        holder.mediaThumb.setImageBitmap(processedBitmap)
+                        holder.itemFrame.setImageBitmap(processedBitmap)
                         //holder.mediaThumb.startAnimation(FadeInAnimation)
                     }
 
@@ -165,20 +167,20 @@ class MainMusicAdapter(
                         covers_path.mkdirs()
                     }
                     //保存图片
-                    val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
+                    val cover_item_file = File(covers_path, "${item.uriNumOnly.hashCode()}.webp")
                     cover_item_file.outputStream().use {
                         defaultBitmap.compress(Bitmap.CompressFormat.WEBP, 50, it)
                     }
                     //刷新页面
                     withContext(Dispatchers.Main){
-                        holder.mediaThumb.setImageBitmap(defaultBitmap)
-                        //holder.mediaThumb.startAnimation(FadeInAnimation)
+                        holder.itemFrame.setImageBitmap(defaultBitmap)
+                        //holder.itemFrame.startAnimation(FadeInAnimation)
                     }
                 }
             }
-            catch (e: Exception) {
+            catch (e: Exception)  {
                 e.printStackTrace()
-                Log.e("SuMing", "generateCoverFrame: ${item.name} 生成缩略图异常: ${e.message}")
+                Log.e("SuMing", "generateCoverFrame: ${item.uriNumOnly} 生成缩略图异常: ${e.message}")
             }
             finally {
                 retriever.release()

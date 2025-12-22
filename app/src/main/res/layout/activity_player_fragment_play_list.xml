@@ -117,88 +117,124 @@
                             android:src="@drawable/ic_more_button_lock_off"
                             tools:ignore="ContentDescription" />
                     </LinearLayout>
-                    <LinearLayout
+                    <!-- 横滑滚动页签 -->
+                    <HorizontalScrollView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-                        <!-- 视频丨实时 -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/ButtonCardVideo"
+                        tools:ignore="TooDeepLayout" >
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:layout_marginTop="2dp"
-                            android:layout_marginBottom="8dp"
-                            android:backgroundTint="@color/ButtonCard_OFF"
-                            app:cardElevation="2dp"
-                            app:cardCornerRadius="5dp">
-                            <LinearLayout
+                            android:orientation="horizontal">
+                            <!-- 自定义 -->
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardCustom1"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-                                <TextView
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="2dp"
+                                android:layout_marginBottom="8dp"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:cardElevation="2dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="5dp"
-                                    android:layout_marginBottom="5dp"
-                                    android:text="视频丨实时"
-                                    android:textColor="@color/HeadText"
-                                    android:textSize="11sp" />
-                                <ImageButton
-                                    android:id="@+id/ButtonRefreshVideoList"
-                                    android:layout_width="25dp"
-                                    android:layout_height="25dp"
-                                    android:layout_gravity="center"
-                                    android:padding="7dp"
-                                    android:backgroundTint="@android:color/transparent"
-                                    android:scaleType="centerCrop"
-                                    android:src="@drawable/ic_play_list_refresh"
-                                    tools:ignore="ContentDescription" />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-                        <!-- 音乐丨实时 -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/ButtonCardMusic"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:layout_marginTop="2dp"
-                            android:layout_marginBottom="8dp"
-                            android:backgroundTint="@color/ButtonCard_OFF"
-                            app:cardElevation="2dp"
-                            app:cardCornerRadius="5dp">
-                            <LinearLayout
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:layout_marginStart="10dp"
+                                        android:layout_marginEnd="10dp"
+                                        android:layout_marginTop="5dp"
+                                        android:layout_marginBottom="5dp"
+                                        android:text="自定义"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                            <!-- 视频丨实时 -->
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardVideo"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-                                <TextView
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="2dp"
+                                android:layout_marginBottom="8dp"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:cardElevation="2dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="5dp"
-                                    android:layout_marginBottom="5dp"
-                                    android:text="音乐丨实时"
-                                    android:textColor="@color/HeadText"
-                                    android:textSize="11sp" />
-                                <ImageButton
-                                    android:id="@+id/ButtonRefreshMusicList"
-                                    android:layout_width="25dp"
-                                    android:layout_height="25dp"
-                                    android:layout_gravity="center"
-                                    android:padding="7dp"
-                                    android:backgroundTint="@android:color/transparent"
-                                    android:scaleType="centerCrop"
-                                    android:src="@drawable/ic_play_list_refresh"
-                                    tools:ignore="ContentDescription" />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-                    </LinearLayout>
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:layout_marginStart="10dp"
+                                        android:layout_marginTop="5dp"
+                                        android:layout_marginBottom="5dp"
+                                        android:text="视频丨实时"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp"
+                                        />
+                                    <ImageButton
+                                        android:id="@+id/ButtonRefreshVideoList"
+                                        android:layout_width="25dp"
+                                        android:layout_height="25dp"
+                                        android:layout_gravity="center"
+                                        android:padding="7dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_play_list_refresh"
+                                        tools:ignore="ContentDescription" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                            <!-- 音乐丨实时 -->
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardMusic"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="2dp"
+                                android:layout_marginBottom="8dp"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:cardElevation="2dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:layout_marginStart="10dp"
+                                        android:layout_marginTop="5dp"
+                                        android:layout_marginBottom="5dp"
+                                        android:text="音乐丨实时"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp" />
+                                    <ImageButton
+                                        android:id="@+id/ButtonRefreshMusicList"
+                                        android:layout_width="25dp"
+                                        android:layout_height="25dp"
+                                        android:layout_gravity="center"
+                                        android:padding="7dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_play_list_refresh"
+                                        tools:ignore="ContentDescription" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                        </LinearLayout>
+                    </HorizontalScrollView>
+                    <!-- 分隔线 -->
                     <View
                         android:layout_width="match_parent"
-                        android:layout_height="1dp"
+                        android:layout_height="0.2dp"
                         android:background="@color/player_scroller_top_line" />
                 </LinearLayout>
             </com.google.android.material.appbar.AppBarLayout>
@@ -208,6 +244,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:minHeight="500dp"
+                android:background="@color/Background3"
                 app:layout_constraintTop_toBottomOf="@+id/AppBar"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

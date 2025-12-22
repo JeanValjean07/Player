@@ -20,7 +20,7 @@ interface MediaStoreDao {
     suspend fun insertOrUpdateAll(items: List<MediaStoreSetting>)
 
     //根据URI查找单个视频
-    @Query("SELECT * FROM MediaStore WHERE MARK_Uri_numOnly = :path LIMIT 1")
+    @Query("SELECT * FROM MediaStore WHERE MARK_ID = :path LIMIT 1")
     suspend operator fun get(path: String): MediaStoreSetting?
 
     //获取所有视频(包括隐藏的)
@@ -54,17 +54,9 @@ interface MediaStoreDao {
     suspend fun getAllVideosSorted(query: SupportSQLiteQuery): List<MediaStoreSetting>
 
 
-    //根据URI获取隐藏状态
-    @Query("SELECT info_is_hidden FROM MediaStore WHERE MARK_Uri_numOnly = :uriNumOnly LIMIT 1")
-    suspend fun getHideStatus(uriNumOnly: String): Boolean?
-
     //根据标题搜索视频
     @Query("SELECT * FROM MediaStore WHERE info_title LIKE '%' || :searchQuery || '%'")
     suspend fun searchVideos(searchQuery: String): List<MediaStoreSetting>
-
-    //更新视频的隐藏状态
-    @Query("UPDATE MediaStore SET info_is_hidden = :isHidden WHERE MARK_Uri_numOnly = :uriNumOnly")
-    suspend fun updateHiddenStatus(uriNumOnly: String, isHidden: Boolean)
 
     //获取视频总数
     @Query("SELECT COUNT(*) FROM MediaStore")

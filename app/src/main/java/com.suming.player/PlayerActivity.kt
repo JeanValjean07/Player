@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.ContentResolver
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -2959,13 +2960,14 @@ class PlayerActivity: AppCompatActivity(){
     private fun CaptureCurrentFrameAsCover(filename: String) {
         fun handleSuccess(bitmap: Bitmap) {
             //创建文件占位并保存
-            val cover_file = File(filesDir, "miniature/cover/${filename.hashCode()}.webp")
+            val cover_file = File(filesDir, "miniature/video_cover/${filename.hashCode()}.webp")
             cover_file.parentFile?.mkdirs()
             cover_file.outputStream().use {
                 bitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
             }
             //发布完成消息
-            ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", filename))
+            val uriNumOnly = ContentUris.parseId(MediaInfo_MediaUri)
+            ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uriNumOnly.toString()))
             showCustomToast("截取封面完成", Toast.LENGTH_SHORT,3)
             //恢复播放状态
             if (vm.wasPlaying){ vm.player.play() }
@@ -2999,7 +3001,7 @@ class PlayerActivity: AppCompatActivity(){
         }
         val processedBitmap = processCenterCrop(defaultCoverBitmap)
         //创建目录
-        val covers_path = File(filesDir, "miniature/cover")
+        val covers_path = File(filesDir, "miniature/video_cover")
         if (!covers_path.exists()) { covers_path.mkdirs() }
         //保存图片
         val cover_item_file = File(covers_path, "${filename.hashCode()}.webp")

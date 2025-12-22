@@ -40,21 +40,21 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.get
+import androidx.core.net.toUri
 
 class MainVideoAdapter(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
     private val onDurationClick: (MediaItemForVideo) -> Unit,
     private val onOptionClick: (MediaItemForVideo) -> Unit,
-    private val onItemHideClick: (Uri, Boolean) -> Unit,
     private val onFormatClick: (MediaItemForVideo, String) -> Unit,
-    private val onSmallCardPlay: (Uri, String) -> Unit,
+    private val onSmallCardPlay: (String, String) -> Unit,
 ):PagingDataAdapter<MediaItemForVideo, MainVideoAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
             override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
-                return oldItem.name == newItem.name
+                return oldItem.uriNumOnly == newItem.uriNumOnly
             }
 
             override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
@@ -77,7 +77,7 @@ class MainVideoAdapter(
     private val CoroutineScope_LoadCoverFrame = CoroutineScope(Dispatchers.IO + SupervisorJob())
     //图片池和加载动画
     private var FadeInAnimation: AlphaAnimation = AlphaAnimation(0.0f, 1.0f)
-    private val covers_path = File(context.filesDir, "miniature/cover")
+    private val covers_path = File(context.filesDir, "miniature/video_cover")
 
 
 
@@ -93,13 +93,13 @@ class MainVideoAdapter(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
-        holder.tvName.text = item.name.substringBeforeLast(".")
+        holder.tvName.text = item.filename.substringBeforeLast(".")
         holder.tvDuration.text = FormatTime_numOnly(item.durationMs)
         holder.tvFormat.text = item.format.ifEmpty { "未知" }
         holder.tvFrameLoadingJob?.cancel()
         holder.tvFrameLoadingJob = CoroutineScope_LoadCoverFrame.launch(Dispatchers.IO) { setHolderFrame(item, holder) }
         //点击事件设定
-        holder.TouchPad.setOnClickListener { onItemClick(item.uri) }
+        holder.TouchPad.setOnClickListener { onItemClick(item.uriString.toUri()) }
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
         holder.tvOption.setOnClickListener {
             ToolVibrate().vibrate(context)
@@ -107,26 +107,23 @@ class MainVideoAdapter(
             val popup = PopupMenu(holder.itemView.context, holder.tvOption)
             popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
             val popup_update_cover = popup.menu.findItem(R.id.MenuAction_Repic)
-            val popup_hide_text = popup.menu.findItem(R.id.MenuAction_Hide)
+            val popup_hide_item = popup.menu.findItem(R.id.MenuAction_Hide)
             val popup_onSmallCardPlay = popup.menu.findItem(R.id.MenuAction_onSmallCardPlay)
-            val local_isHidden = item.isHidden
-            popup_hide_text.title = if (local_isHidden) "取消隐藏" else "隐藏"
             popup.show()
             //注册点击
-            popup_hide_text.setOnMenuItemClickListener {
-                ToolVibrate().vibrate(context)
-                onItemHideClick(item.uri, !local_isHidden)
-                item.isHidden = !local_isHidden
-                true
-            }
             popup_update_cover.setOnMenuItemClickListener {
                 ToolVibrate().vibrate(context)
                 context.showCustomToast("进入视频后,可在更多选项面板更新封面", Toast.LENGTH_SHORT, 3)
                 true
             }
+            popup_hide_item.setOnMenuItemClickListener {
+                ToolVibrate().vibrate(context)
+                context.showCustomToast("已停止对隐藏视频功能的支持", Toast.LENGTH_SHORT, 3)
+                true
+            }
             popup_onSmallCardPlay.setOnMenuItemClickListener {
                 ToolVibrate().vibrate(context)
-                onSmallCardPlay(item.uri, item.name)
+                onSmallCardPlay(item.uriString, item.filename)
                 true
             }
         }
@@ -152,16 +149,16 @@ class MainVideoAdapter(
 
     //Functions
     //更新指定位置的封面
-    fun updateCoverForVideo(videoName: String) {
+    fun updateCoverForVideo(uriNumOnly: Long) {
         //先检查新图是否存在
         val covers_path = File(context.filesDir, "miniature/cover")
-        val cover_file = File(covers_path, "${videoName.hashCode()}.webp")
+        val cover_file = File(covers_path, "${uriNumOnly}.webp")
         if (cover_file.exists()) {
             val bitmap = BitmapFactory.decodeFile(cover_file.absolutePath)
         }
         //遍历列表并换图
         snapshot().forEachIndexed { index, mediaItem ->
-            if (mediaItem?.name == videoName) {
+            if (mediaItem?.uriNumOnly == uriNumOnly) {
                 notifyItemChanged(index)
             }
         }
@@ -183,14 +180,14 @@ class MainVideoAdapter(
         }
     }
     //检查缩略图
-    private suspend fun setHolderFrame(item: MediaItemForVideo, holder: ViewHolder) {
-        val imageTag = item.name.hashCode().toString()
+    private suspend fun setHolderFrame(item: MediaItemForVideo, holder: ViewHolder)  {
+        val imageTag = item.uriNumOnly.toString()
         //记录holder的tag
         withContext(Dispatchers.Main) {
             holder.tvFrame.tag = imageTag
         }
         //设置文件
-        val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
+        val cover_item_file = File(covers_path, "${item.uriNumOnly}.webp")
         //检查是否存在
         if (cover_item_file.exists()){
             val frame = BitmapFactory.decodeFile(cover_item_file.absolutePath)
@@ -215,7 +212,7 @@ class MainVideoAdapter(
             val retriever = MediaMetadataRetriever()
             try {
                 //需要使用数据源作为参数,不能使用绝对路径,否则会因为安卓13及以上权限限制而无法访问除.mp4之外的视频文件
-                context.contentResolver.openFileDescriptor(item.uri, "r")?.use { pfd ->
+                context.contentResolver.openFileDescriptor(item.uriString.toUri(), "r")?.use { pfd ->
                     retriever.setDataSource(pfd.fileDescriptor)
                 }
                 //获取视频封面帧
@@ -235,7 +232,7 @@ class MainVideoAdapter(
                         val targetHeight = (targetWidth * 9 / 10)
                         val processedBitmap = processCenterCrop(bitmap)
                         //保存图片
-                        val cover_item_file = File(covers_path, "${item.name.hashCode()}.webp")
+                        val cover_item_file = File(covers_path, "${item.uriNumOnly}.webp")
                         cover_item_file.outputStream().use {
                             processedBitmap.compress(Bitmap.CompressFormat.WEBP, 50, it)
                         }

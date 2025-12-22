@@ -93,10 +93,6 @@ class MediaStoreRepo private constructor(context: Context) {
     //搜索视频
     suspend fun searchVideos(query: String): List<MediaStoreSetting> = dao.searchVideos(query)
 
-    //更新视频隐藏状态
-    suspend fun getHideStatus(uriNumOnly: String): Boolean? = dao.getHideStatus(uriNumOnly)
-    suspend fun updateHiddenStatus(uriNumOnly: String, isHidden: Boolean) = dao.updateHiddenStatus(uriNumOnly, isHidden)
-
     //获取视频总数
     suspend fun getTotalCount(): Int = dao.getTotalVideoCount()
 

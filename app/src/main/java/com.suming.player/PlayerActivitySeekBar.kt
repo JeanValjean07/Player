@@ -1459,16 +1459,14 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             when(ReceiveKey){
                 //顶部按钮
                 "PreviousMedia" -> {
-                    preparePreviousMediaItem()
+
                 }
                 "NextMedia" -> {
-                    prepareNextMediaItem()
+
                 }
                 //直接切换
                 "switchItem" -> {
-                    val itemUri = bundle.getString("new_item_uri") ?: ""
-                    val itemName = bundle.getString("new_item_name") ?: ""
-                    prepareSwitchMediaItem(itemUri.toUri(), itemName)
+
                 }
                 //退出逻辑
                 "Dismiss" -> {
@@ -1487,41 +1485,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         }
 
 
-        //读取播放列表
-        lifecycleScope.launch(Dispatchers.IO) {
-            //读取设置
-            PREFS_MediaStore = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-            val sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
-            val sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
-            //读取所有媒体
-            val mediaStoreRepo = MediaStoreRepo.get(this@PlayerActivitySeekBar)
-            val mediaStoreSettings = mediaStoreRepo.getAllVideosSorted(sortOrder, sortOrientation)
-            val mediaItems = mediaStoreSettings
-                .filter { setting -> !setting.info_is_hidden }
-                .map { setting ->
-                    MediaItemForVideo(
-                        id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,
-                        uri = setting.info_uri_full.toUri(),
-                        name = setting.info_title,
-                        durationMs = setting.info_duration,
-                        sizeBytes = setting.info_file_size,
-                        dateAdded = setting.info_date_added,
-                        format = setting.info_format,
-                        isHidden = setting.info_is_hidden
-                    )
-                }
-            //反定位当前媒体index
-            val currentMediaIndex = mediaItems.indexOfFirst { it.uri == MediaInfo_VideoUri }
-            //保存到ViewModel
-            vm.mediaItems = mediaItems
-            vm.currentMediaIndex = currentMediaIndex
-            vm.maxMediaIndex = mediaItems.size - 1
-
-
-
-            //保存完后公布状态
-            vm.state_PlayListProcess_Complete = true
-        }
 
         //表明页面状态 需要区分页面类型 flag_page_type
         vm.state_playerWithSeekBar = true
@@ -1538,111 +1501,6 @@ class PlayerActivitySeekBar: AppCompatActivity(){
 
 
     //Testing Functions
-    //确认切换媒体
-    private fun confirmSwitchMediaItem(itemUri: Uri){
-        //关闭已有服务
-        stopBackgroundServices()
-        //表明状态来自切换媒体
-        state_switch_item = true
-        //移动播放区域
-        MovePlayArea_down()
-        //保存新视频链接
-        MediaInfo_VideoUri = itemUri
-        vm.MediaInfo_VideoUri = MediaInfo_VideoUri
-        //获取新视频信息
-        getMediaInfo(MediaInfo_VideoUri)
-
-        //合成并设置媒体项
-        val covers_path = File(filesDir, "miniature/cover")
-        val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
-        val cover_img_uri = if (cover_img_path.exists()) {
-            try {
-                FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
-            }
-            catch (_: Exception) {
-                if (cover_img_path.canRead()) {
-                    cover_img_path.toUri()
-                } else {
-                    null
-                }
-            }
-        } else {
-            null
-        }
-        val mediaItem = MediaItem.Builder()
-            .setUri(MediaInfo_VideoUri)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(MediaInfo_FileName)
-                    .setArtist(MediaInfo_VideoArtist)
-                    .setArtworkUri( cover_img_uri )
-                    .build()
-            )
-            .build()
-        vm.setMediaItem(mediaItem)
-
-        vm.player.play()
-
-        //反定位当前媒体index
-        val currentMediaIndex = vm.mediaItems.indexOfFirst { it.uri == itemUri }
-        vm.currentMediaIndex = currentMediaIndex
-    }
-    //准备上一曲
-    private fun preparePreviousMediaItem(){
-        if (vm.currentMediaIndex == 0) {
-            showCustomToast("已在列表起始，将切换至最后一曲",Toast.LENGTH_SHORT, 3)
-            val newUri = vm.mediaItems.getOrNull(vm.maxMediaIndex)?.uri
-            if (newUri != null) {
-                confirmSwitchMediaItem(newUri)
-            }
-            else{
-                showCustomToast("上一曲获取失败",Toast.LENGTH_SHORT, 3)
-            }
-        }
-        else{
-            val newUri = vm.mediaItems.getOrNull(vm.currentMediaIndex - 1)?.uri
-            if (newUri != null) {
-                confirmSwitchMediaItem(newUri)
-            }
-            else{
-                showCustomToast("上一曲获取失败",Toast.LENGTH_SHORT, 3)
-            }
-        }
-    }
-    //准备下一曲
-    private fun prepareNextMediaItem(){
-        if (vm.currentMediaIndex == vm.maxMediaIndex) {
-            showCustomToast("已在列表末尾，将切换至第一曲",Toast.LENGTH_SHORT, 3)
-            val newUri = vm.mediaItems.getOrNull(0)?.uri
-            if (newUri != null) {
-                confirmSwitchMediaItem(newUri)
-            }
-            else{
-                showCustomToast("下一曲获取失败",Toast.LENGTH_SHORT, 3)
-            }
-        }
-        else{
-            val newUri = vm.mediaItems.getOrNull(vm.currentMediaIndex + 1)?.uri
-            if (newUri != null) {
-                confirmSwitchMediaItem(newUri)
-            }
-            else{
-                showCustomToast("下一曲获取失败",Toast.LENGTH_SHORT, 3)
-            }
-        }
-    }
-    //准备切换媒体
-    private fun prepareSwitchMediaItem(itemUri: Uri, itemName: String){
-        //检测是否是当前媒体
-        if (itemName == vm.MediaInfo_FileName){
-            showCustomToast("您已在播放此视频",Toast.LENGTH_SHORT, 3)
-            PlayerFragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
-            return
-        }
-        else{
-            confirmSwitchMediaItem(itemUri)
-        }
-    }
     //显示播放错误
     private fun showPlayError(){
         val playErrorInfoText = findViewById<TextView>(R.id.playErrorInfo)
@@ -1771,18 +1629,10 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     private fun handlePlayerEvent(event: String) {
         when (event) {
             "SessionController_Next" -> {
-                if (vm.state_PlayListProcess_Complete){
-                    prepareNextMediaItem()
-                }else{
-                    showNotification_NotPrepared("播放列表还未处理完成,请稍后再试")
-                }
+
             }
             "SessionController_Previous" -> {
-                if (vm.state_PlayListProcess_Complete){
-                    preparePreviousMediaItem()
-                }else{
-                    showNotification_NotPrepared("播放列表还未处理完成,请稍后重试")
-                }
+
             }
             "SessionController_Play" -> {
                 vm.wasPlaying = true

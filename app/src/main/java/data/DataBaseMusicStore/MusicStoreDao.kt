@@ -20,7 +20,7 @@ interface MusicStoreDao {
     suspend fun insertOrUpdateAll(items: List<MusicStoreSetting>)
 
     //根据URI查找单个视频
-    @Query("SELECT * FROM MusicStore WHERE MARK_Uri_numOnly = :path LIMIT 1")
+    @Query("SELECT * FROM MusicStore WHERE MARK_ID = :path LIMIT 1")
     suspend operator fun get(path: String): MusicStoreSetting?
 
     //获取所有视频(包括隐藏的)

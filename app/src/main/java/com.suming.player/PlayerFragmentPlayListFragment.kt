@@ -15,9 +15,9 @@ import kotlinx.coroutines.launch
 
 class PlayerFragmentPlayListFragment(
     private val flag: Int = 0,
-    private val onPlayClick: (Uri) -> Unit,
-    private val onDeleteClick: (Uri, Int) -> Unit,
-) : Fragment(R.layout.activity_player_fragment_play_list_page1) {
+    private val onPlayClick: (String) -> Unit,
+    private val onAddToListClick: (String) -> Unit,
+) : Fragment(R.layout.activity_player_fragment_play_list_page_live) {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_video_adapter: PlayerFragmentPlayListVideoAdapter
@@ -35,7 +35,7 @@ class PlayerFragmentPlayListFragment(
             //初始化adapter + 设置点击事件
             recyclerView_video_adapter = PlayerFragmentPlayListVideoAdapter(
                 requireContext(),
-                onDeleteClick = { uri, _ -> onDeleteClick(uri, flag) },
+                onAddToListClick = { uri -> onAddToListClick(uri) },
                 onPlayClick = {
                     onPlayClick(it)
                 },
@@ -60,7 +60,7 @@ class PlayerFragmentPlayListFragment(
             //初始化adapter + 设置点击事件
             recyclerView_music_adapter = PlayerFragmentPlayListMusicAdapter(
                 requireContext(),
-                onDeleteClick = { uri, _ -> onDeleteClick(uri, flag) },
+                onAddToListClick = { uri -> onAddToListClick(uri) },
                 onPlayClick = {
                     onPlayClick(it)
                 },

@@ -55,6 +55,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -252,6 +253,7 @@ class PlayerFragmentPlayList: DialogFragment() {
             }
         }
 
+        //横滑页签按钮
         ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
         ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
         ButtonCardVideo.setOnClickListener {
@@ -263,14 +265,15 @@ class PlayerFragmentPlayList: DialogFragment() {
             switchToMusicPage()
         }
 
-
+        //ViewPager2
         ViewPager = view.findViewById(R.id.ViewPager)
         ViewPager.adapter = ViewPagerAdapter(
             this,
-            ::onPlayClick,
-            onDeleteClick = { uri, flag -> onDeleteClick(uri, flag) } )
+            onPlayClick = { uri -> onPlayClick(uri.toString()) },
+            onAddToListClick = { uri -> onAddToListClick(uri.toString()) })
         startViewPagerListener()
-
+        //设置ViewPager缓存页面数量
+        ViewPager.offscreenPageLimit = 3
 
 
 
@@ -289,16 +292,15 @@ class PlayerFragmentPlayList: DialogFragment() {
     //横向viewPager内部adapter类
     private class ViewPagerAdapter(
         fragment: Fragment,
-        private val onPlayClick: (Uri) -> Unit,
-        private val onDeleteClick: (Uri, Int) -> Unit
+        private val onPlayClick: (String) -> Unit,
+        private val onAddToListClick: (String) -> Unit
     ) : FragmentStateAdapter(fragment) {
-        override fun getItemCount(): Int = 2
+        override fun getItemCount(): Int = 3
         override fun createFragment(position: Int): Fragment =
             when (position) {
-                0, 1 -> PlayerFragmentPlayListFragment(flag = position, onPlayClick = onPlayClick, onDeleteClick = onDeleteClick)
+                0, 1 -> PlayerFragmentPlayListFragment(flag = position, onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
                 else -> ListFragment()
             }
-
 
 
     }
@@ -353,17 +355,17 @@ class PlayerFragmentPlayList: DialogFragment() {
 
 
     //播放点击事件
-    private fun onPlayClick(uri: Uri) {
-        if (uri.toString() == PlayerSingleton.getMediaInfoUri()){
+    private fun onPlayClick(uriString: String) {
+        if (uriString == PlayerSingleton.getMediaInfoUri()){
             PlayerSingleton.playPlayer()
             requireContext().showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
         }else{
-            PlayerSingleton.setMediaItem(uri, true)
+            PlayerSingleton.setMediaItem(uriString.toUri(), true)
             customDismiss()
         }
     }
     //删除点击事件
-    private fun onDeleteClick(uri: Uri, flag: Int) {
+    private fun onDeleteClick(uriString: String, flag: Int) {
         when (flag){
             0 -> {
                 //删除视频
@@ -374,6 +376,11 @@ class PlayerFragmentPlayList: DialogFragment() {
 
             }
         }
+
+    }
+    //添加到自定义列表点击事件
+    private fun onAddToListClick(uriString: String) {
+
 
     }
 

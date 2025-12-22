@@ -5,6 +5,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.content.SharedPreferences
 import android.provider.MediaStore
+import android.util.Log
 import androidx.core.content.edit
 import com.suming.player.ToolEventBus
 import data.DataBaseMediaStore.MediaStoreRepo
@@ -14,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class MediaStoreReaderForVideo(
     private val context: Context,
@@ -48,11 +50,17 @@ class MediaStoreReaderForVideo(
         //查询投影
         val projection = arrayOf(
             MediaStore.Video.Media._ID,
-            MediaStore.Video.Media.DISPLAY_NAME,
+            MediaStore.Video.Media.DISPLAY_NAME, //文件名
+            MediaStore.Video.Media.TITLE, //标题
+            MediaStore.Video.Media.ARTIST, //艺术家
             MediaStore.Video.Media.DURATION,
+            //视频专属
+            MediaStore.Video.Media.RESOLUTION,
+            //其他
+            MediaStore.Video.Media.DATA,
             MediaStore.Video.Media.SIZE,
             MediaStore.Video.Media.DATE_ADDED,
-            MediaStore.Video.Media.MIME_TYPE
+            MediaStore.Video.Media.MIME_TYPE,
         )
 
         //在IO线程执行查询
@@ -61,46 +69,67 @@ class MediaStoreReaderForVideo(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                 projection, null, null, sortOrder
             )?.use { cursor ->
-                //获取列索引
                 val idCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
-                val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+                val filenameCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+                val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.TITLE)
+                val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.ARTIST)
                 val durCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+                //视频专属
+                val resCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.RESOLUTION)
+                //其他
+                val pathCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
                 val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
                 val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
                 val mimeTypeCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
-                //读取
+
+                //读取媒体文件
                 while (cursor.moveToNext()) {
                     val id = cursor.getLong(idCol)
-                    val name = cursor.getString(nameCol).orEmpty()
+                    val uriString = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id).toString()
+                    val filename = cursor.getString(filenameCol).orEmpty()
+                    val title = cursor.getString(titleCol).orEmpty()
+                    val artist = cursor.getString(artistCol).orEmpty()
                     val dur = cursor.getLong(durCol)
+                    //视频专属
+                    val res = cursor.getString(resCol).orEmpty()
+                    //其他
+                    val path = cursor.getString(pathCol).orEmpty() //文件路径：可参与存在检查
                     val size = cursor.getLong(sizeCol)
                     val dateAdded = cursor.getLong(dateCol)
                     val mimeType = cursor.getString(mimeTypeCol).orEmpty()
                     val format = if (mimeType.contains('/')) mimeType.substringAfterLast('/') else mimeType
-                    //使用存在检查
-                    if (PREFS_EnableFileExistCheck) {
+
+
+                    //检查文件有效性
+                    val shouldSkip = when {
                         //检查文件是否存在
-                        val fileExist = isFileExist(ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id))
-                        //文件不存在，跳过
-                        if (fileExist && dur > 0 && size > 0 ) {
-                            list += MediaItemForVideo(
-                                id = id,
-                                uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
-                                name = name,
-                                durationMs = dur,
-                                sizeBytes = size,
-                                dateAdded = dateAdded,
-                                format = format,
-                            )
+                        PREFS_EnableFileExistCheck && !isFileExist(path) -> {
+                            Log.v("SuMing", "检查到媒体文件不存在：文件媒体ID: $id")
+                            true
                         }
+                        //检查文件是否有内容
+                        dur <= 0 || size <= 0 -> {
+                            Log.v("SuMing", "检查到媒体文件没有有效时长或大小：文件媒体ID: $id")
+                            true
+                        }
+                        //直接添加
+                        else -> false
                     }
-                    //不使用存在检查
-                    else{
+
+                    //汇总需要添加的条目
+                    if (!shouldSkip) {
                         list += MediaItemForVideo(
                             id = id,
-                            uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id),
-                            name = name,
+                            uriString = uriString,
+                            uriNumOnly = id,
+                            filename = filename,
+                            title = title,
+                            artist = artist,
                             durationMs = dur,
+                            //视频专属
+                            res = res,
+                            //其他
+                            path = path,
                             sizeBytes = size,
                             dateAdded = dateAdded,
                             format = format,
@@ -122,18 +151,25 @@ class MediaStoreReaderForVideo(
         val mediaStoreRepo = MediaStoreRepo.get(context)
 
         val mediaStoreSettings = videos.map { video ->
-            //查询是否已存在该记录
-            val existingSetting = mediaStoreRepo.getVideo(video.id.toString())
+            //查询是否已存在该记录：暂不使用
+            //val existingSetting = mediaStoreRepo.getVideo(video.id.toString())
+            //用例：info_is_hidden = existingSetting?.info_is_hidden ?: false,
 
             MediaStoreSetting(
-                MARK_Uri_numOnly = video.id.toString(),
-                info_title = video.name,
+                //基本：唯一标识：视频的媒体库id,同时也是uriNumOnly的值
+                MARK_ID = video.id.toString(),
+                info_uri_string = video.uriString,
+                info_uri_numOnly = video.uriNumOnly,
+                info_filename = video.filename,
+                info_title = video.title,
+                info_artist = video.artist,
                 info_duration = video.durationMs,
+                //视频专属
+                info_resolution = video.res,
+                //其他
+                info_path = video.path,
                 info_file_size = video.sizeBytes,
-                info_uri_full = video.uri.toString(),
                 info_date_added = video.dateAdded,
-                info_is_hidden = existingSetting?.info_is_hidden ?: false,
-                info_artwork_path = existingSetting?.info_artwork_path ?: "",
                 info_format = video.format
             )
         }
@@ -149,26 +185,25 @@ class MediaStoreReaderForVideo(
     //类功能主入口：读取所有视频并保存到数据库
     suspend fun readAndSaveAllVideos(): List<MediaItemForVideo> {
         val videos = readAllVideos()
+
         saveVideosToDatabase(videos)
 
         return videos
-    }
+    }  //!主链路入口
     //存在检查
-    private fun isFileExist(uri: android.net.Uri): Boolean {
+    private fun isFileExist(path: String): Boolean {
         return try {
-            contentResolver.openInputStream(uri)?.use {
-                return true
-            }
+            File(path).exists()
+        } catch (_: Exception) {
             false
         }
-        catch (e: Exception) { false }
     }
     //去除数据库中已无对应视频的条目
     private suspend fun cleanupDeletedVideos(currentVideoIds: List<String>, mediaStoreRepo: MediaStoreRepo) {
         val allVideos = mediaStoreRepo.getAllVideos()
         //找出数据库中存在但不在当前读取列表中的视频ID
         val deletedVideoIds = allVideos
-            .map { it.MARK_Uri_numOnly }
+            .map { it.MARK_ID }
             .filterNot { currentVideoIds.contains(it) }
         //批量删除
         if (deletedVideoIds.isNotEmpty()) {

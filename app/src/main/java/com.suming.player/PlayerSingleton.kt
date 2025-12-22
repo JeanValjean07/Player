@@ -193,7 +193,7 @@ object PlayerSingleton {
     //播放器状态变量
     var singleton_player_built = false
     var singleton_exit_before_read = false
-    //媒体信息
+    //媒体信息：!!!修改后必须记得更新这些信息
     var MediaInfo_MediaType = ""
     var MediaInfo_MediaTitle = ""
     var MediaInfo_MediaArtist = ""
@@ -250,7 +250,7 @@ object PlayerSingleton {
         //读取媒体列表
         getMediaListFromDataBase(singletonContext)
         //更新当前媒体index
-        updateMediaIndex(MediaInfo_MediaUri)
+        updateMediaIndex(MediaInfo_MediaUriString)
         //链接媒体会话
         Handler(Looper.getMainLooper()).postDelayed({
             connectToMediaSession(singletonContext)
@@ -337,17 +337,22 @@ object PlayerSingleton {
             val mediaStoreRepo = MediaStoreRepo.get(singletonContext)
             val mediaStoreSettings = mediaStoreRepo.getAllVideosSorted(sortOrder, sortOrientation)
             val mediaItems = mediaStoreSettings
-                .filter { setting -> !setting.info_is_hidden }
                 .map { setting ->
                     MediaItemForVideo(
-                        id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,
-                        uri = setting.info_uri_full.toUri(),
-                        name = setting.info_title,
+                        id = setting.MARK_ID.toLongOrNull() ?: 0,
+                        uriString = setting.info_uri_string,
+                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
+                        filename = setting.info_filename,
+                        title = setting.info_title,
+                        artist = setting.info_artist,
                         durationMs = setting.info_duration,
+                        //视频专属
+                        res = setting.info_resolution,
+                        //其他
+                        path = setting.info_path,
                         sizeBytes = setting.info_file_size,
                         dateAdded = setting.info_date_added,
                         format = setting.info_format,
-                        isHidden = setting.info_is_hidden
                     )
                 }
 
@@ -355,7 +360,7 @@ object PlayerSingleton {
             mediaItemsMutableSnapshot = mediaItems.toMutableStateList()
 
             //反定位当前媒体index
-            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uri.toString() == MediaInfo_MediaUriString }
+            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == MediaInfo_MediaUriString }
             maxMediaIndex = mediaItemsMutableSnapshot.size - 1
 
             //保存完后公布状态
@@ -375,24 +380,29 @@ object PlayerSingleton {
             val mediaStoreRepo = MediaStoreRepo.get(singletonContext)
             val mediaStoreSettings = mediaStoreRepo.getAllVideosSorted(sortOrder, sortOrientation)
             val mediaItems = mediaStoreSettings
-                .filter { setting -> !setting.info_is_hidden }
                 .map { setting ->
                     MediaItemForVideo(
-                        id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,
-                        uri = setting.info_uri_full.toUri(),
-                        name = setting.info_title,
+                        id = setting.MARK_ID.toLongOrNull() ?: 0,
+                        uriString = setting.info_uri_string,
+                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
+                        filename = setting.info_filename,
+                        title = setting.info_title,
+                        artist = setting.info_artist,
                         durationMs = setting.info_duration,
+                        //视频专属
+                        res = setting.info_resolution,
+                        //其他
+                        path = setting.info_path,
                         sizeBytes = setting.info_file_size,
                         dateAdded = setting.info_date_added,
                         format = setting.info_format,
-                        isHidden = setting.info_is_hidden
                     )
                 }
 
             //转换为可观察列表
             mediaItemsMutableSnapshot = mediaItems.toMutableStateList()
             //反定位当前媒体index
-            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uri.toString() == MediaInfo_MediaUriString }
+            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == MediaInfo_MediaUriString }
             maxMediaIndex = mediaItemsMutableSnapshot.size - 1
 
             //保存完后公布状态
@@ -414,13 +424,13 @@ object PlayerSingleton {
     fun updateMediaList(context: Context){
         getMediaListFromDataBase(context)
     } //更新播放列表
-    fun deleteMediaItem(uri: Uri){
-        mediaItemsMutableSnapshot.removeIf { it.uri == uri }
+    fun deleteMediaItem(uriString: String){
+        mediaItemsMutableSnapshot.removeIf { it.uriString == uriString }
 
     } //删除播放列表中的项
-    private fun updateMediaIndex(itemUri: Uri){
+    private fun updateMediaIndex(itemUriString: String){
         if (!state_MediaListProcess_complete) return
-        currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uri.toString() == itemUri.toString() }
+        currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == itemUriString }
     } //内部:更新当前媒体index
     private fun isNewUriValid(uri: Uri): Boolean{
         retriever = MediaMetadataRetriever()
@@ -473,7 +483,7 @@ object PlayerSingleton {
                 if (indexCursor > maxCursorCount){
                     indexCursor = 0
                 }
-                targetUriString = mediaItemsMutableSnapshot.getOrNull(indexCursor)?.uri?.toString() ?: ""
+                targetUriString = mediaItemsMutableSnapshot.getOrNull(indexCursor)?.uriString ?: ""
                 //Log.d("SuMing", "indexCursor: $indexCursor  targetUriString: $targetUriString")
                 indexTryCount++
                 val newUriValid = isNewUriValid(targetUriString.toUri())
@@ -487,7 +497,7 @@ object PlayerSingleton {
                 }
                 //Log.d("SuMing", "检查末尾 targetUriString: $targetUriString")
             }
-            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uri.toString() == targetUriString }
+            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == targetUriString }
             return targetUriString
         }
         else if (flag_next_or_previous == "previous"){
@@ -497,7 +507,7 @@ object PlayerSingleton {
                 if (indexCursor < 0){
                     indexCursor = maxCursorCount
                 }
-                targetUriString = mediaItemsMutableSnapshot.getOrNull(indexCursor)?.uri?.toString() ?: ""
+                targetUriString = mediaItemsMutableSnapshot.getOrNull(indexCursor)?.uriString ?: ""
                 //Log.d("SuMing", "indexCursor: $indexCursor  targetUriString: $targetUriString")
                 indexTryCount++
                 val newUriValid = isNewUriValid(targetUriString.toUri())
@@ -507,7 +517,7 @@ object PlayerSingleton {
                     break
                 }
             }
-            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uri.toString() == targetUriString }
+            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == targetUriString }
             return targetUriString
         }
         else{

@@ -110,6 +110,8 @@ class MainActivity: AppCompatActivity() {
     private var state_PlayingCard_showing = false
     private var state_PlayingCard_gone = true
     //</editor-fold>
+    //播放中媒体信息
+    //!不能放在这里
     //播放中卡片
     //<editor-fold desc="播放中卡片">
     private lateinit var PlayingCard: CardView
@@ -286,34 +288,6 @@ class MainActivity: AppCompatActivity() {
             else if (state_currentPage == "music"){
                 MainFragMusicStoreSetting.newInstance().show(supportFragmentManager, "MainFragMusicStoreSetting")
             }
-        }
-        //显示隐藏的媒体
-        val gestureDetectorToolbarTitle = GestureDetector(this, object : SimpleOnGestureListener() {
-            override fun onLongPress(e: MotionEvent) {
-                ToolVibrate().vibrate(this@MainActivity)
-                //逻辑修改
-                val show_hide_items = PREFS_MediaStore.getBoolean("PREFS_showHideItems", false)
-                if (show_hide_items){
-                    PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
-                    showCustomToast("不显示已被隐藏的视频", Toast.LENGTH_SHORT, 3)
-                    //刷新列表
-                    main_video_list_adapter.refresh()
-                }else{
-                    PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", true).apply() }
-                    showCustomToast("显示已被隐藏的视频", Toast.LENGTH_SHORT, 3)
-                    //刷新列表
-                    main_video_list_adapter.refresh()
-                }
-                super.onLongPress(e)
-            }
-            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                return super.onSingleTapConfirmed(e)
-            }
-        })
-        val ToolbarTitle = findViewById<TextView>(R.id.AppBarTitle)
-        ToolbarTitle.setOnTouchListener { _, event ->
-            gestureDetectorToolbarTitle.onTouchEvent(event)
-            true
         }
         //页签按钮
         ButtonCardMusic.setOnClickListener {
@@ -1019,11 +993,8 @@ class MainActivity: AppCompatActivity() {
                     popup.setOnMenuItemClickListener { /*handle*/; true }
                     popup.show()
                 },
-                onItemHideClick = { uri,flag_need_hide ->
-                    HideItem(uri, flag_need_hide)
-                },
                 onSmallCardPlay = { uri, title ->
-                    startSmallCardPlay(uri, title)
+                    startSmallCardPlay(uri.toUri(), title)
                 }
             )
             //设置adapter
@@ -1207,22 +1178,6 @@ class MainActivity: AppCompatActivity() {
             showCustomToast("严重错误:未知的媒体类型", Toast.LENGTH_SHORT, 3)
         }
     }
-    //隐藏
-    private fun HideItem(uri: Uri, flag_need_hide: Boolean) {
-        val uriNumOnly = uri.toString().replace(Regex("[^0-9]"), "")
-        if (flag_need_hide){
-            showCustomToast("已隐藏", Toast.LENGTH_SHORT, 3)
-        }
-        else{
-            showCustomToast("已取消隐藏", Toast.LENGTH_SHORT, 3)
-        }
-        //保存到数据库
-        lifecycleScope.launch(Dispatchers.IO){
-            MediaStoreRepo.get(this@MainActivity).updateHiddenStatus(uriNumOnly,flag_need_hide)
-        }
-        //刷新列表
-        main_video_list_adapter.refresh()
-    }
     //显示通知
     private var showNoticeJob: Job? = null
     private fun showNoticeJob(text: String, duration: Long) {
@@ -1372,10 +1327,11 @@ class MainActivity: AppCompatActivity() {
         }
     }
     private val disposable_withExtraString = ToolEventBus.events_withExtraString.subscribe {
-        when (it.type) {
+        when (it.key) {
             "PlayerActivity_CoverChanged" -> {
-                it.fileName?.let { fileName ->
-                    main_video_list_adapter.updateCoverForVideo(fileName)
+                it.stringInfo?.let { uriNumOnlyString ->
+                    val uriNumOnly = uriNumOnlyString.toLong()
+                    main_video_list_adapter.updateCoverForVideo(uriNumOnly)
                 }
             }
         }

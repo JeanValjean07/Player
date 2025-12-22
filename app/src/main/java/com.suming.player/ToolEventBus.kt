@@ -4,9 +4,10 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.PublishSubject
 
 data class Event(
-    val type: String,
-    val fileName: String? = null
+    val key: String,
+    val stringInfo: String? = null
 )
+
 
 
 object ToolEventBus {

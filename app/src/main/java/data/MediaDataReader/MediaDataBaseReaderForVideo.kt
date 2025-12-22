@@ -15,7 +15,6 @@ class MediaDataBaseReaderForVideo(
 ) : PagingSource<Int, MediaItemForVideo>() {
     //设置和设置项
     private lateinit var PREFS_MediaStore: SharedPreferences
-    private var PREFS_showHideItems = false
 
 
     override fun getRefreshKey(state: PagingState<Int, MediaItemForVideo>): Int? {
@@ -37,11 +36,6 @@ class MediaDataBaseReaderForVideo(
             var sortOrientation: String
             //读取媒体库设置
             PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-            if (PREFS_MediaStore.contains("PREFS_showHideItems")){
-                PREFS_showHideItems = PREFS_MediaStore.getBoolean("PREFS_showHideItems", false)
-            }else{
-                PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
-            }
             if (PREFS_MediaStore.contains("PREFS_video_sortOrder")){
                 sortOrder = PREFS_MediaStore.getString("PREFS_video_sortOrder", "info_title") ?: "info_title"
             }else{
@@ -61,19 +55,22 @@ class MediaDataBaseReaderForVideo(
 
             //合成MediaItem
             val mediaItems = mediaStoreSettings
-                .filter { setting ->
-                    PREFS_showHideItems || !setting.info_is_hidden
-                }
                 .map { setting ->
                     MediaItemForVideo(
-                        id = setting.MARK_Uri_numOnly.toLongOrNull() ?: 0,
-                        uri = setting.info_uri_full.toUri(),
-                        name = setting.info_title,
+                        id = setting.MARK_ID.toLongOrNull() ?: 0,
+                        uriString = setting.info_uri_string,
+                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
+                        filename = setting.info_filename,
+                        title = setting.info_title,
+                        artist = setting.info_artist,
                         durationMs = setting.info_duration,
+                        //视频专属
+                        res = setting.info_resolution,
+                        //其他
+                        path = setting.info_path,
                         sizeBytes = setting.info_file_size,
                         dateAdded = setting.info_date_added,
                         format = setting.info_format,
-                        isHidden = setting.info_is_hidden
                     )
                 }
 
