@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -550,9 +551,9 @@ class MainActivity: AppCompatActivity() {
         if (!isNowPlying){ return }
         //获取播放中媒体信息
         val (MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist) = getPlayingMediaItemInfo()
+        Log.d("SuMing", "ResetPlayingCard : $MediaInfo_MediaType, $MediaInfo_FileName, $MediaInfo_MediaArtist")
         //更新播放卡片
         updatePlayingCard(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
-        //Log.d("SuMing", "ResetPlayingCard : $MediaInfo_MediaType, $MediaInfo_FileName, $MediaInfo_MediaArtist")
 
     }  //!主链路入口
     //onCreate:每次启动检查上次在播放的媒体
@@ -626,14 +627,15 @@ class MainActivity: AppCompatActivity() {
                 PlayingCard_Image.visibility = View.VISIBLE
                 //获取封面图
                 val covers_path = File(filesDir, "miniature/cover")
-                val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
-                val cover_img_uri = if (cover_img_path.exists()) {
+                val filename = PlayerSingleton.getMediaInfoFileName()
+                val cover_img = File(covers_path, "${filename.hashCode()}.webp")
+                val cover_img_uri = if (cover_img.exists()) {
                     try {
-                        FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img_path)
+                        FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img)
                     }
                     catch (e: Exception) {
-                        if (cover_img_path.canRead()) {
-                            cover_img_path.toUri()
+                        if (cover_img.canRead()) {
+                            cover_img.toUri()
                         } else {
                             null
                         }
@@ -641,7 +643,6 @@ class MainActivity: AppCompatActivity() {
                 } else {
                     null
                 }
-
                 PlayingCard_Image.setImageURI(cover_img_uri)
             }else{
                 PlayingCard_Image.visibility = View.GONE
@@ -653,6 +654,28 @@ class MainActivity: AppCompatActivity() {
         else if (type == "music"){
             PlayingCard_Image.visibility = View.VISIBLE
             PlayingCard_Video.visibility = View.GONE
+            //获取封面图
+            val covers_path = File(filesDir, "miniature/music_cover")
+            val filename = PlayerSingleton.getMediaInfoFileName()
+            val coverName = filename.substringBeforeLast(".")
+            val cover_img = File(covers_path, "${coverName.hashCode()}.webp")
+            Log.d("SuMing", "BindPlayingCardSmallPlayer : $filename ${filename.hashCode()} ${cover_img.absolutePath}")
+            val cover_img_uri = if (cover_img.exists()) {
+                try {
+                    FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img)
+                }
+                catch (e: Exception) {
+                    if (cover_img.canRead()) {
+                        cover_img.toUri()
+                    } else {
+                        null
+                    }
+                }
+            } else {
+                Log.d("SuMing", "BindPlayingCardSmallPlayer : 封面图不存在")
+                null
+            }
+            PlayingCard_Image.setImageURI(cover_img_uri)
         }
 
     } //绑定播放器或视频视图
@@ -759,7 +782,7 @@ class MainActivity: AppCompatActivity() {
             }else{
                 showCustomToast("请先开启媒体访问文件权限", Toast.LENGTH_SHORT, 3)
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .apply { data = Uri.parse("package:$packageName") }
+                    .apply { data = "package:$packageName".toUri() }
                 startActivity(intent)
             }
             return
@@ -781,6 +804,7 @@ class MainActivity: AppCompatActivity() {
     }  //!主链路入口
     private var state_VideoMediaStoreReaded = false
     private var state_VideoDataBaseReaded_N_AdapterBinded = false
+    @SuppressLint("NewApi")
     private fun generalLoadVideo(){
         //检查权限
         val isPermissionGranted = isPermissionGranted()
@@ -792,7 +816,7 @@ class MainActivity: AppCompatActivity() {
             }else{
                 showCustomToast("请先开启媒体访问文件权限", Toast.LENGTH_SHORT, 3)
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .apply { data = Uri.parse("package:$packageName") }
+                    .apply { data = "package:$packageName".toUri() }
                 startActivity(intent)
             }
             return
@@ -1175,7 +1199,9 @@ class MainActivity: AppCompatActivity() {
                 }
         }
         else if (MediaInfo_MediaType == "music"){
-            startMusicPlayer(uri)
+            showCustomToast("暂不支持打开音乐播放页面", Toast.LENGTH_SHORT, 3)
+
+            //startMusicPlayer(uri)
         }
         else{
             showCustomToast("严重错误:未知的媒体类型", Toast.LENGTH_SHORT, 3)

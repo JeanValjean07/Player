@@ -51,7 +51,7 @@
             app:layout_constraintStart_toEndOf="@+id/ivThumbCard"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/ButtonMoreOption"
+            app:layout_constraintEnd_toStartOf="@+id/ButtonDelete"
             android:orientation="vertical">
             <!-- 标题 -->
             <TextView

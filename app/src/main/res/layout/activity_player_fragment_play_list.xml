@@ -203,8 +203,8 @@
                 </LinearLayout>
             </com.google.android.material.appbar.AppBarLayout>
             <!-- 滚动区域 -->
-            <androidx.core.widget.NestedScrollView
-                android:id="@+id/NestedScrollView"
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/ViewPager"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:minHeight="500dp"
@@ -212,22 +212,8 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/PlayListRecyclerView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-                </androidx.recyclerview.widget.RecyclerView>
-            </androidx.core.widget.NestedScrollView>
-            <!-- compose测试区 -->
-            <androidx.compose.ui.platform.ComposeView
-                android:id="@+id/composableView"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                app:layout_constraintTop_toBottomOf="@+id/AppBar"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.cardview.widget.CardView>
+            </androidx.viewpager2.widget.ViewPager2>
+
+       </androidx.constraintlayout.widget.ConstraintLayout>
+   </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

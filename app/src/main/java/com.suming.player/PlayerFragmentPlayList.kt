@@ -3,6 +3,7 @@ package com.suming.player
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
@@ -13,27 +14,21 @@ import android.os.Looper
 import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,8 +37,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardDefaults.shape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,41 +44,37 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.ListFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.common.collect.Multimaps.index
-import data.MediaDataReader.MediaDataBaseReaderForVideo
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
 import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 @SuppressLint("ComposableNaming")
 @UnstableApi
@@ -99,23 +88,15 @@ class PlayerFragmentPlayList: DialogFragment() {
                 )
             }
     }
-    //设置
-    private lateinit var PREFS: SharedPreferences
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
+    //设置
+    private lateinit var PREFS: SharedPreferences
     //协程作用域
     private val viewModelScope = CoroutineScope(Dispatchers.IO)
-    //自动关闭标志位
-    private var lockPage = false
-    //声明式显示列表区域
-    private lateinit var composableView: View
-    private lateinit var composeView: androidx.compose.ui.platform.ComposeView
-    private lateinit var mediaItemsMutableSnapshot: SnapshotStateList<MediaItemForVideo>
-    //当前正在播放项
-    private var currentPlayingUri = ""
-    //RecyclerView
-    private lateinit var play_list_recyclerView: RecyclerView
-    private lateinit var play_list_recyclerView_adapter: PlayerFragmentPlayListAdapter
+    //横向按钮
+    private lateinit var ButtonCardVideo: CardView
+    private lateinit var ButtonCardMusic: CardView
 
 
     override fun onStart() {
@@ -184,9 +165,6 @@ class PlayerFragmentPlayList: DialogFragment() {
     ): View = inflater.inflate(R.layout.activity_player_fragment_play_list, container, false)
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "SuspiciousIndentation")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        //初始化ComposeView
-        composableView = view.findViewById(R.id.composableView)
-        composeView = composableView as ComposeView
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
         buttonExit.setOnClickListener {
@@ -274,132 +252,30 @@ class PlayerFragmentPlayList: DialogFragment() {
             }
         }
 
-        initRecyclerView()
-
-        setPlayListRecyclerViewAdapter()
-
-        //声明式显示列表
-        /*
-        composeView.setContent {
-            showVideoList()
+        ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
+        ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
+        ButtonCardVideo.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            switchToVideoPage()
+        }
+        ButtonCardMusic.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            switchToMusicPage()
         }
 
-         */
+
+        ViewPager = view.findViewById(R.id.ViewPager)
+        ViewPager.adapter = ViewPagerAdapter(
+            this,
+            ::onPlayClick,
+            onDeleteClick = { uri, flag -> onDeleteClick(uri, flag) } )
+        startViewPagerListener()
 
 
 
-        //面板下滑关闭(NestedScrollView)
-        if (!vm.PREFS_CloseFragmentGesture){
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-                var down_y = 0f
-                var deltaY = 0f
-                var deltaY_ReachPadding = false
-                val RootCard = view.findViewById<CardView>(R.id.mainCard)
-                val RootCardOriginY = RootCard.translationY
-                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
-                var NestedScrollViewAtTop = true
-                NestedScrollView.setOnTouchListener { _, event ->
-                    when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN -> {
-                            deltaY_ReachPadding = false
-                            if (NestedScrollView.scrollY != 0){
-                                NestedScrollViewAtTop = false
-                                return@setOnTouchListener false
-                            }else{
-                                NestedScrollViewAtTop = true
-                                down_y = event.rawY
-                            }
-                        }
-                        MotionEvent.ACTION_MOVE -> {
-                            if (!NestedScrollViewAtTop){
-                                return@setOnTouchListener false
-                            }
-                            deltaY = event.rawY - down_y
-                            if (deltaY < 0){
-                                return@setOnTouchListener false
-                            }
-                            if (deltaY >= 400f){
-                                if (!deltaY_ReachPadding){
-                                    deltaY_ReachPadding = true
-                                    ToolVibrate().vibrate(requireContext())
-                                }
-                            }
-                            RootCard.translationY = RootCardOriginY + deltaY
-                            return@setOnTouchListener true
-                        }
-                        MotionEvent.ACTION_UP -> {
-                            if (deltaY >= 400f){
-                                Dismiss(false)
-                            }else{
-                                RootCard.animate()
-                                    .translationY(0f)
-                                    .setInterpolator(DecelerateInterpolator(1f))
-                                    .duration = 300
-                            }
 
-                        }
-                    }
-                    return@setOnTouchListener false
-                }
-            }
-            else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-                var down_y = 0f
-                var deltaY = 0f
-                var down_x = 0f
-                var deltaX = 0f
-                var deltaX_ReachPadding = false
-                var Y_move_ensure = false
-                val RootCard = view.findViewById<CardView>(R.id.mainCard)
-                val RootCardOriginX = RootCard.translationX
-                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
-                NestedScrollView.setOnTouchListener { _, event ->
-                    when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN -> {
-                            down_x = event.rawX
-                            down_y = event.rawY
-                            Y_move_ensure = false
-                            deltaX_ReachPadding = false
-                        }
-                        MotionEvent.ACTION_MOVE -> {
-                            deltaY = event.rawY - down_y
-                            deltaX = event.rawX - down_x
-                            if (deltaX < 0){
-                                return@setOnTouchListener false
-                            }
-                            if (deltaX >= 200f){
-                                if (!deltaX_ReachPadding){
-                                    deltaX_ReachPadding = true
-                                    ToolVibrate().vibrate(requireContext())
-                                }
-                            }
-                            if (Y_move_ensure){
-                                return@setOnTouchListener false
-                            }
-                            if (abs(deltaY) > abs(deltaX)){
-                                Y_move_ensure = true
-                                return@setOnTouchListener false
-                            }
-                            RootCard.translationX = RootCardOriginX + deltaX
-                            return@setOnTouchListener true
-                        }
-                        MotionEvent.ACTION_UP -> {
-                            if (Y_move_ensure){
-                                return@setOnTouchListener false
-                            }
-                            if (deltaX >= 200f){
-                                Dismiss(false)
-                            }else{
-                                RootCard.animate()
-                                    .translationX(0f)
-                                    .setInterpolator(DecelerateInterpolator(1f))
-                                    .duration = 300
-                            }
-                        }
-                    }
-                    return@setOnTouchListener false
-                }
-            }
-        }
+
+
         //监听返回手势(DialogFragment)
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
@@ -410,208 +286,100 @@ class PlayerFragmentPlayList: DialogFragment() {
         }
     //onViewCreated END
     }
-
-
-    private fun initRecyclerView(){
-        //初始化RecyclerView
-        play_list_recyclerView = view!!.findViewById(R.id.PlayListRecyclerView)
-        //设置布局管理器
-        play_list_recyclerView.layoutManager = LinearLayoutManager(requireContext())
-    }
-    private fun setPlayListRecyclerViewAdapter(){
-        //设置点击事件
-        play_list_recyclerView_adapter = PlayerFragmentPlayListAdapter(
-            requireContext(),
-            onPlayClick = { itemUri -> onPlayClick(itemUri) },
-            onDeleteClick = { itemUri -> onDeleteClick(itemUri) }
-        )
-        //设置适配器
-        play_list_recyclerView.adapter = play_list_recyclerView_adapter
-        //分页加载
-        val pager = Pager(PagingConfig(pageSize = 20)) {
-            PlayerFragmentPlayListPagingSource(requireContext())
-        }
-        //分页加载数据
-        lifecycleScope.launch {
-            pager.flow.collect { pagingData ->
-                play_list_recyclerView_adapter.submitData(pagingData)
+    //横向viewPager内部adapter类
+    private class ViewPagerAdapter(
+        fragment: Fragment,
+        private val onPlayClick: (Uri) -> Unit,
+        private val onDeleteClick: (Uri, Int) -> Unit
+    ) : FragmentStateAdapter(fragment) {
+        override fun getItemCount(): Int = 2
+        override fun createFragment(position: Int): Fragment =
+            when (position) {
+                0, 1 -> PlayerFragmentPlayListFragment(flag = position, onPlayClick = onPlayClick, onDeleteClick = onDeleteClick)
+                else -> ListFragment()
             }
+
+
+
+    }
+    //viewPager页面监听器
+    private lateinit var ViewPager: ViewPager2
+    private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
+        override fun onPageSelected(position: Int) {
+            updateCardState(position)
+        }
+
+        override fun onPageScrolled(
+            position: Int,
+            positionOffset: Float,
+            positionOffsetPixels: Int
+        ) {
+            // 滚动过程中持续回调，可做联动动画
+        }
+
+        override fun onPageScrollStateChanged(state: Int) {
+            // 状态：SCROLL_STATE_IDLE / DRAGGING / SETTLING
+        }
+    }
+    private fun startViewPagerListener(){
+        ViewPager.registerOnPageChangeCallback(ViewPagerListener)
+    }
+    private fun stopViewPagerListener(){
+        ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
+    }
+    //卡片颜色切换
+    private fun switchToVideoPage(){
+        ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+        ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+        ViewPager.currentItem = 0
+
+    }
+    private fun switchToMusicPage(){
+        ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+        ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+        ViewPager.currentItem = 1
+
+    }
+    private fun updateCardState(position: Int){
+        if (position == 0){
+            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+        }
+        else if (position == 1){
+            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
         }
     }
 
-    //声明式UI
-    @Composable
-    private fun showVideoList() {
-        //获取正在播放项
-        currentPlayingUri = PlayerSingleton.getMediaInfoUri()
-        //获取播放列表
-        mediaItemsMutableSnapshot = PlayerSingleton.getMediaList(requireContext())
-        //播放列表为空
-        if (mediaItemsMutableSnapshot.isEmpty()){
-            Text(
-                text = "播放列表为空",
-                color = colorResource(R.color.HeadText),
-                style  = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp, 5.dp, 10.dp, 5.dp)
-            )
-            return
-        }
-        //播放列表不为空
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        )
-        {
-            items(
-                items = mediaItemsMutableSnapshot,
-                key = { it.uri },
-                contentType = { "media_card" }
-            ) { item ->
-                var visible by remember { mutableStateOf(true) }
 
-                AnimatedVisibility(
-                    visible = visible,
-                    exit =  shrinkVertically()
-                )
-                {
-                    EachItemCard(
-                        index = mediaItemsMutableSnapshot.indexOf(item),
-                        item = item,
-                        onDelete = {
-                            visible = false
-                        },
-                        onPlay = { onPlayClick(item.uri) }
-                    )
-                }
-
-                LaunchedEffect(visible)
-                {
-                    if (!visible) {
-                        kotlinx.coroutines.delay(300)
-                        mediaItemsMutableSnapshot.remove(item)
-                        onDeleteClick(item.uri)
-                    }
-                }
-            }
-            items(mediaItemsMutableSnapshot) { item ->
-
-            }//items(mediaItems)
-        }
-
-    }
-    @Composable
-    private fun EachItemCard(index: Int, item: MediaItemForVideo, onDelete: () -> Unit, onPlay: () -> Unit)
-    {
-        Card(
-            shape = RoundedCornerShape(6.dp),
-            //elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
-            colors = CardDefaults.cardColors(containerColor = colorResource(if (item.uri.toString() == currentPlayingUri){
-                        R.color.PlayListCard_ON
-                    } else{
-                        R.color.PlayListCard_OFF
-                    })),
-            modifier = Modifier.fillMaxWidth()
-                .then(
-                    if (index == mediaItemsMutableSnapshot.lastIndex)
-                        Modifier.padding(bottom = 300.dp)
-                        //Modifier.border(1.dp, colorResource(R.color.HeadText2), shape).padding(bottom = 300.dp)
-                    else
-                        Modifier
-                ),
-        )
-        {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp, 5.dp, 10.dp, 5.dp),
-                verticalAlignment = Alignment.CenterVertically
-            )
-            {
-                Column(
-                    Modifier.weight(1f)
-                )
-                {
-                    Text(
-                        text = item.name,
-                        color = colorResource(R.color.HeadText),
-                        style  = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = item.uri.toString(),
-                        color = colorResource(R.color.HeadText2),
-                        fontSize = 8.sp,
-                        style  = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                //按钮：移除该项
-                IconButton(
-                    onClick = {
-                        onDelete()
-                    },
-                    modifier = Modifier.size(20.dp)
-                )
-                {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_play_list_delete),
-                        contentDescription = "移除",
-                        tint = colorResource(R.color.HeadText2)
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                //按钮：立即播放
-                IconButton(
-                    onClick = { onPlayClick(item.uri) },
-                    modifier = Modifier.size(22.dp)
-                )
-                {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_play_list_play),
-                        contentDescription = "播放",
-                        tint = colorResource(R.color.HeadText2)
-                    )
-                }
-            }
-        }
-    }
     //播放点击事件
     private fun onPlayClick(uri: Uri) {
         if (uri.toString() == PlayerSingleton.getMediaInfoUri()){
             PlayerSingleton.playPlayer()
-            requireContext().showCustomToast("已在播放该视频", Toast.LENGTH_SHORT, 3)
+            requireContext().showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
         }else{
             PlayerSingleton.setMediaItem(uri, true)
             customDismiss()
         }
     }
     //删除点击事件
-    private fun onDeleteClick(uri: Uri) {
-        if (uri.toString() == PlayerSingleton.getMediaInfoUri()){
-            //本地和播放器都要闪一次
-            mediaItemsMutableSnapshot.removeIf { it.uri == uri }
-            PlayerSingleton.deleteMediaItem(uri)
-            if (mediaItemsMutableSnapshot.isNotEmpty()){
-                PlayerSingleton.switchToNextMediaItem()
-                requireContext().showCustomToast("已切换至下一曲", Toast.LENGTH_SHORT, 3)
-            }else{
-                PlayerSingleton.clearMediaItem()
-                PlayerSingleton.clearMediaInfo()
-                PlayerSingleton.ReleaseSingletonPlayer(requireContext())
-                requireContext().showCustomToast("当前列表已无曲目", Toast.LENGTH_SHORT, 3)
-                ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
-                customDismiss(true)
+    private fun onDeleteClick(uri: Uri, flag: Int) {
+        when (flag){
+            0 -> {
+                //删除视频
+
+            }
+            1 -> {
+                //删除音乐
+
             }
         }
-        else{
-            //移除列表中的项
-            mediaItemsMutableSnapshot.removeIf { it.uri == uri }
-        }
+
     }
 
     //Functions
     //自定义退出逻辑
+    private var lockPage = false
     private fun customDismiss(flag_need_vibrate: Boolean = true){
         if (!lockPage) {
             Dismiss(flag_need_vibrate)
@@ -619,31 +387,14 @@ class PlayerFragmentPlayList: DialogFragment() {
     }
     private fun Dismiss(flag_need_vibrate: Boolean = true){
         if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
+
+        stopViewPagerListener()
+
+
         val result = bundleOf("KEY" to "Dismiss")
         setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-        stopShowVideoListRunnable()
         dismiss()
     }
-    //Runnable:重新显示媒体列表
-    private val showVideoListHandler = Handler(Looper.getMainLooper())
-    private val showVideoList = object : Runnable {
-        override fun run() {
-            val isComplete = PlayerSingleton.isMediaListProcessComplete()
-            if (isComplete){
-                composeView.setContent {
-                    showVideoList()
-                }
-            }
-            else{
-                showVideoListHandler.postDelayed(this, 50)
-            }
-        }
-    }
-    private fun startShowVideoListRunnable() {
-        showVideoListHandler.post(showVideoList)
-    }
-    private fun stopShowVideoListRunnable() {
-        showVideoListHandler.removeCallbacks(showVideoList)
-    }
+
 
 }

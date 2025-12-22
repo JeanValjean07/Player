@@ -234,6 +234,7 @@ object PlayerSingleton {
         }
     }  //播放信息保存到上次播放记录
     private fun onMediaItemChanged(mediaItem: MediaItem?){
+        Log.d("SuMing", "单例 onMediaItemChanged : $mediaItem")
         if (mediaItem == null){ return }
         //播放信息保存到上次播放记录
         saveLastMediaItemInfo(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist, MediaInfo_MediaUriString)
@@ -553,7 +554,17 @@ object PlayerSingleton {
     private fun setNewMediaItem(itemUri: Uri, playWhenReady: Boolean){
         //Log.d("SuMing", "单例 setNewMediaItem: $itemUri  $playWhenReady")
         //先更新单例环境媒体信息
+        val originMediaType = MediaInfo_MediaType
         getMediaInfo(singletonContext, itemUri)
+        if (originMediaType != MediaInfo_MediaType){
+            //先销毁原本的播放器
+            ReleaseSingletonPlayer(singletonContext)
+            //重建播放器并添加监听器
+            BuildPlayer(singletonContext)
+            addPlayerStateListener()
+        }
+
+
         //设置播放状态
         _player?.playWhenReady = playWhenReady
         //合成并设置媒体项
@@ -595,6 +606,8 @@ object PlayerSingleton {
             releasePlayer()
 
             BuildPlayer(singletonContext)
+            addPlayerStateListener()
+
 
             setNewMediaItem(MediaInfo_MediaUri, true)
 
@@ -887,6 +900,9 @@ object PlayerSingleton {
     }
     fun getMediaInfoUri(): String {
         return MediaInfo_MediaUriString
+    }
+    fun getMediaInfoFileName(): String {
+        return MediaInfo_FileName
     }
     fun getMediaInfoForMain(): Triple<String, String, String> {
         return Triple(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)

@@ -32,6 +32,7 @@ class PlayerService(): MediaSessionService() {
     //服务专项设置和媒体信息
     private lateinit var INFO_PlayerSingleton: SharedPreferences
     private var state_playerType: Int = 0   //0:传统进度条页面 1:新型页面
+    private var MediaInfo_MediaType: String? = null
     private var MediaInfo_MediaUriString: String? = null
     private var MediaInfo_FileName: String? = null
 
@@ -42,6 +43,7 @@ class PlayerService(): MediaSessionService() {
         //读取配置文件
         INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
         state_playerType = INFO_PlayerSingleton.getInt("state_playerType", 1)
+        MediaInfo_MediaType = INFO_PlayerSingleton.getString("MediaInfo_MediaType", "error")
         MediaInfo_MediaUriString = INFO_PlayerSingleton.getString("MediaInfo_MediaUriString", "error")
         MediaInfo_FileName = INFO_PlayerSingleton.getString("MediaInfo_FileName", "error")
 
@@ -73,8 +75,14 @@ class PlayerService(): MediaSessionService() {
             .build()
 
         //设置会话点击意图
-        if (state_playerType == 1){mediaSession?.setSessionActivity(createPendingIntentScroller())}
-        else{mediaSession?.setSessionActivity(createPendingIntentSeekBar())}
+        if (MediaInfo_MediaType == "music"){
+
+        }
+        else if (MediaInfo_MediaType == "video"){
+            if (state_playerType == 1){mediaSession?.setSessionActivity(createPendingIntentScroller())}
+            else{mediaSession?.setSessionActivity(createPendingIntentSeekBar())}
+        }
+
 
 
     }
