@@ -2,8 +2,6 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.app.Dialog
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.ContentUris
@@ -69,7 +67,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
@@ -94,6 +91,7 @@ import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.suming.player.ListManager.FragmentPlayList
 import data.DataBaseMediaItem.MediaItemRepo
 import data.DataBaseMediaItem.MediaItemSetting
 import kotlinx.coroutines.CoroutineScope
@@ -111,7 +109,6 @@ import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
-import kotlin.system.exitProcess
 
 @UnstableApi
 @Suppress("unused")
@@ -1353,7 +1350,7 @@ class PlayerActivity: AppCompatActivity(){
                     notice("回到视频起始", 3000)
                 }
                 "PlayList" -> {
-                    PlayerFragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
+                    FragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
                 }
                 "ExtractFrame" -> {
                     val videoPath = getAbsoluteFilePath(this, MediaInfo_MediaUri)
@@ -1659,7 +1656,11 @@ class PlayerActivity: AppCompatActivity(){
                 vm.state_firstReadyReached = true
                 playerReadyFrom_FirstEntry = true
                 //确保播放
-                PlayerSingleton.playPlayer()
+                val currentPosition = PlayerSingleton.getMediaCurrentPosition()
+                if (currentPosition == 0L){
+                    PlayerSingleton.playPlayer()
+                }
+
             }
         }
         //当前单例中没有正在播放的媒体

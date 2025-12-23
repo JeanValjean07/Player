@@ -1,9 +1,9 @@
-package com.suming.player
+package com.suming.player.ListManager
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.R
 import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,18 +22,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class PlayerFragmentPlayListVideoAdapter(
+class FragmentPlayListVideoAdapter(
     private val context: Context,
     private val onAddToListClick: (String) -> Unit,
     private val onPlayClick: (String) -> Unit
-):PagingDataAdapter<MediaItemForVideo, PlayerFragmentPlayListVideoAdapter.ViewHolder>(diffCallback) {
+):PagingDataAdapter<MediaItemForVideo, FragmentPlayListVideoAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
             override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
                 return oldItem.uriNumOnly == newItem.uriNumOnly
             }
-
             override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
                 return oldItem == newItem
             }
@@ -40,7 +40,6 @@ class PlayerFragmentPlayListVideoAdapter(
     }
     //ViewHolder
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val itemTouchPad: View = itemView.findViewById(R.id.TouchPad)
         val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
         var itemFrameJob: Job? = null
         val itemName: TextView = itemView.findViewById(R.id.tvName)
@@ -55,7 +54,7 @@ class PlayerFragmentPlayListVideoAdapter(
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_adapter_item, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_live_list_adapter_item, parent, false)
         return ViewHolder(view)
     }
 

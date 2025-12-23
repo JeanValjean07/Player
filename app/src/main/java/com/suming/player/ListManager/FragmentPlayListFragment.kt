@@ -1,6 +1,5 @@
-package com.suming.player
+package com.suming.player.ListManager
 
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.OptIn
@@ -11,17 +10,18 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.R
 import kotlinx.coroutines.launch
 
-class PlayerFragmentPlayListFragment(
+class FragmentPlayListFragment(
     private val flag: Int = 0,
     private val onPlayClick: (String) -> Unit,
     private val onAddToListClick: (String) -> Unit,
 ) : Fragment(R.layout.activity_player_fragment_play_list_page_live) {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerView_video_adapter: PlayerFragmentPlayListVideoAdapter
-    private lateinit var recyclerView_music_adapter: PlayerFragmentPlayListMusicAdapter
+    private lateinit var recyclerView_video_adapter: FragmentPlayListVideoAdapter
+    private lateinit var recyclerView_music_adapter: FragmentPlayListMusicAdapter
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -29,11 +29,11 @@ class PlayerFragmentPlayListFragment(
         recyclerView = view.findViewById(R.id.recyclerView)
 
         //视频列表
-        if (flag == 0) {
+        if (flag == 1) {
             //设置管理器
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             //初始化adapter + 设置点击事件
-            recyclerView_video_adapter = PlayerFragmentPlayListVideoAdapter(
+            recyclerView_video_adapter = FragmentPlayListVideoAdapter(
                 requireContext(),
                 onAddToListClick = { uri -> onAddToListClick(uri) },
                 onPlayClick = {
@@ -44,7 +44,7 @@ class PlayerFragmentPlayListFragment(
             recyclerView.adapter = recyclerView_video_adapter
             //分页加载
             val pager = Pager(PagingConfig(pageSize = 20)) {
-                PlayerFragmentPlayListVideoPagingSource(requireContext())
+                FragmentPlayListVideoPagingSource(requireContext())
             }
             //分页加载数据
             lifecycleScope.launch {
@@ -54,11 +54,11 @@ class PlayerFragmentPlayListFragment(
             }
         }
         //音乐列表
-        else if (flag == 1) {
+        else if (flag == 2) {
             //设置管理器
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             //初始化adapter + 设置点击事件
-            recyclerView_music_adapter = PlayerFragmentPlayListMusicAdapter(
+            recyclerView_music_adapter = FragmentPlayListMusicAdapter(
                 requireContext(),
                 onAddToListClick = { uri -> onAddToListClick(uri) },
                 onPlayClick = {
@@ -69,7 +69,7 @@ class PlayerFragmentPlayListFragment(
             recyclerView.adapter = recyclerView_music_adapter
             //分页加载
             val pager = Pager(PagingConfig(pageSize = 20)) {
-                PlayerFragmentPlayListMusicPagingSource(requireContext())
+                FragmentPlayListMusicPagingSource(requireContext())
             }
             //分页加载数据
             lifecycleScope.launch {
@@ -79,18 +79,7 @@ class PlayerFragmentPlayListFragment(
             }
         }
 
-
     }
-
-
-
-
-    fun InstigateRefresh(){
-
-
-
-    }
-
 
 
 }

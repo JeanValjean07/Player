@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -17,9 +16,6 @@ import android.os.Looper
 import android.os.PersistableBundle
 import android.provider.Settings
 import android.util.Log
-import android.view.GestureDetector
-import android.view.GestureDetector.SimpleOnGestureListener
-import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
@@ -52,9 +48,8 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.PlayerSingleton.MediaInfo_FileName
+import com.suming.player.ListManager.FragmentPlayList
 import com.suming.player.PlayerSingleton.MediaInfo_MediaType
-import data.DataBaseMediaStore.MediaStoreRepo
 import data.MediaDataReader.MediaDataBaseReaderForMusic
 import data.MediaDataReader.MediaDataBaseReaderForVideo
 import data.MediaDataReader.MediaStoreReaderForMusic
@@ -81,8 +76,6 @@ class MainActivity: AppCompatActivity() {
     private lateinit var main_music_list_adapter: MainMusicAdapter
     private lateinit var main_video_list_adapter_RecyclerView: RecyclerView
     private lateinit var main_music_list_adapter_RecyclerView: RecyclerView
-    private lateinit var NestedScrollView_MusicList: NestedScrollView
-    private lateinit var NestedScrollView_VideoList: NestedScrollView
     private lateinit var AppBarTitle: TextView
     private lateinit var AppBarNoticeText: TextView
     private lateinit var ButtonCardMusic: CardView
@@ -330,7 +323,7 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_List.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
             //UnBindSmallCardVideo()
-            PlayerFragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
+            FragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
         }
 
         //初次启动:
@@ -459,7 +452,6 @@ class MainActivity: AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
         super.onSaveInstanceState(outState, outPersistentState)
         outState.putString("state_currentPage", state_currentPage)
-        outState.putInt("state_NestedScrollView_Y", NestedScrollView_VideoList.scrollY)
     }
 
     override fun onPause() {
@@ -525,7 +517,7 @@ class MainActivity: AppCompatActivity() {
         if (!isNowPlying){ return }
         //获取播放中媒体信息
         val (MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist) = getPlayingMediaItemInfo()
-        Log.d("SuMing", "ResetPlayingCard : $MediaInfo_MediaType, $MediaInfo_FileName, $MediaInfo_MediaArtist")
+        //Log.d("SuMing", "ResetPlayingCard : $MediaInfo_MediaType, $MediaInfo_FileName, $MediaInfo_MediaArtist")
         //更新播放卡片
         updatePlayingCard(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
 
@@ -797,20 +789,20 @@ class MainActivity: AppCompatActivity() {
         }
         //本次启动第一次加载视频
         if (PREFS_QueryNewVideoOnStart){
-            Log.d("SuMing", "generalLoadVideo : 11111")
+            //Log.d("SuMing", "generalLoadVideo : 11111")
             if (!state_VideoDataBaseReaded_N_AdapterBinded){
-                Log.d("SuMing", "generalLoadVideo : 22222")
+                //Log.d("SuMing", "generalLoadVideo : 22222")
                 checkPermissionThenStartLoad("video")
             }
         }
         else{
-            Log.d("SuMing", "generalLoadVideo : 33333")
+            //Log.d("SuMing", "generalLoadVideo : 33333")
             if (state_MusicMediaStoreReaded){
-                Log.d("SuMing", "generalLoadVideo : 44444")
+                //Log.d("SuMing", "generalLoadVideo : 44444")
                 LoadDataBase_N_BindAdapter("video")
             }
             else{
-                Log.d("SuMing", "generalLoadVideo : 55555")
+                //Log.d("SuMing", "generalLoadVideo : 55555")
                 checkPermissionThenStartLoad("video")
             }
         }
@@ -822,8 +814,6 @@ class MainActivity: AppCompatActivity() {
         AppBarTitle.text = "音乐"
         ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
 
-        NestedScrollView_VideoList.visibility = View.GONE
-        NestedScrollView_MusicList.visibility = View.VISIBLE
         main_video_list_adapter_RecyclerView.visibility = View.GONE
         main_music_list_adapter_RecyclerView.visibility = View.VISIBLE
 
@@ -835,8 +825,6 @@ class MainActivity: AppCompatActivity() {
         AppBarTitle.text = "视频"
         ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
 
-        NestedScrollView_VideoList.visibility = View.VISIBLE
-        NestedScrollView_MusicList.visibility = View.GONE
         main_video_list_adapter_RecyclerView.visibility = View.VISIBLE
         main_music_list_adapter_RecyclerView.visibility = View.GONE
 
@@ -859,11 +847,11 @@ class MainActivity: AppCompatActivity() {
     private fun listGoTop(){
         if (state_currentPage == "music"){
             if (state_MusicDataBaseReaded_N_AdapterBinded){ main_music_list_adapter.refresh() }
-            NestedScrollView_MusicList.smoothScrollTo(0,0)
+            main_music_list_adapter_RecyclerView.smoothScrollToPosition(0)
         }
         else if (state_currentPage == "video"){
             if (state_VideoDataBaseReaded_N_AdapterBinded){ main_video_list_adapter.refresh() }
-            NestedScrollView_VideoList.smoothScrollTo(0,0)
+            main_video_list_adapter_RecyclerView.smoothScrollToPosition(0)
         }
         else{
             showCustomToast("列表回顶函数接收到预期外的参数", Toast.LENGTH_SHORT, 3)
@@ -872,8 +860,6 @@ class MainActivity: AppCompatActivity() {
     //初始化
     private fun preCheckAndInit(){
         //界面实例获取
-        NestedScrollView_MusicList = findViewById(R.id.NestedScrollView_MusicList)
-        NestedScrollView_VideoList = findViewById(R.id.NestedScrollView_VideoList)
         main_video_list_adapter_RecyclerView = findViewById(R.id.recyclerview_video_list)
         main_music_list_adapter_RecyclerView = findViewById(R.id.recyclerview_music_list)
         AppBarNoticeText = findViewById(R.id.AppBarNoticeText)
@@ -1032,7 +1018,13 @@ class MainActivity: AppCompatActivity() {
             //设置adapter
             main_music_list_adapter_RecyclerView.adapter = main_music_list_adapter
             //分页加载
-            val pager = Pager(PagingConfig(pageSize = 20)) {
+            val pager = Pager(PagingConfig(
+                pageSize = 25,
+                prefetchDistance = 40,
+                enablePlaceholders = false,
+                initialLoadSize = 200,
+                maxSize = PagingConfig.MAX_SIZE_UNBOUNDED,
+                jumpThreshold = Int.MIN_VALUE)) {
                 MediaDataBaseReaderForMusic(context = this@MainActivity)
             }
             //分页加载数据

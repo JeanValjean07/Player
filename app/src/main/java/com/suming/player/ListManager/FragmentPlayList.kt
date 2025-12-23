@@ -1,4 +1,4 @@
-package com.suming.player
+package com.suming.player.ListManager
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -6,12 +6,8 @@ import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -21,39 +17,6 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
@@ -64,26 +27,24 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.ListFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import data.MediaModel.MediaItemForVideo
+import com.suming.player.PlayerSingleton
+import com.suming.player.PlayerViewModel
+import com.suming.player.R
+import com.suming.player.ToolVibrate
+import com.suming.player.showCustomToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @SuppressLint("ComposableNaming")
 @UnstableApi
-class PlayerFragmentPlayList: DialogFragment() {
+class FragmentPlayList: DialogFragment() {
     //静态方法
     companion object {
-        fun newInstance(): PlayerFragmentPlayList =
-            PlayerFragmentPlayList().apply {
+        fun newInstance(): FragmentPlayList =
+            FragmentPlayList().apply {
                 arguments = bundleOf(
 
                 )
@@ -96,6 +57,7 @@ class PlayerFragmentPlayList: DialogFragment() {
     //协程作用域
     private val viewModelScope = CoroutineScope(Dispatchers.IO)
     //横向按钮
+    private lateinit var ButtonCardCustomList: CardView
     private lateinit var ButtonCardVideo: CardView
     private lateinit var ButtonCardMusic: CardView
 
@@ -187,23 +149,6 @@ class PlayerFragmentPlayList: DialogFragment() {
                 ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
             }
         }
-        //按钮：刷新视频列表
-        val ButtonRefreshVideoList = view.findViewById<ImageButton>(R.id.ButtonRefreshVideoList)
-        ButtonRefreshVideoList.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            PlayerSingleton.updateMediaList(requireContext())
-
-
-
-        }
-        //按钮：刷新音乐列表
-        val ButtonRefreshMusicList = view.findViewById<ImageButton>(R.id.ButtonRefreshMusicList)
-        ButtonRefreshMusicList.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            PlayerSingleton.updateMediaList(requireContext())
-
-
-        }
         //按钮：上一曲
         val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
         ButtonPreviousMedia.setOnClickListener {
@@ -254,8 +199,13 @@ class PlayerFragmentPlayList: DialogFragment() {
         }
 
         //横滑页签按钮
+        ButtonCardCustomList = view.findViewById(R.id.ButtonCardCustomList)
         ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
         ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
+        ButtonCardCustomList.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            switchToCustomListPage()
+        }
         ButtonCardVideo.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             switchToVideoPage()
@@ -264,13 +214,13 @@ class PlayerFragmentPlayList: DialogFragment() {
             ToolVibrate().vibrate(requireContext())
             switchToMusicPage()
         }
-
         //ViewPager2
         ViewPager = view.findViewById(R.id.ViewPager)
         ViewPager.adapter = ViewPagerAdapter(
             this,
-            onPlayClick = { uri -> onPlayClick(uri.toString()) },
-            onAddToListClick = { uri -> onAddToListClick(uri.toString()) })
+            onPlayClick = { uri -> onPlayClick(uri) },
+            onAddToListClick = { uri -> onAddToListClick(uri) },
+            onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) })
         startViewPagerListener()
         //设置ViewPager缓存页面数量
         ViewPager.offscreenPageLimit = 3
@@ -289,39 +239,35 @@ class PlayerFragmentPlayList: DialogFragment() {
         }
     //onViewCreated END
     }
+
     //横向viewPager内部adapter类
     private class ViewPagerAdapter(
         fragment: Fragment,
         private val onPlayClick: (String) -> Unit,
-        private val onAddToListClick: (String) -> Unit
-    ) : FragmentStateAdapter(fragment) {
+        private val onAddToListClick: (String) -> Unit,
+        private val onDeleteClick: (Long) -> Unit
+    ): FragmentStateAdapter(fragment) {
         override fun getItemCount(): Int = 3
         override fun createFragment(position: Int): Fragment =
             when (position) {
-                0, 1 -> PlayerFragmentPlayListFragment(flag = position, onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
+                0 -> FragmentPlayListCustomFragment(
+                    onPlayClick = onPlayClick,
+                    onDeleteClick = onDeleteClick
+                )
+                1, 2 -> FragmentPlayListFragment(
+                    flag = position,
+                    onPlayClick = onPlayClick,
+                    onAddToListClick = onAddToListClick
+                )
                 else -> ListFragment()
             }
-
-
     }
     //viewPager页面监听器
     private lateinit var ViewPager: ViewPager2
     private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
-        override fun onPageSelected(position: Int) {
-            updateCardState(position)
-        }
-
-        override fun onPageScrolled(
-            position: Int,
-            positionOffset: Float,
-            positionOffsetPixels: Int
-        ) {
-            // 滚动过程中持续回调，可做联动动画
-        }
-
-        override fun onPageScrollStateChanged(state: Int) {
-            // 状态：SCROLL_STATE_IDLE / DRAGGING / SETTLING
-        }
+        override fun onPageSelected(position: Int) { updateCardState(position) }
+        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {  }
+        override fun onPageScrollStateChanged(state: Int) {  }
     }
     private fun startViewPagerListener(){
         ViewPager.registerOnPageChangeCallback(ViewPagerListener)
@@ -330,28 +276,40 @@ class PlayerFragmentPlayList: DialogFragment() {
         ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
     }
     //卡片颜色切换
-    private fun switchToVideoPage(){
-        ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-        ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+    private fun switchToCustomListPage(){
+        if (ViewPager.currentItem == 0){
+            return
+        }
         ViewPager.currentItem = 0
-
+        updateCardState(0)
+    }
+    private fun switchToVideoPage(){
+        ViewPager.currentItem = 1
+        updateCardState(1)
     }
     private fun switchToMusicPage(){
-        ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
-        ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-        ViewPager.currentItem = 1
-
+        ViewPager.currentItem = 2
+        updateCardState(2)
     }
     private fun updateCardState(position: Int){
         if (position == 0){
+            ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
             ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
         }
         else if (position == 1){
-            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+            ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+        }
+        else if (position == 2){
+            ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
             ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+
         }
     }
+
 
 
     //播放点击事件
@@ -365,23 +323,12 @@ class PlayerFragmentPlayList: DialogFragment() {
         }
     }
     //删除点击事件
-    private fun onDeleteClick(uriString: String, flag: Int) {
-        when (flag){
-            0 -> {
-                //删除视频
-
-            }
-            1 -> {
-                //删除音乐
-
-            }
-        }
-
+    private fun onDeleteClick(uriNumOnly: Long) {
+        PlayerListManager.DeleteItemFromCustomList(uriNumOnly)
     }
     //添加到自定义列表点击事件
     private fun onAddToListClick(uriString: String) {
-
-
+        PlayerListManager.InsertItemToCustomList(uriString, requireContext())
     }
 
     //Functions

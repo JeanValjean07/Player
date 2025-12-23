@@ -234,7 +234,7 @@ object PlayerSingleton {
         }
     }  //播放信息保存到上次播放记录
     private fun onMediaItemChanged(mediaItem: MediaItem?){
-        Log.d("SuMing", "单例 onMediaItemChanged : $mediaItem")
+        //Log.d("SuMing", "单例 onMediaItemChanged : $mediaItem")
         if (mediaItem == null){ return }
         //播放信息保存到上次播放记录
         saveLastMediaItemInfo(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist, MediaInfo_MediaUriString)
@@ -919,6 +919,9 @@ object PlayerSingleton {
     }
     fun getMediaInfoType(): String {
         return MediaInfo_MediaType
+    }
+    fun getMediaCurrentPosition(): Long {
+        return _player?.currentPosition ?: -1
     }
     //主动设置媒体自定义状态
     fun setMediaInfo(type: String, filename: String, artist: String, url: String) {

@@ -37,14 +37,13 @@ class MainMusicAdapter(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
     private val onOptionsClick: (MediaItemForMusic, View) -> Unit,
-):PagingDataAdapter<MediaItemForMusic, MainMusicAdapter.ViewHolder>(diffCallback) {
+):PagingDataAdapter<MediaItemForMusic, MainMusicAdapter.ViewHolder>(DiffUtil) {
     //条目比较器
     companion object {
-        val diffCallback = object : DiffUtil.ItemCallback<MediaItemForMusic>() {
+        val DiffUtil = object : DiffUtil.ItemCallback<MediaItemForMusic>() {
             override fun areItemsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean  {
                 return oldItem.uriNumOnly == newItem.uriNumOnly
             }
-
             override fun areContentsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean {
                 return oldItem == newItem
             }
@@ -77,6 +76,7 @@ class MainMusicAdapter(
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
+        Log.d("SuMing", "MainMusicAdapter onBindViewHolder: $position")
         val item = getItem(position) ?: return
         holder.itemName.isSelected = true
         holder.itemName.text = item.filename.substringBeforeLast(".")

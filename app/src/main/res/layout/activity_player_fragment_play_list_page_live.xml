@@ -1,17 +1,123 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:ignore="HardcodedText">
+    <!-- 工具栏 -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/AppBar"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:outlineSpotShadowColor="@color/HeadText"
+        app:liftOnScrollColor="@color/HeadBackground"
+        android:outlineAmbientShadowColor="@color/HeadText">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:background="@color/Background3"
+            android:layout_height="35dp">
+            <!-- 横滑滚动选项 -->
+            <HorizontalScrollView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/VerticalDivideLine"
+                android:scrollbars="none"
+                tools:ignore="TooDeepLayout">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+                    <!-- 设为当前播放列表 -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@color/ButtonCard_OFF"
+                        app:cardElevation="2dp"
+                        app:cardCornerRadius="5dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:text="设为当前播放列表"
+                            android:textColor="@color/HeadText"
+                            android:textSize="11sp"
+                            />
+                    </androidx.cardview.widget.CardView>
 
+                    <!-- 末尾占位 -->
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="match_parent"/>
+                </LinearLayout>
+            </HorizontalScrollView>
+            <!-- 中纵分隔线 -->
+            <View
+                android:id="@+id/VerticalDivideLine"
+                android:layout_width="0.2dp"
+                android:layout_height="match_parent"
+                android:background="@color/player_scroller_top_line"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/pageSettingButton"
+                />
+            <!-- 设置按钮 -->
+            <ImageButton
+                android:id="@+id/pageSettingButton"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:padding="10dp"
+                android:src="@drawable/ic_main_activity_settings"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerCrop"
+                android:contentDescription="自定义页签-设置"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:tooltipText="自定义页签-设置" />
+            <!-- 顶横分隔线 -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.2dp"
+                android:background="@color/player_scroller_top_line"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                />
+            <!-- 底横分隔线 -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.2dp"
+                android:background="@color/player_scroller_top_line"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+
+    <!-- 滚动区域 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/Background3"
-        android:orientation="vertical"
+        android:overScrollMode="always"
         android:clipToPadding="false"
         />
 
 </LinearLayout>
-

@@ -1,9 +1,8 @@
-package com.suming.player
+package com.suming.player.ListManager
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +12,7 @@ import android.widget.TextView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.R
 import data.MediaModel.MediaItemForMusic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,18 +22,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class PlayerFragmentPlayListMusicAdapter(
+class FragmentPlayListMusicAdapter(
     private val context: Context,
     private val onAddToListClick: (String) -> Unit,
     private val onPlayClick: (String) -> Unit
-):PagingDataAdapter<MediaItemForMusic, PlayerFragmentPlayListMusicAdapter.ViewHolder>(diffCallback) {
+): PagingDataAdapter<MediaItemForMusic, FragmentPlayListMusicAdapter.ViewHolder>(diffCallback) {
     //条目比较器
     companion object {
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForMusic>() {
             override fun areItemsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean {
                 return oldItem.uriNumOnly == newItem.uriNumOnly
             }
-
             override fun areContentsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean {
                 return oldItem == newItem
             }
@@ -56,7 +55,7 @@ class PlayerFragmentPlayListMusicAdapter(
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_adapter_item, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_live_list_adapter_item, parent, false)
         return ViewHolder(view)
     }
 
@@ -76,8 +75,7 @@ class PlayerFragmentPlayListMusicAdapter(
     override fun onViewAttachedToWindow(holder: ViewHolder) {
         super.onViewAttachedToWindow(holder)
         val position = holder.bindingAdapterPosition
-        val item = getItem(position) ?: return
-
+        if (position == RecyclerView.NO_POSITION) return
     }
 
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
@@ -104,7 +102,7 @@ class PlayerFragmentPlayListMusicAdapter(
         //检查是否存在
         if (cover_item_file.exists()){
             val frame = BitmapFactory.decodeFile(cover_item_file.absolutePath)
-            withContext(Dispatchers.Main){
+            withContext(Dispatchers.Main) {
                 if (holder.itemFrame.tag == imageTag) {
                     holder.itemFrame.setImageBitmap(frame)
                     //holder.itemFrame.startAnimation(FadeInAnimation)

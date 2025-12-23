@@ -32,9 +32,6 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
@@ -99,14 +96,12 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import com.suming.player.ListManager.FragmentPlayList
 import data.DataBaseMediaItem.MediaItemRepo
 import data.DataBaseMediaItem.MediaItemSetting
-import data.DataBaseMediaStore.MediaStoreRepo
-import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -119,10 +114,7 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.hypot
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.pow
-import kotlin.system.exitProcess
 
 @UnstableApi
 @Suppress("unused")
@@ -1221,7 +1213,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
                     notice("回到视频起始", 3000)
                 }
                 "PlayList" -> {
-                    PlayerFragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
+                    FragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
                 }
                 "ExtractFrame" -> {
                     val videoPath = getAbsoluteFilePath(this, MediaInfo_VideoUri)
