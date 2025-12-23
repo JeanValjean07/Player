@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 class FragmentPlayListCustomFragment(
     private val onPlayClick: (String) -> Unit,
     private val onDeleteClick: (Long) -> Unit,
-) : Fragment(R.layout.activity_player_fragment_play_list_page_custom) {
+) : Fragment(R.layout.activity_player_fragment_play_list_custom_page) {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_custom_list_adapter: FragmentPlayListCustomAdapter

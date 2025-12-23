@@ -4,21 +4,27 @@ import android.os.Bundle
 import android.view.View
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.PlayerViewModel
 import com.suming.player.R
 import kotlinx.coroutines.launch
+import kotlin.getValue
 
-class FragmentPlayListFragment(
+@UnstableApi
+class FragmentPlayListMudeoFragment(
     private val flag: Int = 0,
     private val onPlayClick: (String) -> Unit,
     private val onAddToListClick: (String) -> Unit,
-) : Fragment(R.layout.activity_player_fragment_play_list_page_live) {
-
+) : Fragment(R.layout.activity_player_fragment_play_list_live_page) {
+    //共享ViewModel
+    private val vm: PlayerViewModel by activityViewModels()
+    //RecyclerView
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_video_adapter: FragmentPlayListVideoAdapter
     private lateinit var recyclerView_music_adapter: FragmentPlayListMusicAdapter

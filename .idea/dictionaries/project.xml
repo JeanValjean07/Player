@@ -27,6 +27,7 @@
       <w>libavutil</w>
       <w>libswresample</w>
       <w>libswscale</w>
+      <w>mudeo</w>
       <w>ondown</w>
       <w>oneplus</w>
       <w>readed</w>

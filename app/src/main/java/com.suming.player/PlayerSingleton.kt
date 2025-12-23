@@ -578,8 +578,13 @@ object PlayerSingleton {
         //设置播放状态
         _player?.playWhenReady = playWhenReady
         //合成并设置媒体项
-        val covers_path = File(singletonContext.filesDir, "miniature/cover")
-        val cover_img_path = File(covers_path, "${MediaInfo_FileName.hashCode()}.webp")
+        val covers_path_music = File(singletonContext.filesDir, "miniature/music_cover")
+        val covers_path_video = File(singletonContext.filesDir, "miniature/video_cover")
+        val cover_img_path = if (MediaInfo_MediaType == "video"){
+            File(covers_path_video, "${MediaInfo_FileName.hashCode()}.webp")
+        } else {
+            File(covers_path_music, "${MediaInfo_FileName.hashCode()}.webp")
+        }
         val cover_img_uri = if (cover_img_path.exists()) {
             try {
                 FileProvider.getUriForFile(singletonContext, "${singletonContext.packageName}.provider", cover_img_path)

@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.HorizontalScrollView
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -60,6 +61,9 @@ class FragmentPlayList: DialogFragment() {
     private lateinit var ButtonCardCustomList: CardView
     private lateinit var ButtonCardVideo: CardView
     private lateinit var ButtonCardMusic: CardView
+    //横滑页签
+    private lateinit var TabScrollView: HorizontalScrollView
+
 
 
     override fun onStart() {
@@ -198,21 +202,23 @@ class FragmentPlayList: DialogFragment() {
             }
         }
 
+
         //横滑页签按钮
+        TabScrollView = view.findViewById(R.id.TabScrollView)
         ButtonCardCustomList = view.findViewById(R.id.ButtonCardCustomList)
         ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
         ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
         ButtonCardCustomList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            switchToCustomListPage()
+            switchToCustomPageByButton()
         }
         ButtonCardVideo.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            switchToVideoPage()
+            switchToVideoPageByButton()
         }
         ButtonCardMusic.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            switchToMusicPage()
+            switchToMusicPageByButton()
         }
         //ViewPager2
         ViewPager = view.findViewById(R.id.ViewPager)
@@ -227,8 +233,6 @@ class FragmentPlayList: DialogFragment() {
 
 
 
-
-
         //监听返回手势(DialogFragment)
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
@@ -240,6 +244,7 @@ class FragmentPlayList: DialogFragment() {
     //onViewCreated END
     }
 
+    //ViewPager
     //横向viewPager内部adapter类
     private class ViewPagerAdapter(
         fragment: Fragment,
@@ -254,7 +259,7 @@ class FragmentPlayList: DialogFragment() {
                     onPlayClick = onPlayClick,
                     onDeleteClick = onDeleteClick
                 )
-                1, 2 -> FragmentPlayListFragment(
+                1, 2 -> FragmentPlayListMudeoFragment(
                     flag = position,
                     onPlayClick = onPlayClick,
                     onAddToListClick = onAddToListClick
@@ -262,10 +267,10 @@ class FragmentPlayList: DialogFragment() {
                 else -> ListFragment()
             }
     }
-    //viewPager页面监听器
+    //viewPager页面切换监听器
     private lateinit var ViewPager: ViewPager2
     private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
-        override fun onPageSelected(position: Int) { updateCardState(position) }
+        override fun onPageSelected(position: Int) { scrollToPage(position) }
         override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {  }
         override fun onPageScrollStateChanged(state: Int) {  }
     }
@@ -275,42 +280,73 @@ class FragmentPlayList: DialogFragment() {
     private fun stopViewPagerListener(){
         ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
     }
-    //卡片颜色切换
-    private fun switchToCustomListPage(){
-        if (ViewPager.currentItem == 0){
-            return
+    //页签更新：位置 + 颜色
+    private fun scrollToPage(position: Int){
+        when(position){
+            0 -> switchToCustomPageByScroll()
+            1 -> switchToVideoPageByScroll()
+            2 -> switchToMusicPageByScroll()
         }
+    }
+    private fun switchToCustomPageByButton(){
         ViewPager.currentItem = 0
-        updateCardState(0)
+        updateCardColor(0)
     }
-    private fun switchToVideoPage(){
+    private fun switchToVideoPageByButton(){
         ViewPager.currentItem = 1
-        updateCardState(1)
+        updateCardColor(1)
     }
-    private fun switchToMusicPage(){
+    private fun switchToMusicPageByButton(){
         ViewPager.currentItem = 2
-        updateCardState(2)
+        updateCardColor(2)
     }
-    private fun updateCardState(position: Int){
-        if (position == 0){
-            ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
-            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-        }
-        else if (position == 1){
-            ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
-            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-        }
-        else if (position == 2){
-            ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+    private fun switchToCustomPageByScroll(){
+        updateCardPosition(0)
+        updateCardColor(0)
+    }
+    private fun switchToVideoPageByScroll(){
+        updateCardPosition(1)
+        updateCardColor(1)
+    }
+    private fun switchToMusicPageByScroll(){
+        updateCardPosition(2)
+        updateCardColor(2)
+    }
+    private fun updateCardColor(position: Int){
+        when(position){
+            0 -> {
+                ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+            }
+            1 -> {
+                ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+            }
 
+            2 -> {
+                ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+            }
         }
     }
-
-
+    private fun updateCardPosition(position: Int){
+        when (position) {
+            0 -> {
+                TabScrollView.smoothScrollTo(0, 0)
+            }
+            1 -> {
+                val left = ButtonCardVideo.left
+                TabScrollView.smoothScrollTo(left, 0)
+            }
+            2 -> {
+                val left = ButtonCardMusic.left
+                TabScrollView.smoothScrollTo(left, 0)
+            }
+        }
+    }
 
     //播放点击事件
     private fun onPlayClick(uriString: String) {

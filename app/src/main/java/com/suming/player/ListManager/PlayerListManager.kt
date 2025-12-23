@@ -7,6 +7,8 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.net.toUri
+import data.MediaModel.MediaItemForMusic
+import data.MediaModel.MediaItemForVideo
 import data.MediaModel.MiniMediaItemForList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,12 +22,16 @@ import java.io.File
 object PlayerListManager {
 
 
+    //自定义列表
     var customList = mutableListOf<MiniMediaItemForList>()
+    //实时视频列表
+    var liveVideoList = mutableListOf<MediaItemForVideo>()
+    //实时音乐列表
+    var liveMusicList = mutableListOf<MediaItemForMusic>()
 
-    private val coroutineScope_updateList = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-
-    //自定义列表操作
+    //列表操作
+    //向自定义列表中插入一项
     fun InsertItemToCustomList(uriString: String, context: Context){
         val item = getMediaInfo(uriString, context)
 
@@ -35,16 +41,25 @@ object PlayerListManager {
         customList.add(item)
 
     }
-
+    //从自定义列表中删除一项
     fun DeleteItemFromCustomList(uriNumOnly: Long){
         customList.removeAll { it.uriNumOnly == uriNumOnly }
 
     }
-
+    //整表替换自定义列表
     fun updateList(newList: List<MiniMediaItemForList>) {
         customList.clear()
         customList.addAll(newList)
     }
+
+
+
+
+
+
+
+
+
 
 
     //媒体信息读取
@@ -126,12 +141,6 @@ object PlayerListManager {
         //val type: String = ""
 
 
-    }
-
-
-    //主动关闭
-    fun onDestroy() {
-        coroutineScope_updateList.cancel()
     }
 
 }

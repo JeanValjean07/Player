@@ -38,6 +38,7 @@
                     android:orientation="horizontal">
                     <!-- 设为当前播放列表 -->
                     <androidx.cardview.widget.CardView
+                        android:id="@+id/ButtonSetAsCurrentList"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
@@ -45,18 +46,33 @@
                         android:backgroundTint="@color/ButtonCard_OFF"
                         app:cardElevation="2dp"
                         app:cardCornerRadius="5dp">
-                        <TextView
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="10dp"
-                            android:layout_marginEnd="10dp"
-                            android:layout_marginTop="5dp"
-                            android:layout_marginBottom="5dp"
-                            android:text="设为当前播放列表"
-                            android:textColor="@color/HeadText"
-                            android:textSize="11sp"
-                            />
+                            android:orientation="horizontal">
+                            <ImageView
+                                android:id="@+id/ButtonSetAsCurrentListIcon"
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:layout_gravity="center"
+                                android:padding="6dp"
+                                android:backgroundTint="@android:color/transparent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_play_list_add"
+                                tools:ignore="ContentDescription" />
+                            <TextView
+                                android:id="@+id/ButtonSetAsCurrentListText"
+                                android:layout_width="105dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginEnd="10dp"
+                                android:layout_marginTop="5dp"
+                                android:layout_marginBottom="5dp"
+                                android:text="设为当前播放列表"
+                                android:textColor="@color/HeadText"
+                                android:textSize="11sp"
+                                />
+                        </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
                     <!-- 末尾占位 -->
