@@ -5,7 +5,6 @@
         android:drawable="@drawable/ic_album_music_background">
     </item>
 
-
     <item
         android:drawable="@drawable/ic_album_music"
         android:gravity="center"

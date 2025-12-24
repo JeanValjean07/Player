@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.LoadState
@@ -15,21 +16,26 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.PlayerViewModel
 import com.suming.player.R
 import com.suming.player.ToolVibrate
 import kotlinx.coroutines.launch
+import kotlin.getValue
 
-class FragmentPlayListCustomFragment(
+@UnstableApi
+class FragmentPlayListVideoFragment(
     private val onPlayClick: (String) -> Unit,
-    private val onDeleteClick: (Long) -> Unit,
-) : Fragment(R.layout.activity_player_fragment_play_list_custom_page) {
+    private val onAddToListClick: (String) -> Unit,
+) : Fragment(R.layout.activity_player_fragment_play_list_live_page) {
+    //共享ViewModel
+    private val vm: PlayerViewModel by activityViewModels()
     //加载中卡片
     private lateinit var LoadingState: LinearLayout
     private lateinit var LoadingStateText: TextView
     private lateinit var TextItemCount: TextView
-    //recyclerView
+    //RecyclerView
     private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerView_custom_list_adapter: FragmentPlayListCustomAdapter
+    private lateinit var recyclerView_video_adapter: FragmentPlayListVideoAdapter
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -42,20 +48,20 @@ class FragmentPlayListCustomFragment(
         val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
         pageSettingButton.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            Log.d("SuMing", "pageSettingButton  custom")
+            Log.d("SuMing", "pageSettingButton  video")
             val popup = PopupMenu(requireContext(), pageSettingButton)
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.setting_set_as_current_list -> {
                         ToolVibrate().vibrate(requireContext())
-                        Log.d("SuMing", "pageSettingButton  setting_set_as_current_list  custom")
+                        Log.d("SuMing", "pageSettingButton  setting_set_as_current_list  video")
                         true
                     }
 
                     R.id.setting_set_as_default_show_list -> {
                         ToolVibrate().vibrate(requireContext())
-                        Log.d("SuMing", "pageSettingButton  setting_set_as_default_show_list  custom")
+                        Log.d("SuMing", "pageSettingButton  setting_set_as_default_show_list  video")
                         true
                     }
 
@@ -63,7 +69,6 @@ class FragmentPlayListCustomFragment(
                 }
             }
             popup.show()
-
         }
         //按钮：设为当前播放列表/已是当前播放列表
         val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
@@ -71,39 +76,35 @@ class FragmentPlayListCustomFragment(
         val ButtonSetAsCurrentListIcon = view.findViewById<View>(R.id.ButtonSetAsCurrentListIcon)
         ButtonSetAsCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            Log.d("SuMing", "ButtonSetAsCurrentList - custom")
-        }
-        //按钮：全部删除
-        val ButtonDeleteAllListItem = view.findViewById<View>(R.id.ButtonDeleteAllListItem)
-        ButtonDeleteAllListItem.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            Log.d("SuMing", "ButtonDeleteAll - custom")
+            Log.d("SuMing", "ButtonSetAsCurrentList - video")
         }
 
         //初始化recyclerView
         recyclerView = view.findViewById(R.id.recyclerView)
         //设置管理器
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        //合成适配器
-        recyclerView_custom_list_adapter = FragmentPlayListCustomAdapter(
-            requireContext(),
-            onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) },
-            onPlayClick = { onPlayClick(it.toString()) },
-        )
+        //初始化adapter + 设置点击事件
+        recyclerView_video_adapter = FragmentPlayListVideoAdapter(
+                requireContext(),
+                onAddToListClick = { uri -> onAddToListClick(uri) },
+                onPlayClick = {
+                    onPlayClick(it)
+                },
+            )
         //设置适配器
-        recyclerView.adapter = recyclerView_custom_list_adapter
+        recyclerView.adapter = recyclerView_video_adapter
         //分页加载
         val pager = Pager(PagingConfig(pageSize = 20)) {
-            FragmentPlayListCustomPagingSource(requireContext())
-        }
+                FragmentPlayListVideoPagingSource(requireContext())
+            }
         //分页加载数据
         lifecycleScope.launch {
-            pager.flow.collect { pagingData ->
-                recyclerView_custom_list_adapter.submitData(pagingData)
+                pager.flow.collect { pagingData ->
+                    recyclerView_video_adapter.submitData(pagingData)
+                }
             }
-        }
         //添加加载状态监听器
-        recyclerView_custom_list_adapter.addLoadStateListener { loadState ->
+        recyclerView_video_adapter.addLoadStateListener { loadState ->
             when (loadState.refresh) {
                 is LoadState.Loading -> {
                     showLoadingNotice()
@@ -119,17 +120,12 @@ class FragmentPlayListCustomFragment(
 
 
 
+
+
     }
 
 
 
-
-
-
-
-
-
-    //stable Functions
     //加载状态提示
     private fun showLoadingNotice() {
         LoadingStateText.text = "加载中"
@@ -140,7 +136,7 @@ class FragmentPlayListCustomFragment(
         LoadingState.visibility = View.VISIBLE
     }
     private fun LoadingComplete() {
-        val itemCount = recyclerView_custom_list_adapter.itemCount
+        val itemCount = recyclerView_video_adapter.itemCount
         showItemCount(itemCount)
         if (itemCount == 0) {
             showEmptyNotice()

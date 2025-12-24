@@ -110,7 +110,7 @@ class MainMusicAdapter(
             withContext(Dispatchers.Main){
                 if (holder.itemFrame.tag == imageTag) {
                     holder.itemFrame.setImageBitmap(frame)
-                    holder.itemFrame.startAnimation(FadeInAnimation)
+                    //holder.itemFrame.startAnimation(FadeInAnimation)
                 } else {
                     frame?.recycle()
                 }

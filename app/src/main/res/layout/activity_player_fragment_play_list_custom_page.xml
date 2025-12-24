@@ -36,6 +36,57 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="horizontal">
+                    <!-- 总项数 -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@color/ButtonCard_OFF"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/pageSettingButton"
+                        app:cardElevation="2dp"
+                        app:cardCornerRadius="5dp">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="5dp"
+                                android:layout_marginBottom="5dp"
+                                android:text="共 "
+                                android:textColor="@color/HeadText"
+                                android:textSize="11sp"
+                                />
+                            <TextView
+                                android:id="@+id/TextItemCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginTop="5dp"
+                                android:layout_marginBottom="5dp"
+                                android:text="00"
+                                android:textColor="@color/HeadText"
+                                android:textSize="11sp"
+                                />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginEnd="10dp"
+                                android:layout_marginTop="5dp"
+                                android:layout_marginBottom="5dp"
+                                android:text=" 项"
+                                android:textColor="@color/HeadText"
+                                android:textSize="11sp"
+                                />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
                     <!-- 设为当前播放列表 -->
                     <androidx.cardview.widget.CardView
                         android:id="@+id/ButtonSetAsCurrentList"
@@ -161,11 +212,34 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.appbar.AppBarLayout>
     <!-- 滚动区域 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:overScrollMode="always"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        />
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:id="@+id/LoadingState"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@color/Background3">
+            <TextView
+                android:id="@+id/LoadingStateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="加载中"
+                android:textColor="@color/HeadText"
+                android:textSize="16sp"
+                />
+        </LinearLayout>
+        <!-- recyclerview -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:overScrollMode="always"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            />
+    </FrameLayout>
+
 </LinearLayout>

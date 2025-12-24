@@ -194,7 +194,7 @@ class MainVideoAdapter(
             withContext(Dispatchers.Main){
                 if (holder.tvFrame.tag == imageTag) {
                     holder.tvFrame.setImageBitmap(frame)
-                    holder.tvFrame.startAnimation(FadeInAnimation)
+                    //holder.tvFrame.startAnimation(FadeInAnimation)
                 } else {
                     frame?.recycle()
                 }

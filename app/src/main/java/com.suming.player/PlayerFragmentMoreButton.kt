@@ -2,17 +2,12 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Context.VIBRATOR_MANAGER_SERVICE
-import android.content.Context.VIBRATOR_SERVICE
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -29,7 +24,6 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -43,7 +37,6 @@ import com.google.android.material.button.MaterialButton
 import data.DataBaseMediaItem.MediaItemRepo
 import data.DataBaseMediaItem.MediaItemSetting
 import kotlinx.coroutines.launch
-import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 
 @UnstableApi
@@ -65,7 +58,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     companion object { fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments = bundleOf(  ) } }
 
-
+    @Suppress("DEPRECATION")
     override fun onStart() {
         super.onStart()
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
@@ -332,7 +325,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
         //定时关闭
         val ButtonTimerShutDown = view.findViewById<TextView>(R.id.ButtonTimerShutDown)
-        ButtonTimerShutDown.setOnClickListener { item ->
+        ButtonTimerShutDown.setOnClickListener { _ ->
             ToolVibrate().vibrate(requireContext())
             val popup = PopupMenu(requireContext(), ButtonTimerShutDown)
             popup.menuInflater.inflate(R.menu.activity_player_popup_timer_shut_down, popup.menu)
@@ -762,6 +755,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
         customDismiss()
     }
+    @SuppressLint("SetTextI18n")
     private fun setShutDownTimeText(){
         val timerShutDown = view?.findViewById<TextView>(R.id.StateTimerShutDown)
         val shutDownMoment = PlayerSingleton.getShutDownMoment()

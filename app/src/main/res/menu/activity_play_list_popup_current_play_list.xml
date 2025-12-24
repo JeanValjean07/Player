@@ -1,0 +1,14 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText" >
+    <item
+        android:id="@+id/list_custom"
+        android:title="自定义列表" />
+    <item
+        android:id="@+id/list_video_live"
+        android:title="实时视频列表" />
+    <item
+        android:id="@+id/list_music_live"
+        android:title="实时音乐列表" />
+</menu>

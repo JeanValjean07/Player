@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -17,6 +18,7 @@ import android.widget.HorizontalScrollView
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -202,6 +204,39 @@ class FragmentPlayList: DialogFragment() {
             }
         }
 
+        //按钮：当前播放列表
+        val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
+        ButtonCurrentList.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            Log.d("SuMing", "ButtonCurrentList - custom")
+            val popup = PopupMenu(requireContext(), ButtonCurrentList)
+            popup.menuInflater.inflate(R.menu.activity_play_list_popup_current_play_list, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.list_custom -> {
+                        ToolVibrate().vibrate(requireContext())
+                        Log.d("SuMing", "ButtonCurrentList  list_custom")
+                        true
+                    }
+
+                    R.id.list_video_live -> {
+                        ToolVibrate().vibrate(requireContext())
+                        Log.d("SuMing", "ButtonCurrentList  list_video_live")
+                        true
+                    }
+
+                    R.id.list_music_live -> {
+                        ToolVibrate().vibrate(requireContext())
+                        Log.d("SuMing", "ButtonCurrentList  list_music_live")
+                        true
+                    }
+
+                    else -> true
+                }
+            }
+            popup.show()
+        }
+
 
         //横滑页签按钮
         TabScrollView = view.findViewById(R.id.TabScrollView)
@@ -233,6 +268,8 @@ class FragmentPlayList: DialogFragment() {
 
 
 
+
+
         //监听返回手势(DialogFragment)
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
@@ -259,11 +296,8 @@ class FragmentPlayList: DialogFragment() {
                     onPlayClick = onPlayClick,
                     onDeleteClick = onDeleteClick
                 )
-                1, 2 -> FragmentPlayListMudeoFragment(
-                    flag = position,
-                    onPlayClick = onPlayClick,
-                    onAddToListClick = onAddToListClick
-                )
+                1 -> FragmentPlayListVideoFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
+                2 -> FragmentPlayListMusicFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
                 else -> ListFragment()
             }
     }
