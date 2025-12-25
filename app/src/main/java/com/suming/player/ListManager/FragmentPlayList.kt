@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -42,6 +43,7 @@ import com.suming.player.showCustomToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import androidx.core.content.edit
+import androidx.core.widget.PopupMenuCompat
 
 @SuppressLint("ComposableNaming")
 @UnstableApi
@@ -56,10 +58,11 @@ class FragmentPlayList: DialogFragment() {
             }
     }
     //共享ViewModel
-    private val vm: PlayerViewModel by activityViewModels()
+    private val vm: PlayerListViewModel by activityViewModels()
     //设置
     private lateinit var PREFS_List: SharedPreferences
-    private var PREFS_DefaultPage = 0
+    private var PREFS_AcquiescePage = 0
+    private var state_LastPage = 0
     //协程作用域
     private val viewModelScope = CoroutineScope(Dispatchers.IO)
     //横向按钮
@@ -138,6 +141,17 @@ class FragmentPlayList: DialogFragment() {
     ): View = inflater.inflate(R.layout.activity_player_fragment_play_list, container, false)
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "SuspiciousIndentation")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        //初始化控件：不包含viewPager
+        fun initElement(){
+            TabScrollView = view.findViewById(R.id.TabScrollView)
+            ButtonCardCustomList = view.findViewById(R.id.ButtonCardCustomList)
+            ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
+            ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
+        }
+        initElement()
+        //加载设置
+        loadSettings()
+
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
         buttonExit.setOnClickListener {
@@ -212,7 +226,7 @@ class FragmentPlayList: DialogFragment() {
         ButtonCurrentListIcon = view.findViewById(R.id.ButtonCurrentListIcon)
         ButtonCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-
+            //弹出菜单切换当前播放列表
             val popup = PopupMenu(requireContext(), ButtonCurrentList)
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_current_play_list, popup.menu)
             popup.setOnMenuItemClickListener { item ->
@@ -247,14 +261,7 @@ class FragmentPlayList: DialogFragment() {
             popup.show()
         }
         setCurrentPlayListIcon()
-
-
-        //横滑页签按钮
-        PREFS_DefaultPage = PREFS_List.getInt("PREFS_DefaultPage", 0)
-        TabScrollView = view.findViewById(R.id.TabScrollView)
-        ButtonCardCustomList = view.findViewById(R.id.ButtonCardCustomList)
-        ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
-        ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
+        //按钮：切换列表
         ButtonCardCustomList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             switchToCustomPageByButton()
@@ -267,6 +274,10 @@ class FragmentPlayList: DialogFragment() {
             ToolVibrate().vibrate(requireContext())
             switchToMusicPageByButton()
         }
+
+
+
+
         //ViewPager2
         ViewPager = view.findViewById(R.id.ViewPager)
         viewPagerAdapter = ViewPagerAdapter(
@@ -275,7 +286,7 @@ class FragmentPlayList: DialogFragment() {
             onAddToListClick = { uri -> onAddToListClick(uri) },
             onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) },
             onPlayListChange = { flag -> onPlayListChange(flag) },
-            onDefaultPageChange = { flag -> onDefaultPageChange(flag) }
+            onDefaultPageChange = { flag -> onAcquiescePageChange(flag) }
         )
         ViewPager.adapter = viewPagerAdapter
         startViewPagerListener()
@@ -283,8 +294,15 @@ class FragmentPlayList: DialogFragment() {
         ViewPager.offscreenPageLimit = 3
         //默认显示列表
         ViewPager.post {
-            if (viewPagerAdapter.itemCount > 0) {
-                ViewPager.setCurrentItem(PREFS_DefaultPage, false)
+            if (viewPagerAdapter.itemCount > 0){
+                //使用上一次的页面
+                if (PREFS_AcquiescePage == -1){
+                    ViewPager.setCurrentItem(state_LastPage, false)
+                }
+                //使用设置的固定默认页面
+                else if (PREFS_AcquiescePage in 0..2){
+                    ViewPager.setCurrentItem(PREFS_AcquiescePage, false)
+                }
             }
         }
 
@@ -360,7 +378,7 @@ class FragmentPlayList: DialogFragment() {
     private fun stopViewPagerListener(){
         ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
     }
-    //页签更新：位置 + 颜色
+    //页签更新：位置 + 颜色d
     private fun scrolledToPage(position: Int){
         when(position){
             0 -> switchedToCustomPageByScroll()
@@ -394,16 +412,19 @@ class FragmentPlayList: DialogFragment() {
     }
     private fun switchedToCustomPageByScroll(){
         viewPagerAdapter.sendDataToFragment(0, "switch_to_you")
+        saveLastPage()
         updateCardPosition(0)
         updateCardColor(0)
     }
     private fun switchedToVideoPageByScroll(){
         viewPagerAdapter.sendDataToFragment(1, "switch_to_you")
+        saveLastPage()
         updateCardPosition(1)
         updateCardColor(1)
     }
     private fun switchedToMusicPageByScroll(){
         viewPagerAdapter.sendDataToFragment(2, "switch_to_you")
+        saveLastPage()
         updateCardPosition(2)
         updateCardColor(2)
     }
@@ -479,12 +500,23 @@ class FragmentPlayList: DialogFragment() {
             viewPagerAdapter.sendDataToFragment(f, "changed_current_list")
         }
     }
-    //设置默认展示列表
-    private fun setDefaultPage(flag: Int){
-        PREFS_List.edit { putInt("PREFS_DefaultPage", flag) }
+    private fun saveLastPage(){
+        PREFS_List.edit { putInt("state_LastPage", ViewPager.currentItem) }
+        vm.state_LastPage = ViewPager.currentItem
     }
-    private fun onDefaultPageChange(flag: Int){
-        setDefaultPage(flag)
+    //设置默认展示列表
+    private fun setAcquiescePage(flag: Int){
+        if (flag == vm.PREFS_AcquiescePage){
+            PREFS_List.edit { putInt("PREFS_AcquiescePage", -1) }
+            vm.PREFS_AcquiescePage = -1
+            requireContext().showCustomToast("已无默认页签，将使用上一次关闭时的页签作为默认页签", Toast.LENGTH_SHORT, 2)
+        }else{
+            PREFS_List.edit { putInt("PREFS_AcquiescePage", flag) }
+            vm.PREFS_AcquiescePage = flag
+        }
+    }
+    private fun onAcquiescePageChange(flag: Int){
+        setAcquiescePage(flag)
     }
 
     //播放点击事件
@@ -506,7 +538,20 @@ class FragmentPlayList: DialogFragment() {
         PlayerListManager.InsertItemToCustomList(uriString, requireContext())
     }
 
+
+
+
+
     //Functions
+    //读取设置信息
+    private fun loadSettings(){
+        //默认显式页的签
+        PREFS_AcquiescePage = PREFS_List.getInt("PREFS_AcquiescePage", 0)
+        vm.PREFS_AcquiescePage = PREFS_AcquiescePage
+        //上一次显式的页签
+        state_LastPage = PREFS_List.getInt("state_LastPage", 0)
+        vm.state_LastPage = state_LastPage
+    }
     //自定义退出逻辑
     private var lockPage = false
     private fun customDismiss(flag_need_vibrate: Boolean = true){

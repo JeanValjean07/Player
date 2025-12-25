@@ -10,6 +10,7 @@ import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.LoadState
@@ -21,13 +22,19 @@ import com.suming.player.R
 import com.suming.player.ToolVibrate
 import com.suming.player.showCustomToast
 import kotlinx.coroutines.launch
+import org.w3c.dom.Text
+import kotlin.getValue
 
+@UnstableApi
 class FragmentPlayListCustomFragment(
     private val onPlayClick: (String) -> Unit,
     private val onDeleteClick: (Long) -> Unit,
     private val onPlayListChange: (Int) -> Unit,
     private val onDefaultPageChange: (Int) -> Unit
 ) : Fragment(R.layout.activity_player_fragment_play_list_custom_page) {
+    //共享ViewModel
+    private val vm: PlayerListViewModel by activityViewModels()
+    private val currentPageFlag = 0
     //加载中卡片
     private lateinit var LoadingState: LinearLayout
     private lateinit var LoadingStateText: TextView
@@ -51,8 +58,15 @@ class FragmentPlayListCustomFragment(
         val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
         pageSettingButton.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
+            //弹出页面选项菜单
             val popup = PopupMenu(requireContext(), pageSettingButton)
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
+            val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
+            if (currentPageFlag == vm.PREFS_AcquiescePage) {
+                menuItem_default_page.title = "取消设为默认显示页签"
+            }else{
+                menuItem_default_page.title = "设为默认显示页签"
+            }
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.setting_set_as_current_list -> {
