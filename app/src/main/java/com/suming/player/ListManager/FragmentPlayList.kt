@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.HorizontalScrollView
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
@@ -64,6 +65,7 @@ class FragmentPlayList: DialogFragment() {
     private lateinit var ButtonCardMusic: CardView
     //横滑页签
     private lateinit var TabScrollView: HorizontalScrollView
+    private lateinit var ButtonCurrentListIcon: ImageView
 
 
 
@@ -202,9 +204,9 @@ class FragmentPlayList: DialogFragment() {
                 }
             }
         }
-
         //按钮：当前播放列表
         val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
+        ButtonCurrentListIcon = view.findViewById(R.id.ButtonCurrentListIcon)
         ButtonCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
 
@@ -214,16 +216,25 @@ class FragmentPlayList: DialogFragment() {
                 when (item.itemId) {
                     R.id.list_custom -> {
                         ToolVibrate().vibrate(requireContext())
+
+                        setCurrentPlayList(0)
+
                         true
                     }
 
                     R.id.list_video_live -> {
                         ToolVibrate().vibrate(requireContext())
+
+                        setCurrentPlayList(1)
+
                         true
                     }
 
                     R.id.list_music_live -> {
                         ToolVibrate().vibrate(requireContext())
+
+                        setCurrentPlayList(2)
+
                         true
                     }
 
@@ -232,6 +243,7 @@ class FragmentPlayList: DialogFragment() {
             }
             popup.show()
         }
+        setCurrentPlayListIcon()
 
 
         //横滑页签按钮
@@ -257,7 +269,9 @@ class FragmentPlayList: DialogFragment() {
             this,
             onPlayClick = { uri -> onPlayClick(uri) },
             onAddToListClick = { uri -> onAddToListClick(uri) },
-            onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) })
+            onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) },
+            onPlayListChange = { flag -> onPlayListChange(flag) }
+        )
         ViewPager.adapter = viewPagerAdapter
         startViewPagerListener()
         //设置ViewPager缓存页面数量
@@ -285,7 +299,8 @@ class FragmentPlayList: DialogFragment() {
         fragment: Fragment,
         private val onPlayClick: (String) -> Unit,
         private val onAddToListClick: (String) -> Unit,
-        private val onDeleteClick: (Long) -> Unit
+        private val onDeleteClick: (Long) -> Unit,
+        private val onPlayListChange: (Int) -> Unit
     ): FragmentStateAdapter(fragment) {
         //保持子类引用
         private lateinit var FragmentPlayListCustomFragment: FragmentPlayListCustomFragment
@@ -297,15 +312,15 @@ class FragmentPlayList: DialogFragment() {
         override fun createFragment(position: Int): Fragment =
             when (position) {
                 0 -> {
-                    FragmentPlayListCustomFragment(onPlayClick = onPlayClick, onDeleteClick = onDeleteClick)
+                    FragmentPlayListCustomFragment(onPlayClick = onPlayClick, onDeleteClick = onDeleteClick, onPlayListChange = onPlayListChange)
                         .also { FragmentPlayListCustomFragment = it }
                 }
                 1 -> {
-                    FragmentPlayListVideoFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
+                    FragmentPlayListVideoFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick, onPlayListChange = onPlayListChange)
                         .also { FragmentPlayListVideoFragment = it }
                 }
                 2 -> {
-                    FragmentPlayListMusicFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
+                    FragmentPlayListMusicFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick, onPlayListChange = onPlayListChange)
                         .also { FragmentPlayListMusicFragment = it }
                 }
                 else -> ListFragment()
@@ -366,15 +381,17 @@ class FragmentPlayList: DialogFragment() {
         updateCardColor(2)
     }
     private fun switchedToCustomPageByScroll(){
-        viewPagerAdapter.sendDataToFragment(0, "update")
+        viewPagerAdapter.sendDataToFragment(0, "switch_to_you")
         updateCardPosition(0)
         updateCardColor(0)
     }
     private fun switchedToVideoPageByScroll(){
+        viewPagerAdapter.sendDataToFragment(1, "switch_to_you")
         updateCardPosition(1)
         updateCardColor(1)
     }
     private fun switchedToMusicPageByScroll(){
+        viewPagerAdapter.sendDataToFragment(2, "switch_to_you")
         updateCardPosition(2)
         updateCardColor(2)
     }
@@ -411,6 +428,43 @@ class FragmentPlayList: DialogFragment() {
                 val left = ButtonCardMusic.left
                 TabScrollView.smoothScrollTo(left, 0)
             }
+        }
+    }
+    //显示当前播放列表
+    private fun setCurrentPlayListIcon(){
+        val currentPlayList = PlayerListManager.getCurrentPlayListByFlag(requireContext())
+        if (currentPlayList == 0){
+            ButtonCurrentListIcon.setImageResource(R.drawable.ic_play_list_custom_list)
+        }
+        else if (currentPlayList == 1){
+            ButtonCurrentListIcon.setImageResource(R.drawable.ic_main_fragment_video_icon)
+        }
+        else if (currentPlayList == 2){
+            ButtonCurrentListIcon.setImageResource(R.drawable.ic_main_fragment_music_icon)
+        }
+
+
+        ButtonCurrentListIcon
+    }
+    private fun onPlayListChange(flag: Int){
+        setCurrentPlayListIcon()
+    }
+    private fun setCurrentPlayList(flag: Int){
+        when(flag){
+            0 -> {
+                PlayerListManager.setPlayList("custom")
+            }
+            1 -> {
+                PlayerListManager.setPlayList("video")
+            }
+            2 -> {
+                PlayerListManager.setPlayList("music")
+            }
+        }
+        setCurrentPlayListIcon()
+        //发布消息
+        for (f in 0..2){
+            viewPagerAdapter.sendDataToFragment(f, "changed_current_list")
         }
     }
 

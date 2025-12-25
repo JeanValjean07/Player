@@ -2,6 +2,7 @@ package com.suming.player.ListManager
 
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -24,11 +25,15 @@ import kotlinx.coroutines.launch
 class FragmentPlayListCustomFragment(
     private val onPlayClick: (String) -> Unit,
     private val onDeleteClick: (Long) -> Unit,
+    private val onPlayListChange: (Int) -> Unit
 ) : Fragment(R.layout.activity_player_fragment_play_list_custom_page) {
     //加载中卡片
     private lateinit var LoadingState: LinearLayout
     private lateinit var LoadingStateText: TextView
     private lateinit var TextItemCount: TextView
+    //当前播放列表
+    private lateinit var ButtonSetAsCurrentListText: TextView
+    private lateinit var ButtonSetAsCurrentListIcon: ImageView
     //recyclerView
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_custom_list_adapter: FragmentPlayListCustomAdapter
@@ -69,18 +74,35 @@ class FragmentPlayListCustomFragment(
         }
         //按钮：设为当前播放列表/已是当前播放列表
         val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
-        val ButtonSetAsCurrentListText = view.findViewById<View>(R.id.ButtonSetAsCurrentListText)
-        val ButtonSetAsCurrentListIcon = view.findViewById<View>(R.id.ButtonSetAsCurrentListIcon)
+        ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
+        ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
+        setCurrentListState()
         ButtonSetAsCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
 
+            val isSetSuccess = PlayerListManager.setPlayList("custom")
+
+            //更新当前播放列表
+            setCurrentListState()
+
+            if (isSetSuccess){
+                //更新当前播放列表
+                onPlayListChange(0)
+                requireContext().showCustomToast("设置成功", Toast.LENGTH_SHORT, 2)
+            }
+            else{
+                requireContext().showCustomToast("设置失败", Toast.LENGTH_SHORT, 2)
+            }
         }
         //横滑选项按钮
         //按钮：全部删除
         val ButtonDeleteAllListItem = view.findViewById<View>(R.id.ButtonDeleteAllListItem)
         ButtonDeleteAllListItem.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-
+            //清空自定义列表
+            PlayerListManager.clearCustomList()
+            //刷新适配器
+            recyclerView_custom_list_adapter.refresh()
         }
         //按钮：总项数
         val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
@@ -107,6 +129,8 @@ class FragmentPlayListCustomFragment(
             recyclerView_custom_list_adapter.refresh()
 
         }
+
+
 
 
         //初始化recyclerView
@@ -155,8 +179,11 @@ class FragmentPlayListCustomFragment(
         when (data) {
             is String -> {
                 when (data) {
-                    "update" -> {
-                        recyclerView_custom_list_adapter.refresh()
+                    "switch_to_you" -> {
+                        switchedToThisList()
+                    }
+                    "changed_current_list" -> {
+                        setCurrentListState()
                     }
                     "go_top" -> {
                         recyclerView.smoothScrollToPosition(0)
@@ -167,7 +194,26 @@ class FragmentPlayListCustomFragment(
         }
     }
 
+
+    //切换到此列表
+    private fun switchedToThisList(){
+        setCurrentListState()
+        recyclerView_custom_list_adapter.refresh()
+    }
+
     //stable Functions
+    //是否已经是当前播放列表
+    private fun setCurrentListState(){
+        //判断是否是当前播放列表
+        if (PlayerListManager.getCurrentPlayListByString(requireContext()) == "custom"){
+            ButtonSetAsCurrentListText.text = "已设为当前播放列表"
+            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
+        }
+        else{
+            ButtonSetAsCurrentListText.text = "设为当前播放列表"
+            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_add)
+        }
+    }
     //加载状态提示
     private fun showLoadingNotice() {
         LoadingStateText.text = "加载中"

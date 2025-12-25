@@ -2,6 +2,7 @@ package com.suming.player.ListManager
 
 import android.content.ContentResolver
 import android.content.Context
+import android.content.SharedPreferences
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
@@ -10,19 +11,19 @@ import androidx.core.net.toUri
 import data.MediaModel.MediaItemForMusic
 import data.MediaModel.MediaItemForVideo
 import data.MediaModel.MiniMediaItemForList
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import java.io.File
+import androidx.core.content.edit
 
 object PlayerListManager {
 
+    //列表管理器设置
+    private lateinit var PREFS_List: SharedPreferences
+    //当前列表flag
+    private var currentPlayListFlag = -1
+    private var state_LastPlayListFlagRead = false
 
-    //自定义列表
+
+    //自定义列表实例
     var customList = mutableListOf<MiniMediaItemForList>()
     //实时视频列表
     var liveVideoList = mutableListOf<MediaItemForVideo>()
@@ -47,19 +48,125 @@ object PlayerListManager {
 
     }
     //整表替换自定义列表
-    fun updateList(newList: List<MiniMediaItemForList>) {
+    fun updateCustomList(newList: List<MiniMediaItemForList>) {
         customList.clear()
         customList.addAll(newList)
+    }
+    //清空自定义列表
+    fun clearCustomList(){
+        customList.clear()
     }
 
 
 
+    /*
+    //获取下一个或上一个媒体项
+    fun getMediaItemByOrder(flag_prev_or_next: String, current_uri_num: Long): Any {
 
 
 
+    }
+
+
+    //查询某个特定uri是否存在于当前播放列表中
+    fun getMediaItemByUri(uriNumOnly: Long): Boolean {
 
 
 
+    }
+     */
+
+
+    //设置当前播放列表 返回值:是否设置成功
+    fun setPlayList(targetList: String): Boolean{
+        when(targetList){
+            "custom" -> {
+                currentPlayListFlag = 0
+                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                return true
+            }
+            "video" -> {
+                currentPlayListFlag = 1
+                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                return true
+            }
+            "music" -> {
+                currentPlayListFlag = 2
+                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                return true
+            }
+            else -> {
+                return false
+            }
+        }
+
+    }
+    fun getCurrentPlayListByString(context: Context): String{
+        if (!state_LastPlayListFlagRead){
+            PREFS_List = context.getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
+            if (PREFS_List.contains("PREFS_CurrentPlayListFlag")){
+                currentPlayListFlag = PREFS_List.getInt("PREFS_CurrentPlayListFlag", 0)
+                if (currentPlayListFlag !in 0..2) {
+                    currentPlayListFlag = 0
+                    PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                }
+            }else{
+                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                currentPlayListFlag = 0
+            }
+            state_LastPlayListFlagRead = true
+        }
+
+        when(currentPlayListFlag){
+            0 -> {
+                return "custom"
+            }
+            1 -> {
+                return "video"
+            }
+            2 -> {
+                return "music"
+            }
+            else -> {
+                return "error"
+            }
+        }
+    }
+    fun getCurrentPlayListByFlag(context: Context): Int{
+        if (!state_LastPlayListFlagRead){
+            PREFS_List = context.getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
+            if (PREFS_List.contains("PREFS_CurrentPlayListFlag")){
+                currentPlayListFlag = PREFS_List.getInt("PREFS_CurrentPlayListFlag", 0)
+                if (currentPlayListFlag !in 0..2) {
+                    currentPlayListFlag = 0
+                    PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                }
+            }else{
+                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                currentPlayListFlag = 0
+            }
+            state_LastPlayListFlagRead = true
+        }
+
+        return currentPlayListFlag
+    }
+    //向实时视频列表和音乐列表传入内容
+    fun InfuseLiveVideoList(newList: List<MediaItemForVideo>){
+        liveVideoList.clear()
+        liveVideoList.addAll(newList)
+    }
+    fun InfuseLiveMusicList(newList: List<MediaItemForMusic>){
+        liveMusicList.clear()
+        liveMusicList.addAll(newList)
+    }
+
+
+    //启动播放列表管理器
+    fun startPlayListManage(){
+
+
+
+    }
 
 
 

@@ -288,6 +288,7 @@
                                     android:textColor="@color/HeadText"
                                     android:textSize="11sp" />
                                 <ImageView
+                                    android:id="@+id/ButtonCurrentListIcon"
                                     android:layout_width="25dp"
                                     android:layout_height="25dp"
                                     android:layout_gravity="center"

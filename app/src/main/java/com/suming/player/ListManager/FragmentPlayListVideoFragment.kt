@@ -2,6 +2,7 @@ package com.suming.player.ListManager
 
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -28,6 +29,7 @@ import kotlin.getValue
 class FragmentPlayListVideoFragment(
     private val onPlayClick: (String) -> Unit,
     private val onAddToListClick: (String) -> Unit,
+    private val onPlayListChange: (Int) -> Unit
 ) : Fragment(R.layout.activity_player_fragment_play_list_live_page) {
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
@@ -35,6 +37,9 @@ class FragmentPlayListVideoFragment(
     private lateinit var LoadingState: LinearLayout
     private lateinit var LoadingStateText: TextView
     private lateinit var TextItemCount: TextView
+    //当前播放列表
+    private lateinit var ButtonSetAsCurrentListText: TextView
+    private lateinit var ButtonSetAsCurrentListIcon: ImageView
     //RecyclerView
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_video_adapter: FragmentPlayListVideoAdapter
@@ -75,11 +80,24 @@ class FragmentPlayListVideoFragment(
         }
         //按钮：设为当前播放列表/已是当前播放列表
         val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
-        val ButtonSetAsCurrentListText = view.findViewById<View>(R.id.ButtonSetAsCurrentListText)
-        val ButtonSetAsCurrentListIcon = view.findViewById<View>(R.id.ButtonSetAsCurrentListIcon)
+        ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
+        ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
+        setCurrentListState()
         ButtonSetAsCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
 
+            val isSetSuccess = PlayerListManager.setPlayList("video")
+            //更新当前播放列表
+            setCurrentListState()
+
+            if (isSetSuccess){
+                //更新当前播放列表
+                onPlayListChange(1)
+                requireContext().showCustomToast("设置成功", Toast.LENGTH_SHORT, 2)
+            }
+            else{
+                requireContext().showCustomToast("设置失败", Toast.LENGTH_SHORT, 2)
+            }
         }
         //按钮：总项数
         val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
@@ -148,8 +166,11 @@ class FragmentPlayListVideoFragment(
         when (data) {
             is String -> {
                 when (data) {
-                    "update" -> {
-                        recyclerView_video_adapter.refresh()
+                    "switch_to_you" -> {
+                        switchedToThisList()
+                    }
+                    "changed_current_list" -> {
+                        setCurrentListState()
                     }
                     "go_top" -> {
                         recyclerView.smoothScrollToPosition(0)
@@ -160,7 +181,25 @@ class FragmentPlayListVideoFragment(
         }
     }
 
+    //切换到此列表
+    private fun switchedToThisList(){
+        setCurrentListState()
+
+    }
+
     //stable Functions
+    //是否已经是当前播放列表
+    private fun setCurrentListState(){
+        //判断是否是当前播放列表
+        if (PlayerListManager.getCurrentPlayListByString(requireContext()) == "video"){
+            ButtonSetAsCurrentListText.text = "已设为当前播放列表"
+            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
+        }
+        else{
+            ButtonSetAsCurrentListText.text = "设为当前播放列表"
+            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_add)
+        }
+    }
     //加载状态提示
     private fun showLoadingNotice() {
         LoadingStateText.text = "加载中"
