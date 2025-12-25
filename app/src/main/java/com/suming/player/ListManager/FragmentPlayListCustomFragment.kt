@@ -25,7 +25,8 @@ import kotlinx.coroutines.launch
 class FragmentPlayListCustomFragment(
     private val onPlayClick: (String) -> Unit,
     private val onDeleteClick: (Long) -> Unit,
-    private val onPlayListChange: (Int) -> Unit
+    private val onPlayListChange: (Int) -> Unit,
+    private val onDefaultPageChange: (Int) -> Unit
 ) : Fragment(R.layout.activity_player_fragment_play_list_custom_page) {
     //加载中卡片
     private lateinit var LoadingState: LinearLayout
@@ -50,19 +51,22 @@ class FragmentPlayListCustomFragment(
         val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
         pageSettingButton.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-
             val popup = PopupMenu(requireContext(), pageSettingButton)
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.setting_set_as_current_list -> {
                         ToolVibrate().vibrate(requireContext())
+
+                        setAsCurrentPlayList()
+
                         true
                     }
 
                     R.id.setting_set_as_default_show_list -> {
                         ToolVibrate().vibrate(requireContext())
-
+                        //设置默认显示列表
+                        onDefaultPageChange(0)
                         true
                     }
 
@@ -70,7 +74,6 @@ class FragmentPlayListCustomFragment(
                 }
             }
             popup.show()
-
         }
         //按钮：设为当前播放列表/已是当前播放列表
         val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
@@ -79,20 +82,7 @@ class FragmentPlayListCustomFragment(
         setCurrentListState()
         ButtonSetAsCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-
-            val isSetSuccess = PlayerListManager.setPlayList("custom")
-
-            //更新当前播放列表
-            setCurrentListState()
-
-            if (isSetSuccess){
-                //更新当前播放列表
-                onPlayListChange(0)
-                requireContext().showCustomToast("设置成功", Toast.LENGTH_SHORT, 2)
-            }
-            else{
-                requireContext().showCustomToast("设置失败", Toast.LENGTH_SHORT, 2)
-            }
+            setAsCurrentPlayList()
         }
         //横滑选项按钮
         //按钮：全部删除
@@ -199,6 +189,23 @@ class FragmentPlayListCustomFragment(
     private fun switchedToThisList(){
         setCurrentListState()
         recyclerView_custom_list_adapter.refresh()
+    }
+    //设置为当前播放列表
+    private fun setAsCurrentPlayList(){
+        val isSetSuccess = PlayerListManager.setPlayList("custom")
+
+        //更新当前播放列表
+        setCurrentListState()
+
+        if (isSetSuccess){
+            //更新当前播放列表
+            onPlayListChange(0)
+            requireContext().showCustomToast("设置成功", Toast.LENGTH_SHORT, 2)
+        }
+        else{
+            requireContext().showCustomToast("设置失败", Toast.LENGTH_SHORT, 2)
+        }
+
     }
 
     //stable Functions

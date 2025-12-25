@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -40,6 +41,7 @@ import com.suming.player.ToolVibrate
 import com.suming.player.showCustomToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import androidx.core.content.edit
 
 @SuppressLint("ComposableNaming")
 @UnstableApi
@@ -56,7 +58,8 @@ class FragmentPlayList: DialogFragment() {
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
     //设置
-    private lateinit var PREFS: SharedPreferences
+    private lateinit var PREFS_List: SharedPreferences
+    private var PREFS_DefaultPage = 0
     //协程作用域
     private val viewModelScope = CoroutineScope(Dispatchers.IO)
     //横向按钮
@@ -126,7 +129,7 @@ class FragmentPlayList: DialogFragment() {
             return
         }
         //读取设置
-        PREFS = requireContext().getSharedPreferences("PREFS", Context.MODE_PRIVATE)
+        PREFS_List = requireContext().getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
     }
 
     override fun onCreateView(
@@ -247,6 +250,7 @@ class FragmentPlayList: DialogFragment() {
 
 
         //横滑页签按钮
+        PREFS_DefaultPage = PREFS_List.getInt("PREFS_DefaultPage", 0)
         TabScrollView = view.findViewById(R.id.TabScrollView)
         ButtonCardCustomList = view.findViewById(R.id.ButtonCardCustomList)
         ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
@@ -270,14 +274,19 @@ class FragmentPlayList: DialogFragment() {
             onPlayClick = { uri -> onPlayClick(uri) },
             onAddToListClick = { uri -> onAddToListClick(uri) },
             onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) },
-            onPlayListChange = { flag -> onPlayListChange(flag) }
+            onPlayListChange = { flag -> onPlayListChange(flag) },
+            onDefaultPageChange = { flag -> onDefaultPageChange(flag) }
         )
         ViewPager.adapter = viewPagerAdapter
         startViewPagerListener()
         //设置ViewPager缓存页面数量
         ViewPager.offscreenPageLimit = 3
-
-
+        //默认显示列表
+        ViewPager.post {
+            if (viewPagerAdapter.itemCount > 0) {
+                ViewPager.setCurrentItem(PREFS_DefaultPage, false)
+            }
+        }
 
 
 
@@ -300,7 +309,8 @@ class FragmentPlayList: DialogFragment() {
         private val onPlayClick: (String) -> Unit,
         private val onAddToListClick: (String) -> Unit,
         private val onDeleteClick: (Long) -> Unit,
-        private val onPlayListChange: (Int) -> Unit
+        private val onPlayListChange: (Int) -> Unit,
+        private val onDefaultPageChange: (Int) -> Unit,
     ): FragmentStateAdapter(fragment) {
         //保持子类引用
         private lateinit var FragmentPlayListCustomFragment: FragmentPlayListCustomFragment
@@ -312,15 +322,15 @@ class FragmentPlayList: DialogFragment() {
         override fun createFragment(position: Int): Fragment =
             when (position) {
                 0 -> {
-                    FragmentPlayListCustomFragment(onPlayClick = onPlayClick, onDeleteClick = onDeleteClick, onPlayListChange = onPlayListChange)
+                    FragmentPlayListCustomFragment(onPlayClick = onPlayClick, onDeleteClick = onDeleteClick, onPlayListChange = onPlayListChange, onDefaultPageChange = onDefaultPageChange)
                         .also { FragmentPlayListCustomFragment = it }
                 }
                 1 -> {
-                    FragmentPlayListVideoFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick, onPlayListChange = onPlayListChange)
+                    FragmentPlayListVideoFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick, onPlayListChange = onPlayListChange, onDefaultPageChange = onDefaultPageChange)
                         .also { FragmentPlayListVideoFragment = it }
                 }
                 2 -> {
-                    FragmentPlayListMusicFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick, onPlayListChange = onPlayListChange)
+                    FragmentPlayListMusicFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick, onPlayListChange = onPlayListChange, onDefaultPageChange = onDefaultPageChange)
                         .also { FragmentPlayListMusicFragment = it }
                 }
                 else -> ListFragment()
@@ -338,7 +348,9 @@ class FragmentPlayList: DialogFragment() {
     //viewPager页面切换监听器
     private lateinit var ViewPager: ViewPager2
     private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
-        override fun onPageSelected(position: Int) { scrolledToPage(position) }
+        override fun onPageSelected(position: Int) {
+            scrolledToPage(position)
+        }
         override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {  }
         override fun onPageScrollStateChanged(state: Int) {  }
     }
@@ -466,6 +478,13 @@ class FragmentPlayList: DialogFragment() {
         for (f in 0..2){
             viewPagerAdapter.sendDataToFragment(f, "changed_current_list")
         }
+    }
+    //设置默认展示列表
+    private fun setDefaultPage(flag: Int){
+        PREFS_List.edit { putInt("PREFS_DefaultPage", flag) }
+    }
+    private fun onDefaultPageChange(flag: Int){
+        setDefaultPage(flag)
     }
 
     //播放点击事件

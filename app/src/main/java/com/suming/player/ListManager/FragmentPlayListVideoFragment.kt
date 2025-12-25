@@ -29,7 +29,8 @@ import kotlin.getValue
 class FragmentPlayListVideoFragment(
     private val onPlayClick: (String) -> Unit,
     private val onAddToListClick: (String) -> Unit,
-    private val onPlayListChange: (Int) -> Unit
+    private val onPlayListChange: (Int) -> Unit,
+    private val onDefaultPageChange: (Int) -> Unit
 ) : Fragment(R.layout.activity_player_fragment_play_list_live_page) {
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
@@ -56,20 +57,20 @@ class FragmentPlayListVideoFragment(
         val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
         pageSettingButton.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-
             val popup = PopupMenu(requireContext(), pageSettingButton)
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.setting_set_as_current_list -> {
                         ToolVibrate().vibrate(requireContext())
-
+                        setAsCurrentPlayList()
                         true
                     }
 
                     R.id.setting_set_as_default_show_list -> {
                         ToolVibrate().vibrate(requireContext())
-
+                        //设置默认显示列表
+                        onDefaultPageChange(1)
                         true
                     }
 
@@ -85,19 +86,7 @@ class FragmentPlayListVideoFragment(
         setCurrentListState()
         ButtonSetAsCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-
-            val isSetSuccess = PlayerListManager.setPlayList("video")
-            //更新当前播放列表
-            setCurrentListState()
-
-            if (isSetSuccess){
-                //更新当前播放列表
-                onPlayListChange(1)
-                requireContext().showCustomToast("设置成功", Toast.LENGTH_SHORT, 2)
-            }
-            else{
-                requireContext().showCustomToast("设置失败", Toast.LENGTH_SHORT, 2)
-            }
+            setAsCurrentPlayList()
         }
         //按钮：总项数
         val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
@@ -184,6 +173,23 @@ class FragmentPlayListVideoFragment(
     //切换到此列表
     private fun switchedToThisList(){
         setCurrentListState()
+
+    }
+    //设置为当前播放列表
+    private fun setAsCurrentPlayList(){
+        val isSetSuccess = PlayerListManager.setPlayList("video")
+
+        //更新当前播放列表
+        setCurrentListState()
+
+        if (isSetSuccess){
+            //更新当前播放列表
+            onPlayListChange(0)
+            requireContext().showCustomToast("设置成功", Toast.LENGTH_SHORT, 2)
+        }
+        else{
+            requireContext().showCustomToast("设置失败", Toast.LENGTH_SHORT, 2)
+        }
 
     }
 
