@@ -61,7 +61,6 @@ class FragmentPlayListCustomAdapter(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
-        holder.itemName.isSelected = true
         holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
         holder.itemFrameJob?.cancel()
@@ -69,6 +68,7 @@ class FragmentPlayListCustomAdapter(
         //点击事件设定
         holder.ButtonDelete.setOnClickListener { onDeleteClick(item.uriNumOnly) }
         holder.ButtonPlay.setOnClickListener { onPlayClick(item.uri) }
+        holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 
     override fun onViewAttachedToWindow(holder: ViewHolder) {
@@ -82,6 +82,8 @@ class FragmentPlayListCustomAdapter(
         val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) return
     }
+
+
 
 
     //Functions

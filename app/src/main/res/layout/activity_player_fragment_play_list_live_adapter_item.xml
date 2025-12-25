@@ -15,12 +15,6 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <!-- 全卡点击层 -->
-        <View
-            android:id="@+id/TouchPad"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            />
         <!-- 视频预览图 -->
         <androidx.cardview.widget.CardView
             android:id="@+id/ivThumbCard"
@@ -71,9 +65,6 @@
                 android:layout_marginStart="5dp"
                 android:layout_marginTop="1dp"
                 android:layout_marginEnd="15dp"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/ivThumbCard"
-                app:layout_constraintEnd_toEndOf="parent"
                 />
             <!-- 艺术家 -->
             <TextView
@@ -87,9 +78,6 @@
                 android:textColor="@color/HeadText2"
                 android:layout_marginStart="5dp"
                 android:layout_marginBottom="1dp"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/ivThumbCard"
-                app:layout_constraintEnd_toEndOf="parent"
                 tools:ignore="SmallSp" />
         </LinearLayout>
         <!-- 操作按钮 -->

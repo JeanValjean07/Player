@@ -8,7 +8,6 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -208,26 +207,23 @@ class FragmentPlayList: DialogFragment() {
         val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
         ButtonCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            Log.d("SuMing", "ButtonCurrentList - custom")
+
             val popup = PopupMenu(requireContext(), ButtonCurrentList)
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_current_play_list, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.list_custom -> {
                         ToolVibrate().vibrate(requireContext())
-                        Log.d("SuMing", "ButtonCurrentList  list_custom")
                         true
                     }
 
                     R.id.list_video_live -> {
                         ToolVibrate().vibrate(requireContext())
-                        Log.d("SuMing", "ButtonCurrentList  list_video_live")
                         true
                     }
 
                     R.id.list_music_live -> {
                         ToolVibrate().vibrate(requireContext())
-                        Log.d("SuMing", "ButtonCurrentList  list_music_live")
                         true
                     }
 
@@ -257,11 +253,12 @@ class FragmentPlayList: DialogFragment() {
         }
         //ViewPager2
         ViewPager = view.findViewById(R.id.ViewPager)
-        ViewPager.adapter = ViewPagerAdapter(
+        viewPagerAdapter = ViewPagerAdapter(
             this,
             onPlayClick = { uri -> onPlayClick(uri) },
             onAddToListClick = { uri -> onAddToListClick(uri) },
             onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) })
+        ViewPager.adapter = viewPagerAdapter
         startViewPagerListener()
         //设置ViewPager缓存页面数量
         ViewPager.offscreenPageLimit = 3
@@ -283,28 +280,50 @@ class FragmentPlayList: DialogFragment() {
 
     //ViewPager
     //横向viewPager内部adapter类
+    private lateinit var viewPagerAdapter: ViewPagerAdapter
     private class ViewPagerAdapter(
         fragment: Fragment,
         private val onPlayClick: (String) -> Unit,
         private val onAddToListClick: (String) -> Unit,
         private val onDeleteClick: (Long) -> Unit
     ): FragmentStateAdapter(fragment) {
+        //保持子类引用
+        private lateinit var FragmentPlayListCustomFragment: FragmentPlayListCustomFragment
+        private lateinit var FragmentPlayListVideoFragment: FragmentPlayListVideoFragment
+        private lateinit var FragmentPlayListMusicFragment: FragmentPlayListMusicFragment
+
+        //viewPager参数设置
         override fun getItemCount(): Int = 3
         override fun createFragment(position: Int): Fragment =
             when (position) {
-                0 -> FragmentPlayListCustomFragment(
-                    onPlayClick = onPlayClick,
-                    onDeleteClick = onDeleteClick
-                )
-                1 -> FragmentPlayListVideoFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
-                2 -> FragmentPlayListMusicFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
+                0 -> {
+                    FragmentPlayListCustomFragment(onPlayClick = onPlayClick, onDeleteClick = onDeleteClick)
+                        .also { FragmentPlayListCustomFragment = it }
+                }
+                1 -> {
+                    FragmentPlayListVideoFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
+                        .also { FragmentPlayListVideoFragment = it }
+                }
+                2 -> {
+                    FragmentPlayListMusicFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick)
+                        .also { FragmentPlayListMusicFragment = it }
+                }
                 else -> ListFragment()
             }
+
+        //功能传递
+        fun sendDataToFragment(position: Int, data: Any) {
+            when (position) {
+                0 -> FragmentPlayListCustomFragment.receiveInstruction(data)
+                1 -> FragmentPlayListVideoFragment.receiveInstruction(data)
+                2 -> FragmentPlayListMusicFragment.receiveInstruction(data)
+            }
+        }
     }
     //viewPager页面切换监听器
     private lateinit var ViewPager: ViewPager2
     private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
-        override fun onPageSelected(position: Int) { scrollToPage(position) }
+        override fun onPageSelected(position: Int) { scrolledToPage(position) }
         override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {  }
         override fun onPageScrollStateChanged(state: Int) {  }
     }
@@ -315,34 +334,47 @@ class FragmentPlayList: DialogFragment() {
         ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
     }
     //页签更新：位置 + 颜色
-    private fun scrollToPage(position: Int){
+    private fun scrolledToPage(position: Int){
         when(position){
-            0 -> switchToCustomPageByScroll()
-            1 -> switchToVideoPageByScroll()
-            2 -> switchToMusicPageByScroll()
+            0 -> switchedToCustomPageByScroll()
+            1 -> switchedToVideoPageByScroll()
+            2 -> switchedToMusicPageByScroll()
         }
     }
     private fun switchToCustomPageByButton(){
+        if (ViewPager.currentItem == 0) {
+            viewPagerAdapter.sendDataToFragment(0, "go_top")
+            return
+        }
         ViewPager.currentItem = 0
         updateCardColor(0)
     }
     private fun switchToVideoPageByButton(){
+        if (ViewPager.currentItem == 1) {
+            viewPagerAdapter.sendDataToFragment(1, "go_top")
+            return
+        }
         ViewPager.currentItem = 1
         updateCardColor(1)
     }
     private fun switchToMusicPageByButton(){
+        if (ViewPager.currentItem == 2) {
+            viewPagerAdapter.sendDataToFragment(2, "go_top")
+            return
+        }
         ViewPager.currentItem = 2
         updateCardColor(2)
     }
-    private fun switchToCustomPageByScroll(){
+    private fun switchedToCustomPageByScroll(){
+        viewPagerAdapter.sendDataToFragment(0, "update")
         updateCardPosition(0)
         updateCardColor(0)
     }
-    private fun switchToVideoPageByScroll(){
+    private fun switchedToVideoPageByScroll(){
         updateCardPosition(1)
         updateCardColor(1)
     }
-    private fun switchToMusicPageByScroll(){
+    private fun switchedToMusicPageByScroll(){
         updateCardPosition(2)
         updateCardColor(2)
     }
@@ -422,3 +454,4 @@ class FragmentPlayList: DialogFragment() {
 
 
 }
+

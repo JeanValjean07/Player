@@ -242,7 +242,6 @@ object PlayerSingleton {
         setServiceSetting()
         //通告主界面
         ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
-
         //读取循环模式
         getRepeatMode()
         //注册事件总线
@@ -269,7 +268,11 @@ object PlayerSingleton {
         //更新单例环境中的媒体信息变量
         MediaInfo_MediaUri = uri
         MediaInfo_MediaUriString = uri.toString()
-        MediaInfo_MediaType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: "error"
+        val MediaInfo_NewMediaType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: "error"
+        if (MediaInfo_NewMediaType != MediaInfo_MediaType){
+            ToolEventBus.sendEvent("PlayerSingleton_MediaTypeChanged")
+        }
+        MediaInfo_MediaType = MediaInfo_NewMediaType
         MediaInfo_MediaTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: "error"
         MediaInfo_MediaArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: "error"
         MediaInfo_AbsolutePath = getFilePath(context, uri).toString()

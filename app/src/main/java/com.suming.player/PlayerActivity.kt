@@ -32,6 +32,7 @@ import android.os.Process
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -1628,6 +1629,18 @@ class PlayerActivity: AppCompatActivity(){
 
 
     //Testing Functions
+    //检查媒体类型
+    private fun checkMediaType(){
+        val type = PlayerSingleton.getMediaType()
+        if (type == "music"){
+            EnsureExit_but_keep_playing()
+            finish()
+            return
+        }
+        else if (type == "video") {
+
+        }
+    }
     //检查正在播放状态: 返回true需要重播  返回false不需重播
     private fun checkSingletonPlayerState(){
         val currentMediaItem = PlayerSingleton.getCurrentMediaItem()
@@ -1785,13 +1798,14 @@ class PlayerActivity: AppCompatActivity(){
         disposable = ToolEventBus.events
             .observeOn(io.reactivex.rxjava3.android.schedulers.AndroidSchedulers.mainThread())
             .subscribe({
-                handlePlayerEvent(it)
+                HandlePlayerEvent(it)
             }, {
                 showCustomToast("事件总线注册失败:${it.message}", Toast.LENGTH_SHORT,3)
             })
     }
-    private fun handlePlayerEvent(event: String) {
+    private fun HandlePlayerEvent(event: String) {
         when (event) {
+            //播控中心按钮操作
             "SessionController_Next" -> {  }
             "SessionController_Previous" -> {  }
             "SessionController_Play" -> {
@@ -1805,6 +1819,10 @@ class PlayerActivity: AppCompatActivity(){
                 PlayerSingleton.setWasPlaying(false)
                 stopScrollerSync()
                 stopVideoTimeSync()
+            }
+            //媒体类型变更
+            "PlayerSingleton_MediaTypeChanged" -> {
+                checkMediaType()
             }
         }
     }
@@ -1898,6 +1916,13 @@ class PlayerActivity: AppCompatActivity(){
         MediaInfo_MediaUri = mediaItem.mediaId.toUri()
         MediaInfo_MediaUriString = MediaInfo_MediaUri.toString()
         vm.MediaInfo_VideoUri = MediaInfo_MediaUri
+        //获取媒体类型
+        val type = PlayerSingleton.getMediaType()
+        Log.d("SuMing","onMediaItemChanged: ${type}")
+        if (type == "music"){
+            EnsureExit(false)
+            return
+        }
         //更新全局媒体信息变量
         getMediaInfo(MediaInfo_MediaUri)
         //重新读取数据库+覆盖关键值

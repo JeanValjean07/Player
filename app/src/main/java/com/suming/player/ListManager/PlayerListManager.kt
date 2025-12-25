@@ -62,6 +62,7 @@ object PlayerListManager {
 
 
 
+
     //媒体信息读取
     private lateinit var retriever: MediaMetadataRetriever
     private var state_MediaMetadataRetriever_Running = false

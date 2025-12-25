@@ -1,12 +1,13 @@
 package com.suming.player.ListManager
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
+import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.ToolVibrate
+import com.suming.player.showCustomToast
 import kotlinx.coroutines.launch
 
 class FragmentPlayListCustomFragment(
@@ -30,6 +32,7 @@ class FragmentPlayListCustomFragment(
     //recyclerView
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_custom_list_adapter: FragmentPlayListCustomAdapter
+    private var state_adapter_load_complete = false
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -42,20 +45,19 @@ class FragmentPlayListCustomFragment(
         val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
         pageSettingButton.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            Log.d("SuMing", "pageSettingButton  custom")
+
             val popup = PopupMenu(requireContext(), pageSettingButton)
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.setting_set_as_current_list -> {
                         ToolVibrate().vibrate(requireContext())
-                        Log.d("SuMing", "pageSettingButton  setting_set_as_current_list  custom")
                         true
                     }
 
                     R.id.setting_set_as_default_show_list -> {
                         ToolVibrate().vibrate(requireContext())
-                        Log.d("SuMing", "pageSettingButton  setting_set_as_default_show_list  custom")
+
                         true
                     }
 
@@ -71,14 +73,41 @@ class FragmentPlayListCustomFragment(
         val ButtonSetAsCurrentListIcon = view.findViewById<View>(R.id.ButtonSetAsCurrentListIcon)
         ButtonSetAsCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            Log.d("SuMing", "ButtonSetAsCurrentList - custom")
+
         }
+        //横滑选项按钮
         //按钮：全部删除
         val ButtonDeleteAllListItem = view.findViewById<View>(R.id.ButtonDeleteAllListItem)
         ButtonDeleteAllListItem.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            Log.d("SuMing", "ButtonDeleteAll - custom")
+
         }
+        //按钮：总项数
+        val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
+        ButtonItemCount.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            //未加载完成前拒绝访问
+            if (!state_adapter_load_complete) return@setOnClickListener
+            //显示列表中项数
+            val itemCount = recyclerView_custom_list_adapter.itemCount
+            if (itemCount == 0) {
+                requireContext().showCustomToast("目前还没有媒体，可在其他列表中添加", Toast.LENGTH_SHORT, 2)
+            }
+            else{
+                requireContext().showCustomToast("包含${itemCount}个媒体", Toast.LENGTH_SHORT, 2)
+            }
+
+
+        }
+        //按钮：立即刷新
+        val ButtonUpdate = view.findViewById<CardView>(R.id.ButtonUpdate)
+        ButtonUpdate.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+
+            recyclerView_custom_list_adapter.refresh()
+
+        }
+
 
         //初始化recyclerView
         recyclerView = view.findViewById(R.id.recyclerView)
@@ -118,16 +147,25 @@ class FragmentPlayListCustomFragment(
         }
 
 
-
+    //onViewCreated END
     }
 
+    //外部Functions
+    fun receiveInstruction(data: Any) {
+        when (data) {
+            is String -> {
+                when (data) {
+                    "update" -> {
+                        recyclerView_custom_list_adapter.refresh()
+                    }
+                    "go_top" -> {
+                        recyclerView.smoothScrollToPosition(0)
+                    }
+                }
+            }
 
-
-
-
-
-
-
+        }
+    }
 
     //stable Functions
     //加载状态提示
@@ -140,6 +178,9 @@ class FragmentPlayListCustomFragment(
         LoadingState.visibility = View.VISIBLE
     }
     private fun LoadingComplete() {
+        //刷新状态
+        state_adapter_load_complete = true
+        //更新总项数文字
         val itemCount = recyclerView_custom_list_adapter.itemCount
         showItemCount(itemCount)
         if (itemCount == 0) {

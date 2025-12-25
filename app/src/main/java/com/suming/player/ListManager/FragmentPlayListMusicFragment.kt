@@ -1,12 +1,13 @@
 package com.suming.player.ListManager
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
+import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -19,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.PlayerViewModel
 import com.suming.player.R
 import com.suming.player.ToolVibrate
+import com.suming.player.showCustomToast
 import kotlinx.coroutines.launch
 import kotlin.getValue
 
@@ -36,6 +38,7 @@ class FragmentPlayListMusicFragment(
     //RecyclerView
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_music_adapter: FragmentPlayListMusicAdapter
+    private var state_adapter_load_complete = false
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -48,7 +51,7 @@ class FragmentPlayListMusicFragment(
         val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
         pageSettingButton.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            Log.d("SuMing", "pageSettingButton - music")
+
             val popup = PopupMenu(requireContext(), pageSettingButton)
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
             popup.setOnMenuItemClickListener { item ->
@@ -56,13 +59,13 @@ class FragmentPlayListMusicFragment(
 
                     R.id.setting_set_as_current_list -> {
                         ToolVibrate().vibrate(requireContext())
-                        Log.d("SuMing", "pageSettingButton  setting_set_as_current_list  music")
+
                         true
                     }
 
                     R.id.setting_set_as_default_show_list -> {
                         ToolVibrate().vibrate(requireContext())
-                        Log.d("SuMing", "pageSettingButton  setting_set_as_default_show_list  music")
+
                         true
                     }
 
@@ -77,8 +80,27 @@ class FragmentPlayListMusicFragment(
         val ButtonSetAsCurrentListIcon = view.findViewById<View>(R.id.ButtonSetAsCurrentListIcon)
         ButtonSetAsCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            Log.d("SuMing", "ButtonSetAsCurrentList - music")
+
         }
+        //按钮：总项数
+        val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
+        ButtonItemCount.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            //未加载完成前拒绝访问
+            if (!state_adapter_load_complete) return@setOnClickListener
+            //显示列表中项数
+            val itemCount = recyclerView_music_adapter.itemCount
+            if (itemCount == 0) {
+                requireContext().showCustomToast("目前还没有音乐", Toast.LENGTH_SHORT, 2)
+            }
+            else{
+                requireContext().showCustomToast("包含${itemCount}条音乐", Toast.LENGTH_SHORT, 2)
+            }
+
+
+        }
+
+
 
         //初始化recyclerView
         recyclerView = view.findViewById(R.id.recyclerView)
@@ -120,17 +142,26 @@ class FragmentPlayListMusicFragment(
         }
 
 
-
     }
 
 
 
+    //外部Functions
+    fun receiveInstruction(data: Any) {
+        when (data) {
+            is String -> {
+                when (data) {
+                    "update" -> {
+                        recyclerView_music_adapter.refresh()
+                    }
+                    "go_top" -> {
+                        recyclerView.smoothScrollToPosition(0)
+                    }
+                }
+            }
 
-
-
-
-
-
+        }
+    }
 
     //stable Functions
     //加载状态提示
@@ -143,6 +174,9 @@ class FragmentPlayListMusicFragment(
         LoadingState.visibility = View.VISIBLE
     }
     private fun LoadingComplete() {
+        //刷新状态
+        state_adapter_load_complete = true
+        //更新总项数文字
         val itemCount = recyclerView_music_adapter.itemCount
         showItemCount(itemCount)
         if (itemCount == 0) {

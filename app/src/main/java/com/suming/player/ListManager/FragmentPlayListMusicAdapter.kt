@@ -39,7 +39,6 @@ class FragmentPlayListMusicAdapter(
     }
     //ViewHolder
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val itemHandle: View = itemView.findViewById(R.id.TouchPad)
         val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
         var itemFrameJob: Job? = null
         val itemName: TextView = itemView.findViewById(R.id.tvName)
@@ -61,7 +60,6 @@ class FragmentPlayListMusicAdapter(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return
-        holder.itemName.isSelected = true
         holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
         holder.itemFrameJob?.cancel()
@@ -69,6 +67,7 @@ class FragmentPlayListMusicAdapter(
         //点击事件设定
         holder.ButtonAddToList.setOnClickListener { onAddToListClick(item.uriString) }
         holder.ButtonPlay.setOnClickListener { onPlayClick(item.uriString) }
+        holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 
     override fun onViewAttachedToWindow(holder: ViewHolder) {
