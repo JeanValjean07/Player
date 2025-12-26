@@ -400,6 +400,10 @@ class MainActivity: AppCompatActivity() {
                 "Dismiss" -> {
 
                 }
+                //更新小卡片
+                "updateSmallCard" -> {
+                    ResetPlayingCard()
+                }
             }
         }
         //监听返回手势
@@ -469,6 +473,7 @@ class MainActivity: AppCompatActivity() {
         disposeEventBus()
 
     }
+
 
 
 

@@ -252,14 +252,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_weight="0"
-                            android:text="退出视频时保持继续播放"
+                            android:text="退出视频后继续在首页底栏中播放"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
+
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"

@@ -78,12 +78,14 @@ class MainMusicAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         Log.d("SuMing", "MainMusicAdapter onBindViewHolder: $position")
         val item = getItem(position) ?: return
-        holder.itemName.isSelected = true
         holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
         holder.itemFrameJob?.cancel()
         holder.itemFrameJob = CoroutineScope_LoadCoverFrame.launch { setHolderFrame(item, holder) }
         //点击事件设定
+        holder.itemName.setOnClickListener{
+            holder.itemName.isSelected = true
+        }
         holder.itemHandle.setOnClickListener {
             onItemClick(item.uriString.toUri())
         }

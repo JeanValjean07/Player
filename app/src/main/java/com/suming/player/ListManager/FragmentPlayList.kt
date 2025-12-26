@@ -8,10 +8,8 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -36,14 +34,12 @@ import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.suming.player.PlayerSingleton
-import com.suming.player.PlayerViewModel
 import com.suming.player.R
 import com.suming.player.ToolVibrate
 import com.suming.player.showCustomToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import androidx.core.content.edit
-import androidx.core.widget.PopupMenuCompat
 
 @SuppressLint("ComposableNaming")
 @UnstableApi
@@ -221,6 +217,15 @@ class FragmentPlayList: DialogFragment() {
                 }
             }
         }
+        //按钮：停止播放
+        val ButtonStopPlaying = view.findViewById<ImageButton>(R.id.ButtonStopPlaying)
+        ButtonStopPlaying.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            PlayerSingleton.ReleaseSingletonPlayer(requireContext())
+            customDismiss(false)
+            val result = bundleOf("KEY" to "updateSmallCard")
+            setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
+        }
         //按钮：当前播放列表
         val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
         ButtonCurrentListIcon = view.findViewById(R.id.ButtonCurrentListIcon)
@@ -348,7 +353,12 @@ class FragmentPlayList: DialogFragment() {
                         .also { FragmentPlayListVideoFragment = it }
                 }
                 2 -> {
-                    FragmentPlayListMusicFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick, onPlayListChange = onPlayListChange, onDefaultPageChange = onDefaultPageChange)
+                    FragmentPlayListMusicFragment(
+                        onPlayClick = onPlayClick,
+                        onAddToListClick = onAddToListClick,
+                        onPlayListChange = onPlayListChange,
+                        onDefaultPageChange = onDefaultPageChange
+                    )
                         .also { FragmentPlayListMusicFragment = it }
                 }
                 else -> ListFragment()
@@ -532,6 +542,7 @@ class FragmentPlayList: DialogFragment() {
     //删除点击事件
     private fun onDeleteClick(uriNumOnly: Long) {
         PlayerListManager.DeleteItemFromCustomList(uriNumOnly)
+        viewPagerAdapter.sendDataToFragment(0, "update")
     }
     //添加到自定义列表点击事件
     private fun onAddToListClick(uriString: String) {
