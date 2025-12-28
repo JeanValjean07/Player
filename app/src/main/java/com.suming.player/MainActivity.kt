@@ -124,8 +124,8 @@ class MainActivity: AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main_old)
-        //初始化上下文
-        PlayerSingleton.setContext(application)
+        //启动播放器单例
+        PlayerSingleton.startPlayerSingleton(application)
         //界面实例获取
         preCheckAndInit()
         //表明首次启动信息
@@ -449,7 +449,6 @@ class MainActivity: AppCompatActivity() {
             checkLastPlayingMedia()
         }
         else{ ResetPlayingCard() }
-
 
     }
 

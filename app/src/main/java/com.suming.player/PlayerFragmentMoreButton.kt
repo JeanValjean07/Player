@@ -1,13 +1,16 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Context
+import android.content.Context.INPUT_METHOD_SERVICE
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Process
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -15,6 +18,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
+import android.view.inputmethod.InputMethodManager
+import android.widget.Button
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -34,29 +40,33 @@ import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.google.android.material.button.MaterialButton
-import data.DataBaseMediaItem.MediaItemRepo
-import data.DataBaseMediaItem.MediaItemSetting
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 @UnstableApi
 class PlayerFragmentMoreButton: DialogFragment() {
-
+    companion object {
+        fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments = bundleOf(  ) }
+    }
+    //自动关闭标志位
+    private var lockPage = false
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
     //设置
     private lateinit var PREFS: SharedPreferences
     //开关初始化
     private lateinit var Switch_BackgroundPlay: SwitchCompat
-    private lateinit var Switch_SealOEL: SwitchCompat
-    private lateinit var Switch_OnlyAudio: SwitchCompat
-    private lateinit var Switch_OnlyVideo: SwitchCompat
+    private lateinit var Switch_sealOEL: SwitchCompat
+    private lateinit var Switch_onlyAudio: SwitchCompat
+    private lateinit var Switch_onlyVideo: SwitchCompat
     private lateinit var Switch_ExitWhenMediaEnd: SwitchCompat
-    private lateinit var Switch_SavePositionWhenExit: SwitchCompat
-    //自动关闭标志位
-    private var lockPage = false
+    private lateinit var Switch_saveLastPosition: SwitchCompat
 
-    companion object { fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments = bundleOf(  ) } }
+
+
 
     @Suppress("DEPRECATION")
     override fun onStart() {
@@ -117,64 +127,46 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
         //开关置位
-        Switch_BackgroundPlay = view.findViewById(R.id.Switch_BackgroundPlay)
-        Switch_SealOEL = view.findViewById(R.id.Switch_SealOEL)
-        Switch_OnlyAudio = view.findViewById(R.id.Switch_OnlyAudio)
-        Switch_OnlyVideo = view.findViewById(R.id.Switch_OnlyVideo)
-        Switch_ExitWhenMediaEnd = view.findViewById(R.id.Switch_ExitWhenMediaEnd)
-        Switch_SavePositionWhenExit = view.findViewById(R.id.Switch_SavePositionWhenExit)
-        Switch_BackgroundPlay.isChecked = vm.PREFS_BackgroundPlay
-        Switch_SealOEL.isChecked = vm.PREFS_SealOEL
-        Switch_OnlyAudio.isChecked = vm.PREFS_OnlyAudio
-        Switch_OnlyVideo.isChecked = vm.PREFS_OnlyVideo
-
-        Switch_SavePositionWhenExit.isChecked = vm.PREFS_SavePositionWhenExit
-
-
-        //播放倍速
-        val currentSpeed: Float = vm.player.playbackParameters.speed
-        val currentSpeedText = view.findViewById<TextView>(R.id.current_speed)
-        currentSpeedText.text = currentSpeed.toString()
-        //定时关闭
-        setShutDownTimeText()
-        val PREFS_ShutDownWhenMediaEnd = PlayerSingleton.getPREFS_ShutDownWhenMediaEnd()
-        Switch_ExitWhenMediaEnd.isChecked = PREFS_ShutDownWhenMediaEnd
-        //循环模式
-        val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
-        fun setLoopModeText(){
-            val currentRepeatMode = PlayerSingleton.getRepeatMode()
-            ButtonLoopMode.text = when (currentRepeatMode) {
-                "ONE" -> "单集循环"
-                "ALL" -> "列表循环"
-                "OFF" -> "播完暂停"
-                else -> "未知"
-            }
+        fun initSwitch(){
+            Switch_BackgroundPlay = view.findViewById(R.id.Switch_BackgroundPlay)
+            Switch_sealOEL = view.findViewById(R.id.Switch_SealOEL)
+            Switch_onlyAudio = view.findViewById(R.id.Switch_OnlyAudio)
+            Switch_onlyVideo = view.findViewById(R.id.Switch_OnlyVideo)
+            Switch_ExitWhenMediaEnd = view.findViewById(R.id.Switch_ExitWhenMediaEnd)
+            Switch_saveLastPosition = view.findViewById(R.id.Switch_SavePositionWhenExit)
         }
-        setLoopModeText()
-        ButtonLoopMode.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            val currentRepeatMode = PlayerSingleton.getRepeatMode()
-            when (currentRepeatMode) {
-                "OFF" -> {
-                    PlayerSingleton.setRepeatMode("ONE")
-                    setLoopModeText()
-                }
-                "ONE" -> {
-                    PlayerSingleton.setRepeatMode("ALL")
-                    setLoopModeText()
-                }
-                "ALL" -> {
-                    PlayerSingleton.setRepeatMode("OFF")
-                    setLoopModeText()
-                }
-                else -> {
-                    PlayerSingleton.setRepeatMode("OFF")
-                    setLoopModeText()
-                }
-            }
+        initSwitch()
+        fun setSwitch_FromViewModel(){
+            Switch_sealOEL.isChecked = vm.PREFS_SealOEL
+            Switch_saveLastPosition.isChecked = vm.PREFS_SavePositionWhenExit
         }
+        fun setSwitch_FromPlayerSingleton(){
+            val PREFS_BackgroundPlay = PlayerSingleton.get_PREFS_BackgroundPlay()
+            Switch_BackgroundPlay.isChecked = PREFS_BackgroundPlay
+            val (state_audioTrackWorking, state_videoTrackWorking) = PlayerSingleton.getState_trackWorkingState()
+            Switch_onlyAudio.isChecked = !state_videoTrackWorking
+            Switch_onlyVideo.isChecked = !state_audioTrackWorking
+            val PREFS_ShutDownWhenMediaEnd = PlayerSingleton.get_PREFS_ShutDownWhenMediaEnd()
+            Switch_ExitWhenMediaEnd.isChecked = PREFS_ShutDownWhenMediaEnd
+            val PREFS_saveLastPosition = PlayerSingleton.get_PREFS_saveLastPosition()
+            Switch_saveLastPosition.isChecked = PREFS_saveLastPosition
+        }
+        setSwitch_FromViewModel()
+        setSwitch_FromPlayerSingleton()
+
+        //文本填写
+        fun initText(){
+            //播放倍速
+            setSpeedText()
+            //定时关闭
+            setShutDownTimeText()
+            //循环模式
+            setLoopModeText()
+        }
+        initText()
+
+
 
         //按钮：退出
         val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
@@ -196,6 +188,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
             } else {
                 ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
             }
+        }
+        //点击顶部区域回顶
+        val TopBarArea = view.findViewById<View>(R.id.TopBarArea)
+        TopBarArea.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            //回到顶部
+            val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+            NestedScrollView.smoothScrollTo(0, 0)
         }
         //截屏
         val ButtonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
@@ -231,25 +231,20 @@ class PlayerFragmentMoreButton: DialogFragment() {
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.MenuAction_0_5 -> {
-                        chooseSpeed(0.5f); true
+                        choosePresetSpeed(0.5f); true
                     }
-
                     R.id.MenuAction_1_0 -> {
-                        chooseSpeed(1.0f); true
+                        choosePresetSpeed(1.0f); true
                     }
-
                     R.id.MenuAction_1_5 -> {
-                        chooseSpeed(1.5f); true
+                        choosePresetSpeed(1.5f); true
                     }
-
                     R.id.MenuAction_2_0 -> {
-                        chooseSpeed(2.0f); true
+                        choosePresetSpeed(2.0f); true
                     }
-
                     R.id.MenuAction_Input -> {
-                        setSpeed(); Dismiss(); true
+                        setSpeedByInput(); true
                     }
-
                     else -> true
                 }
             }
@@ -259,15 +254,13 @@ class PlayerFragmentMoreButton: DialogFragment() {
         Switch_BackgroundPlay.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
 
-            vm.PREFS_BackgroundPlay = isChecked
+            PlayerSingleton.set_PREFS_BackgroundPlay(isChecked)
 
-            val result = bundleOf("KEY" to "BackgroundPlay")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
+            //退出
             customDismiss()
         }
         //开关：关闭方向监听器(OEL：OrientationEventListener)
-        Switch_SealOEL.setOnCheckedChangeListener { _, isChecked ->
+        Switch_sealOEL.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
             vm.PREFS_SealOEL = isChecked
             if (isChecked) {
@@ -278,50 +271,66 @@ class PlayerFragmentMoreButton: DialogFragment() {
             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
             customDismiss()
         }
-        //开关：仅播放音频
-        Switch_OnlyAudio.setOnCheckedChangeListener { _, isChecked ->
+        //开关：仅播放音频：关闭视频轨道
+        Switch_onlyAudio.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
 
-            vm.PREFS_OnlyAudio = isChecked
             if (isChecked) {
-                vm.PREFS_OnlyVideo = false
-                Switch_OnlyVideo.isChecked = false
+                PlayerSingleton.closeVideoTrack()
+            }else{
+                PlayerSingleton.recoverVideoTrack()
             }
 
-            val result = bundleOf("KEY" to "SoundOnly")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
+            //退出
             customDismiss()
         }
-        //开关：仅播放视频
-        Switch_OnlyVideo.setOnCheckedChangeListener { _, isChecked ->
+        //开关：仅播放视频：关闭音频轨道
+        Switch_onlyVideo.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
 
-            vm.PREFS_OnlyVideo = isChecked
             if (isChecked) {
-                vm.PREFS_OnlyAudio = false
-                Switch_OnlyAudio.isChecked = false
+                PlayerSingleton.closeAudioTrack()
+            }else{
+                PlayerSingleton.recoverAudioTrack()
             }
 
-            val result = bundleOf("KEY" to "VideoOnly")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
+            //退出
             customDismiss()
         }
         //开关：保存播放进度
-        Switch_SavePositionWhenExit.setOnCheckedChangeListener { _, isChecked ->
+        Switch_saveLastPosition.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
-            vm.PREFS_SavePositionWhenExit = isChecked
 
-            val result = bundleOf("KEY" to "SavePositionWhenExit")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+            PlayerSingleton.set_PREFS_saveLastPosition(isChecked)
 
             customDismiss()
         }
         //开关：播放结束时关闭
         Switch_ExitWhenMediaEnd.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
-            PlayerSingleton.setPREFS_ShutDownWhenMediaEnd(isChecked)
+            PlayerSingleton.set_PREFS_ShutDownWhenMediaEnd(isChecked)
+        }
+        //循环模式
+        val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
+        ButtonLoopMode.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            val popup = PopupMenu(requireContext(), ButtonLoopMode)
+            popup.menuInflater.inflate(R.menu.activity_player_popup_loop_mode, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.LoopMode_ONE -> {
+                        chooseLoopMode("ONE"); true
+                    }
+                    R.id.LoopMode_ALL -> {
+                        chooseLoopMode("ALL"); true
+                    }
+                    R.id.LoopMode_OFF -> {
+                        chooseLoopMode("OFF"); true
+                    }
+                    else -> true
+                }
+            }
+            popup.show()
         }
         //定时关闭
         val ButtonTimerShutDown = view.findViewById<TextView>(R.id.ButtonTimerShutDown)
@@ -331,35 +340,24 @@ class PlayerFragmentMoreButton: DialogFragment() {
             popup.menuInflater.inflate(R.menu.activity_player_popup_timer_shut_down, popup.menu)
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
-
-                    R.id.MenuAction_1 -> {
-                        chooseCountDownDuration(1); true
-                    }
-
                     R.id.MenuAction_0 -> {
                         chooseCountDownDuration(0); true
                     }
-
                     R.id.MenuAction_15 -> {
                         chooseCountDownDuration(15); true
                     }
-
                     R.id.MenuAction_30 -> {
                         chooseCountDownDuration(30); true
                     }
-
                     R.id.MenuAction_60 -> {
                         chooseCountDownDuration(60); true
                     }
-
                     R.id.MenuAction_90 -> {
                         chooseCountDownDuration(90); true
                     }
-
                     R.id.MenuAction_Input -> {
-                        setShutDownTime(); Dismiss(); true
+                        setShutDownTimeByInput(); true
                     }
-
                     else -> true
                 }
             }
@@ -412,21 +410,12 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 }
             }
             popup.show()
-
         }
         //按钮：提取帧
         val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
         ButtonExtractFrame.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             context?.showCustomToast("暂不开放此功能", Toast.LENGTH_SHORT, 3)
-
-            /*
-            val result = bundleOf("KEY" to "ExtractFrame")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
-            Dismiss()
-
-             */
         }
         //使用传统进度条页面时隐藏滚动条控制卡片
         val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
@@ -720,40 +709,108 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
     //Functions
-    //设置倍速
-    private fun chooseSpeed(speed: Float){
+    //循环模式
+    private fun chooseLoopMode(loopMode: String){
         ToolVibrate().vibrate(requireContext())
+        //设置循环模式
+        PlayerSingleton.setRepeatMode(when (loopMode) {
+            "ONE" -> "ONE"
+            "ALL" -> "ALL"
+            "OFF" -> "OFF"
+            else -> "OFF"
+        })
 
-        vm.PREFS_PlaySpeed = speed
-        vm.player.setPlaybackSpeed(speed)
-        //刷新文字
-        val currentSpeedText = view?.findViewById<TextView>(R.id.current_speed)
-        currentSpeedText?.text = speed.toString()
-        //存表
-        lifecycleScope.launch {
-            val newSetting = MediaItemSetting(MARK_FileName = vm.MediaInfo_FileName, PREFS_PlaySpeed = speed)
-            MediaItemRepo.get(requireContext()).saveSetting(newSetting)
+        //刷新显示文本
+        setLoopModeText()
+        //不主动退出
+    }
+    private fun setLoopModeText(){
+        val currentRepeatMode = PlayerSingleton.getRepeatMode()
+        val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
+        ButtonLoopMode?.text = when (currentRepeatMode) {
+            "ONE" -> "单集循环"
+            "ALL" -> "列表循环"
+            "OFF" -> "播完暂停"
+            else -> "未知模式"
         }
-
-        customDismiss()
     }
-    private fun setSpeed(){
+    //倍速
+    private fun choosePresetSpeed(speed: Float){
+        ToolVibrate().vibrate(requireContext())
+        //设置倍速
+        PlayerSingleton.setPlaySpeed(speed)
 
-        val result = bundleOf("KEY" to "SetSpeed")
-        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
-        Dismiss()
+        //刷新显示文本
+        setSpeedText()
+        //不主动退出
     }
-    //设置自动关闭倒计时
+    private fun setSpeedByInput(){
+        val dialog = Dialog(requireContext())
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.activity_player_dialog_input_value, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description:TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+        //修改提示文本
+        title.text = "自定义倍速"
+        Description.text = "输入您的自定义倍速,最大允许数值为5.0"
+        EditText.hint = ""
+        Button.text = "确定"
+        //设置点击事件
+        val imm = requireContext().getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val userInput = EditText.text.toString()
+            if (userInput.isEmpty()){
+                requireContext().showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
+            }
+            else {
+                val inputValue = userInput.toFloat()
+                if(inputValue > 0.0 && inputValue <= 5.0){
+                    //向播放器发起设置倍速
+                    PlayerSingleton.setPlaySpeed(inputValue)
+
+                    //刷新显示文本
+                    setSpeedText()
+
+                    requireContext().showCustomToast("已将倍速设置为$inputValue", Toast.LENGTH_SHORT, 3)
+                }
+                else {
+                    requireContext().showCustomToast("不允许该值", Toast.LENGTH_SHORT, 3)
+                }
+            }
+            dialog.dismiss()
+        }
+        dialog.show()
+        //自动弹出键盘
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(50)
+            EditText.requestFocus()
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+    private fun setSpeedText(){
+        //获取文本显示位
+        val originalSpeedText = view?.findViewById<TextView>(R.id.current_speed)
+        //获取当前倍速信息
+        val ( currentSpeed, originalSpeed) = PlayerSingleton.getPlaySpeed()
+        //填入文字
+        if (currentSpeed == originalSpeed){
+            originalSpeedText?.text = originalSpeed.toString()
+        }else{
+            originalSpeedText?.text = "$originalSpeed (长按倍速$currentSpeed)"
+        }
+    }
+    //自动关闭倒计时
     @SuppressLint("SetTextI18n")
     private fun chooseCountDownDuration(countDownDuration_Min: Int){
         ToolVibrate().vibrate(requireContext())
-
+        //设置自动关闭倒计时
         PlayerSingleton.setCountDownTimer(countDownDuration_Min)
 
+        //刷新显示文本
         setShutDownTimeText()
-
-        customDismiss()
+        //不主动退出
     }
     @SuppressLint("SetTextI18n")
     private fun setShutDownTimeText(){
@@ -769,11 +826,74 @@ class PlayerFragmentMoreButton: DialogFragment() {
             timerShutDown?.text = "将在${shutDownMoment}关闭"
         }
     } //更改显示文本
-    private fun setShutDownTime(){
+    private fun setShutDownTimeByInput(){
+        val dialog = Dialog(requireContext())
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.activity_player_dialog_input_time, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description:TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditTextHour: EditText = dialogView.findViewById(R.id.dialog_input_hour)
+        val EditTextMinute: EditText = dialogView.findViewById(R.id.dialog_input_minute)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+        //修改提示文本
+        title.text = "自定义：定时关闭时间"
+        Description.text = "请输入您的自定定时关闭时间"
+        EditTextHour.hint = "              "
+        EditTextMinute.hint = "              "
+        Button.text = "确定"
+        //设置点击事件
+        val imm = requireContext().getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val hourInput = EditTextHour.text.toString().toIntOrNull()
+            val minuteInput = EditTextMinute.text.toString().toIntOrNull()
+            var hour: Int
+            var minute: Int
+            //提取小时
+            if (hourInput == null || hourInput == 0 ){
+                hour = 0
+            }else{
+                hour = hourInput
+            }
+            //提取分钟
+            if (minuteInput == null || minuteInput == 0 ){
+                minute = 0
+            }else{
+                minute = minuteInput
+            }
+            //不合规检查
+            if (hourInput == null && minuteInput == null){
+                requireContext().showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            if (hour == 0 && minute == 0){
+                requireContext().showCustomToast("立即关闭", Toast.LENGTH_SHORT, 3)
+                lifecycleScope.launch {
+                    delay(2000)
+                    //关闭播放器
+                    PlayerSingleton.ReleaseSingletonPlayer(requireContext())
+                    //结束进程
+                    val pid = Process.myPid()
+                    Process.killProcess(pid)
+                }
+            }
+            //输入数值合规：转为分钟传入
+            val totalMinutes = hour * 60 + minute
+            //设置自动关闭倒计时
+            PlayerSingleton.setCountDownTimer(totalMinutes)
+            //刷新显示文本
+            setShutDownTimeText()
 
-        val result = bundleOf("KEY" to "setShutDownTime")
-        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
+            //关闭对话框
+            dialog.dismiss()
+        }
+        dialog.show()
+        //自动弹出键盘
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(50)
+            EditTextHour.requestFocus()
+            imm.showSoftInput(EditTextHour, InputMethodManager.SHOW_IMPLICIT)
+        }
     }
     //自定义退出逻辑
     private fun customDismiss(){

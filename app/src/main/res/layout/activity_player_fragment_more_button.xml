@@ -15,6 +15,7 @@
         android:id="@+id/mainCard"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clickable="true"
         app:cardCornerRadius="8dp"
         app:cardBackgroundColor="@color/Background3"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -37,6 +38,7 @@
                 android:outlineAmbientShadowColor="@color/HeadText">
                 <!-- 标题：更多选项 -->
                 <LinearLayout
+                    android:id="@+id/TopBarArea"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:layout_constraintStart_toStartOf="parent"

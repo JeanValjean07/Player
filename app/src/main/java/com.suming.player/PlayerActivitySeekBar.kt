@@ -311,6 +311,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         //连接ViewModel
         val vm = ViewModelProvider(this, PlayerExoFactory.getInstance(application))[PlayerViewModel::class.java]
 
+        /*
         //其他预设
         preCheck()
 
@@ -372,6 +373,8 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             finish()
             return
         }
+
+
 
 
         //读取设置
@@ -550,6 +553,8 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         if (vm.PREFS_EnablePlayAreaMove){
             MoveYaxisCalculate()
         }                      //计算移动高度
+
+
 
         //监听注册
         //方向监听器
@@ -787,6 +792,8 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             val cover = findViewById<LinearLayout>(R.id.cover)
             cover.visibility = View.GONE
         }
+
+
 
 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -1478,20 +1485,33 @@ class PlayerActivitySeekBar: AppCompatActivity(){
 
 
 
+
+
+
+
         //表明页面状态 需要区分页面类型 flag_page_type
         vm.state_playerWithSeekBar = true
         //检查播放器状态
         checkPlayerState(3000)
+
+
         //系统手势监听：返回键重写
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                ExitByOrientation()
+                //ExitByOrientation()
             }
         })
+
+        */
+
+
+
+
     //onCreate END
     }
 
 
+    /*
     //Testing Functions
     //显示播放错误
     private fun showPlayError(){
@@ -3218,6 +3238,10 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             EnsureExit_but_keep_playing()
         }
     }
+
+     */
+      */
+
 
 }
 

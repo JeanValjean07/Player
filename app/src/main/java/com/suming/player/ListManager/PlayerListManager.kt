@@ -59,22 +59,36 @@ object PlayerListManager {
 
 
 
-    /*
+
     //获取下一个或上一个媒体项
-    fun getMediaItemByOrder(flag_prev_or_next: String, current_uri_num: Long): Any {
+    fun getMediaItemByOrder(flag_prev_or_next: String, current_uri_num: Long): Triple<String, Uri, String>    {
 
 
-
+        return Triple("", Uri.EMPTY, "")
     }
+
+
+
 
 
     //查询某个特定uri是否存在于当前播放列表中
     fun getMediaItemByUri(uriNumOnly: Long): Boolean {
-
-
-
+        return when(currentPlayListFlag){
+            0 -> {
+                customList.any { it.uriNumOnly == uriNumOnly }
+            }
+            1 -> {
+                liveVideoList.any { it.uriNumOnly == uriNumOnly }
+            }
+            2 -> {
+                liveMusicList.any { it.uriNumOnly == uriNumOnly }
+            }
+            else -> {
+                false
+            }
+        }
     }
-     */
+
 
 
     //设置当前播放列表 返回值:是否设置成功

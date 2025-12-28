@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -25,6 +26,7 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.media3.common.util.UnstableApi
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.navigation.NavigationView
@@ -112,6 +114,14 @@ class SettingsActivity: AppCompatActivity() {
         ButtonBack.setOnClickListener {
             ToolVibrate().vibrate(this)
             finish()
+        }
+        //点击顶部区域回顶
+        val TopBarArea = findViewById<View>(R.id.TopBarArea)
+        TopBarArea.setOnClickListener {
+            ToolVibrate().vibrate(this)
+            //回到顶部
+            val NestedScrollView = findViewById<NestedScrollView>(R.id.NestedScrollView)
+            NestedScrollView.smoothScrollTo(0, 0)
         }
         //按钮：前往项目Github仓库页
         val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)

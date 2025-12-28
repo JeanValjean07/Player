@@ -16,12 +16,7 @@ interface MediaItemDao {
     @Query("SELECT * FROM MediaItemSetting WHERE MARK_FileName = :path LIMIT 1")
     suspend operator fun get(path: String): MediaItemSetting?
 
-    //快速修改单个位
-    @Query("UPDATE MediaItemSetting SET SavePath_Cover = :newValue")
-    suspend fun removeAllThumbPath(newValue: String)
 
-    @Query("UPDATE MediaItemSetting SET PREFS_Hide = :newValue1 WHERE MARK_FileName = :videoId")
-    suspend fun update_PREFS_HideThisItem(videoId: String,newValue1: Boolean)
 
     @Query("UPDATE MediaItemSetting SET PREFS_AlwaysSeek = :newValue1 WHERE MARK_FileName = :videoId")
     suspend fun update_PREFS_AlwaysSeek(videoId: String,newValue1: Boolean)
@@ -34,15 +29,26 @@ interface MediaItemDao {
 
     @Query("UPDATE MediaItemSetting SET PREFS_VideoOnly = :newValue1 WHERE MARK_FileName = :videoId")
     suspend fun update_PREFS_VideoOnly(videoId: String,newValue1: Boolean)
+    @Query("SELECT PREFS_VideoOnly FROM MediaItemSetting WHERE MARK_FileName = :videoId LIMIT 1")
+    suspend fun get_PREFS_VideoOnly(videoId: String): Boolean
+
 
     @Query("UPDATE MediaItemSetting SET PREFS_SoundOnly = :newValue1 WHERE MARK_FileName = :videoId")
     suspend fun update_PREFS_SoundOnly(videoId: String,newValue1: Boolean)
+    @Query("SELECT PREFS_SoundOnly FROM MediaItemSetting WHERE MARK_FileName = :videoId LIMIT 1")
+    suspend fun get_PREFS_SoundOnly(videoId: String): Boolean
+
 
     @Query("UPDATE MediaItemSetting SET PREFS_SavePositionWhenExit = :newValue WHERE MARK_FileName = :videoId")
-    suspend fun update_PREFS_SavePositionWhenExit(videoId: String,newValue: Boolean)
-
+    suspend fun update_PREFS_saveLastPosition(videoId: String,newValue: Boolean)
+    @Query("SELECT PREFS_SavePositionWhenExit FROM MediaItemSetting WHERE MARK_FileName = :videoId LIMIT 1")
+    suspend fun get_PREFS_saveLastPosition(videoId: String): Boolean
     @Query("UPDATE MediaItemSetting SET SaveState_ExitPosition = :newValue WHERE MARK_FileName = :videoId")
-    suspend fun update_State_PositionWhenExit(videoId: String,newValue: Long)
+    suspend fun update_value_LastPosition(videoId: String,newValue: Long)
+    @Query("SELECT SaveState_ExitPosition FROM MediaItemSetting WHERE MARK_FileName = :videoId LIMIT 1")
+    suspend fun get_value_LastPosition(videoId: String): Long
+
+
 
     @Query("UPDATE MediaItemSetting SET SavePath_Cover = :newValue WHERE MARK_FileName = :videoId")
     suspend fun update_cover_path(videoId: String,newValue: String)

@@ -18,7 +18,7 @@
         app:liftOnScrollColor="@color/HeadBackground"
         android:outlineAmbientShadowColor="@color/HeadText">
         <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar1"
+            android:id="@+id/TopBarArea"
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:background="@android:color/transparent"
@@ -54,7 +54,7 @@
     </com.google.android.material.appbar.AppBarLayout>
     <!-- 滚动区域# -->
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/nestedScrollView"
+        android:id="@+id/NestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">

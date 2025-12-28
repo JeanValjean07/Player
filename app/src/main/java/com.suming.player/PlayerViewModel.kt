@@ -14,59 +14,6 @@ import data.MediaModel.MediaItemForVideo
 @UnstableApi
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
-    //播放器数据连接
-    private val app = application
-
-    val player: ExoPlayer get() = PlayerSingleton.getPlayer(app)
-
-    val trackSelector: DefaultTrackSelector get() = PlayerSingleton.getTrackSelector(app)
-
-    //Functions
-    //设置单链接或媒体项
-    fun setMediaUri(videoUri: Uri) {
-        player.setMediaItem(MediaItem.fromUri(videoUri))
-    }
-    fun setMediaItem(mediaItem: MediaItem) {
-        player.setMediaItem(mediaItem)
-    }
-    //清除现有媒体
-    fun clearMediaItem() {
-        player.clearMediaItems()
-    }
-    //关闭和开启视频轨道
-    fun close_VideoTrack() {
-        trackSelector.parameters = trackSelector
-            .buildUponParameters()
-            .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)
-            .build()
-    }
-    fun recovery_VideoTrack() {
-        trackSelector.parameters = trackSelector
-            .buildUponParameters()
-            .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
-            .build()
-    }
-    //关闭和开启音频轨道
-    fun close_AudioTrack() {
-        trackSelector.parameters = trackSelector
-            .buildUponParameters()
-            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
-            .build()
-    }
-    fun recovery_AudioTrack() {
-        trackSelector.parameters = trackSelector
-            .buildUponParameters()
-            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
-            .build()
-    }
-
-
-
-
-    var mediaItems: List<MediaItemForVideo> = emptyList()
-    var currentMediaIndex = -1
-    var maxMediaIndex = 0
-
 
 
     //屏幕旋转状态
@@ -115,7 +62,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     var controllerHided = false
 
-    var closeVideoTrackJobRunning = false
 
     var statusBarHeight = 0
 
@@ -127,7 +73,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     //设置项
     var PREFS_AlwaysSeek: Boolean = false
-    var PREFS_BackgroundPlay: Boolean = false
     var PREFS_TapJump: Boolean = false
     var PREFS_LinkScroll: Boolean = true
     var PREFS_SealOEL: Boolean = false
@@ -146,17 +91,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_EnablePlayAreaMove: Boolean = false
     var PREFS_UseDataBaseForScrollerSetting: Boolean = false
     var PREFS_UseSyncFrameWhenScrollerStop: Boolean = false
-    var PREFS_OnlyAudio: Boolean = false
-    var PREFS_OnlyVideo: Boolean = false
     var PREFS_SeekHandlerGap: Long = 0
     var PREFS_KeepPlayingWhenExit: Boolean = false
 
 
+
     var state_playerWithSeekBar : Boolean = false
-    //进度条停止时使用关键帧
-
-    var seekToLastPositionExecuted: Boolean = false
-
 
 
     var YaxisDestination = 800f
@@ -186,19 +126,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             MediaInfo_FileName = name
         }
     }
-    //倍速
-    var PREFS_PlaySpeed: Float = 1.0f
-    fun setSpeed(speed: Float){
-        PREFS_PlaySpeed = speed
-        player.setPlaybackSpeed(speed)
+
+
+
+    override fun onCleared() {
+
     }
-
-
-
-    var state_PlayListProcess_Complete: Boolean = false
-
-
-
-
-    override fun onCleared() {  }
 }

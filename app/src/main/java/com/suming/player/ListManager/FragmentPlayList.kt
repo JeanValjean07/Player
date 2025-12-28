@@ -145,8 +145,15 @@ class FragmentPlayList: DialogFragment() {
             ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
         }
         initElement()
+        //文本填写
+        fun initText(){
+            //循环模式
+            setLoopModeText()
+        }
+        initText()
         //加载设置
         loadSettings()
+
 
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
@@ -185,37 +192,25 @@ class FragmentPlayList: DialogFragment() {
         }
         //循环模式
         val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
-        fun setLoopModeText(){
-            val currentRepeatMode = PlayerSingleton.getRepeatMode()
-            ButtonLoopMode.text = when (currentRepeatMode) {
-                "ONE" -> "单集循环"
-                "ALL" -> "列表循环"
-                "OFF" -> "播完暂停"
-                else -> "未知"
-            }
-        }
-        setLoopModeText()
         ButtonLoopMode.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            val currentRepeatMode = PlayerSingleton.getRepeatMode()
-            when (currentRepeatMode) {
-                "OFF" -> {
-                    PlayerSingleton.setRepeatMode("ONE")
-                    setLoopModeText()
-                }
-                "ONE" -> {
-                    PlayerSingleton.setRepeatMode("ALL")
-                    setLoopModeText()
-                }
-                "ALL" -> {
-                    PlayerSingleton.setRepeatMode("OFF")
-                    setLoopModeText()
-                }
-                else -> {
-                    PlayerSingleton.setRepeatMode("OFF")
-                    setLoopModeText()
+            val popup = PopupMenu(requireContext(), ButtonLoopMode)
+            popup.menuInflater.inflate(R.menu.activity_player_popup_loop_mode, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.LoopMode_ONE -> {
+                        chooseLoopMode("ONE"); true
+                    }
+                    R.id.LoopMode_ALL -> {
+                        chooseLoopMode("ALL"); true
+                    }
+                    R.id.LoopMode_OFF -> {
+                        chooseLoopMode("OFF"); true
+                    }
+                    else -> true
                 }
             }
+            popup.show()
         }
         //按钮：停止播放
         val ButtonStopPlaying = view.findViewById<ImageButton>(R.id.ButtonStopPlaying)
@@ -562,6 +557,31 @@ class FragmentPlayList: DialogFragment() {
         //上一次显式的页签
         state_LastPage = PREFS_List.getInt("state_LastPage", 0)
         vm.state_LastPage = state_LastPage
+    }
+    //循环模式
+    private fun chooseLoopMode(loopMode: String){
+        ToolVibrate().vibrate(requireContext())
+        //设置循环模式
+        PlayerSingleton.setRepeatMode(when (loopMode) {
+            "ONE" -> "ONE"
+            "ALL" -> "ALL"
+            "OFF" -> "OFF"
+            else -> "OFF"
+        })
+
+        //刷新显示文本
+        setLoopModeText()
+        //不主动退出
+    }
+    private fun setLoopModeText(){
+        val currentRepeatMode = PlayerSingleton.getRepeatMode()
+        val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
+        ButtonLoopMode?.text = when (currentRepeatMode) {
+            "ONE" -> "单集循环"
+            "ALL" -> "列表循环"
+            "OFF" -> "播完暂停"
+            else -> "未知模式"
+        }
     }
     //自定义退出逻辑
     private var lockPage = false

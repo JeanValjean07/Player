@@ -1,6 +1,7 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -29,10 +30,11 @@ import android.widget.Toast
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.C
 import androidx.media3.common.C.WAKE_MODE_NETWORK
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -49,14 +51,17 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import data.DataBaseMediaItem.MediaItemRepo
 import data.DataBaseMediaStore.MediaStoreRepo
 import data.MediaModel.MediaItemForVideo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
-import java.time.format.DateTimeFormatter
 import kotlin.system.exitProcess
 
 @SuppressLint("StaticFieldLeak")
@@ -131,14 +136,7 @@ object PlayerSingleton {
         @SuppressLint("SwitchIntDef")
         override fun onPlaybackStateChanged(state: Int) {
             when (state) {
-                Player.STATE_READY -> {
-                     if (state_onPlayError_NeedSeekToLastPosition){
-                         state_onPlayError_NeedSeekToLastPosition = false
-                         if (state_onPlayError_ErrorDuration != -1L){
-                            player.seekTo(state_onPlayError_ErrorDuration!!)
-                         }
-                     }
-                }
+                Player.STATE_READY -> { playerReady() }
                 Player.STATE_ENDED -> {
                     playEnd()
                 }
@@ -246,6 +244,8 @@ object PlayerSingleton {
         getRepeatMode()
         //注册事件总线
         registerEventBus(singletonContext)
+        //读取单个媒体播放设置
+        loadPlayParametersFromRoom()
         //读取媒体列表
         getMediaListFromDataBase(singletonContext)
         //更新当前媒体index
@@ -566,7 +566,13 @@ object PlayerSingleton {
     //通用:设置媒体项
     private fun setNewMediaItem(itemUri: Uri, playWhenReady: Boolean){
         //Log.d("SuMing", "单例 setNewMediaItem: $itemUri  $playWhenReady")
-        //先更新单例环境媒体信息
+        //先保存上一个媒体的需要保存的信息
+        savePositionToRoom()
+
+
+        state_currentMediaReady = false
+
+        //更新单例环境媒体信息
         val originMediaType = MediaInfo_MediaType
         getMediaInfo(singletonContext, itemUri)
         if (originMediaType != MediaInfo_MediaType){
@@ -576,7 +582,6 @@ object PlayerSingleton {
             BuildPlayer(singletonContext)
             addPlayerStateListener()
         }
-
 
         //设置播放状态
         _player?.playWhenReady = playWhenReady
@@ -680,24 +685,9 @@ object PlayerSingleton {
             PREFS.edit{ putString("PREFS_RepeatMode", singleton_repeat_mode).apply() }
         }
     }
-    private fun getShutDownWhenMediaEndFromPreference(context: Context){
-        PREFS = context.getSharedPreferences("PREFS", MODE_PRIVATE)
-        if (PREFS.contains("PREFS_ShutDownWhenMediaEnd")){
-            PREFS_ShutDownWhenMediaEnd = PREFS.getBoolean("PREFS_ShutDownWhenMediaEnd", false)
-        }else{
-            PREFS_ShutDownWhenMediaEnd = false
-            PREFS.edit{ putBoolean("PREFS_ShutDownWhenMediaEnd", PREFS_ShutDownWhenMediaEnd).apply() }
-        }
-        state_autoShutDown_PrefsReaded = true
-    }
 
-    //初始化上下文
-    lateinit var singletonContext: Context
-    private var state_ContextSet = false
-    fun setContext(ctx: Context) {
-        singletonContext = ctx.applicationContext
-        state_ContextSet = true
-    }
+
+
     //音频设备监听
     private lateinit var audioManager: AudioManager
     private val DeviceCallback = object : AudioDeviceCallback() {
@@ -733,9 +723,7 @@ object PlayerSingleton {
         state_AudioManager_Initialized = true
     }
     fun startAudioDeviceCallback(context: Context){
-        if (!state_AudioManager_Initialized){
-            initAudioManager(context)
-        }
+        if (!state_AudioManager_Initialized){ initAudioManager(context) }
         if (state_DeviceCallback_Registered) return
         state_DeviceCallback_Registered = true
         audioManager.registerAudioDeviceCallback(DeviceCallback, null)
@@ -787,6 +775,7 @@ object PlayerSingleton {
         if (!state_AudioManager_Initialized){
             initAudioManager(context)
         }
+        if (_player?.isPlaying == false) return
         audioManager.requestAudioFocus(focusRequest)
     }
     fun releaseAudioFocus(context: Context){
@@ -798,8 +787,9 @@ object PlayerSingleton {
         }
         audioManager.abandonAudioFocusRequest(focusRequest)
     }
+
+
     //事件总线
-    //RxJava事件总线
     private var state_EventBus_Registered = false
     fun registerEventBus(context: Context){
         if (state_EventBus_Registered) return
@@ -959,6 +949,13 @@ object PlayerSingleton {
             _player?.seekTo(0)
         }
         playState_wasPlaying = true
+
+        //保险：重置音量
+        if (!PREFS_onlyVideoTrack) _player?.volume = 1f
+        //保险：重置倍速
+        player.setPlaybackSpeed(value_originalPlaySpeed)
+
+        //开始播放
         _player?.play()
     }
     fun pausePlayer() {
@@ -1025,6 +1022,7 @@ object PlayerSingleton {
     }
     //销毁播放器并关闭媒体会话和服务
     fun ReleaseSingletonPlayer(context: Context){
+        savePositionToRoom()
         state_PlayerStateListenerAdded = false
         stopMediaSession(context)
         releasePlayer()
@@ -1071,10 +1069,6 @@ object PlayerSingleton {
         autoShutDown_Timer?.cancel()
     }
     private fun startTimerShutDown(countDownDuration_Ms: Int){
-        if (!state_autoShutDown_PrefsReaded){
-            getShutDownWhenMediaEndFromPreference(singletonContext)
-        }
-
         autoShutDown_Timer?.cancel()
         autoShutDown_Timer = object : CountDownTimer(countDownDuration_Ms.toLong(), 1000000L) {
             override fun onTick( millisUntilFinished: Long) {}
@@ -1119,18 +1113,278 @@ object PlayerSingleton {
     fun getShutDownMoment(): String{
         return shutDownMoment
     }
-    fun getPREFS_ShutDownWhenMediaEnd(): Boolean{
-        if (!state_autoShutDown_PrefsReaded){
-            getShutDownWhenMediaEndFromPreference(singletonContext)
-        }
+    fun get_PREFS_ShutDownWhenMediaEnd(): Boolean{
         return PREFS_ShutDownWhenMediaEnd
     }
-    fun setPREFS_ShutDownWhenMediaEnd(isChecked: Boolean){
+    fun set_PREFS_ShutDownWhenMediaEnd(isChecked: Boolean){
         PREFS_ShutDownWhenMediaEnd = isChecked
         state_autoShutDown_PrefsReaded = true
         PREFS.edit{ putBoolean("PREFS_ShutDownWhenMediaEnd", isChecked) }
     }
 
+
+    //重置播放参数
+    private fun resetPlayParameters(){
+        //确保播放倍速为1.0f
+        setPlaySpeed(1.0f)
+        //确保视频和音频都在播放
+        if (!state_videoTrackWorking){ recoverVideoTrack() }
+        if (!state_audioTrackWorking){ recoverAudioTrack() }
+    }
+    //播放参数一次性读取:只播音频/只播视频/上次进度等
+    private var state_NeedSeekToLastPosition = false
+    private var value_lastPosition = 0L
+    private fun loadPlayParametersFromRoom(){
+        //读取视频和音频轨道状态
+        coroutineScope_saveRoom.launch {
+            PREFS_onlyVideoTrack = MediaItemRepo.get(singletonContext).get_PREFS_VideoOnly(MediaInfo_FileName)
+            PREFS_onlyAudioTrack = MediaItemRepo.get(singletonContext).get_PREFS_SoundOnly(MediaInfo_FileName)
+            PREFS_saveLastPosition = MediaItemRepo.get(singletonContext).get_PREFS_saveLastPosition(MediaInfo_FileName)
+
+
+            //根据状态设置播放参数
+            if (PREFS_saveLastPosition){
+                value_lastPosition = MediaItemRepo.get(singletonContext).get_value_LastPosition(MediaInfo_FileName)
+                if (value_lastPosition >= 10_000L){
+                    withContext(Dispatchers.Main){
+                        if (state_currentMediaReady){
+                            _player?.seekTo(value_lastPosition)
+                            state_NeedSeekToLastPosition = false
+                        }else{
+                            state_NeedSeekToLastPosition = true
+                        }
+                    }
+                }
+            }
+            if (PREFS_onlyVideoTrack){ closeVideoTrack() }
+            if (PREFS_onlyAudioTrack){ closeAudioTrack() }
+
+
+        }
+    }
+    //关闭和开启视频轨道
+    private var coroutineScope_saveRoom = CoroutineScope(Dispatchers.IO)
+    private var PREFS_onlyVideoTrack = false
+    private var PREFS_onlyAudioTrack = false
+    private var state_videoTrackWorking = true
+    private var state_audioTrackWorking = true
+    private fun saveTrackStateToRoom(type: String, flag: Boolean){
+        when(type){
+            "video" -> {
+                coroutineScope_saveRoom.launch {
+                    MediaItemRepo.get(singletonContext).update_PREFS_VideoOnly(MediaInfo_FileName,flag)
+                }
+            }
+            "audio" -> {
+                coroutineScope_saveRoom.launch {
+                    MediaItemRepo.get(singletonContext).update_PREFS_SoundOnly(MediaInfo_FileName,flag)
+                }
+            }
+        }
+
+    }
+    fun closeVideoTrack() {
+        if (!state_videoTrackWorking) return
+        _trackSelector?.parameters = _trackSelector!!
+            .buildUponParameters()
+            .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)
+            .build()
+        state_videoTrackWorking = false
+        //关闭视频时确保音频在播放
+        if (!state_audioTrackWorking){ recoverAudioTrack() }
+        //设置保存到数据库
+        saveTrackStateToRoom("video", true)
+    }
+    fun recoverVideoTrack() {
+        if (state_videoTrackWorking) return
+        _trackSelector?.parameters = _trackSelector!!
+            .buildUponParameters()
+            .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
+            .build()
+        state_videoTrackWorking = true
+        //设置保存到数据库
+        saveTrackStateToRoom("video", false)
+    }
+    fun getState_isVideoTrackWorking(): Boolean{
+        return state_videoTrackWorking
+    }
+    fun getState_trackWorkingState(): Pair<Boolean, Boolean>{
+        return Pair(state_audioTrackWorking, state_videoTrackWorking)
+    }
+    //关闭和开启音频轨道
+    fun closeAudioTrack() {
+        if (!state_audioTrackWorking) return
+        _trackSelector?.parameters = _trackSelector!!
+            .buildUponParameters()
+            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+            .build()
+        state_audioTrackWorking = false
+        //关闭音频时确保视频在播放
+        if (!state_videoTrackWorking){ recoverVideoTrack() }
+        //设置保存到数据库
+        saveTrackStateToRoom("audio", true)
+    }
+    fun recoverAudioTrack() {
+        if (state_audioTrackWorking) return
+        _trackSelector?.parameters = _trackSelector!!
+            .buildUponParameters()
+            .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
+            .build()
+        state_audioTrackWorking = true
+        //设置保存到数据库
+        saveTrackStateToRoom("audio", false)
+    }
+    fun getState_isAudioTrackWorking(): Boolean{
+        return state_audioTrackWorking
+    }
+    //倍速管理
+    private var value_originalPlaySpeed = 1.0f  //设定的倍速,避免返回长按快进倍速
+    fun setPlaySpeed(speed: Float){
+        player.setPlaybackSpeed(speed)
+        value_originalPlaySpeed = speed
+    }
+    fun setPlaySpeedByLongPress(speed: Float){
+        player.setPlaybackSpeed(speed)
+    }
+    fun getPlaySpeed(): Pair<Float, Float>{
+        return Pair(player.playbackParameters.speed, value_originalPlaySpeed)
+    }
+    //保存播放进度
+    private var PREFS_saveLastPosition = false
+    private fun savePositionToRoom(){
+        if (!PREFS_saveLastPosition) return
+        val currentPosition = _player?.currentPosition
+        if (currentPosition == 0L) return
+        Log.d("SuMing", "savePositionToRoom: value_lastPosition = $currentPosition ${MediaInfo_FileName}")
+        coroutineScope_saveRoom.launch {
+            MediaItemRepo.get(singletonContext).update_value_LastPosition(MediaInfo_FileName, currentPosition?:114514L)
+        }
+    }
+    fun get_PREFS_saveLastPosition(): Boolean{
+        return PREFS_saveLastPosition
+    }
+    fun set_PREFS_saveLastPosition(flag: Boolean){
+        PREFS_saveLastPosition = flag
+        coroutineScope_saveRoom.launch {
+            MediaItemRepo.get(singletonContext).update_PREFS_saveLastPosition(MediaInfo_FileName, flag)
+        }
+    }
+    //后台播放设置：loadSettings()
+    private var PREFS_BackgroundPlay = false
+    private var PREFS_closeVideoTrackOnBackground = false
+    fun set_PREFS_BackgroundPlay(flag: Boolean){
+        PREFS_BackgroundPlay = flag
+        PREFS.edit { putBoolean("PREFS_BackgroundPlay", flag) }
+    }
+    fun get_PREFS_BackgroundPlay(): Boolean{
+        return PREFS_BackgroundPlay
+    }
+
+    private var state_currentMediaReady = false
+    private fun playerReady(){
+        state_currentMediaReady = true
+        if (state_onPlayError_NeedSeekToLastPosition){
+            state_onPlayError_NeedSeekToLastPosition = false
+            if (state_onPlayError_ErrorDuration != -1L){
+                player.seekTo(state_onPlayError_ErrorDuration!!)
+            }
+        }
+        if (state_NeedSeekToLastPosition){
+            Log.d("SuMing", "playerReady: seekTo value_lastPosition = $value_lastPosition")
+            state_NeedSeekToLastPosition = false
+            player.seekTo(value_lastPosition)
+        }
+
+    }
+
+    //启动播放器单例 + 存入上下文引用
+    lateinit var singletonContext: Context
+    private var state_ContextSet = false
+    private fun setContext(ctx: Context) {
+        singletonContext = ctx.applicationContext
+        state_ContextSet = true
+    }
+    private fun loadSettings(){
+        PREFS = singletonContext.getSharedPreferences("PREFS", MODE_PRIVATE)
+        if (PREFS.contains("PREFS_BackgroundPlay")) {
+            PREFS_BackgroundPlay = PREFS.getBoolean("PREFS_BackgroundPlay", false)
+        } else {
+            PREFS.edit { putBoolean("PREFS_BackgroundPlay", false) }
+        }
+        if (PREFS.contains("PREFS_closeVideoTrackOnBackground")) {
+            PREFS_closeVideoTrackOnBackground = PREFS.getBoolean("PREFS_closeVideoTrackOnBackground", false)
+        } else {
+            PREFS.edit { putBoolean("PREFS_closeVideoTrackOnBackground", false) }
+        }
+        if (PREFS.contains("PREFS_ShutDownWhenMediaEnd")){
+            PREFS_ShutDownWhenMediaEnd = PREFS.getBoolean("PREFS_ShutDownWhenMediaEnd", false)
+        }else{
+            PREFS_ShutDownWhenMediaEnd = false
+            PREFS.edit{ putBoolean("PREFS_ShutDownWhenMediaEnd", PREFS_ShutDownWhenMediaEnd).apply() }
+        }
+
+    }
+    fun startPlayerSingleton(app: Application){
+        //设置上下文
+        setContext(app)
+        //启动事件总线
+        registerEventBus(app)
+        //启动音频设备监听器
+        startAudioDeviceCallback(app)
+        //启动音频焦点监听器：未实际播放时，不申请焦点
+        requestAudioFocus(app)
+
+
+    }
+    fun settingsUpdate(){
+        loadSettings()
+    }
+    //全局onResume/onStop信息收集
+    fun ActivityOnResume(){
+        stopBackgroundPlay()
+    }
+    fun ActivityOnStop(){
+        startBackgroundPlay()
+    }
+    //开始/结束后台播放
+    private fun startBackgroundPlay(){
+        //开启后台播放
+        if (PREFS_BackgroundPlay){
+            if (PREFS_closeVideoTrackOnBackground){
+                closeVideoTrackJob()
+                state_closeVideoTrackJob_Running = true
+            }
+        }
+        //关闭后台播放
+        else{
+            pausePlayer()
+        }
+    }
+    private fun stopBackgroundPlay(){
+        //开启后台播放
+        if (PREFS_BackgroundPlay){
+            if (PREFS_closeVideoTrackOnBackground){
+                closeVideoTrackJob?.cancel()
+                recoverVideoTrack()
+            }
+        }
+        //关闭后台播放
+        else{
+            playPlayer()
+        }
+    }
+    //关闭视频轨道倒计时
+    private var coroutineScope_closeVideoTrackJob: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var state_closeVideoTrackJob_Running = false
+    private var closeVideoTrackJob: Job? = null
+    private fun closeVideoTrackJob() {
+        closeVideoTrackJob?.cancel()
+        closeVideoTrackJob = coroutineScope_closeVideoTrackJob.launch {
+            delay(60_000)
+            closeVideoTrack()
+            state_closeVideoTrackJob_Running = false
+        }
+    }
 
     //获取播放器实例
     fun getPlayer(app: Application): ExoPlayer = _player ?: synchronized(this) {
