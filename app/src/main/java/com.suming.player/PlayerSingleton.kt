@@ -173,6 +173,7 @@ object PlayerSingleton {
         if (state_PlayerStateListenerAdded){
             return
         }
+        player.removeListener(PlayerStateListener)
         player.addListener(PlayerStateListener)
         state_PlayerStateListenerAdded = true
     }
@@ -181,10 +182,39 @@ object PlayerSingleton {
         state_PlayerStateListenerAdded = false
     }
     //快速创建播放器并包含后续必要操作
-    private fun BuildPlayer(context: Context){
+    fun startSingletonExoPlayer(context: Context){
+        //确保播放器在线
         getPlayer(context as Application)
         //添加监听器
         addPlayerStateListener()
+    }
+
+    //播放器错误处理
+    private fun escapePlayerError(){
+        //缓存原本的媒体uri
+        val currentMediaUri = MediaInfo_MediaUri
+        Log.d("SuMing","currentMediaUri:${currentMediaUri}")
+        //清除
+        _player?.clearMediaItems()
+        //重新设置媒体
+        _player?.playWhenReady = true
+        //合成并设置媒体项
+        val mediaItem = MediaItem.Builder()
+            .setUri(MediaInfo_MediaUri)
+            .setMediaId(MediaInfo_MediaUriString)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(MediaInfo_FileName)
+                    .setArtist(MediaInfo_MediaArtist)
+                    .build()
+            )
+            .build()
+        _player?.setMediaItem(mediaItem)
+
+
+        _player?.prepare()
+
+
     }
 
 
@@ -274,7 +304,7 @@ object PlayerSingleton {
         MediaInfo_MediaUriString = ""
         MediaInfo_MediaUri = Uri.EMPTY
         //写入配置
-        saveLastMediaItemInfo(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist, MediaInfo_MediaUriString)
+        saveToLastMediaRecord()
     }
 
 
@@ -286,18 +316,20 @@ object PlayerSingleton {
         saveLastMediaStuff()
         //重置播放参数
         resetPlayParameters()
-
-        //开始更换新媒体信息
+        //检查媒体类型
         val originMediaType = MediaInfo_MediaType
         getMediaInfo(singletonContext, itemUri)
         if (originMediaType != MediaInfo_MediaType){
             //先销毁原本的播放器
             ReleaseSingletonPlayer(singletonContext)
             //重建播放器并添加监听器
-            BuildPlayer(singletonContext)
+            startSingletonExoPlayer(singletonContext)
             addPlayerStateListener()
         }
 
+
+        //刷新媒体信息
+        getMediaInfo(singletonContext, itemUri)
         //设置播放状态
         _player?.playWhenReady = playWhenReady
         //合成并设置媒体项
@@ -363,15 +395,23 @@ object PlayerSingleton {
 
     }
 
-
+    //保存上个媒体的需保存内容
     private fun saveLastMediaStuff(){
         //保存播放进度
         savePositionToRoom()
 
     }
-
-
-    //媒体项变更的后续操作
+    //写入上次播放记录
+    private fun saveToLastMediaRecord(){
+        val INFO_PlayerSingleton = singletonContext.getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
+        INFO_PlayerSingleton.edit {
+            putString("MediaInfo_MediaType", MediaInfo_MediaType)
+            putString("MediaInfo_FileName", MediaInfo_FileName)
+            putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist)
+            putString("MediaInfo_MediaUriString", MediaInfo_MediaUriString)
+        }
+    }  //播放信息保存到上次播放记录
+    //写入服务用配置
     private fun setServiceSetting(){
         val INFO_PlayerSingleton = singletonContext.getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
         INFO_PlayerSingleton.edit{ putInt("state_PlayerType", 1 ).apply() }
@@ -380,43 +420,29 @@ object PlayerSingleton {
         INFO_PlayerSingleton.edit{ putString("MediaInfo_FileName", MediaInfo_FileName).apply() }
         INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist).apply() }
     }
-    private fun saveLastMediaItemInfo(type: String, fileName: String, artist: String, uri: String){
-        //Log.d("SuMing", "单例 saveLastMediaItemInfo : $type, $fileName, $artist, $uri")
-        val INFO_PlayerSingleton = singletonContext.getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
-        INFO_PlayerSingleton.edit {
-            putString("MediaInfo_MediaType", type)
-            putString("MediaInfo_FileName", fileName)
-            putString("MediaInfo_MediaArtist", artist)
-            putString("MediaInfo_MediaUriString", uri)
-        }
-    }  //播放信息保存到上次播放记录
+
+    //媒体项变更的后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?){
-        //Log.d("SuMing", "单例 onMediaItemChanged : $mediaItem")
         if (mediaItem == null){ return }
-        //播放信息保存到上次播放记录
-        saveLastMediaItemInfo(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist, MediaInfo_MediaUriString)
         //写入服务信息
         setServiceSetting()
-        //通告主界面
-        ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
-
-        //注册事件总线
-        registerEventBus(singletonContext)
+        //播放信息保存到上次播放记录
+        saveToLastMediaRecord()
         //读取单个媒体播放设置
         loadPlayParametersFromRoom()
-        //读取媒体列表
-        getMediaListFromDataBase(singletonContext)
-        //更新当前媒体index
-        updateMediaIndex(MediaInfo_MediaUriString)
+        //通告主界面
+        ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
         //链接媒体会话
         Handler(Looper.getMainLooper()).postDelayed({
             connectToMediaSession(singletonContext)
         }, 1000)
-        //请求音频焦点和注册设备监听
+        //请求音频焦点
         requestAudioFocus(singletonContext)
-        startAudioDeviceCallback(singletonContext)
 
     }
+
+
+
 
     //播放列表
     private val coroutineScope_getPlayList = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -663,34 +689,12 @@ object PlayerSingleton {
         setNewMediaItem(targetUri, true)
 
     }
-
-    //
-    private fun escapePlayerError(){
-        //缓存原本的媒体uri
-        val currentMediaUri = MediaInfo_MediaUri
-        Log.d("SuMing","currentMediaUri:${currentMediaUri}")
-        //清除
-        _player?.clearMediaItems()
-        //重新设置媒体
-        _player?.playWhenReady = true
-        //合成并设置媒体项
-        val mediaItem = MediaItem.Builder()
-            .setUri(MediaInfo_MediaUri)
-            .setMediaId(MediaInfo_MediaUriString)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(MediaInfo_FileName)
-                    .setArtist(MediaInfo_MediaArtist)
-                    .build()
-            )
-            .build()
-        _player?.setMediaItem(mediaItem)
+    //读取媒体列表
+    //getMediaListFromDataBase(singletonContext)
+    //更新当前媒体index
+    //updateMediaIndex(MediaInfo_MediaUriString)
 
 
-        _player?.prepare()
-
-
-    }
 
 
 
@@ -1268,7 +1272,7 @@ object PlayerSingleton {
         registerEventBus(app)
         //启动音频设备监听器
         startAudioDeviceCallback(app)
-        //启动音频焦点监听器：未实际播放时，不申请焦点
+        //请求音频焦点
         requestAudioFocus(app)
         //读取设置
         loadSettings()
@@ -1303,9 +1307,9 @@ object PlayerSingleton {
     }
     private fun stopBackgroundPlay(){
         //开启后台播放
+        closeVideoTrackJob?.cancel()
         if (PREFS_BackgroundPlay){
-            if (PREFS_closeVideoTrackOnBackground){
-                closeVideoTrackJob?.cancel()
+            if (!state_videoTrackWorking){
                 recoverVideoTrack()
             }
         }

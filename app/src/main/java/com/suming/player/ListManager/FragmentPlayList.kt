@@ -71,6 +71,7 @@ class FragmentPlayList: DialogFragment() {
 
 
 
+
     override fun onStart() {
         super.onStart()
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
@@ -120,13 +121,6 @@ class FragmentPlayList: DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
-        //检查播放列表是否加载完成
-        val isMediaListProcessComplete = PlayerSingleton.isMediaListProcessComplete()
-        if (!isMediaListProcessComplete){
-            requireContext().showCustomToast("播放列表未加载完成", Toast.LENGTH_SHORT, 3)
-            Dismiss()
-            return
-        }
         //读取设置
         PREFS_List = requireContext().getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
     }
@@ -377,11 +371,16 @@ class FragmentPlayList: DialogFragment() {
         override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {  }
         override fun onPageScrollStateChanged(state: Int) {  }
     }
+    private var state_viewPagerListener_started = false
     private fun startViewPagerListener(){
+        if (state_viewPagerListener_started){ return }
         ViewPager.registerOnPageChangeCallback(ViewPagerListener)
+        state_viewPagerListener_started = true
     }
     private fun stopViewPagerListener(){
+        if (!state_viewPagerListener_started){ return }
         ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
+        state_viewPagerListener_started = false
     }
     //页签更新：位置 + 颜色d
     private fun scrolledToPage(position: Int){
@@ -530,7 +529,7 @@ class FragmentPlayList: DialogFragment() {
             PlayerSingleton.playPlayer()
             requireContext().showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
         }else{
-            //PlayerSingleton.setMediaItem(uriString.toUri(), true)
+            PlayerSingleton.setMediaItem(uriString.toUri(), true)
             customDismiss()
         }
     }
@@ -594,7 +593,6 @@ class FragmentPlayList: DialogFragment() {
         if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
 
         stopViewPagerListener()
-
 
         val result = bundleOf("KEY" to "Dismiss")
         setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)

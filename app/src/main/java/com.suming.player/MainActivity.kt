@@ -435,7 +435,6 @@ class MainActivity: AppCompatActivity() {
     //onResume时更新一些设置变量
     override fun onResume() {
         super.onResume()
-        //Log.d("SuMing", "onResume")
         //注册事件总线监听器
         setupEventBus()
         //刷新状态和设置
@@ -446,7 +445,9 @@ class MainActivity: AppCompatActivity() {
         //判断首次启动
         if (state_onFirstStart){
             state_onFirstStart = false
-            checkLastPlayingMedia()
+            Handler(Looper.getMainLooper()).postDelayed({
+                checkLastPlayingMedia()
+            }, 1000)
         }
         else{ ResetPlayingCard() }
 
@@ -457,19 +458,14 @@ class MainActivity: AppCompatActivity() {
         outState.putString("state_currentPage", state_currentPage)
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onStop() {
+        super.onStop()
         //关闭事件总线监听器
         disposeEventBus()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        //关闭单例监听器
-        PlayerSingleton.releaseAudioFocus(application)
-        PlayerSingleton.stopAudioDeviceCallback(application)
-        //关闭事件总线监听器
-        disposeEventBus()
 
     }
 
@@ -528,22 +524,17 @@ class MainActivity: AppCompatActivity() {
     }  //!主链路入口
     //onCreate:每次启动检查上次在播放的媒体
     private fun checkLastPlayingMedia(){
-        //从键值表读取信息
-        val (_, MediaInfo_FileName, MediaInfo_MediaArtist) = getLastMediaItemInfo()
-        val MediaInfo_MediaUriString = getLastMediaItemUriString()
-        if (MediaInfo_MediaUriString == ""){
-            //Log.d("SuMing", "checkLastPlayingMedia : MediaInfo_MediaUriString == \"\"")
+        val MediaInfo_MediaUri = getLastMediaRecordUri()
+        if (MediaInfo_MediaUri == Uri.EMPTY){
             closePlayingCard()
             return
-        }
-        //保险:检查是否有正在播放的媒体
-        val isNowPlying = checkPlayingItem()
-        if (isNowPlying){
-            ResetPlayingCard()
-            //Log.d("SuMing", "checkLastPlayingMedia : ResetPlayingCard()")
         }else{
-            setNewMediaItem(MediaInfo_MediaUriString, MediaInfo_FileName, MediaInfo_MediaArtist, false)
-            //Log.d("SuMing", "checkLastPlayingMedia : setNewMediaItem $MediaInfo_MediaUriString, $MediaInfo_FileName, $MediaInfo_MediaArtist")
+            val isNowPlying = checkPlayingItem()
+            if (isNowPlying){
+                ResetPlayingCard()
+            }else{
+                setNewMediaItem(MediaInfo_MediaUri, false)
+            }
         }
 
 
@@ -685,26 +676,20 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_Video = findViewById(R.id.PlayingCard_Video)
         state_PlayingCard_inited = true
     }
-    //读取上次播放信息
-    private fun getLastMediaItemInfo(): Triple<String, String, String>{
-        val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
-        val MediaInfo_MediaType = INFO_PlayerSingleton.getString("MediaInfo_MediaType", "error") ?: "error"
-        val MediaInfo_FileName = INFO_PlayerSingleton.getString("MediaInfo_FileName", "error") ?: "error"
-        val MediaInfo_MediaArtist = INFO_PlayerSingleton.getString("MediaInfo_MediaArtist", "error") ?: "error"
-        return Triple(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
-    }
-    private fun getLastMediaItemUriString(): String {
+    //读取上次播放记录
+    private fun getLastMediaRecordUri(): Uri{
         val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
         val MediaInfo_MediaUriString = INFO_PlayerSingleton.getString("MediaInfo_MediaUriString", "error") ?: "error"
-        //Log.d("SuMing", "getLastMediaItemUriString : $MediaInfo_MediaUriString")
-        return MediaInfo_MediaUriString
+        return MediaInfo_MediaUriString.toUri()
     }
     //设置新媒体项
-    private fun setNewMediaItem(MediaInfo_MediaUriString: String, MediaInfo_FileName: String, MediaInfo_MediaArtist: String, playWhenReady: Boolean){
+    private fun setNewMediaItem(MediaInfo_MediaUri: Uri, playWhenReady: Boolean){
         PlayerSingleton.getPlayer(application)
         PlayerSingleton.addPlayerStateListener()
-        //设置媒体项
-
+        //启动播放器
+        PlayerSingleton.startSingletonExoPlayer(application)
+        //确认设置新媒体项
+        PlayerSingleton.setMediaItem(MediaInfo_MediaUri, playWhenReady)
 
     }
     //保存上次播放的项信息
@@ -729,7 +714,7 @@ class MainActivity: AppCompatActivity() {
             return
         }
         //设置新播放项
-        setNewMediaItem(newUri.toString(), filename, "未知艺术家", true)
+        setNewMediaItem(newUri, true)
 
     }
     //停止视频播放区域

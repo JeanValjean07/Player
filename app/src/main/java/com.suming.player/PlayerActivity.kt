@@ -30,6 +30,7 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -66,6 +67,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.core.content.edit
 import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -582,11 +584,10 @@ class PlayerActivity: AppCompatActivity(){
         registerEventBus()
 
 
-
         //传入视频链接
-        if(savedInstanceState == null){ startPlayNewItem(MediaInfo_MediaUri) }
-        //此分支通常来自于切换深色模式,开关小窗导致的重启
-        else {
+        if(savedInstanceState == null){
+            startPlayNewItem(MediaInfo_MediaUri)
+        }else{
             //状态置位
             playerReadyFrom_FirstEntry = true
             state_EnterAnimationCompleted = true
@@ -1427,14 +1428,19 @@ class PlayerActivity: AppCompatActivity(){
         }
     }
     private var state_PlayerListenerAdded: Boolean = false
+    //启动ExoPlayer
     private fun startExoPlayer(){
-        //确保播放器已在线
-        PlayerSingleton.getPlayer(application)
+        //确保单例端播放器已启动
+        PlayerSingleton.startSingletonExoPlayer(application)
         //添加播放器事件监听
+        startExoPlayerListener()
+
+    }
+    private fun startExoPlayerListener(){
         player.removeListener(PlayerStateListener)
         player.addListener(PlayerStateListener)
         state_PlayerListenerAdded = true
-    }
+    } //添加播放器事件监听
     //设置新媒体项
     private fun setNewMediaItem(uri: Uri){
         //解码信息到本地
@@ -1474,13 +1480,17 @@ class PlayerActivity: AppCompatActivity(){
         //绑定播放器视图
         playerView.player = null
         playerView.player = player
+        //添加播放器事件监听
+        player.removeListener(PlayerStateListener)
+        player.addListener(PlayerStateListener)
+        state_PlayerListenerAdded = true
         //关闭遮罩
         closeCover(0,0)
         //重置状态
         playerReadyFrom_FirstEntry = false
         //更新全局媒体信息变量
         getMediaInfo(MediaInfo_MediaUri)
-        //重新读取数据库
+        //读取数据库
         ReadRoomDataBase()
         //刷新视频进度线
         updateTimeCard()
@@ -1491,6 +1501,32 @@ class PlayerActivity: AppCompatActivity(){
 
     }
 
+    //媒体项变更回调
+    private fun onMediaItemChanged(mediaItem: MediaItem?){
+        if (mediaItem == null){ return }
+        //检查媒体类型
+        if (PlayerSingleton.getMediaInfoType() == "music"){
+            EnsureExit(false)
+            return
+        }
+
+        //重新绑定播放器视图
+        playerView.player = null
+        playerView.player = player
+        //更新本地MediaInfo_MediaUri
+        MediaInfo_MediaUri = mediaItem.mediaId.toUri()
+        //更新全局媒体信息变量
+        getMediaInfo(MediaInfo_MediaUri)
+        //重新读取数据库+覆盖关键值
+        ReadRoomDataBase()
+        //刷新：视频总长度
+        updateTimeCard()
+        //刷新：进度条更新
+        updateScrollerAdapter()
+        //刷新按钮
+        updateButtonState()
+
+    }
 
 
 
@@ -1549,38 +1585,9 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
     }
-    //媒体项变更的后续操作
-    private fun onMediaItemChanged(mediaItem: MediaItem?){
-        if (mediaItem == null){ return }
 
 
-        //获取媒体类型
-        val type = PlayerSingleton.getMediaInfoType()
-        if (type == "music"){
-            EnsureExit(false)
-            return
-        }
-        //更新全局媒体信息变量
-        getMediaInfo(MediaInfo_MediaUri)
-        //重新读取数据库+覆盖关键值
-        ReadRoomDataBase()
-        //刷新：视频总长度
-        updateTimeCard()
-        //刷新：进度条更新
-        updateScrollerAdapter()
-        //刷新按钮
-        updateButtonState()
-    }
-    //服务设置写入
-    private fun setServiceSetting(){
-        val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
-        INFO_PlayerSingleton.edit{ putInt("state_PlayerType", 1 ).apply() }
-        INFO_PlayerSingleton.edit{ putString("state_MediaType", "video").apply() }
-        INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaUri", MediaInfo_MediaUri.toString()).apply() }
-        INFO_PlayerSingleton.edit{ putString("MediaInfo_FileName", vm.MediaInfo_FileName).apply() }
-        INFO_PlayerSingleton.edit{ putString("MediaInfo_Artist", vm.MediaInfo_MediaArtist).apply() }
-    }
-    //绑定进度条adapter,可重复刷新
+    //刷新进度条
     private fun updateScrollerAdapter(){
         lifecycleScope.launch(Dispatchers.IO) {
             //获取ViewModel
@@ -1693,7 +1700,7 @@ class PlayerActivity: AppCompatActivity(){
 
         }
     }
-    //重读媒体信息并覆盖对应全局变量
+    //读取媒体信息：uri作为唯一key
     private var MediaInfo_MediaUri = Uri.EMPTY!!
     private fun getMediaInfo(uri: Uri){
         retriever = MediaMetadataRetriever()
@@ -1742,14 +1749,7 @@ class PlayerActivity: AppCompatActivity(){
     }
 
 
-    //设置新媒体项
-    private fun setNewMediaItem(MediaInfo_MediaUriString: String, MediaInfo_FileName: String, MediaInfo_MediaArtist: String){
-        PlayerSingleton.getPlayer(application)
-        PlayerSingleton.addPlayerStateListener()
-        //设置媒体项
-            PlayerSingleton.setMediaItem(MediaInfo_MediaUri, true)
 
-    }
     //确认关闭操作
     private var state_FromExitKeepPlaying = false
     private var state_FromExitCloseAllStuff = false
@@ -2045,10 +2045,8 @@ class PlayerActivity: AppCompatActivity(){
                     else{
                         //变更保存的信息
                         MediaInfo_MediaUri = uri
-
-
                         //设置新的媒体项
-                        setNewMediaItem(vm.MediaInfo_MediaUriString, vm.MediaInfo_FileName, vm.MediaInfo_MediaArtist)
+                        setNewMediaItem(MediaInfo_MediaUri)
                     }
                 }
                 //系统面板：选择其他应用打开
@@ -2058,15 +2056,10 @@ class PlayerActivity: AppCompatActivity(){
                     //判断是否是同一个视频
                     if (uri == PlayerSingleton.getMediaInfoUri()) { return }
                     else{
-                        //清除现有媒体
-                        PlayerSingleton.clearMediaItem()
                         //变更保存的信息
                         MediaInfo_MediaUri = uri
-
-
                         //设置新的媒体项
-                        setNewMediaItem(vm.MediaInfo_MediaUriString, vm.MediaInfo_FileName, vm.MediaInfo_MediaArtist)
-
+                        setNewMediaItem(MediaInfo_MediaUri)
                     }
                 }
             }
