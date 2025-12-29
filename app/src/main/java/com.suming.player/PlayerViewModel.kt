@@ -14,6 +14,30 @@ import data.MediaModel.MediaItemForVideo
 @UnstableApi
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
+    //媒体信息
+    var MediaInfo_MediaType = ""
+    var MediaInfo_MediaTitle = ""
+    var MediaInfo_MediaArtist = ""
+    var MediaInfo_MediaDuration = 0L
+    var MediaInfo_FileName = ""
+    var MediaInfo_AbsolutePath = ""
+    var MediaInfo_MediaUri = Uri.EMPTY!!
+    var MediaInfo_MediaUriString = ""
+    fun saveInfoToViewModel(type: String,title: String,artist: String,duration: Long,filename: String, path: String,uri: Uri, uriString: String){
+        MediaInfo_MediaType = type
+        MediaInfo_MediaTitle = title
+        MediaInfo_MediaArtist = artist
+        MediaInfo_MediaDuration = duration
+        MediaInfo_FileName = filename
+        MediaInfo_AbsolutePath = path
+        MediaInfo_MediaUri = uri
+        MediaInfo_MediaUriString = uriString
+    }
+
+
+    //播放器监听器绑定状态
+
+
 
 
     //屏幕旋转状态
@@ -102,30 +126,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var YaxisDestination = 800f
 
 
-    var MediaInfo_Uri_Saved: Boolean = false
-    var MediaInfo_VideoUri: Uri? = null
-
-    var state_firstReadyReached: Boolean = false
 
     var allowRecord_wasPlaying: Boolean = true
 
     var wasPlaying: Boolean = false
-
-
-    //Intent保存
-    var originIntent : Intent? = null
-    fun saveIntent(intent: Intent){
-        if (originIntent == null) {
-            originIntent = intent
-        }
-    }
-    //文件名保存
-    var MediaInfo_FileName : String = ""
-    fun saveFileName(name: String){
-        if (MediaInfo_FileName == "") {
-            MediaInfo_FileName = name
-        }
-    }
 
 
 

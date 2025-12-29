@@ -2,6 +2,7 @@ package com.suming.player.ListManager
 
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.media.MediaMetadataRetriever
 import android.net.Uri
@@ -14,6 +15,7 @@ import data.MediaModel.MiniMediaItemForList
 import java.io.File
 import androidx.core.content.edit
 
+@Suppress("unused")
 object PlayerListManager {
 
     //列表管理器设置
@@ -176,12 +178,51 @@ object PlayerListManager {
 
 
     //启动播放列表管理器
-    fun startPlayListManage(){
+    fun startPlayListManage(context: Context){
+        //设置上下文
+        setContext(context)
+        //读取设置
+        loadSettings()
 
 
-
+        state_PlayListManage_started = true
+    }
+    lateinit var singletonContext: Context
+    private var state_PlayListManage_started = false
+    private fun setContext(context: Context){
+        singletonContext = context
+    }
+    private fun loadSettings(){
+        PREFS_List = singletonContext.getSharedPreferences("PREFS_List", MODE_PRIVATE)
+        if (PREFS_List.contains("PREFS_RepeatMode")){
+            PREFS_LoopMode = PREFS_List.getString("PREFS_RepeatMode", "OFF") ?: "error"
+            if (PREFS_LoopMode != "OFF" && PREFS_LoopMode != "ONE" && PREFS_LoopMode != "ALL"){
+                PREFS_LoopMode = "OFF"
+                PREFS_List.edit{ putString("PREFS_RepeatMode", "OFF").apply() }
+            }
+        }else{
+            PREFS_LoopMode = "OFF"
+            PREFS_List.edit{ putString("PREFS_RepeatMode", "OFF").apply() }
+        }
     }
 
+
+    //循环模式
+    var PREFS_LoopMode = ""
+    fun setRepeatMode(mode: String) {
+        PREFS_LoopMode  = mode
+        PREFS_List.edit{ putString("PREFS_RepeatMode", PREFS_LoopMode ).apply() }
+    }
+    fun getRepeatMode(): String{
+        if (PREFS_LoopMode != "OFF" && PREFS_LoopMode != "ONE" && PREFS_LoopMode != "ALL"){
+
+            PREFS_LoopMode = "OFF"
+
+            return PREFS_LoopMode
+        }else{
+            return PREFS_LoopMode
+        }
+    }
 
 
     //媒体信息读取

@@ -40,6 +40,7 @@ import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.google.android.material.button.MaterialButton
+import com.suming.player.ListManager.PlayerListManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -713,7 +714,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private fun chooseLoopMode(loopMode: String){
         ToolVibrate().vibrate(requireContext())
         //设置循环模式
-        PlayerSingleton.setRepeatMode(when (loopMode) {
+        PlayerListManager.setRepeatMode(when (loopMode) {
             "ONE" -> "ONE"
             "ALL" -> "ALL"
             "OFF" -> "OFF"
@@ -725,7 +726,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //不主动退出
     }
     private fun setLoopModeText(){
-        val currentRepeatMode = PlayerSingleton.getRepeatMode()
+        val currentRepeatMode = PlayerListManager.getRepeatMode()
         val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
         ButtonLoopMode?.text = when (currentRepeatMode) {
             "ONE" -> "单集循环"

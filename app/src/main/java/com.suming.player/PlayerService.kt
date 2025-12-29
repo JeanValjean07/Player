@@ -21,6 +21,7 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 
 @UnstableApi
+@Suppress("unused")
 class PlayerService(): MediaSessionService() {
     //通知标识变量
     companion object {
@@ -106,7 +107,7 @@ class PlayerService(): MediaSessionService() {
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
         //释放播放器
-        PlayerSingleton.releasePlayer()
+        PlayerSingleton.ReleaseSingletonPlayer(this)
         PlayerSingleton.onTaskRemoved()
     }
     //接收Intent额外信息

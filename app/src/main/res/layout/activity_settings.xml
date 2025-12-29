@@ -278,7 +278,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="开启后，退出视频时，视频将在列表底部播放卡片中继续播放，长按退出按钮则为退出并停止播放。若不开启，单击退出按钮为退出并停止播放，长按则为退出但继续播放。"
+                        android:text="开启后，使用返回键退出视频时，视频将在列表底部播放卡片中继续播放，长按退出按钮则为退出并停止播放。若不开启，单击退出按钮为退出并停止播放，长按则为退出但继续播放。从播放页中间下滑时，默认保持播放。保持播放时，不再受后台播放控制。"
                         android:textSize="12sp" />
                     <!--  选单按钮：播放器seek间隔  -->
                     <LinearLayout

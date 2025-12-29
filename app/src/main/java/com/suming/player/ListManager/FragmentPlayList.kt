@@ -526,11 +526,11 @@ class FragmentPlayList: DialogFragment() {
 
     //播放点击事件
     private fun onPlayClick(uriString: String) {
-        if (uriString == PlayerSingleton.getMediaInfoUri()){
+        if (uriString == PlayerSingleton.getMediaInfoUriString()){
             PlayerSingleton.playPlayer()
             requireContext().showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
         }else{
-            PlayerSingleton.setMediaItem(uriString.toUri(), true)
+            //PlayerSingleton.setMediaItem(uriString.toUri(), true)
             customDismiss()
         }
     }
@@ -562,7 +562,7 @@ class FragmentPlayList: DialogFragment() {
     private fun chooseLoopMode(loopMode: String){
         ToolVibrate().vibrate(requireContext())
         //设置循环模式
-        PlayerSingleton.setRepeatMode(when (loopMode) {
+        PlayerListManager.setRepeatMode(when (loopMode) {
             "ONE" -> "ONE"
             "ALL" -> "ALL"
             "OFF" -> "OFF"
@@ -574,7 +574,7 @@ class FragmentPlayList: DialogFragment() {
         //不主动退出
     }
     private fun setLoopModeText(){
-        val currentRepeatMode = PlayerSingleton.getRepeatMode()
+        val currentRepeatMode = PlayerListManager.getRepeatMode()
         val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
         ButtonLoopMode?.text = when (currentRepeatMode) {
             "ONE" -> "单集循环"

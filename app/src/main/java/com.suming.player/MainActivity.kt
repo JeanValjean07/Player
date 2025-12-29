@@ -309,7 +309,7 @@ class MainActivity: AppCompatActivity() {
         PlayingCard.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
             val uri = PlayerSingleton.getMediaInfoUri()
-            startPlayerFromSmallCard(uri.toUri())
+            startPlayerFromSmallCard(uri)
         }
         PlayingCard_Button.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
@@ -704,8 +704,7 @@ class MainActivity: AppCompatActivity() {
         PlayerSingleton.getPlayer(application)
         PlayerSingleton.addPlayerStateListener()
         //设置媒体项
-        PlayerSingleton.setMediaItem(MediaInfo_MediaUriString.toUri(), playWhenReady)
-        //Log.d("SuMing", "setNewMediaItem : $MediaInfo_MediaUriString, $MediaInfo_FileName, $MediaInfo_MediaArtist")
+
 
     }
     //保存上次播放的项信息
@@ -722,7 +721,7 @@ class MainActivity: AppCompatActivity() {
     //从选项菜单中发起后台播放
     private fun startSmallCardPlay(uri: Uri, filename: String){
         //比对上次播放媒体信息与当前播放媒体信息
-        val newUri = uri.toString()
+        val newUri = uri
         val currentUri = PlayerSingleton.getMediaInfoUri()
         if (newUri == currentUri){
             showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
@@ -730,7 +729,7 @@ class MainActivity: AppCompatActivity() {
             return
         }
         //设置新播放项
-        setNewMediaItem(newUri, filename, "未知艺术家", true)
+        setNewMediaItem(newUri.toString(), filename, "未知艺术家", true)
 
     }
     //停止视频播放区域
