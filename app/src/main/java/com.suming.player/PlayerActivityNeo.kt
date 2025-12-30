@@ -592,28 +592,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         if(savedInstanceState == null){
             startPlayNewItem(MediaInfo_MediaUri)
         }else{
-            //绑定播放器视图
-            playerView.player = null
-            playerView.player = player
-            //状态置位
-            playerReadyFrom_FirstEntry = true
-            state_EnterAnimationCompleted = true
-            //重新获取媒体信息
-            MediaInfo_MediaUri = vm.MediaInfo_MediaUri
-            getMediaInfo(MediaInfo_MediaUri)
-            //刷新时间显示
-            updateTimeCard()
-            //读取数据库:不要再次操作可执行项
-            ReadRoomDataBase()
-            //绑定进度条
-            updateScrollerAdapter()
-            //刷新按钮
-            updateButtonState()
-            //移除遮罩
-            closeCover(0,0)
-            //隐藏顶部分割线
-            HideTopLine()
-
+            //重建时连接已有媒体
+            onBindExistingItem()
         }
 
 
@@ -1497,6 +1477,39 @@ class PlayerActivityNeo: AppCompatActivity(){
         updateScrollerAdapter()
         //刷新控制按钮
         updateButtonState()
+
+    }
+    //重建时连接已有媒体
+    private fun onBindExistingItem(){
+        //状态置位
+        playerReadyFrom_FirstEntry = true
+        state_EnterAnimationCompleted = true
+        //绑定播放器视图
+        playerView.player = null
+        playerView.player = player
+        //添加播放器事件监听
+        player.removeListener(PlayerStateListener)
+        player.addListener(PlayerStateListener)
+        state_PlayerListenerAdded = true
+        //关闭遮罩
+        closeCover(0,0)
+        //重置状态
+        playerReadyFrom_FirstEntry = false
+        //更新全局媒体信息变量
+        getMediaInfo(MediaInfo_MediaUri)
+        //读取数据库
+        ReadRoomDataBase()
+        //刷新视频进度线
+        updateTimeCard()
+        //刷新进度条
+        updateScrollerAdapter()
+        //刷新控制按钮
+        updateButtonState()
+        //隐藏顶部分割线
+        HideTopLine()
+        //重新获取媒体信息
+        MediaInfo_MediaUri = vm.MediaInfo_MediaUri
+        getMediaInfo(MediaInfo_MediaUri)
 
     }
 
