@@ -833,30 +833,22 @@ class PlayerActivity: AppCompatActivity(){
         buttonPause.setOnClickListener {
             ToolVibrate().vibrate(this@PlayerActivity)
             if (player.isPlaying) {
-                pauseVideo()
+                scroller.stopScroll()
+                recessPlay(need_fadeOut = false)
                 stopScrollerSync()
                 notice("暂停", 1000)
                 updateButtonState()
-            } else {
-                //状态变更
+            }else{
                 scroller.stopScroll()
-                //播放或暂停
-                lifecycleScope.launch {
-                    scroller.stopScroll()
-                    delay(20)
-                    if (vm.playEnd) {
-                        vm.playEnd = false
-                        player.seekTo(0)
-                        playVideo()
-                        notice("视频已结束,开始重播", 1000)
-                        updateButtonState()
-                        return@launch
-                    } else {
-                        playVideo()
-                        return@launch
-                    }
+                if (vm.playEnd) {
+                    vm.playEnd = false
+                    continuePlay(true, force_request = true, need_fadeIn = false)
+                    notice("开始重播", 2000)
+                    updateButtonState()
+                } else {
+                    continuePlay(true, force_request = true, need_fadeIn = false)
+                    notice("继续播放", 2000)
                 }
-                notice("继续播放", 1000)
             }
         }
         //按钮：切换横屏
@@ -901,18 +893,17 @@ class PlayerActivity: AppCompatActivity(){
         val gestureDetectorPlayArea = GestureDetector(this, object : SimpleOnGestureListener() {
             override fun onDoubleTap(e: MotionEvent): Boolean {
                 if (player.isPlaying) {
-                    pauseVideo()
+                    recessPlay(need_fadeOut = false)
                     stopScrollerSync()
                     notice("暂停播放", 1000)
                     updateButtonState()
                 } else {
                     if (vm.playEnd) {
                         vm.playEnd = false
-                        player.seekTo(0)
-                        playVideo()
-                        notice("视频已结束,开始重播", 1000)
+                        continuePlay(true, force_request = true, need_fadeIn = false)
+                        notice("开始重播", 1000)
                     } else {
-                        playVideo()
+                        continuePlay(true, force_request = true, need_fadeIn = false)
                         notice("继续播放", 1000)
                         updateButtonState()
                     }
@@ -2405,6 +2396,7 @@ class PlayerActivity: AppCompatActivity(){
         File(filesDir, "miniature/${vm.MediaInfo_FileName.hashCode()}/scroller").deleteRecursively()
     }
     //视频区域抬高(含Job)
+    @Suppress("DEPRECATION")
     private fun MoveYaxisCalculate(){
         val displayMetrics = DisplayMetrics()
 
@@ -2952,7 +2944,7 @@ class PlayerActivity: AppCompatActivity(){
             startScrollerSync()
 
             //启动播放
-            playVideo()
+            continuePlay(need_requestFocus = true, force_request = true, need_fadeIn = false)
             //隐藏遮罩
             closeCover(1,20)
 
@@ -2963,7 +2955,7 @@ class PlayerActivity: AppCompatActivity(){
             isSeekReady = true
             //恢复播放状态
             if (vm.wasPlaying){
-                playVideo()
+                continuePlay(need_requestFocus = false, force_request = false, need_fadeIn = false)
             }else{
                 player.pause()
                 player.setPlaybackSpeed(1f)
@@ -2977,7 +2969,9 @@ class PlayerActivity: AppCompatActivity(){
             isSeekReady = true
             player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
             //恢复播放状态
-            if (vm.wasPlaying){ playVideo() }
+            if (vm.wasPlaying){
+                continuePlay(need_requestFocus = false, force_request = false, need_fadeIn = false)
+            }
             vm.allowRecord_wasPlaying = true
 
             return
@@ -3016,20 +3010,18 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
     }
-
-    private fun pauseVideo(){
-        PlayerSingleton.pausePlayer()
-        PlayerSingleton.setWasPlaying(false)
-        vm.wasPlaying = false
+    @Suppress("SameParameterValue")
+    private fun recessPlay(need_fadeOut: Boolean){
+        PlayerSingleton.recessPlay(need_fadeOut)
 
         stopVideoTimeSync()
         stopScrollerSync()
     }
+    @Suppress("SameParameterValue")
+    private fun continuePlay(need_requestFocus: Boolean, force_request: Boolean, need_fadeIn: Boolean){
+        PlayerSingleton.continuePlay(need_requestFocus, force_request, need_fadeIn)
 
-    private fun playVideo(){
-        PlayerSingleton.setWasPlaying(true)
-        PlayerSingleton.requestAudioFocus(application)
-        PlayerSingleton.playPlayer()
+
         //界面控件操作
         startScrollerSync()
         startVideoTimeSync()

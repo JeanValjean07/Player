@@ -437,7 +437,7 @@ object PlayerSingleton {
             connectToMediaSession(singletonContext)
         }, 1000)
         //请求音频焦点
-        requestAudioFocus(singletonContext)
+        requestAudioFocus(singletonContext, force_request = false)
 
     }
 
@@ -709,7 +709,7 @@ object PlayerSingleton {
             }
             if (relevant.isNotEmpty()) {
                 state_HeadSetInserted = false
-                pausePlayer()
+                recessPlay(need_fadeOut = false)
             }
         }
         override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
@@ -774,15 +774,14 @@ object PlayerSingleton {
 
                     }
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                        _player?.pause()
-
+                        recessPlay(need_fadeOut = true)
                     }
                     AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
 
                     }
                     AudioManager.AUDIOFOCUS_GAIN -> {
                         if (playState_wasPlaying){
-                            _player?.play()
+                            continuePlay(need_requestFocus = true, force_request = true, need_fadeIn = true)
                         }
 
                     }
@@ -791,15 +790,19 @@ object PlayerSingleton {
             .build()
         state_focusRequest_Initialized = true
     }
-    fun requestAudioFocus(context: Context){
+    fun requestAudioFocus(context: Context, force_request: Boolean){
         if (!state_focusRequest_Initialized){
             initFocusRequest(context)
         }
         if (!state_AudioManager_Initialized){
             initAudioManager(context)
         }
-        if (_player?.isPlaying == false) return
-        audioManager.requestAudioFocus(focusRequest)
+        if (force_request){
+            audioManager.requestAudioFocus(focusRequest)
+        }else if(_player?.isPlaying != true ) {
+            audioManager.requestAudioFocus(focusRequest)
+        }
+
     }
     fun releaseAudioFocus(context: Context){
         if (!state_focusRequest_Initialized){
@@ -834,18 +837,17 @@ object PlayerSingleton {
     private fun HandlePlayerEvent(event: String) {
         when (event) {
             "SessionController_Next" -> {
-                //Log.d("SuMing", "SessionController_Next")
                 switchToNextMediaItem()
             }
             "SessionController_Previous" -> {
-                //Log.d("SuMing", "SessionController_Previous")
                 switchToPreviousMediaItem()
             }
             "SessionController_Play" -> {
-                playState_wasPlaying = true
+                setWasPlaying(true)
+                requestAudioFocus(singletonContext, force_request = false)
             }
             "SessionController_Pause" -> {
-                playState_wasPlaying = false
+                setWasPlaying(false)
             }
         }
     }
@@ -892,12 +894,16 @@ object PlayerSingleton {
     //播放和暂停
     private var playState_playEnd = false
     private var playState_wasPlaying = false
-    fun playPlayer() {
+    fun continuePlay(need_requestFocus: Boolean,force_request: Boolean, need_fadeIn: Boolean) {
         if (playState_playEnd){
             playState_playEnd = false
             _player?.seekTo(0)
         }
         playState_wasPlaying = true
+
+
+        //请求音频焦点
+        if (need_requestFocus) requestAudioFocus(singletonContext, force_request)
 
         //保险：重置音量
         if (!PREFS_onlyVideoTrack) _player?.volume = 1f
@@ -906,11 +912,16 @@ object PlayerSingleton {
 
         //开始播放
         _player?.play()
-    }
-    fun pausePlayer() {
-        playState_wasPlaying = false
+    } //开始/继续播放
+    fun recessPlay(need_fadeOut: Boolean) {
+        if (_player?.isPlaying == true){
+            setWasPlaying(true)
+        }else{
+            setWasPlaying(false)
+        }
         _player?.pause()
-    }
+
+    } //暂停播放
     fun setWasPlaying(wasPlaying: Boolean){
         this.playState_wasPlaying = wasPlaying
     }
@@ -933,14 +944,14 @@ object PlayerSingleton {
         when (currentLoopMode) {
             "ONE" -> {
                 _player?.seekTo(0)
-                _player?.play()
+                continuePlay(need_requestFocus = false, force_request = false, need_fadeIn = false)
             }
             "ALL" -> {
                 switchToNextMediaItem()
             }
             "OFF" -> {
                 playState_playEnd = true
-                _player?.pause()
+                recessPlay(need_fadeOut = false)
                 ToolEventBus.sendEvent("PlayerSingleton_PlaybackStateChanged")
             }
         }
@@ -1273,7 +1284,7 @@ object PlayerSingleton {
         //启动音频设备监听器
         startAudioDeviceCallback(app)
         //请求音频焦点
-        requestAudioFocus(app)
+        requestAudioFocus(app, force_request = false)
         //读取设置
         loadSettings()
 
@@ -1302,7 +1313,7 @@ object PlayerSingleton {
         }
         //关闭后台播放
         else{
-            pausePlayer()
+            recessPlay(true)
         }
     }
     private fun stopBackgroundPlay(){
@@ -1317,7 +1328,7 @@ object PlayerSingleton {
         else{
             if (state_mediaStartedOnce) return
             state_mediaStartedOnce = true
-            playPlayer()
+            continuePlay(need_requestFocus = false, force_request = true, need_fadeIn = true)
         }
     }
     //关闭视频轨道倒计时

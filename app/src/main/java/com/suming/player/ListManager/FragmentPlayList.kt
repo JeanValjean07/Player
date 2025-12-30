@@ -43,6 +43,7 @@ import androidx.core.content.edit
 
 @SuppressLint("ComposableNaming")
 @UnstableApi
+@Suppress("unused")
 class FragmentPlayList: DialogFragment() {
     //静态方法
     companion object {
@@ -526,7 +527,7 @@ class FragmentPlayList: DialogFragment() {
     //播放点击事件
     private fun onPlayClick(uriString: String) {
         if (uriString == PlayerSingleton.getMediaInfoUriString()){
-            PlayerSingleton.playPlayer()
+            PlayerSingleton.continuePlay(true, force_request = true, need_fadeIn = false)
             requireContext().showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
         }else{
             PlayerSingleton.setMediaItem(uriString.toUri(), true)

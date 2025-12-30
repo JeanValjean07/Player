@@ -314,9 +314,9 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_Button.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
             if (PlayerSingleton.getIsPlaying()){
-                PlayerSingleton.pausePlayer()
+                PlayerSingleton.recessPlay(need_fadeOut = false)
             }else{
-                PlayerSingleton.playPlayer()
+                PlayerSingleton.continuePlay(true, force_request = true, need_fadeIn = false)
             }
             setPlayingCardButton()
         }
@@ -458,8 +458,8 @@ class MainActivity: AppCompatActivity() {
         outState.putString("state_currentPage", state_currentPage)
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onPause() {
+        super.onPause()
         //关闭事件总线监听器
         disposeEventBus()
     }
@@ -710,7 +710,7 @@ class MainActivity: AppCompatActivity() {
         val currentUri = PlayerSingleton.getMediaInfoUri()
         if (newUri == currentUri){
             showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
-            PlayerSingleton.playPlayer()
+            PlayerSingleton.continuePlay(true, force_request = true, need_fadeIn = false)
             return
         }
         //设置新播放项
@@ -1334,6 +1334,7 @@ class MainActivity: AppCompatActivity() {
         }
     }
     //设置高刷新率
+    @Suppress("DEPRECATION")
     private fun setHighRefreshRate() {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val wm = windowManager
