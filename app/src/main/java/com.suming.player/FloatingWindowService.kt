@@ -107,15 +107,15 @@ class FloatingWindowService : Service() {
                 isFolded = false
             }else {
                 if (source == "PlayerActivityTest"){
-                    val intent = Intent(this, PlayerActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                    val intent = Intent(this, PlayerActivityNeo::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
                     startActivity(intent)
                 }
                 else if (source == "PlayerActivity"){
-                    val intent = Intent(this, PlayerActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                    val intent = Intent(this, PlayerActivityNeo::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
                     startActivity(intent)
                 }
                 else if (source == "PlayerActivitySeekBar"){
-                    val intent = Intent(this, PlayerActivitySeekBar::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                    val intent = Intent(this, PlayerActivityOro::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
                     startActivity(intent)
                 }
                 else {

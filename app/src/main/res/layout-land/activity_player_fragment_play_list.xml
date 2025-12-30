@@ -6,27 +6,25 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    android:clipToPadding="false"
-    android:clipChildren="false"
     android:background="@android:color/transparent"
-    android:padding="0dp"
     tools:ignore="HardcodedText" >
     <androidx.cardview.widget.CardView
         android:id="@+id/mainCard"
         android:layout_width="350dp"
         android:layout_height="match_parent"
-        app:cardCornerRadius="8dp"
-        app:cardBackgroundColor="@color/Background3"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:clickable="true"
-        app:cardElevation="10dp">
+        app:cardBackgroundColor="@color/Background3"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="10dp"
+        android:clickable="true">
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/playListArea"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <!-- AppBar -->
+            android:layout_height="match_parent"
+            android:layout_marginTop="30dp">
+
             <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/AppBar"
                 android:layout_width="match_parent"
@@ -35,7 +33,6 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="35dp"
                 android:outlineSpotShadowColor="@color/HeadText"
                 app:liftOnScrollColor="@color/HeadBackground"
                 android:outlineAmbientShadowColor="@color/HeadText">
@@ -47,8 +44,6 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="45dp"
-                        android:paddingStart="10dp"
-                        android:paddingEnd="10dp"
                         android:orientation="horizontal">
                         <!-- 关闭按钮 -->
                         <ImageButton
@@ -56,9 +51,10 @@
                             android:layout_width="45dp"
                             android:layout_height="45dp"
                             android:backgroundTint="@android:color/transparent"
+                            android:contentDescription="关闭播放列表页面"
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_play_list_close"
-                            tools:ignore="ContentDescription" />
+                            />
                         <!-- 标题:播放列表 -->
                         <TextView
                             android:layout_width="wrap_content"
@@ -67,6 +63,17 @@
                             android:text="播放列表"
                             android:textSize="20sp"
                             android:textColor="@color/HeadText"
+                            />
+                        <!-- 按钮：停止播放 -->
+                        <ImageButton
+                            android:id="@+id/ButtonStopPlaying"
+                            android:layout_width="40dp"
+                            android:layout_height="45dp"
+                            android:contentDescription="停止播放并移除底部播放卡片"
+                            android:padding="14dp"
+                            android:backgroundTint="@android:color/transparent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_play_list_delete"
                             />
                         <!-- 占位 -->
                         <View
@@ -78,21 +85,23 @@
                             android:id="@+id/ButtonPreviousMedia"
                             android:layout_width="30dp"
                             android:layout_height="45dp"
+                            android:contentDescription="立即切换上一曲"
                             android:padding="16dp"
                             android:backgroundTint="@android:color/transparent"
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_play_list_previous"
-                            tools:ignore="ContentDescription" />
+                            />
                         <!-- 按钮：下一曲 -->
                         <ImageButton
                             android:id="@+id/ButtonNextMedia"
                             android:layout_width="30dp"
                             android:layout_height="45dp"
+                            android:contentDescription="立即切换下一曲"
                             android:padding="16dp"
                             android:backgroundTint="@android:color/transparent"
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_play_list_next"
-                            tools:ignore="ContentDescription" />
+                            />
                         <!-- 循环模式 -->
                         <TextView
                             android:id="@+id/ButtonLoopMode"
@@ -110,12 +119,13 @@
                             android:id="@+id/buttonLock"
                             android:layout_width="30dp"
                             android:layout_height="45dp"
+                            android:contentDescription="锁定或解锁页面"
                             android:padding="12dp"
                             android:layout_marginEnd="5dp"
                             android:backgroundTint="@android:color/transparent"
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_more_button_lock_off"
-                            tools:ignore="ContentDescription" />
+                            />
                     </LinearLayout>
                     <!-- 横滑滚动页签 + 当前列表 -->
                     <androidx.constraintlayout.widget.ConstraintLayout
@@ -287,6 +297,7 @@
                                     android:textColor="@color/HeadText"
                                     android:textSize="11sp" />
                                 <ImageView
+                                    android:id="@+id/ButtonCurrentListIcon"
                                     android:layout_width="25dp"
                                     android:layout_height="25dp"
                                     android:layout_gravity="center"
@@ -318,7 +329,7 @@
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </LinearLayout>
             </com.google.android.material.appbar.AppBarLayout>
-            <!-- 滚动区域 -->
+
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/ViewPager"
                 android:layout_width="match_parent"
@@ -330,6 +341,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
             </androidx.viewpager2.widget.ViewPager2>
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -7,16 +7,11 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.SharedPreferences
-import android.os.Binder
-import android.os.IBinder
-import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
-import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 
@@ -203,7 +198,7 @@ class PlayerService(): MediaSessionService() {
     //通知卡片和媒体会话卡片:点击拉起
     @OptIn(UnstableApi::class)
     private fun createPendingIntentScroller(): PendingIntent {
-        val intent = Intent(this, PlayerActivity::class.java).apply {
+        val intent = Intent(this, PlayerActivityNeo::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
             .putExtra("IntentSource", "FromPendingIntent")
@@ -211,7 +206,7 @@ class PlayerService(): MediaSessionService() {
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
     private fun createPendingIntentSeekBar(): PendingIntent {
-        val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
+        val intent = Intent(this, PlayerActivityOro::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
             .putExtra("IntentSource", "FromPendingIntent")

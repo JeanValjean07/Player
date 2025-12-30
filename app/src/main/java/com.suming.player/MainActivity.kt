@@ -40,7 +40,6 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
@@ -1033,7 +1032,7 @@ class MainActivity: AppCompatActivity() {
         ToolVibrate().vibrate(this@MainActivity)
         if (state_PlayingCard_showing){
             if (PREFS_UsePlayerWithSeekBar){
-                val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
+                val intent = Intent(this, PlayerActivityOro::class.java).apply {
                     putExtra("uri", uri)
                 }
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -1048,7 +1047,7 @@ class MainActivity: AppCompatActivity() {
 
                 detailLauncher.launch(intent, options)
             }else{
-                val intent = Intent(this, PlayerActivity::class.java)
+                val intent = Intent(this, PlayerActivityNeo::class.java)
                     .apply {
                         putExtra("uri", uri)
                     }
@@ -1065,7 +1064,7 @@ class MainActivity: AppCompatActivity() {
             }
         }else{
             if (PREFS_UsePlayerWithSeekBar){
-                val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
+                val intent = Intent(this, PlayerActivityOro::class.java).apply {
                     putExtra("uri", uri)
                 }
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -1073,7 +1072,7 @@ class MainActivity: AppCompatActivity() {
                     .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 detailLauncher.launch(intent)
             }else{
-                val intent = Intent(this, PlayerActivity::class.java)
+                val intent = Intent(this, PlayerActivityNeo::class.java)
                     .apply {
                         putExtra("uri", uri)
                     }
@@ -1118,7 +1117,7 @@ class MainActivity: AppCompatActivity() {
         MediaInfo_MediaType = PlayerSingleton.getMediaInfoType()
         if (MediaInfo_MediaType == "video"){
             if (PREFS_UsePlayerWithSeekBar){
-                    val intent = Intent(this, PlayerActivitySeekBar::class.java).apply {
+                    val intent = Intent(this, PlayerActivityOro::class.java).apply {
                         putExtra("uri", uri)
                     }
                         .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -1133,7 +1132,7 @@ class MainActivity: AppCompatActivity() {
 
                     detailLauncher.launch(intent, options)
                 }else{
-                    val intent = Intent(this, PlayerActivity::class.java)
+                    val intent = Intent(this, PlayerActivityNeo::class.java)
                         .apply {
                             putExtra("uri", uri)
                         }

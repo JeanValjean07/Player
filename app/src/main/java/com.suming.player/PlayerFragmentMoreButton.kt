@@ -420,7 +420,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
         //使用传统进度条页面时隐藏滚动条控制卡片
         val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
-        if(vm.state_playerWithSeekBar){
+        if(vm.state_player_type == "Oro"){
             CardScrollerStuff.visibility = View.GONE
         }
         //解除亮度控制卡片+按钮

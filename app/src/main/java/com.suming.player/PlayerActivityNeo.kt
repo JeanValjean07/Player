@@ -19,6 +19,7 @@ import android.graphics.RectF
 import android.hardware.display.DisplayManager
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.media.Image
 import android.media.MediaMetadataRetriever
 import android.media.audiofx.Equalizer
 import android.net.Uri
@@ -30,7 +31,6 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -106,7 +106,7 @@ import kotlin.math.pow
 
 @UnstableApi
 @Suppress("unused")
-class PlayerActivity: AppCompatActivity(){
+class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
     //音量配置参数
@@ -180,8 +180,7 @@ class PlayerActivity: AppCompatActivity(){
     //耳机链接状态
     private var headSet = false
 
-    //ViewModel
-    private val vm: PlayerViewModel by viewModels { PlayerExoFactory.getInstance(application) }
+
     //视频尺寸
     private var videoSizeWidth = 0
     private var videoSizeHeight = 0
@@ -302,8 +301,8 @@ class PlayerActivity: AppCompatActivity(){
 
     //获取播放器实例
     private val player get() = PlayerSingleton.getPlayer(application)
-
-
+    //ViewModel
+    private val vm: PlayerViewModel by viewModels()
 
     @OptIn(UnstableApi::class)
     @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
@@ -312,7 +311,7 @@ class PlayerActivity: AppCompatActivity(){
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        setContentView(R.layout.activity_player)
+        setContentView(R.layout.activity_player_type_neo)
         //启动播放器单例
         PlayerSingleton.startPlayerSingleton(application)
 
@@ -347,8 +346,13 @@ class PlayerActivity: AppCompatActivity(){
                 //系统面板：选择其他应用打开
                 Intent.ACTION_VIEW -> {
                     vm.state_FromSysStart = true
-                    val uri = intent.data ?: return finish()
-                    MediaInfo_MediaUri = uri
+                    val uri = intent.data
+                    if (uri == null){
+                        showCustomToast("链接无效，无法播放。可在附加Data中填入媒体uri", Toast.LENGTH_SHORT, 3)
+                        finishAndRemoveTask()
+                    }else{
+                        MediaInfo_MediaUri = uri
+                    }
                 }
                 //正常打开
                 else -> {
@@ -588,6 +592,9 @@ class PlayerActivity: AppCompatActivity(){
         if(savedInstanceState == null){
             startPlayNewItem(MediaInfo_MediaUri)
         }else{
+            //绑定播放器视图
+            playerView.player = null
+            playerView.player = player
             //状态置位
             playerReadyFrom_FirstEntry = true
             state_EnterAnimationCompleted = true
@@ -790,7 +797,7 @@ class PlayerActivity: AppCompatActivity(){
         ButtonExit.setOnTouchListener { _, event ->
             when (event.actionMasked){
                 MotionEvent.ACTION_DOWN -> {
-                    ToolVibrate().vibrate(this@PlayerActivity)
+                    ToolVibrate().vibrate(this@PlayerActivityNeo)
                     ExitJob_upMillis = 0L
                     ExitJob_downMillis = System.currentTimeMillis()
                     ExitJob()
@@ -810,7 +817,7 @@ class PlayerActivity: AppCompatActivity(){
         //更多选项
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
-            ToolVibrate().vibrate(this@PlayerActivity)
+            ToolVibrate().vibrate(this@PlayerActivityNeo)
             if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                 return@setOnClickListener
             }
@@ -825,13 +832,13 @@ class PlayerActivity: AppCompatActivity(){
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.NoticeCard)
         noticeCard.setOnClickListener {
-            ToolVibrate().vibrate(this@PlayerActivity)
+            ToolVibrate().vibrate(this@PlayerActivityNeo)
             noticeCard.visibility = View.GONE
         }
         //按钮：暂停/继续播放
-        val buttonPause = findViewById<FrameLayout>(R.id.buttonPause)
-        buttonPause.setOnClickListener {
-            ToolVibrate().vibrate(this@PlayerActivity)
+        val ButtonPause = findViewById<ImageButton>(R.id.controller_button_playorpause)
+        ButtonPause.setOnClickListener {
+            ToolVibrate().vibrate(this@PlayerActivityNeo)
             if (player.isPlaying) {
                 scroller.stopScroll()
                 recessPlay(need_fadeOut = false)
@@ -852,11 +859,11 @@ class PlayerActivity: AppCompatActivity(){
             }
         }
         //按钮：切换横屏
-        val buttonSwitchLandscape = findViewById<FrameLayout>(R.id.buttonActualSwitchLandscape)
-        buttonSwitchLandscape.setOnTouchListener { _, event ->
+        val ButtonLandscape = findViewById<ImageButton>(R.id.controller_button_landscape)
+        ButtonLandscape.setOnTouchListener { _, event ->
             when (event.actionMasked){
                 MotionEvent.ACTION_DOWN -> {
-                    ToolVibrate().vibrate(this@PlayerActivity)
+                    ToolVibrate().vibrate(this@PlayerActivityNeo)
                     switchLandscape_upMillis = 0L
                     switchLandscape_downMillis = System.currentTimeMillis()
                     SwitchLandscapeJob()
@@ -874,9 +881,9 @@ class PlayerActivity: AppCompatActivity(){
             onTouchEvent(event)
         }
         //按钮：更多选项
-        val buttonMoreOptions = findViewById<FrameLayout>(R.id.buttonActualMoreButton)
-        buttonMoreOptions.setOnClickListener {
-            ToolVibrate().vibrate(this@PlayerActivity)
+        val ButtonMore = findViewById<ImageButton>(R.id.controller_button_more)
+        ButtonMore.setOnClickListener {
+            ToolVibrate().vibrate(this@PlayerActivityNeo)
 
             if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                 return@setOnClickListener
@@ -924,7 +931,7 @@ class PlayerActivity: AppCompatActivity(){
                 player.setPlaybackSpeed(currentSpeed * 2.0f)
                 notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
                 longPress = true
-                ToolVibrate().vibrate(this@PlayerActivity)
+                ToolVibrate().vibrate(this@PlayerActivityNeo)
                 super.onLongPress(e)
             }
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
@@ -953,7 +960,7 @@ class PlayerActivity: AppCompatActivity(){
                             notice("亮度已到上限", 1000)
                             if (!touchState_scroll_vibrated) {
                                 touchState_scroll_vibrated = true
-                                ToolVibrate().vibrate(this@PlayerActivity)
+                                ToolVibrate().vibrate(this@PlayerActivityNeo)
                             }
                         }
                     }
@@ -969,7 +976,7 @@ class PlayerActivity: AppCompatActivity(){
                         else{
                             if (!touchState_scroll_vibrated) {
                                 touchState_scroll_vibrated = true
-                                ToolVibrate().vibrate(this@PlayerActivity)
+                                ToolVibrate().vibrate(this@PlayerActivityNeo)
                             }
                             notice("亮度已到下限", 1000)
                         }
@@ -1005,7 +1012,7 @@ class PlayerActivity: AppCompatActivity(){
                                 else{
                                     if (!touchState_scroll_vibrated) {
                                         touchState_scroll_vibrated = true
-                                        ToolVibrate().vibrate(this@PlayerActivity)
+                                        ToolVibrate().vibrate(this@PlayerActivityNeo)
                                     }
                                     notice("佩戴耳机时,音量不能超过${(maxVolume*0.6).toInt()},除非使用音量键调整", 1000)
                                 }
@@ -1018,7 +1025,7 @@ class PlayerActivity: AppCompatActivity(){
                         else{
                             if (!touchState_scroll_vibrated) {
                                 touchState_scroll_vibrated = true
-                                ToolVibrate().vibrate(this@PlayerActivity)
+                                ToolVibrate().vibrate(this@PlayerActivityNeo)
                             }
                             notice("音量已到最高", 1000)
                         }
@@ -1033,7 +1040,7 @@ class PlayerActivity: AppCompatActivity(){
                         else{
                             if (!touchState_scroll_vibrated) {
                                 touchState_scroll_vibrated = true
-                                ToolVibrate().vibrate(this@PlayerActivity)
+                                ToolVibrate().vibrate(this@PlayerActivityNeo)
                             }
                             notice("音量已到最低", 1000)
                         }
@@ -1051,7 +1058,7 @@ class PlayerActivity: AppCompatActivity(){
                         //振动:仅一次
                         if (!touchState_need_exit_vibrated){
                             touchState_need_exit_vibrated = true
-                            ToolVibrate().vibrate(this@PlayerActivity)
+                            ToolVibrate().vibrate(this@PlayerActivityNeo)
                         }
                     }else{
                         touchState_need_exit = false
@@ -1085,7 +1092,7 @@ class PlayerActivity: AppCompatActivity(){
                         touchLeft = true
                     }
                     else if(finger1x > screenWidth * 0.8){
-                        state_HeadSetInserted = PlayerSingleton.getState_isHeadsetPlugged(this@PlayerActivity)
+                        state_HeadSetInserted = PlayerSingleton.getState_isHeadsetPlugged(this@PlayerActivityNeo)
                         touchRight = true
                     }
                     else{
@@ -1235,7 +1242,7 @@ class PlayerActivity: AppCompatActivity(){
                     FragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
                 }
                 "ExtractFrame" -> {
-                    val videoPath = getAbsoluteFilePath(this, MediaInfo_MediaUri)
+                    val videoPath = getFilePath(this, MediaInfo_MediaUri)
                     if (videoPath == null){
                         showCustomToast("视频绝对路径获取失败", Toast.LENGTH_SHORT, 3)
                         return@setFragmentResultListener
@@ -1305,7 +1312,7 @@ class PlayerActivity: AppCompatActivity(){
                 "SysShare" -> {
                     lifecycleScope.launch(Dispatchers.IO) {
                         delay(500)
-                        shareVideo(this@PlayerActivity, MediaInfo_MediaUri)
+                        shareVideo(this@PlayerActivityNeo, MediaInfo_MediaUri)
                     }
                 }
                 "updateCoverFrame" -> {
@@ -1362,7 +1369,7 @@ class PlayerActivity: AppCompatActivity(){
         }
 
         //表明页面状态 需要区分页面类型 flag_page_type
-        vm.state_playerWithSeekBar = false
+        vm.state_player_type = "Neo"
         //监听系统手势返回
         onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -1371,6 +1378,7 @@ class PlayerActivity: AppCompatActivity(){
         })
     //onCreate END
     }
+
 
 
     //Testing Functions
@@ -1522,6 +1530,7 @@ class PlayerActivity: AppCompatActivity(){
 
 
 
+
     //RxJava事件总线:界面端减少参与播放器单例的控制
     private var state_EventBus_Registered = false
     private fun registerEventBus(){
@@ -1642,7 +1651,7 @@ class PlayerActivity: AppCompatActivity(){
             //使用超长进度条
             if (vm.PREFS_UseLongScroller){
                 withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivity,
+                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivityNeo,
                         MediaInfo_AbsolutePath_clean,
                         vm.MediaInfo_FileName,
                         playerScrollerViewModel.thumbItems,
@@ -1658,7 +1667,7 @@ class PlayerActivity: AppCompatActivity(){
             //使用标准进度条
             else{
                 withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivity,
+                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivityNeo,
                         MediaInfo_AbsolutePath_clean,
                         vm.MediaInfo_FileName,
                         playerScrollerViewModel.thumbItems,
@@ -1695,7 +1704,7 @@ class PlayerActivity: AppCompatActivity(){
     private var MediaInfo_MediaUri = Uri.EMPTY!!
     private fun getMediaInfo(uri: Uri){
         retriever = MediaMetadataRetriever()
-        try { retriever.setDataSource(this@PlayerActivity, uri) }
+        try { retriever.setDataSource(this@PlayerActivityNeo, uri) }
         catch (_: Exception) {
             onDestroy_fromErrorExit = true
             showCustomToast("无法解码视频信息", Toast.LENGTH_SHORT, 3)
@@ -1710,7 +1719,7 @@ class PlayerActivity: AppCompatActivity(){
         val MediaInfo_MediaDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
         val MediaInfo_MediaUriString = uri.toString()
         retriever.release()
-        val MediaInfo_AbsolutePath = getAbsoluteFilePath(this@PlayerActivity, MediaInfo_MediaUri).toString()
+        val MediaInfo_AbsolutePath = getFilePath(this@PlayerActivityNeo, MediaInfo_MediaUri).toString()
         var MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name ?: "error"
         //处理值
         if (PlayerSingleton.MediaInfo_MediaType.contains("video")){
@@ -1811,7 +1820,7 @@ class PlayerActivity: AppCompatActivity(){
     //数据库预写
     private fun DataBasePreWrite(){
         lifecycleScope.launch(Dispatchers.IO) {
-            MediaItemRepo.get(this@PlayerActivity).preset_all_row_default(vm.MediaInfo_FileName)
+            MediaItemRepo.get(this@PlayerActivityNeo).preset_all_row_default(vm.MediaInfo_FileName)
         }
     }
     //关闭遮罩:输入1带淡出,输入0直接消失
@@ -2167,7 +2176,7 @@ class PlayerActivity: AppCompatActivity(){
                 notice("已开启AlwaysSeek", 3000)
             }
             lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivity).update_PREFS_AlwaysSeek(vm.MediaInfo_FileName,vm.PREFS_AlwaysSeek)
+                MediaItemRepo.get(this@PlayerActivityNeo).update_PREFS_AlwaysSeek(vm.MediaInfo_FileName,vm.PREFS_AlwaysSeek)
             }
         }
         else{
@@ -2198,7 +2207,7 @@ class PlayerActivity: AppCompatActivity(){
                 stopVideoSeek()
             }
             lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivity).update_PREFS_LinkScroll(vm.MediaInfo_FileName,vm.PREFS_LinkScroll)
+                MediaItemRepo.get(this@PlayerActivityNeo).update_PREFS_LinkScroll(vm.MediaInfo_FileName,vm.PREFS_LinkScroll)
             }
         }
         else{
@@ -2229,7 +2238,7 @@ class PlayerActivity: AppCompatActivity(){
                 notice("已开启TapJump", 3000)
             }
             lifecycleScope.launch(Dispatchers.IO) {
-                MediaItemRepo.get(this@PlayerActivity).update_PREFS_TapJump(vm.MediaInfo_FileName,vm.PREFS_TapJump)
+                MediaItemRepo.get(this@PlayerActivityNeo).update_PREFS_TapJump(vm.MediaInfo_FileName,vm.PREFS_TapJump)
             }
         }
         else{
@@ -2310,10 +2319,10 @@ class PlayerActivity: AppCompatActivity(){
         //刷新旋转屏幕按钮
         val ButtonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivity, R.color.ButtonBgClosed))
+            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBgClosed))
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivity, R.color.ButtonBg))
+            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBg))
         }
 
     }
@@ -2326,7 +2335,7 @@ class PlayerActivity: AppCompatActivity(){
     //进度条端点配置
     private fun setScrollerPadding(){
         displayMetricsLoad()
-        scroller.layoutManager = LinearLayoutManager(this@PlayerActivity, LinearLayoutManager.HORIZONTAL, false)
+        scroller.layoutManager = LinearLayoutManager(this@PlayerActivityNeo, LinearLayoutManager.HORIZONTAL, false)
         scroller.itemAnimator = null
         scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         scroller.layoutParams.width = 0
@@ -2887,7 +2896,7 @@ class PlayerActivity: AppCompatActivity(){
                     vm.controllerHided = false
                     lifecycleScope.launch{
                         delay(75)
-                        ToolVibrate().vibrate(this@PlayerActivity)
+                        ToolVibrate().vibrate(this@PlayerActivityNeo)
                     }
                 }
                 //确认退出
@@ -2913,7 +2922,7 @@ class PlayerActivity: AppCompatActivity(){
                 vm.controllerHided = false
                 lifecycleScope.launch{
                     delay(75)
-                    ToolVibrate().vibrate(this@PlayerActivity)
+                    ToolVibrate().vibrate(this@PlayerActivityNeo)
                 }
             }
             //确认退出
@@ -3038,7 +3047,7 @@ class PlayerActivity: AppCompatActivity(){
         }
     }
     //合成绝对路径
-    private fun getAbsoluteFilePath(context: Context, uri: Uri): String? {
+    private fun getFilePath(context: Context, uri: Uri): String? {
         val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
             Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
         } else {
@@ -3057,17 +3066,14 @@ class PlayerActivity: AppCompatActivity(){
 
         return absolutePath?.takeIf { File(it).exists() }
     }
-
+    //刷新按钮状态：在启动播放指令之后调用
     private fun updateButtonState(){
-        val PauseImage = findViewById<ImageView>(R.id.PauseImage)
-        val ContinueImage = findViewById<ImageView>(R.id.ContinueImage)
+        val Button = findViewById<ImageView>(R.id.controller_button_playorpause)
         if (player.isPlaying){
-            PauseImage.visibility = View.VISIBLE
-            ContinueImage.visibility = View.GONE
+            Button.setImageResource(R.drawable.ic_player_controller_pause)
         }
         else{
-            PauseImage.visibility = View.GONE
-            ContinueImage.visibility = View.VISIBLE
+            Button.setImageResource(R.drawable.ic_player_controller_play)
         }
     }
 
@@ -3427,7 +3433,7 @@ class PlayerActivity: AppCompatActivity(){
         ExitJob?.cancel()
         ExitJob = lifecycleScope.launch {
             delay(500)
-            ToolVibrate().vibrate(this@PlayerActivity)
+            ToolVibrate().vibrate(this@PlayerActivityNeo)
             EnsureExit(false)
         }
     }

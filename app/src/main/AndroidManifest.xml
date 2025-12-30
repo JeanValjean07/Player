@@ -46,7 +46,7 @@
         </activity>
 
         <!-- 播放页 -->
-        <activity android:name=".PlayerActivity"
+        <activity android:name=".PlayerActivityNeo"
             android:theme="@style/THEME_Player"
             android:label="播放器"
             android:screenOrientation="unspecified"
@@ -70,7 +70,7 @@
         </activity>
 
         <!-- 播放页(传统进度条) -->
-        <activity android:name=".PlayerActivitySeekBar"
+        <activity android:name=".PlayerActivityOro"
             android:theme="@style/THEME_Player"
             android:label="播放器:传统进度条"
             android:screenOrientation="unspecified"

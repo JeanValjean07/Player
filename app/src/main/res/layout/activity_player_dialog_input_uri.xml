@@ -1,0 +1,79 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/Background"
+    android:orientation="vertical"
+    tools:ignore="HardcodedText"
+    android:padding="24dp">
+    <!-- Dialog Title -->
+    <TextView
+        android:id="@+id/dialog_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="dialog_title"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="6dp" />
+    <!-- Dialog Description -->
+    <TextView
+        android:id="@+id/dialog_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:text="dialog_description"
+        android:gravity="center"
+        android:textSize="10sp"
+        tools:ignore="SmallSp" />
+    <!-- Dialog uri 示例 -->
+    <TextView
+        android:id="@+id/dialog_uri_example"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="4dp"
+        android:text="示例：content://media/external/video/media/114514"
+        android:gravity="center"
+        android:textSize="10sp"
+        tools:ignore="SmallSp" />
+    <!-- Dialog Input -->
+    <EditText
+        android:id="@+id/dialog_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入媒体链接"
+        android:gravity="start|center_vertical"
+        android:textSize="14sp"
+        android:inputType="textUri|textNoSuggestions"
+        android:singleLine="true"
+        android:ellipsize="none"
+        android:scrollHorizontally="true"
+        android:imeOptions="actionDone"
+        android:maxLines="1"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:scrollbars="horizontal"
+        android:fadeScrollbars="false"
+        tools:ignore="Autofill"
+        />
+    <!-- 按钮：确认 -->
+    <Button
+        android:id="@+id/dialog_button_ensure"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/ButtonBg"
+        android:textColor="@color/ButtonText"
+        android:layout_gravity="center"
+        android:text="dialog_button" />
+    <!-- 按钮：取消 -->
+    <Button
+        android:id="@+id/dialog_button_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/ButtonBgClosed"
+        android:textColor="@color/ButtonText"
+        android:layout_gravity="center"
+        android:text="dialog_button" />
+
+</LinearLayout>

@@ -1,124 +1,40 @@
 package com.suming.player
 
 import android.annotation.SuppressLint
-import android.app.Dialog
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
-import android.content.ComponentName
-import android.content.ContentResolver
-import android.content.ContentValues
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.content.SharedPreferences
-import android.content.pm.ActivityInfo
-import android.content.res.ColorStateList
-import android.content.res.Configuration
-import android.graphics.Bitmap
-import android.graphics.Bitmap.CompressFormat.JPEG
-import android.hardware.display.DisplayManager
-import android.media.AudioAttributes
-import android.media.AudioDeviceCallback
-import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.audiofx.Equalizer
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.os.Handler
-import android.os.Looper
-import android.os.Process
-import android.provider.MediaStore
-import android.provider.Settings
 import android.util.DisplayMetrics
-import android.util.Log
-import android.view.Display
-import android.view.GestureDetector
-import android.view.GestureDetector.SimpleOnGestureListener
-import android.view.KeyEvent
-import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.OrientationEventListener
-import android.view.PixelCopy
-import android.view.Surface
-import android.view.SurfaceView
-import android.view.View
-import android.view.ViewGroup
-import android.view.WindowInsets
-import android.view.WindowInsetsController
-import android.view.WindowManager
-import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.DecelerateInterpolator
-import android.view.inputmethod.InputMethodManager
-import android.widget.Button
-import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
-import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
-import androidx.core.content.IntentCompat
-import androidx.core.content.edit
-import androidx.core.graphics.createBitmap
-import androidx.core.net.toUri
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
-import androidx.media3.common.Tracks
-import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.button.MaterialButton
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
-import com.suming.player.ListManager.FragmentPlayList
-import data.DataBaseMediaItem.MediaItemRepo
 import data.DataBaseMediaItem.MediaItemSetting
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.OutputStream
-import java.math.RoundingMode
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import kotlin.math.hypot
-import kotlin.math.pow
 
 @UnstableApi
 @Suppress("unused")
-class PlayerActivitySeekBar: AppCompatActivity(){
+class PlayerActivityOro: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
     //音量配置参数
@@ -189,7 +105,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
     //视频播放状态监听器
     private var PlayerStateListener: Player.Listener? = null
     //ViewModel
-    private val vm: PlayerViewModel by viewModels { PlayerExoFactory.getInstance(application) }
+    private val vm: PlayerViewModel by viewModels()
     //视频尺寸
     private var videoSizeWidth = 0
     private var videoSizeHeight = 0
@@ -293,7 +209,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        setContentView(R.layout.activity_player_seek_bar)
+        setContentView(R.layout.activity_player_type_oro)
         //初始化部分控件
         fun lateInitItem(){
             seekBar = findViewById(R.id.seek_bar)
@@ -308,8 +224,7 @@ class PlayerActivitySeekBar: AppCompatActivity(){
             ButtonExit = findViewById(R.id.TopBarArea_ButtonExit)
         }
         lateInitItem()
-        //连接ViewModel
-        val vm = ViewModelProvider(this, PlayerExoFactory.getInstance(application))[PlayerViewModel::class.java]
+
 
         /*
         //其他预设

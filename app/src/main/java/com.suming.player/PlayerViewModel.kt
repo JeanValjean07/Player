@@ -119,8 +119,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_KeepPlayingWhenExit: Boolean = false
 
 
-
-    var state_playerWithSeekBar : Boolean = false
+    //标记播放器类型：传统Oro 或 新晋Neo
+    var state_player_type = ""
 
 
     var YaxisDestination = 800f
