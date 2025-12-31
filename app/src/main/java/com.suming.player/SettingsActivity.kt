@@ -57,8 +57,6 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseHighRefreshRate: SwitchCompat
     private lateinit var Switch_CloseFragmentGesture: SwitchCompat
     private lateinit var Switch_EnablePlayAreaMove: SwitchCompat
-    private lateinit var Switch_UsePlayerWithSeekBar: SwitchCompat
-    private lateinit var Switch_UseTestingPlayer: SwitchCompat
     private lateinit var Switch_UseSyncFrameWhenScrollerStop: SwitchCompat
     //</editor-fold>
     //开关变量和数值量
@@ -80,8 +78,7 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_SeekHandlerGap = 0L
     private var PREFS_CloseFragmentGesture = false
     private var PREFS_EnablePlayAreaMove = false
-    private var PREFS_UsePlayerWithSeekBar = false
-    private var PREFS_UseTestingPlayer = false
+    private var PREFS_UsePlayerType = 0
     private var PREFS_UseSyncFrameWhenScrollerStop = false
     //震动时间
     private var PREFS_VibrateMillis = 0L
@@ -105,62 +102,9 @@ class SettingsActivity: AppCompatActivity() {
             insets
         }
 
-        //显示版本
-        val version = packageManager.getPackageInfo(packageName, 0).versionName
-        val versionText = findViewById<TextView>(R.id.version)
-        versionText.text = "版本: $version"
-        //按钮：返回
-        val ButtonBack = findViewById<ImageButton>(R.id.buttonExit)
-        ButtonBack.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            finish()
-        }
-        //点击顶部区域回顶
-        val TopBarArea = findViewById<View>(R.id.TopBarArea)
-        TopBarArea.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            //回到顶部
-            val NestedScrollView = findViewById<NestedScrollView>(R.id.NestedScrollView)
-            NestedScrollView.smoothScrollTo(0, 0)
-        }
-        //按钮：前往项目Github仓库页
-        val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
-        ButtonGoGithub.setOnClickListener {
-            ToolVibrate().vibrate(this)
 
-            val url = "https://github.com/JeanValjean07/Player/releases"
-            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-            startActivity(intent)
-        }
-        //超链接：开放源代码许可
-        val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
-        openSourceLicense.paint.isUnderlineText = true
-        openSourceLicense.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            val isMicroG_Exist = checkMicroG()
-            if (packageNumber == 1){
-                showCustomToast("无法读取应用列表,拒绝打开此页面",Toast.LENGTH_SHORT,3)
-                return@setOnClickListener
-            }
-            if (isMicroG_Exist){
-                showCustomToast("已安装MicroG服务的设备不支持打开此页",Toast.LENGTH_SHORT,3)
-            }
-            else{
-                startActivity(Intent(this,
-                    com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java
-                ))
-            }
-        }
-        //超链接：设备信息
-        val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
-        DeviceInfoPage.paint.isUnderlineText = true
-        DeviceInfoPage.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            startActivity(Intent(this, DeviceInfoActivity::class.java))
-        }
-
-        //静态操作部分:::
         //读取设置
+        //<editor-fold desc="读取设置">
         PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         PREFS_Editor = PREFS.edit()
         if (!PREFS.contains("PREFS_CloseVideoTrack")) {
@@ -282,28 +226,78 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
         }
-        if (!PREFS.contains("PREFS_UsePlayerWithSeekBar")){
-            PREFS_Editor.putBoolean("PREFS_UsePlayerWithSeekBar", false)
-            PREFS_UsePlayerWithSeekBar = false
-        } else {
-            PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
-        }
-        if (!PREFS.contains("PREFS_UseTestingPlayer")){
-            PREFS_Editor.putBoolean("PREFS_UseTestingPlayer", false)
-            PREFS_UseTestingPlayer = false
-        } else {
-            PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
-        }
         if (!PREFS.contains("PREFS_UseSyncFrameWhenScrollerStop")){
             PREFS_Editor.putBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
             PREFS_UseSyncFrameWhenScrollerStop = false
         } else {
             PREFS_UseSyncFrameWhenScrollerStop = PREFS.getBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
         }
+        if (!PREFS.contains("PREFS_UsePlayerType")){
+            PREFS_Editor.putInt("PREFS_UsePlayerType", 0)
+            PREFS_UsePlayerType = 0
+        }else{
+            PREFS_UsePlayerType = PREFS.getInt("PREFS_UsePlayerType", 0)
+        }
         PREFS_Editor.apply()
+        //</editor-fold>
 
+
+        //显示版本
+        val version = packageManager.getPackageInfo(packageName, 0).versionName
+        val versionText = findViewById<TextView>(R.id.version)
+        versionText.text = "版本: $version"
+        //按钮：返回
+        val ButtonBack = findViewById<ImageButton>(R.id.buttonExit)
+        ButtonBack.setOnClickListener {
+            ToolVibrate().vibrate(this)
+            finish()
+        }
+        //点击顶部区域回顶
+        val TopBarArea = findViewById<View>(R.id.TopBarArea)
+        TopBarArea.setOnClickListener {
+            ToolVibrate().vibrate(this)
+            //回到顶部
+            val NestedScrollView = findViewById<NestedScrollView>(R.id.NestedScrollView)
+            NestedScrollView.smoothScrollTo(0, 0)
+        }
+        //按钮：前往项目Github仓库页
+        val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
+        ButtonGoGithub.setOnClickListener {
+            ToolVibrate().vibrate(this)
+
+            val url = "https://github.com/JeanValjean07/Player/releases"
+            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+            startActivity(intent)
+        }
+        //超链接：开放源代码许可
+        val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
+        openSourceLicense.paint.isUnderlineText = true
+        openSourceLicense.setOnClickListener {
+            ToolVibrate().vibrate(this)
+            val isMicroG_Exist = checkMicroG()
+            if (packageNumber == 1){
+                showCustomToast("无法读取应用列表,拒绝打开此页面",Toast.LENGTH_SHORT,3)
+                return@setOnClickListener
+            }
+            if (isMicroG_Exist){
+                showCustomToast("已安装MicroG服务的设备不支持打开此页",Toast.LENGTH_SHORT,3)
+            }
+            else{
+                startActivity(Intent(this,
+                    com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java
+                ))
+            }
+        }
+        //超链接：设备信息
+        val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
+        DeviceInfoPage.paint.isUnderlineText = true
+        DeviceInfoPage.setOnClickListener {
+            ToolVibrate().vibrate(this)
+            startActivity(Intent(this, DeviceInfoActivity::class.java))
+        }
 
         //开关初始化
+        //<editor-fold desc="开关初始化">
         Switch_CloseVideoTrack = findViewById(R.id.closeVideoTrack)
         Switch_SwitchPortraitWhenExit = findViewById(R.id.SwitchPortraitWhenExit)
         Switch_KeepPlayingWhenExit = findViewById(R.id.SwitchKeepPlayingWhenExit)
@@ -319,10 +313,10 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
         Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
         Switch_EnablePlayAreaMove = findViewById(R.id.EnablePlayAreaMove)
-        Switch_UsePlayerWithSeekBar = findViewById(R.id.UsePlayerWithSeekBar)
-        Switch_UseTestingPlayer = findViewById(R.id.UseTestingPlayer)
         Switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
+        //</editor-fold>
         //开关预置位
+        //<editor-fold desc="开关预置位">
         Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
         Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
         Switch_KeepPlayingWhenExit.isChecked = PREFS_KeepPlayingWhenExit
@@ -338,12 +332,11 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
         Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
         Switch_EnablePlayAreaMove.isChecked = PREFS_EnablePlayAreaMove
-        Switch_UsePlayerWithSeekBar.isChecked = PREFS_UsePlayerWithSeekBar
-        Switch_UseTestingPlayer.isChecked = PREFS_UseTestingPlayer
         Switch_UseSyncFrameWhenScrollerStop.isChecked = PREFS_UseSyncFrameWhenScrollerStop
-
+        //</editor-fold>
 
         //文本信息预写
+        setPlayerTypeText()
         val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
         if (PREFS_SeekHandlerGap == 0L) {
             currentSeekHandlerGap.text = "默认 (无寻帧间隔)"
@@ -368,8 +361,7 @@ class SettingsActivity: AppCompatActivity() {
         }
 
 
-        //动态操作部分:::
-        //开关更改操作
+        //开关更改操作注册
         Switch_CloseVideoTrack.setOnCheckedChangeListener { _, isChecked ->
             PREFS_CloseVideoTrack = isChecked
             ToolVibrate().vibrate(this)
@@ -444,19 +436,6 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_EnablePlayAreaMove = isChecked
             ToolVibrate().vibrate(this)
             PREFS_Editor.putBoolean("PREFS_EnablePlayAreaMove", isChecked).apply()
-        }
-        Switch_UsePlayerWithSeekBar.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UsePlayerWithSeekBar = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UsePlayerWithSeekBar", isChecked).apply()
-            if (PREFS_UseTestingPlayer){
-                showCustomToast("使用测试版页面已开始,此选项不会生效", Toast.LENGTH_SHORT,3)
-            }
-        }
-        Switch_UseTestingPlayer.setOnCheckedChangeListener { _, isChecked ->
-            ToolVibrate().vibrate(this)
-            PREFS_UseTestingPlayer = isChecked
-            check_PREFS_UseTestingPlayer()
         }
         Switch_UseSyncFrameWhenScrollerStop.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseSyncFrameWhenScrollerStop = isChecked
@@ -588,6 +567,29 @@ class SettingsActivity: AppCompatActivity() {
                 }
             }
         }
+        //播放页样式
+        val ButtonPlayerType = findViewById<TextView>(R.id.ButtonPlayerType)
+        ButtonPlayerType.setOnClickListener { item ->
+            ToolVibrate().vibrate(this)
+            //使用弹出菜单选择
+            val popup = PopupMenu(this, ButtonPlayerType)
+            popup.menuInflater.inflate(R.menu.activity_settings_popup_player_type, popup.menu)
+            popup.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.type_oro -> {
+                        choosePlayerType(0); true
+                    }
+                    R.id.type_neo -> {
+                        choosePlayerType(1); true
+                    }
+                    R.id.type_test -> {
+                        choosePlayerType(2); true
+                    }
+                    else -> true
+                }
+            }
+            popup.show()
+        }
 
 
     //onCreate END
@@ -595,54 +597,78 @@ class SettingsActivity: AppCompatActivity() {
 
     //Functions
     //测试版可用性检查
-    private fun turnOFF_Switch_UseTestPlayer(){
-        PREFS_UseTestingPlayer = false
-        Switch_UseTestingPlayer.isChecked = false
-        PREFS.edit { putBoolean("PREFS_UseTestingPlayer", false) }
+    private fun allowUseTestPlayer(): Boolean{
+        val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        val signingInfo = packageInfo.signingInfo
 
-    }
-    private fun turnON_Switch_UseTestPlayer(){
-        PREFS_UseTestingPlayer = true
-        PREFS.edit { putBoolean("PREFS_UseTestingPlayer", true) }
-
-    }
-    private fun check_PREFS_UseTestingPlayer(){
-
-        if (PREFS_UseTestingPlayer){
-            val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-            val signingInfo = packageInfo.signingInfo
-
-            if (signingInfo == null) {
-                showCustomToast("签名错误", Toast.LENGTH_SHORT, 3)
-                turnOFF_Switch_UseTestPlayer()
-                return
-            }
-
-            if (signingInfo.hasMultipleSigners()) {
-                showCustomToast("签名错误", Toast.LENGTH_SHORT, 3)
-                turnOFF_Switch_UseTestPlayer()
-                return
-            }
-
-            val signatures = signingInfo.signingCertificateHistory
-            for (sig in signatures) {
-                val cert = sig.toByteArray()
-                val input = ByteArrayInputStream(cert)
-                val cf = CertificateFactory.getInstance("X509")
-                val c = cf.generateCertificate(input) as X509Certificate
-                val name = c.subjectDN.name
-                if (name.contains("Android Debug")) {
-                    showCustomToast("当前程序可使用测试版界面", Toast.LENGTH_SHORT, 3)
-                    turnON_Switch_UseTestPlayer()
-                }else{
-                    showCustomToast("Release版本不能使用测试版页面", Toast.LENGTH_SHORT, 3)
-                    turnOFF_Switch_UseTestPlayer()
-                }
-            }
-        }else{
-            turnOFF_Switch_UseTestPlayer()
+        if (signingInfo == null) {
+            showCustomToast("签名错误", Toast.LENGTH_SHORT, 3)
+            return false
         }
 
+        if (signingInfo.hasMultipleSigners()) {
+            showCustomToast("签名错误", Toast.LENGTH_SHORT, 3)
+            return false
+        }
+
+        val signatures = signingInfo.signingCertificateHistory
+        for (sig in signatures) {
+            val cert = sig.toByteArray()
+            val input = ByteArrayInputStream(cert)
+            val cf = CertificateFactory.getInstance("X509")
+            val c = cf.generateCertificate(input) as X509Certificate
+            val name = c.subjectDN.name
+            if (name.contains("Android Debug")) {
+                showCustomToast("当前程序可使用测试版界面", Toast.LENGTH_SHORT, 3)
+                return true
+            }else{
+                showCustomToast("非Debug版本不能使用测试版页面", Toast.LENGTH_SHORT, 3)
+                return false
+            }
+        }
+        return true
+    }
+    //播放页样式
+    private fun choosePlayerType(playerType: Int){
+        when(playerType){
+            0 -> {
+                PREFS_UsePlayerType = 0
+                PREFS.edit { putInt("PREFS_UsePlayerType", playerType) }
+                showCustomToast("成功设置播放页样式为经典版本", Toast.LENGTH_SHORT, 3)
+                setPlayerTypeText()
+            }
+            1 -> {
+                PREFS_UsePlayerType = 1
+                PREFS.edit { putInt("PREFS_UsePlayerType", playerType) }
+                showCustomToast("成功设置播放页样式为新晋版本", Toast.LENGTH_SHORT, 3)
+                setPlayerTypeText()
+            }
+            2 -> {
+                //测试版样式
+                showCustomToast("当前包中未包含测试版界面", Toast.LENGTH_SHORT, 3)
+                return
+                /*
+                if (allowUseTestPlayer()){
+                    PREFS_UsePlayerType = 2
+                    PREFS.edit { putInt("PREFS_usePlayerType", playerType) }
+                    setPlayerTypeText()
+                }else{
+                    showCustomToast("设置失败", Toast.LENGTH_SHORT, 3)
+                    setPlayerTypeText()
+                }
+
+                 */
+            }
+        }
+
+    }
+    private fun setPlayerTypeText(){
+        val ButtonPlayerType = findViewById<TextView>(R.id.ButtonPlayerType)
+        when(PREFS_UsePlayerType){
+            0 -> ButtonPlayerType.text = "经典"
+            1 -> ButtonPlayerType.text = "新晋"
+            2 -> ButtonPlayerType.text = "测试版"
+        }
     }
     //数值设置
     @SuppressLint("SetTextI18n")

@@ -86,9 +86,8 @@ class MainActivity: AppCompatActivity() {
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_QueryNewVideoOnStart = false
-    private var PREFS_UsePlayerWithSeekBar = false
     private var PREFS_UseHighRefreshRate = true
-    private var PREFS_UseTestingPlayer = false
+    private var PREFS_UsePlayerType = 0
     private var PREFS_DisableSmallPlayer = false
     private var PREFS_AcquiesceTab = "video"
     //</editor-fold>
@@ -179,23 +178,12 @@ class MainActivity: AppCompatActivity() {
         //读取媒体库设置
         PREFS_MediaStore = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
         PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
-        if (PREFS_MediaStore.contains("PREFS_UseTestingPlayer")){
-            PREFS_UseTestingPlayer = PREFS_MediaStore.getBoolean("PREFS_UseTestingPlayer", false)
+        if (PREFS_MediaStore.contains("PREFS_UsePlayerType")){
+            PREFS_UsePlayerType = PREFS_MediaStore.getInt("PREFS_UsePlayerType", 0)
         }else{
-            PREFS_MediaStore.edit { putBoolean("PREFS_UseTestingPlayer", false).apply() }
-            PREFS_UseTestingPlayer = false
+            PREFS_MediaStore.edit { putInt("PREFS_UsePlayerType", 0).apply() }
+            PREFS_UsePlayerType = 0
         }
-        if (PREFS_MediaStore.contains("PREFS_UsePlayerWithSeekBar")){
-            PREFS_UsePlayerWithSeekBar = PREFS_MediaStore.getBoolean("PREFS_UsePlayerWithSeekBar", false)
-        }else{
-            if (Build.BRAND.equals("xiaomi",ignoreCase = true) || Build.BRAND.equals("redmi",ignoreCase = true)){
-                PREFS_MediaStore.edit { putBoolean("PREFS_UsePlayerWithSeekBar", true).apply() }
-                PREFS_UsePlayerWithSeekBar = true
-            }else{
-                PREFS_MediaStore.edit { putBoolean("PREFS_UsePlayerWithSeekBar", false).apply() }
-                PREFS_UsePlayerWithSeekBar = false
-            }
-        } //基于设备信息
         if (PREFS_MediaStore.contains("PREFS_QueryNewVideoOnStart")){
             PREFS_QueryNewVideoOnStart = PREFS_MediaStore.getBoolean("PREFS_QueryNewVideoOnStart", false)
         }else{
@@ -438,9 +426,7 @@ class MainActivity: AppCompatActivity() {
         setupEventBus()
         //刷新状态和设置
         state_MediaStore_refreshed = false
-        PREFS_UsePlayerWithSeekBar = PREFS.getBoolean("PREFS_UsePlayerWithSeekBar", false)
-        PREFS_UseTestingPlayer = PREFS.getBoolean("PREFS_UseTestingPlayer", false)
-        PREFS_DisableSmallPlayer = PREFS.getBoolean("PREFS_DisableSmallPlayer", false)
+        PREFS_UsePlayerType = PREFS.getInt("PREFS_UsePlayerType", 0)
         //判断首次启动
         if (state_onFirstStart){
             state_onFirstStart = false
@@ -467,7 +453,6 @@ class MainActivity: AppCompatActivity() {
         super.onDestroy()
 
     }
-
 
 
 
@@ -1030,58 +1015,51 @@ class MainActivity: AppCompatActivity() {
     //启动播放器
     private fun startVideoPlayer(uri: Uri){
         ToolVibrate().vibrate(this@MainActivity)
-        if (state_PlayingCard_showing){
-            if (PREFS_UsePlayerWithSeekBar){
-                val intent = Intent(this, PlayerActivityOro::class.java).apply {
-                    putExtra("uri", uri)
+        //
+        when(PREFS_UsePlayerType){
+            0 -> {
+                //构建intent
+                val intent = Intent(this, PlayerActivityOro::class.java).apply { putExtra("uri", uri) }
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                //构建可选参数
+                val options = ActivityOptionsCompat.makeCustomAnimation(
+                    this,
+                    R.anim.slide_in,
+                    R.anim.slide_dont_move
+                )
+
+                //启动活动
+                if (state_PlayingCard_showing){
+                    detailLauncher.launch(intent, options)
+
+                }else{
+                    detailLauncher.launch(intent)
                 }
-                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                    .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
 
-                val options = ActivityOptionsCompat.makeCustomAnimation(
-                    this,
-                    R.anim.slide_in,
-                    R.anim.slide_dont_move
-                )
-
-                detailLauncher.launch(intent, options)
-            }else{
-                val intent = Intent(this, PlayerActivityNeo::class.java)
-                    .apply {
-                        putExtra("uri", uri)
-                    }
-                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-
-                val options = ActivityOptionsCompat.makeCustomAnimation(
-                    this,
-                    R.anim.slide_in,
-                    R.anim.slide_dont_move
-                )
-
-                detailLauncher.launch(intent, options)
             }
-        }else{
-            if (PREFS_UsePlayerWithSeekBar){
-                val intent = Intent(this, PlayerActivityOro::class.java).apply {
-                    putExtra("uri", uri)
-                }
+            1 -> {
+                //构建intent
+                val intent = Intent(this, PlayerActivityNeo::class.java).apply { putExtra("uri", uri) }
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                    .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                detailLauncher.launch(intent)
-            }else{
-                val intent = Intent(this, PlayerActivityNeo::class.java)
-                    .apply {
-                        putExtra("uri", uri)
-                    }
-                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                //构建可选参数
+                val options = ActivityOptionsCompat.makeCustomAnimation(
+                    this,
+                    R.anim.slide_in,
+                    R.anim.slide_dont_move
+                )
 
-                detailLauncher.launch(intent)
+                //启动活动
+                if (state_PlayingCard_showing){
+                    detailLauncher.launch(intent, options)
+
+                }else{
+                    detailLauncher.launch(intent)
+                }
             }
         }
+
     }
     private fun startMusicPlayer(uri: Uri){
         Log.d("SuMing", "startMusicPlayer: $uri")
@@ -1116,37 +1094,7 @@ class MainActivity: AppCompatActivity() {
     private fun startPlayerFromSmallCard(uri: Uri){
         MediaInfo_MediaType = PlayerSingleton.getMediaInfoType()
         if (MediaInfo_MediaType == "video"){
-            if (PREFS_UsePlayerWithSeekBar){
-                    val intent = Intent(this, PlayerActivityOro::class.java).apply {
-                        putExtra("uri", uri)
-                    }
-                        .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                        .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-
-                    val options = ActivityOptionsCompat.makeCustomAnimation(
-                        this,
-                        R.anim.slide_in,
-                        R.anim.slide_dont_move
-                    )
-
-                    detailLauncher.launch(intent, options)
-                }else{
-                    val intent = Intent(this, PlayerActivityNeo::class.java)
-                        .apply {
-                            putExtra("uri", uri)
-                        }
-                        .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-
-                    val options = ActivityOptionsCompat.makeCustomAnimation(
-                        this,
-                        R.anim.slide_in,
-                        R.anim.slide_dont_move
-                    )
-
-                    detailLauncher.launch(intent, options)
-                }
+            startVideoPlayer(uri)
         }
         else if (MediaInfo_MediaType == "music"){
             showCustomToast("暂不支持打开音乐播放页面", Toast.LENGTH_SHORT, 3)

@@ -3,13 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:keepScreenOn="true"
-    android:id="@+id/RootConstraint"
+    android:id="@+id/rootConstraint"
     android:fitsSystemWindows="false"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:ignore="HardcodedText">
-
-
+    <!-- 顶部分隔线 -->
+    <View
+        android:id="@+id/TopLine"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/player_scroller_top_line"
+        app:layout_constraintTop_toTopOf="parent"
+        android:translationZ="5dp"/>
     <!-- 小型提示卡片 -->
     <androidx.cardview.widget.CardView
         android:id="@+id/NoticeCard"
@@ -108,7 +114,7 @@
 
     <!-- 控件层 -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/ControllerLayer"
+        android:id="@+id/controllerLayer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
@@ -119,7 +125,7 @@
         android:translationZ="10dp">
         <!-- 顶部横排按钮区 -->
         <LinearLayout
-            android:id="@+id/TopBarArea"
+            android:id="@+id/controller_top_bar"
             android:layout_width="match_parent"
             android:layout_height="45dp"
             android:orientation="horizontal"
@@ -161,7 +167,8 @@
         </LinearLayout>
         <!-- 底部控制卡片 -->
         <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
+            android:id="@+id/controller_bottom_card"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
@@ -169,23 +176,24 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            android:backgroundTint="@color/Background3"
             app:cardElevation="10dp"
             app:cardCornerRadius="15dp">
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-
+                <!-- 顶部：进度条下方时间显示区 -->
                 <LinearLayout
-                    android:id="@+id/controller_top"
+                    android:id="@+id/controller_container_time_line"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
+                    android:layout_height="20dp"
+                    android:layout_marginTop="15dp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toTopOf="@id/controller_bottom"
+                    app:layout_constraintBottom_toTopOf="@+id/controller_container_seekbar"
                     android:orientation="horizontal">
-                    <!-- 底部：当前时间 -->
+                    <!-- 当前时间 -->
                     <TextView
                         android:id="@+id/controller_timer_current"
                         android:layout_width="wrap_content"
@@ -193,76 +201,46 @@
                         android:layout_gravity="center"
                         android:gravity="center"
                         android:layout_marginStart="20dp"
-                        android:layout_weight="0"
                         android:text="00:00"
                         android:textColor="@color/HeadText"
                         android:textSize="11sp"
                         android:textStyle="bold"
-                        tools:ignore="SmallSp"
                         />
-                    <!-- 占位 -->
                     <View
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1"/>
-                    <!-- 上层：更多选项 -->
-                    <ImageView
-                        android:id="@+id/controller_button_more"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
+                    <!-- 总时长间 -->
+                    <TextView
+                        android:id="@+id/controller_timer_total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_gravity="center"
                         android:gravity="center"
-                        android:padding="5dp"
-                        app:layout_constraintBottom_toTopOf="@id/controller_seek_bar"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_controller_more"
-                        tools:ignore="ContentDescription"
-                        />
-                    <!-- 上层：切换横屏 -->
-                    <ImageView
-                        android:id="@+id/controller_button_landscape"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:gravity="center"
-                        android:padding="5dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_controller_landscape"
-                        tools:ignore="ContentDescription"
-                        />
-                    <!-- 上层：暂停/开始 -->
-                    <ImageView
-                        android:id="@+id/controller_button_playorpause"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:layout_marginEnd="15dp"
-                        android:gravity="center"
-                        android:padding="5dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_controller_player_pause"
-                        android:visibility="visible"
-                        tools:ignore="ContentDescription"
+                        android:layout_marginEnd="20dp"
+                        android:text="00:00"
+                        android:textColor="@color/HeadText"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
                         />
                 </LinearLayout>
-                <!-- 底部：进度条 -->
+                <!-- 顶部：进度条 -->
                 <LinearLayout
-                    android:id="@+id/controller_bottom"
+                    android:id="@+id/controller_container_seekbar"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
+                    android:layout_height="20dp"
                     android:layout_marginBottom="5dp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/controller_container_time_line"
+                    app:layout_constraintBottom_toTopOf="@+id/controller_container_buttons"
                     android:orientation="horizontal">
                     <SeekBar
                         android:id="@+id/controller_seek_bar"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginEnd="10dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginEnd="5dp"
                         android:max="1000"
                         android:progress="0"
                         android:secondaryProgress="0"
@@ -273,16 +251,122 @@
                         app:layout_constraintStart_toEndOf="@+id/controller_timer_current"
                         app:layout_constraintEnd_toStartOf="@+id/controller_timer_total"
                         app:layout_constraintBottom_toBottomOf="parent"
-                        android:layout_weight="1"
                         />
                 </LinearLayout>
+                <!-- 底部：按钮区 -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/controller_container_buttons"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/controller_container_time_line"
+                    app:layout_constraintBottom_toBottomOf="parent">
+                    <!-- 更多选项 -->
+                    <ImageButton
+                        android:id="@+id/controller_button_more"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:layout_marginEnd="15dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:padding="2dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_oro_more"
+                        tools:ignore="ContentDescription"
+                        />
+                    <!-- 切换横屏 -->
+                    <ImageButton
+                        android:id="@+id/controller_button_landscape"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        app:layout_constraintEnd_toStartOf="@+id/controller_button_more"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:padding="5dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_oro_landscape"
+                        tools:ignore="ContentDescription"
+                        />
+                    <!-- 暂停/开始 -->
+                    <ImageButton
+                        android:id="@+id/controller_button_playorpause"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:padding="8dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_oro_play"
+                        tools:ignore="ContentDescription"
+                        />
+                    <!-- 前进10秒 -->
+                    <ImageButton
+                        android:id="@+id/controller_button_forward_10"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        app:layout_constraintStart_toEndOf="@+id/controller_button_playorpause"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:padding="5dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_oro_forward_10"
+                        tools:ignore="ContentDescription"
+                        />
+                    <!-- 后退10秒 -->
+                    <ImageButton
+                        android:id="@+id/controller_button_backward_10"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        app:layout_constraintEnd_toStartOf="@+id/controller_button_playorpause"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:padding="5dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_oro_backward_10"
+                        tools:ignore="ContentDescription"
+                        />
+                    <!-- 播放列表 -->
+                    <ImageButton
+                        android:id="@+id/controller_button_play_list"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:layout_marginStart="15dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:padding="5dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_main_controller_list"
+                        tools:ignore="ContentDescription"
+                        />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
-
-
-
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

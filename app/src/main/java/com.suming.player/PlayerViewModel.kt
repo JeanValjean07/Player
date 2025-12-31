@@ -83,8 +83,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var onOrientationChanging: Boolean = false
 
 
-
-    var controllerHided = false
+    //控件隐藏/显示状态
+    var state_controllerShowing = true
 
 
     var statusBarHeight = 0

@@ -19,7 +19,6 @@ import android.graphics.RectF
 import android.hardware.display.DisplayManager
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
-import android.media.Image
 import android.media.MediaMetadataRetriever
 import android.media.audiofx.Equalizer
 import android.net.Uri
@@ -31,6 +30,7 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -51,6 +51,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -213,22 +214,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var videoSeekHandlerGap = 0L
     //进度条参数
     private var sidePadding = 0
-    private var screenWidth = 0
-    private var screenHeight = 0
 
-    //lateInitItem -控件
-    private lateinit var scroller: RecyclerView
-    private lateinit var TopBarArea : LinearLayout
-    private lateinit var ButtonArea : ConstraintLayout
-    private lateinit var NoticeCard : CardView
-    private lateinit var ButtonExit : ImageButton
-    private lateinit var TimeCard : CardView
-    private lateinit var playerView: PlayerView
-    private lateinit var timer_current : TextView
-    private lateinit var timer_duration : TextView
-    private lateinit var RootConstraint : ConstraintLayout
-    //lateInitItem -工具
-    private lateinit var DisplayMetrics: DisplayMetrics
+
     //lateInitItem -复杂工具
     private lateinit var receiver: BroadcastReceiver
     private lateinit var localBroadcastManager: LocalBroadcastManager
@@ -314,25 +301,10 @@ class PlayerActivityNeo: AppCompatActivity(){
         setContentView(R.layout.activity_player_type_neo)
         //启动播放器单例
         PlayerSingleton.startPlayerSingleton(application)
-
-
-        //初始化部分界面控件
-        fun lateInitItem(){
-            scroller = findViewById(R.id.rvThumbnails)
-            DisplayMetrics = resources.displayMetrics
-            RootConstraint = findViewById(R.id.RootConstraint)
-            NoticeCard = findViewById(R.id.NoticeCard)
-            TopBarArea = findViewById(R.id.TopBarArea)
-            ButtonArea = findViewById(R.id.ButtonArea)
-            playerView = findViewById(R.id.playerView)
-            TimeCard = findViewById(R.id.VideoCurrentTimeCard)
-            timer_current = findViewById(R.id.timer_current)
-            timer_duration = findViewById(R.id.timer_duration)
-            ButtonExit = findViewById(R.id.TopBarArea_ButtonExit)
-        }
-        lateInitItem()
         //其他预设
         preCheck()
+
+
         //提取uri并保存
         if (savedInstanceState == null){
             //区分打开方式
@@ -740,7 +712,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         onScroll_seekToMs = (onScroll_scrollPercent * vm.MediaInfo_MediaDuration).toLong()
 
                         //刷新时间显示
-                        timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
+                        controller_timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
 
                     } else {
                         return
@@ -774,6 +746,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         })
 
         //退出按钮
+        val ButtonExit = findViewById<ImageButton>(R.id.TopBarArea_ButtonExit)
         ButtonExit.setOnTouchListener { _, event ->
             when (event.actionMasked){
                 MotionEvent.ACTION_DOWN -> {
@@ -1064,14 +1037,14 @@ class PlayerActivityNeo: AppCompatActivity(){
                     finger1x = event.x
                     finger1y = event.y
                     //屏蔽纵向误触区域
-                    if (finger1y < screenHeight * 0.2 || finger1y > screenHeight * 0.95){
+                    if (finger1y < DisplayMetric_ScreenHeight * 0.2 || finger1y > DisplayMetric_ScreenHeight * 0.95){
                         return@setOnTouchListener false
                     }
                     //分割横向功能区:初步信息获取
-                    if (finger1x < screenWidth * 0.2) {
+                    if (finger1x < DisplayMetric_ScreenWidth * 0.2) {
                         touchLeft = true
                     }
-                    else if(finger1x > screenWidth * 0.8){
+                    else if(finger1x > DisplayMetric_ScreenWidth * 0.8){
                         state_HeadSetInserted = PlayerSingleton.getState_isHeadsetPlugged(this@PlayerActivityNeo)
                         touchRight = true
                     }
@@ -1600,119 +1573,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
-    //刷新进度条
-    private fun updateScrollerAdapter(){
-        lifecycleScope.launch(Dispatchers.IO) {
-            //获取ViewModel
-            val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
-            //预先规划文件夹结构并创建 + 基于文件名哈希区分
-            val SubDir_ThisMedia = File(cacheDir, "Media/${vm.MediaInfo_FileName.hashCode()}/scroller")
-            if (!SubDir_ThisMedia.exists()){
-                SubDir_ThisMedia.mkdirs()
-            }
-            //传入参数预处理
-            if (ScrollerInfo_EachPicDuration > 1000){
-                vm.PREFS_GenerateThumbSYNC = true
-            }
-            //进度条绘制参数计算
-            //使用超长进度条
-            if (vm.PREFS_UseLongScroller) {
-                ScrollerInfo_EachPicWidth = (47 * DisplayMetrics.density).toInt()
-                if (vm.MediaInfo_MediaDuration > 1_0000_000L) {
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 500.0).toInt()
-                    ScrollerInfo_PicNumber = 500
-                }
-                else if (vm.MediaInfo_MediaDuration > 7500_000L) {
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 400.0).toInt()
-                    ScrollerInfo_PicNumber = 400
-                }
-                else if (vm.MediaInfo_MediaDuration > 5000_000L) {
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 300.0).toInt()
-                    ScrollerInfo_PicNumber = 300
-                }
-                else if (vm.MediaInfo_MediaDuration > 500_000L) {
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 200.0).toInt()
-                    ScrollerInfo_PicNumber = 200
-                }
-                else {
-                    ScrollerInfo_EachPicDuration = 1000
-                    ScrollerInfo_PicNumber = min((max((vm.MediaInfo_MediaDuration / 1000).toInt(), 1)), 500)
-                }
-            }
-            //使用普通进度条
-            else if (vm.MediaInfo_MediaDuration / 1000 >= ScrollerInfo_MaxPicNumber) {
-                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration.div(100) * 100).toInt() / ScrollerInfo_MaxPicNumber
-                ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
-            } else {
-                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                ScrollerInfo_PicNumber = (vm.MediaInfo_MediaDuration / 1000).toInt() + 1
-                ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration.div(100) * 100).toInt() / ScrollerInfo_PicNumber
-            }
 
-            //移除查询参数
-            val MediaInfo_AbsolutePath_clean = vm.MediaInfo_AbsolutePath.substringBefore("?")
-
-
-            //进度条边界设置
-            withContext(Dispatchers.Main){
-                setScrollerPadding()
-            }
-
-
-            //绑定Adapter
-            //使用超长进度条
-            if (vm.PREFS_UseLongScroller){
-                withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivityNeo,
-                        MediaInfo_AbsolutePath_clean,
-                        vm.MediaInfo_FileName,
-                        playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
-                        vm.PREFS_GenerateThumbSYNC,
-                        scroller,
-                        playerScrollerViewModel
-                    )
-                }
-            }
-            //使用标准进度条
-            else{
-                withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivityNeo,
-                        MediaInfo_AbsolutePath_clean,
-                        vm.MediaInfo_FileName,
-                        playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
-                        vm.PREFS_GenerateThumbSYNC,
-                        scroller,
-                        playerScrollerViewModel
-                    )
-                }
-            }
-
-
-            //开启被控
-            fun startSyncScrollerGapControl(){
-                syncScrollRunnableGap = 0L
-                lifecycleScope.launch {
-                    delay(3000)
-                    syncScrollRunnableGap = ((vm.MediaInfo_MediaDuration / 1000) * (1000.0 / 3600)).toLong()
-                    if (vm.PREFS_UseLongScroller){
-                        syncScrollRunnableGap = 10L
-                    }
-                }
-            }
-            startSyncScrollerGapControl()
-            startScrollerSync()
-            delay(200)
-            startVideoTimeSync()
-
-        }
-    }
     //读取媒体信息：uri作为唯一key
     private var MediaInfo_MediaUri = Uri.EMPTY!!
     private fun getMediaInfo(uri: Uri){
@@ -1902,8 +1763,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                     else if (vm.currentOrientation == 1) {
                         //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
                         if (vm.OrientationValue == 2) {
-                            //按钮避让:横排按钮区&更多选项按钮
-                            setControllerLayerPadding("right")
                             //更改状态并发起旋转
                             vm.currentOrientation = 2
                             vm.LastLandscapeOrientation = 2
@@ -1922,8 +1781,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                     else if (vm.currentOrientation == 2) {
                         //从 反向横屏 转动到 正向横屏 ORIENTATION_LANDSCAPE
                         if (vm.OrientationValue == 1) {
-                            //按钮避让时间框&退出按钮
-                            setControllerLayerPadding("left")
                             //更改状态并发起旋转
                             vm.currentOrientation = 1
                             vm.LastLandscapeOrientation = 1
@@ -1944,15 +1801,11 @@ class PlayerActivityNeo: AppCompatActivity(){
                     if (!vm.FromManualPortrait) {
                         //从 反向横屏 转动到 正向横屏 ORIENTATION_REVERSE_LANDSCAPE
                         if (vm.OrientationValue == 1) {
-                            //按钮避让时间框&退出按钮
-                            setControllerLayerPadding("left")
                             //更改状态并发起旋转
                             setOrientation_LANDSCAPE()
                         }
                         //从 正向横屏 转动到 反向横屏 ORIENTATION_REVERSE_LANDSCAPE
                         else if (vm.OrientationValue == 2) {
-                            //按钮避让:横排按钮区&更多选项按钮
-                            setControllerLayerPadding("right")
                             //更改状态并发起旋转
                             setOrientation_REVERSE_LANDSCAPE()
                         }
@@ -2088,39 +1941,16 @@ class PlayerActivityNeo: AppCompatActivity(){
         super.onConfigurationChanged(newConfig)
         //横屏
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            //横屏时隐藏状态栏
-            setStatusBarParams()
-            //控件
-            val displayManager = this.getSystemService(DISPLAY_SERVICE) as DisplayManager
-            val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
-            val rotation = display?.rotation
-            if (rotation == Surface.ROTATION_90) {
-                setControllerLayerPadding("left")
-            } //正向横屏
-            else if (rotation == Surface.ROTATION_270) {
-                setControllerLayerPadding("right")
-            } //反向横屏
-            else{
-                setControllerLayerPadding("left")
-            } //其他
-            //进度条端点
-            setScrollerPadding()
-            //通知卡片
-            setNoticeCardPosition("landscape")
+            //更新界面显示
+            updateScreenParameters()
             //启动隐藏控件倒计时
             startIdleTimer()
 
         }
         //竖屏
         else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            //取消隐藏状态栏
-            setStatusBarParams()
-            //进度条端点
-            setScrollerPadding()
-            //控件
-            setControllerLayerPadding("recover")
-            //通知卡片
-            setNoticeCardPosition("portrait")
+            //更新界面显示
+            updateScreenParameters()
 
         }
     }
@@ -2164,14 +1994,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         vm.BrightnessChanged = false
 
         showCustomToast("已解除亮度控制,现在您可以使用系统亮度控制了", Toast.LENGTH_SHORT, 3)
-    }
-    //通知卡片位置设置:接收px值,需把dp转px
-    private fun setNoticeCardPosition(type_portrait_or_landscape: String){
-        if (type_portrait_or_landscape == "landscape"){
-            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(5f))
-        }else if (type_portrait_or_landscape == "portrait") {
-            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(100f))
-        }
     }
     //dp转px
     private fun dp2px(dpValue: Float): Int {
@@ -2268,151 +2090,10 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //刷新视频总长度
     private fun updateTimeCard(){
-        timer_duration.text = FormatTime_onlyNum(vm.MediaInfo_MediaDuration.toLong())
+        controller_timer_total.text = FormatTime_onlyNum(vm.MediaInfo_MediaDuration.toLong())
     }
-    //状态栏配置
-    @Suppress("DEPRECATION")
-    private fun setStatusBarParams(){
-        //竖屏
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            //控件层参数
-            val controllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
-            ViewCompat.setFitsSystemWindows(controllerLayer, true)
-            controllerLayer.requestLayout()
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
-                    val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
-                    controllerLayer.updatePadding(top = systemBars.top)
-
-                    WindowInsetsCompat.CONSUMED }
-                window.decorView.post { window.insetsController?.let { controller ->
-                    controller.show(WindowInsets.Type.statusBars())
-                    controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_DEFAULT
-                } }
-                //三星专用:显示到挖空区域
-                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            } else {
-                window.decorView.systemUiVisibility = (
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        )
-            }
-        }
-        //横屏
-        else{
-            //控件层参数
-            val controllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
-            ViewCompat.setFitsSystemWindows(controllerLayer, false)
-            controllerLayer.requestLayout()
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
-                    val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-
-                    controllerLayer.updatePadding(top = systemBars.top)
-
-                    WindowInsetsCompat.CONSUMED }
-                window.decorView.post { window.insetsController?.let { controller ->
-                    controller.hide(WindowInsets.Type.statusBars())
-                    controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                } }
-                //三星专用:显示到挖空区域
-                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            } else {
-                window.decorView.systemUiVisibility = (
-                        View.SYSTEM_UI_FLAG_FULLSCREEN
-                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        )
-            }
-        }
-
-        //刷新旋转屏幕按钮
-        val ButtonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBgClosed))
-        }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBg))
-        }
-
-    }
-    //屏幕尺寸配置
-    private fun displayMetricsLoad(){
-        val displayMetrics = resources.displayMetrics
-        screenWidth = displayMetrics.widthPixels
-        screenHeight = displayMetrics.heightPixels
-    }
-    //进度条端点配置
-    private fun setScrollerPadding(){
-        displayMetricsLoad()
-        scroller.layoutManager = LinearLayoutManager(this@PlayerActivityNeo, LinearLayoutManager.HORIZONTAL, false)
-        scroller.itemAnimator = null
-        scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        scroller.layoutParams.width = 0
-        sidePadding = screenWidth / 2
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-        }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            var scrollerMarginType: Int
-            //华为
-            if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor") {
-                scrollerMarginType = 2
-                scroller.setPadding(
-                    sidePadding + vm.statusBarHeight / 2,
-                    0,
-                    sidePadding + vm.statusBarHeight / 2 - 1,
-                    0
-                )
-            }
-            //三星
-            else if (Build.BRAND == "samsung") {
-                scrollerMarginType = 1
-                scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-            }
-            //其他机型
-            else {
-                scrollerMarginType = 1
-                scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-            }
-            //超长进度条
-            if (vm.PREFS_UseCompatScroller) {
-                if (scrollerMarginType == 2) {
-                    scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-                }
-                else {
-                    scroller.setPadding(sidePadding + vm.statusBarHeight / 2, 0, sidePadding + vm.statusBarHeight / 2 - 1, 0)
-                }
-            }
-        }
-
-        scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
-        stopScrollerSync()
-        startScrollerSync()
-    }
-    //控件层移动
-    private fun setControllerLayerPadding(flag_dodge_which_side: String){
-        if (flag_dodge_which_side == "left"){
-            (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
-            (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (0)
-            (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
-            (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (0)
-        }
-        else if (flag_dodge_which_side == "right"){
-            (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
-            (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (0)
-            (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
-            (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (0)
-        }else if (flag_dodge_which_side == "recover"){
-            (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (0)
-            (ButtonArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (0)
-            (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (0)
-            (TopBarArea.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (0)
-        }
-    }
     //清除进度条截图
     private fun clearMiniature(){
         File(filesDir, "miniature/${vm.MediaInfo_FileName.hashCode()}/scroller").deleteRecursively()
@@ -2648,96 +2329,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             setControllerInvisible()
         }
     }
-    //控件隐藏和显示
-    private fun setControllerInvisibleNoAnimation() {
-        //状态标记变更
-        widgetsShowing = false
-        vm.controllerHided = true
-        //被控控件控制
-        stopScrollerSync()
-        stopVideoTimeSync()
-        scroller.stopScroll()
-        //显示控制
-        //<editor-fold desc="显示控制(隐藏)">
-        val ControllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
-        ControllerLayer.visibility = View.GONE
-        //</editor-fold>
-        setBackgroundInvisible()
-    }
-    private fun setControllerInvisible() {
-        //状态标记变更
-        widgetsShowing = false
-        vm.controllerHided = true
-        //被控控件控制
-        stopScrollerSync()
-        stopVideoTimeSync()
-        scroller.stopScroll()
-        //显示控制
-        //<editor-fold desc="显示控制(隐藏)">
-        val ControllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
-        ControllerLayer.animate().alpha(0f).setDuration(100)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .withEndAction { ControllerLayer.visibility = View.GONE }
-            .start()
-        //</editor-fold>
-        setBackgroundInvisible()
-    }
-    private fun setControllerVisible() {
-        //状态标记变更
-        widgetsShowing = true
-        vm.controllerHided = false
-        //被控控件控制
-        startScrollerSync()
-        startVideoTimeSync()
-        //显示控制
-        //<editor-fold desc="显示控制(显示)">
-        val ControllerLayer = findViewById<ConstraintLayout>(R.id.ControllerLayer)
-        ControllerLayer.visibility = View.VISIBLE
-        ControllerLayer.animate().alpha(1f).setDuration(300)
-            .setInterpolator(AccelerateDecelerateInterpolator())
-            .start()
-        //</editor-fold>
-        setBackgroundVisible()
-    }
-    private fun setBackgroundVisible(){
-        val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
-        if (vm.PREFS_UseBlackBackground){
-            playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-        }else{
-            playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
-        }
-    }
-    private fun setBackgroundInvisible(){
-        val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
-        playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-    }
-    private fun changeBackgroundColor(){
-        if (widgetsShowing){
-            setControllerInvisible()
-        }else{
-            setControllerVisible()
-        }
-    }
-    private fun setPageToDark(){
-        val playerViewContainer = findViewById<FrameLayout>(R.id.playerContainer)
-        playerViewContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-
-        val cover = findViewById<LinearLayout>(R.id.cover)
-        cover.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-
-        val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-        val scroller_area = findViewById<View>(R.id.scroller_area)
-
-        recyclerView.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
-        scroller_area.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
-
-        val top_line = findViewById<View>(R.id.player_scroller_top_line)
-        val middle_line = findViewById<View>(R.id.player_scroller_center_line)
-        top_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.player_scroller_top_line_black))
-        middle_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
-
-
-    }  //该函数需要区分页面类型 flag_page_type
     //启动和关闭小窗
     private var state_FromFloatingWindow = false
     private fun startFloatingWindow() {
@@ -2775,47 +2366,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         state_FromFloatingWindow = false
         stopService(Intent(applicationContext, FloatingWindowService::class.java))
     }
-    //设置状态栏样式:横屏时隐藏状态栏,包含通知卡片设置
-    @Suppress("DEPRECATION")
-    private fun AppBarSetting() {
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            //横屏时隐藏状态栏
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, _ -> WindowInsetsCompat.CONSUMED }
-                window.decorView.post { window.insetsController?.let { controller ->
-                        controller.hide(WindowInsets.Type.statusBars())
-                        controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    } }
-                //三星专用:显示到挖空区域
-                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            } else {
-                    window.decorView.systemUiVisibility = (
-                            View.SYSTEM_UI_FLAG_FULLSCREEN
-                                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                            )
-                }
 
-            state_EnterAnimationCompleted = true
-
-            //控件位置动态调整
-            val displayManager = this.getSystemService(DISPLAY_SERVICE) as DisplayManager
-            val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
-            val rotation = display?.rotation
-            //控件位置动态调整:正向横屏
-            if (rotation == Surface.ROTATION_90) {
-                setControllerLayerPadding("left")
-            }
-            //控件位置动态调整:反向横屏
-            else if (rotation == Surface.ROTATION_270) {
-                setControllerLayerPadding("right")
-            }
-
-        }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setNoticeCardPosition("portrait")
-        }
-    }
     //切换横屏
     private fun ButtonChangeOrientation(flag_short_or_long: String){
         //自动旋转关闭
@@ -2903,10 +2454,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                 setOrientation_PORTRAIT()
             }
             else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-                if (vm.controllerHided){
+                if (!vm.state_controllerShowing){
                     notice("再按一次退出",2000)
                     setControllerVisible()
-                    vm.controllerHided = false
+                    vm.state_controllerShowing = true
                     lifecycleScope.launch{
                         delay(75)
                         ToolVibrate().vibrate(this@PlayerActivityNeo)
@@ -2929,10 +2480,10 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
         //横屏可直接退出
         else{
-            if (vm.controllerHided){
+            if (!vm.state_controllerShowing){
                 notice("再按一次退出",2000)
                 setControllerVisible()
-                vm.controllerHided = false
+                vm.state_controllerShowing = true
                 lifecycleScope.launch{
                     delay(75)
                     ToolVibrate().vibrate(this@PlayerActivityNeo)
@@ -3083,28 +2634,496 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun updateButtonState(){
         val Button = findViewById<ImageView>(R.id.controller_button_playorpause)
         if (player.isPlaying){
-            Button.setImageResource(R.drawable.ic_player_controller_pause)
+            Button.setImageResource(R.drawable.ic_controller_neo_pause)
         }
         else{
-            Button.setImageResource(R.drawable.ic_player_controller_play)
+            Button.setImageResource(R.drawable.ic_controller_neo_play)
         }
     }
 
+    //显示相关函数
+    //界面控件
+    //<editor-fold desc="界面控件">
+    //经典播放页专属
+    private lateinit var seekBar: SeekBar
+    private lateinit var controller_bottom_card : CardView
+    //新晋播放页专属
+    private lateinit var scroller : RecyclerView
+    private lateinit var controller_bottom_constraint : ConstraintLayout
+    private lateinit var controller_timer_card : CardView //当前时间卡片
+    //通用
+    private lateinit var rootConstraint : ConstraintLayout //根约束布局
+    private lateinit var controllerLayer : ConstraintLayout //控件层
+    private lateinit var controller_top_bar : LinearLayout //顶部按钮区域
+    private lateinit var controller_timer_current : TextView //当前时间
+    private lateinit var controller_timer_total : TextView //总时间
+    private lateinit var NoticeCard : CardView //通知胶囊卡片
+    private lateinit var playerView: PlayerView //播放区域
+    //</editor-fold>
+    //显示相关函数
+    //<editor-fold desc="显示相关函数">
+    //刷新进度条
+    private fun updateScrollerAdapter(){
+        lifecycleScope.launch(Dispatchers.IO) {
+            //获取ViewModel
+            val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
+            //预先规划文件夹结构并创建 + 基于文件名哈希区分
+            val SubDir_ThisMedia = File(cacheDir, "Media/${vm.MediaInfo_FileName.hashCode()}/scroller")
+            if (!SubDir_ThisMedia.exists()){
+                SubDir_ThisMedia.mkdirs()
+            }
+            //传入参数预处理
+            if (ScrollerInfo_EachPicDuration > 1000){
+                vm.PREFS_GenerateThumbSYNC = true
+            }
+            //进度条绘制参数计算
+            //使用超长进度条
+            if (vm.PREFS_UseLongScroller) {
+                ScrollerInfo_EachPicWidth = (47 * DisplayMetrics.density).toInt()
+                if (vm.MediaInfo_MediaDuration > 1_0000_000L) {
+                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 500.0).toInt()
+                    ScrollerInfo_PicNumber = 500
+                }
+                else if (vm.MediaInfo_MediaDuration > 7500_000L) {
+                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 400.0).toInt()
+                    ScrollerInfo_PicNumber = 400
+                }
+                else if (vm.MediaInfo_MediaDuration > 5000_000L) {
+                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 300.0).toInt()
+                    ScrollerInfo_PicNumber = 300
+                }
+                else if (vm.MediaInfo_MediaDuration > 500_000L) {
+                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 200.0).toInt()
+                    ScrollerInfo_PicNumber = 200
+                }
+                else {
+                    ScrollerInfo_EachPicDuration = 1000
+                    ScrollerInfo_PicNumber = min((max((vm.MediaInfo_MediaDuration / 1000).toInt(), 1)), 500)
+                }
+            }
+            //使用普通进度条
+            else if (vm.MediaInfo_MediaDuration / 1000 >= ScrollerInfo_MaxPicNumber) {
+                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
+                ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration.div(100) * 100).toInt() / ScrollerInfo_MaxPicNumber
+                ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
+            } else {
+                ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
+                ScrollerInfo_PicNumber = (vm.MediaInfo_MediaDuration / 1000).toInt() + 1
+                ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration.div(100) * 100).toInt() / ScrollerInfo_PicNumber
+            }
+
+            //移除查询参数
+            val MediaInfo_AbsolutePath_clean = vm.MediaInfo_AbsolutePath.substringBefore("?")
+
+
+            //进度条边界设置
+            withContext(Dispatchers.Main){
+                setScrollerPadding()
+            }
+
+
+            //绑定Adapter
+            //使用超长进度条
+            if (vm.PREFS_UseLongScroller){
+                withContext(Dispatchers.Main) {
+                    scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivityNeo,
+                        MediaInfo_AbsolutePath_clean,
+                        vm.MediaInfo_FileName,
+                        playerScrollerViewModel.thumbItems,
+                        ScrollerInfo_EachPicWidth,
+                        ScrollerInfo_PicNumber,
+                        ScrollerInfo_EachPicDuration,
+                        vm.PREFS_GenerateThumbSYNC,
+                        scroller,
+                        playerScrollerViewModel
+                    )
+                }
+            }
+            //使用标准进度条
+            else{
+                withContext(Dispatchers.Main) {
+                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivityNeo,
+                        MediaInfo_AbsolutePath_clean,
+                        vm.MediaInfo_FileName,
+                        playerScrollerViewModel.thumbItems,
+                        ScrollerInfo_EachPicWidth,
+                        ScrollerInfo_PicNumber,
+                        ScrollerInfo_EachPicDuration,
+                        vm.PREFS_GenerateThumbSYNC,
+                        scroller,
+                        playerScrollerViewModel
+                    )
+                }
+            }
+
+            //开启被控
+            fun startSyncScrollerGapControl(){
+                syncScrollRunnableGap = 0L
+                lifecycleScope.launch {
+                    delay(3000)
+                    syncScrollRunnableGap = ((vm.MediaInfo_MediaDuration / 1000) * (1000.0 / 3600)).toLong()
+                    if (vm.PREFS_UseLongScroller){
+                        syncScrollRunnableGap = 10L
+                    }
+                }
+            }
+            startSyncScrollerGapControl()
+            startScrollerSync()
+            delay(200)
+            startVideoTimeSync()
+
+        }
+    }
+    //控件隐藏和显示
+    private fun setControllerInvisibleNoAnimation() {
+        //状态标记变更
+        vm.state_controllerShowing = false
+
+        //停止被控控件控制
+        stopVideoTimeSync()
+        //仅在新晋播放页使用
+        stopScrollerSync()
+        scroller.stopScroll()
+        //仅在传统播放页使用
+        //stopSeekBarSync()
+
+        //隐藏控件并设置背景为黑色
+        controllerLayer.visibility = View.GONE
+        setBackgroundInvisible()
+    }
+    private fun setControllerInvisible() {
+        //状态标记变更
+        vm.state_controllerShowing = false
+
+        //停止被控控件控制
+        stopVideoTimeSync()
+        //仅在新晋播放页使用
+        stopScrollerSync()
+        scroller.stopScroll()
+        //仅在传统播放页使用
+        //stopSeekBarSync()
+
+        //隐藏控件并设置背景为黑色
+        setBackgroundInvisible()
+        controllerLayer.animate().alpha(0f).setDuration(100)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .withEndAction { controllerLayer.visibility = View.GONE }
+            .start()
+
+
+    }
+    private fun setControllerVisible() {
+        //状态标记变更
+        vm.state_controllerShowing = true
+
+        //启动被控控件控制
+        startVideoTimeSync()
+        //仅在新晋播放页使用
+        startScrollerSync()
+        //仅在传统播放页使用
+        //startSeekBarSync()
+
+        //隐藏控件并设置背景为有色
+        setBackgroundVisible()
+        controllerLayer.visibility = View.VISIBLE
+        controllerLayer.animate().alpha(1f).setDuration(300)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .start()
+
+    }
+    private fun setBackgroundVisible(){
+        val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
+        if (vm.PREFS_UseBlackBackground){
+            playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
+        }else{
+            playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
+        }
+    }
+    private fun setBackgroundInvisible(){
+        val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
+        playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
+    }
+    private fun changeBackgroundColor(){
+        if (vm.state_controllerShowing){
+            setControllerInvisible()
+        }else{
+            setControllerVisible()
+        }
+    }
+    private fun setPageToDark(){
+        val playerViewContainer = findViewById<FrameLayout>(R.id.playerContainer)
+        val cover = findViewById<LinearLayout>(R.id.cover)
+        val top_line = findViewById<View>(R.id.controller_scroller_top_line)
+        val middle_line = findViewById<View>(R.id.player_scroller_center_line)
+
+        playerViewContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
+        cover.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
+        scroller.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
+        top_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.player_scroller_top_line_black))
+        middle_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
+    }
+    //进度条端点配置:仅在新晋播放页使用
+    private fun setScrollerPadding(){
+
+        scroller.layoutManager = LinearLayoutManager(this@PlayerActivityNeo, LinearLayoutManager.HORIZONTAL, false)
+        scroller.itemAnimator = null
+        scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        scroller.layoutParams.width = 0
+        sidePadding = DisplayMetric_ScreenWidth / 2
+
+        //竖屏
+        if (state_screen_orientation == 0) {
+            scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
+        }
+        //横屏
+        else if (state_screen_orientation == 1) {
+            var scrollerMarginType: Int
+            //华为
+            if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor") {
+                scrollerMarginType = 2
+                scroller.setPadding(
+                    sidePadding + vm.statusBarHeight / 2,
+                    0,
+                    sidePadding + vm.statusBarHeight / 2 - 1,
+                    0
+                )
+            }
+            //三星
+            else if (Build.BRAND == "samsung") {
+                scrollerMarginType = 1
+                scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
+            }
+            //其他机型
+            else {
+                scrollerMarginType = 1
+                scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
+            }
+            //超长进度条
+            if (vm.PREFS_UseCompatScroller) {
+                if (scrollerMarginType == 2) {
+                    scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
+                }
+                else {
+                    scroller.setPadding(sidePadding + vm.statusBarHeight / 2, 0, sidePadding + vm.statusBarHeight / 2 - 1, 0)
+                }
+            }
+        }
+
+        scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
+        stopScrollerSync()
+        startScrollerSync()
+
+    }
+    //状态栏配置
+    @Suppress("DEPRECATION")
+    private fun setStatusBarParams(){
+        //横屏
+        if (state_screen_orientation == 1){
+            //控件层参数
+            ViewCompat.setFitsSystemWindows(controllerLayer, false)
+            controllerLayer.requestLayout()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
+                    val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+                    controllerLayer.updatePadding(top = systemBars.top)
+
+                    WindowInsetsCompat.CONSUMED }
+                window.decorView.post { window.insetsController?.let { controller ->
+                    controller.hide(WindowInsets.Type.statusBars())
+                    controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                } }
+                //三星专用:显示到挖空区域
+                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            } else {
+                window.decorView.systemUiVisibility = (
+                        View.SYSTEM_UI_FLAG_FULLSCREEN
+                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        )
+            }
+        }
+        //竖屏
+        else if (state_screen_orientation == 0) {
+            //控件层参数
+            ViewCompat.setFitsSystemWindows(controllerLayer, true)
+            controllerLayer.requestLayout()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
+                    val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+                    controllerLayer.updatePadding(top = systemBars.top)
+
+                    WindowInsetsCompat.CONSUMED }
+                window.decorView.post { window.insetsController?.let { controller ->
+                    controller.show(WindowInsets.Type.statusBars())
+                    controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_DEFAULT
+                } }
+                //三星专用:显示到挖空区域
+                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            } else {
+                window.decorView.systemUiVisibility = (
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        )
+            }
+        }
+    }
+    //刷新横屏按钮
+    private fun updateLandscapeButton(){
+        if (state_playerType == 0) return
+
+        val ButtonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBgClosed))
+        }
+        else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBg))
+        }
+
+    }
+    //通知卡片位置设置
+    private fun setNoticeCardPosition(){
+        //横屏
+        if (state_screen_orientation == 1) {
+            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(5f))
+        }
+        //竖屏
+        else if (state_screen_orientation == 0) {
+            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(100f))
+        }
+    }
+    //调整控件位置
+    private fun setControllerPosition(){
+        //横屏
+        if (state_screen_orientation == 1) {
+            //控件位置动态调整
+            val displayManager = this.getSystemService(DISPLAY_SERVICE) as DisplayManager
+            val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
+            val rotation = display?.rotation
+            //正向横屏
+            if (rotation == Surface.ROTATION_90) {
+                when (state_playerType) {
+                    //经典播放页
+                    0 -> {
+                        (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
+                        (controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight + 50)
+                    }
+                    //新晋播放页
+                    1 -> {
+                        (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
+                        (controller_timer_card.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
+                    }
+                    //错误直接退出
+                    else -> {
+                        showCustomToast("播放器样式参数错误：既不是oro也不是neo", Toast.LENGTH_SHORT, 3)
+                        finish()
+                    }
+                }
+            }
+            //反向横屏
+            else if (rotation == Surface.ROTATION_270) {
+                //经典播放页
+                if (state_playerType == 0){
+                    (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
+                    (controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight + 50)
+                }
+                //新晋播放页
+                else if (state_playerType == 1){
+                    (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
+                    (controller_timer_card.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
+                }
+                //错误直接退出
+                else{
+                    showCustomToast("播放器样式参数错误：既不是oro也不是neo", Toast.LENGTH_SHORT, 3)
+                    finish()
+                }
+            }
+        }
+        //竖屏重置
+        else if (state_screen_orientation == 0) {
+            //经典播放页
+            if (state_playerType == 0){
+                (controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (dp2px(10f))
+                (controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (dp2px(10f))
+                (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = 0
+                (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = 0
+            }
+            //新晋播放页
+            else if (state_playerType == 1){
+                (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = 0
+                (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = 0
+            }
+        }
+    }
+    //屏幕尺寸和方向记录
+    private lateinit var DisplayMetrics: DisplayMetrics
+    private var DisplayMetric_ScreenWidth = 0
+    private var DisplayMetric_ScreenHeight = 0
+    private var state_screen_orientation = 0  //0:竖屏 1:横屏
+    private fun displayMetricsLoad(){
+        //记录屏幕宽高
+        DisplayMetrics = resources.displayMetrics
+        DisplayMetric_ScreenWidth = DisplayMetrics.widthPixels
+        DisplayMetric_ScreenHeight = DisplayMetrics.heightPixels
+        //屏幕方向记录
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) { state_screen_orientation = 1 }
+        else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { state_screen_orientation = 0 }
+    }
+    //初始化界面控件 + 界面参数读取 + 控件位移
+    private var state_playerType = 1  //0:传统oro 1:新晋neo
+    private fun updateScreenParameters(){
+        //屏幕尺寸和方向记录
+        displayMetricsLoad()
+        //状态栏设置
+        setStatusBarParams()
+        //调整控件位置
+        setControllerPosition()
+        //通知卡片位置
+        setNoticeCardPosition()
+        //恢复隐藏控件状态
+        if (!vm.state_controllerShowing){ setControllerInvisibleNoAnimation() }
+        //仅在新晋播放页使用
+        if (state_playerType == 1){
+            //刷新横屏按钮(经典页面自动跳过)
+            updateLandscapeButton()
+            //设定进度条边界
+            setScrollerPadding()
+        }
+
+    }
+    //</editor-fold>
+    //初始化
     private fun preCheck(){
+        //初始化部分界面控件
+        fun initElement(){
+            //经典播放页专属
+            //seekBar = findViewById(R.id.controller_seek_bar)
+            //controller_bottom_card = findViewById(R.id.controller_bottom_card)
+            //新晋播放页专属
+            scroller = findViewById(R.id.controller_scroller_recyclerView) //滚动条
+            controller_bottom_constraint = findViewById(R.id.controller_bottom_constraint) //底部约束布局
+            controller_timer_card = findViewById(R.id.controller_timer_card) //当前时间卡片
+            //通用
+            rootConstraint = findViewById(R.id.rootConstraint) //根约束布局
+            controllerLayer = findViewById(R.id.controllerLayer) //控件层
+            controller_top_bar = findViewById(R.id.controller_top_bar) //顶部按钮区域
+            controller_timer_current = findViewById(R.id.controller_timer_current) //当前时间
+            controller_timer_total = findViewById(R.id.controller_timer_total) //总时间
+            NoticeCard = findViewById(R.id.NoticeCard) //通知胶囊卡片
+            playerView = findViewById(R.id.playerView) //播放区域
+        }
+        initElement()
+        //初始化界面参数
+        updateScreenParameters()
+
+
         //获取自动旋转状态
         rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
-        //屏幕方向检查
-        val buttonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-            vm.FromManualPortrait = false
-            vm.currentOrientation = 1
-            buttonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBg))
-        }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            vm.FromManualPortrait = true
-            vm.currentOrientation = 0
-            buttonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonBgClosed))
-        }
+
+
         //亮度
         val windowInfo = window.attributes
         if (!vm.BrightnessChanged) {
@@ -3126,33 +3145,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             vm.NOTICED_VolumeIsZero = true
             notice("当前音量为0", 3000)
         }
-        //检查是否有耳机连接
-        val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-        val isHeadsetConnected = devices.any {
-            it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
-                    it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
-                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
-                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
-        }
-        if (isHeadsetConnected) {
-            headSet = true
-            if (currentVolume > (maxVolume*0.6).toInt()){
-                currentVolume = (maxVolume*0.6).toInt()
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume, 0)
-                notice("检测到耳机佩戴,音量已降低至${(maxVolume*0.6).toInt()}", 1000)
-            }
-        } else {
-            headSet = false
-        }
-        //状态栏设置
-        AppBarSetting()
-        //恢复控件显示状态
-        if (vm.controllerHided){
-            setControllerInvisibleNoAnimation()
-        }
-        //显示参数读取
-        displayMetricsLoad()
+
+
     }
+
     //格式化时间显示
     @SuppressLint("DefaultLocale")
     private fun FormatTime_onlyNum(milliseconds: Long): String {
@@ -3218,7 +3214,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         override fun run() {
             videoTimeSyncHandler_currentPosition = player.currentPosition
 
-            timer_current.text = FormatTime_onlyNum(videoTimeSyncHandler_currentPosition)
+            controller_timer_current.text = FormatTime_onlyNum(videoTimeSyncHandler_currentPosition)
 
             videoTimeSyncHandler.postDelayed(this, videoTimeSyncGap)
         }
@@ -3235,10 +3231,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var videoSmartScroll = object : Runnable{
         override fun run() {
             vm.allowRecord_wasPlaying = false
-            val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
             var delayGap = if (scrollerState_Pressed){ 30L } else{ 30L }
             val videoPosition = player.currentPosition
-            val scrollerPosition = player.duration * (recyclerView.computeHorizontalScrollOffset().toFloat()/recyclerView.computeHorizontalScrollRange())
+            val scrollerPosition = player.duration * (scroller.computeHorizontalScrollOffset().toFloat()/scroller.computeHorizontalScrollRange())
             player.volume = 0f
             if (scrollerState_Moving) {
                 if (player.currentPosition > scrollerPosition - 100) {
@@ -3453,28 +3448,3 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
 }
-
-//封存的函数
-/*
-//拉到前台
-private fun pullActivity() {
-    val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-
-    //<uses-permission android:name="android.permission.REORDER_TASKS"/>
-    val tasks = am.getRunningTasks(Int.MAX_VALUE)
-    for (task in tasks) {
-        if (task.topActivity?.packageName == packageName) {
-            am.moveTaskToFront(task.id, 0)
-            break
-        }
-    }
-
-    val intent = Intent(this, this::class.java).apply {
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-    }
-
-    startActivity(intent)
-}
-
- */
-

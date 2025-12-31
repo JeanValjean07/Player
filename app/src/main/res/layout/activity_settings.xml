@@ -950,63 +950,7 @@
                         android:layout_height="wrap_content"
                         android:text="移动过程出现卡顿可考虑关闭。"
                         android:textSize="12sp" />
-                    <!--  开关:使用传统播放页面  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_weight="0"
-                            android:text="使用传统播放页面"
-                            android:textColor="@color/HeadText"
-                            android:textSize="14sp" />
-
-                        <View
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/UsePlayerWithSeekBar"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            app:thumbTint="@color/switchThumbColor"
-                            app:trackTint="@color/switchTrackColor" />
-                    </LinearLayout>
-                    <!--  提示信息:使用传统播放页面  -->
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="传统播放页面使用传统进度条，而不是缩略图组成的进度条。传统页面无法获得标准播放页面的功能更新频率。"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-            <!--  卡片：测试  -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="3dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="测试"
-                        android:textColor="@color/HeadText"
-                        android:textSize="17sp" />
-                    <!--  开关：使用测试版播放页面  -->
+                    <!--  选单：播放页样式  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -1016,21 +960,23 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_weight="0"
-                            android:text="使用测试版播放页面"
+                            android:text="播放页样式"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/UseTestingPlayer"
+                        <TextView
+                            android:id="@+id/ButtonPlayerType"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="0"
-                            app:thumbTint="@color/switchThumbColor"
-                            app:trackTint="@color/switchTrackColor" />
+                            android:padding="10dp"
+                            android:text="当前样式"
+                            android:textColor="@color/HeadText"
+                            android:textSize="12sp" />
                     </LinearLayout>
+
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
             <!--  超链接样式:设备信息  -->

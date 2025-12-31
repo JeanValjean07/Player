@@ -1,0 +1,14 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText" >
+    <item
+        android:id="@+id/type_oro"
+        android:title="经典" />
+    <item
+        android:id="@+id/type_neo"
+        android:title="新晋" />
+    <item
+        android:id="@+id/type_test"
+        android:title="测试版" />
+</menu>
