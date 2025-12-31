@@ -930,15 +930,17 @@ object PlayerSingleton {
     } //开始/继续播放
     fun recessPlay(need_fadeOut: Boolean) {
         if (_player?.isPlaying == true){
+            Log.d("SuMing","recessPlay: 记录当前状态：true")
             setWasPlaying(true)
         }else{
+            Log.d("SuMing","recessPlay: 记录当前状态：false")
             setWasPlaying(false)
         }
         _player?.pause()
 
     } //暂停播放
     fun setWasPlaying(wasPlaying: Boolean){
-        this.playState_wasPlaying = wasPlaying
+        playState_wasPlaying = wasPlaying
     }
     private fun playEnd(){
         //本次播放完成后关闭
@@ -1326,7 +1328,7 @@ object PlayerSingleton {
     }
     //开始/结束后台播放
     private fun startBackgroundPlay(){
-        //开启后台播放
+        //开启后台播放功能：开始关闭视频轨道倒计时
         if (PREFS_BackgroundPlay){
             if (PREFS_closeVideoTrackOnBackground){
                 if (_player?.isPlaying == true){
@@ -1335,24 +1337,26 @@ object PlayerSingleton {
                 }
             }
         }
-        //关闭后台播放
+        //关闭后台播放功能：直接暂停
         else{
+            Log.d("SuMing","startBackgroundPlay: 关闭后台播放功能：直接暂停")
             recessPlay(true)
         }
     }
     private fun stopBackgroundPlay(){
-        //开启后台播放
+        //开启后台播放功能：关闭视频轨道倒计时 + 恢复视频轨道
         closeVideoTrackJob?.cancel()
         if (PREFS_BackgroundPlay){
             if (!state_videoTrackWorking){
                 recoverVideoTrack()
             }
         }
-        //关闭后台播放
+        //关闭后台播放功能：开始继续播放
         else{
-            if (state_mediaStartedOnce) return
-            state_mediaStartedOnce = true
-            continuePlay(need_requestFocus = false, force_request = true, need_fadeIn = true)
+            Log.d("SuMing","stopBackgroundPlay: playState_wasPlaying: ${playState_wasPlaying}")
+            if(playState_wasPlaying){
+                continuePlay(need_requestFocus = false, force_request = true, need_fadeIn = true)
+            }
         }
     }
     //关闭视频轨道倒计时

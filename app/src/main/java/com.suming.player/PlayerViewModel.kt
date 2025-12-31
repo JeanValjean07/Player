@@ -86,6 +86,33 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //控件隐藏/显示状态
     var state_controllerShowing = true
 
+    //退出状态判定
+    var state_onStopDecider_Running = false
+    var state_onStop_ByReBuild = false
+    var state_onStop_ByLossFocus = false
+    var state_onStop_ByRealExit = true
+    fun set_onStop_ByReBuild(){
+        state_onStop_ByReBuild = true
+        state_onStop_ByLossFocus = false
+        state_onStop_ByRealExit = false
+    }
+    fun set_onStop_ByLossFocus(){
+        state_onStop_ByLossFocus = true
+        state_onStop_ByReBuild = false
+        state_onStop_ByRealExit = false
+    }
+    fun set_onStop_ByRealExit(){
+        state_onStop_ByRealExit = true
+        state_onStop_ByReBuild = false
+        state_onStop_ByLossFocus = false
+    }
+    fun set_onStop_all_reset(){
+        state_onStop_ByReBuild = false
+        state_onStop_ByLossFocus = false
+        state_onStop_ByRealExit = false
+    }
+
+
 
     var statusBarHeight = 0
 

@@ -1848,37 +1848,71 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     override fun onStop() {
         super.onStop()
-        //将onStop报告给播放器：下滑退出和开启小窗时，不报告
-        if (state_FromFloatingWindow || state_FromExitKeepPlaying) return
-        PlayerSingleton.ActivityOnStop()
+        startOnStopDecider()
     }
 
     override fun onResume() {
         super.onResume()
-        //将onResume报告给播放器
-        PlayerSingleton.ActivityOnResume()
-        //开启控件
-        startVideoTimeSync()
-        startScrollerSync()
-        //开启旋转监听器
-        startOrientationListener()
-        //onResume来自浮窗
-        if (state_FromFloatingWindow){
-            //关闭小窗服务
-            stopFloatingWindow()
-            //重新绑定播放器
-            playerView.player = null
-            playerView.player = player
-        }
+        //区分onResume原因：
+        if (vm.state_onStopDecider_Running){
+            //决策函数运行中：无法有效判断，但这种情况大概率是重建，除非回桌面后又立即点开
+            //可能来自浮窗
+            if (state_FromFloatingWindow){
+                //关闭小窗服务
+                stopFloatingWindow()
+                //重新绑定播放器
+                playerView.player = null
+                playerView.player = player
+            }
+            //开启视频控件
+            startScrollerSync()
+            startVideoTimeSync()
+            //Log.d("SuMing","onResume: 决策函数运行中")
+        }else{
+            //活动重建
+            if (vm.state_onStop_ByReBuild){
+                //Log.d("SuMing","onResume: 活动重建")
+                //开启视频控件
+                startScrollerSync()
+                startVideoTimeSync()
+            }
+            //首次启动
+            /*
+            if (vm.state_onStop_ByRealExit){
+                //Log.d("SuMing","onResume: 首次启动")
+            }
 
+             */
+            //活动暂退桌面：小窗模式在这里包含
+            if (vm.state_onStop_ByLossFocus){
+                //可能来自浮窗
+                if (state_FromFloatingWindow){
+                    //关闭小窗服务
+                    stopFloatingWindow()
+                    //重新绑定播放器
+                    playerView.player = null
+                    playerView.player = player
+                }
+                //开始继续播放
+                PlayerSingleton.ActivityOnResume()
+                //开启视频控件
+                startScrollerSync()
+                startVideoTimeSync()
+                //Log.d("SuMing","onResume: 活动暂退桌面")
+            }
+            //通用步骤：
+            //重置状态
+            vm.set_onStop_all_reset()
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        //重建类型判定变量
+        state_onDestroy_reach = true
         //关闭本地监听器
         unregisterEventBus()
         stopOrientationListener()
-
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -1925,6 +1959,12 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
         }
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        //重建类型判定变量
+        state_onSaveInstanceState_reach = true
+    }
     //用户交互监听器
     override fun onUserInteraction() {
         super.onUserInteraction()
@@ -1968,7 +2008,57 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
 
-    //Stable Functions
+    //退出动作决策程序
+    private var state_onDestroy_reach = false
+    private var state_onSaveInstanceState_reach = false
+    private var onStopDecideCount = 0L
+    private val onStopDecideHandler = Handler(Looper.getMainLooper())
+    private val onStopDecideTask = object : Runnable {
+        override fun run() {
+            //修改计数位以在必要时退出循环
+            onStopDecideCount++
+            //等待100毫秒后检查状态变量
+            if (onStopDecideCount > 100){
+                //未触发onDestroy,活动暂退桌面
+                if (!state_onDestroy_reach){
+                    //Log.d("SuMing","onStop: 活动暂退桌面")
+                    vm.set_onStop_ByLossFocus()
+                    PlayerSingleton.ActivityOnStop()
+                }
+                //活动被销毁
+                else{
+                    //活动销毁但保存了数据：活动因深色模式切换或尺寸切换发生重建
+                    if (state_onSaveInstanceState_reach){
+                        //Log.d("SuMing","onStop: 活动重建")
+                        vm.set_onStop_ByReBuild()
+                    }
+                    //活动销毁且未保存数据：确实退出了活动
+                    else{
+                        //Log.d("SuMing","onStop: 活动确实退出")
+                        vm.set_onStop_ByRealExit()
+                    }
+                }
+                //决策函数运行结束
+                vm.state_onStopDecider_Running = false
+            }
+            //循环100毫秒后检测
+            else{
+                onStopDecideHandler.postDelayed(this, 1)
+            }
+        }
+    }
+    private fun startOnStopDecider() {
+        //因开启小窗和保持播放状态退出时：不报告状态
+        if (state_FromFloatingWindow || state_FromExitKeepPlaying) return
+        //重置计数位并启动检测程序
+        onStopDecideCount = 0L
+        vm.state_onStopDecider_Running = true
+        onStopDecideHandler.post(onStopDecideTask)
+    }
+    private fun stopOnStopDecider() {
+        onStopDecideHandler.removeCallbacks(onStopDecideTask)
+        vm.state_onStopDecider_Running = false
+    }
     //隐藏顶部分割线
     private fun HideTopLine(){
         val TopLine = findViewById<View>(R.id.TopLine)
