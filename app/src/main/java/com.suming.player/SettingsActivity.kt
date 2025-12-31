@@ -633,15 +633,17 @@ class SettingsActivity: AppCompatActivity() {
         when(playerType){
             0 -> {
                 PREFS_UsePlayerType = 0
-                PREFS.edit { putInt("PREFS_UsePlayerType", playerType) }
+                PREFS.edit { putInt("PREFS_UsePlayerType", 0) }
                 showCustomToast("成功设置播放页样式为经典版本", Toast.LENGTH_SHORT, 3)
                 setPlayerTypeText()
+                PlayerSingleton.updatedPlayStyle(application, 0)
             }
             1 -> {
                 PREFS_UsePlayerType = 1
-                PREFS.edit { putInt("PREFS_UsePlayerType", playerType) }
+                PREFS.edit { putInt("PREFS_UsePlayerType", 1) }
                 showCustomToast("成功设置播放页样式为新晋版本", Toast.LENGTH_SHORT, 3)
                 setPlayerTypeText()
+                PlayerSingleton.updatedPlayStyle(application, 1)
             }
             2 -> {
                 //测试版样式

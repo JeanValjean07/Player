@@ -772,7 +772,6 @@
                         android:layout_marginTop="10dp"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        android:layout_marginBottom="30dp"
                         app:cardBackgroundColor="@color/Background4"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="0dp">
@@ -1012,6 +1011,66 @@
                                     android:layout_width="35dp"
                                     android:layout_height="20dp"
                                     android:text="解除"
+                                    android:textSize="14sp"
+                                    android:gravity="center"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="12dp"
+                                    android:textColor="@color/Text2"
+                                    tools:ignore="SmallSp" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                    <!-- 功能卡5：错误处置 -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_marginBottom="30dp"
+                        app:cardBackgroundColor="@color/Background4"
+                        app:cardCornerRadius="15dp"
+                        app:cardElevation="0dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginStart="5dp"
+                            android:orientation="vertical">
+                            <!-- 重新绑定播放器视图 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:src="@drawable/ic_art_herbs"
+                                    android:scaleType="centerCrop"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="重新绑定播放器视图"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2"
+                                    />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1"/>
+                                <TextView
+                                    android:id="@+id/ButtonBindPlayView"
+                                    android:layout_width="35dp"
+                                    android:layout_height="20dp"
+                                    android:text="绑定"
                                     android:textSize="14sp"
                                     android:gravity="center"
                                     android:layout_gravity="center"

@@ -583,6 +583,17 @@ class PlayerFragmentMoreButton: DialogFragment() {
             Dismiss()
         }
 
+        //绑定播放视图
+        val ButtonBindPlayView = view.findViewById<TextView>(R.id.ButtonBindPlayView)
+        ButtonBindPlayView.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+
+            val result = bundleOf("KEY" to "BindPlayView")
+            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+
+            Dismiss()
+        }
+
 
 
         //面板下滑关闭(NestedScrollView)

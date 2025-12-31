@@ -1291,6 +1291,11 @@ class PlayerActivityNeo: AppCompatActivity(){
                 "UnBindBrightness" -> {
                     unBindBrightness()
                 }
+                //错误处理
+                "BindPlayView" -> {
+                    playerView.player = null
+                    playerView.player = player
+                }
                 //退出事件
                 "Dismiss" -> {
                     startScrollerSync()

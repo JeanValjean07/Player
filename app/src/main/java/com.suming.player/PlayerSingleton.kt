@@ -403,8 +403,8 @@ object PlayerSingleton {
     }
     //写入上次播放记录
     private fun saveToLastMediaRecord(){
-        val INFO_PlayerSingleton = singletonContext.getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
-        INFO_PlayerSingleton.edit {
+        val serviceLink = singletonContext.getSharedPreferences("serviceLink", MODE_PRIVATE)
+        serviceLink.edit {
             putString("MediaInfo_MediaType", MediaInfo_MediaType)
             putString("MediaInfo_FileName", MediaInfo_FileName)
             putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist)
@@ -412,20 +412,25 @@ object PlayerSingleton {
         }
     }  //播放信息保存到上次播放记录
     //写入服务用配置
-    private fun setServiceSetting(){
-        val INFO_PlayerSingleton = singletonContext.getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
-        INFO_PlayerSingleton.edit{ putInt("state_PlayerType", 1 ).apply() }
-        INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaType", MediaInfo_MediaType).apply() }
-        INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaUriString", MediaInfo_MediaUriString).apply() }
-        INFO_PlayerSingleton.edit{ putString("MediaInfo_FileName", MediaInfo_FileName).apply() }
-        INFO_PlayerSingleton.edit{ putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist).apply() }
+    private fun setServiceLink(newType: Int = -1){
+        val serviceLink = singletonContext.getSharedPreferences("serviceLink", MODE_PRIVATE)
+        if (newType == -1){
+            val PREFS = singletonContext.getSharedPreferences("PREFS", MODE_PRIVATE)
+            serviceLink.edit{ putInt("state_PlayerType", PREFS.getInt("PREFS_UsePlayerType", 1) ).apply() }
+        }else{
+            serviceLink.edit{ putInt("state_PlayerType", newType ).apply() }
+        }
+        serviceLink.edit{ putString("MediaInfo_MediaType", MediaInfo_MediaType).apply() }
+        serviceLink.edit{ putString("MediaInfo_MediaUriString", MediaInfo_MediaUriString).apply() }
+        serviceLink.edit{ putString("MediaInfo_FileName", MediaInfo_FileName).apply() }
+        serviceLink.edit{ putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist).apply() }
     }
 
     //媒体项变更的后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null){ return }
-        //写入服务信息
-        setServiceSetting()
+        //写入服务连接信消息
+        setServiceLink()
         //播放信息保存到上次播放记录
         saveToLastMediaRecord()
         //读取单个媒体播放设置
@@ -880,8 +885,19 @@ object PlayerSingleton {
         stopMediaSessionController(context)
         state_MediaSessionConnected = false
     }
+    //播放页样式切换，重启服务
+    fun updatedPlayStyle(context: Context, newType: Int){
+        stopMediaSession(context)
 
+        if (_player?.currentMediaItem == null) return
 
+        setServiceLink(newType = newType)
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            connectToMediaSession(context)
+        }, 2000)
+
+    }
 
 
     //获取播放器播放状态
