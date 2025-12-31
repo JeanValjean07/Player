@@ -1178,6 +1178,10 @@ class PlayerActivityOro: AppCompatActivity(){
             val ReceiveKey = bundle.getString("KEY")
             when(ReceiveKey){
                 //切换逻辑由播放器单例接管
+                //停止播放并退出
+                "stopPlaying" -> {
+                    finish()
+                }
                 //退出逻辑
                 "Dismiss" -> {
                     startSeekBarSync()
@@ -1360,7 +1364,6 @@ class PlayerActivityOro: AppCompatActivity(){
         getMediaInfo(MediaInfo_MediaUri)
 
     }
-
     //媒体项变更回调
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null){ return }
@@ -1387,11 +1390,6 @@ class PlayerActivityOro: AppCompatActivity(){
         updateButtonState()
 
     }
-
-
-
-
-
     //RxJava事件总线:界面端减少参与播放器单例的控制
     private var state_EventBus_Registered = false
     private fun registerEventBus(){
@@ -1446,8 +1444,6 @@ class PlayerActivityOro: AppCompatActivity(){
             }
         }
     }
-
-
     //刷新进度条：仅在新晋播放页中启用
     /*
     private fun updateScrollerAdapter(){
@@ -1650,10 +1646,8 @@ class PlayerActivityOro: AppCompatActivity(){
         stopSeekBarSync()
         stopVideoTimeSync()
         //停止服务端操作
-        PlayerSingleton.stopMediaSessionController(application)
         PlayerSingleton.clearMediaInfo()
-        PlayerSingleton.releasePlayer()
-        stopFloatingWindow()
+        PlayerSingleton.DevastatePlayBundle(application)
         finish()
     }
     private fun EnsureExit_but_keep_playing(){
@@ -1675,7 +1669,7 @@ class PlayerActivityOro: AppCompatActivity(){
         setResult(RESULT_OK, data)
         //不停止服务端操作
         if (playerReadyFrom_FirstEntry){
-            PlayerSingleton.ReleaseSingletonPlayer(application)
+            PlayerSingleton.DevastatePlayBundle(application)
             PlayerSingleton.clearMediaInfo()
             stopFloatingWindow()
         }
@@ -2627,16 +2621,7 @@ class PlayerActivityOro: AppCompatActivity(){
 
         return absolutePath?.takeIf { File(it).exists() }
     }
-    //刷新按钮状态：在启动播放指令之后调用
-    private fun updateButtonState(){
-        val Button = findViewById<ImageView>(R.id.controller_button_playorpause)
-        if (player.isPlaying){
-            Button.setImageResource(R.drawable.ic_controller_neo_pause)
-        }
-        else{
-            Button.setImageResource(R.drawable.ic_controller_neo_play)
-        }
-    }
+
 
     //显示相关函数
     //界面控件
@@ -2659,6 +2644,16 @@ class PlayerActivityOro: AppCompatActivity(){
     //</editor-fold>
     //显示相关函数
     //<editor-fold desc="显示相关函数">
+    //刷新按钮状态：在启动播放指令之后调用
+    private fun updateButtonState(){
+        val Button = findViewById<ImageView>(R.id.controller_button_playorpause)
+        if (player.isPlaying){
+            Button.setImageResource(R.drawable.ic_controller_oro_pause)
+        }
+        else{
+            Button.setImageResource(R.drawable.ic_controller_oro_play)
+        }
+    }
     //控件隐藏和显示
     private fun setControllerInvisibleNoAnimation() {
         //状态标记变更

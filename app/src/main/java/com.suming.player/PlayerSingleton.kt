@@ -304,7 +304,7 @@ object PlayerSingleton {
         MediaInfo_MediaUriString = ""
         MediaInfo_MediaUri = Uri.EMPTY
         //写入配置
-        saveToLastMediaRecord()
+        saveToLastMediaRecord(false)
     }
 
 
@@ -316,16 +316,6 @@ object PlayerSingleton {
         saveLastMediaStuff()
         //重置播放参数
         resetPlayParameters()
-        //检查媒体类型
-        val originMediaType = MediaInfo_MediaType
-        getMediaInfo(singletonContext, itemUri)
-        if (originMediaType != MediaInfo_MediaType){
-            //先销毁原本的播放器
-            ReleaseSingletonPlayer(singletonContext)
-            //重建播放器并添加监听器
-            startSingletonExoPlayer(singletonContext)
-            addPlayerStateListener()
-        }
 
 
         //刷新媒体信息
@@ -402,15 +392,26 @@ object PlayerSingleton {
 
     }
     //写入上次播放记录
-    private fun saveToLastMediaRecord(){
-        val serviceLink = singletonContext.getSharedPreferences("serviceLink", MODE_PRIVATE)
-        serviceLink.edit {
+    private fun saveToLastMediaRecord(valid: Boolean){
+        val lastRecord = singletonContext.getSharedPreferences("lastRecord", MODE_PRIVATE)
+        lastRecord.edit {
+            putBoolean("MediaInfo_MediaValid", valid)
             putString("MediaInfo_MediaType", MediaInfo_MediaType)
             putString("MediaInfo_FileName", MediaInfo_FileName)
             putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist)
             putString("MediaInfo_MediaUriString", MediaInfo_MediaUriString)
         }
     }  //播放信息保存到上次播放记录
+    fun clearLastRecord(context: Context){
+        val lastRecord = context.getSharedPreferences("lastRecord", MODE_PRIVATE)
+        lastRecord.edit {
+            putBoolean("MediaInfo_MediaValid", false)
+            putString("MediaInfo_MediaType", "")
+            putString("MediaInfo_FileName", "")
+            putString("MediaInfo_MediaArtist", "")
+            putString("MediaInfo_MediaUriString", "")
+        }
+    }  //清除上次播放记录
     //写入服务用配置
     private fun setServiceLink(newType: Int = -1){
         val serviceLink = singletonContext.getSharedPreferences("serviceLink", MODE_PRIVATE)
@@ -432,7 +433,7 @@ object PlayerSingleton {
         //写入服务连接信消息
         setServiceLink()
         //播放信息保存到上次播放记录
-        saveToLastMediaRecord()
+        saveToLastMediaRecord(true)
         //读取单个媒体播放设置
         loadPlayParametersFromRoom()
         //通告主界面
@@ -887,15 +888,13 @@ object PlayerSingleton {
     }
     //播放页样式切换，重启服务
     fun updatedPlayStyle(context: Context, newType: Int){
-        stopMediaSession(context)
-
+        //关闭媒体会话和服务
+        DevastateMediaSession(context)
+        //未播放时不执行
         if (_player?.currentMediaItem == null) return
-
+        //写入新服务配置并启动媒体会话
         setServiceLink(newType = newType)
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            connectToMediaSession(context)
-        }, 2000)
+        Handler(Looper.getMainLooper()).postDelayed({ connectToMediaSession(context) }, 2000)
 
     }
 
@@ -947,8 +946,10 @@ object PlayerSingleton {
             state_autoShutDown_Reach = false
             countDownDuration_Ms = 0
             _player?.stop()
+            //关闭监听器
             onTaskRemoved()
-            ReleaseSingletonPlayer(singletonContext)
+            //关闭
+            DevastatePlayBundle(singletonContext)
             //结束进程
             val pid = Process.myPid()
             Process.killProcess(pid)
@@ -985,15 +986,21 @@ object PlayerSingleton {
         _player?.release()
         _player = null
     }
-    //销毁播放器并关闭媒体会话和服务
-    fun ReleaseSingletonPlayer(context: Context){
-        //保存播放位置
-        savePositionToRoom()
-        //关闭监听状态
+    //关闭播放器实例 + 服务 + 媒体会话
+    fun DevastatePlayBundle(context: Context){
+        //播放器监听器跟随销毁,重置状态
         state_PlayerStateListenerAdded = false
-        stopMediaSession(context)
+        //销毁媒体会话
+        DevastateMediaSession(context)
         //执行播放器释放
         releasePlayer()
+    }
+    //关闭媒体会话和服务
+    //提示：要完全关闭媒体会话,必须关闭服务,媒体会话实例,媒体会话控制器，三项缺一不可，否则会留下僵尸👻zombie👻
+    fun DevastateMediaSession(context: Context){
+        stopBackgroundServices()
+        stopMediaSession(context)
+        stopMediaSessionController(context)
     }
     //关闭所有监听器
     fun onTaskRemoved(){
@@ -1054,8 +1061,9 @@ object PlayerSingleton {
         else{
             countDownDuration_Ms = 0
             _player?.stop()
+            savePositionToRoom()
             onTaskRemoved()
-            ReleaseSingletonPlayer(singletonContext)
+            DevastatePlayBundle(singletonContext)
             //结束进程
             Process.killProcess(Process.myPid())
             exitProcess(0)
@@ -1223,7 +1231,7 @@ object PlayerSingleton {
     }
     //保存播放进度
     private var PREFS_saveLastPosition = false
-    private fun savePositionToRoom(){
+    fun savePositionToRoom(){
         if (!PREFS_saveLastPosition) return
         val currentPosition = _player?.currentPosition
         if (currentPosition == 0L) return

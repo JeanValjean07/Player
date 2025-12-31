@@ -1308,6 +1308,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             val ReceiveKey = bundle.getString("KEY")
             when(ReceiveKey){
                 //切换逻辑由播放器单例接管
+                //停止播放并退出
+                "stopPlaying" -> {
+                    finish()
+                }
                 //退出逻辑
                 "Dismiss" -> {
                     startScrollerSync()
@@ -1490,7 +1494,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         getMediaInfo(MediaInfo_MediaUri)
 
     }
-
     //媒体项变更回调
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null){ return }
@@ -1517,11 +1520,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         updateButtonState()
 
     }
-
-
-
-
-
     //RxJava事件总线:界面端减少参与播放器单例的控制
     private var state_EventBus_Registered = false
     private fun registerEventBus(){
@@ -1576,9 +1574,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
         }
     }
-
-
-
     //读取媒体信息：uri作为唯一key
     private var MediaInfo_MediaUri = Uri.EMPTY!!
     private fun getMediaInfo(uri: Uri){
@@ -1626,9 +1621,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         )
 
     }
-
-
-
     //确认关闭操作
     private var state_FromExitKeepPlaying = false
     private var state_FromExitCloseAllStuff = false
@@ -1665,10 +1657,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         stopScrollerSync()
         stopVideoTimeSync()
         //停止服务端操作
-        PlayerSingleton.stopMediaSessionController(application)
         PlayerSingleton.clearMediaInfo()
-        PlayerSingleton.releasePlayer()
-        stopFloatingWindow()
+        PlayerSingleton.DevastatePlayBundle(application)
         finish()
     }
     private fun EnsureExit_but_keep_playing(){
@@ -1690,9 +1680,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         setResult(RESULT_OK, data)
         //不停止服务端操作
         if (playerReadyFrom_FirstEntry){
-            PlayerSingleton.ReleaseSingletonPlayer(application)
+            PlayerSingleton.DevastatePlayBundle(application)
             PlayerSingleton.clearMediaInfo()
-            stopFloatingWindow()
         }
         finish()
     }
@@ -2097,8 +2086,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun updateTimeCard(){
         controller_timer_total.text = FormatTime_onlyNum(vm.MediaInfo_MediaDuration.toLong())
     }
-
-
     //清除进度条截图
     private fun clearMiniature(){
         File(filesDir, "miniature/${vm.MediaInfo_FileName.hashCode()}/scroller").deleteRecursively()
@@ -2371,7 +2358,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         state_FromFloatingWindow = false
         stopService(Intent(applicationContext, FloatingWindowService::class.java))
     }
-
     //切换横屏
     private fun ButtonChangeOrientation(flag_short_or_long: String){
         //自动旋转关闭
@@ -2635,18 +2621,9 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         return absolutePath?.takeIf { File(it).exists() }
     }
-    //刷新按钮状态：在启动播放指令之后调用
-    private fun updateButtonState(){
-        val Button = findViewById<ImageView>(R.id.controller_button_playorpause)
-        if (player.isPlaying){
-            Button.setImageResource(R.drawable.ic_controller_neo_pause)
-        }
-        else{
-            Button.setImageResource(R.drawable.ic_controller_neo_play)
-        }
-    }
 
-    //显示相关函数
+
+    //显示相关
     //界面控件
     //<editor-fold desc="界面控件">
     //经典播放页专属
@@ -2667,6 +2644,16 @@ class PlayerActivityNeo: AppCompatActivity(){
     //</editor-fold>
     //显示相关函数
     //<editor-fold desc="显示相关函数">
+    //刷新按钮状态：在启动播放指令之后调用
+    private fun updateButtonState(){
+        val Button = findViewById<ImageView>(R.id.controller_button_playorpause)
+        if (player.isPlaying){
+            Button.setImageResource(R.drawable.ic_controller_neo_pause)
+        }
+        else{
+            Button.setImageResource(R.drawable.ic_controller_neo_play)
+        }
+    }
     //刷新进度条
     private fun updateScrollerAdapter(){
         lifecycleScope.launch(Dispatchers.IO) {

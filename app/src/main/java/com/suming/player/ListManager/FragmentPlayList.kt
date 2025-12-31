@@ -211,10 +211,17 @@ class FragmentPlayList: DialogFragment() {
         val ButtonStopPlaying = view.findViewById<ImageButton>(R.id.ButtonStopPlaying)
         ButtonStopPlaying.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            PlayerSingleton.ReleaseSingletonPlayer(requireContext())
-            customDismiss(false)
-            val result = bundleOf("KEY" to "updateSmallCard")
+            //记录当前位置
+            PlayerSingleton.savePositionToRoom()
+            //清除上次播放信息
+            PlayerSingleton.clearLastRecord(requireContext())
+            //销毁播放器
+            PlayerSingleton.DevastatePlayBundle(requireContext())
+            //发回命令信息
+            val result = bundleOf("KEY" to "stopPlaying")
             setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
+            //退出
+            customDismiss(false)
         }
         //按钮：当前播放列表
         val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)

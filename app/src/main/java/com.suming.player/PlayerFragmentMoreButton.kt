@@ -879,11 +879,13 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 return@setOnClickListener
             }
             if (hour == 0 && minute == 0){
-                requireContext().showCustomToast("立即关闭", Toast.LENGTH_SHORT, 3)
+                requireContext().showCustomToast("您选择了立即关闭", Toast.LENGTH_SHORT, 3)
                 lifecycleScope.launch {
                     delay(2000)
                     //关闭播放器
-                    PlayerSingleton.ReleaseSingletonPlayer(requireContext())
+                    PlayerSingleton.savePositionToRoom()
+                    PlayerSingleton.onTaskRemoved()
+                    PlayerSingleton.DevastatePlayBundle(requireContext())
                     //结束进程
                     val pid = Process.myPid()
                     Process.killProcess(pid)

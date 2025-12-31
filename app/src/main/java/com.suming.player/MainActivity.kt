@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -388,7 +389,7 @@ class MainActivity: AppCompatActivity() {
 
                 }
                 //更新小卡片
-                "updateSmallCard" -> {
+                "stopPlaying" -> {
                     ResetPlayingCard()
                 }
             }
@@ -508,21 +509,38 @@ class MainActivity: AppCompatActivity() {
     }  //!主链路入口
     //onCreate:每次启动检查上次在播放的媒体
     private fun checkLastPlayingMedia(){
-        val MediaInfo_MediaUri = getLastMediaRecordUri()
-        if (MediaInfo_MediaUri == Uri.EMPTY){
-            closePlayingCard()
-            return
-        }else{
-            val isNowPlying = checkPlayingItem()
-            if (isNowPlying){
-                ResetPlayingCard()
-            }else{
-                setNewMediaItem(MediaInfo_MediaUri, false)
+        val (MediaInfo_MediaUriString, isMediaValid) = getLastMediaRecord()
+        if (isMediaValid){
+            if (isUriStringValid(MediaInfo_MediaUriString)){
+                val isNowPlying = checkPlayingItem()
+                if (isNowPlying){
+                    ResetPlayingCard()
+                }else{
+                    setNewMediaItem(MediaInfo_MediaUriString.toUri(), false)
+                }
             }
+            else{
+                closePlayingCard()
+            }
+        }else{
+            closePlayingCard()
+        }
+    }  //!主链路入口
+    private fun isUriStringValid(uriString: String): Boolean{
+        val retriever = MediaMetadataRetriever()
+        try{
+            val uri = uriString.toUri()
+            retriever.setDataSource(this,uri)
+        }
+        catch (_: Exception){
+            return false
+        }
+        finally {
+            retriever.release()
         }
 
-
-    }  //!主链路入口
+        return true
+    }
     //播放卡片功能方法
     private fun setPlayingCardButton(){
         if (PlayerSingleton.getIsPlaying()){
@@ -661,10 +679,11 @@ class MainActivity: AppCompatActivity() {
         state_PlayingCard_inited = true
     }
     //读取上次播放记录
-    private fun getLastMediaRecordUri(): Uri{
-        val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
-        val MediaInfo_MediaUriString = INFO_PlayerSingleton.getString("MediaInfo_MediaUriString", "error") ?: "error"
-        return MediaInfo_MediaUriString.toUri()
+    private fun getLastMediaRecord(): Pair<String, Boolean>{
+        val lastRecord = getSharedPreferences("lastRecord", MODE_PRIVATE)
+        val MediaInfo_MediaUriString = lastRecord.getString("MediaInfo_MediaUriString", "error") ?: "error"
+        val isMediaValid = lastRecord.getBoolean("MediaInfo_MediaValid", false)
+        return Pair(MediaInfo_MediaUriString, isMediaValid)
     }
     //设置新媒体项
     private fun setNewMediaItem(MediaInfo_MediaUri: Uri, playWhenReady: Boolean){
