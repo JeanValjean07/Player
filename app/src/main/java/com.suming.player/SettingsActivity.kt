@@ -28,6 +28,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.media3.common.util.UnstableApi
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +40,7 @@ import java.io.File
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
+@Suppress("unused")
 class SettingsActivity: AppCompatActivity() {
     //开关初始化
     //<editor-fold desc="开关初始化">
@@ -77,7 +79,7 @@ class SettingsActivity: AppCompatActivity() {
     private var PREFS_UseHighRefreshRate = false
     private var PREFS_SeekHandlerGap = 0L
     private var PREFS_CloseFragmentGesture = false
-    private var PREFS_EnablePlayAreaMove = false
+    private var PREFS_EnablePlayAreaMoveAnim = false
     private var PREFS_UsePlayerType = 0
     private var PREFS_UseSyncFrameWhenScrollerStop = false
     //震动时间
@@ -202,11 +204,11 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
         }
-        if (!PREFS.contains("PREFS_EnablePlayAreaMove")){
-            PREFS_Editor.putBoolean("PREFS_EnablePlayAreaMove", true)
-            PREFS_EnablePlayAreaMove = true
+        if (!PREFS.contains("PREFS_EnablePlayAreaMoveAnim")){
+            PREFS_Editor.putBoolean("PREFS_EnablePlayAreaMoveAnim", true)
+            PREFS_EnablePlayAreaMoveAnim = true
         }else{
-            PREFS_EnablePlayAreaMove = PREFS.getBoolean("PREFS_EnablePlayAreaMove", true)
+            PREFS_EnablePlayAreaMoveAnim = PREFS.getBoolean("PREFS_EnablePlayAreaMoveAnim", true)
         }
         if (!PREFS.contains("PREFS_TimeUpdateGap")) {
             PREFS_Editor.putLong("PREFS_TimeUpdateGap", 66L)
@@ -284,7 +286,7 @@ class SettingsActivity: AppCompatActivity() {
             }
             else{
                 startActivity(Intent(this,
-                    com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java
+                    OssLicensesMenuActivity::class.java
                 ))
             }
         }
@@ -331,7 +333,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseBlackBackground.isChecked = PREFS_UseBlackBackground
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
         Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
-        Switch_EnablePlayAreaMove.isChecked = PREFS_EnablePlayAreaMove
+        Switch_EnablePlayAreaMove.isChecked = PREFS_EnablePlayAreaMoveAnim
         Switch_UseSyncFrameWhenScrollerStop.isChecked = PREFS_UseSyncFrameWhenScrollerStop
         //</editor-fold>
 
@@ -433,9 +435,9 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_Editor.putBoolean("PREFS_CloseFragmentGesture", isChecked).apply()
         }
         Switch_EnablePlayAreaMove.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_EnablePlayAreaMove = isChecked
+            PREFS_EnablePlayAreaMoveAnim = isChecked
             ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_EnablePlayAreaMove", isChecked).apply()
+            PREFS_Editor.putBoolean("PREFS_EnablePlayAreaMoveAnim", isChecked).apply()
         }
         Switch_UseSyncFrameWhenScrollerStop.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseSyncFrameWhenScrollerStop = isChecked
@@ -447,7 +449,7 @@ class SettingsActivity: AppCompatActivity() {
 
         //seek间隔
         val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
-        ButtonSeekHandlerGap.setOnClickListener { item ->
+        ButtonSeekHandlerGap.setOnClickListener {
             ToolVibrate().vibrate(this)
             val popup = PopupMenu(this, ButtonSeekHandlerGap)
             popup.menuInflater.inflate(R.menu.activity_settings_popup_seek_gap, popup.menu)
@@ -480,7 +482,7 @@ class SettingsActivity: AppCompatActivity() {
         }
         //时间更新间隔
         val ButtonTimeUpdateGap = findViewById<TextView>(R.id.ButtonTimeUpdateGap)
-        ButtonTimeUpdateGap.setOnClickListener { item ->
+        ButtonTimeUpdateGap.setOnClickListener {
             ToolVibrate().vibrate(this)
             val popup = PopupMenu(this, ButtonTimeUpdateGap)
             popup.menuInflater.inflate(R.menu.activity_settings_popup_time_update_gap, popup.menu)
@@ -517,7 +519,7 @@ class SettingsActivity: AppCompatActivity() {
         }
         //振动时长
         val ButtonVibratorMillis = findViewById<TextView>(R.id.ButtonVibratorMillis)
-        ButtonVibratorMillis.setOnClickListener { item ->
+        ButtonVibratorMillis.setOnClickListener {
             ToolVibrate().vibrate(this)
             val popup = PopupMenu(this, ButtonVibratorMillis)
             popup.menuInflater.inflate(R.menu.activity_settings_popup_vibrate_millis, popup.menu)
@@ -569,7 +571,7 @@ class SettingsActivity: AppCompatActivity() {
         }
         //播放页样式
         val ButtonPlayerType = findViewById<TextView>(R.id.ButtonPlayerType)
-        ButtonPlayerType.setOnClickListener { item ->
+        ButtonPlayerType.setOnClickListener {
             ToolVibrate().vibrate(this)
             //使用弹出菜单选择
             val popup = PopupMenu(this, ButtonPlayerType)
@@ -629,6 +631,7 @@ class SettingsActivity: AppCompatActivity() {
         return true
     }
     //播放页样式
+    @OptIn(UnstableApi::class)
     private fun choosePlayerType(playerType: Int){
         when(playerType){
             0 -> {
@@ -878,7 +881,7 @@ class SettingsActivity: AppCompatActivity() {
         packageNumber = 0
         val packageManager = packageManager
         val installedPackages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
-        var packageName = ""
+        var packageName: String
         for (packageInfo in installedPackages) {
             packageName = packageInfo.packageName
             packageNumber++

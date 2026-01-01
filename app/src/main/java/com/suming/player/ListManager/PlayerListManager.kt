@@ -1,5 +1,6 @@
 package com.suming.player.ListManager
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
@@ -15,14 +16,15 @@ import data.MediaModel.MiniMediaItemForList
 import java.io.File
 import androidx.core.content.edit
 
+@SuppressLint("StaticFieldLeak")
 @Suppress("unused")
 object PlayerListManager {
 
     //列表管理器设置
     private lateinit var PREFS_List: SharedPreferences
-    //当前列表flag
-    private var currentPlayListFlag = -1
-    private var state_LastPlayListFlagRead = false
+    private var state_PREFS_List_Initialized = false
+    //当前列表
+    private var currentList = -1
 
 
     //自定义列表实例
@@ -75,7 +77,7 @@ object PlayerListManager {
 
     //查询某个特定uri是否存在于当前播放列表中
     fun getMediaItemByUri(uriNumOnly: Long): Boolean {
-        return when(currentPlayListFlag){
+        return when(currentList){
             0 -> {
                 customList.any { it.uriNumOnly == uriNumOnly }
             }
@@ -97,18 +99,18 @@ object PlayerListManager {
     fun setPlayList(targetList: String): Boolean{
         when(targetList){
             "custom" -> {
-                currentPlayListFlag = 0
-                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                currentList = 0
+                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
                 return true
             }
             "video" -> {
-                currentPlayListFlag = 1
-                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                currentList = 1
+                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
                 return true
             }
             "music" -> {
-                currentPlayListFlag = 2
-                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
+                currentList = 2
+                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
                 return true
             }
             else -> {
@@ -117,55 +119,50 @@ object PlayerListManager {
         }
 
     }
-    fun getCurrentPlayListByString(context: Context): String{
-        if (!state_LastPlayListFlagRead){
-            PREFS_List = context.getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
-            if (PREFS_List.contains("PREFS_CurrentPlayListFlag")){
-                currentPlayListFlag = PREFS_List.getInt("PREFS_CurrentPlayListFlag", 0)
-                if (currentPlayListFlag !in 0..2) {
-                    currentPlayListFlag = 0
-                    PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
-                }
-            }else{
-                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
-                currentPlayListFlag = 0
-            }
-            state_LastPlayListFlagRead = true
-        }
-
-        when(currentPlayListFlag){
+    fun setPlayList(targetList: Int): Boolean{
+        when(targetList){
             0 -> {
-                return "custom"
+                currentList = 0
+                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                return true
             }
             1 -> {
-                return "video"
+                currentList = 1
+                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                return true
             }
             2 -> {
-                return "music"
+                currentList = 2
+                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                return true
             }
             else -> {
-                return "error"
+                return false
             }
-        }
-    }
-    fun getCurrentPlayListByFlag(context: Context): Int{
-        if (!state_LastPlayListFlagRead){
-            PREFS_List = context.getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
-            if (PREFS_List.contains("PREFS_CurrentPlayListFlag")){
-                currentPlayListFlag = PREFS_List.getInt("PREFS_CurrentPlayListFlag", 0)
-                if (currentPlayListFlag !in 0..2) {
-                    currentPlayListFlag = 0
-                    PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
-                }
-            }else{
-                PREFS_List.edit { putInt("PREFS_CurrentPlayListFlag", currentPlayListFlag) }
-                currentPlayListFlag = 0
-            }
-            state_LastPlayListFlagRead = true
         }
 
-        return currentPlayListFlag
     }
+    fun getCurrentList(context: Context): Int{
+        //确保已初始化设置清单
+        if (!state_PREFS_List_Initialized){
+            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
+            state_PREFS_List_Initialized = true
+        }
+        //确保数值有效
+        if (PREFS_List.contains("PREFS_currentList")){
+            currentList = PREFS_List.getInt("PREFS_currentList", 0)
+            if (currentList !in 0..2) {
+                currentList = 0
+                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+            }
+        }else{
+            PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+            currentList = 0
+        }
+
+        return currentList
+    }
+
     //向实时视频列表和音乐列表传入内容
     fun InfuseLiveVideoList(newList: List<MediaItemForVideo>){
         liveVideoList.clear()
@@ -182,7 +179,7 @@ object PlayerListManager {
         //设置上下文
         setContext(context)
         //读取设置
-        loadSettings()
+        loadSettings(context)
 
 
         state_PlayListManage_started = true
@@ -192,36 +189,48 @@ object PlayerListManager {
     private fun setContext(context: Context){
         singletonContext = context
     }
-    private fun loadSettings(){
-        PREFS_List = singletonContext.getSharedPreferences("PREFS_List", MODE_PRIVATE)
-        if (PREFS_List.contains("PREFS_RepeatMode")){
-            PREFS_LoopMode = PREFS_List.getString("PREFS_RepeatMode", "OFF") ?: "error"
+    private fun loadSettings(context: Context){
+        PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
+        state_PREFS_List_Initialized = true
+
+        if (PREFS_List.contains("PREFS_LoopMode")){
+            PREFS_LoopMode = PREFS_List.getString("PREFS_LoopMode", "OFF") ?: "error"
             if (PREFS_LoopMode != "OFF" && PREFS_LoopMode != "ONE" && PREFS_LoopMode != "ALL"){
                 PREFS_LoopMode = "OFF"
-                PREFS_List.edit{ putString("PREFS_RepeatMode", "OFF").apply() }
+                PREFS_List.edit{ putString("PREFS_LoopMode", "OFF").apply() }
             }
         }else{
             PREFS_LoopMode = "OFF"
-            PREFS_List.edit{ putString("PREFS_RepeatMode", "OFF").apply() }
+            PREFS_List.edit{ putString("PREFS_LoopMode", "OFF").apply() }
         }
+
     }
 
 
     //循环模式
     var PREFS_LoopMode = ""
-    fun setRepeatMode(mode: String) {
-        PREFS_LoopMode  = mode
-        PREFS_List.edit{ putString("PREFS_RepeatMode", PREFS_LoopMode ).apply() }
-    }
-    fun getRepeatMode(): String{
-        if (PREFS_LoopMode != "OFF" && PREFS_LoopMode != "ONE" && PREFS_LoopMode != "ALL"){
-
-            PREFS_LoopMode = "OFF"
-
-            return PREFS_LoopMode
-        }else{
-            return PREFS_LoopMode
+    @SuppressLint("StaticFieldLeak")
+    fun setLoopMode(mode: String, context: Context) {
+        //确保已初始化设置清单
+        if (!state_PREFS_List_Initialized){
+            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
+            state_PREFS_List_Initialized = true
         }
+
+        PREFS_LoopMode  = mode
+        PREFS_List.edit{ putString("PREFS_LoopMode", PREFS_LoopMode ).apply() }
+    }
+    fun getLoopMode(context: Context): String{
+        //确保已初始化设置清单
+        if (!state_PREFS_List_Initialized){
+            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
+            state_PREFS_List_Initialized = true
+        }
+        //过滤无效值
+        PREFS_LoopMode  = PREFS_List.getString("PREFS_LoopMode", "OFF") ?: "error"
+        if (PREFS_LoopMode != "OFF" && PREFS_LoopMode != "ONE" && PREFS_LoopMode != "ALL"){ PREFS_LoopMode = "OFF" }
+
+        return PREFS_LoopMode
     }
 
 

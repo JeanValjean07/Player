@@ -725,21 +725,21 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private fun chooseLoopMode(loopMode: String){
         ToolVibrate().vibrate(requireContext())
         //设置循环模式
-        PlayerListManager.setRepeatMode(when (loopMode) {
+        PlayerListManager.setLoopMode(when (loopMode) {
             "ONE" -> "ONE"
             "ALL" -> "ALL"
             "OFF" -> "OFF"
             else -> "OFF"
-        })
+        },requireContext())
 
         //刷新显示文本
         setLoopModeText()
         //不主动退出
     }
     private fun setLoopModeText(){
-        val currentRepeatMode = PlayerListManager.getRepeatMode()
+        val currentLoopMode = PlayerListManager.getLoopMode(requireContext())
         val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
-        ButtonLoopMode?.text = when (currentRepeatMode) {
+        ButtonLoopMode?.text = when (currentLoopMode) {
             "ONE" -> "单集循环"
             "ALL" -> "列表循环"
             "OFF" -> "播完暂停"
@@ -756,6 +756,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         setSpeedText()
         //不主动退出
     }
+    @SuppressLint("UseGetLayoutInflater", "InflateParams")
     private fun setSpeedByInput(){
         val dialog = Dialog(requireContext())
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.activity_player_dialog_input_value, null)
@@ -801,6 +802,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
         }
     }
+    @SuppressLint("SetTextI18n")
     private fun setSpeedText(){
         //获取文本显示位
         val originalSpeedText = view?.findViewById<TextView>(R.id.current_speed)
@@ -838,6 +840,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             timerShutDown?.text = "将在${shutDownMoment}关闭"
         }
     } //更改显示文本
+    @SuppressLint("UseGetLayoutInflater", "InflateParams")
     private fun setShutDownTimeByInput(){
         val dialog = Dialog(requireContext())
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.activity_player_dialog_input_time, null)

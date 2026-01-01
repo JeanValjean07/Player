@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import data.MediaModel.MediaItemForVideo
 
 @UnstableApi
+@Suppress("unused")
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
     //媒体信息
@@ -133,13 +134,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_UseBlackBackground : Boolean = false
     var PREFS_UseHighRefreshRate : Boolean = false
     var PREFS_UseCompatScroller : Boolean = false
-    var PREFS_CloseVideoTrack : Boolean = false
     var PREFS_CloseFragmentGesture : Boolean = false
     var PREFS_UseOnlySyncFrame : Boolean = false
     var PREFS_TimeUpdateGap: Long = 20L
     var PREFS_SavePositionWhenExit: Boolean = false
     var PREFS_SwitchPortraitWhenExit: Boolean = true
-    var PREFS_EnablePlayAreaMove: Boolean = false
+    var PREFS_EnablePlayAreaMoveAnim: Boolean = false
     var PREFS_UseDataBaseForScrollerSetting: Boolean = false
     var PREFS_UseSyncFrameWhenScrollerStop: Boolean = false
     var PREFS_SeekHandlerGap: Long = 0

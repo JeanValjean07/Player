@@ -470,11 +470,11 @@ class PlayerActivityNeo: AppCompatActivity(){
             } else {
                 vm.PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
             }
-            if (!PREFS.contains("PREFS_EnablePlayAreaMove")){
-                PREFSEditor.putBoolean("PREFS_EnablePlayAreaMove", true)
-                vm.PREFS_EnablePlayAreaMove = true
+            if (!PREFS.contains("PREFS_EnablePlayAreaMoveAnim")){
+                PREFSEditor.putBoolean("PREFS_EnablePlayAreaMoveAnim", true)
+                vm.PREFS_EnablePlayAreaMoveAnim = true
             }else{
-                vm.PREFS_EnablePlayAreaMove = PREFS.getBoolean("PREFS_EnablePlayAreaMove", true)
+                vm.PREFS_EnablePlayAreaMoveAnim = PREFS.getBoolean("PREFS_EnablePlayAreaMoveAnim", true)
             }
 
             //固定数值项
@@ -552,7 +552,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
         }                     //刷新率强制修改
-        if (vm.PREFS_EnablePlayAreaMove){
+        if (vm.PREFS_EnablePlayAreaMoveAnim){
             MoveYaxisCalculate()
         }                      //计算移动高度
 
@@ -2197,24 +2197,30 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     private fun MovePlayArea_down(){
-        if (!vm.PREFS_EnablePlayAreaMove) return
+        if (vm.PREFS_EnablePlayAreaMoveAnim) {
+            //取消Job:播放区域上移
+            MovePlayAreaJob?.cancel()
 
-        //取消Job:播放区域上移
-        MovePlayAreaJob?.cancel()
+            playerView.animate()
+                .translationY(0f)
+                .setInterpolator(DecelerateInterpolator())
+                .setDuration(300)
+                .start()
+        }else{
+            playerView.translationY = 0f
+        }
 
-        playerView.animate()
-            .translationY(0f)
-            .setInterpolator(DecelerateInterpolator())
-            .setDuration(300)
-            .start()
     }
     private fun MovePlayArea_up() {
-        if (!vm.PREFS_EnablePlayAreaMove) return
-        playerView.animate()
-            .translationY(-(vm.YaxisDestination))
-            .setInterpolator(DecelerateInterpolator())
-            .setDuration(300)
-            .start()
+        if (vm.PREFS_EnablePlayAreaMoveAnim){
+            playerView.animate()
+                .translationY(-(vm.YaxisDestination))
+                .setInterpolator(DecelerateInterpolator())
+                .setDuration(300)
+                .start()
+        }else{
+            playerView.translationY = -(vm.YaxisDestination)
+        }
     }
     private var MovePlayAreaJob: Job? = null
     private fun MovePlayAreaJob() {
@@ -2639,8 +2645,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //playEnd不应该控制播放,而是只专注于用户端界面的控制,播放控制转移到单例中
     private fun playerEnd(){
-        val repeatMode = PlayerListManager.getRepeatMode()
-        when (repeatMode) {
+        val loopMode = PlayerListManager.getLoopMode(this)
+        when (loopMode) {
             "ONE" -> {
                 notice("单集循环", 3000)
             }

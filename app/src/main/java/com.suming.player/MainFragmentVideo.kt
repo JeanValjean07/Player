@@ -34,6 +34,7 @@ class MainFragmentVideo(
 ) : Fragment(R.layout.activity_player_fragment_play_list_live_page) {
     //共享ViewModel
     private val vm: PlayerListViewModel by activityViewModels()
+    //当前页签
     private val currentPageFlag = 2
     //加载中卡片
     private lateinit var LoadingState: LinearLayout
@@ -209,7 +210,7 @@ class MainFragmentVideo(
     //是否已经是当前播放列表
     private fun setCurrentListState(){
         //判断是否是当前播放列表
-        if (PlayerListManager.getCurrentPlayListByString(requireContext()) == "music"){
+        if (PlayerListManager.getCurrentList(requireContext()) == currentPageFlag){
             ButtonSetAsCurrentListText.text = "已设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
         }

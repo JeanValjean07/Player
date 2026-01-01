@@ -958,7 +958,7 @@ object PlayerSingleton {
             exitProcess(0)
         }
         //从列表管理器获取循环模式
-        val currentLoopMode = PlayerListManager.getRepeatMode()
+        val currentLoopMode = PlayerListManager.getLoopMode(singletonContext)
         //根据循环模式执行不同操作
         when (currentLoopMode) {
             "ONE" -> {

@@ -574,7 +574,8 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="0"
                             app:thumbTint="@color/switchThumbColor"
-                            app:trackTint="@color/switchTrackColor" />
+                            app:trackTint="@color/switchTrackColor"
+                            tools:ignore="TooManyViews" />
                     </LinearLayout>
                     <!--  描述：提高强制Seek时间差  -->
                     <TextView
@@ -768,7 +769,6 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="14dp">
-
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -871,7 +871,6 @@
                         android:layout_height="wrap_content"
                         android:text="如果出现卡顿可考虑关闭。"
                         android:textSize="12sp" />
-
                     <!--  选单按钮：振动时长  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -916,26 +915,23 @@
                         android:layout_height="wrap_content"
                         android:text="根据您的设备马达配置选择合适的振动时长，以获得更好的振动体验。如果您的系统对振动效果进行了优化，建议选择跟随系统。"
                         android:textSize="12sp" />
-                    <!--  开关:播放区域自动移动  -->
+                    <!--  开关:播放区域移动动画  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_weight="0"
-                            android:text="播放区域随面板移动"
+                            android:text="播放区域随面板移动动画"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
-
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
-
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/EnablePlayAreaMove"
                             android:layout_width="wrap_content"
@@ -944,11 +940,11 @@
                             app:thumbTint="@color/switchThumbColor"
                             app:trackTint="@color/switchTrackColor" />
                     </LinearLayout>
-                    <!--  提示信息:播放区域自动移动  -->
+                    <!--  提示信息:播放区域移动动画  -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="移动过程出现卡顿可考虑关闭。"
+                        android:text="移动过程出现卡顿可考虑关闭。移动动画卡顿通常不是性能原因，而是暂时性的。"
                         android:textSize="12sp" />
                     <!--  选单：播放页样式  -->
                     <LinearLayout

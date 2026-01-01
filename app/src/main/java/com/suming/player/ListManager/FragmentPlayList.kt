@@ -72,7 +72,7 @@ class FragmentPlayList: DialogFragment() {
 
 
 
-
+    @Suppress("DEPRECATION")
     override fun onStart() {
         super.onStart()
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
@@ -477,19 +477,19 @@ class FragmentPlayList: DialogFragment() {
     }
     //显示当前播放列表
     private fun setCurrentPlayListIcon(){
-        val currentPlayList = PlayerListManager.getCurrentPlayListByFlag(requireContext())
-        if (currentPlayList == 0){
-            ButtonCurrentListIcon.setImageResource(R.drawable.ic_play_list_custom_list)
-        }
-        else if (currentPlayList == 1){
-            ButtonCurrentListIcon.setImageResource(R.drawable.ic_main_fragment_video_icon)
-        }
-        else if (currentPlayList == 2){
-            ButtonCurrentListIcon.setImageResource(R.drawable.ic_main_fragment_music_icon)
+        val currentPlayList = PlayerListManager.getCurrentList(requireContext())
+        when (currentPlayList) {
+            0 -> {
+                ButtonCurrentListIcon.setImageResource(R.drawable.ic_play_list_custom_list)
+            }
+            1 -> {
+                ButtonCurrentListIcon.setImageResource(R.drawable.ic_main_fragment_video_icon)
+            }
+            2 -> {
+                ButtonCurrentListIcon.setImageResource(R.drawable.ic_main_fragment_music_icon)
+            }
         }
 
-
-        ButtonCurrentListIcon
     }
     private fun onPlayListChange(flag: Int){
         setCurrentPlayListIcon()
@@ -569,21 +569,21 @@ class FragmentPlayList: DialogFragment() {
     private fun chooseLoopMode(loopMode: String){
         ToolVibrate().vibrate(requireContext())
         //设置循环模式
-        PlayerListManager.setRepeatMode(when (loopMode) {
+        PlayerListManager.setLoopMode(when (loopMode) {
             "ONE" -> "ONE"
             "ALL" -> "ALL"
             "OFF" -> "OFF"
             else -> "OFF"
-        })
+        }, requireContext())
 
         //刷新显示文本
         setLoopModeText()
         //不主动退出
     }
     private fun setLoopModeText(){
-        val currentRepeatMode = PlayerListManager.getRepeatMode()
+        val currentLoopMode = PlayerListManager.getLoopMode(requireContext())
         val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
-        ButtonLoopMode?.text = when (currentRepeatMode) {
+        ButtonLoopMode?.text = when (currentLoopMode) {
             "ONE" -> "单集循环"
             "ALL" -> "列表循环"
             "OFF" -> "播完暂停"
