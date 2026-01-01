@@ -12,7 +12,7 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import data.MediaModel.MediaItemForVideo
 
 @UnstableApi
-@Suppress("unused")
+//@Suppress("unused")
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
     //媒体信息
@@ -53,12 +53,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     //视频播放状态
     var playEnd: Boolean = false
-
-    //浮窗相关
-    var inFloatingWindow = false
-
-    //视频时长
-    var global_videoDuration = 0L
 
 
     //屏幕旋转相关

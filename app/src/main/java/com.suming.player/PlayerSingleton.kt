@@ -975,6 +975,9 @@ object PlayerSingleton {
             }
         }
     }
+    fun cancelPlayEnd(){
+        playState_playEnd = false
+    }
     //清除媒体项
     fun clearMediaItem() {
         _player?.clearMediaItems()

@@ -21,6 +21,7 @@ import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
+import androidx.cardview.widget.CardView
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
@@ -103,7 +104,6 @@ class SettingsActivity: AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
 
         //读取设置
         //<editor-fold desc="读取设置">
@@ -242,7 +242,6 @@ class SettingsActivity: AppCompatActivity() {
         }
         PREFS_Editor.apply()
         //</editor-fold>
-
 
         //显示版本
         val version = packageManager.getPackageInfo(packageName, 0).versionName
@@ -570,7 +569,7 @@ class SettingsActivity: AppCompatActivity() {
             }
         }
         //播放页样式
-        val ButtonPlayerType = findViewById<TextView>(R.id.ButtonPlayerType)
+        val ButtonPlayerType = findViewById<CardView>(R.id.ButtonPlayerType)
         ButtonPlayerType.setOnClickListener {
             ToolVibrate().vibrate(this)
             //使用弹出菜单选择
@@ -668,11 +667,11 @@ class SettingsActivity: AppCompatActivity() {
 
     }
     private fun setPlayerTypeText(){
-        val ButtonPlayerType = findViewById<TextView>(R.id.ButtonPlayerType)
+        val ButtonPlayerTypeText = findViewById<TextView>(R.id.ButtonPlayerTypeText)
         when(PREFS_UsePlayerType){
-            0 -> ButtonPlayerType.text = "经典"
-            1 -> ButtonPlayerType.text = "新晋"
-            2 -> ButtonPlayerType.text = "测试版"
+            0 -> ButtonPlayerTypeText.text = "经典"
+            1 -> ButtonPlayerTypeText.text = "新晋"
+            2 -> ButtonPlayerTypeText.text = "测试"
         }
     }
     //数值设置

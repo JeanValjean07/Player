@@ -564,11 +564,10 @@ class PlayerActivityOro: AppCompatActivity(){
         }                     //刷新率强制修改
         if (vm.PREFS_EnablePlayAreaMoveAnim){
             MoveYaxisCalculate()
-        }                      //计算移动高度
+        }                  //计算移动高度
 
         //RxJava事件总线
         registerEventBus()
-
 
         //传入视频链接
         if(savedInstanceState == null){
@@ -579,9 +578,13 @@ class PlayerActivityOro: AppCompatActivity(){
         }
 
 
+        //进度条
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
+                    //取消播放结束事件
+                    PlayerSingleton.cancelPlayEnd()
+                    //更新进度条
                     val duration = player.duration
                     val seekToPosition = (progress.toFloat() / 1000 * duration.toFloat()).toLong()
                     player.seekTo(seekToPosition)
@@ -594,7 +597,6 @@ class PlayerActivityOro: AppCompatActivity(){
                 startSeekBarSync()
             }
         })
-
         //退出按钮
         val ButtonExit = findViewById<ImageButton>(R.id.TopBarArea_ButtonExit)
         ButtonExit.setOnTouchListener { _, event ->
@@ -687,23 +689,32 @@ class PlayerActivityOro: AppCompatActivity(){
         val ButtonMore = findViewById<ImageButton>(R.id.controller_button_more)
         ButtonMore.setOnClickListener {
             ToolVibrate().vibrate(this@PlayerActivityOro)
-
+            //防止快速点击
             if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                 return@setOnClickListener
             }
             clickMillis_MoreOptionPage = System.currentTimeMillis()
-
+            //关闭时间和进度条同步 + 移动播放区域
+            stopVideoTimeSync()
             stopSeekBarSync()
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { MovePlayAreaJob() }
+            //启动弹窗
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                MovePlayAreaJob()
-            }
         }
         //播放列表
         val ButtonList = findViewById<ImageButton>(R.id.controller_button_play_list)
         ButtonList.setOnClickListener {
             ToolVibrate().vibrate(this@PlayerActivityOro)
-
+            //防止快速点击
+            if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
+                return@setOnClickListener
+            }
+            clickMillis_MoreOptionPage = System.currentTimeMillis()
+            //关闭时间和进度条同步 + 移动播放区域
+            stopVideoTimeSync()
+            stopSeekBarSync()
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { MovePlayAreaJob() }
+            //启动弹窗
             FragmentPlayList.newInstance().show(supportFragmentManager, "PlayerPlayListFragment")
         }
         //前进10秒
@@ -1169,7 +1180,10 @@ class PlayerActivityOro: AppCompatActivity(){
                 }
                 //退出事件
                 "Dismiss" -> {
+                    //开启被控组件
                     startSeekBarSync()
+                    startVideoTimeSync()
+                    //移动播放区域回原位
                     MovePlayArea_down()
                 }
             }
@@ -1185,7 +1199,10 @@ class PlayerActivityOro: AppCompatActivity(){
                 }
                 //退出逻辑
                 "Dismiss" -> {
+                    //开启被控组件
                     startSeekBarSync()
+                    startVideoTimeSync()
+                    //移动播放区域回原位
                     MovePlayArea_down()
                 }
             }
@@ -1195,7 +1212,10 @@ class PlayerActivityOro: AppCompatActivity(){
             val ReceiveKey = bundle.getString("KEY")
             when(ReceiveKey){
                 "Dismiss" -> {
+                    //开启被控组件
                     startSeekBarSync()
+                    startVideoTimeSync()
+                    //移动播放区域回原位
                     MovePlayArea_down()
                 }
             }
@@ -1859,22 +1879,19 @@ class PlayerActivityOro: AppCompatActivity(){
             //开启视频控件
             startSeekBarSync()
             startVideoTimeSync()
-            //Log.d("SuMing","onResume: 决策函数运行中")
+            Log.d("SuMing","onResume: 决策函数运行中")
         }else{
             //活动重建
             if (vm.state_onStop_ByReBuild){
-                //Log.d("SuMing","onResume: 活动重建")
+                Log.d("SuMing","onResume: 活动重建")
                 //开启视频控件
                 startSeekBarSync()
                 startVideoTimeSync()
             }
             //首次启动
-            /*
             if (vm.state_onStop_ByRealExit){
-                //Log.d("SuMing","onResume: 首次启动")
+                Log.d("SuMing","onResume: 首次启动")
             }
-
-             */
             //活动暂退桌面：小窗模式在这里包含
             if (vm.state_onStop_ByLossFocus){
                 //可能来自浮窗
@@ -1890,7 +1907,7 @@ class PlayerActivityOro: AppCompatActivity(){
                 //开启视频控件
                 startSeekBarSync()
                 startVideoTimeSync()
-                //Log.d("SuMing","onResume: 活动暂退桌面")
+                Log.d("SuMing","onResume: 活动暂退桌面")
             }
             //通用步骤：
             //重置状态
@@ -2016,7 +2033,9 @@ class PlayerActivityOro: AppCompatActivity(){
                 if (!state_onDestroy_reach){
                     //Log.d("SuMing","onStop: 活动暂退桌面")
                     vm.set_onStop_ByLossFocus()
-                    PlayerSingleton.ActivityOnStop()
+                    if(!state_FromFloatingWindow){
+                        PlayerSingleton.ActivityOnStop()
+                    }
                 }
                 //活动被销毁
                 else{
@@ -2041,8 +2060,8 @@ class PlayerActivityOro: AppCompatActivity(){
         }
     }
     private fun startOnStopDecider() {
-        //因开启小窗和保持播放状态退出时：不报告状态
-        if (state_FromFloatingWindow || state_FromExitKeepPlaying) return
+        //因保持播放状态退出时：不报告状态
+        if (state_FromExitKeepPlaying) return
         //重置计数位并启动检测程序
         onStopDecideCount = 0L
         vm.state_onStopDecider_Running = true
@@ -2434,11 +2453,10 @@ class PlayerActivityOro: AppCompatActivity(){
             intentFloatingWindow.putExtra("VIDEO_SIZE_WIDTH", videoSizeWidth)
             intentFloatingWindow.putExtra("VIDEO_SIZE_HEIGHT", videoSizeHeight)
             intentFloatingWindow.putExtra("SCREEN_WIDTH", screenWidth)
-            intentFloatingWindow.putExtra("SOURCE", "PlayerActivity")   //该传入值需要区分页面类型 flag_page_type
+            intentFloatingWindow.putExtra("state_PlayerType", 0)   //该传入值需要区分页面类型 flag_page_type
             startService(intentFloatingWindow)
             //修改状态
             state_FromFloatingWindow = true
-            vm.inFloatingWindow = true
             //主动返回系统桌面
             val intentHomeLauncher = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_HOME)
@@ -3158,7 +3176,7 @@ class PlayerActivityOro: AppCompatActivity(){
             }
 
 
-            syncSeekBarTaskHandler.postDelayed(this, 1)
+            syncSeekBarTaskHandler.postDelayed(this, 1000)
         }
     }
     private fun startSeekBarSync() {
@@ -3180,7 +3198,7 @@ class PlayerActivityOro: AppCompatActivity(){
 
             controller_timer_current.text = FormatTime_onlyNum(videoTimeSyncHandler_currentPosition)
 
-            videoTimeSyncHandler.postDelayed(this, videoTimeSyncGap)
+            videoTimeSyncHandler.postDelayed(this, 1000)
         }
     }
     private fun startVideoTimeSync() {

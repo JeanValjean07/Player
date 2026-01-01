@@ -771,16 +771,17 @@ class PlayerActivityNeo: AppCompatActivity(){
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
             ToolVibrate().vibrate(this@PlayerActivityNeo)
+            //防止快速点击
             if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                 return@setOnClickListener
             }
             clickMillis_MoreOptionPage = System.currentTimeMillis()
-
+            //关闭时间和进度条同步 + 移动播放区域
+            stopVideoTimeSync()
             stopScrollerSync()
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { MovePlayAreaJob() }
+            //启动弹窗
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                MovePlayAreaJob()
-            }
         }
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.NoticeCard)
@@ -837,17 +838,17 @@ class PlayerActivityNeo: AppCompatActivity(){
         val ButtonMore = findViewById<ImageButton>(R.id.controller_button_more)
         ButtonMore.setOnClickListener {
             ToolVibrate().vibrate(this@PlayerActivityNeo)
-
+            //防止快速点击
             if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                 return@setOnClickListener
             }
             clickMillis_MoreOptionPage = System.currentTimeMillis()
-
+            //关闭时间和进度条同步 + 移动播放区域
+            stopVideoTimeSync()
             stopScrollerSync()
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { MovePlayAreaJob() }
+            //启动弹窗
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                MovePlayAreaJob()
-            }
         }
         //播放区域点击事件
         val gestureDetectorPlayArea = GestureDetector(this, object : SimpleOnGestureListener() {
@@ -1298,7 +1299,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
                 //退出事件
                 "Dismiss" -> {
+                    //开启被控组件
                     startScrollerSync()
+                    startVideoTimeSync()
+                    //把播放区域移回去
                     MovePlayArea_down()
                 }
             }
@@ -1314,7 +1318,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
                 //退出逻辑
                 "Dismiss" -> {
+                    //开启被控组件
                     startScrollerSync()
+                    startVideoTimeSync()
+                    //把播放区域移回去
                     MovePlayArea_down()
                 }
             }
@@ -1324,7 +1331,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             val ReceiveKey = bundle.getString("KEY")
             when(ReceiveKey){
                 "Dismiss" -> {
+                    //开启被控组件
                     startScrollerSync()
+                    startVideoTimeSync()
+                    //把播放区域移回去
                     MovePlayArea_down()
                 }
             }
@@ -2023,7 +2033,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                 if (!state_onDestroy_reach){
                     //Log.d("SuMing","onStop: 活动暂退桌面")
                     vm.set_onStop_ByLossFocus()
-                    PlayerSingleton.ActivityOnStop()
+                    if(!state_FromFloatingWindow){
+                        PlayerSingleton.ActivityOnStop()
+                    }
                 }
                 //活动被销毁
                 else{
@@ -2048,8 +2060,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun startOnStopDecider() {
-        //因开启小窗和保持播放状态退出时：不报告状态
-        if (state_FromFloatingWindow || state_FromExitKeepPlaying) return
+        //因保持播放状态退出时：不报告状态
+        if (state_FromExitKeepPlaying) return
         //重置计数位并启动检测程序
         onStopDecideCount = 0L
         vm.state_onStopDecider_Running = true
@@ -2437,11 +2449,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             intentFloatingWindow.putExtra("VIDEO_SIZE_WIDTH", videoSizeWidth)
             intentFloatingWindow.putExtra("VIDEO_SIZE_HEIGHT", videoSizeHeight)
             intentFloatingWindow.putExtra("SCREEN_WIDTH", screenWidth)
-            intentFloatingWindow.putExtra("SOURCE", "PlayerActivity")   //该传入值需要区分页面类型 flag_page_type
+            intentFloatingWindow.putExtra("state_PlayerType", 1)   //该传入值需要区分页面类型 flag_page_type
             startService(intentFloatingWindow)
             //修改状态
             state_FromFloatingWindow = true
-            vm.inFloatingWindow = true
             //主动返回系统桌面
             val intentHomeLauncher = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_HOME)
@@ -3271,7 +3282,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             scrollParam2 = (( player.currentPosition - scrollParam1 * ScrollerInfo_EachPicDuration ) * ScrollerInfo_EachPicWidth / ScrollerInfo_EachPicDuration ).toInt()
 
             if (vm.playEnd && !player.isPlaying){
-                scrollParam1 = scrollParam1 - 1
+                scrollParam1 -= 1
                 scrollParam2 = 150
                 scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
                 syncScrollRunnableRunning = false
@@ -3304,7 +3315,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             controller_timer_current.text = FormatTime_onlyNum(videoTimeSyncHandler_currentPosition)
 
-            videoTimeSyncHandler.postDelayed(this, videoTimeSyncGap)
+            videoTimeSyncHandler.postDelayed(this, 1000)
         }
     }
     private fun startVideoTimeSync() {

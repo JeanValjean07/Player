@@ -25,7 +25,7 @@ class FloatingWindowService : Service() {
     private var mFloatingView: View? = null
     private var mParams: WindowManager.LayoutParams? = null
     //启动来源
-    private var source = ""
+    private var source = -1
     //视频尺寸
     private var videoSizeWidth = 0
     private var videoSizeHeight = 0
@@ -67,7 +67,7 @@ class FloatingWindowService : Service() {
         videoSizeWidth = intent?.getIntExtra("VIDEO_SIZE_WIDTH", 0) ?: 0
         videoSizeHeight = intent?.getIntExtra("VIDEO_SIZE_HEIGHT", 0) ?: 0
         screenWidth = intent?.getIntExtra("SCREEN_WIDTH", 0) ?: 0
-        source = intent?.getStringExtra("SOURCE") ?: "PlayerActivity"
+        source = intent?.getIntExtra("state_PlayerType", -1) ?: -1
         //动态设置尺寸
         videoSizeWidthD = screenWidth / 2
         videoSizeHeightD = (videoSizeWidthD * (videoSizeHeight.toFloat() / videoSizeWidth)).toInt()
@@ -106,16 +106,16 @@ class FloatingWindowService : Service() {
                 mWindowManager?.updateViewLayout(mFloatingView, mParams!!)
                 isFolded = false
             }else {
-                if (source == "PlayerActivityTest"){
-                    val intent = Intent(this, PlayerActivityNeo::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                if (source == 0){
+                    val intent = Intent(this, PlayerActivityOro::class.java)
+                        .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+                        .putExtra("IntentSource","FromPendingIntent" )
                     startActivity(intent)
                 }
-                else if (source == "PlayerActivity"){
-                    val intent = Intent(this, PlayerActivityNeo::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
-                    startActivity(intent)
-                }
-                else if (source == "PlayerActivitySeekBar"){
-                    val intent = Intent(this, PlayerActivityOro::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }.putExtra("SOURCE","FROM_PENDING" )
+                else if (source == 1){
+                    val intent = Intent(this, PlayerActivityNeo::class.java)
+                        .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+                        .putExtra("IntentSource","FromPendingIntent" )
                     startActivity(intent)
                 }
                 else {

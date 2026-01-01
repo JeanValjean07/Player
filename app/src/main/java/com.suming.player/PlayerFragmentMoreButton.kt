@@ -193,9 +193,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //点击顶部区域回顶
         val TopBarArea = view.findViewById<View>(R.id.TopBarArea)
         TopBarArea.setOnClickListener {
+            val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+            if (NestedScrollView.scrollY == 0) { return@setOnClickListener }
             ToolVibrate().vibrate(requireContext())
             //回到顶部
-            val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
             NestedScrollView.smoothScrollTo(0, 0)
         }
         //截屏
