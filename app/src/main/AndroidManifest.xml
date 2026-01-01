@@ -37,6 +37,7 @@
             android:name=".MainActivity"
             android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
+            android:label="主页"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <intent-filter>
@@ -45,10 +46,10 @@
             </intent-filter>
         </activity>
 
-        <!-- 播放页 -->
+        <!-- 播放页Neo -->
         <activity android:name=".PlayerActivityNeo"
             android:theme="@style/THEME_Player"
-            android:label="播放器"
+            android:label="播放器Neo"
             android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|screenLayout"
             android:launchMode="singleTask"
@@ -68,11 +69,10 @@
                 android:name="android.notch_support"
                 android:value="true"/>
         </activity>
-
-        <!-- 播放页(传统进度条) -->
+        <!-- 播放页Oro -->
         <activity android:name=".PlayerActivityOro"
             android:theme="@style/THEME_Player"
-            android:label="播放器:传统进度条"
+            android:label="播放器Oro"
             android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|screenLayout"
             android:launchMode="singleTask"
@@ -92,40 +92,27 @@
                 android:name="android.notch_support"
                 android:value="true"/>
         </activity>
-
 
 
         <!-- 设置 -->
         <activity android:name=".SettingsActivity"
             android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
+            android:label="设置"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
-
         <!-- 指南和帮助 -->
         <activity android:name=".GuidanceActivity"
             android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
-            android:exported="true"
-            tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
-
-
-
-        <!-- 开放源代码许可 -->
-        <activity android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
-            android:theme="@style/THEME_OSS"
-            android:screenOrientation="portrait"
-            android:exported="true"
-            tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
-        <activity android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
-            android:theme="@style/THEME_OSS"
-            android:screenOrientation="portrait"
+            android:label="指南和帮助"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
         <!-- 设备信息 -->
         <activity android:name=".DeviceInfoActivity"
             android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
+            android:label="设备信息"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
 
@@ -141,27 +128,12 @@
                 <action android:name="androidx.media3.session.MediaSessionService"/>
             </intent-filter>
         </service>
-
-        <!-- 后台播放服务test -->
-        <service
-            android:name=".PlayerService"
-            android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="mediaPlayback"
-            tools:ignore="ExportedService">
-            <intent-filter>
-                <action android:name="androidx.media3.session.MediaSessionService"/>
-            </intent-filter>
-        </service>
-
-
         <!-- 悬浮窗服务 -->
         <service
             android:name=".FloatingWindowService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
-
         <!-- provider -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -172,7 +144,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
         <!-- 播放控制广播接收器 -->
         <receiver android:name=".PlayerActionReceiver"
             android:exported="false">
@@ -182,6 +153,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- 开放源代码许可 -->
+        <activity android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
+            android:theme="@style/THEME_OSS"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
+        <activity android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
+            android:theme="@style/THEME_OSS"
+            android:screenOrientation="portrait"
+            android:exported="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
     </application>
 
 </manifest>
