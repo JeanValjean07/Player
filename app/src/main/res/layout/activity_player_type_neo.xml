@@ -168,6 +168,7 @@
             app:layout_constraintStart_toStartOf="parent">
             <!-- 缩略图上方按钮区 -->
             <LinearLayout
+                android:id="@+id/controller_bottom_bar"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:orientation="horizontal"
@@ -201,7 +202,7 @@
                             android:layout_marginStart="6dp"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="0"
-                            android:text="00:00.000"
+                            android:text="00:00"
                             android:textColor="@color/HeadText"
                             android:textSize="15sp"
                             android:textStyle="bold"/>
@@ -223,7 +224,7 @@
                             android:layout_marginStart="6dp"
                             android:layout_marginEnd="6dp"
                             android:layout_weight="0"
-                            android:text="00:00.000"
+                            android:text="00:00"
                             android:textColor="@color/HeadText"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -362,6 +363,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="70dp"
                 android:orientation="horizontal"
+                android:clickable="true"
+                android:background="@color/Background3"
                 android:paddingBottom="30dp"
                 android:translationZ="3dp"
                 app:layout_constraintStart_toStartOf="parent"
@@ -385,4 +388,6 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

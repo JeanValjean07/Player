@@ -2096,6 +2096,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         val scale = resources.displayMetrics.density
         return (dpValue * scale + 0.5f).toInt()
     }
+    //px转dp
+    private fun px2dp(pxValue: Float): Int {
+        val scale = resources.displayMetrics.density
+        return (pxValue / scale + 0.5f).toInt()
+    }
     //设置项修改封装函数
     private fun changeStateAlwaysSeek(){
         if (vm.PREFS_UseDataBaseForScrollerSetting){
@@ -2183,10 +2188,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 notice("已开启TapJump", 3000)
             }
         }
-    }
-    //刷新视频总长度
-    private fun updateTimeCard(){
-        controller_timer_total.text = FormatTime_onlyNum(vm.MediaInfo_MediaDuration.toLong())
     }
     //清除进度条截图
     private fun clearMiniature(){
@@ -2728,18 +2729,15 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         return absolutePath?.takeIf { File(it).exists() }
     }
-
-
     //显示相关
     //界面控件
     //<editor-fold desc="界面控件">
     //经典播放页专属
-    private lateinit var seekBar: SeekBar
-    private lateinit var controller_bottom_card : CardView
+    //private lateinit var seekBar: SeekBar
+    //private lateinit var controller_bottom_card : CardView
     //新晋播放页专属
     private lateinit var scroller : RecyclerView
-    private lateinit var controller_bottom_constraint : ConstraintLayout
-    private lateinit var controller_timer_card : CardView //当前时间卡片
+    private lateinit var controller_bottom_bar : LinearLayout //底部按钮区域
     //通用
     private lateinit var rootConstraint : ConstraintLayout //根约束布局
     private lateinit var controllerLayer : ConstraintLayout //控件层
@@ -2751,7 +2749,11 @@ class PlayerActivityNeo: AppCompatActivity(){
     //</editor-fold>
     //显示相关函数
     //<editor-fold desc="显示相关函数">
-    //刷新按钮状态：在启动播放指令之后调用
+    //刷新视频总长度
+    private fun updateTimeCard(){
+        controller_timer_total.text = FormatTime_onlyNum(vm.MediaInfo_MediaDuration.toLong())
+    }
+    //刷新按钮状态
     private fun updateButtonState(){
         val Button = findViewById<ImageView>(R.id.controller_button_playorpause)
         if (player.isPlaying){
@@ -3009,6 +3011,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
 
         scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
+
+
         stopScrollerSync()
         startScrollerSync()
 
@@ -3108,12 +3112,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                     //经典播放页
                     0 -> {
                         (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
-                        (controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight + 50)
+                        //(controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight + 50)
                     }
                     //新晋播放页
                     1 -> {
                         (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
-                        (controller_timer_card.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
+                        (controller_bottom_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (vm.statusBarHeight)
                     }
                     //错误直接退出
                     else -> {
@@ -3127,12 +3131,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //经典播放页
                 if (state_playerType == 0){
                     (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
-                    (controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight + 50)
+                    //(controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight + 50)
                 }
                 //新晋播放页
                 else if (state_playerType == 1){
                     (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
-                    (controller_timer_card.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
+                    (controller_bottom_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (vm.statusBarHeight)
                 }
                 //错误直接退出
                 else{
@@ -3145,8 +3149,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         else if (state_screen_orientation == 0) {
             //经典播放页
             if (state_playerType == 0){
-                (controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (dp2px(10f))
-                (controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (dp2px(10f))
+                //(controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (dp2px(10f))
+                //(controller_bottom_card.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = (dp2px(10f))
                 (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = 0
                 (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = 0
             }
@@ -3154,6 +3158,8 @@ class PlayerActivityNeo: AppCompatActivity(){
             else if (state_playerType == 1){
                 (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = 0
                 (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = 0
+                (controller_bottom_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = 0
+                (controller_bottom_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = 0
             }
         }
     }
@@ -3203,8 +3209,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //controller_bottom_card = findViewById(R.id.controller_bottom_card)
             //新晋播放页专属
             scroller = findViewById(R.id.controller_scroller_recyclerView) //滚动条
-            controller_bottom_constraint = findViewById(R.id.controller_bottom_constraint) //底部约束布局
-            controller_timer_card = findViewById(R.id.controller_timer_card) //当前时间卡片
+            controller_bottom_bar = findViewById(R.id.controller_bottom_bar) //底部按钮区域
             //通用
             rootConstraint = findViewById(R.id.rootConstraint) //根约束布局
             controllerLayer = findViewById(R.id.controllerLayer) //控件层
