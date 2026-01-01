@@ -817,7 +817,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         ButtonLandscape.setOnTouchListener { _, event ->
             when (event.actionMasked){
                 MotionEvent.ACTION_DOWN -> {
-                    ToolVibrate().vibrate(this@PlayerActivityNeo)
+                    ToolVibrate().vibrate(this)
                     switchLandscape_upMillis = 0L
                     switchLandscape_downMillis = System.currentTimeMillis()
                     SwitchLandscapeJob()
@@ -3223,11 +3223,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         //初始化界面参数
         updateScreenParameters()
 
-
         //获取自动旋转状态
         rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
-
-
         //亮度
         val windowInfo = window.attributes
         if (!vm.BrightnessChanged) {
@@ -3249,7 +3246,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             vm.NOTICED_VolumeIsZero = true
             notice("当前音量为0", 3000)
         }
-
 
     }
 
@@ -3536,6 +3532,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         SwitchLandscapeJob?.cancel()
         SwitchLandscapeJob = lifecycleScope.launch {
             delay(500)
+            ToolVibrate().vibrate(this@PlayerActivityNeo)
             ButtonChangeOrientation("long")
         }
     }

@@ -3468,6 +3468,7 @@ class PlayerActivityOro: AppCompatActivity(){
         SwitchLandscapeJob?.cancel()
         SwitchLandscapeJob = lifecycleScope.launch {
             delay(500)
+            ToolVibrate().vibrate(this@PlayerActivityOro)
             ButtonChangeOrientation("long")
         }
     }
