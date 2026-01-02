@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 class FragmentPlayListMusicAdapter(
-    private val context: Context,
+    context: Context,
     private val onAddToListClick: (String) -> Unit,
     private val onPlayClick: (String) -> Unit
 ): PagingDataAdapter<MediaItemForMusic, FragmentPlayListMusicAdapter.ViewHolder>(diffCallback) {

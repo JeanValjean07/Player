@@ -17,7 +17,8 @@
         android:background="@color/HeadBackground"
         android:outlineSpotShadowColor="@color/HeadText"
         app:liftOnScrollColor="@color/HeadBackground"
-        android:outlineAmbientShadowColor="@color/HeadText">
+        android:outlineAmbientShadowColor="@color/HeadText"
+        tools:targetApi="28">
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:background="@color/Background"
@@ -379,7 +380,7 @@
                         android:textColor="@color/HeadText"
                         android:text="未知艺术家"
                         android:layout_marginStart="10dp"
-                        />
+                        tools:ignore="SmallSp" />
                 </LinearLayout>
                 <ImageButton
                     android:id="@+id/PlayingCard_Button"

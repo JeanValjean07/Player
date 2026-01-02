@@ -70,6 +70,8 @@ class MainActivity: AppCompatActivity() {
     private val REQUEST_STORAGE_PERMISSION = 1001
     //状态栏高度
     private var statusBarHeight = 0
+    //防止快速点击
+    private var lock_clickMillisLock = 0L
     //界面控件元素
     //<editor-fold desc="界面控件元素">
     private lateinit var main_video_list_adapter: MainVideoAdapter
@@ -296,6 +298,7 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_List = findViewById(R.id.PlayingCard_List)
         PlayingCard.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
+            //启动播放页
             val uri = PlayerSingleton.getMediaInfoUri()
             startPlayerFromSmallCard(uri)
         }
@@ -310,7 +313,12 @@ class MainActivity: AppCompatActivity() {
         }
         PlayingCard_List.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
-            //UnBindSmallCardVideo()
+            //防止快速点击
+            if (System.currentTimeMillis() - lock_clickMillisLock < 800) {
+                return@setOnClickListener
+            }
+            lock_clickMillisLock = System.currentTimeMillis()
+            //启动播放列表
             FragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
         }
 
@@ -1034,7 +1042,12 @@ class MainActivity: AppCompatActivity() {
     //启动播放器
     private fun startVideoPlayer(uri: Uri){
         ToolVibrate().vibrate(this@MainActivity)
-        //
+        //防止快速发起
+        if (System.currentTimeMillis() - lock_clickMillisLock < 800) {
+            return
+        }
+        lock_clickMillisLock = System.currentTimeMillis()
+        //确认启动
         when(PREFS_UsePlayerType){
             0 -> {
                 //构建intent

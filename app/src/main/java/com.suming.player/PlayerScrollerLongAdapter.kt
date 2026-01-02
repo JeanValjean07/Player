@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
-import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -25,9 +24,9 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.coroutines.coroutineContext
 
 @UnstableApi
+@Suppress("unused")
 class PlayerScrollerLongAdapter(
     private val context: Context,
     private val MediaInfo_AbsolutePath: String,
@@ -137,7 +136,7 @@ class PlayerScrollerLongAdapter(
         retrieverMap[position] = MediaMetadataRetriever()
         try {
             retrieverMap[position]?.setDataSource(MediaInfo_AbsolutePath)
-            coroutineContext.ensureActive()
+            currentCoroutineContext().ensureActive()
             var wStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
             var hStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
             val rotateStr = retrieverMap[position]?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
@@ -149,16 +148,16 @@ class PlayerScrollerLongAdapter(
             val videoWidth = wStr?.toFloat() ?: 0f
             val videoHeight = hStr?.toFloat() ?: 0f
             val ratio = videoHeight.div(videoWidth)
-            coroutineContext.ensureActive()
+            currentCoroutineContext().ensureActive()
             if (PREFS_GenerateThumbSYNC){
                 val frame = retrieverMap[position]?.getFrameAtTime(
                     (position * eachPicDuration * 1000L),
                     MediaMetadataRetriever.OPTION_CLOSEST_SYNC
                 )
-                coroutineContext.ensureActive()
+                currentCoroutineContext().ensureActive()
                 retrieverMap[position]?.release()
                 saveThumb(ratio, position, frame)
-                coroutineContext.ensureActive()
+                currentCoroutineContext().ensureActive()
             }
             else{
                 val frame = retrieverMap[position]?.getFrameAtTime(
@@ -168,7 +167,7 @@ class PlayerScrollerLongAdapter(
                 currentCoroutineContext().ensureActive()
                 retrieverMap[position]?.release()
                 saveThumb(ratio, position, frame)
-                coroutineContext.ensureActive()
+                currentCoroutineContext().ensureActive()
             }
             item.thumbGeneratingRunning = false
         }

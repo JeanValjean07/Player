@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +19,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
@@ -598,6 +600,7 @@ class SettingsActivity: AppCompatActivity() {
 
     //Functions
     //测试版可用性检查
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun allowUseTestPlayer(): Boolean{
         val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
         val signingInfo = packageInfo.signingInfo

@@ -9,7 +9,7 @@
     android:fitsSystemWindows="false"
     tools:context=".MainActivity"
     tools:ignore="HardcodedText" >
-    <!-- AppBarLayout -->
+
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -20,7 +20,8 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:outlineAmbientShadowColor="@color/HeadText">
+        android:outlineAmbientShadowColor="@color/HeadText"
+        tools:targetApi="28">
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar1"
             android:layout_width="match_parent"
@@ -120,7 +121,7 @@
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
-    <!-- RV -->
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerview_video_list"
         android:layout_width="match_parent"

@@ -7,12 +7,15 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.annotation.RequiresApi
 
+@RequiresApi(Build.VERSION_CODES.Q)
 class ToolVibrate() {
     //振动配置
     private var state_vibrateSettingExist = false
     private var PREFS_UseSysVibrate = true
     private var PREFS_VibrateMillis = 50L
+    private var state_SDK_version = 0
 
     //振动
     private fun Context.vibrator(): Vibrator =
@@ -29,6 +32,12 @@ class ToolVibrate() {
             readVibrateSetting(context)
         }
         val vib = context.vibrator()
+
+        //检查sdk版本
+        if (state_SDK_version == 0){ state_SDK_version = Build.VERSION.SDK_INT }
+        //检查sdk版本是否支持振动
+        if (state_SDK_version < Build.VERSION_CODES.Q){ return }
+
         if (PREFS_UseSysVibrate) {
             val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
             vib.vibrate(effect)

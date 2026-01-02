@@ -16,7 +16,8 @@
         android:background="@color/HeadBackground"
         android:outlineSpotShadowColor="@color/HeadText"
         app:liftOnScrollColor="@color/HeadBackground"
-        android:outlineAmbientShadowColor="@color/HeadText">
+        android:outlineAmbientShadowColor="@color/HeadText"
+        tools:targetApi="28">
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/TopBarArea"
             android:layout_width="match_parent"
@@ -24,7 +25,6 @@
             android:background="@android:color/transparent"
             app:contentInsetStart="0dp"
             android:elevation="1dp">
-            <!-- AppBar# -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -62,7 +62,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:paddingBottom="100dp">
+            android:paddingBottom="100dp"
+            tools:targetApi="28">
             <!-- 版本卡片 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -73,36 +74,30 @@
                 android:layout_marginBottom="5dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="horizontal">
-
                     <ImageView
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:contentDescription="icon"
                         android:src="@drawable/ic_settings_icon" />
-
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_margin="3dp"
                         android:orientation="horizontal">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_weight="0"
                             android:text="播放器" />
-
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
                             android:layout_weight="1" />
-
                         <TextView
                             android:id="@+id/version"
                             android:layout_width="wrap_content"
@@ -112,7 +107,6 @@
                             android:layout_weight="0"
                             android:text="version"
                             android:textSize="11sp" />
-
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
@@ -126,12 +120,10 @@
                 android:layout_marginBottom="10dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp">
-
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -139,12 +131,10 @@
                         android:padding="16dp"
                         android:text="Github Release丨手动检查更新"
                         android:textSize="13sp" />
-
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_weight="1" />
-
                     <TextView
                         android:id="@+id/buttonGoGithubRelease"
                         android:layout_width="wrap_content"
@@ -154,8 +144,6 @@
                         android:text="前往"
                         android:textSize="11sp" />
                 </LinearLayout>
-
-
             </androidx.cardview.widget.CardView>
 
             <!--  卡片：通用  -->
@@ -197,7 +185,7 @@
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
-                                android:layout_width="wrap_content"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
@@ -232,7 +220,7 @@
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
-                                android:layout_width="wrap_content"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
@@ -297,7 +285,7 @@
                             android:textColor="@color/HeadText"
                             android:textSize="16sp" />
                         <View
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
                         <androidx.cardview.widget.CardView
@@ -442,7 +430,8 @@
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="25dp"
-                            android:orientation="horizontal">
+                            android:orientation="horizontal"
+                            tools:ignore="UselessParent">
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
@@ -547,7 +536,8 @@
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="25dp"
-                            android:orientation="horizontal">
+                            android:orientation="horizontal"
+                            tools:ignore="TooManyViews">
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
@@ -932,7 +922,7 @@
                                 android:textColor="@color/HeadText"
                                 android:textSize="11sp" />
                             <View
-                                android:layout_width="wrap_content"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <TextView
@@ -1123,7 +1113,7 @@
                                 android:textColor="@color/HeadText"
                                 android:textSize="12sp" />
                             <View
-                                android:layout_width="wrap_content"
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <TextView
@@ -1139,7 +1129,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="根据您的设备马达配置选择合适的振动时长，以获得更好的振动体验。如果您的系统对振动效果进行了优化，建议选择跟随系统。"
+                            android:text="根据您的设备马达配置选择合适的振动时长，以获得更好的振动体验。如果您的系统对振动效果进行了优化，建议选择跟随系统。振动仅支持安卓10及以上版本。"
                             android:textSize="12sp" />
                     </LinearLayout>
 

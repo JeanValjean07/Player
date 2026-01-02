@@ -364,7 +364,7 @@
                 android:layout_height="70dp"
                 android:orientation="horizontal"
                 android:clickable="true"
-                android:background="@color/Background3"
+                android:background="@color/Background"
                 android:paddingBottom="30dp"
                 android:translationZ="3dp"
                 app:layout_constraintStart_toStartOf="parent"

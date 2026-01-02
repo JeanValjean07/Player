@@ -258,7 +258,7 @@ class PlayerActivityOro: AppCompatActivity(){
 
 
 
-    private var clickMillis_MoreOptionPage = 0L
+    private var lock_clickMillisLock = 0L
 
     private var state_need_return = false
 
@@ -623,16 +623,17 @@ class PlayerActivityOro: AppCompatActivity(){
         val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
         TopBarArea_ButtonMoreOptions.setOnClickListener {
             ToolVibrate().vibrate(this@PlayerActivityOro)
-            if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
+            //防止快速点击
+            if (System.currentTimeMillis() - lock_clickMillisLock < 800) {
                 return@setOnClickListener
             }
-            clickMillis_MoreOptionPage = System.currentTimeMillis()
-
+            lock_clickMillisLock = System.currentTimeMillis()
+            //关闭时间和进度条同步 + 移动播放区域
+            stopVideoTimeSync()
             stopSeekBarSync()
+            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { MovePlayAreaJob() }
+            //启动弹窗
             PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                MovePlayAreaJob()
-            }
         }
         //提示卡点击时关闭
         val noticeCard = findViewById<CardView>(R.id.NoticeCard)
@@ -690,10 +691,10 @@ class PlayerActivityOro: AppCompatActivity(){
         ButtonMore.setOnClickListener {
             ToolVibrate().vibrate(this@PlayerActivityOro)
             //防止快速点击
-            if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
+            if (System.currentTimeMillis() - lock_clickMillisLock < 800) {
                 return@setOnClickListener
             }
-            clickMillis_MoreOptionPage = System.currentTimeMillis()
+            lock_clickMillisLock = System.currentTimeMillis()
             //关闭时间和进度条同步 + 移动播放区域
             stopVideoTimeSync()
             stopSeekBarSync()
@@ -706,10 +707,10 @@ class PlayerActivityOro: AppCompatActivity(){
         ButtonList.setOnClickListener {
             ToolVibrate().vibrate(this@PlayerActivityOro)
             //防止快速点击
-            if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
+            if (System.currentTimeMillis() - lock_clickMillisLock < 800) {
                 return@setOnClickListener
             }
-            clickMillis_MoreOptionPage = System.currentTimeMillis()
+            lock_clickMillisLock = System.currentTimeMillis()
             //关闭时间和进度条同步 + 移动播放区域
             stopVideoTimeSync()
             stopSeekBarSync()

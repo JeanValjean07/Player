@@ -22,6 +22,7 @@ import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.edit
@@ -35,6 +36,8 @@ import androidx.media3.common.util.UnstableApi
 import kotlin.math.abs
 
 @UnstableApi
+@Suppress("unused")
+@RequiresApi(Build.VERSION_CODES.Q)
 class MainFragMusicStoreSetting: DialogFragment() {
     //静态
     companion object {
@@ -55,7 +58,7 @@ class MainFragMusicStoreSetting: DialogFragment() {
     private var PREFS_music_sortOrder: String = "info_title"
     private var PREFS_music_sortOrientation: String = "DESC"
 
-
+    @Suppress("DEPRECATION")
     override fun onStart() {
         super.onStart()
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
@@ -106,6 +109,7 @@ class MainFragMusicStoreSetting: DialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_main_frag_music_media_store_setting, container, false)
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //开关实例初始化

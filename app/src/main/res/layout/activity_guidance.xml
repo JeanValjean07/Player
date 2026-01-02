@@ -9,13 +9,15 @@
     android:fitsSystemWindows="false"
     tools:context=".GuidanceActivity"
     tools:ignore="HardcodedText" >
+
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/HeadBackground"
         android:outlineSpotShadowColor="@color/HeadText"
         app:liftOnScrollColor="@color/HeadBackground"
-        android:outlineAmbientShadowColor="@color/HeadText">
+        android:outlineAmbientShadowColor="@color/HeadText"
+        tools:targetApi="28">
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar1"
             android:layout_width="match_parent"
@@ -197,4 +199,5 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

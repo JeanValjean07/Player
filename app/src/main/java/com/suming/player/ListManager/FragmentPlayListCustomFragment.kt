@@ -24,8 +24,6 @@ import com.suming.player.R
 import com.suming.player.ToolVibrate
 import com.suming.player.showCustomToast
 import kotlinx.coroutines.launch
-import org.w3c.dom.Text
-import kotlin.getValue
 
 @UnstableApi
 class FragmentPlayListCustomFragment(

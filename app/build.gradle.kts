@@ -30,7 +30,7 @@ android {
 
     defaultConfig {
         applicationId = "com.suming.player"
-        minSdk = 29
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "3.6.5"

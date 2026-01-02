@@ -9,14 +9,15 @@
     android:fitsSystemWindows="false"
     tools:context=".DeviceInfoActivity"
     tools:ignore="HardcodedText" >
-    <!-- AppBar -->
+
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/HeadBackground"
         android:outlineSpotShadowColor="@color/HeadText"
         app:liftOnScrollColor="@color/HeadBackground"
-        android:outlineAmbientShadowColor="@color/HeadText">
+        android:outlineAmbientShadowColor="@color/HeadText"
+        tools:targetApi="28">
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar1"
             android:layout_width="match_parent"
@@ -51,7 +52,7 @@
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
-    <!-- 滚动区域# -->
+
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
@@ -298,4 +299,5 @@
             </androidx.cardview.widget.CardView>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

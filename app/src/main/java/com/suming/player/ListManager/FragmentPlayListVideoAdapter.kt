@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+@Suppress("unused")
 class FragmentPlayListVideoAdapter(
     private val context: Context,
     private val onAddToListClick: (String) -> Unit,

@@ -1,5 +1,6 @@
 package com.suming.player.ListManager
 
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -7,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
@@ -18,14 +20,14 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.PlayerViewModel
 import com.suming.player.R
 import com.suming.player.ToolVibrate
 import com.suming.player.showCustomToast
 import kotlinx.coroutines.launch
-import kotlin.getValue
 
 @UnstableApi
+@Suppress("unused")
+@RequiresApi(Build.VERSION_CODES.Q)
 class FragmentPlayListVideoFragment(
     private val onPlayClick: (String) -> Unit,
     private val onAddToListClick: (String) -> Unit,
