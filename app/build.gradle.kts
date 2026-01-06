@@ -63,6 +63,7 @@ dependencies {
 
     //Oss Licenses Plugin (已停用)
     //implementation("com.google.android.gms:play-services-oss-licenses:17.3.0")
+    //implementation(libs.play.services.oss.licenses)
     //Compose
     implementation(platform("androidx.compose:compose-bom:2024.09.00"))
     implementation("androidx.compose.runtime:runtime")
@@ -101,7 +102,6 @@ dependencies {
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.lifecycle.service)
-    implementation(libs.play.services.oss.licenses)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
