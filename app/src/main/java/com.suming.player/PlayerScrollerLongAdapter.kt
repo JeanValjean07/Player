@@ -31,7 +31,7 @@ class PlayerScrollerLongAdapter(
     private val context: Context,
     private val MediaInfo_AbsolutePath: String,
     private val MediaInfo_FileName: String,
-    private val thumbItems: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+    private val thumbItems: ObservableList<PlayerScrollerViewModel.scrollerItem>,
     private val eachPicWidth: Int,
     private val picNumber: Int,
     private val eachPicDuration: Int,
@@ -64,7 +64,7 @@ class PlayerScrollerLongAdapter(
             PlayerScrollerVM.last_MediaInfo_FileName = MediaInfo_FileName
 
             val newList = List(picNumber) {
-                PlayerScrollerViewModel.ThumbScrollerItem(
+                PlayerScrollerViewModel.scrollerItem(
                     currentThumbType = false,
                     thumbGeneratingRunning = false
                 )

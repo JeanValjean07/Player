@@ -193,7 +193,6 @@ object PlayerSingleton {
     private fun escapePlayerError(){
         //缓存原本的媒体uri
         val currentMediaUri = MediaInfo_MediaUri
-        Log.d("SuMing","currentMediaUri:${currentMediaUri}")
         //清除
         _player?.clearMediaItems()
         //重新设置媒体
@@ -237,7 +236,16 @@ object PlayerSingleton {
         MediaInfo_MediaUriString = uri.toString()
         val MediaInfo_NewMediaType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: "error"
         if (MediaInfo_NewMediaType != MediaInfo_MediaType){
-            ToolEventBus.sendEvent("PlayerSingleton_MediaTypeChanged")
+            //清除现存媒体信息
+            clearMediaItem()
+            DevastateMediaSession(singletonContext)
+
+            //检查新媒体类型,发布通告
+            if (MediaInfo_NewMediaType == "video"){
+                ToolEventBus.sendEvent("PlayerSingleton_MediaTypeChanged_toVideo")
+            }else if (MediaInfo_NewMediaType == "music"){
+                ToolEventBus.sendEvent("PlayerSingleton_MediaTypeChanged_toMusic")
+            }
         }
         MediaInfo_MediaType = MediaInfo_NewMediaType
         MediaInfo_MediaTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: "error"
@@ -318,6 +326,7 @@ object PlayerSingleton {
         resetPlayParameters()
 
 
+
         //刷新媒体信息
         getMediaInfo(singletonContext, itemUri)
         //设置播放状态
@@ -325,10 +334,17 @@ object PlayerSingleton {
         //合成并设置媒体项
         val covers_path_music = File(singletonContext.filesDir, "miniature/music_cover")
         val covers_path_video = File(singletonContext.filesDir, "miniature/video_cover")
-        val cover_img_path = if (MediaInfo_MediaType == "video"){
-            File(covers_path_video, "${MediaInfo_FileName.hashCode()}.webp")
-        } else {
-            File(covers_path_music, "${MediaInfo_FileName.hashCode()}.webp")
+        val MediaInfo_uriNumOnly = MediaInfo_MediaUri.lastPathSegment
+        val cover_img_path = when (MediaInfo_MediaType) {
+            "video" -> {
+                File(covers_path_video, "${MediaInfo_uriNumOnly}.webp")
+            }
+            "music" -> {
+                File(covers_path_music, "${MediaInfo_uriNumOnly}.webp")
+            }
+            else -> {
+                File(covers_path_video, "${MediaInfo_uriNumOnly}.webp")
+            }
         }
         val cover_img_uri = if (cover_img_path.exists()) {
             try {
@@ -344,6 +360,8 @@ object PlayerSingleton {
         } else {
             null
         }
+        //开始构建mediaItem
+        Log.d("SuMing", "setNewMediaItem: ${MediaInfo_MediaType} ${MediaInfo_FileName} ${MediaInfo_MediaArtist} ${MediaInfo_MediaUriString}")
         val mediaItem = MediaItem.Builder()
             .setUri(MediaInfo_MediaUri)
             .setMediaId(MediaInfo_MediaUriString)
@@ -351,7 +369,7 @@ object PlayerSingleton {
                 MediaMetadata.Builder()
                     .setTitle(MediaInfo_FileName)
                     .setArtist(MediaInfo_MediaArtist)
-                    .setArtworkUri( cover_img_uri )
+                    .setArtworkUri(cover_img_uri)
                     .build()
             )
             .build()
@@ -415,6 +433,7 @@ object PlayerSingleton {
     //写入服务用配置
     private fun setServiceLink(newType: Int = -1){
         val serviceLink = singletonContext.getSharedPreferences("serviceLink", MODE_PRIVATE)
+        //写入视频播放器样式
         if (newType == -1){
             val PREFS = singletonContext.getSharedPreferences("PREFS", MODE_PRIVATE)
             serviceLink.edit{ putInt("state_PlayerType", PREFS.getInt("PREFS_UsePlayerType", 1) ).apply() }
@@ -1120,6 +1139,8 @@ object PlayerSingleton {
     private var state_NeedSeekToLastPosition = false
     private var value_lastPosition = 0L
     private fun loadPlayParametersFromRoom(){
+        //暂不处理音频
+        if (MediaInfo_MediaType == "music"){ return }
         //读取视频和音频轨道状态
         coroutineScope_saveRoom.launch {
             PREFS_onlyVideoTrack = MediaItemRepo.get(singletonContext).get_PREFS_VideoOnly(MediaInfo_FileName)
@@ -1282,6 +1303,7 @@ object PlayerSingleton {
     private var state_ContextSet = false
     private lateinit var PREFS: SharedPreferences
     private fun setContext(ctx: Context) {
+        if (state_ContextSet) return
         singletonContext = ctx.applicationContext
         state_ContextSet = true
     }

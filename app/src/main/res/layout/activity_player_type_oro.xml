@@ -363,6 +363,22 @@
                         android:src="@drawable/ic_main_controller_list"
                         tools:ignore="ContentDescription"
                         />
+                    <!--展开/收缩 -->
+                    <ImageButton
+                        android:id="@+id/controller_button_expand_shrink"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        app:layout_constraintStart_toEndOf="@+id/controller_button_play_list"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:padding="5dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_controller_oro_shrink"
+                        tools:ignore="ContentDescription"
+                        />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -44,6 +44,7 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
 @Suppress("unused")
+@RequiresApi(Build.VERSION_CODES.Q)
 class SettingsActivity: AppCompatActivity() {
     //开关初始化
     //<editor-fold desc="开关初始化">
@@ -92,6 +93,7 @@ class SettingsActivity: AppCompatActivity() {
     //设置清单
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_Editor: SharedPreferences.Editor
+
 
 
     @OptIn(UnstableApi::class)
@@ -277,6 +279,10 @@ class SettingsActivity: AppCompatActivity() {
         openSourceLicense.paint.isUnderlineText = true
         openSourceLicense.setOnClickListener {
             ToolVibrate().vibrate(this)
+
+            showCustomToast("此功能正在替换实现方案,暂不提供",Toast.LENGTH_SHORT,3)
+
+            /*
             val isMicroG_Exist = checkMicroG()
             if (packageNumber == 1){
                 showCustomToast("无法读取应用列表,拒绝打开此页面",Toast.LENGTH_SHORT,3)
@@ -290,6 +296,8 @@ class SettingsActivity: AppCompatActivity() {
                     OssLicensesMenuActivity::class.java
                 ))
             }
+
+             */
         }
         //超链接：设备信息
         val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
@@ -600,7 +608,6 @@ class SettingsActivity: AppCompatActivity() {
 
     //Functions
     //测试版可用性检查
-    @RequiresApi(Build.VERSION_CODES.P)
     private fun allowUseTestPlayer(): Boolean{
         val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
         val signingInfo = packageInfo.signingInfo
@@ -667,7 +674,6 @@ class SettingsActivity: AppCompatActivity() {
                  */
             }
         }
-
     }
     private fun setPlayerTypeText(){
         val ButtonPlayerTypeText = findViewById<TextView>(R.id.ButtonPlayerTypeText)

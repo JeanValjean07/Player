@@ -153,7 +153,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- 开放源代码许可 -->
+        <!-- 开放源代码许可
         <activity android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
             android:theme="@style/THEME_OSS"
             android:screenOrientation="portrait"
@@ -164,6 +164,7 @@
             android:screenOrientation="portrait"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
+            -->
     </application>
 
 </manifest>

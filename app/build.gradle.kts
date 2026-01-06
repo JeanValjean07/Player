@@ -7,8 +7,8 @@ plugins {
     //ksp
     id("com.google.devtools.ksp")
 
-    //Oss Licenses Plugin
-    id("com.google.android.gms.oss-licenses-plugin")
+    //Oss Licenses Plugin (已停用)
+    //id("com.google.android.gms.oss-licenses-plugin")
 
 
 }
@@ -61,8 +61,8 @@ dependencies {
     implementation("io.coil-kt:coil:2.4.0")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
 
-    //Oss Licenses Plugin
-    implementation("com.google.android.gms:play-services-oss-licenses:17.3.0")
+    //Oss Licenses Plugin (已停用)
+    //implementation("com.google.android.gms:play-services-oss-licenses:17.3.0")
     //Compose
     implementation(platform("androidx.compose:compose-bom:2024.09.00"))
     implementation("androidx.compose.runtime:runtime")

@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.core.graphics.get
 import androidx.core.graphics.scale
 import androidx.core.view.updateLayoutParams
 import androidx.databinding.ObservableList
@@ -33,37 +34,38 @@ class PlayerScrollerAdapter(
     private val context: Context,
     private val MediaInfo_AbsolutePath: String,
     private val MediaInfo_FileName: String,
-    private val thumbItems: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+    private val thumbItems: ObservableList<PlayerScrollerViewModel.scrollerItem>,
     private val scrollerParam_EachPicWidth: Int,
     private val scrollerParam_PicNumber: Int,
     private val scrollerParam_EachPicDuration: Int,
     private val PREFS_GenerateThumbSYNC: Boolean,
     private var recyclerView: RecyclerView? = null,
     private var PlayerScrollerVM: PlayerScrollerViewModel
-) : RecyclerView.Adapter<PlayerScrollerAdapter.ThumbViewHolder>() {
+) : RecyclerView.Adapter<PlayerScrollerAdapter.scrollerViewHolder>() {
 
     //协程作用域
-    private val coroutineScopeGenerateThumb = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val coroutineScopeLoadFrame = CoroutineScope(Dispatchers.IO + SupervisorJob()) //可选,禁止删除
+    private val coroutineScopeGenerateFrame = CoroutineScope(Dispatchers.IO + SupervisorJob())
     //缩略图内存缓存
     private val BitmapCache = LruCache<Int, Bitmap>(10 * 1024 * 1024)
     private lateinit var HolderBitmap : Bitmap
-
-    inner class ThumbViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    //viewHolder
+    class scrollerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var generateThumbJob: Job? = null
         val ivThumbnail: ImageView = itemView.findViewById(R.id.iv_thumbnail)
     }
 
+
+
     //主线程初始化操作
     init {
         //列表监听器(必选)
-        thumbItems.addOnListChangedCallback(object : ObservableList.OnListChangedCallback<ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>>() {
+        thumbItems.addOnListChangedCallback(object : ObservableList.OnListChangedCallback<ObservableList<PlayerScrollerViewModel.scrollerItem>>() {
             @SuppressLint("NotifyDataSetChanged")
-            override fun onChanged(sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>) =
+            override fun onChanged(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>) =
                 notifyDataSetChanged()
 
             override fun onItemRangeChanged(
-                sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+                sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
                 positionStart: Int,
                 itemCount: Int
             ) {
@@ -77,7 +79,7 @@ class PlayerScrollerAdapter(
             }
 
             override fun onItemRangeInserted(
-                sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+                sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
                 positionStart: Int,
                 itemCount: Int
             ) {
@@ -88,7 +90,7 @@ class PlayerScrollerAdapter(
             }
 
             override fun onItemRangeMoved(
-                sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+                sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
                 fromPosition: Int,
                 toPosition: Int,
                 itemCount: Int
@@ -102,7 +104,7 @@ class PlayerScrollerAdapter(
 
 
             override fun onItemRangeRemoved(
-                sender: ObservableList<PlayerScrollerViewModel.ThumbScrollerItem>,
+                sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
                 positionStart: Int,
                 itemCount: Int
             ) {
@@ -120,7 +122,7 @@ class PlayerScrollerAdapter(
     override fun getItemCount() = (scrollerParam_PicNumber)
 
     @SuppressLint("NotifyDataSetChanged")
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThumbViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): scrollerViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_adapter_scroller_item, parent, false)
 
         //媒体文件更新,需要更换数据源
@@ -128,7 +130,7 @@ class PlayerScrollerAdapter(
             PlayerScrollerVM.last_MediaInfo_FileName = MediaInfo_FileName
 
             val newList = List(scrollerParam_PicNumber) {
-                PlayerScrollerViewModel.ThumbScrollerItem(
+                PlayerScrollerViewModel.scrollerItem(
                     currentThumbType = false,
                     thumbGeneratingRunning = false
                 )
@@ -142,10 +144,10 @@ class PlayerScrollerAdapter(
         }
 
 
-        return ThumbViewHolder(view)
+        return scrollerViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ThumbViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: scrollerViewHolder, position: Int) {
         //指定单图宽度
         holder.itemView.updateLayoutParams<ViewGroup.LayoutParams> { this.width = scrollerParam_EachPicWidth }
         //绑定图片
@@ -158,15 +160,16 @@ class PlayerScrollerAdapter(
 
     }
 
-    override fun onViewAttachedToWindow(holder: ThumbViewHolder) {
+    override fun onViewAttachedToWindow(holder: scrollerViewHolder) {
         super.onViewAttachedToWindow(holder)
         val position = holder.bindingAdapterPosition
 
         if (BitmapCache.get(position) == null){
-            holder.generateThumbJob = coroutineScopeGenerateThumb.launch(Dispatchers.IO) { generateThumb(position) }
+            holder.generateThumbJob = coroutineScopeGenerateFrame.launch(Dispatchers.IO) { generateFrame(position) }
         }
 
     }
+
 
 
     //Functions
@@ -234,7 +237,7 @@ class PlayerScrollerAdapter(
     }
     //截取实际缩略图
     val retrieverMap = mutableMapOf<Int, MediaMetadataRetriever>()
-    private suspend fun generateThumb(position: Int) {
+    private suspend fun generateFrame(position: Int) {
         val item = thumbItems[position]
         if (item.thumbGeneratingRunning) return
         item.thumbGeneratingRunning = true
@@ -256,19 +259,24 @@ class PlayerScrollerAdapter(
             currentCoroutineContext().ensureActive()
             //使用关键帧缩略图
             if (PREFS_GenerateThumbSYNC){
+                //首张需检查是否纯黑
                 if (position == 0){
-                    val frame = retrieverMap[position]?.getFrameAtTime(
-                        (scrollerParam_EachPicDuration / 2 * 1000L),
-                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC
-                    )
-                    saveThumb(ratio, position, frame)
-                }  //首张不截取0位置,防止第一帧可能是纯黑图
+                    var frame = retrieverMap[position]?.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                    if (frame != null){
+                        if (isDarkFrame(frame)){
+                            frame = retrieverMap[position]?.getFrameAtTime(
+                                (scrollerParam_EachPicDuration / 2 * 1000L),
+                                MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+                            )
+                            saveFrame(ratio, position, frame)
+                        }
+                    }
+                    saveFrame(ratio, position, frame)
+                }
+                //非首张图
                 else{
-                    val frame = retrieverMap[position]?.getFrameAtTime(
-                        (position * scrollerParam_EachPicDuration * 1000L),
-                        MediaMetadataRetriever.OPTION_CLOSEST_SYNC
-                    )
-                    saveThumb(ratio, position, frame)
+                    val frame = retrieverMap[position]?.getFrameAtTime((position * scrollerParam_EachPicDuration * 1000L), MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                    saveFrame(ratio, position, frame)
                 }
                 currentCoroutineContext().ensureActive()
                 retrieverMap[position]?.release()
@@ -282,7 +290,7 @@ class PlayerScrollerAdapter(
                 )
                 currentCoroutineContext().ensureActive()
                 retrieverMap[position]?.release()
-                saveThumb(ratio, position, frame)
+                saveFrame(ratio, position, frame)
                 currentCoroutineContext().ensureActive()
             }
             item.thumbGeneratingRunning = false
@@ -294,7 +302,7 @@ class PlayerScrollerAdapter(
         }
     }
     //压缩和保存缩略图
-    private suspend fun saveThumb(ratio: Float, position: Int, frame: Bitmap?) {
+    private suspend fun saveFrame(ratio: Float, position: Int, frame: Bitmap?) {
         val item = thumbItems[position]
         if (frame != null) {
             val save_file_path = File(context.filesDir, "miniature/${MediaInfo_FileName.hashCode()}/scroller/${position}.jpg")
@@ -347,5 +355,32 @@ class PlayerScrollerAdapter(
             retriever.release()
         }
 
+    }
+
+    //黑屏评估
+    private fun isDarkFrame(bmp: Bitmap, darkThreshold: Int = 20, ratioThreshold: Float = 0.9f, sampleStep: Int = 4): Boolean {
+        val w = bmp.width
+        val h = bmp.height
+        //
+        val left = (w / 3)
+        val right = 2 * w / 3
+        val top = h / 3
+        val bottom = 2 * h / 3
+
+        var darkCount = 0
+        var totalCount = 0
+
+        for (y in top until bottom step sampleStep) {
+            for (x in left until right step sampleStep) {
+                val pixel = bmp[x, y]
+                val r = (pixel shr 16) and 0xff
+                val g = (pixel shr 8) and 0xff
+                val b = pixel and 0xff
+                val brightness = (0.299 * r + 0.587 * g + 0.114 * b).toInt()
+                if (brightness <= darkThreshold) darkCount++
+                totalCount++
+            }
+        }
+        return darkCount.toFloat() / totalCount >= ratioThreshold
     }
 }

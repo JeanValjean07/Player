@@ -62,6 +62,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 @Suppress("unused")
+@RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
     //ViewModel

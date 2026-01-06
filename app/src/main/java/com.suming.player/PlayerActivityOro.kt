@@ -60,6 +60,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.cardview.widget.CardView
@@ -109,6 +110,7 @@ import kotlin.math.min
 import kotlin.math.pow
 
 @UnstableApi
+@RequiresApi(Build.VERSION_CODES.Q)
 @Suppress("unused")
 class PlayerActivityOro: AppCompatActivity(){
     //变量初始化
@@ -1392,7 +1394,7 @@ class PlayerActivityOro: AppCompatActivity(){
         if (mediaItem == null){ return }
         //检查媒体类型
         if (PlayerSingleton.getMediaInfoType() == "music"){
-            EnsureExit(false)
+            EnsureExit_but_keep_playing()
             return
         }
 
@@ -1447,6 +1449,11 @@ class PlayerActivityOro: AppCompatActivity(){
                 stopSeekBarSync()
                 stopVideoTimeSync()
             }
+            //媒体类型变更
+            "PlayerSingleton_MediaTypeChanged_toMusic" -> {
+                //EnsureExit_but_keep_playing()
+            }
+
 
         }
     }
@@ -2752,8 +2759,6 @@ class PlayerActivityOro: AppCompatActivity(){
     private lateinit var NoticeCard : CardView //通知胶囊卡片
     private lateinit var playerView: PlayerView //播放区域
     //</editor-fold>
-    //显示相关函数
-    //<editor-fold desc="显示相关函数">
     //刷新按钮状态：在启动播放指令之后调用
     private fun updateButtonState(){
         val Button = findViewById<ImageView>(R.id.controller_button_playorpause)
@@ -3072,7 +3077,6 @@ class PlayerActivityOro: AppCompatActivity(){
         if (!vm.state_controllerShowing){ setControllerInvisibleNoAnimation() }
 
     }
-    //</editor-fold>
     //初始化
     private fun preCheck(){
         //初始化部分界面控件

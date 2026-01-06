@@ -18,6 +18,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
@@ -42,6 +43,7 @@ import kotlinx.coroutines.Dispatchers
 import androidx.core.content.edit
 
 @SuppressLint("ComposableNaming")
+@RequiresApi(Build.VERSION_CODES.Q)
 @UnstableApi
 @Suppress("unused")
 class FragmentPlayList: DialogFragment() {

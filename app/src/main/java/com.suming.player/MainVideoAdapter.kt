@@ -11,6 +11,7 @@ import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import android.util.LruCache
 import android.view.LayoutInflater
@@ -20,6 +21,7 @@ import android.view.animation.AlphaAnimation
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.paging.PagingDataAdapter
@@ -42,6 +44,7 @@ import androidx.core.graphics.createBitmap
 import androidx.core.graphics.get
 import androidx.core.net.toUri
 
+@Suppress("unused")
 class MainVideoAdapter(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
@@ -90,6 +93,7 @@ class MainVideoAdapter(
         return ViewHolder(view)
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
         val item = getItem(position) ?: return

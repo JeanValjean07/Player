@@ -59,6 +59,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.cardview.widget.CardView
@@ -106,6 +107,7 @@ import kotlin.math.min
 import kotlin.math.pow
 
 @UnstableApi
+@RequiresApi(Build.VERSION_CODES.Q)
 @Suppress("unused")
 class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
@@ -1509,7 +1511,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (mediaItem == null){ return }
         //检查媒体类型
         if (PlayerSingleton.getMediaInfoType() == "music"){
-            EnsureExit(false)
+            EnsureExit_but_keep_playing()
             return
         }
 
@@ -1563,6 +1565,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             "SessionController_Pause" -> {
                 stopScrollerSync()
                 stopVideoTimeSync()
+            }
+            //媒体类型变更
+            "PlayerSingleton_MediaTypeChanged_toMusic" -> {
+                //EnsureExit_but_keep_playing()
             }
 
         }
