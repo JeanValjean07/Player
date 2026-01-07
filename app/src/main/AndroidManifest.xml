@@ -27,17 +27,16 @@
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:hardwareAccelerated="true"
-        tools:replace="android:allowBackup"
         android:theme="@style/Theme.SpeedSpy"
         android:enableOnBackInvokedCallback="false"
+        tools:replace="android:allowBackup"
         tools:ignore="ForegroundServicePermission"
         tools:targetApi="33">
         <!-- 主页:视频列表 -->
-        <activity
-            android:name=".MainActivity"
+        <activity android:name=".MainActivity"
             android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
-            android:label="主页"
+            android:label="播放器"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <intent-filter>
@@ -118,8 +117,7 @@
 
 
         <!-- 后台播放服务 -->
-        <service
-            android:name=".PlayerService"
+        <service android:name=".PlayerService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
@@ -129,14 +127,12 @@
             </intent-filter>
         </service>
         <!-- 悬浮窗服务 -->
-        <service
-            android:name=".FloatingWindowService"
+        <service android:name=".FloatingWindowService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
         <!-- provider -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
+        <provider android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">

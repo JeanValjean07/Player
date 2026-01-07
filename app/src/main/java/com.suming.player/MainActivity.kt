@@ -591,7 +591,7 @@ class MainActivity: AppCompatActivity() {
     private fun BindPlayingCardSmallPlayer(type: String, filename: String){
         if (!state_PlayingCard_inited){ initPlayingCard() }
         if (!state_PlayingCard_showing){ return }
-
+        //视频
         if (type == "video"){
             if (PREFS_DisableSmallPlayer){
                 PlayingCard_Video.player = null
@@ -623,15 +623,14 @@ class MainActivity: AppCompatActivity() {
                 PlayingCard_Video.player = PlayerSingleton.getPlayer(application)
             }
         }
+        //音乐
         else if (type == "music"){
             PlayingCard_Image.visibility = View.VISIBLE
             PlayingCard_Video.visibility = View.GONE
             //获取封面图
+            val uriNumOnly = PlayerSingleton.getMediaInfoUri().lastPathSegment
             val covers_path = File(filesDir, "miniature/music_cover")
-            val filename = PlayerSingleton.getMediaInfoFileName()
-            val coverName = filename.substringBeforeLast(".")
-            val cover_img = File(covers_path, "${coverName.hashCode()}.webp")
-            Log.d("SuMing", "BindPlayingCardSmallPlayer : $filename ${filename.hashCode()} ${cover_img.absolutePath}")
+            val cover_img = File(covers_path, "${uriNumOnly}.webp")
             val cover_img_uri = if (cover_img.exists()) {
                 try {
                     FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img)
@@ -1095,7 +1094,10 @@ class MainActivity: AppCompatActivity() {
 
     }
     private fun startMusicPlayer(uri: Uri){
-        Log.d("SuMing", "startMusicPlayer: $uri")
+        setNewMediaItem(uri, true)
+
+        //使用其他播放器播放
+        /*
         try {
 
             val playIntent = Intent().apply {
@@ -1123,6 +1125,10 @@ class MainActivity: AppCompatActivity() {
             Log.e("SuMing", "播放失败", e)
             Toast.makeText(this, "播放失败：${e.localizedMessage}", Toast.LENGTH_SHORT).show()
         }
+
+       */*/
+
+         */
     }
     private fun startPlayerFromSmallCard(uri: Uri){
         MediaInfo_MediaType = PlayerSingleton.getMediaInfoType()
