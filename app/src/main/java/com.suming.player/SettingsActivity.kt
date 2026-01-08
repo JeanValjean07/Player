@@ -59,6 +59,7 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_CloseFragmentGesture: SwitchCompat
     private lateinit var Switch_EnablePlayAreaMove: SwitchCompat
     private lateinit var Switch_UseSyncFrameWhenScrollerStop: SwitchCompat
+    private lateinit var Switch_DisableMediaArtWork: SwitchCompat
     //</editor-fold>
     //开关变量和数值量
     //<editor-fold desc="开关变量数值量">
@@ -89,6 +90,7 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_Editor: SharedPreferences.Editor
 
+    private var coroutineScope_setSwitch = CoroutineScope(Dispatchers.Main)
 
 
     @OptIn(UnstableApi::class)
@@ -320,6 +322,7 @@ class SettingsActivity: AppCompatActivity() {
         Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
         Switch_EnablePlayAreaMove = findViewById(R.id.EnablePlayAreaMove)
         Switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
+        Switch_DisableMediaArtWork = findViewById(R.id.DisableMediaArtWork)
         //</editor-fold>
         //开关预置位
         //<editor-fold desc="开关预置位">
@@ -339,7 +342,24 @@ class SettingsActivity: AppCompatActivity() {
         Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
         Switch_EnablePlayAreaMove.isChecked = PREFS_EnablePlayAreaMoveAnim
         Switch_UseSyncFrameWhenScrollerStop.isChecked = PREFS_UseSyncFrameWhenScrollerStop
+
+
+        coroutineScope_setSwitch.launch {
+
+            Switch_DisableMediaArtWork.isChecked = SettingsRequestCenter.get_PREFS_DisableMediaArtWork(this@SettingsActivity)
+
+            Switch_DisableMediaArtWork.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_DisableMediaArtWork(isChecked)
+            }
+
+
+        }
+
+
         //</editor-fold>
+
+
 
         //文本信息预写
         setPlayerTypeText()

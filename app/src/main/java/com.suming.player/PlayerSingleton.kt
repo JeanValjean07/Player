@@ -346,7 +346,9 @@ object PlayerSingleton {
                 File(covers_path_video, "${MediaInfo_uriNumOnly}.webp")
             }
         }
-        val cover_img_uri = if (cover_img_path.exists()) {
+        val cover_img_uri = if(SettingsRequestCenter.get_PREFS_DisableMediaArtWork(singletonContext)){
+            null
+        } else if (cover_img_path.exists()) {
             try {
                 FileProvider.getUriForFile(singletonContext, "${singletonContext.packageName}.provider", cover_img_path)
             }
@@ -360,8 +362,8 @@ object PlayerSingleton {
         } else {
             null
         }
+
         //开始构建mediaItem
-        Log.d("SuMing", "setNewMediaItem: ${MediaInfo_MediaType} ${MediaInfo_FileName} ${MediaInfo_MediaArtist} ${MediaInfo_MediaUriString}")
         val mediaItem = MediaItem.Builder()
             .setUri(MediaInfo_MediaUri)
             .setMediaId(MediaInfo_MediaUriString)

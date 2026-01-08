@@ -844,16 +844,22 @@ class MainActivity: AppCompatActivity() {
         }
     }
     private fun listGoTop(){
-        if (state_currentPage == "music"){
-            if (state_MusicDataBaseReaded_N_AdapterBinded){ main_music_list_adapter.refresh() }
-            main_music_list_adapter_RecyclerView.smoothScrollToPosition(0)
-        }
-        else if (state_currentPage == "video"){
-            if (state_VideoDataBaseReaded_N_AdapterBinded){ main_video_list_adapter.refresh() }
-            main_video_list_adapter_RecyclerView.smoothScrollToPosition(0)
-        }
-        else{
-            showCustomToast("列表回顶函数接收到预期外的参数", Toast.LENGTH_SHORT, 3)
+        when (state_currentPage) {
+            "music" -> {
+                if (state_MusicDataBaseReaded_N_AdapterBinded) {
+                    main_music_list_adapter.refresh()
+                }
+                main_music_list_adapter_RecyclerView.smoothScrollToPosition(0)
+            }
+            "video" -> {
+                if (state_VideoDataBaseReaded_N_AdapterBinded) {
+                    main_video_list_adapter.refresh()
+                }
+                main_video_list_adapter_RecyclerView.smoothScrollToPosition(0)
+            }
+            else -> {
+                showCustomToast("列表回顶函数接收到预期外的参数", Toast.LENGTH_SHORT, 3)
+            }
         }
     }
     //初始化
