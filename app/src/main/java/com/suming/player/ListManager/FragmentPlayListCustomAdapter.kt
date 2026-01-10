@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+@Suppress("unused")
 class FragmentPlayListCustomAdapter(
     private val context: Context,
     private val onDeleteClick: (Long) -> Unit,

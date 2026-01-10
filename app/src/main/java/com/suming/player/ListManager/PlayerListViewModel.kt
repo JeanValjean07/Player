@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.util.UnstableApi
 
 @UnstableApi
+@Suppress("unused")
 class PlayerListViewModel(application: Application) : AndroidViewModel(application) {
 
     //默认显式的页签

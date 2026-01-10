@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
-import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat.JPEG
@@ -17,8 +16,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.hardware.display.DisplayManager
-import android.media.AudioDeviceInfo
-import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.audiofx.Equalizer
@@ -84,12 +81,9 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.SeekParameters
-import androidx.media3.session.MediaController
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.button.MaterialButton
-import com.google.common.util.concurrent.ListenableFuture
 import com.suming.player.ListManager.FragmentPlayList
 import com.suming.player.ListManager.PlayerListManager
 import data.DataBaseMediaItem.MediaItemRepo
@@ -98,15 +92,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.OutputStream
 import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.hypot
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.pow
 
 @UnstableApi
@@ -2017,7 +2008,7 @@ class PlayerActivityOro: AppCompatActivity(){
                 //使用收起动画
                 overridePendingTransition(
                     R.anim.slide_just_appear,
-                    R.anim.slide_out
+                    R.anim.slide_out_vertical
                 )
             }
         }

@@ -17,7 +17,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.hardware.display.DisplayManager
-import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.audiofx.Equalizer
@@ -30,7 +29,6 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -51,7 +49,6 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -2015,7 +2012,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //使用收起动画
                 overridePendingTransition(
                     R.anim.slide_just_appear,
-                    R.anim.slide_out
+                    R.anim.slide_out_vertical
                 )
             }
         }

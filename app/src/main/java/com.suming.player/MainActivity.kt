@@ -2,7 +2,6 @@ package com.suming.player
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -1063,7 +1062,7 @@ class MainActivity: AppCompatActivity() {
                 //构建可选参数
                 val options = ActivityOptionsCompat.makeCustomAnimation(
                     this,
-                    R.anim.slide_in,
+                    R.anim.slide_in_vertical,
                     R.anim.slide_dont_move
                 )
 
@@ -1084,7 +1083,7 @@ class MainActivity: AppCompatActivity() {
                 //构建可选参数
                 val options = ActivityOptionsCompat.makeCustomAnimation(
                     this,
-                    R.anim.slide_in,
+                    R.anim.slide_in_vertical,
                     R.anim.slide_dont_move
                 )
 

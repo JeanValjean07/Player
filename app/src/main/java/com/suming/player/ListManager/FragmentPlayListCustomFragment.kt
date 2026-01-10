@@ -1,5 +1,6 @@
 package com.suming.player.ListManager
 
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -9,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
@@ -26,6 +28,8 @@ import com.suming.player.showCustomToast
 import kotlinx.coroutines.launch
 
 @UnstableApi
+@Suppress("unused")
+@RequiresApi(Build.VERSION_CODES.Q)
 class FragmentPlayListCustomFragment(
     private val onPlayClick: (String) -> Unit,
     private val onDeleteClick: (Long) -> Unit,
@@ -47,6 +51,7 @@ class FragmentPlayListCustomFragment(
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_custom_list_adapter: FragmentPlayListCustomAdapter
     private var state_adapter_load_complete = false
+
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

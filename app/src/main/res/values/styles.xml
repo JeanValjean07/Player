@@ -1,39 +1,35 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+
+    <!-- 基础页面主题 -->
     <style name="THEME_BASIC" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:fitsSystemWindows">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
+     <!-- 播放器页面主题 -->
     <style name="THEME_Player" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:fitsSystemWindows">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
-    <style name="THEME_OSS" parent="Theme.Material3.DayNight">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:ignore="NewApi">true</item>
-        <item name="android:fitsSystemWindows">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
 
 
 
 
 
+    <!-- fragment基础主题 -->
     <style name="FullScreenDialog" parent="Theme.AppCompat.Light.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsFloating">false</item>
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
-
-
+    <!-- fragment弹出动画 -->
     <style name="DialogSlideInOut" parent="ThemeOverlay.MaterialComponents.Dialog">
-        <item name="android:windowEnterAnimation">@anim/slide_in</item>
-        <item name="android:windowExitAnimation">@anim/slide_out</item>
+        <item name="android:windowEnterAnimation">@anim/slide_in_vertical</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_vertical</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimEnabled">false</item>
     </style>
@@ -44,7 +40,13 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
-
+    <!-- oss页面主题(已停用) -->
+    <style name="THEME_OSS" parent="Theme.Material3.DayNight">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:ignore="NewApi">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
 
 </resources>
 

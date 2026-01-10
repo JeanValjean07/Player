@@ -26,6 +26,7 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
@@ -48,6 +49,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 @UnstableApi
+@RequiresApi(Build.VERSION_CODES.Q)
 class PlayerFragmentMoreButton: DialogFragment() {
     companion object {
         fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments = bundleOf(  ) }
