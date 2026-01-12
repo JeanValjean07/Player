@@ -507,7 +507,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/useBlackBackground"
+                                android:id="@+id/AlwaysUseDarkTheme"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="0"

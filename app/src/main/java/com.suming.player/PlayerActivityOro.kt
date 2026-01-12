@@ -59,6 +59,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -102,7 +103,7 @@ import kotlin.math.pow
 
 @UnstableApi
 @RequiresApi(Build.VERSION_CODES.Q)
-@Suppress("unused")
+//@Suppress("unused")
 class PlayerActivityOro: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -298,9 +299,17 @@ class PlayerActivityOro: AppCompatActivity(){
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //初始化界面
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_player_type_oro)
+        //界面设置
+        if (SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(this)){
+            delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
+        }
+
+
+
         //启动播放器单例
         PlayerSingleton.startPlayerSingleton(application)
         //初始化
@@ -431,12 +440,6 @@ class PlayerActivityOro: AppCompatActivity(){
                     forceSeekGap = 20000L
                 }
             }
-            if (!PREFS.contains("PREFS_UseBlackBackground")) {
-                PREFSEditor.putBoolean("PREFS_UseBlackBackground", false)
-                vm.PREFS_UseBlackBackground = false
-            } else {
-                vm.PREFS_UseBlackBackground = PREFS.getBoolean("PREFS_UseBlackBackground", false)
-            }
             if (!PREFS.contains("PREFS_UseHighRefreshRate")) {
                 PREFSEditor.putBoolean("PREFS_UseHighRefreshRate", false)
                 vm.PREFS_UseHighRefreshRate = false
@@ -521,9 +524,6 @@ class PlayerActivityOro: AppCompatActivity(){
         //读取数据库
         if (savedInstanceState == null){ ReadRoomDataBase() }
         //基于设置的后续操作
-        if (vm.PREFS_UseBlackBackground) {
-            setPageToDark()
-        }                     //使用深色播放页
         if (!vm.PREFS_UseDataBaseForScrollerSetting){
             if (!PREFS.contains("PREFS_AlwaysSeek")) {
                 PREFS.edit { putBoolean("PREFS_AlwaysSeek", true).apply() }
@@ -2819,11 +2819,7 @@ class PlayerActivityOro: AppCompatActivity(){
     }
     private fun setBackgroundVisible(){
         val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
-        if (vm.PREFS_UseBlackBackground){
-            playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-        }else{
-            playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
-        }
+        playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
     }
     private fun setBackgroundInvisible(){
         val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
@@ -2835,64 +2831,6 @@ class PlayerActivityOro: AppCompatActivity(){
         }else{
             setControllerVisible()
         }
-    }
-    private fun setPageToDark(){
-        val playerViewContainer = findViewById<FrameLayout>(R.id.playerContainer)
-        val cover = findViewById<LinearLayout>(R.id.cover)
-
-        playerViewContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-        cover.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-
-    }
-    //进度条端点配置:仅在新晋播放页使用
-    private fun setScrollerPadding(){
-        if (state_playerType == 0) return
-
-        scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
-        scroller.layoutManager = LinearLayoutManager(this@PlayerActivityOro, LinearLayoutManager.HORIZONTAL, false)
-        scroller.itemAnimator = null
-        scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        scroller.layoutParams.width = 0
-        sidePadding = DisplayMetric_ScreenWidth / 2
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-        }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            var scrollerMarginType: Int
-            //华为
-            if (Build.BRAND == "huawei" || Build.BRAND == "HUAWEI" || Build.BRAND == "HONOR" || Build.BRAND == "honor") {
-                scrollerMarginType = 2
-                scroller.setPadding(
-                    sidePadding + vm.statusBarHeight / 2,
-                    0,
-                    sidePadding + vm.statusBarHeight / 2 - 1,
-                    0
-                )
-            }
-            //三星
-            else if (Build.BRAND == "samsung") {
-                scrollerMarginType = 1
-                scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-            }
-            //其他机型
-            else {
-                scrollerMarginType = 1
-                scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-            }
-            //超长进度条
-            if (vm.PREFS_UseCompatScroller) {
-                if (scrollerMarginType == 2) {
-                    scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-                }
-                else {
-                    scroller.setPadding(sidePadding + vm.statusBarHeight / 2, 0, sidePadding + vm.statusBarHeight / 2 - 1, 0)
-                }
-            }
-        }
-
-        //stopScrollerSync()
-        //startScrollerSync()
-
     }
     //状态栏配置
     @Suppress("DEPRECATION")
@@ -3203,231 +3141,6 @@ class PlayerActivityOro: AppCompatActivity(){
     private fun stopVideoTimeSync() {
         videoTimeSyncHandler.removeCallbacks(videoTimeSync)
     }
-    //Runnable:根据视频时间更新进度条位置：仅在新晋播放页使用
-    /*
-    private val syncScrollTaskHandler = Handler(Looper.getMainLooper())
-    private val syncScrollTask = object : Runnable {
-        @SuppressLint("ServiceCast")
-        override fun run() {
-
-            syncScrollRunnableRunning = true
-            if (ScrollerInfo_EachPicDuration == 0){ return }
-
-            scrollParam1 = ( player.currentPosition / ScrollerInfo_EachPicDuration ).toInt()
-            scrollParam2 = (( player.currentPosition - scrollParam1 * ScrollerInfo_EachPicDuration ) * ScrollerInfo_EachPicWidth / ScrollerInfo_EachPicDuration ).toInt()
-
-            if (vm.playEnd && !player.isPlaying){
-                scrollParam1 = scrollParam1 - 1
-                scrollParam2 = 150
-                scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
-                syncScrollRunnableRunning = false
-            }
-            else{
-
-                scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
-
-                syncScrollTaskHandler.postDelayed(this, 1)
-            }
-        }
-    }
-    private fun startScrollerSync() {
-        if (!vm.PREFS_LinkScroll){ return }
-        if (syncScrollRunnableRunning){
-            return
-        }
-        scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
-        syncScrollTaskHandler.post(syncScrollTask)
-    }
-    private fun stopScrollerSync() {
-        syncScrollRunnableRunning = false
-        syncScrollTaskHandler.removeCallbacks(syncScrollTask)
-    }
-
-     */
-    //Runnable:视频倍速滚动：仅在新晋播放页使用
-    /*
-    var lastSeekExecuted = false
-    private val videoSmartScrollHandler = Handler(Looper.getMainLooper())
-    private var videoSmartScroll = object : Runnable{
-        override fun run() {
-            vm.allowRecord_wasPlaying = false
-            val recyclerView = findViewById<RecyclerView>(R.id.rvThumbnails)
-            var delayGap = if (scrollerState_Pressed){ 30L } else{ 30L }
-            val videoPosition = player.currentPosition
-            val scrollerPosition = player.duration * (recyclerView.computeHorizontalScrollOffset().toFloat()/recyclerView.computeHorizontalScrollRange())
-            player.volume = 0f
-            if (scrollerState_Moving) {
-                if (player.currentPosition > scrollerPosition - 100) {
-                    player.pause()
-                }else{
-                    val positionGap = scrollerPosition - videoPosition
-                    var speed5 = (((positionGap / 100).toInt()) /10.0).toFloat()
-
-                    if (speed5 > lastPlaySpeed){
-                        speed5 = speed5 + 0.2f
-                    }else if(speed5 < lastPlaySpeed){
-                        speed5 = speed5 - 0.2f
-                    }
-
-
-                    val MAX_EFFICIENT_SPEED = 20.0f
-                    speed5 = speed5.coerceAtMost(MAX_EFFICIENT_SPEED)
-
-
-                    if (speed5 > 0f){ player.setPlaybackSpeed(speed5) }
-                }
-                videoSmartScrollHandler.postDelayed(this,delayGap)
-            }
-            else{
-                if (lastSeekExecuted) return
-                lastSeekExecuted = true
-
-                global_SeekToMs = scrollerPosition.toLong()
-                player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
-                smartScrollRunnableRunning = false
-                playerReadyFrom_SmartScrollLastSeek = true
-                startSmartScrollLastSeek()
-            }
-        }
-    }
-    private fun startVideoSmartScroll() {
-        stopScrollerSync()
-        stopVideoTimeSync()
-        player.volume = 0f
-        player.play()
-        if (singleTap){
-            singleTap = false
-            return
-        }
-        if (smartScrollRunnableRunning) return
-        smartScrollRunnableRunning = true
-        videoSmartScrollHandler.post(videoSmartScroll)
-    }
-    private fun stopVideoSmartScroll() {
-        smartScrollRunnableRunning = false
-        videoSmartScrollHandler.removeCallbacks(videoSmartScroll)
-    }
-
-     */
-    //Runnable:视频Seek滚动：仅在新晋播放页使用
-    /*
-    private val videoSeekHandler = Handler(Looper.getMainLooper())
-    private var videoSeek = object : Runnable{
-        override fun run() {
-            //标记位更改
-            videoSeekHandlerRunning = true
-
-            //计算目标位置
-            VideoSeekHandler_totalWidth = scroller.computeHorizontalScrollRange()
-            VideoSeekHandler_offset = scroller.computeHorizontalScrollOffset()
-            VideoSeekHandler_percent = VideoSeekHandler_offset.toFloat() / VideoSeekHandler_totalWidth
-            VideoSeekHandler_seekToMs = (VideoSeekHandler_percent * player.duration).toLong()
-            //反向滚动时防止seek到前面
-            if (scrollerState_BackwardScroll){
-                if (vm.PREFS_AlwaysSeek) {
-                    if (VideoSeekHandler_seekToMs < player.currentPosition){
-                        player.pause()
-                        if (VideoSeekHandler_seekToMs < 50){
-                            playerReadyFrom_LastSeek = true
-                            player.seekTo(0)
-                        }
-                        else{
-                            if (isSeekReady){
-                                isSeekReady = false
-                                playerReadyFrom_NormalSeek = true
-                                player.seekTo(VideoSeekHandler_seekToMs)
-                            }
-                        }
-                    }
-                }
-                else{
-                    player.pause()
-                    if (VideoSeekHandler_seekToMs < 50){
-                        playerReadyFrom_LastSeek = true
-                        player.seekTo(0)
-                    }
-                    else{
-                        if (isSeekReady){
-                            isSeekReady = false
-                            playerReadyFrom_NormalSeek = true
-                            player.seekTo(VideoSeekHandler_seekToMs)
-                        }
-                    }
-                }
-            }
-            //正向seek
-            else{
-                player.pause()
-                if (isSeekReady){
-                    isSeekReady = false
-                    playerReadyFrom_NormalSeek = true
-                    player.seekTo(VideoSeekHandler_seekToMs)
-                }
-            }
-
-
-            //决定继续运行或是结束
-            if (scrollerState_Pressed || scrollerState_Moving) {
-                videoSeekHandler.postDelayed(this, videoSeekHandlerGap)
-            }else{
-                global_SeekToMs = VideoSeekHandler_seekToMs
-                startLastSeek()
-                videoSeekHandlerRunning = false
-            }
-
-        }
-    }
-    private fun startVideoSeek() {
-        vm.playEnd = false
-        if (videoSeekHandlerRunning) return
-        //开启后不再允许记录播放状态
-        vm.allowRecord_wasPlaying = false
-        videoSeekHandler.post(videoSeek)
-    }
-    private fun stopVideoSeek() {
-        videoSeekHandlerRunning = false
-        videoSeekHandler.removeCallbacks(videoSeek)
-    }
-
-     */
-    //Runnable:lastSeek：仅在新晋播放页使用
-    /*
-    private val lastSeekHandler = Handler(Looper.getMainLooper())
-    private var lastSeek = object : Runnable{
-        override fun run() {
-            if (isSeekReady){
-                isSeekReady = false
-                player.setSeekParameters(SeekParameters.EXACT)
-                playerReadyFrom_LastSeek = true
-                player.seekTo(global_SeekToMs)
-            }
-            else{ videoSeekHandler.post(this) }
-        }
-    }
-    private fun startLastSeek() {
-        lastSeekHandler.post(lastSeek)
-    }
-
-     */
-    //Runnable:SmartScrollLastSeek：仅在新晋播放页使用
-    /*
-    private val SmartScrollLastSeekHandler = Handler(Looper.getMainLooper())
-    private var SmartScrollLastSeek = object : Runnable{
-        override fun run() {
-            if (isSeekReady){
-                isSeekReady = false
-                playerReadyFrom_SmartScrollLastSeek = true
-                player.seekTo(global_SeekToMs)
-            }else{
-                videoSeekHandler.post(this)
-            }
-        }
-    }
-    private fun startSmartScrollLastSeek() {
-        SmartScrollLastSeekHandler.post(SmartScrollLastSeek)
-    }
-
-     */
     //显示通知
     private var showNoticeJob: Job? = null
     private var showNoticeJobLong: Job? = null

@@ -125,7 +125,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_GenerateThumbSYNC : Boolean = false
     var PREFS_UseLongScroller : Boolean = false
     var PREFS_UseLongSeekGap : Boolean = false
-    var PREFS_UseBlackBackground : Boolean = false
     var PREFS_UseHighRefreshRate : Boolean = false
     var PREFS_UseCompatScroller : Boolean = false
     var PREFS_CloseFragmentGesture : Boolean = false

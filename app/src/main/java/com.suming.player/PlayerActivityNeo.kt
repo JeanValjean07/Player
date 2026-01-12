@@ -29,6 +29,7 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -58,6 +59,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -88,6 +90,7 @@ import com.suming.player.ListManager.FragmentPlayList
 import com.suming.player.ListManager.PlayerListManager
 import data.DataBaseMediaItem.MediaItemRepo
 import data.DataBaseMediaItem.MediaItemSetting
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -105,7 +108,7 @@ import kotlin.math.pow
 
 @UnstableApi
 @RequiresApi(Build.VERSION_CODES.Q)
-@Suppress("unused")
+//@Suppress("unused")
 class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -295,13 +298,49 @@ class PlayerActivityNeo: AppCompatActivity(){
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //初始化界面
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_player_type_neo)
+        //界面设置
+        if (SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(this)){
+            delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
+        }
+
+
+
+        //启动主播放线程
+        coroutine_main_startPlayVideo.launch {
+            //检查intent
+            val (mode, unused, uri) = inspectIntent(intent)
+            when(mode){
+                //需设置媒体且获取链接成功
+                1 -> {
+                    Log.d("SuMing", "需设置媒体且获取链接成功")
+                }
+                //无需新设置媒体,直接绑定
+                2 -> {
+                    Log.d("SuMing", "无需新设置媒体,直接绑定")
+                }
+                //要求自己输入链接
+                3 -> {
+                    Log.d("SuMing", "要求自己输入链接")
+                }
+                //其他分支不应出现,直接退出
+                else -> {
+                    showCustomToast("异常分支，请检查", Toast.LENGTH_SHORT, 3)
+                    finish()
+                }
+
+            }
+        }
+
+
         //启动播放器单例
         PlayerSingleton.startPlayerSingleton(application)
         //其他预设
         preCheck()
+
 
 
         //提取uri并保存
@@ -347,10 +386,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                             originalUriString = intent?.getStringExtra("MediaInfo_MediaUri") ?: "error"
                             //pendingIntent的uri不存在:尝试读取落盘保存的uri
                             if (originalUriString == "error"){
-                                val INFO_PlayerSingleton = getSharedPreferences("INFO_PlayerSingleton", MODE_PRIVATE)
+                                val lastRecord = getSharedPreferences("lastRecord", MODE_PRIVATE)
                                 val saveInfoUri: Uri
-                                if (INFO_PlayerSingleton.contains("MediaInfo_MediaUri")){
-                                    val saveInfoUriString = INFO_PlayerSingleton.getString("MediaInfo_MediaUri", "error") ?: "error"
+                                if (lastRecord.contains("MediaInfo_MediaUri")){
+                                    val saveInfoUriString = lastRecord.getString("MediaInfo_MediaUriString", "error") ?: "error"
                                     saveInfoUri = Uri.parse(saveInfoUriString)
                                     MediaInfo_MediaUri = saveInfoUri
                                 }
@@ -426,12 +465,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 if (vm.PREFS_UseLongSeekGap) {
                     forceSeekGap = 20000L
                 }
-            }
-            if (!PREFS.contains("PREFS_UseBlackBackground")) {
-                PREFSEditor.putBoolean("PREFS_UseBlackBackground", false)
-                vm.PREFS_UseBlackBackground = false
-            } else {
-                vm.PREFS_UseBlackBackground = PREFS.getBoolean("PREFS_UseBlackBackground", false)
             }
             if (!PREFS.contains("PREFS_UseHighRefreshRate")) {
                 PREFSEditor.putBoolean("PREFS_UseHighRefreshRate", false)
@@ -517,9 +550,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         //读取数据库
         if (savedInstanceState == null){ ReadRoomDataBase() }
         //基于设置的后续操作
-        if (vm.PREFS_UseBlackBackground) {
-            setPageToDark()
-        }                     //使用深色播放页
         if (!vm.PREFS_UseDataBaseForScrollerSetting){
             if (!PREFS.contains("PREFS_AlwaysSeek")) {
                 PREFS.edit { putBoolean("PREFS_AlwaysSeek", true).apply() }
@@ -1351,6 +1381,160 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
+    private var coroutine_main_startPlayVideo = CoroutineScope(Dispatchers.Main)
+    //检查intent并返回uri信息丨Triple<A: 1=需设置媒体且获取链接成功 2=无需新设置媒体 3=要求自己输入链接丨B:   还没想好    丨C:Uri>
+    private fun inspectIntent(intent: Intent): Triple<Int, Int, Uri>{
+        when (intent.action) {
+            //系统面板：分享
+            Intent.ACTION_SEND -> {
+                vm.state_FromSysStart = true
+                val intentUri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
+                //获取链接失败：要求手动输入
+                if (intentUri == null){
+
+                    return Triple(3, 0, Uri.EMPTY)
+                }
+                //获取链接成功：检查该条链接是否已经在播放
+                else{
+                    //查询该链接是否正在播放
+                    val (currentMediaItem, currentMediaUri) = PlayerSingleton.getPlayState()
+
+                    if (currentMediaItem == null){
+
+                        return Triple(1, 0, intentUri)
+                    }else{
+                        //该条链接已在播放：不设置新的播放项
+                        if (intentUri == currentMediaUri){
+
+                            return Triple(2, 0, Uri.EMPTY)
+                        }
+                        //该条链接未在播放：设置为新的播放项
+                        else{
+
+                            return Triple(1, 0, intentUri)
+                        }
+                    }
+                }
+            }
+            //系统面板：选择其他应用打开
+            Intent.ACTION_VIEW -> {
+                vm.state_FromSysStart = true
+                //尝试获取原始intent的uri
+                val intentUri = intent.data
+                //获取链接失败：要求手动输入
+                if (intentUri == null){
+
+                    return Triple(3, 0, Uri.EMPTY)
+                }
+                //获取链接成功：检查该条链接是否已经在播放
+                else{
+                    //查询该链接是否正在播放
+                    val (currentMediaItem, currentMediaUri) = PlayerSingleton.getPlayState()
+                    if (currentMediaItem == null){
+                        return Triple(1, 0, intentUri)
+                    }else{
+                        //该条链接已在播放：不设置新的播放项
+                        if (intentUri == currentMediaUri){
+
+                            return Triple(2, 0, Uri.EMPTY)
+                        }
+                        //该条链接未在播放：设置为新的播放项
+                        else{
+                            return Triple(1, 0, intentUri)
+                        }
+                    }
+                }
+            }
+            //正常打开
+            else -> {
+                vm.state_FromSysStart = false
+                //尝试获取原始intent的uri
+                val intentUri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)?: Uri.EMPTY
+                //原始intent丨获取失败
+                if (intentUri == Uri.EMPTY){
+                    //从pendingIntent获取uri
+                    val FromPendingIntent = intent.getStringExtra("IntentSource") ?: "error"
+                    //来自pendingIntent拉起：检查播放器是否正在播放该链接
+                    if (FromPendingIntent == "FromPendingIntent"){
+                        //尝试获取pendingIntent的链接
+                        val intentUriString = intent.getStringExtra("MediaInfo_MediaUri") ?: "error"
+                        //获取pendingIntent链接失败：如果在播放就直接绑定得了,不再检查链接是否一致
+                        if (intentUriString == "error"){
+                            val (currentMediaItem,_) = PlayerSingleton.getPlayState()
+                            //该链接丨未在播放
+                            if (currentMediaItem == null){
+
+                                return Triple(1, 0, intentUri)
+                            }
+                            //该链接丨正在播放
+                            else{
+                                return Triple(2, 0, Uri.EMPTY)
+                            }
+                        }
+                        //获取pendingIntent链接成功
+                        else{
+                            val (currentMediaItem,_) = PlayerSingleton.getPlayState()
+                            //该链接丨未在播放
+                            if (currentMediaItem == null){
+
+                                return Triple(1, 0, intentUriString.toUri())
+                            }
+                            //该链接丨正在播放
+                            else{
+                                return Triple(2, 0, Uri.EMPTY)
+                            }
+
+                        }
+                    }
+                    //原始intent没有链接,但又非来自pendingIntent拉起,这种情况理论上不应该发生
+                    else{
+                        //要求手动输入链接
+                        return Triple(3, 0, Uri.EMPTY)
+                    }
+                }
+                //原始intent丨获取成功
+                else{
+                    val (currentMediaItem, currentMediaUri) = PlayerSingleton.getPlayState()
+                    //该链接丨未在播放
+                    if (currentMediaItem == null){
+
+                        return Triple(1, 0, intentUri)
+                    }
+                    //该链接丨正在播放
+                    else if (intentUri == currentMediaUri){
+                        return Triple(2, 0, Uri.EMPTY)
+                    }
+                    //该链接丨未在播放
+                    else{
+                        return Triple(1, 0, intentUri)
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private fun queryManualInputUri(){
+
+
+
+    }
+
+
+
+
+
 
     //Testing Functions
     //播放器监听器
@@ -1592,7 +1776,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun getMediaInfo(uri: Uri){
         retriever = MediaMetadataRetriever()
         try { retriever.setDataSource(this@PlayerActivityNeo, uri) }
-        catch (_: Exception) {
+        catch (e: Exception) {
+            Log.d("SuMing", "getMediaInfo: ${e}")
             onDestroy_fromErrorExit = true
             showCustomToast("无法解码视频信息", Toast.LENGTH_SHORT, 3)
             showCustomToast("播放失败", Toast.LENGTH_SHORT, 3)
@@ -2937,11 +3122,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun setBackgroundVisible(){
         val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
-        if (vm.PREFS_UseBlackBackground){
-            playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-        }else{
-            playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
-        }
+        playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
     }
     private fun setBackgroundInvisible(){
         val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
@@ -2953,18 +3134,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         }else{
             setControllerVisible()
         }
-    }
-    private fun setPageToDark(){
-        val playerViewContainer = findViewById<FrameLayout>(R.id.playerContainer)
-        val cover = findViewById<LinearLayout>(R.id.cover)
-        val top_line = findViewById<View>(R.id.controller_scroller_top_line)
-        val middle_line = findViewById<View>(R.id.player_scroller_center_line)
-
-        playerViewContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-        cover.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
-        scroller.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.BlackGrey))
-        top_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.player_scroller_top_line_black))
-        middle_line.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
     }
     //进度条端点配置:仅在新晋播放页使用
     private fun setScrollerPadding(){

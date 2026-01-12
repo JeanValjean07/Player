@@ -466,6 +466,7 @@ object PlayerSingleton {
         //请求音频焦点
         requestAudioFocus(singletonContext, force_request = false)
 
+
     }
 
 
@@ -921,6 +922,9 @@ object PlayerSingleton {
 
 
     //获取播放器播放状态
+    fun getPlayState(): Pair<MediaItem?, Uri> {
+        return Pair(_player?.currentMediaItem, MediaInfo_MediaUri)
+    } //获取当前播放状态
     fun getIsPlaying(): Boolean {
         return _player?.isPlaying ?: false
     } //是否正在播放
@@ -951,7 +955,6 @@ object PlayerSingleton {
     } //开始/继续播放
     fun recessPlay(need_fadeOut: Boolean) {
         if (_player?.isPlaying == true){
-            Log.d("SuMing","recessPlay: 记录当前状态：true")
             setWasPlaying(true)
         }else{
             Log.d("SuMing","recessPlay: 记录当前状态：false")
@@ -1189,7 +1192,6 @@ object PlayerSingleton {
                 }
             }
         }
-
     }
     fun closeVideoTrack() {
         if (!state_videoTrackWorking) return

@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.SharedPreferences
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
@@ -98,6 +99,7 @@ class PlayerService(): MediaSessionService() {
     }
     //仅在后台划卡时触发,而且前提是系统不执行强行停止
     override fun onTaskRemoved(rootIntent: Intent?) {
+        //Log.d("SuMing", "onTaskRemoved: 后台划卡触发")
         //销毁媒体会话
         mediaSession?.release()
         //关闭服务

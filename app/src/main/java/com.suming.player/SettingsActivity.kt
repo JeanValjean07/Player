@@ -54,12 +54,15 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var Switch_UseCompatScroller: SwitchCompat
     private lateinit var Switch_GenerateThumbSync: SwitchCompat
     private lateinit var Switch_UseOnlySyncFrame: SwitchCompat
-    private lateinit var Switch_UseBlackBackground: SwitchCompat
+
     private lateinit var Switch_UseHighRefreshRate: SwitchCompat
     private lateinit var Switch_CloseFragmentGesture: SwitchCompat
     private lateinit var Switch_EnablePlayAreaMove: SwitchCompat
     private lateinit var Switch_UseSyncFrameWhenScrollerStop: SwitchCompat
-    private lateinit var Switch_DisableMediaArtWork: SwitchCompat
+
+    //新版开关合集
+    private lateinit var switch_DisableMediaArtWork: SwitchCompat
+    private lateinit var switch_AlwaysUseDarkTheme: SwitchCompat
     //</editor-fold>
     //开关变量和数值量
     //<editor-fold desc="开关变量数值量">
@@ -89,14 +92,16 @@ class SettingsActivity: AppCompatActivity() {
     //设置清单
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_Editor: SharedPreferences.Editor
-
-    private var coroutineScope_setSwitch = CoroutineScope(Dispatchers.Main)
+    //协程
+    private var coroutine_setSwitch = CoroutineScope(Dispatchers.Main)
+    private var coroutine_setButtonAndInfo = CoroutineScope(Dispatchers.Main)
 
 
     @OptIn(UnstableApi::class)
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //界面处理
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContentView(R.layout.activity_settings)
@@ -105,6 +110,91 @@ class SettingsActivity: AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        //注册基本操作按钮 + 读取显示版本号
+        coroutine_setButtonAndInfo.launch {
+            //显示版本
+            val version = packageManager.getPackageInfo(packageName, 0).versionName
+            val versionText = findViewById<TextView>(R.id.version)
+            versionText.text = "版本: $version"
+            //按钮：返回
+            val ButtonBack = findViewById<ImageButton>(R.id.buttonExit)
+            ButtonBack.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                finish()
+            }
+            //点击顶部区域回顶
+            val TopBarArea = findViewById<View>(R.id.TopBarArea)
+            TopBarArea.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                //回到顶部
+                val NestedScrollView = findViewById<NestedScrollView>(R.id.NestedScrollView)
+                NestedScrollView.smoothScrollTo(0, 0)
+            }
+            //按钮：前往项目Github仓库页
+            val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
+            ButtonGoGithub.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+
+                val url = "https://github.com/JeanValjean07/Player/releases"
+                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                startActivity(intent)
+            }
+            //超链接：开放源代码许可
+            val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
+            openSourceLicense.paint.isUnderlineText = true
+            openSourceLicense.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+
+                showCustomToast("此功能正在替换实现方案,暂不提供",Toast.LENGTH_SHORT,3)
+
+                /*
+                val isMicroG_Exist = checkMicroG()
+                if (packageNumber == 1){
+                    showCustomToast("无法读取应用列表,拒绝打开此页面",Toast.LENGTH_SHORT,3)
+                    return@setOnClickListener
+                }
+                if (isMicroG_Exist){
+                    showCustomToast("已安装MicroG服务的设备不支持打开此页",Toast.LENGTH_SHORT,3)
+                }
+                else{
+                    startActivity(Intent(this,
+                        OssLicensesMenuActivity::class.java
+                    ))
+                }
+
+                 */
+            }
+            //超链接：设备信息
+            val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
+            DeviceInfoPage.paint.isUnderlineText = true
+            DeviceInfoPage.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                startActivity(Intent(this@SettingsActivity, DeviceInfoActivity::class.java))
+            }
+        }
+
+        //注册开关(当前仅转移部分)：获取实例 + 设置状态 + 设置点击事件
+        coroutine_setSwitch.launch {
+            //媒体会话不使用封面图片
+            switch_DisableMediaArtWork = findViewById(R.id.DisableMediaArtWork)
+            switch_DisableMediaArtWork.isChecked = SettingsRequestCenter.get_PREFS_DisableMediaArtWork(this@SettingsActivity)
+            switch_DisableMediaArtWork.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_DisableMediaArtWork(isChecked)
+            }
+            //始终使用深色播放页面
+            switch_AlwaysUseDarkTheme = findViewById(R.id.AlwaysUseDarkTheme)
+            switch_AlwaysUseDarkTheme.isChecked = SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(this@SettingsActivity)
+            switch_AlwaysUseDarkTheme.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_AlwaysUseDarkTheme(isChecked)
+            }
+
+
+        }
+
+
 
         //读取设置
         //<editor-fold desc="读取设置">
@@ -244,65 +334,8 @@ class SettingsActivity: AppCompatActivity() {
         PREFS_Editor.apply()
         //</editor-fold>
 
-        //显示版本
-        val version = packageManager.getPackageInfo(packageName, 0).versionName
-        val versionText = findViewById<TextView>(R.id.version)
-        versionText.text = "版本: $version"
-        //按钮：返回
-        val ButtonBack = findViewById<ImageButton>(R.id.buttonExit)
-        ButtonBack.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            finish()
-        }
-        //点击顶部区域回顶
-        val TopBarArea = findViewById<View>(R.id.TopBarArea)
-        TopBarArea.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            //回到顶部
-            val NestedScrollView = findViewById<NestedScrollView>(R.id.NestedScrollView)
-            NestedScrollView.smoothScrollTo(0, 0)
-        }
-        //按钮：前往项目Github仓库页
-        val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
-        ButtonGoGithub.setOnClickListener {
-            ToolVibrate().vibrate(this)
 
-            val url = "https://github.com/JeanValjean07/Player/releases"
-            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-            startActivity(intent)
-        }
-        //超链接：开放源代码许可
-        val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
-        openSourceLicense.paint.isUnderlineText = true
-        openSourceLicense.setOnClickListener {
-            ToolVibrate().vibrate(this)
 
-            showCustomToast("此功能正在替换实现方案,暂不提供",Toast.LENGTH_SHORT,3)
-
-            /*
-            val isMicroG_Exist = checkMicroG()
-            if (packageNumber == 1){
-                showCustomToast("无法读取应用列表,拒绝打开此页面",Toast.LENGTH_SHORT,3)
-                return@setOnClickListener
-            }
-            if (isMicroG_Exist){
-                showCustomToast("已安装MicroG服务的设备不支持打开此页",Toast.LENGTH_SHORT,3)
-            }
-            else{
-                startActivity(Intent(this,
-                    OssLicensesMenuActivity::class.java
-                ))
-            }
-
-             */
-        }
-        //超链接：设备信息
-        val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
-        DeviceInfoPage.paint.isUnderlineText = true
-        DeviceInfoPage.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            startActivity(Intent(this, DeviceInfoActivity::class.java))
-        }
 
         //开关初始化
         //<editor-fold desc="开关初始化">
@@ -317,12 +350,11 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseCompatScroller = findViewById(R.id.useCompatScroller)
         Switch_GenerateThumbSync = findViewById(R.id.generateThumbSYNC)
         Switch_UseOnlySyncFrame = findViewById(R.id.UseOnlySyncFrame)
-        Switch_UseBlackBackground = findViewById(R.id.useBlackBackground)
         Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
         Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
         Switch_EnablePlayAreaMove = findViewById(R.id.EnablePlayAreaMove)
         Switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
-        Switch_DisableMediaArtWork = findViewById(R.id.DisableMediaArtWork)
+
         //</editor-fold>
         //开关预置位
         //<editor-fold desc="开关预置位">
@@ -337,24 +369,13 @@ class SettingsActivity: AppCompatActivity() {
         Switch_UseCompatScroller.isChecked = PREFS_UseCompatScroller
         Switch_GenerateThumbSync.isChecked = PREFS_GenerateThumbSYNC
         Switch_UseOnlySyncFrame.isChecked = PREFS_UseOnlySyncFrame
-        Switch_UseBlackBackground.isChecked = PREFS_UseBlackBackground
         Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
         Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
         Switch_EnablePlayAreaMove.isChecked = PREFS_EnablePlayAreaMoveAnim
         Switch_UseSyncFrameWhenScrollerStop.isChecked = PREFS_UseSyncFrameWhenScrollerStop
 
 
-        coroutineScope_setSwitch.launch {
 
-            Switch_DisableMediaArtWork.isChecked = SettingsRequestCenter.get_PREFS_DisableMediaArtWork(this@SettingsActivity)
-
-            Switch_DisableMediaArtWork.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(this@SettingsActivity)
-                SettingsRequestCenter.set_PREFS_DisableMediaArtWork(isChecked)
-            }
-
-
-        }
 
 
         //</editor-fold>
@@ -442,11 +463,6 @@ class SettingsActivity: AppCompatActivity() {
             PREFS_UseOnlySyncFrame = isChecked
             ToolVibrate().vibrate(this)
             PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", isChecked).apply()
-        }
-        Switch_UseBlackBackground.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseBlackBackground = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UseBlackBackground", isChecked).apply()
         }
         Switch_UseHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
             PREFS_UseHighRefreshRate = isChecked
