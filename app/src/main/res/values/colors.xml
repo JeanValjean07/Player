@@ -59,6 +59,19 @@
     <color name="PlayListCard_ON">#F8BBD0</color>
     <color name="PlayListCard_OFF">#FAFAFA</color>
 
+    <!-- 已启用全新分类体系 -->
+    <!-- 按钮 -->
+    <color name="Button_Background_Recommend">#E1BEE7</color>
+    <color name="Button_Background_NotRecommend">#EEEEEE</color>
+    <color name="Button_Text_Recommend">#4527A0</color>
+    <color name="Button_Text_NotRecommend">#424242</color>
+
+    <!-- 文字 -->
+    <color name="Text_Level_1">#000000</color>
+    <color name="Text_Level_2">#212121</color>
+    <color name="Text_Level_3">#424242</color>
+    <color name="Text_Level_4">#616161</color>
+
 
 
 </resources>

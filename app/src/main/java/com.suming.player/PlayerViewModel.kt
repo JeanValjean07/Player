@@ -34,9 +34,17 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         MediaInfo_MediaUri = uri
         MediaInfo_MediaUriString = uriString
     }
+    fun saveMediaUri(uri: Uri){
+        MediaInfo_MediaUri = uri
+    }
+    fun getMediaUri(): Pair<Boolean, Uri>{
+        return if (MediaInfo_MediaUri == Uri.EMPTY){
+            Pair(false,Uri.EMPTY)
+        }else{
+            Pair(true,MediaInfo_MediaUri)
+        }
+    }
 
-
-    //播放器监听器绑定状态
 
 
 

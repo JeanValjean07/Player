@@ -216,6 +216,7 @@ class FragmentPlayList: DialogFragment() {
             //记录当前位置
             PlayerSingleton.savePositionToRoom()
             //清除上次播放信息
+            PlayerSingleton.clearMediaItem()
             PlayerSingleton.clearLastRecord(requireContext())
             //销毁播放器
             PlayerSingleton.DevastatePlayBundle(requireContext())

@@ -922,8 +922,17 @@ object PlayerSingleton {
 
 
     //获取播放器播放状态
-    fun getPlayState(): Pair<MediaItem?, Uri> {
-        return Pair(_player?.currentMediaItem, MediaInfo_MediaUri)
+    fun getPlayState(uri_need_compare: Uri): Triple<Boolean, Boolean, Uri> {
+        if (_player?.currentMediaItem == null){
+            return Triple(false, false, MediaInfo_MediaUri)
+        }else{
+            //Log.d("SuMing", "uri_need_compare:${uri_need_compare},MediaInfo_MediaUri:${MediaInfo_MediaUri}")
+            if (uri_need_compare == MediaInfo_MediaUri){
+                return Triple(true, true, MediaInfo_MediaUri)
+            }else{
+                return Triple(true, false, MediaInfo_MediaUri)
+            }
+        }
     } //获取当前播放状态
     fun getIsPlaying(): Boolean {
         return _player?.isPlaying ?: false
@@ -957,7 +966,6 @@ object PlayerSingleton {
         if (_player?.isPlaying == true){
             setWasPlaying(true)
         }else{
-            Log.d("SuMing","recessPlay: 记录当前状态：false")
             setWasPlaying(false)
         }
         _player?.pause()
@@ -1368,7 +1376,6 @@ object PlayerSingleton {
         }
         //关闭后台播放功能：直接暂停
         else{
-            Log.d("SuMing","startBackgroundPlay: 关闭后台播放功能：直接暂停")
             recessPlay(true)
         }
     }
@@ -1382,7 +1389,6 @@ object PlayerSingleton {
         }
         //关闭后台播放功能：开始继续播放
         else{
-            Log.d("SuMing","stopBackgroundPlay: playState_wasPlaying: ${playState_wasPlaying}")
             if(playState_wasPlaying){
                 continuePlay(need_requestFocus = false, force_request = true, need_fadeIn = true)
             }
