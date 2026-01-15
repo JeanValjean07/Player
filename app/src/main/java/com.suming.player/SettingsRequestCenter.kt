@@ -25,19 +25,7 @@ object SettingsRequestCenter {
     private var state_PREFS_MainPage_initialized = false
 
 
-    //项：使用的播放器类型
-    private var PREFS_usePlayerType = -1
-    fun setPREFS_usePlayerType(playerType: Int){
-        PREFS_usePlayerType = playerType
-        PREFS_PlayEngin.edit { putInt("PREFS_usePlayerType", playerType) }
-    }
-    fun getPREFS_usePlayerType(): Int{
 
-        return PREFS_usePlayerType
-    }
-    private fun Fetch_PREFS_usePlayerType(){
-        PREFS_usePlayerType = PREFS_MainPage.getInt("PREFS_usePlayerType", -1)
-    }
 
     //PREFS in PREFS_MainPage
     //禁用主页面小播放器
@@ -56,8 +44,13 @@ object SettingsRequestCenter {
         if (PREFS_DisableMainPageSmallPlayer == -1) {
             PREFS_DisableMainPageSmallPlayer = PREFS_MainPage.getInt("PREFS_DisableMainPageSmallPlayer", -1)
             if (PREFS_DisableMainPageSmallPlayer == -1) {
-                PREFS_DisableMainPageSmallPlayer = 0
-                PREFS_MainPage.edit { putInt("PREFS_DisableMainPageSmallPlayer", 0) }
+                if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
+                    PREFS_DisableMainPageSmallPlayer = 1
+                    PREFS_MainPage.edit { putInt("PREFS_DisableMainPageSmallPlayer", 1) }
+                }else{
+                    PREFS_DisableMainPageSmallPlayer = 0
+                    PREFS_MainPage.edit { putInt("PREFS_DisableMainPageSmallPlayer", 0) }
+                }
             }
         }
         return PREFS_DisableMainPageSmallPlayer == 1
@@ -108,8 +101,13 @@ object SettingsRequestCenter {
         if (PREFS_DisableVideoTrackOnBack == -1){
             PREFS_DisableVideoTrackOnBack = PREFS_PlayEngin.getInt("PREFS_DisableVideoTrackOnBack", -1)
             if (PREFS_DisableVideoTrackOnBack == -1){
-                PREFS_DisableVideoTrackOnBack = 0
-                PREFS_PlayEngin.edit { putInt("PREFS_DisableVideoTrackOnBack", 0) }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+                    PREFS_DisableVideoTrackOnBack = 1
+                    PREFS_PlayEngin.edit { putInt("PREFS_DisableVideoTrackOnBack", 1) }
+                }else{
+                    PREFS_DisableVideoTrackOnBack = 0
+                    PREFS_PlayEngin.edit { putInt("PREFS_DisableVideoTrackOnBack", 0) }
+                }
             }
         }
 
@@ -179,8 +177,8 @@ object SettingsRequestCenter {
         if (PREFS_EnableAlwaysSeek == -1) {
             PREFS_EnableLinkScroll = PREFS_PlayVideoPage.getInt("PREFS_EnableLinkScroll", -1)
             if (PREFS_EnableLinkScroll == -1) {
-                PREFS_EnableLinkScroll = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_EnableLinkScroll", 0) }
+                PREFS_EnableLinkScroll = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_EnableLinkScroll", 1) }
             }
         }
         return PREFS_EnableLinkScroll == 1
@@ -223,10 +221,16 @@ object SettingsRequestCenter {
         if (PREFS_EnableHighRefreshRate == -1) {
             PREFS_EnableHighRefreshRate = PREFS_PlayVideoPage.getInt("PREFS_EnableHighRefreshRate", -1)
             if (PREFS_EnableHighRefreshRate == -1) {
-                PREFS_EnableHighRefreshRate = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_EnableHighRefreshRate", 0) }
+                if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
+                    PREFS_EnableHighRefreshRate = 1
+                    PREFS_PlayVideoPage.edit { putInt("PREFS_EnableHighRefreshRate", 1) }
+                }else{
+                    PREFS_EnableHighRefreshRate = 0
+                    PREFS_PlayVideoPage.edit { putInt("PREFS_EnableHighRefreshRate", 0) }
+                }
             }
         }
+
         return PREFS_EnableHighRefreshRate == 1
     }
     //从其他应用启动时,播放结束自动退出
@@ -267,8 +271,8 @@ object SettingsRequestCenter {
         if (PREFS_RetainPlayingWhenFinish == -1) {
             PREFS_RetainPlayingWhenFinish = PREFS_PlayVideoPage.getInt("PREFS_RetainPlayingWhenFinish", -1)
             if (PREFS_RetainPlayingWhenFinish == -1) {
-                PREFS_RetainPlayingWhenFinish = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_RetainPlayingWhenFinish", 0) }
+                PREFS_RetainPlayingWhenFinish = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_RetainPlayingWhenFinish", 1) }
             }
         }
         return PREFS_RetainPlayingWhenFinish == 1
@@ -293,6 +297,7 @@ object SettingsRequestCenter {
                 PREFS_PlayVideoPage.edit { putInt("PREFS_EnableOrientationListener", 0) }
             }
         }
+
         return PREFS_EnableOrientationListener == 1
     }
     //关闭更多操作面板下滑手势
@@ -355,13 +360,39 @@ object SettingsRequestCenter {
         if (PREFS_EnablePlayAreaMoveAnim == -1) {
             PREFS_EnablePlayAreaMoveAnim = PREFS_PlayVideoPage.getInt("PREFS_EnablePlayAreaMoveAnim", -1)
             if (PREFS_EnablePlayAreaMoveAnim == -1) {
-                PREFS_EnablePlayAreaMoveAnim = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_EnablePlayAreaMoveAnim", 0) }
+                PREFS_EnablePlayAreaMoveAnim = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_EnablePlayAreaMoveAnim", 1) }
             }
         }
         return PREFS_EnablePlayAreaMoveAnim == 1
     }
-
+    //播放页样式
+    private var PREFS_PlayPageType = -1
+    fun set_PREFS_PlayPageType(playPageType: Int){
+        PREFS_PlayPageType = playPageType
+        PREFS_PlayVideoPage.edit { putInt("PREFS_PlayPageType", playPageType) }
+    }
+    fun get_PREFS_PlayPageType(context: Context): Int{
+        //确保配置清单已初始化
+        if (!state_PREFS_PlayVideoPage_initialized) {
+            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
+            state_PREFS_PlayVideoPage_initialized = true
+        }
+        //确保配置项已被读取过
+        if (PREFS_PlayPageType == -1) {
+            PREFS_PlayPageType = PREFS_PlayVideoPage.getInt("PREFS_PlayPageType", -1)
+            if (PREFS_PlayPageType == -1) {
+                if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
+                    PREFS_PlayPageType = 1
+                    PREFS_PlayVideoPage.edit { putInt("PREFS_PlayPageType", 1) }
+                }else{
+                    PREFS_PlayPageType = 0
+                    PREFS_PlayVideoPage.edit { putInt("PREFS_PlayPageType", 0) }
+                }
+            }
+        }
+        return PREFS_PlayPageType
+    }
 
 
     //进度条相关设置
@@ -381,8 +412,8 @@ object SettingsRequestCenter {
         if (PREFS_UseSyncFrameInScroller == -1) {
             PREFS_UseSyncFrameInScroller = PREFS_PlayVideoPage.getInt("PREFS_UseSyncFrameInScroller", -1)
             if (PREFS_UseSyncFrameInScroller == -1) {
-                PREFS_UseSyncFrameInScroller = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_UseSyncFrameInScroller", 0) }
+                PREFS_UseSyncFrameInScroller = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_UseSyncFrameInScroller", 1) }
             }
         }
         return PREFS_UseSyncFrameInScroller == 1
@@ -470,8 +501,8 @@ object SettingsRequestCenter {
         if (PREFS_UseSyncFrameInScroller == -1) {
             PREFS_UseOnlySyncFrameWhenSeek = PREFS_PlayVideoPage.getInt("PREFS_UseOnlySyncFrameWhenSeek", -1)
             if (PREFS_UseOnlySyncFrameWhenSeek == -1) {
-                PREFS_UseOnlySyncFrameWhenSeek = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_UseOnlySyncFrameWhenSeek", 0) }
+                PREFS_UseOnlySyncFrameWhenSeek = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_UseOnlySyncFrameWhenSeek", 1) }
             }
         }
 
@@ -483,6 +514,7 @@ object SettingsRequestCenter {
     private var VALUE_Gap_TimerUpdate = -1L
     fun set_VALUE_Gap_TimerUpdate(gap: Long){
         VALUE_Gap_TimerUpdate = gap
+        PREFS_PlayVideoPage.edit { putLong("VALUE_Gap_TimerUpdate", gap) }
     }
     fun get_VALUE_Gap_TimerUpdate(context: Context): Long {
         //确保配置清单已初始化
@@ -494,8 +526,8 @@ object SettingsRequestCenter {
         if (VALUE_Gap_TimerUpdate == -1L) {
             VALUE_Gap_TimerUpdate = PREFS_PlayVideoPage.getLong("VALUE_Gap_TimerUpdate", -1L)
             if (VALUE_Gap_TimerUpdate == -1L) {
-                VALUE_Gap_TimerUpdate = 40L
-                PREFS_PlayVideoPage.edit { putLong("VALUE_Gap_TimerUpdate", 40L) }
+                VALUE_Gap_TimerUpdate = 33L
+                PREFS_PlayVideoPage.edit { putLong("VALUE_Gap_TimerUpdate", 33L) }
             }
         }
         return VALUE_Gap_TimerUpdate
@@ -504,6 +536,7 @@ object SettingsRequestCenter {
     private var VALUE_Gap_SeekHandlerGap = -1L
     fun set_VALUE_Gap_SeekHandlerGap(gap: Long){
         VALUE_Gap_SeekHandlerGap = gap
+        PREFS_PlayVideoPage.edit { putLong("VALUE_Gap_SeekHandlerGap", gap) }
     }
     fun get_VALUE_Gap_SeekHandlerGap(context: Context): Long {
         //确保配置清单已初始化
@@ -526,6 +559,7 @@ object SettingsRequestCenter {
     private var VALUE_Int_statusBarHeight = -1
     fun set_VALUE_Int_statusBarHeight(height: Int){
         VALUE_Int_statusBarHeight = height
+        PREFS_PlayVideoPage.edit { putInt("VALUE_Int_statusBarHeight", height) }
     }
     fun get_VALUE_Int_statusBarHeight(context: Context): Int {
         //确保配置清单已初始化
@@ -541,7 +575,22 @@ object SettingsRequestCenter {
                 //如果读取失败,就返回默认值200,因为无法在单例环境下决策出正确的值
             }
         }
+
         return VALUE_Int_statusBarHeight
+    }
+    fun isStatusBarHeightExist(context: Context): Boolean {
+        //确保配置清单已初始化
+        if (!state_PREFS_PlayVideoPage_initialized) {
+            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
+            state_PREFS_PlayVideoPage_initialized = true
+        }
+        //确保配置项已被读取过
+        if (VALUE_Int_statusBarHeight == -1) {
+            VALUE_Int_statusBarHeight = PREFS_PlayVideoPage.getInt("VALUE_Int_statusBarHeight", -1)
+
+        }
+
+        return VALUE_Int_statusBarHeight != -1
     }
 
 

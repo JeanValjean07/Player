@@ -1,0 +1,21 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText">
+    <item
+        android:id="@+id/item_NoVibrate"
+        android:title="关闭振动" />
+    <item
+        android:id="@+id/item_EFFECT_CLICK"
+        android:title="EFFECT_CLICK" />
+    <item
+        android:id="@+id/item_EFFECT_TICK"
+        android:title="EFFECT_TICK" />
+    <item
+        android:id="@+id/item_EFFECT_DOUBLE_CLICK"
+        android:title="EFFECT_DOUBLE_CLICK" />
+    <item
+        android:id="@+id/item_EFFECT_HEAVY_CLICK"
+        android:title="EFFECT_HEAVY_CLICK" />
+
+</menu>

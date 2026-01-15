@@ -3,8 +3,8 @@ package com.suming.player
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,7 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
-import androidx.core.content.edit
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -39,6 +39,8 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 
 @Suppress("unused")
+@OptIn(UnstableApi::class)
+@SuppressLint("InflateParams", "SetTextI18n")
 @RequiresApi(Build.VERSION_CODES.Q)
 class SettingsActivity: AppCompatActivity() {
     //开关初始化
@@ -58,19 +60,6 @@ class SettingsActivity: AppCompatActivity() {
     private lateinit var switch_UseSuperLongScroller: SwitchCompat
     private lateinit var switch_UseCompatScroller: SwitchCompat
     private lateinit var switch_DisableVideoTrackOnBack: SwitchCompat
-    //开关变量和数值量
-    //<editor-fold desc="开关变量数值量">
-
-    private var PREFS_TimeUpdateGap = 16L
-    private var PREFS_SeekHandlerGap = 0L
-    private var PREFS_UsePlayerType = 0
-    //震动时间
-    private var PREFS_VibrateMillis = 0L
-    private var PREFS_UseSysVibrate = false
-    //</editor-fold>
-    //设置清单
-    private lateinit var PREFS: SharedPreferences
-    private lateinit var PREFS_Editor: SharedPreferences.Editor
     //协程
     private var coroutine_setSwitch = CoroutineScope(Dispatchers.Main)
     private var coroutine_setButtonAndInfo = CoroutineScope(Dispatchers.Main)
@@ -78,7 +67,7 @@ class SettingsActivity: AppCompatActivity() {
     private var coroutine_setBasicFunctionalButton = CoroutineScope(Dispatchers.Main)
 
 
-    @OptIn(UnstableApi::class)
+
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -271,6 +260,7 @@ class SettingsActivity: AppCompatActivity() {
         coroutine_setMenuButton.launch {
             //播放页样式
             val ButtonPlayerType = findViewById<CardView>(R.id.ButtonPlayerType)
+            updatePlayPageTypeText()
             ButtonPlayerType.setOnClickListener {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 //使用弹出菜单选择
@@ -279,14 +269,133 @@ class SettingsActivity: AppCompatActivity() {
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         R.id.type_oro -> {
-                            choosePlayerType(0); true
+                            choosePlayPageType(0); true
                         }
+
                         R.id.type_neo -> {
-                            choosePlayerType(1); true
+                            choosePlayPageType(1); true
                         }
+
                         R.id.type_test -> {
-                            choosePlayerType(2); true
+                            choosePlayPageType(2); true
                         }
+
+                        else -> true
+                    }
+                }
+                popup.show()
+            }
+            //寻帧间隔
+            val ButtonCardSeekHandlerGap = findViewById<CardView>(R.id.ButtonCardSeekHandlerGap)
+            updateSeekHandlerGapText()
+            ButtonCardSeekHandlerGap.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                //使用弹出菜单选择
+                val popup = PopupMenu(this@SettingsActivity, ButtonCardSeekHandlerGap)
+                popup.menuInflater.inflate(
+                    R.menu.activity_settings_popup_seek_handler_gap,
+                    popup.menu
+                )
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.menu_item_NoGap -> {
+                            chooseSeekHandlerGap(0); true
+                        }
+
+                        R.id.menu_item_60hz -> {
+                            chooseSeekHandlerGap(16); true
+                        }
+
+                        R.id.menu_item_30hz -> {
+                            chooseSeekHandlerGap(33); true
+                        }
+
+                        R.id.menu_item_15hz -> {
+                            chooseSeekHandlerGap(66); true
+                        }
+
+                        R.id.menu_item_Input -> {
+                            setSeekHandlerGapByInput(); true
+                        }
+
+                        else -> true
+                    }
+                }
+                popup.show()
+            }
+            //时间戳刷新间隔
+            val ButtonCardTimerUpdateGap = findViewById<CardView>(R.id.ButtonCardTimerUpdateGap)
+            updateTimerUpdateGapText()
+            ButtonCardTimerUpdateGap.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                //使用弹出菜单选择
+                val popup = PopupMenu(this@SettingsActivity, ButtonCardTimerUpdateGap)
+                popup.menuInflater.inflate(
+                    R.menu.activity_settings_popup_timer_update_gap,
+                    popup.menu
+                )
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.menu_item_120hz -> {
+                            chooseTimeUpdateGap(8L); true
+                        }
+
+                        R.id.menu_item_90hz -> {
+                            chooseTimeUpdateGap(12L); true
+                        }
+
+                        R.id.menu_item_60hz -> {
+                            chooseTimeUpdateGap(16L); true
+                        }
+
+                        R.id.menu_item_30hz -> {
+                            chooseTimeUpdateGap(33L); true
+                        }
+
+                        R.id.menu_item_15hz -> {
+                            chooseTimeUpdateGap(66L); true
+                        }
+
+                        R.id.menu_item_Input -> {
+                            setTimerUpdateGapByInput(); true
+                        }
+
+                        else -> true
+                    }
+                }
+                popup.show()
+
+            }
+            //振动模式
+            val ButtonCardVibrateMode = findViewById<CardView>(R.id.ButtonCardVibrateMode)
+            updateVibrateModeText()
+            ButtonCardVibrateMode.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                //使用弹出菜单选择
+                val popup = PopupMenu(this@SettingsActivity, ButtonCardVibrateMode)
+                popup.menuInflater.inflate(R.menu.activity_settings_popup_vibrate_mode, popup.menu)
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.item_NoVibrate -> {
+                            chooseVibrateMode(0); true
+                        }
+
+                        R.id.item_EFFECT_CLICK -> {
+                            chooseVibrateMode(1); true
+                        }
+
+                        R.id.item_EFFECT_TICK -> {
+                            chooseVibrateMode(2); true
+                        }
+
+                        R.id.item_EFFECT_DOUBLE_CLICK -> {
+                            chooseVibrateMode(3); true
+                        }
+
+                        R.id.item_EFFECT_HEAVY_CLICK -> {
+                            chooseVibrateMode(4); true
+                        }
+
                         else -> true
                     }
                 }
@@ -320,193 +429,222 @@ class SettingsActivity: AppCompatActivity() {
             }
         }
 
-        //读取设置
-        //<editor-fold desc="读取设置">
-        PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
-        PREFS_Editor = PREFS.edit()
-
-        if (!PREFS.contains("PREFS_SeekHandlerGap")) {
-            PREFS_Editor.putLong("PREFS_SeekHandlerGap", 0L)
-            PREFS_SeekHandlerGap = 0L
-        } else {
-            PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0L)
-        }
-
-        if (!PREFS.contains("PREFS_TimeUpdateGap")) {
-            PREFS_Editor.putLong("PREFS_TimeUpdateGap", 16L)
-            PREFS_TimeUpdateGap = 16L
-        } else {
-            PREFS_TimeUpdateGap = PREFS.getLong("PREFS_TimeUpdateGap", 16L)
-        }
-        if (!PREFS.contains("PREFS_TimeUpdateGap")) {
-            PREFS_Editor.putLong("PREFS_TimeUpdateGap", 66L)
-            PREFS_TimeUpdateGap = 66L
-        } else {
-            PREFS_TimeUpdateGap = PREFS.getLong("PREFS_TimeUpdateGap", 66L)
-        }
-        if (!PREFS.contains("PREFS_VibrateMillis")) {
-            PREFS_Editor.putLong("PREFS_VibrateMillis", 50L)
-            PREFS_VibrateMillis = 50L
-        } else {
-            PREFS_VibrateMillis = PREFS.getLong("PREFS_VibrateMillis", 50L)
-        }
-        if (!PREFS.contains("PREFS_UseSysVibrate")) {
-            PREFS_Editor.putBoolean("PREFS_UseSysVibrate", true)
-            PREFS_UseSysVibrate = true
-        } else {
-            PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
-        }
-
-        if (!PREFS.contains("PREFS_UsePlayerType")){
-            PREFS_Editor.putInt("PREFS_UsePlayerType", 0)
-            PREFS_UsePlayerType = 0
-        }else{
-            PREFS_UsePlayerType = PREFS.getInt("PREFS_UsePlayerType", 0)
-        }
-        PREFS_Editor.apply()
-        //</editor-fold>
-
-
-
-
-
-
-        //文本信息预写
-        setPlayerTypeText()
-        val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
-        if (PREFS_SeekHandlerGap == 0L) {
-            currentSeekHandlerGap.text = "默认 (无寻帧间隔)"
-        } else {
-            currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
-        }
-        val currentTimeUpdateGap = findViewById<TextView>(R.id.currentTimeUpdateGap)
-        if (PREFS_TimeUpdateGap == 66L) {
-            currentTimeUpdateGap.text = "默认 (66毫秒丨15Hz)"
-        } else {
-            currentTimeUpdateGap.text = "$PREFS_TimeUpdateGap 毫秒"
-        }
-        val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
-        if (PREFS_UseSysVibrate) {
-            currentVibrateMillis.text = "跟随系统"
-        } else {
-            if (PREFS_VibrateMillis == 0L) {
-                currentVibrateMillis.text = "关闭"
-            }else{
-                currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
-            }
-        }
-
-
-
-        //seek间隔
-        val ButtonSeekHandlerGap = findViewById<TextView>(R.id.ButtonSeekHandlerGap)
-        ButtonSeekHandlerGap.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            val popup = PopupMenu(this, ButtonSeekHandlerGap)
-            popup.menuInflater.inflate(R.menu.activity_settings_popup_seek_gap, popup.menu)
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.MenuAction_NoGap -> {
-                        chooseSeekHandlerGap(0); true
-                    }
-
-                    R.id.MenuAction_50 -> {
-                        chooseSeekHandlerGap(50); true
-                    }
-
-                    R.id.MenuAction_100 -> {
-                        chooseSeekHandlerGap(100); true
-                    }
-
-                    R.id.MenuAction_200 -> {
-                        chooseSeekHandlerGap(200); true
-                    }
-
-                    R.id.MenuAction_Input -> {
-                        setSeekHandlerGap(); true
-                    }
-
-                    else -> true
-                }
-            }
-            popup.show()
-        }
-        //时间更新间隔
-        val ButtonTimeUpdateGap = findViewById<TextView>(R.id.ButtonTimeUpdateGap)
-        ButtonTimeUpdateGap.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            val popup = PopupMenu(this, ButtonTimeUpdateGap)
-            popup.menuInflater.inflate(R.menu.activity_settings_popup_time_update_gap, popup.menu)
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.MenuAction_8 -> {
-                        chooseTimeUpdateGap(8L); true
-                    }
-
-                    R.id.MenuAction_12 -> {
-                        chooseTimeUpdateGap(12L); true
-                    }
-
-                    R.id.MenuAction_16 -> {
-                        chooseTimeUpdateGap(16L); true
-                    }
-
-                    R.id.MenuAction_33 -> {
-                        chooseTimeUpdateGap(33L); true
-                    }
-
-                    R.id.MenuAction_66 -> {
-                        chooseTimeUpdateGap(66L); true
-                    }
-
-                    R.id.MenuAction_Input -> {
-                        setTimeUpdateGap(); true
-                    }
-
-                    else -> true
-                }
-            }
-            popup.show()
-        }
-        //振动时长
-        val ButtonVibratorMillis = findViewById<TextView>(R.id.ButtonVibratorMillis)
-        ButtonVibratorMillis.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            val popup = PopupMenu(this, ButtonVibratorMillis)
-            popup.menuInflater.inflate(R.menu.activity_settings_popup_vibrate_millis, popup.menu)
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.MenuAction_NoMillis -> {
-                        chooseVibrateMillis(0L); true
-                    }
-                    R.id.MenuAction_UseSys -> {
-                        chooseVibrateMillis(-1L); true
-                    }
-                    R.id.MenuAction_20 -> {
-                        chooseVibrateMillis(20L); true
-                    }
-                    R.id.MenuAction_50 -> {
-                        chooseVibrateMillis(50L); true
-                    }
-                    R.id.MenuAction_100 -> {
-                        chooseVibrateMillis(100L); true
-                    }
-                    R.id.MenuAction_Input -> {
-                        setVibrateMillis(); true
-                    }
-                    else -> true
-                }
-            }
-            popup.show()
-        }
-
-
 
 
     //onCreate END
     }
 
     //Functions
+    //播放页样式
+    private fun choosePlayPageType(playPageType: Int){
+        when(playPageType){
+            0 -> {
+                SettingsRequestCenter.set_PREFS_PlayPageType(0)
+                showCustomToast("成功设置播放页样式为经典版本", Toast.LENGTH_SHORT, 3)
+                updatePlayPageTypeText()
+                PlayerSingleton.updatedPlayStyle(application, 0)
+            }
+            1 -> {
+                SettingsRequestCenter.set_PREFS_PlayPageType(1)
+                showCustomToast("成功设置播放页样式为新晋版本", Toast.LENGTH_SHORT, 3)
+                updatePlayPageTypeText()
+                PlayerSingleton.updatedPlayStyle(application, 1)
+            }
+            2 -> {
+                showCustomToast("当前包中未包含测试版界面", Toast.LENGTH_SHORT, 3)
+            }
+        }
+    }
+    private fun updatePlayPageTypeText(){
+        val ButtonPlayerTypeText = findViewById<TextView>(R.id.ButtonPlayerTypeText)
+        val PlayPageType = SettingsRequestCenter.get_PREFS_PlayPageType(this)
+        when(PlayPageType){
+            0 -> ButtonPlayerTypeText.text = "经典"
+            1 -> ButtonPlayerTypeText.text = "新晋"
+            2 -> ButtonPlayerTypeText.text = "测试"
+        }
+    }
+    //寻帧间隔
+    private fun chooseSeekHandlerGap(gap: Long) {
+        ToolVibrate().vibrate(this)
+        SettingsRequestCenter.set_VALUE_Gap_SeekHandlerGap(gap)
+        updateSeekHandlerGapText()
+    }
+    private fun setSeekHandlerGapByInput(){
+        ToolVibrate().vibrate(this)
+        //创建对话框
+        val dialog = Dialog(this).apply {
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+        dialog.setContentView(dialogView)
+
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+        title.text = "自定义播放器寻帧间隔"
+        Description.text = "仅控制滚动进度条时的寻帧间隔"
+        EditText.hint = "以毫秒为单位"
+        Button.text = "确定"
+
+        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val gapInput = EditText.text.toString().toLongOrNull()
+            if (gapInput == null || gapInput == 0L) {
+                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            else if (gapInput > 1000) {
+                showCustomToast("寻帧间隔不能大于1秒", Toast.LENGTH_SHORT, 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            else {
+                //设置寻帧间隔
+                SettingsRequestCenter.set_VALUE_Gap_SeekHandlerGap(gapInput)
+                //界面刷新
+                updateSeekHandlerGapText()
+
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+        //自动弹出键盘程序
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(50)
+            EditText.requestFocus()
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+
+    }
+    private fun updateSeekHandlerGapText(){
+        val ButtonTextSeekHandlerGap = findViewById<TextView>(R.id.ButtonTextSeekHandlerGap)
+        val seekHandlerGap = SettingsRequestCenter.get_VALUE_Gap_SeekHandlerGap(this)
+        when(seekHandlerGap){
+            0L -> ButtonTextSeekHandlerGap.text = "无间隔"
+            16L -> ButtonTextSeekHandlerGap.text = "60 Hz"
+            33L -> ButtonTextSeekHandlerGap.text = "30 Hz"
+            66L -> ButtonTextSeekHandlerGap.text = "15 Hz"
+            else -> ButtonTextSeekHandlerGap.text = "$seekHandlerGap 毫秒"
+        }
+    }
+    //时间戳刷新间隔
+    private fun chooseTimeUpdateGap(gap: Long) {
+        ToolVibrate().vibrate(this)
+        SettingsRequestCenter.set_VALUE_Gap_TimerUpdate(gap)
+        updateTimerUpdateGapText()
+    }
+    private fun setTimerUpdateGapByInput() {
+        ToolVibrate().vibrate(this)
+        //创建对话框
+        val dialog = Dialog(this).apply {
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+        title.text = "自定义时间戳更新间隔"
+        Description.text = "仅控制滚动进度条时的时间戳更新间隔"
+        EditText.hint = "以毫秒为单位"
+        Button.text = "确定"
+
+        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val gapInput = EditText.text.toString().toLongOrNull()
+            if (gapInput == null || gapInput == 0L) {
+                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
+                dialog.dismiss()
+                return@setOnClickListener
+
+            }
+            else if (gapInput > 1000) {
+                showCustomToast("时间更新间隔不能大于1秒", Toast.LENGTH_SHORT, 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            else{
+                SettingsRequestCenter.set_VALUE_Gap_TimerUpdate(gapInput)
+                //界面刷新
+                updateTimerUpdateGapText()
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+        //自动弹出键盘程序
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(50)
+            EditText.requestFocus()
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+    private fun updateTimerUpdateGapText(){
+        val ButtonTextTimerUpdateGap = findViewById<TextView>(R.id.ButtonTextTimerUpdateGap)
+        val timerUpdateGap = SettingsRequestCenter.get_VALUE_Gap_TimerUpdate(this)
+        when(timerUpdateGap){
+            8L -> ButtonTextTimerUpdateGap.text = "120 Hz"
+            16L -> ButtonTextTimerUpdateGap.text = "60 Hz"
+            33L -> ButtonTextTimerUpdateGap.text = "30 Hz"
+            66L -> ButtonTextTimerUpdateGap.text = "15 Hz"
+            else -> ButtonTextTimerUpdateGap.text = "$timerUpdateGap 毫秒"
+        }
+    }
+    //振动模式
+    private fun chooseVibrateMode(mode: Int) {
+        //振动模式表
+        /*
+        0 = No Vibrate
+        1 = VibrationEffect.EFFECT_CLICK
+        2 = VibrationEffect.EFFECT_TICK
+        3 = VibrationEffect.EFFECT_DOUBLE_CLICK
+        4 = VibrationEffect.EFFECT_HEAVY_CLICK
+        */
+
+        ToolVibrate().setVibrateMode(this, mode)
+
+        updateVibrateModeText()
+
+    }
+    private fun updateVibrateModeText() {
+        val ButtonTextVibrateMode = findViewById<TextView>(R.id.ButtonTextVibrateMode)
+        val vibrateMode = ToolVibrate().getVibrateMode(this)
+        when(vibrateMode){
+            0 -> ButtonTextVibrateMode.text = "无振动"
+            1 -> ButtonTextVibrateMode.text = "EFFECT_CLICK"
+            2 -> ButtonTextVibrateMode.text = "EFFECT_TICK"
+            3 -> ButtonTextVibrateMode.text = "EFFECT_DOUBLE_CLICK"
+            4 -> ButtonTextVibrateMode.text = "EFFECT_HEAVY_CLICK"
+        }
+
+    }
+
+
+
+    //检查应用列表
+    private var packageNumber = 0
+    private fun checkMicroG(): Boolean {
+        packageNumber = 0
+        val packageManager = packageManager
+        val installedPackages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
+        var packageName: String
+        for (packageInfo in installedPackages) {
+            packageName = packageInfo.packageName
+            packageNumber++
+            if (packageName == "com.google.android.gms"){
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                val label = appInfo.loadLabel(packageManager).toString()
+                if (label.contains("microG")){
+                    return true
+                }
+            }
+        }
+        return false
+    }
     //测试版可用性检查
     private fun allowUseTestPlayer(): Boolean{
         val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
@@ -538,270 +676,6 @@ class SettingsActivity: AppCompatActivity() {
             }
         }
         return true
-    }
-    //播放页样式
-    @OptIn(UnstableApi::class)
-    private fun choosePlayerType(playerType: Int){
-        when(playerType){
-            0 -> {
-                PREFS_UsePlayerType = 0
-                PREFS.edit { putInt("PREFS_UsePlayerType", 0) }
-                showCustomToast("成功设置播放页样式为经典版本", Toast.LENGTH_SHORT, 3)
-                setPlayerTypeText()
-                PlayerSingleton.updatedPlayStyle(application, 0)
-            }
-            1 -> {
-                PREFS_UsePlayerType = 1
-                PREFS.edit { putInt("PREFS_UsePlayerType", 1) }
-                showCustomToast("成功设置播放页样式为新晋版本", Toast.LENGTH_SHORT, 3)
-                setPlayerTypeText()
-                PlayerSingleton.updatedPlayStyle(application, 1)
-            }
-            2 -> {
-                //测试版样式
-                showCustomToast("当前包中未包含测试版界面", Toast.LENGTH_SHORT, 3)
-                return
-                /*
-                if (allowUseTestPlayer()){
-                    PREFS_UsePlayerType = 2
-                    PREFS.edit { putInt("PREFS_usePlayerType", playerType) }
-                    setPlayerTypeText()
-                }else{
-                    showCustomToast("设置失败", Toast.LENGTH_SHORT, 3)
-                    setPlayerTypeText()
-                }
-
-                 */
-            }
-        }
-    }
-    private fun setPlayerTypeText(){
-        val ButtonPlayerTypeText = findViewById<TextView>(R.id.ButtonPlayerTypeText)
-        when(PREFS_UsePlayerType){
-            0 -> ButtonPlayerTypeText.text = "经典"
-            1 -> ButtonPlayerTypeText.text = "新晋"
-            2 -> ButtonPlayerTypeText.text = "测试"
-        }
-    }
-    //数值设置
-    @SuppressLint("SetTextI18n")
-    private fun chooseSeekHandlerGap(gap: Long) {
-        ToolVibrate().vibrate(this)
-        PREFS_SeekHandlerGap = gap
-        PREFS.edit { putLong("PREFS_SeekHandlerGap", gap) }
-        val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
-        if (PREFS_SeekHandlerGap == 50L) {
-            currentSeekHandlerGap.text = "默认 (50 毫秒)"
-        } else {
-            currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
-        }
-    }
-    @SuppressLint("InflateParams", "SetTextI18n")
-    private fun setSeekHandlerGap() {
-        ToolVibrate().vibrate(this)
-        val dialog = Dialog(this)
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
-        dialog.setContentView(dialogView)
-        val title: TextView = dialogView.findViewById(R.id.dialog_title)
-        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
-        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-        val Button: Button = dialogView.findViewById(R.id.dialog_button)
-
-        title.text = "自定义：播放器寻帧间隔"
-        Description.text = "输入自定义滚动进度条时的寻帧间隔"
-        EditText.hint = "单位：毫秒丨默认值：50"
-        Button.text = "确定"
-
-        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        Button.setOnClickListener {
-            val gapInput = EditText.text.toString().toLongOrNull()
-            if (gapInput == null || gapInput == 0L) {
-                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
-                dialog.dismiss()
-                return@setOnClickListener
-            }
-            else if (gapInput > 1000) {
-                showCustomToast("寻帧间隔不能大于1秒", Toast.LENGTH_SHORT, 3)
-                dialog.dismiss()
-                return@setOnClickListener
-            }
-            else {
-                PREFS_SeekHandlerGap = gapInput
-                PREFS.edit { putLong("PREFS_SeekHandlerGap", gapInput).apply() }
-                //界面刷新
-                val currentSeekHandlerGap = findViewById<TextView>(R.id.currentSeekHandlerGap)
-                currentSeekHandlerGap.text = "$PREFS_SeekHandlerGap 毫秒"
-                dialog.dismiss()
-            }
-            dialog.dismiss()
-        }
-        dialog.show()
-        //自动弹出键盘程序
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(50)
-            EditText.requestFocus()
-            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-        }
-
-    }
-    @SuppressLint("SetTextI18n")
-    private fun chooseTimeUpdateGap(gap: Long) {
-        ToolVibrate().vibrate(this)
-        PREFS_TimeUpdateGap = gap
-        PREFS.edit { putLong("PREFS_TimeUpdateGap", gap) }
-        val currentTimeUpdateGap = findViewById<TextView>(R.id.currentTimeUpdateGap)
-        if (PREFS_TimeUpdateGap == 66L) {
-            currentTimeUpdateGap.text = "默认 (66 毫秒)"
-        } else {
-            currentTimeUpdateGap.text = "$PREFS_TimeUpdateGap 毫秒"
-        }
-    }
-    @SuppressLint("InflateParams", "SetTextI18n")
-    private fun setTimeUpdateGap() {
-        ToolVibrate().vibrate(this)
-        val dialog = Dialog(this)
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
-        dialog.setContentView(dialogView)
-        val title: TextView = dialogView.findViewById(R.id.dialog_title)
-        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
-        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-        val Button: Button = dialogView.findViewById(R.id.dialog_button)
-
-        title.text = "自定义：播放器时间更新间隔"
-        Description.text = "输入自定义时间更新间隔"
-        EditText.hint = "单位：毫秒丨默认值：66"
-        Button.text = "确定"
-
-        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        Button.setOnClickListener {
-            val gapInput = EditText.text.toString().toLongOrNull()
-            if (gapInput == null || gapInput == 0L) {
-                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
-                dialog.dismiss()
-                return@setOnClickListener
-
-            }
-            else if (gapInput > 1000) {
-                showCustomToast("时间更新间隔不能大于1秒", Toast.LENGTH_SHORT, 3)
-                dialog.dismiss()
-                return@setOnClickListener
-            }
-            else {
-                PREFS_TimeUpdateGap = gapInput
-                PREFS.edit { putLong("PREFS_TimeUpdateGap", gapInput).apply() }
-                //界面刷新
-                val currentTimeUpdateGap = findViewById<TextView>(R.id.currentTimeUpdateGap)
-                currentTimeUpdateGap.text = "$PREFS_TimeUpdateGap 毫秒"
-                dialog.dismiss()
-            }
-        }
-        dialog.show()
-        //自动弹出键盘程序
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(50)
-            EditText.requestFocus()
-            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-        }
-    }
-    @SuppressLint("SetTextI18n")
-    private fun chooseVibrateMillis(gap: Long) {
-        //跟随系统
-        if (gap == -1L) {
-            PREFS_UseSysVibrate = true
-            PREFS.edit { putBoolean("PREFS_UseSysVibrate", true) }
-            val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
-            currentVibrateMillis.text = "跟随系统"
-            ToolVibrate().readVibrateSetting(this)
-            ToolVibrate().vibrate(this)
-        }
-        //自定时长
-        else{
-            PREFS_VibrateMillis = gap
-            PREFS_UseSysVibrate = false
-            PREFS.edit { putLong("PREFS_VibrateMillis", gap).apply() }
-            PREFS.edit { putBoolean("PREFS_UseSysVibrate", false).apply() }
-            val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
-            if (PREFS_VibrateMillis == 0L) {
-                currentVibrateMillis.text = "关闭"
-            } else {
-                currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
-            }
-            ToolVibrate().readVibrateSetting(this)
-            ToolVibrate().vibrate(this)
-        }
-    }
-    @SuppressLint("InflateParams", "SetTextI18n")
-    private fun setVibrateMillis() {
-        ToolVibrate().vibrate(this)
-        val dialog = Dialog(this)
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
-        dialog.setContentView(dialogView)
-        val title: TextView = dialogView.findViewById(R.id.dialog_title)
-        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
-        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-        val Button: Button = dialogView.findViewById(R.id.dialog_button)
-
-        title.text = "自定义：振动时长"
-        Description.text = "输入自定义振动时长"
-        EditText.hint = "单位：毫秒"
-        Button.text = "确定"
-
-        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        Button.setOnClickListener {
-            val gapInput = EditText.text.toString().toLongOrNull()
-            if (gapInput == null || gapInput == 0L) {
-                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
-                dialog.dismiss()
-                return@setOnClickListener
-
-            }
-            else if (gapInput > 300L) {
-                Toast.makeText(this, "振动时长不能大于300毫秒", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-                return@setOnClickListener
-            }
-            else {
-                PREFS_VibrateMillis = gapInput
-                PREFS_UseSysVibrate = false
-                PREFS.edit { putLong("PREFS_VibrateMillis", gapInput).apply() }
-                PREFS.edit { putBoolean("PREFS_UseSysVibrate", false).apply() }
-                //界面刷新
-                val currentVibrateMillis = findViewById<TextView>(R.id.currentVibratorMillis)
-                if (PREFS_VibrateMillis == 0L) {
-                    currentVibrateMillis.text = "关闭"
-                } else {
-                    currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
-                }
-                dialog.dismiss()
-            }
-        }
-        dialog.show()
-        //自动弹出键盘程序
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(50)
-            EditText.requestFocus()
-            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-        }
-    }
-    //检查应用列表
-    private var packageNumber = 0
-    private fun checkMicroG(): Boolean {
-        packageNumber = 0
-        val packageManager = packageManager
-        val installedPackages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
-        var packageName: String
-        for (packageInfo in installedPackages) {
-            packageName = packageInfo.packageName
-            packageNumber++
-            if (packageName == "com.google.android.gms"){
-                val appInfo = packageManager.getApplicationInfo(packageName, 0)
-                val label = appInfo.loadLabel(packageManager).toString()
-                if (label.contains("microG")){
-                    return true
-                }
-            }
-        }
-        return false
     }
 
 }

@@ -1,0 +1,20 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText">
+    <item
+        android:id="@+id/menu_item_NoGap"
+        android:title="无间隔" />
+    <item
+        android:id="@+id/menu_item_60hz"
+        android:title="60 Hz" />
+    <item
+        android:id="@+id/menu_item_30hz"
+        android:title="30 Hz" />
+    <item
+        android:id="@+id/menu_item_15hz"
+        android:title="15 Hz" />
+    <item
+        android:id="@+id/menu_item_Input"
+        android:title="自定义" />
+</menu>

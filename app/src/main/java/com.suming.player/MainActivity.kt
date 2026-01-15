@@ -68,8 +68,6 @@ class MainActivity: AppCompatActivity() {
     private lateinit var MainViewModel: MainViewModel
     //权限检查
     private val REQUEST_STORAGE_PERMISSION = 1001
-    //状态栏高度
-    private var statusBarHeight = 0
     //防止快速点击
     private var lock_clickMillisLock = 0L
     //界面控件元素
@@ -85,15 +83,10 @@ class MainActivity: AppCompatActivity() {
     private lateinit var ButtonCardGallery: CardView
     //</editor-fold>
     //设置和设置项
-    //<editor-fold desc="设置和设置项">
     private lateinit var PREFS: SharedPreferences
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_QueryNewVideoOnStart = false
-    private var PREFS_UseHighRefreshRate = true
-    private var PREFS_UsePlayerType = 0
-    private var PREFS_DisableSmallPlayer = false
     private var PREFS_AcquiesceTab = "video"
-    //</editor-fold>
     //状态信息
     //<editor-fold desc="状态信息">
     private var state_FromFirstMediaStoreRead = false
@@ -120,6 +113,7 @@ class MainActivity: AppCompatActivity() {
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //界面设置
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main_old)
@@ -128,63 +122,22 @@ class MainActivity: AppCompatActivity() {
         //界面实例获取
         preCheckAndInit()
         //表明首次启动信息
-        if (savedInstanceState == null){
-            state_onFirstStart = true
-        }else{
-            state_onFirstStart = false
-        }
-        //读取播放设置
-        PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
-        if (!PREFS.contains("PREFS_EnablePlayAreaMove")){
-            if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
-                PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", false).apply() }
-            }else{
-                PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", true).apply() }
-            }
-        } //基于设备信息
-        if (!PREFS.contains("PREFS_UseHighRefreshRate")) {
-            if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
-                PREFS.edit { putBoolean("PREFS_UseHighRefreshRate", true).apply() }
-            }else{
-                PREFS.edit { putBoolean("PREFS_EnablePlayAreaMove", false).apply() }
-            }
-        } //基于设备信息
-        if (PREFS.contains("PREFS_UseHighRefreshRate")){
-            PREFS_UseHighRefreshRate = PREFS.getBoolean("PREFS_UseHighRefreshRate", true)
-        }else{
-            PREFS.edit { putBoolean("PREFS_UseHighRefreshRate", true).apply() }
-        }
-        if (PREFS.contains("PREFS_DisableSmallPlayer")){
-            PREFS_DisableSmallPlayer = PREFS.getBoolean("PREFS_DisableSmallPlayer", false)
-        }else{
-            if (Build.BRAND.equals("huawei",ignoreCase = true)){
-                PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", true).apply() }
-            }
-            else{
-                PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", false).apply() }
-            }
-        } //基于设备信息
-        //设置后续操作
-        setHighRefreshRate()
+        state_onFirstStart = savedInstanceState == null
+
+
         //内容避让状态栏并预读取状态栏高度写入设置
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            if (!PREFS.contains("INFO_STATUSBAR_HEIGHT")){
-                statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-                PREFS.edit { putInt("INFO_STATUSBAR_HEIGHT", statusBarHeight).apply() }
+            if (!SettingsRequestCenter.isStatusBarHeightExist(this)){
+                val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+                SettingsRequestCenter.set_VALUE_Int_statusBarHeight(statusBarHeight)
             }
             insets
         }
         //读取媒体库设置
         PREFS_MediaStore = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
         PREFS_MediaStore.edit { putBoolean("PREFS_showHideItems", false).apply() }
-        if (PREFS_MediaStore.contains("PREFS_UsePlayerType")){
-            PREFS_UsePlayerType = PREFS_MediaStore.getInt("PREFS_UsePlayerType", 0)
-        }else{
-            PREFS_MediaStore.edit { putInt("PREFS_UsePlayerType", 0).apply() }
-            PREFS_UsePlayerType = 0
-        }
         if (PREFS_MediaStore.contains("PREFS_QueryNewVideoOnStart")){
             PREFS_QueryNewVideoOnStart = PREFS_MediaStore.getBoolean("PREFS_QueryNewVideoOnStart", false)
         }else{
@@ -429,19 +382,20 @@ class MainActivity: AppCompatActivity() {
     //onResume时更新一些设置变量
     override fun onResume() {
         super.onResume()
+
         //注册事件总线监听器
         setupEventBus()
+
         //刷新状态和设置
         state_MediaStore_refreshed = false
-        PREFS_UsePlayerType = PREFS.getInt("PREFS_UsePlayerType", 0)
-        //判断首次启动
-        if (state_onFirstStart){
+
+        //首次启动时延迟检查上次的媒体
+        if(state_onFirstStart){
             state_onFirstStart = false
             Handler(Looper.getMainLooper()).postDelayed({
                 checkLastPlayingMedia()
             }, 1000)
-        }
-        else{ ResetPlayingCard() }
+        }else{ ResetPlayingCard() }
 
     }
 
@@ -590,12 +544,12 @@ class MainActivity: AppCompatActivity() {
         if (!state_PlayingCard_showing){ return }
         //视频
         if (type == "video"){
-            if (PREFS_DisableSmallPlayer){
+            if (SettingsRequestCenter.get_PREFS_DisableMainPageSmallPlayer(this)){
                 PlayingCard_Video.player = null
                 PlayingCard_Video.visibility = View.VISIBLE
                 PlayingCard_Image.visibility = View.VISIBLE
                 //获取封面图
-                val covers_path = File(filesDir, "miniature/cover")
+                val covers_path = File(filesDir, "miniature/video_cover")
                 val filename = PlayerSingleton.getMediaInfoFileName()
                 val cover_img = File(covers_path, "${filename.hashCode()}.webp")
                 val cover_img_uri = if (cover_img.exists()) {
@@ -1051,7 +1005,8 @@ class MainActivity: AppCompatActivity() {
         }
         lock_clickMillisLock = System.currentTimeMillis()
         //确认启动
-        when(PREFS_UsePlayerType){
+        val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(this)
+        when(playPageType){
             0 -> {
                 //构建intent
                 val intent = Intent(this, PlayerActivityOro::class.java).apply { putExtra("uri", uri) }

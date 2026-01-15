@@ -8,7 +8,7 @@
     android:background="@color/Background"
     android:fitsSystemWindows="false"
     tools:context=".SettingsActivity"
-    tools:ignore="HardcodedText" >
+    tools:ignore="HardcodedText,TooDeepLayout">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -927,30 +927,49 @@
                                 android:layout_height="match_parent"
                                 android:gravity="center"
                                 android:layout_weight="0"
-                                android:text="时间文本刷新间隔"
+                                android:text="时间戳刷新间隔"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
-                            <TextView
-                                android:id="@+id/currentTimeUpdateGap"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_marginStart="10dp"
-                                android:text="当前值"
-                                android:textColor="@color/HeadText"
-                                android:textSize="11sp" />
                             <View
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
-                            <TextView
-                                android:id="@+id/ButtonTimeUpdateGap"
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardTimerUpdateGap"
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="10dp"
-                                android:text="修改"
-                                android:textColor="@color/HeadText"
-                                android:textSize="12sp" />
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="2dp"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:cardElevation="1dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:id="@+id/ButtonTextTimerUpdateGap"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="match_parent"
+                                        android:layout_marginStart="5dp"
+                                        android:gravity="center"
+                                        android:text="当前时间戳刷新间隔"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp"
+                                        />
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:padding="2dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_setting_arrow_down"
+                                        tools:ignore="ContentDescription" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
                         </LinearLayout>
                         <!--  提示信息  -->
                         <TextView
@@ -976,28 +995,46 @@
                                 android:text="播放器寻帧间隔"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
-                            <TextView
-                                android:id="@+id/currentSeekHandlerGap"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_marginStart="10dp"
-                                android:text="当前值"
-                                android:textColor="@color/HeadText"
-                                android:textSize="11sp" />
                             <View
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
-                            <TextView
-                                android:id="@+id/ButtonSeekHandlerGap"
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardSeekHandlerGap"
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_marginEnd="10dp"
-                                android:text="修改"
-                                android:textColor="@color/HeadText"
-                                android:textSize="12sp" />
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="2dp"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:cardElevation="1dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:id="@+id/ButtonTextSeekHandlerGap"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="match_parent"
+                                        android:layout_marginStart="5dp"
+                                        android:gravity="center"
+                                        android:text="当前寻帧间隔"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp"
+                                        />
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:padding="2dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_setting_arrow_down"
+                                        tools:ignore="ContentDescription" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
                         </LinearLayout>
                         <!--  提示信息  -->
                         <TextView
@@ -1109,27 +1146,46 @@
                                 android:text="振动"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
-                            <TextView
-                                android:id="@+id/currentVibratorMillis"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_marginStart="10dp"
-                                android:text="当前值"
-                                android:textColor="@color/HeadText"
-                                android:textSize="12sp" />
                             <View
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
-                            <TextView
-                                android:id="@+id/ButtonVibratorMillis"
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardVibrateMode"
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_marginEnd="10dp"
-                                android:text="修改"
-                                android:textColor="@color/HeadText"
-                                android:textSize="12sp" />
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="2dp"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:cardElevation="1dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:id="@+id/ButtonTextVibrateMode"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="match_parent"
+                                        android:layout_marginStart="5dp"
+                                        android:gravity="center"
+                                        android:text="当前振动模式"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp"
+                                        />
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:padding="2dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_setting_arrow_down"
+                                        tools:ignore="ContentDescription" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
                         </LinearLayout>
                         <!--  提示信息  -->
                         <TextView
