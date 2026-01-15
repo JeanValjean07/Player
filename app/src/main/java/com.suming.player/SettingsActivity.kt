@@ -42,49 +42,28 @@ import java.security.cert.X509Certificate
 @RequiresApi(Build.VERSION_CODES.Q)
 class SettingsActivity: AppCompatActivity() {
     //开关初始化
-    //<editor-fold desc="开关初始化">
-    private lateinit var Switch_CloseVideoTrack: SwitchCompat
-    private lateinit var Switch_SwitchPortraitWhenExit: SwitchCompat
-    private lateinit var Switch_KeepPlayingWhenExit: SwitchCompat
-    private lateinit var Switch_DisableSmallPlayer: SwitchCompat
-    private lateinit var Switch_UseDataBaseForScrollerSetting: SwitchCompat
-    private lateinit var Switch_ExitWhenEnd: SwitchCompat
-    private lateinit var Switch_UseLongScroller: SwitchCompat
-    private lateinit var Switch_UseLongSeekGap: SwitchCompat
-    private lateinit var Switch_UseCompatScroller: SwitchCompat
-    private lateinit var Switch_GenerateThumbSync: SwitchCompat
-    private lateinit var Switch_UseOnlySyncFrame: SwitchCompat
-
-    private lateinit var Switch_UseHighRefreshRate: SwitchCompat
-    private lateinit var Switch_CloseFragmentGesture: SwitchCompat
-    private lateinit var Switch_EnablePlayAreaMove: SwitchCompat
-    private lateinit var Switch_UseSyncFrameWhenScrollerStop: SwitchCompat
-
-    //新版开关合集
     private lateinit var switch_DisableMediaArtWork: SwitchCompat
     private lateinit var switch_AlwaysUseDarkTheme: SwitchCompat
-    //</editor-fold>
+    private lateinit var switch_EnableHighRefreshRate: SwitchCompat
+    private lateinit var switch_RetainPlayingWhenFinish: SwitchCompat
+    private lateinit var switch_DisableFragmentGesture: SwitchCompat
+    private lateinit var switch_EnableSeparateScrollerSetting: SwitchCompat
+    private lateinit var switch_AutoExitWhenEnd: SwitchCompat
+    private lateinit var switch_EnsurePortraitWhenExit: SwitchCompat
+    private lateinit var switch_EnablePlayAreaMoveAnim: SwitchCompat
+    private lateinit var switch_UseSyncFrameInScroller: SwitchCompat
+    private lateinit var switch_UseOnlySyncFrameWhenSeek: SwitchCompat
+    private lateinit var switch_UseSyncFrameWhenScrollerStop: SwitchCompat
+    private lateinit var switch_DisableMainPageSmallPlayer: SwitchCompat
+    private lateinit var switch_UseSuperLongScroller: SwitchCompat
+    private lateinit var switch_UseCompatScroller: SwitchCompat
+    private lateinit var switch_DisableVideoTrackOnBack: SwitchCompat
     //开关变量和数值量
     //<editor-fold desc="开关变量数值量">
-    private var PREFS_CloseVideoTrack = false
-    private var PREFS_SwitchPortraitWhenExit = true
-    private var PREFS_KeepPlayingWhenExit = false
-    private var PREFS_DisableSmallPlayer = false
-    private var PREFS_UseDataBaseForScrollerSetting = false
-    private var PREFS_ExitWhenEnd = false
-    private var PREFS_UseLongScroller = false
-    private var PREFS_UseLongSeekGap = false
-    private var PREFS_UseCompatScroller = false
-    private var PREFS_GenerateThumbSYNC = true
-    private var PREFS_UseOnlySyncFrame = false
+
     private var PREFS_TimeUpdateGap = 16L
-    private var PREFS_UseBlackBackground = false
-    private var PREFS_UseHighRefreshRate = false
     private var PREFS_SeekHandlerGap = 0L
-    private var PREFS_CloseFragmentGesture = false
-    private var PREFS_EnablePlayAreaMoveAnim = false
     private var PREFS_UsePlayerType = 0
-    private var PREFS_UseSyncFrameWhenScrollerStop = false
     //震动时间
     private var PREFS_VibrateMillis = 0L
     private var PREFS_UseSysVibrate = false
@@ -95,6 +74,8 @@ class SettingsActivity: AppCompatActivity() {
     //协程
     private var coroutine_setSwitch = CoroutineScope(Dispatchers.Main)
     private var coroutine_setButtonAndInfo = CoroutineScope(Dispatchers.Main)
+    private var coroutine_setMenuButton = CoroutineScope(Dispatchers.Main)
+    private var coroutine_setBasicFunctionalButton = CoroutineScope(Dispatchers.Main)
 
 
     @OptIn(UnstableApi::class)
@@ -110,6 +91,8 @@ class SettingsActivity: AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+
 
         //注册基本操作按钮 + 读取显示版本号
         coroutine_setButtonAndInfo.launch {
@@ -190,116 +173,170 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_AlwaysUseDarkTheme(isChecked)
             }
-
+            //使用高刷新率
+            switch_EnableHighRefreshRate = findViewById(R.id.EnableHighRefreshRate)
+            switch_EnableHighRefreshRate.isChecked = SettingsRequestCenter.get_PREFS_EnableHighRefreshRate(this@SettingsActivity)
+            switch_EnableHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_EnableHighRefreshRate(isChecked)
+            }
+            //退出播放页时保持继续播放
+            switch_RetainPlayingWhenFinish = findViewById(R.id.RetainPlayingWhenFinish)
+            switch_RetainPlayingWhenFinish.isChecked = SettingsRequestCenter.get_PREFS_RetainPlayingWhenFinish(this@SettingsActivity)
+            switch_RetainPlayingWhenFinish.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_RetainPlayingWhenFinish(isChecked)
+            }
+            //禁用更多操作面板下滑手势
+            switch_DisableFragmentGesture = findViewById(R.id.DisableFragmentGesture)
+            switch_DisableFragmentGesture.isChecked = SettingsRequestCenter.get_PREFS_DisableFragmentGesture(this@SettingsActivity)
+            switch_DisableFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_DisableFragmentGesture(isChecked)
+            }
+            //自动退出播放页时结束播放
+            switch_AutoExitWhenEnd = findViewById(R.id.AutoExitWhenEnd)
+            switch_AutoExitWhenEnd.isChecked = SettingsRequestCenter.get_PREFS_AutoExitWhenEnd(this@SettingsActivity)
+            switch_AutoExitWhenEnd.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_AutoExitWhenEnd(isChecked)
+            }
+            //退出播放页时确保竖屏
+            switch_EnsurePortraitWhenExit = findViewById(R.id.EnsurePortraitWhenExit)
+            switch_EnsurePortraitWhenExit.isChecked = SettingsRequestCenter.get_PREFS_EnsurePortraitWhenExit(this@SettingsActivity)
+            switch_EnsurePortraitWhenExit.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_EnsurePortraitWhenExit(isChecked)
+            }
+            //启用播放区域移动动画
+            switch_EnablePlayAreaMoveAnim = findViewById(R.id.EnablePlayAreaMoveAnim)
+            switch_EnablePlayAreaMoveAnim.isChecked = SettingsRequestCenter.get_PREFS_EnablePlayAreaMoveAnim(this@SettingsActivity)
+            switch_EnablePlayAreaMoveAnim.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_EnablePlayAreaMoveAnim(isChecked)
+            }
+            //进度条截取缩略图时使用关键帧
+            switch_UseSyncFrameInScroller = findViewById(R.id.UseSyncFrameInScroller)
+            switch_UseSyncFrameInScroller.isChecked = SettingsRequestCenter.get_PREFS_UseSyncFrameInScroller(this@SettingsActivity)
+            switch_UseSyncFrameInScroller.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_UseSyncFrameInScroller(isChecked)
+            }
+            //寻帧时一律使用关键帧
+            switch_UseOnlySyncFrameWhenSeek = findViewById(R.id.UseOnlySyncFrameWhenSeek)
+            switch_UseOnlySyncFrameWhenSeek.isChecked = SettingsRequestCenter.get_PREFS_UseOnlySyncFrameWhenSeek(this@SettingsActivity)
+            switch_UseOnlySyncFrameWhenSeek.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_UseOnlySyncFrameWhenSeek(isChecked)
+            }
+            //进度条停止滚动时尾帧使用关键帧
+            switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
+            switch_UseSyncFrameWhenScrollerStop.isChecked = SettingsRequestCenter.get_PREFS_UseSyncFrameWhenScrollerStop(this@SettingsActivity)
+            switch_UseSyncFrameWhenScrollerStop.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_UseSyncFrameWhenScrollerStop(isChecked)
+            }
+            //禁用主页面小播放器
+            switch_DisableMainPageSmallPlayer = findViewById(R.id.DisableMainPageSmallPlayer)
+            switch_DisableMainPageSmallPlayer.isChecked = SettingsRequestCenter.get_PREFS_DisableMainPageSmallPlayer(this@SettingsActivity)
+            switch_DisableMainPageSmallPlayer.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_DisableMainPageSmallPlayer(isChecked)
+            }
+            //使用超长进度条
+            switch_UseSuperLongScroller = findViewById(R.id.UseSuperLongScroller)
+            switch_UseSuperLongScroller.isChecked = SettingsRequestCenter.get_PREFS_UseSuperLongScroller(this@SettingsActivity)
+            switch_UseSuperLongScroller.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_UseSuperLongScroller(isChecked)
+            }
+            //进度条绘制使用兼容模式
+            switch_UseCompatScroller = findViewById(R.id.UseCompatScroller)
+            switch_UseCompatScroller.isChecked = SettingsRequestCenter.get_PREFS_UseCompatScroller(this@SettingsActivity)
+            switch_UseCompatScroller.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_UseCompatScroller(isChecked)
+            }
+            //后台播放时关闭视频轨道
+            switch_DisableVideoTrackOnBack = findViewById(R.id.DisableVideoTrackOnBack)
+            switch_DisableVideoTrackOnBack.isChecked = SettingsRequestCenter.get_PREFS_DisableVideoTrackOnBack(this@SettingsActivity)
+            switch_DisableVideoTrackOnBack.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_DisableVideoTrackOnBack(isChecked)
+            }
 
         }
 
+        //注册选单按钮
+        coroutine_setMenuButton.launch {
+            //播放页样式
+            val ButtonPlayerType = findViewById<CardView>(R.id.ButtonPlayerType)
+            ButtonPlayerType.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                //使用弹出菜单选择
+                val popup = PopupMenu(this@SettingsActivity, ButtonPlayerType)
+                popup.menuInflater.inflate(R.menu.activity_settings_popup_player_type, popup.menu)
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.type_oro -> {
+                            choosePlayerType(0); true
+                        }
+                        R.id.type_neo -> {
+                            choosePlayerType(1); true
+                        }
+                        R.id.type_test -> {
+                            choosePlayerType(2); true
+                        }
+                        else -> true
+                    }
+                }
+                popup.show()
+            }
 
+        }
+
+        //注册基础功能性单击按钮
+        coroutine_setBasicFunctionalButton.launch {
+            //重新生成封面
+            val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
+            ButtonRemoveAllThumbPath.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsFragmentDeleteCover.newInstance().show(supportFragmentManager, "SettingsFragmentDeleteCover")
+            }
+            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_DELETE_COVER", this@SettingsActivity) { _, bundle ->
+                val ReceiveKey = bundle.getString("KEY")
+                when (ReceiveKey) {
+                    "DeleteAllCover" -> {
+                        File(filesDir, "miniature/cover").deleteRecursively()
+                        File(filesDir, "miniature/music_cover").deleteRecursively()
+                    }
+                    "DeleteVideoCover" -> {
+                        File(filesDir, "miniature/cover").deleteRecursively()
+                    }
+                    "DeleteMusicCover" -> {
+                        File(filesDir, "miniature/music_cover").deleteRecursively()
+                    }
+                }
+            }
+        }
 
         //读取设置
         //<editor-fold desc="读取设置">
         PREFS = getSharedPreferences("PREFS", MODE_PRIVATE)
         PREFS_Editor = PREFS.edit()
-        if (!PREFS.contains("PREFS_CloseVideoTrack")) {
-            PREFS_Editor.putBoolean("PREFS_CloseVideoTrack", true)
-            PREFS_CloseVideoTrack = true
-        } else {
-            PREFS_CloseVideoTrack = PREFS.getBoolean("PREFS_CloseVideoTrack", false)
-        }
-        if (!PREFS.contains("PREFS_SwitchPortraitWhenExit")) {
-            PREFS_Editor.putBoolean("PREFS_SwitchPortraitWhenExit", false)
-            PREFS_SwitchPortraitWhenExit = false
-        } else {
-            PREFS_SwitchPortraitWhenExit = PREFS.getBoolean("PREFS_SwitchPortraitWhenExit", false)
-        }
-        if ( PREFS.contains("PREFS_KeepPlayingWhenExit")) {
-            PREFS_KeepPlayingWhenExit = PREFS.getBoolean("PREFS_KeepPlayingWhenExit", true)
-        } else {
-            PREFS_Editor.putBoolean("PREFS_KeepPlayingWhenExit", true)
-            PREFS_KeepPlayingWhenExit = true
-        }
+
         if (!PREFS.contains("PREFS_SeekHandlerGap")) {
             PREFS_Editor.putLong("PREFS_SeekHandlerGap", 0L)
             PREFS_SeekHandlerGap = 0L
         } else {
             PREFS_SeekHandlerGap = PREFS.getLong("PREFS_SeekHandlerGap", 0L)
         }
-        if ( PREFS.contains("PREFS_DisableSmallPlayer")) {
-            PREFS_DisableSmallPlayer = PREFS.getBoolean("PREFS_DisableSmallPlayer", false)
-        }else{
-            PREFS.edit { putBoolean("PREFS_DisableSmallPlayer", false).apply() }
-        }
-        if (!PREFS.contains("PREFS_UseDataBaseForScrollerSetting")) {
-            PREFS_Editor.putBoolean("PREFS_UseDataBaseForScrollerSetting", false)
-            PREFS_UseDataBaseForScrollerSetting = false
-        } else {
-            PREFS_UseDataBaseForScrollerSetting = PREFS.getBoolean("PREFS_UseDataBaseForScrollerSetting", false)
-        }
-        if (!PREFS.contains("PREFS_ExitWhenEnd")) {
-            PREFS_Editor.putBoolean("PREFS_ExitWhenEnd", false)
-            PREFS_ExitWhenEnd = false
-        } else {
-            PREFS_ExitWhenEnd = PREFS.getBoolean("PREFS_ExitWhenEnd", false)
-        }
-        if (!PREFS.contains("PREFS_UseLongScroller")) {
-            PREFS_Editor.putBoolean("PREFS_UseLongScroller", false)
-            PREFS_UseLongScroller = false
-        } else {
-            PREFS_UseLongScroller = PREFS.getBoolean("PREFS_UseLongScroller", false)
-        }
-        if (!PREFS.contains("PREFS_UseLongSeekGap")) {
-            PREFS_Editor.putBoolean("PREFS_UseLongSeekGap", false)
-            PREFS_UseLongSeekGap = false
-        } else {
-            PREFS_UseLongSeekGap = PREFS.getBoolean("PREFS_UseLongSeekGap", false)
-        }
-        if (!PREFS.contains("PREFS_UseCompatScroller")) {
-            PREFS_Editor.putBoolean("PREFS_UseCompatScroller", false)
-            PREFS_UseCompatScroller = false
-        } else {
-            PREFS_UseCompatScroller = PREFS.getBoolean("PREFS_UseCompatScroller", false)
-        }
-        if (!PREFS.contains("PREFS_GenerateThumbSYNC")) {
-            PREFS_Editor.putBoolean("PREFS_GenerateThumbSYNC", true)
-            PREFS_GenerateThumbSYNC = true
-        } else {
-            PREFS_GenerateThumbSYNC = PREFS.getBoolean("PREFS_GenerateThumbSYNC", true)
-        }
-        if (!PREFS.contains("PREFS_UseOnlySyncFrame")) {
-            PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", true)
-            PREFS_UseOnlySyncFrame = true
-        } else {
-            PREFS_UseOnlySyncFrame = PREFS.getBoolean("PREFS_UseOnlySyncFrame", true)
-        }
+
         if (!PREFS.contains("PREFS_TimeUpdateGap")) {
             PREFS_Editor.putLong("PREFS_TimeUpdateGap", 16L)
             PREFS_TimeUpdateGap = 16L
         } else {
             PREFS_TimeUpdateGap = PREFS.getLong("PREFS_TimeUpdateGap", 16L)
-        }
-        if (!PREFS.contains("PREFS_UseBlackBackground")) {
-            PREFS_Editor.putBoolean("PREFS_UseBlackBackground", false)
-            PREFS_UseBlackBackground = false
-        } else {
-            PREFS_UseBlackBackground = PREFS.getBoolean("PREFS_UseBlackBackground", false)
-        }
-        if (!PREFS.contains("PREFS_UseHighRefreshRate")) {
-            PREFS_Editor.putBoolean("PREFS_UseHighRefreshRate", false)
-            PREFS_UseHighRefreshRate = false
-        } else {
-            PREFS_UseHighRefreshRate = PREFS.getBoolean("PREFS_UseHighRefreshRate", false)
-        }
-        if (!PREFS.contains("PREFS_CloseFragmentGesture")) {
-            PREFS_Editor.putBoolean("PREFS_CloseFragmentGesture", false)
-            PREFS_CloseFragmentGesture = false
-        } else {
-            PREFS_CloseFragmentGesture = PREFS.getBoolean("PREFS_CloseFragmentGesture", false)
-        }
-        if (!PREFS.contains("PREFS_EnablePlayAreaMoveAnim")){
-            PREFS_Editor.putBoolean("PREFS_EnablePlayAreaMoveAnim", true)
-            PREFS_EnablePlayAreaMoveAnim = true
-        }else{
-            PREFS_EnablePlayAreaMoveAnim = PREFS.getBoolean("PREFS_EnablePlayAreaMoveAnim", true)
         }
         if (!PREFS.contains("PREFS_TimeUpdateGap")) {
             PREFS_Editor.putLong("PREFS_TimeUpdateGap", 66L)
@@ -319,12 +356,7 @@ class SettingsActivity: AppCompatActivity() {
         } else {
             PREFS_UseSysVibrate = PREFS.getBoolean("PREFS_UseSysVibrate", true)
         }
-        if (!PREFS.contains("PREFS_UseSyncFrameWhenScrollerStop")){
-            PREFS_Editor.putBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
-            PREFS_UseSyncFrameWhenScrollerStop = false
-        } else {
-            PREFS_UseSyncFrameWhenScrollerStop = PREFS.getBoolean("PREFS_UseSyncFrameWhenScrollerStop", false)
-        }
+
         if (!PREFS.contains("PREFS_UsePlayerType")){
             PREFS_Editor.putInt("PREFS_UsePlayerType", 0)
             PREFS_UsePlayerType = 0
@@ -336,49 +368,6 @@ class SettingsActivity: AppCompatActivity() {
 
 
 
-
-        //开关初始化
-        //<editor-fold desc="开关初始化">
-        Switch_CloseVideoTrack = findViewById(R.id.closeVideoTrack)
-        Switch_SwitchPortraitWhenExit = findViewById(R.id.SwitchPortraitWhenExit)
-        Switch_KeepPlayingWhenExit = findViewById(R.id.SwitchKeepPlayingWhenExit)
-        Switch_DisableSmallPlayer = findViewById(R.id.SwitchDisableSmallPlayer)
-        Switch_UseDataBaseForScrollerSetting = findViewById(R.id.UseDataBaseForScrollerSetting)
-        Switch_ExitWhenEnd = findViewById(R.id.exitWhenEnd)
-        Switch_UseLongScroller = findViewById(R.id.useLongScroller)
-        Switch_UseLongSeekGap = findViewById(R.id.useLongSeekGap)
-        Switch_UseCompatScroller = findViewById(R.id.useCompatScroller)
-        Switch_GenerateThumbSync = findViewById(R.id.generateThumbSYNC)
-        Switch_UseOnlySyncFrame = findViewById(R.id.UseOnlySyncFrame)
-        Switch_UseHighRefreshRate = findViewById(R.id.useHighRefreshRate)
-        Switch_CloseFragmentGesture = findViewById(R.id.closeFragmentGesture)
-        Switch_EnablePlayAreaMove = findViewById(R.id.EnablePlayAreaMove)
-        Switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
-
-        //</editor-fold>
-        //开关预置位
-        //<editor-fold desc="开关预置位">
-        Switch_CloseVideoTrack.isChecked = PREFS_CloseVideoTrack
-        Switch_SwitchPortraitWhenExit.isChecked = PREFS_SwitchPortraitWhenExit
-        Switch_KeepPlayingWhenExit.isChecked = PREFS_KeepPlayingWhenExit
-        Switch_DisableSmallPlayer.isChecked = PREFS_DisableSmallPlayer
-        Switch_UseDataBaseForScrollerSetting.isChecked = PREFS_UseDataBaseForScrollerSetting
-        Switch_ExitWhenEnd.isChecked = PREFS_ExitWhenEnd
-        Switch_UseLongScroller.isChecked = PREFS_UseLongScroller
-        Switch_UseLongSeekGap.isChecked = PREFS_UseLongSeekGap
-        Switch_UseCompatScroller.isChecked = PREFS_UseCompatScroller
-        Switch_GenerateThumbSync.isChecked = PREFS_GenerateThumbSYNC
-        Switch_UseOnlySyncFrame.isChecked = PREFS_UseOnlySyncFrame
-        Switch_UseHighRefreshRate.isChecked = PREFS_UseHighRefreshRate
-        Switch_CloseFragmentGesture.isChecked = PREFS_CloseFragmentGesture
-        Switch_EnablePlayAreaMove.isChecked = PREFS_EnablePlayAreaMoveAnim
-        Switch_UseSyncFrameWhenScrollerStop.isChecked = PREFS_UseSyncFrameWhenScrollerStop
-
-
-
-
-
-        //</editor-fold>
 
 
 
@@ -405,84 +394,6 @@ class SettingsActivity: AppCompatActivity() {
             }else{
                 currentVibrateMillis.text = "$PREFS_VibrateMillis 毫秒"
             }
-        }
-
-
-        //开关更改操作注册
-        Switch_CloseVideoTrack.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_CloseVideoTrack = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_CloseVideoTrack", isChecked).apply()
-        }
-        Switch_SwitchPortraitWhenExit.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_SwitchPortraitWhenExit = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_SwitchPortraitWhenExit", isChecked).apply()
-        }
-        Switch_KeepPlayingWhenExit.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_KeepPlayingWhenExit = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_KeepPlayingWhenExit", isChecked).apply()
-        }
-        Switch_DisableSmallPlayer.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_DisableSmallPlayer = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_DisableSmallPlayer", isChecked).apply()
-        }
-        Switch_UseDataBaseForScrollerSetting.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseDataBaseForScrollerSetting = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UseDataBaseForScrollerSetting", isChecked).apply()
-        }
-        Switch_ExitWhenEnd.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_ExitWhenEnd = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_ExitWhenEnd", isChecked).apply()
-        }
-        Switch_UseLongScroller.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseLongScroller = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UseLongScroller", isChecked).apply()
-        }
-        Switch_UseLongSeekGap.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseLongSeekGap = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UseLongSeekGap", isChecked).apply()
-        }
-        Switch_UseCompatScroller.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseCompatScroller = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UseCompatScroller", isChecked).apply()
-        }
-        Switch_GenerateThumbSync.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_GenerateThumbSYNC = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_GenerateThumbSYNC", isChecked).apply()
-        }
-        Switch_UseOnlySyncFrame.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseOnlySyncFrame = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UseOnlySyncFrame", isChecked).apply()
-        }
-        Switch_UseHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseHighRefreshRate = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UseHighRefreshRate", isChecked).apply()
-        }
-        Switch_CloseFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_CloseFragmentGesture = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_CloseFragmentGesture", isChecked).apply()
-        }
-        Switch_EnablePlayAreaMove.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_EnablePlayAreaMoveAnim = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_EnablePlayAreaMoveAnim", isChecked).apply()
-        }
-        Switch_UseSyncFrameWhenScrollerStop.setOnCheckedChangeListener { _, isChecked ->
-            PREFS_UseSyncFrameWhenScrollerStop = isChecked
-            ToolVibrate().vibrate(this)
-            PREFS_Editor.putBoolean("PREFS_UseSyncFrameWhenScrollerStop", isChecked).apply()
         }
 
 
@@ -588,50 +499,8 @@ class SettingsActivity: AppCompatActivity() {
             }
             popup.show()
         }
-        //重新生成封面
-        val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
-        ButtonRemoveAllThumbPath.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            SettingsFragmentDeleteCover.newInstance().show(supportFragmentManager, "SettingsFragmentDeleteCover")
-        }
-        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_DELETE_COVER", this) { _, bundle ->
-            val ReceiveKey = bundle.getString("KEY")
-            when (ReceiveKey) {
-                "DeleteAllCover" -> {
-                    File(filesDir, "miniature/cover").deleteRecursively()
-                    File(filesDir, "miniature/music_cover").deleteRecursively()
-                }
-                "DeleteVideoCover" -> {
-                    File(filesDir, "miniature/cover").deleteRecursively()
-                }
-                "DeleteMusicCover" -> {
-                    File(filesDir, "miniature/music_cover").deleteRecursively()
-                }
-            }
-        }
-        //播放页样式
-        val ButtonPlayerType = findViewById<CardView>(R.id.ButtonPlayerType)
-        ButtonPlayerType.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            //使用弹出菜单选择
-            val popup = PopupMenu(this, ButtonPlayerType)
-            popup.menuInflater.inflate(R.menu.activity_settings_popup_player_type, popup.menu)
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.type_oro -> {
-                        choosePlayerType(0); true
-                    }
-                    R.id.type_neo -> {
-                        choosePlayerType(1); true
-                    }
-                    R.id.type_test -> {
-                        choosePlayerType(2); true
-                    }
-                    else -> true
-                }
-            }
-            popup.show()
-        }
+
+
 
 
     //onCreate END

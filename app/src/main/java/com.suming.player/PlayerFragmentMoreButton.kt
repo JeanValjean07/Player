@@ -31,6 +31,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -61,13 +62,24 @@ class PlayerFragmentMoreButton: DialogFragment() {
     //设置
     private lateinit var PREFS: SharedPreferences
     //开关初始化
+    //<editor-fold desc="//switch initialization">
+    //旧版开关禁止继续扩充
     private lateinit var Switch_BackgroundPlay: SwitchCompat
-    private lateinit var Switch_sealOEL: SwitchCompat
     private lateinit var Switch_onlyAudio: SwitchCompat
     private lateinit var Switch_onlyVideo: SwitchCompat
     private lateinit var Switch_ExitWhenMediaEnd: SwitchCompat
     private lateinit var Switch_saveLastPosition: SwitchCompat
+    //新开关
+    private lateinit var switch_EnableOriListener: SwitchCompat
 
+
+    //</editor-fold>
+    //协程
+    private var coroutine_registerSwitch = CoroutineScope(Dispatchers.Main)
+    private var coroutine_registerBasicButton = CoroutineScope(Dispatchers.Main)
+    private var coroutine_registerFunctionalButtonTop = CoroutineScope(Dispatchers.Main)
+    private var coroutine_registerFunctionalButton = CoroutineScope(Dispatchers.Main)
+    private var coroutine_registerSeekBarStuff = CoroutineScope(Dispatchers.Main)
 
 
 
@@ -133,7 +145,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //开关置位
         fun initSwitch(){
             Switch_BackgroundPlay = view.findViewById(R.id.Switch_BackgroundPlay)
-            Switch_sealOEL = view.findViewById(R.id.Switch_SealOEL)
+
             Switch_onlyAudio = view.findViewById(R.id.Switch_OnlyAudio)
             Switch_onlyVideo = view.findViewById(R.id.Switch_OnlyVideo)
             Switch_ExitWhenMediaEnd = view.findViewById(R.id.Switch_ExitWhenMediaEnd)
@@ -141,7 +153,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
         initSwitch()
         fun setSwitch_FromViewModel(){
-            Switch_sealOEL.isChecked = vm.PREFS_SealOEL
             Switch_saveLastPosition.isChecked = vm.PREFS_SavePositionWhenExit
         }
         fun setSwitch_FromPlayerSingleton(){
@@ -170,62 +181,204 @@ class PlayerFragmentMoreButton: DialogFragment() {
         initText()
 
 
+        //注册开关
+        coroutine_registerSwitch.launch {
+            //开启方向监听器
+            switch_EnableOriListener = view.findViewById(R.id.EnableOriListener)
+            switch_EnableOriListener.isChecked = SettingsRequestCenter.get_PREFS_EnableOrientationListener(requireContext())
+            switch_EnableOriListener.setOnClickListener { val isChecked = switch_EnableOriListener.isChecked
+                ToolVibrate().vibrate(requireContext())
+                //修改设置
+                SettingsRequestCenter.set_PREFS_EnableOrientationListener(isChecked)
+                //发回结果
+                val result = bundleOf("KEY" to "EnableOriListener","target" to isChecked)
+                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                customDismiss()
+            }
 
-        //按钮：退出
-        val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
-        ButtonExit.setOnClickListener {
-            Dismiss()
         }
-        //按钮：点击空白区域退出
-        val topArea = view.findViewById<View>(R.id.topArea)
-        topArea.setOnClickListener {
-            Dismiss()
-        }
-        //按钮：锁定页面
-        val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
-        ButtonLock.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            lockPage = !lockPage
-            if (lockPage) {
-                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
-            } else {
-                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
+
+
+        coroutine_registerBasicButton.launch {
+            //按钮：退出
+            val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
+            ButtonExit.setOnClickListener {
+                Dismiss()
+            }
+            //按钮：点击空白区域退出
+            val topArea = view.findViewById<View>(R.id.topArea)
+            topArea.setOnClickListener {
+                Dismiss()
+            }
+            //按钮：锁定页面
+            val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
+            ButtonLock.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                lockPage = !lockPage
+                if (lockPage) {
+                    ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
+                } else {
+                    ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
+                }
+            }
+            //点击顶部区域回顶
+            val TopBarArea = view.findViewById<View>(R.id.TopBarArea)
+            TopBarArea.setOnClickListener {
+                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+                if (NestedScrollView.scrollY == 0) { return@setOnClickListener }
+                ToolVibrate().vibrate(requireContext())
+                //回到顶部
+                NestedScrollView.smoothScrollTo(0, 0)
+            }
+            //面板下滑关闭注册
+            if (!SettingsRequestCenter.get_PREFS_DisableFragmentGesture(requireContext())){
+                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+                    var down_y = 0f
+                    var deltaY = 0f
+                    var deltaY_ReachPadding = false
+                    val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                    val RootCardOriginY = RootCard.translationY
+                    val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+                    var NestedScrollViewAtTop = true
+                    NestedScrollView.setOnTouchListener { _, event ->
+                        when (event.actionMasked) {
+                            MotionEvent.ACTION_DOWN -> {
+                                deltaY_ReachPadding = false
+                                if (NestedScrollView.scrollY != 0){
+                                    NestedScrollViewAtTop = false
+                                    return@setOnTouchListener false
+                                }else{
+                                    NestedScrollViewAtTop = true
+                                    down_y = event.rawY
+                                }
+                            }
+                            MotionEvent.ACTION_MOVE -> {
+                                if (!NestedScrollViewAtTop){
+                                    return@setOnTouchListener false
+                                }
+                                deltaY = event.rawY - down_y
+                                if (deltaY < 0){
+                                    return@setOnTouchListener false
+                                }
+                                if (deltaY >= 400f){
+                                    if (!deltaY_ReachPadding){
+                                        deltaY_ReachPadding = true
+                                        ToolVibrate().vibrate(requireContext())
+                                    }
+                                }
+                                RootCard.translationY = RootCardOriginY + deltaY
+                                return@setOnTouchListener true
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                if (deltaY >= 400f){
+                                    Dismiss(false)
+                                }else{
+                                    RootCard.animate()
+                                        .translationY(0f)
+                                        .setInterpolator(DecelerateInterpolator(1f))
+                                        .duration = 300
+                                }
+
+                            }
+                        }
+                        return@setOnTouchListener false
+                    }
+                }
+                else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                    var down_y = 0f
+                    var deltaY = 0f
+                    var down_x = 0f
+                    var deltaX = 0f
+                    var deltaX_ReachPadding = false
+                    var Y_move_ensure = false
+                    val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                    val RootCardOriginX = RootCard.translationX
+                    val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
+                    NestedScrollView.setOnTouchListener { _, event ->
+                        when (event.actionMasked) {
+                            MotionEvent.ACTION_DOWN -> {
+                                down_x = event.rawX
+                                down_y = event.rawY
+                                Y_move_ensure = false
+                                deltaX_ReachPadding = false
+                            }
+                            MotionEvent.ACTION_MOVE -> {
+                                deltaY = event.rawY - down_y
+                                deltaX = event.rawX - down_x
+                                if (deltaX < 0){
+                                    return@setOnTouchListener false
+                                }
+                                if (deltaX >= 200f){
+                                    if (!deltaX_ReachPadding){
+                                        deltaX_ReachPadding = true
+                                        ToolVibrate().vibrate(requireContext())
+                                    }
+                                }
+                                if (Y_move_ensure){
+                                    return@setOnTouchListener false
+                                }
+                                if (abs(deltaY) > abs(deltaX)){
+                                    Y_move_ensure = true
+                                    return@setOnTouchListener false
+                                }
+                                RootCard.translationX = RootCardOriginX + deltaX
+                                return@setOnTouchListener true
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                if (Y_move_ensure){
+                                    return@setOnTouchListener false
+                                }
+                                if (deltaX >= 200f){
+                                    Dismiss(false)
+                                }else{
+                                    RootCard.animate()
+                                        .translationX(0f)
+                                        .setInterpolator(DecelerateInterpolator(1f))
+                                        .duration = 300
+                                }
+                            }
+                        }
+                        return@setOnTouchListener false
+                    }
+                }
             }
         }
-        //点击顶部区域回顶
-        val TopBarArea = view.findViewById<View>(R.id.TopBarArea)
-        TopBarArea.setOnClickListener {
-            val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
-            if (NestedScrollView.scrollY == 0) { return@setOnClickListener }
-            ToolVibrate().vibrate(requireContext())
-            //回到顶部
-            NestedScrollView.smoothScrollTo(0, 0)
+
+        coroutine_registerFunctionalButtonTop.launch {
+            //截屏
+            val ButtonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
+            ButtonCapture.setOnClickListener {
+                val result = bundleOf("KEY" to "Capture")
+                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                Dismiss()
+            }
+            //按钮：播放列表
+            val ButtonPlayList = view.findViewById<ImageButton>(R.id.ButtonPlayList)
+            if (vm.state_FromSysStart) {
+                ButtonPlayList.visibility = View.GONE
+            }
+            ButtonPlayList.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                val result = bundleOf("KEY" to "PlayList")
+                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                dismiss()
+            }
+            //按钮：回到开头
+            val ButtonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
+            ButtonBackToStart.setOnClickListener {
+                val result = bundleOf("KEY" to "BackToStart")
+                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                Dismiss()
+            }
+
         }
-        //截屏
-        val ButtonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
-        ButtonCapture.setOnClickListener {
-            val result = bundleOf("KEY" to "Capture")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-            Dismiss()
+
+        coroutine_registerFunctionalButton.launch {
+
+
         }
-        //按钮：播放列表
-        val ButtonPlayList = view.findViewById<ImageButton>(R.id.ButtonPlayList)
-        if (vm.state_FromSysStart) {
-            ButtonPlayList.visibility = View.GONE
-        }
-        ButtonPlayList.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            val result = bundleOf("KEY" to "PlayList")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-            dismiss()
-        }
-        //按钮：回到开头
-        val ButtonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
-        ButtonBackToStart.setOnClickListener {
-            val result = bundleOf("KEY" to "BackToStart")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-            Dismiss()
-        }
+
+
         //按钮：更改倍速
         val ButtonChangeSpeed = view.findViewById<TextView>(R.id.buttonChangeSpeed)
         ButtonChangeSpeed.setOnClickListener {
@@ -263,18 +416,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             //退出
             customDismiss()
         }
-        //开关：关闭方向监听器(OEL：OrientationEventListener)
-        Switch_sealOEL.setOnCheckedChangeListener { _, isChecked ->
-            ToolVibrate().vibrate(requireContext())
-            vm.PREFS_SealOEL = isChecked
-            if (isChecked) {
-                context?.showCustomToast("短按或长按横屏按钮可切换至不同方向", Toast.LENGTH_SHORT,3)
-            }
 
-            val result = bundleOf("KEY" to "SealOEL")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-            customDismiss()
-        }
         //开关：仅播放音频：关闭视频轨道
         Switch_onlyAudio.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
@@ -421,11 +563,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ToolVibrate().vibrate(requireContext())
             context?.showCustomToast("暂不开放此功能", Toast.LENGTH_SHORT, 3)
         }
-        //使用传统进度条页面时隐藏滚动条控制卡片
-        val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
-        if(vm.state_player_type == "Oro"){
-            CardScrollerStuff.visibility = View.GONE
-        }
+
         //解除亮度控制卡片+按钮
         val CardBrightness = view.findViewById<LinearLayout>(R.id.ContainerUnBindBrightness)
         val ButtonUnBindBrightness = view.findViewById<TextView>(R.id.ButtonUnBindBrightness)
@@ -439,104 +577,134 @@ class PlayerFragmentMoreButton: DialogFragment() {
             Dismiss()
         }
 
-        //按钮：AlwaysSeek
-        val ButtonAlwaysSeek = view.findViewById<FrameLayout>(R.id.buttonActualAlwaysSeek)
-        val ButtonAlwaysMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialAlwaysSeek)
-        if (vm.PREFS_AlwaysSeek) {
-            ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
-        } else {
-            ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBgClosed))
-        }
-        ButtonAlwaysSeek.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //先给按钮改颜色
-            if (vm.PREFS_AlwaysSeek) {
-                ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(
-                    ContextCompat.getColor(
+
+
+        coroutine_registerSeekBarStuff.launch {
+            val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
+            //经典播放页
+            if(vm.state_player_type == "Oro"){
+                CardScrollerStuff.visibility = View.GONE
+            }
+            //新晋播放页
+            else if (vm.state_player_type == "Neo"){
+                //按钮：AlwaysSeek
+                val ButtonAlwaysSeek = view.findViewById<FrameLayout>(R.id.buttonActualAlwaysSeek)
+                val ButtonAlwaysMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialAlwaysSeek)
+                if (vm.PREFS_AlwaysSeek) {
+                    ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+                } else {
+                    ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBgClosed))
+                }
+                ButtonAlwaysSeek.setOnClickListener {
+                    ToolVibrate().vibrate(requireContext())
+                    //立即切换变量并写入数据库
+                    val target = !vm.PREFS_AlwaysSeek
+                    vm.PREFS_AlwaysSeek = target
+                    SettingsRequestCenter.set_PREFS_EnableAlwaysSeek(target)
+
+                    //按钮改为目标颜色
+                    if (target){
+                        ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
+                            requireContext(),
+                            R.color.Button_Switch_Background_ON
+                        ))
+                    }else{
+                        ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(
+                            ContextCompat.getColor(
+                                requireContext(),
+                                R.color.Button_Switch_Background_OFF
+                            )
+                        )
+                    }
+
+                    //发回并关闭
+                    val result = bundleOf("KEY" to "AlwaysSeek","target" to target)
+                    setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                    customDismiss()
+                }
+                //按钮：单击跳转
+                val ButtonTap = view.findViewById<FrameLayout>(R.id.buttonActualTap)
+                val ButtonTapMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialTap)
+                if (vm.PREFS_TapJump) {
+                    ButtonTapMaterial.backgroundTintList =
+                        ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+                } else {
+                    ButtonTapMaterial.backgroundTintList = ColorStateList.valueOf(
+                        ContextCompat.getColor(
+                            requireContext(),
+                            R.color.ButtonBgClosed
+                        )
+                    )
+                }
+                ButtonTap.setOnClickListener {
+                    ToolVibrate().vibrate(requireContext())
+                    //立即切换变量并写入数据库
+                    val target = !vm.PREFS_TapJump
+                    vm.PREFS_TapJump = target
+                    SettingsRequestCenter.set_PREFS_EnableTapJump(target)
+
+                    //按钮改为目标颜色
+                    if (target){
+                        ButtonTapMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
+                            requireContext(),
+                            R.color.Button_Switch_Background_ON
+                        ))
+                    }else{
+                        ButtonTapMaterial.backgroundTintList = ColorStateList.valueOf(
+                            ContextCompat.getColor(
+                                requireContext(),
+                                R.color.Button_Switch_Background_OFF
+                            )
+                        )
+                    }
+
+                    //发回并关闭
+                    val result = bundleOf("KEY" to "TapJump","target" to target)
+                    setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                    customDismiss()
+                }
+                //按钮：链接滚动条与视频进度
+                val ButtonLink = view.findViewById<FrameLayout>(R.id.buttonActualLink)
+                val ButtonLinkMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialLink)
+                if (vm.PREFS_LinkScroll) {
+                    ButtonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
+                } else {
+                    ButtonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
                         requireContext(),
                         R.color.ButtonBgClosed
-                    )
-                )
-            } else {
-                ButtonAlwaysMaterial.backgroundTintList = ColorStateList.valueOf(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.ButtonBg
-                    )
-                )
+                    ))
+                }
+                ButtonLink.setOnClickListener {
+                    ToolVibrate().vibrate(requireContext())
+                    //立即切换变量并写入数据库
+                    val target = !vm.PREFS_LinkScroll
+                    vm.PREFS_LinkScroll = target
+                    SettingsRequestCenter.set_PREFS_EnableLinkScroll(target)
+
+                    //按钮改为目标颜色
+                    if (target){
+                        ButtonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
+                            requireContext(),
+                            R.color.Button_Switch_Background_ON
+                        ))
+                    }else{
+                        ButtonLinkMaterial.backgroundTintList = ColorStateList.valueOf(
+                            ContextCompat.getColor(
+                                requireContext(),
+                                R.color.Button_Switch_Background_OFF
+                            )
+                        )
+                    }
+
+                    //发回并关闭
+                    val result = bundleOf("KEY" to "LinkScroll","target" to target)
+                    setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                    customDismiss()
+                }
             }
 
-            val result = bundleOf("KEY" to "AlwaysSeek")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
-            customDismiss()
         }
-        //按钮：单击跳转
-        val ButtonTap = view.findViewById<FrameLayout>(R.id.buttonActualTap)
-        val ButtonTapMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialTap)
-        if (vm.PREFS_TapJump) {
-            ButtonTapMaterial.backgroundTintList =
-                ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
-        } else {
-            ButtonTapMaterial.backgroundTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(
-                    requireContext(),
-                    R.color.ButtonBgClosed
-                )
-            )
-        }
-        ButtonTap.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //先给按钮改颜色
-            if (vm.PREFS_TapJump) {
-                ButtonTapMaterial.backgroundTintList = ColorStateList.valueOf(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.ButtonBgClosed
-                    )
-                )
-            } else {
-                ButtonTapMaterial.backgroundTintList = ColorStateList.valueOf(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        R.color.ButtonBg
-                    )
-                )
-            }
 
-            val result = bundleOf("KEY" to "TapJump")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
-            customDismiss()
-        }
-        //按钮：链接滚动条与视频进度
-        val ButtonLink = view.findViewById<FrameLayout>(R.id.buttonActualLink)
-        val ButtonLinkMaterial = view.findViewById<MaterialButton>(R.id.buttonMaterialLink)
-        if (vm.PREFS_LinkScroll) {
-            ButtonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonBg))
-        } else {
-            ButtonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
-                    requireContext(),
-                    R.color.ButtonBgClosed
-                ))
-        }
-        ButtonLink.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //先给按钮改颜色
-            if (vm.PREFS_LinkScroll) { ButtonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
-                        requireContext(),
-                        R.color.ButtonBgClosed
-                    )) }
-            else { ButtonLinkMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(
-                        requireContext(),
-                        R.color.ButtonBg
-                    )) }
-
-            val result = bundleOf("KEY" to "LinkScroll")
-            setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
-            customDismiss()
-        }
 
         //视频信息
         val ButtonVideoInfo = view.findViewById<TextView>(R.id.buttonVideoInfo)
@@ -599,118 +767,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
 
-        //面板下滑关闭(NestedScrollView)
-        if (!vm.PREFS_CloseFragmentGesture){
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-                var down_y = 0f
-                var deltaY = 0f
-                var deltaY_ReachPadding = false
-                val RootCard = view.findViewById<CardView>(R.id.mainCard)
-                val RootCardOriginY = RootCard.translationY
-                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
-                var NestedScrollViewAtTop = true
-                NestedScrollView.setOnTouchListener { _, event ->
-                    when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN -> {
-                            deltaY_ReachPadding = false
-                            if (NestedScrollView.scrollY != 0){
-                                NestedScrollViewAtTop = false
-                                return@setOnTouchListener false
-                            }else{
-                                NestedScrollViewAtTop = true
-                                down_y = event.rawY
-                            }
-                        }
-                        MotionEvent.ACTION_MOVE -> {
-                            if (!NestedScrollViewAtTop){
-                                return@setOnTouchListener false
-                            }
-                            deltaY = event.rawY - down_y
-                            if (deltaY < 0){
-                                return@setOnTouchListener false
-                            }
-                            if (deltaY >= 400f){
-                                if (!deltaY_ReachPadding){
-                                    deltaY_ReachPadding = true
-                                    ToolVibrate().vibrate(requireContext())
-                                }
-                            }
-                            RootCard.translationY = RootCardOriginY + deltaY
-                            return@setOnTouchListener true
-                        }
-                        MotionEvent.ACTION_UP -> {
-                            if (deltaY >= 400f){
-                                Dismiss(false)
-                            }else{
-                                RootCard.animate()
-                                    .translationY(0f)
-                                    .setInterpolator(DecelerateInterpolator(1f))
-                                    .duration = 300
-                            }
 
-                        }
-                    }
-                    return@setOnTouchListener false
-                }
-            }
-            else if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-                var down_y = 0f
-                var deltaY = 0f
-                var down_x = 0f
-                var deltaX = 0f
-                var deltaX_ReachPadding = false
-                var Y_move_ensure = false
-                val RootCard = view.findViewById<CardView>(R.id.mainCard)
-                val RootCardOriginX = RootCard.translationX
-                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
-                NestedScrollView.setOnTouchListener { _, event ->
-                    when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN -> {
-                            down_x = event.rawX
-                            down_y = event.rawY
-                            Y_move_ensure = false
-                            deltaX_ReachPadding = false
-                        }
-                        MotionEvent.ACTION_MOVE -> {
-                            deltaY = event.rawY - down_y
-                            deltaX = event.rawX - down_x
-                            if (deltaX < 0){
-                                return@setOnTouchListener false
-                            }
-                            if (deltaX >= 200f){
-                                if (!deltaX_ReachPadding){
-                                    deltaX_ReachPadding = true
-                                    ToolVibrate().vibrate(requireContext())
-                                }
-                            }
-                            if (Y_move_ensure){
-                                return@setOnTouchListener false
-                            }
-                            if (abs(deltaY) > abs(deltaX)){
-                                Y_move_ensure = true
-                                return@setOnTouchListener false
-                            }
-                            RootCard.translationX = RootCardOriginX + deltaX
-                            return@setOnTouchListener true
-                        }
-                        MotionEvent.ACTION_UP -> {
-                            if (Y_move_ensure){
-                                return@setOnTouchListener false
-                            }
-                            if (deltaX >= 200f){
-                                Dismiss(false)
-                            }else{
-                                RootCard.animate()
-                                    .translationX(0f)
-                                    .setInterpolator(DecelerateInterpolator(1f))
-                                    .duration = 300
-                            }
-                        }
-                    }
-                    return@setOnTouchListener false
-                }
-            }
-        }
         //监听返回手势(DialogFragment)
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {

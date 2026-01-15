@@ -189,7 +189,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/SwitchKeepPlayingWhenExit"
+                                android:id="@+id/RetainPlayingWhenFinish"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 app:thumbTint="@color/switchThumbColor"
@@ -224,7 +224,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/SwitchDisableSmallPlayer"
+                                android:id="@+id/DisableMainPageSmallPlayer"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 app:thumbTint="@color/switchThumbColor"
@@ -432,7 +432,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/EnablePlayAreaMove"
+                                android:id="@+id/EnablePlayAreaMoveAnim"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -469,7 +469,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/closeFragmentGesture"
+                                android:id="@+id/DisableFragmentGesture"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -538,12 +538,13 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/useHighRefreshRate"
+                                android:id="@+id/EnableHighRefreshRate"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
                                 app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:trackTint="@color/switchTrackColor"
+                                tools:ignore="TooManyViews" />
                         </LinearLayout>
                         <!--  提示信息  -->
                         <TextView
@@ -575,7 +576,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/closeVideoTrack"
+                                android:id="@+id/DisableVideoTrackOnBack"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -614,7 +615,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/SwitchPortraitWhenExit"
+                                android:id="@+id/EnsurePortraitWhenExit"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -707,7 +708,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/useLongScroller"
+                                android:id="@+id/UseSuperLongScroller"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -783,7 +784,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/useCompatScroller"
+                                android:id="@+id/UseCompatScroller"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -821,7 +822,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/generateThumbSYNC"
+                                android:id="@+id/UseSyncFrameInScroller"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -897,7 +898,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/UseOnlySyncFrame"
+                                android:id="@+id/UseOnlySyncFrameWhenSeek"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -1009,65 +1010,7 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!--  卡片：数据库  -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
-                app:cardCornerRadius="15dp"
-                app:cardElevation="3dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="14dp">
-                    <!--  大标题：数据库  -->
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="数据库"
-                        android:textColor="@color/HeadText"
-                        android:textSize="17sp" />
-                    <!--  开关：进度条设置保存方式  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:orientation="vertical">
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="25dp"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_weight="0"
-                                android:text="进度条设置为单个视频保存"
-                                android:textColor="@color/HeadText"
-                                android:textSize="14sp" />
-                            <View
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1" />
-                            <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/UseDataBaseForScrollerSetting"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
-                        </LinearLayout>
-                        <!-- 提示文本 -->
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="开启后，快进策略，链接滚动，单击跳转这三项设置将仅为单个视频保存。若关闭，则所有视频共享进度条设置"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+
             <!--  卡片：从其他应用打开时  -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -1112,7 +1055,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/exitWhenEnd"
+                                android:id="@+id/AutoExitWhenEnd"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -1278,4 +1221,5 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

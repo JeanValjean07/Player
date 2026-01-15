@@ -104,8 +104,6 @@ class MainActivity: AppCompatActivity() {
     private var state_PlayingCard_showing = false
     private var state_PlayingCard_gone = true
     //</editor-fold>
-    //播放中媒体信息
-    //!不能放在这里
     //播放中卡片
     //<editor-fold desc="播放中卡片">
     private lateinit var PlayingCard: CardView

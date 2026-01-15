@@ -56,15 +56,19 @@
     <color name="ButtonCard_ON">#B39DDB</color>
     <color name="ButtonCard_OFF">#FFFFFF</color>
 
-    <color name="PlayListCard_ON">#F8BBD0</color>
-    <color name="PlayListCard_OFF">#FAFAFA</color>
 
     <!-- 已启用全新分类体系 -->
-    <!-- 按钮 -->
+    <!-- 单击纯文字按钮 -->
     <color name="Button_Background_Recommend">#E1BEE7</color>
     <color name="Button_Background_NotRecommend">#EEEEEE</color>
     <color name="Button_Text_Recommend">#4527A0</color>
     <color name="Button_Text_NotRecommend">#424242</color>
+
+    <!-- 开关按钮 -->
+    <color name="Button_Switch_Background_ON">#E1BEE7</color>
+    <color name="Button_Switch_Background_OFF">#EEEEEE</color>
+    <color name="Button_Switch_Foreground_ON">#000000</color>
+    <color name="Button_Switch_Foreground_OFF">#000000</color>
 
     <!-- 文字 -->
     <color name="Text_Level_1">#000000</color>

@@ -117,18 +117,23 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
 
 
-    var statusBarHeight = 0
+
 
     var state_FromSysStart: Boolean = false
+
+
 
     var PREFS_ExitWhenEnd: Boolean = false
 
 
+    var statusBarHeight = 0
 
     //设置项
     var PREFS_AlwaysSeek: Boolean = false
     var PREFS_TapJump: Boolean = false
     var PREFS_LinkScroll: Boolean = true
+
+
     var PREFS_SealOEL: Boolean = false
     var PREFS_GenerateThumbSYNC : Boolean = false
     var PREFS_UseLongScroller : Boolean = false
@@ -140,11 +145,22 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_TimeUpdateGap: Long = 20L
     var PREFS_SavePositionWhenExit: Boolean = false
     var PREFS_SwitchPortraitWhenExit: Boolean = true
-    var PREFS_EnablePlayAreaMoveAnim: Boolean = false
+
     var PREFS_UseDataBaseForScrollerSetting: Boolean = false
-    var PREFS_UseSyncFrameWhenScrollerStop: Boolean = false
+
     var PREFS_SeekHandlerGap: Long = 0
     var PREFS_KeepPlayingWhenExit: Boolean = false
+
+
+    //全新设置变量体系(仅保存需高频次访问的变量)
+    var PREFS_UseOnlySyncFrameWhenSeek: Boolean = true
+    var PREFS_UseSyncFrameWhenScrollerStop = true
+    var PREFS_EnablePlayAreaMoveAnim = false
+    var VALUE_Gap_TimerUpdate = 40L
+    var VALUE_Gap_SeekHandlerGap = 0L
+    var VALUE_Int_statusBarHeight: Int = 0
+
+
 
 
     //标记播放器类型：传统Oro 或 新晋Neo
