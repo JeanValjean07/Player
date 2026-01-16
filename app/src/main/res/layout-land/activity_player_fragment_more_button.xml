@@ -9,7 +9,7 @@
     android:background="@android:color/transparent"
     tools:ignore="HardcodedText">
     <androidx.cardview.widget.CardView
-        android:id="@+id/mainCard"
+        android:id="@+id/main_card"
         android:layout_width="350dp"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -301,7 +301,7 @@
                                     android:layout_height="0dp"
                                     android:layout_weight="1"/>
                                 <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_SealOEL"
+                                    android:id="@+id/EnableOriListener"
                                     android:layout_width="wrap_content"
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"

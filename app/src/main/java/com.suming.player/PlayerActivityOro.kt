@@ -2206,7 +2206,7 @@ class PlayerActivityOro: AppCompatActivity(){
 
         val heightPx = displayMetrics.heightPixels
         val heightHalfPx = (heightPx / 2.0).toFloat()
-        val cardTopMarginPx = 300 * density
+        val cardTopMarginPx = heightPx * 0.3f * density
 
         vm.YaxisDestination = heightHalfPx - ((cardTopMarginPx + vm.statusBarHeight) / 2)
 

@@ -55,8 +55,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
     companion object {
         fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments = bundleOf(  ) }
     }
-    //自动关闭标志位
-    private var lockPage = false
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
     //设置
@@ -80,6 +78,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private var coroutine_registerFunctionalButtonTop = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerFunctionalButton = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerSeekBarStuff = CoroutineScope(Dispatchers.Main)
+
 
 
 
@@ -140,8 +139,20 @@ class PlayerFragmentMoreButton: DialogFragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_player_fragment_more_button, container, false)
 
-    @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
+    @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility",
+        "CutPasteId"
+    )
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        //设置卡片高度
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            val MainCard = view.findViewById<CardView>(R.id.main_card)
+            MainCard.layoutParams.height = (resources.displayMetrics.heightPixels * 0.7).toInt()
+        }
+
+
+
+
+
         //开关置位
         fun initSwitch(){
             Switch_BackgroundPlay = view.findViewById(R.id.Switch_BackgroundPlay)
@@ -184,7 +195,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //注册开关
         coroutine_registerSwitch.launch {
             //开启方向监听器
-            switch_EnableOriListener = view.findViewById(R.id.EnableOriListener)
+            val switch_EnableOriListener = view.findViewById<SwitchCompat>(R.id.EnableOriListener)
             switch_EnableOriListener.isChecked = SettingsRequestCenter.get_PREFS_EnableOrientationListener(requireContext())
             switch_EnableOriListener.setOnClickListener { val isChecked = switch_EnableOriListener.isChecked
                 ToolVibrate().vibrate(requireContext())
@@ -195,6 +206,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
                 customDismiss()
             }
+            //
 
         }
 
@@ -236,7 +248,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     var down_y = 0f
                     var deltaY = 0f
                     var deltaY_ReachPadding = false
-                    val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                    val RootCard = view.findViewById<CardView>(R.id.main_card)
                     val RootCardOriginY = RootCard.translationY
                     val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
                     var NestedScrollViewAtTop = true
@@ -291,7 +303,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     var deltaX = 0f
                     var deltaX_ReachPadding = false
                     var Y_move_ensure = false
-                    val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                    val RootCard = view.findViewById<CardView>(R.id.main_card)
                     val RootCardOriginX = RootCard.translationX
                     val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
                     NestedScrollView.setOnTouchListener { _, event ->
@@ -780,6 +792,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
     }
 
 
+
+
     //Functions
     //循环模式
     private fun chooseLoopMode(loopMode: String){
@@ -973,6 +987,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
     }
     //自定义退出逻辑
+    private var lockPage = false
     private fun customDismiss(){
         if (!lockPage) {
             Dismiss()

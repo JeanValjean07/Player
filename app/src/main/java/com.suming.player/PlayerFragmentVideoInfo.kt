@@ -19,6 +19,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
+import androidx.annotation.RequiresApi
 import androidx.cardview.widget.CardView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -41,6 +42,7 @@ import androidx.media3.common.util.UnstableApi
 import kotlin.math.abs
 
 @UnstableApi
+@RequiresApi(Build.VERSION_CODES.Q)
 class PlayerFragmentVideoInfo: DialogFragment() {
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
@@ -170,8 +172,18 @@ class PlayerFragmentVideoInfo: DialogFragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_player_fragment_video_info, container, false)
-    @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility")
+    @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility",
+        "CutPasteId"
+    )
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        //设置卡片高度
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            val MainCard = view.findViewById<CardView>(R.id.main_card)
+            MainCard.layoutParams.height = (resources.displayMetrics.heightPixels * 0.7).toInt()
+        }
+
+
+
 
         //按钮：退出
         val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
@@ -209,7 +221,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                 var down_y = 0f
                 var deltaY = 0f
                 var deltaY_ReachPadding = false
-                val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                val RootCard = view.findViewById<CardView>(R.id.main_card)
                 val RootCardOriginY = RootCard.translationY
                 val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
                 var NestedScrollViewAtTop = true
@@ -264,7 +276,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
                 var deltaX = 0f
                 var deltaX_ReachPadding = false
                 var Y_move_ensure = false
-                val RootCard = view.findViewById<CardView>(R.id.mainCard)
+                val RootCard = view.findViewById<CardView>(R.id.main_card)
                 val RootCardOriginX = RootCard.translationX
                 val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
                 NestedScrollView.setOnTouchListener { _, event ->

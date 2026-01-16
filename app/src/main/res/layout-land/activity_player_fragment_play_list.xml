@@ -9,7 +9,7 @@
     android:background="@android:color/transparent"
     tools:ignore="HardcodedText" >
     <androidx.cardview.widget.CardView
-        android:id="@+id/mainCard"
+        android:id="@+id/main_card"
         android:layout_width="350dp"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"

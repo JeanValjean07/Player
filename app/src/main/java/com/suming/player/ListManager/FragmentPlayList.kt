@@ -134,6 +134,15 @@ class FragmentPlayList: DialogFragment() {
     ): View = inflater.inflate(R.layout.activity_player_fragment_play_list, container, false)
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "SuspiciousIndentation")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        //设置卡片高度
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            val MainCard = view.findViewById<CardView>(R.id.main_card)
+            MainCard.layoutParams.height = (resources.displayMetrics.heightPixels * 0.7).toInt()
+        }
+
+
+
+
         //初始化控件：不包含viewPager
         fun initElement(){
             TabScrollView = view.findViewById(R.id.TabScrollView)

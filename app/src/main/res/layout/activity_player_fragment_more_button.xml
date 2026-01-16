@@ -7,16 +7,14 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:background="@android:color/transparent"
-    tools:ignore="HardcodedText">
+    tools:ignore="HardcodedText,UnusedAttribute">
     <androidx.cardview.widget.CardView
-        android:id="@+id/mainCard"
+        android:id="@+id/main_card"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="500dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="300dp"
         app:cardCornerRadius="8dp"
         app:cardBackgroundColor="@color/Background3"
         app:cardElevation="10dp"

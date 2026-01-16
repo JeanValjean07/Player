@@ -597,15 +597,16 @@ class SettingsActivity: AppCompatActivity() {
     //振动模式
     private fun chooseVibrateMode(mode: Int) {
         //振动模式表
-        /*
-        0 = No Vibrate
-        1 = VibrationEffect.EFFECT_CLICK
-        2 = VibrationEffect.EFFECT_TICK
-        3 = VibrationEffect.EFFECT_DOUBLE_CLICK
-        4 = VibrationEffect.EFFECT_HEAVY_CLICK
-        */
+        // 0 = No Vibrate
+        // 1 = VibrationEffect.EFFECT_CLICK
+        // 2 = VibrationEffect.EFFECT_TICK
+        // 3 = VibrationEffect.EFFECT_DOUBLE_CLICK
+        // 4 = VibrationEffect.EFFECT_HEAVY_CLICK
+
 
         ToolVibrate().setVibrateMode(this, mode)
+
+        ToolVibrate().vibrate(this)
 
         updateVibrateModeText()
 
