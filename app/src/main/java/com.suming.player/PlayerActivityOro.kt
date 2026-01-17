@@ -1297,7 +1297,7 @@ class PlayerActivityOro: AppCompatActivity(){
         playerView.player = null
         playerView.player = player
         //确认设置新媒体项
-        PlayerSingleton.setMediaItem(MediaInfo_MediaUri, true)
+        PlayerSingleton.setMediaItem(MediaInfo_MediaUri, true, this)
     }
     //开启播放新媒体项
     private fun startPlayNewItem(uri: Uri){
@@ -1583,50 +1583,45 @@ class PlayerActivityOro: AppCompatActivity(){
      */
     //读取媒体信息：uri作为唯一key
     private var MediaInfo_MediaUri = Uri.EMPTY!!
-    private fun getMediaInfo(uri: Uri){
+    //读取媒体信息
+    private fun getMediaInfo(uri: Uri): Boolean{
         retriever = MediaMetadataRetriever()
+        //尝试解码媒体信息
         try { retriever.setDataSource(this@PlayerActivityOro, uri) }
-        catch (_: Exception) {
-            onDestroy_fromErrorExit = true
-            showCustomToast("无法解码视频信息", Toast.LENGTH_SHORT, 3)
-            showCustomToast("播放失败", Toast.LENGTH_SHORT, 3)
-            state_need_return = true
-            finish()
-            return
-        }
-        PlayerSingleton.MediaInfo_MediaType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: "error"
-        val MediaInfo_MediaTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: "error"
-        var MediaInfo_MediaArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: "error"
-        val MediaInfo_MediaDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toInt() ?: 0
-        val MediaInfo_MediaUriString = uri.toString()
-        retriever.release()
-        val MediaInfo_AbsolutePath = getFilePath(this@PlayerActivityOro, MediaInfo_MediaUri).toString()
-        var MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name ?: "error"
+        catch (_: Exception) { return false }
+        //确认可以解码
+        var NEW_MediaInfo_MediaType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: ""
+        val NEW_MediaInfo_MediaTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
+        var NEW_MediaInfo_MediaArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
+        val NEW_MediaInfo_MediaDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0L
+        val NEW_MediaInfo_Uri = uri
+        val NEW_MediaInfo_MediaUriString = uri.toString()
+        val NEW_MediaInfo_AbsolutePath = getFilePath(this@PlayerActivityOro, uri).toString()
+        var NEW_MediaInfo_FileName = (File(NEW_MediaInfo_AbsolutePath)).name ?: ""
         //处理值
-        if (PlayerSingleton.MediaInfo_MediaType.contains("video")){
-            PlayerSingleton.MediaInfo_MediaType = "video"
+        if (NEW_MediaInfo_MediaType.contains("video")){
+            NEW_MediaInfo_MediaType = "video"
+        }else if (NEW_MediaInfo_MediaType.contains("audio")){
+            NEW_MediaInfo_MediaType = "music"
         }
-        else if (PlayerSingleton.MediaInfo_MediaType.contains("audio")){
-            PlayerSingleton.MediaInfo_MediaType = "music"
-        }
-        if (MediaInfo_FileName == "error"){
-            MediaInfo_FileName = "未知媒体标题"
-        }
-        if (MediaInfo_MediaArtist == "error" || MediaInfo_MediaArtist == "<unknown>"){
-            MediaInfo_MediaArtist = "未知艺术家"
-        }
+        if (NEW_MediaInfo_FileName == ""){ NEW_MediaInfo_FileName = "未知媒体标题" }
+        if (NEW_MediaInfo_MediaArtist == "error" || NEW_MediaInfo_MediaArtist == "<unknown>"){ NEW_MediaInfo_MediaArtist = "未知艺术家" }
+
+        //完成后释放资源
+        retriever.release()
         //统一保存到viewModel
         vm.saveInfoToViewModel(
-            PlayerSingleton.MediaInfo_MediaType,
-            MediaInfo_MediaTitle,
-            MediaInfo_MediaArtist,
-            MediaInfo_MediaDuration.toLong(),
-            MediaInfo_FileName,
-            MediaInfo_AbsolutePath,
-            MediaInfo_MediaUri,
-            MediaInfo_MediaUriString
+            NEW_MediaInfo_MediaType,
+            NEW_MediaInfo_MediaTitle,
+            NEW_MediaInfo_MediaArtist,
+            NEW_MediaInfo_MediaDuration,
+            NEW_MediaInfo_FileName,
+            NEW_MediaInfo_AbsolutePath,
+            NEW_MediaInfo_Uri,
+            NEW_MediaInfo_MediaUriString
         )
 
+        return true
     }
 
 
@@ -1667,7 +1662,7 @@ class PlayerActivityOro: AppCompatActivity(){
         stopSeekBarSync()
         stopVideoTimeSync()
         //停止服务端操作
-        PlayerSingleton.clearMediaInfo()
+        PlayerSingleton.clearMediaInfo(this)
         PlayerSingleton.DevastatePlayBundle(application)
         finish()
     }
@@ -1691,7 +1686,7 @@ class PlayerActivityOro: AppCompatActivity(){
         //不停止服务端操作
         if (playerReadyFrom_FirstEntry){
             PlayerSingleton.DevastatePlayBundle(application)
-            PlayerSingleton.clearMediaInfo()
+            PlayerSingleton.clearMediaInfo(this)
             stopFloatingWindow()
         }
         finish()
@@ -1902,7 +1897,7 @@ class PlayerActivityOro: AppCompatActivity(){
                     playerView.player = player
                 }
                 //开始继续播放
-                PlayerSingleton.ActivityOnResume()
+                PlayerSingleton.ActivityOnResume(this@PlayerActivityOro)
                 //开启视频控件
                 startSeekBarSync()
                 startVideoTimeSync()
@@ -2033,7 +2028,7 @@ class PlayerActivityOro: AppCompatActivity(){
                     //Log.d("SuMing","onStop: 活动暂退桌面")
                     vm.set_onStop_ByLossFocus()
                     if(!state_FromFloatingWindow){
-                        PlayerSingleton.ActivityOnStop()
+                        PlayerSingleton.ActivityOnStop(this@PlayerActivityOro)
                     }
                 }
                 //活动被销毁

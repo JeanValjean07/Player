@@ -43,23 +43,7 @@ import java.security.cert.X509Certificate
 @SuppressLint("InflateParams", "SetTextI18n")
 @RequiresApi(Build.VERSION_CODES.Q)
 class SettingsActivity: AppCompatActivity() {
-    //开关初始化
-    private lateinit var switch_DisableMediaArtWork: SwitchCompat
-    private lateinit var switch_AlwaysUseDarkTheme: SwitchCompat
-    private lateinit var switch_EnableHighRefreshRate: SwitchCompat
-    private lateinit var switch_RetainPlayingWhenFinish: SwitchCompat
-    private lateinit var switch_DisableFragmentGesture: SwitchCompat
-    private lateinit var switch_EnableSeparateScrollerSetting: SwitchCompat
-    private lateinit var switch_AutoExitWhenEnd: SwitchCompat
-    private lateinit var switch_EnsurePortraitWhenExit: SwitchCompat
-    private lateinit var switch_EnablePlayAreaMoveAnim: SwitchCompat
-    private lateinit var switch_UseSyncFrameInScroller: SwitchCompat
-    private lateinit var switch_UseOnlySyncFrameWhenSeek: SwitchCompat
-    private lateinit var switch_UseSyncFrameWhenScrollerStop: SwitchCompat
-    private lateinit var switch_DisableMainPageSmallPlayer: SwitchCompat
-    private lateinit var switch_UseSuperLongScroller: SwitchCompat
-    private lateinit var switch_UseCompatScroller: SwitchCompat
-    private lateinit var switch_DisableVideoTrackOnBack: SwitchCompat
+
     //协程
     private var coroutine_setSwitch = CoroutineScope(Dispatchers.Main)
     private var coroutine_setButtonAndInfo = CoroutineScope(Dispatchers.Main)
@@ -146,108 +130,108 @@ class SettingsActivity: AppCompatActivity() {
             }
         }
 
-        //注册开关(当前仅转移部分)：获取实例 + 设置状态 + 设置点击事件
+        //注册开关
         coroutine_setSwitch.launch {
             //媒体会话不使用封面图片
-            switch_DisableMediaArtWork = findViewById(R.id.DisableMediaArtWork)
+            val switch_DisableMediaArtWork = findViewById<SwitchCompat>(R.id.DisableMediaArtWork)
             switch_DisableMediaArtWork.isChecked = SettingsRequestCenter.get_PREFS_DisableMediaArtWork(this@SettingsActivity)
             switch_DisableMediaArtWork.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_DisableMediaArtWork(isChecked)
             }
             //始终使用深色播放页面
-            switch_AlwaysUseDarkTheme = findViewById(R.id.AlwaysUseDarkTheme)
+            val switch_AlwaysUseDarkTheme = findViewById<SwitchCompat>(R.id.AlwaysUseDarkTheme)
             switch_AlwaysUseDarkTheme.isChecked = SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(this@SettingsActivity)
             switch_AlwaysUseDarkTheme.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_AlwaysUseDarkTheme(isChecked)
             }
             //使用高刷新率
-            switch_EnableHighRefreshRate = findViewById(R.id.EnableHighRefreshRate)
+            val switch_EnableHighRefreshRate = findViewById<SwitchCompat>(R.id.EnableHighRefreshRate)
             switch_EnableHighRefreshRate.isChecked = SettingsRequestCenter.get_PREFS_EnableHighRefreshRate(this@SettingsActivity)
             switch_EnableHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_EnableHighRefreshRate(isChecked)
             }
             //退出播放页时保持继续播放
-            switch_RetainPlayingWhenFinish = findViewById(R.id.RetainPlayingWhenFinish)
+            val switch_RetainPlayingWhenFinish = findViewById<SwitchCompat>(R.id.RetainPlayingWhenFinish)
             switch_RetainPlayingWhenFinish.isChecked = SettingsRequestCenter.get_PREFS_RetainPlayingWhenFinish(this@SettingsActivity)
             switch_RetainPlayingWhenFinish.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_RetainPlayingWhenFinish(isChecked)
             }
             //禁用更多操作面板下滑手势
-            switch_DisableFragmentGesture = findViewById(R.id.DisableFragmentGesture)
+            val switch_DisableFragmentGesture = findViewById<SwitchCompat>(R.id.DisableFragmentGesture)
             switch_DisableFragmentGesture.isChecked = SettingsRequestCenter.get_PREFS_DisableFragmentGesture(this@SettingsActivity)
             switch_DisableFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_DisableFragmentGesture(isChecked)
             }
             //自动退出播放页时结束播放
-            switch_AutoExitWhenEnd = findViewById(R.id.AutoExitWhenEnd)
+            val switch_AutoExitWhenEnd = findViewById<SwitchCompat>(R.id.AutoExitWhenEnd)
             switch_AutoExitWhenEnd.isChecked = SettingsRequestCenter.get_PREFS_AutoExitWhenEnd(this@SettingsActivity)
             switch_AutoExitWhenEnd.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_AutoExitWhenEnd(isChecked)
             }
             //退出播放页时确保竖屏
-            switch_EnsurePortraitWhenExit = findViewById(R.id.EnsurePortraitWhenExit)
+            val switch_EnsurePortraitWhenExit = findViewById<SwitchCompat>(R.id.EnsurePortraitWhenExit)
             switch_EnsurePortraitWhenExit.isChecked = SettingsRequestCenter.get_PREFS_EnsurePortraitWhenExit(this@SettingsActivity)
             switch_EnsurePortraitWhenExit.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_EnsurePortraitWhenExit(isChecked)
             }
             //启用播放区域移动动画
-            switch_EnablePlayAreaMoveAnim = findViewById(R.id.EnablePlayAreaMoveAnim)
+            val switch_EnablePlayAreaMoveAnim = findViewById<SwitchCompat>(R.id.EnablePlayAreaMoveAnim)
             switch_EnablePlayAreaMoveAnim.isChecked = SettingsRequestCenter.get_PREFS_EnablePlayAreaMoveAnim(this@SettingsActivity)
             switch_EnablePlayAreaMoveAnim.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_EnablePlayAreaMoveAnim(isChecked)
             }
             //进度条截取缩略图时使用关键帧
-            switch_UseSyncFrameInScroller = findViewById(R.id.UseSyncFrameInScroller)
+            val switch_UseSyncFrameInScroller = findViewById<SwitchCompat>(R.id.UseSyncFrameInScroller)
             switch_UseSyncFrameInScroller.isChecked = SettingsRequestCenter.get_PREFS_UseSyncFrameInScroller(this@SettingsActivity)
             switch_UseSyncFrameInScroller.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_UseSyncFrameInScroller(isChecked)
             }
             //寻帧时一律使用关键帧
-            switch_UseOnlySyncFrameWhenSeek = findViewById(R.id.UseOnlySyncFrameWhenSeek)
+            val switch_UseOnlySyncFrameWhenSeek = findViewById<SwitchCompat>(R.id.UseOnlySyncFrameWhenSeek)
             switch_UseOnlySyncFrameWhenSeek.isChecked = SettingsRequestCenter.get_PREFS_UseOnlySyncFrameWhenSeek(this@SettingsActivity)
             switch_UseOnlySyncFrameWhenSeek.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_UseOnlySyncFrameWhenSeek(isChecked)
             }
             //进度条停止滚动时尾帧使用关键帧
-            switch_UseSyncFrameWhenScrollerStop = findViewById(R.id.UseSyncFrameWhenScrollerStop)
+            val switch_UseSyncFrameWhenScrollerStop = findViewById<SwitchCompat>(R.id.UseSyncFrameWhenScrollerStop)
             switch_UseSyncFrameWhenScrollerStop.isChecked = SettingsRequestCenter.get_PREFS_UseSyncFrameWhenScrollerStop(this@SettingsActivity)
             switch_UseSyncFrameWhenScrollerStop.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_UseSyncFrameWhenScrollerStop(isChecked)
             }
             //禁用主页面小播放器
-            switch_DisableMainPageSmallPlayer = findViewById(R.id.DisableMainPageSmallPlayer)
+            val switch_DisableMainPageSmallPlayer = findViewById<SwitchCompat>(R.id.DisableMainPageSmallPlayer)
             switch_DisableMainPageSmallPlayer.isChecked = SettingsRequestCenter.get_PREFS_DisableMainPageSmallPlayer(this@SettingsActivity)
             switch_DisableMainPageSmallPlayer.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_DisableMainPageSmallPlayer(isChecked)
             }
             //使用超长进度条
-            switch_UseSuperLongScroller = findViewById(R.id.UseSuperLongScroller)
+            val switch_UseSuperLongScroller = findViewById<SwitchCompat>(R.id.UseSuperLongScroller)
             switch_UseSuperLongScroller.isChecked = SettingsRequestCenter.get_PREFS_UseSuperLongScroller(this@SettingsActivity)
             switch_UseSuperLongScroller.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_UseSuperLongScroller(isChecked)
             }
             //进度条绘制使用兼容模式
-            switch_UseCompatScroller = findViewById(R.id.UseCompatScroller)
+            val switch_UseCompatScroller = findViewById<SwitchCompat>(R.id.UseCompatScroller)
             switch_UseCompatScroller.isChecked = SettingsRequestCenter.get_PREFS_UseCompatScroller(this@SettingsActivity)
             switch_UseCompatScroller.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_UseCompatScroller(isChecked)
             }
             //后台播放时关闭视频轨道
-            switch_DisableVideoTrackOnBack = findViewById(R.id.DisableVideoTrackOnBack)
+            val switch_DisableVideoTrackOnBack = findViewById<SwitchCompat>(R.id.DisableVideoTrackOnBack)
             switch_DisableVideoTrackOnBack.isChecked = SettingsRequestCenter.get_PREFS_DisableVideoTrackOnBack(this@SettingsActivity)
             switch_DisableVideoTrackOnBack.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
@@ -404,7 +388,7 @@ class SettingsActivity: AppCompatActivity() {
 
         }
 
-        //注册基础功能性单击按钮
+        //注册基础功能单击按钮
         coroutine_setBasicFunctionalButton.launch {
             //重新生成封面
             val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
@@ -433,6 +417,8 @@ class SettingsActivity: AppCompatActivity() {
 
     //onCreate END
     }
+
+
 
     //Functions
     //播放页样式

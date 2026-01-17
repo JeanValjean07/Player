@@ -48,7 +48,6 @@ import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.ListManager.FragmentPlayList
-import com.suming.player.PlayerSingleton.MediaInfo_MediaType
 import data.MediaDataReader.MediaDataBaseReaderForMusic
 import data.MediaDataReader.MediaDataBaseReaderForVideo
 import data.MediaDataReader.MediaStoreReaderForMusic
@@ -651,7 +650,7 @@ class MainActivity: AppCompatActivity() {
         //启动播放器
         PlayerSingleton.startSingletonExoPlayer(application)
         //确认设置新媒体项
-        PlayerSingleton.setMediaItem(MediaInfo_MediaUri, playWhenReady)
+        PlayerSingleton.setMediaItem(MediaInfo_MediaUri, playWhenReady, this)
 
     }
     //保存上次播放的项信息
@@ -1089,17 +1088,18 @@ class MainActivity: AppCompatActivity() {
          */
     }
     private fun startPlayerFromSmallCard(uri: Uri){
-        MediaInfo_MediaType = PlayerSingleton.getMediaInfoType()
-        if (MediaInfo_MediaType == "video"){
-            startVideoPlayer(uri)
-        }
-        else if (MediaInfo_MediaType == "music"){
-            showCustomToast("暂不支持打开音乐播放页面", Toast.LENGTH_SHORT, 3)
-
-            //startMusicPlayer(uri)
-        }
-        else{
-            showCustomToast("严重错误:未知的媒体类型", Toast.LENGTH_SHORT, 3)
+        val MediaInfo_MediaType = PlayerSingleton.getMediaInfoType()
+        when (MediaInfo_MediaType) {
+            "video" -> {
+                startVideoPlayer(uri)
+            }
+            "music" -> {
+                showCustomToast("暂不支持打开音乐播放页面", Toast.LENGTH_SHORT, 3)
+                //startMusicPlayer(uri)
+            }
+            else -> {
+                showCustomToast("严重错误:未知的媒体类型", Toast.LENGTH_SHORT, 3)
+            }
         }
     }
     //显示通知

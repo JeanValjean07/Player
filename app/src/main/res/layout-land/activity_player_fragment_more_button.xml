@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:background="@android:color/transparent"
-    tools:ignore="HardcodedText">
+    tools:ignore="HardcodedText,UnusedAttribute">
     <androidx.cardview.widget.CardView
         android:id="@+id/main_card"
         android:layout_width="350dp"
@@ -213,17 +213,43 @@
                                     android:layout_width="0dp"
                                     android:layout_height="0dp"
                                     android:layout_weight="1"/>
-                                <TextView
-                                    android:id="@+id/ButtonLoopMode"
-                                    android:layout_width="100dp"
+                                <androidx.cardview.widget.CardView
+                                    android:id="@+id/ButtonCardLoopMode"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="20dp"
-                                    android:text="循环模式"
+                                    android:layout_marginEnd="2dp"
                                     android:layout_gravity="center"
-                                    android:gravity="end"
-                                    android:layout_marginEnd="10dp"
-                                    android:paddingStart="10dp"
-                                    android:textSize="14sp"
-                                    android:textColor="@color/HeadText" />
+                                    android:backgroundTint="@color/ButtonCard_OFF"
+                                    app:layout_constraintTop_toTopOf="parent"
+                                    app:layout_constraintBottom_toBottomOf="parent"
+                                    app:layout_constraintEnd_toEndOf="parent"
+                                    app:cardElevation="1dp"
+                                    app:cardCornerRadius="5dp">
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:orientation="horizontal"
+                                        tools:ignore="TooDeepLayout">
+                                        <TextView
+                                            android:id="@+id/ButtonTextLoopMode"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="match_parent"
+                                            android:layout_marginStart="5dp"
+                                            android:gravity="center"
+                                            android:text="当前模式"
+                                            android:textColor="@color/HeadText"
+                                            android:textSize="11sp" />
+                                        <ImageView
+                                            android:layout_width="20dp"
+                                            android:layout_height="20dp"
+                                            android:layout_gravity="center"
+                                            android:padding="2dp"
+                                            android:backgroundTint="@android:color/transparent"
+                                            android:scaleType="centerCrop"
+                                            android:src="@drawable/ic_setting_arrow_down"
+                                            tools:ignore="ContentDescription" />
+                                    </LinearLayout>
+                                </androidx.cardview.widget.CardView>
                             </LinearLayout>
                             <!-- 按钮：倍速 -->
                             <LinearLayout
@@ -248,30 +274,47 @@
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:textColor="@color/Text2" />
-                                <TextView
-                                    android:id="@+id/current_speed"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="1.0"
-                                    android:textSize="12sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
                                 <View
                                     android:layout_width="0dp"
                                     android:layout_height="0dp"
                                     android:layout_weight="1"/>
-                                <TextView
-                                    android:id="@+id/buttonChangeSpeed"
-                                    android:layout_width="100dp"
+                                <androidx.cardview.widget.CardView
+                                    android:id="@+id/ButtonCardPlaySpeed"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="20dp"
-                                    android:text="更改"
-                                    android:textSize="14sp"
-                                    android:gravity="end"
+                                    android:layout_marginEnd="2dp"
                                     android:layout_gravity="center"
-                                    android:layout_marginEnd="12dp"
-                                    android:textColor="@color/Text2"
-                                    tools:ignore="SmallSp" />
+                                    android:backgroundTint="@color/ButtonCard_OFF"
+                                    app:layout_constraintTop_toTopOf="parent"
+                                    app:layout_constraintBottom_toBottomOf="parent"
+                                    app:layout_constraintEnd_toEndOf="parent"
+                                    app:cardElevation="1dp"
+                                    app:cardCornerRadius="5dp">
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:orientation="horizontal"
+                                        tools:ignore="TooDeepLayout">
+                                        <TextView
+                                            android:id="@+id/ButtonTextPlaySpeed"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="match_parent"
+                                            android:layout_marginStart="5dp"
+                                            android:gravity="center"
+                                            android:text="当前倍速"
+                                            android:textColor="@color/HeadText"
+                                            android:textSize="11sp" />
+                                        <ImageView
+                                            android:layout_width="20dp"
+                                            android:layout_height="20dp"
+                                            android:layout_gravity="center"
+                                            android:padding="2dp"
+                                            android:backgroundTint="@android:color/transparent"
+                                            android:scaleType="centerCrop"
+                                            android:src="@drawable/ic_setting_arrow_down"
+                                            tools:ignore="ContentDescription" />
+                                    </LinearLayout>
+                                </androidx.cardview.widget.CardView>
                             </LinearLayout>
                             <!-- 开关：禁止传感器旋转 -->
                             <LinearLayout
@@ -291,7 +334,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="禁止传感器旋转"
+                                    android:text="开启传感器旋转"
                                     android:textSize="16sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
@@ -302,80 +345,6 @@
                                     android:layout_weight="1"/>
                                 <androidx.appcompat.widget.SwitchCompat
                                     android:id="@+id/EnableOriListener"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="20dp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
-                            </LinearLayout>
-                            <!-- 开关：只播声音 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:minHeight="40dp"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="21dp"
-                                    android:layout_height="21dp"
-                                    android:src="@drawable/ic_more_button_close_video_track"
-                                    android:scaleType="centerCrop"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="1dp"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="只播声音"
-                                    android:textSize="16sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
-                                <View
-                                    android:layout_width="0dp"
-                                    android:layout_height="0dp"
-                                    android:layout_weight="1"/>
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_OnlyAudio"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="20dp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    tools:ignore="InefficientWeight" />
-                            </LinearLayout>
-                            <!-- 开关：只播视频 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:minHeight="40dp"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="21dp"
-                                    android:layout_height="21dp"
-                                    android:src="@drawable/ic_more_button_close_sound_track"
-                                    android:scaleType="centerCrop"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="1dp"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="只播视频"
-                                    android:textSize="16sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
-                                <View
-                                    android:layout_width="0dp"
-                                    android:layout_height="0dp"
-                                    android:layout_weight="1"/>
-                                <androidx.appcompat.widget.SwitchCompat
-                                    android:id="@+id/Switch_OnlyVideo"
                                     android:layout_width="wrap_content"
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
@@ -443,12 +412,10 @@
                             android:layout_marginStart="5dp"
                             android:orientation="vertical">
                             <!-- 按钮：快速定位 -->
-                            <!-- 按钮：链接滚动条与视频进度 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal">
-
                                 <FrameLayout
                                     android:id="@+id/buttonLinkContainer"
                                     android:layout_width="45dp"
@@ -456,9 +423,8 @@
                                     app:layout_constraintBottom_toBottomOf="parent"
                                     app:layout_constraintEnd_toStartOf="@+id/buttonBackgroundPlay"
                                     app:layout_constraintTop_toTopOf="parent">
-
                                     <com.google.android.material.button.MaterialButton
-                                        android:id="@+id/buttonMaterialAlwaysSeek"
+                                        android:id="@+id/ButtonMaterialAlwaysSeek"
                                         android:layout_width="37dp"
                                         android:layout_height="37dp"
                                         android:layout_margin="5dp"
@@ -470,17 +436,14 @@
                                         android:padding="0dp"
                                         app:cornerRadius="100dp"
                                         tools:ignore="TooDeepLayout" />
-
                                     <FrameLayout
-                                        android:id="@+id/buttonActualAlwaysSeek"
+                                        android:id="@+id/ButtonActualAlwaysSeek"
                                         android:layout_width="match_parent"
                                         android:layout_height="match_parent"
                                         android:layout_margin="5dp"
                                         android:elevation="11dp"
                                         android:padding="5dp">
-
                                         <ImageView
-                                            android:id="@+id/buttonImgAlwaysSeek"
                                             android:layout_width="20dp"
                                             android:layout_height="20dp"
                                             android:layout_gravity="center"
@@ -491,7 +454,6 @@
                                             tools:ignore="ContentDescription" />
                                     </FrameLayout>
                                 </FrameLayout>
-
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
@@ -501,7 +463,7 @@
                                     android:textColor="@color/Text2"
                                     android:textSize="16sp" />
                             </LinearLayout>
-
+                            <!-- 按钮：链接滚动条与视频进度 -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -515,7 +477,7 @@
                                     app:layout_constraintBottom_toBottomOf="parent"
                                     app:layout_constraintEnd_toStartOf="@+id/buttonLinkContainer">
                                     <com.google.android.material.button.MaterialButton
-                                        android:id="@+id/buttonMaterialLink"
+                                        android:id="@+id/ButtonMaterialLinkScroll"
                                         android:layout_width="37dp"
                                         android:layout_height="37dp"
                                         android:layout_margin="5dp"
@@ -527,7 +489,7 @@
                                         android:padding="0dp"
                                         app:cornerRadius="100dp" />
                                     <FrameLayout
-                                        android:id="@+id/buttonActualLink"
+                                        android:id="@+id/ButtonActualLinkScroll"
                                         android:layout_width="match_parent"
                                         android:layout_height="match_parent"
                                         android:layout_margin="5dp"
@@ -536,7 +498,6 @@
                                         android:focusable="true"
                                         android:padding="5dp">
                                         <ImageView
-                                            android:id="@+id/buttonImgLink"
                                             android:layout_width="24dp"
                                             android:layout_height="20dp"
                                             android:layout_gravity="center"
@@ -572,7 +533,7 @@
                                     app:layout_constraintBottom_toBottomOf="parent"
                                     app:layout_constraintEnd_toStartOf="@+id/buttonLoopPlay">
                                     <com.google.android.material.button.MaterialButton
-                                        android:id="@+id/buttonMaterialTap"
+                                        android:id="@+id/ButtonMaterialTapJump"
                                         android:layout_width="37dp"
                                         android:layout_height="37dp"
                                         android:layout_margin="5dp"
@@ -584,7 +545,7 @@
                                         android:padding="0dp"
                                         app:cornerRadius="100dp" />
                                     <FrameLayout
-                                        android:id="@+id/buttonActualTap"
+                                        android:id="@+id/ButtonActualTapJump"
                                         android:layout_width="match_parent"
                                         android:layout_height="match_parent"
                                         android:layout_margin="5dp"
@@ -593,7 +554,6 @@
                                         android:focusable="true"
                                         android:padding="5dp">
                                         <ImageView
-                                            android:id="@+id/buttonImgTap"
                                             android:layout_width="19dp"
                                             android:layout_height="19dp"
                                             android:layout_gravity="center"
@@ -657,31 +617,48 @@
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:textColor="@color/Text2" />
-                                <TextView
-                                    android:id="@+id/StateTimerShutDown"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="定时关闭状态"
-                                    android:textSize="12sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
                                 <View
                                     android:layout_width="0dp"
                                     android:layout_height="0dp"
                                     android:layout_weight="1"
                                     tools:ignore="TooManyViews" />
-                                <TextView
-                                    android:id="@+id/ButtonTimerShutDown"
-                                    android:layout_width="40dp"
+                                <androidx.cardview.widget.CardView
+                                    android:id="@+id/ButtonCardAutoShut"
+                                    android:layout_width="wrap_content"
                                     android:layout_height="20dp"
+                                    android:layout_marginEnd="2dp"
                                     android:layout_gravity="center"
-                                    android:layout_marginEnd="12dp"
-                                    android:gravity="end"
-                                    android:text="设置"
-                                    android:textColor="@color/Text2"
-                                    android:textSize="14sp"
-                                    tools:ignore="SmallSp" />
+                                    android:backgroundTint="@color/ButtonCard_OFF"
+                                    app:layout_constraintTop_toTopOf="parent"
+                                    app:layout_constraintBottom_toBottomOf="parent"
+                                    app:layout_constraintEnd_toEndOf="parent"
+                                    app:cardElevation="1dp"
+                                    app:cardCornerRadius="5dp">
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"
+                                        android:orientation="horizontal"
+                                        tools:ignore="TooDeepLayout">
+                                        <TextView
+                                            android:id="@+id/ButtonTextAutoShut"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="match_parent"
+                                            android:layout_marginStart="5dp"
+                                            android:gravity="center"
+                                            android:text="当前状态"
+                                            android:textColor="@color/HeadText"
+                                            android:textSize="11sp" />
+                                        <ImageView
+                                            android:layout_width="20dp"
+                                            android:layout_height="20dp"
+                                            android:layout_gravity="center"
+                                            android:padding="2dp"
+                                            android:backgroundTint="@android:color/transparent"
+                                            android:scaleType="centerCrop"
+                                            android:src="@drawable/ic_setting_arrow_down"
+                                            tools:ignore="ContentDescription" />
+                                    </LinearLayout>
+                                </androidx.cardview.widget.CardView>
                             </LinearLayout>
                             <!-- 开关：播完后才关闭 -->
                             <LinearLayout
@@ -1043,7 +1020,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:minHeight="40dp"
-                                android:orientation="horizontal">
+                                android:orientation="horizontal"
+                                tools:ignore="UselessParent">
                                 <ImageView
                                     android:layout_width="19dp"
                                     android:layout_height="19dp"

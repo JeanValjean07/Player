@@ -113,9 +113,55 @@ object SettingsRequestCenter {
 
         return PREFS_DisableVideoTrackOnBack == 1
     }
+    //仅在播放完成后退出
+    private var PREFS_OnlyStopUnMediaEnd = -1
+    fun set_PREFS_OnlyStopUnMediaEnd(onlyStopUnMediaEnd: Boolean){
+        PREFS_OnlyStopUnMediaEnd = if (onlyStopUnMediaEnd) 1 else 0
+        PREFS_PlayEngin.edit { putInt("PREFS_OnlyStopUnMediaEnd", if (onlyStopUnMediaEnd) 1 else 0) }
+    }
+    fun get_PREFS_OnlyStopUnMediaEnd(context: Context): Boolean{
+        //确保配置清单已初始化
+        if (!state_PREFS_PlayEngin_initialized){
+            PREFS_PlayEngin = context.getSharedPreferences("PREFS_PlayEngin", 0)
+            state_PREFS_PlayEngin_initialized = true
+        }
+        //确保配置项已被读取过
+        if (PREFS_OnlyStopUnMediaEnd == -1){
+            PREFS_OnlyStopUnMediaEnd = PREFS_PlayEngin.getInt("PREFS_OnlyStopUnMediaEnd", -1)
+            if (PREFS_OnlyStopUnMediaEnd == -1){
+                PREFS_OnlyStopUnMediaEnd = 0
+                PREFS_PlayEngin.edit { putInt("PREFS_OnlyStopUnMediaEnd", 0) }
+            }
+        }
+
+        return PREFS_OnlyStopUnMediaEnd == 1
+    }
 
 
     //PREFS in PREFS_PlayVideoPage
+    //后台播放
+    private var PREFS_BackgroundPlay = -1
+    fun set_PREFS_BackgroundPlay(backgroundPlay: Boolean){
+        PREFS_BackgroundPlay = if (backgroundPlay) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_BackgroundPlay", if (backgroundPlay) 1 else 0) }
+    }
+    fun get_PREFS_BackgroundPlay(context: Context): Boolean{
+        //确保配置清单已初始化
+        if (!state_PREFS_PlayVideoPage_initialized){
+            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
+            state_PREFS_PlayVideoPage_initialized = true
+        }
+        //确保配置项已被读取过
+        if (PREFS_BackgroundPlay == -1){
+            PREFS_BackgroundPlay = PREFS_PlayVideoPage.getInt("PREFS_BackgroundPlay", -1)
+            if (PREFS_BackgroundPlay == -1){
+                PREFS_BackgroundPlay = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_BackgroundPlay", 1) }
+            }
+        }
+
+        return PREFS_BackgroundPlay == 1
+    }
     //始终使用深色播放界面
     private var PREFS_AlwaysUseDarkTheme = -1
     fun set_PREFS_AlwaysUseDarkTheme(alwaysUseDarkTheme: Boolean){
@@ -159,6 +205,7 @@ object SettingsRequestCenter {
                 PREFS_PlayVideoPage.edit { putInt("PREFS_EnableAlwaysSeek", 1) }
             }
         }
+
         return PREFS_EnableAlwaysSeek == 1
     }
     //LinkScroll
@@ -174,13 +221,14 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_EnableAlwaysSeek == -1) {
+        if (PREFS_EnableLinkScroll == -1) {
             PREFS_EnableLinkScroll = PREFS_PlayVideoPage.getInt("PREFS_EnableLinkScroll", -1)
             if (PREFS_EnableLinkScroll == -1) {
                 PREFS_EnableLinkScroll = 1
                 PREFS_PlayVideoPage.edit { putInt("PREFS_EnableLinkScroll", 1) }
             }
         }
+
         return PREFS_EnableLinkScroll == 1
     }
     //TapJump
@@ -203,6 +251,7 @@ object SettingsRequestCenter {
                 PREFS_PlayVideoPage.edit { putInt("PREFS_EnableTapJump", 0) }
             }
         }
+
         return PREFS_EnableTapJump == 1
     }
     //使用高刷新率
@@ -366,7 +415,7 @@ object SettingsRequestCenter {
         }
         return PREFS_EnablePlayAreaMoveAnim == 1
     }
-    //播放页样式
+    //播放页样式丨0 = 经典, 1 = 新晋
     private var PREFS_PlayPageType = -1
     fun set_PREFS_PlayPageType(playPageType: Int){
         PREFS_PlayPageType = playPageType

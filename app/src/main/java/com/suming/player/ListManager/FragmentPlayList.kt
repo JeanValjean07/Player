@@ -223,10 +223,10 @@ class FragmentPlayList: DialogFragment() {
         ButtonStopPlaying.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             //记录当前位置
-            PlayerSingleton.savePositionToRoom()
+            //PlayerSingleton.savePositionToRoom()
             //清除上次播放信息
             PlayerSingleton.clearMediaItem()
-            PlayerSingleton.clearLastRecord(requireContext())
+            //PlayerSingleton.clearLastRecord(requireContext())
             //销毁播放器
             PlayerSingleton.DevastatePlayBundle(requireContext())
             //发回命令信息
@@ -549,7 +549,7 @@ class FragmentPlayList: DialogFragment() {
             PlayerSingleton.continuePlay(true, force_request = true, need_fadeIn = false)
             requireContext().showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
         }else{
-            PlayerSingleton.setMediaItem(uriString.toUri(), true)
+            PlayerSingleton.setMediaItem(uriString.toUri(), true,requireContext())
             customDismiss()
         }
     }
