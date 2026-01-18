@@ -718,6 +718,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     currentSpeed = player.playbackParameters.speed
                     player.setPlaybackSpeed(currentSpeed * 2.0f)
                     notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
+                    setControllerInvisibleNoAnimation()
                     longPress = true
                     ToolVibrate().vibrate(this@PlayerActivityNeo)
                     super.onLongPress(e)
@@ -907,6 +908,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                         if (longPress) {
                             longPress = false
                             player.setPlaybackSpeed(currentSpeed)
+
+                            setControllerVisibleNoAnimation()
                             val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
                             NoticeCard.visibility = View.GONE
                         }
@@ -2814,6 +2817,22 @@ class PlayerActivityNeo: AppCompatActivity(){
             .withEndAction { controllerLayer.visibility = View.GONE }
             .start()
 
+
+    }
+    private fun setControllerVisibleNoAnimation() {
+        //状态标记变更
+        vm.state_controllerShowing = true
+
+        //启动被控控件控制
+        startVideoTimeSync()
+        //仅在新晋播放页使用
+        startScrollerSync()
+        //仅在传统播放页使用
+        //startSeekBarSync()
+
+        //隐藏控件并设置背景为有色
+        setBackgroundVisible()
+        controllerLayer.visibility = View.VISIBLE
 
     }
     private fun setControllerVisible() {

@@ -403,6 +403,7 @@ object PlayerSingleton {
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null){ return }
         //启动服务
+        Log.d("SuMing", "onMediaItemChanged")
         coroutine_startService.launch { startService() }
         //记录到上次播放清单
         coroutine_saveLastMediaRecord.launch { saveLastMediaRecord() }
@@ -993,7 +994,7 @@ object PlayerSingleton {
     //播放和暂停
     private var playState_playEnd = false
     private var playState_wasPlaying = false
-    fun continuePlay(need_requestFocus: Boolean,force_request: Boolean, need_fadeIn: Boolean) {
+    fun continuePlay(need_requestFocus: Boolean, force_request: Boolean, need_fadeIn: Boolean) {
         if (playState_playEnd){
             playState_playEnd = false
             _player?.seekTo(0)
@@ -1163,10 +1164,7 @@ object PlayerSingleton {
     private fun playerReady(){
         itemState_firstExoReady = true
         //是否需要应用独立的项参数
-        if (paraApply){
-            ExecuteApplyPara(
-                lastProgress = true, audioTrack = true, videoTrack = true)
-        }
+        if (paraApply){ ExecuteApplyPara() }
 
     }
     private fun playEnd(){
@@ -1210,13 +1208,16 @@ object PlayerSingleton {
     fun get_Para_saveLastProgress(): Boolean{
         return Para_saveLastProgress
     }
-    fun set_Para_saveLastProgress(boolean: Boolean, immediateApply: Boolean){
+    fun set_Para_saveLastProgress(boolean: Boolean){
         Para_saveLastProgress = boolean
-        //是否需要立即执行
-        if (immediateApply){      }
+        val currentPosition = _player?.currentPosition ?: 0L
         //保存到数据库
         coroutine_saveOrFetchDataBase.launch {
             MediaItemRepo.get(singletonContext).update_PREFS_saveLastPosition(MediaInfo_FileName,boolean)
+            if (currentPosition != 0L){
+                MediaItemRepo.get(singletonContext).update_value_LastPosition(MediaInfo_FileName,currentPosition)
+            }
+
         }
     }
     fun get_Para_DisableAudioTrack(): Boolean{
@@ -1225,7 +1226,13 @@ object PlayerSingleton {
     fun set_Para_DisableAudioTrack(boolean: Boolean, immediateApply: Boolean){
         Para_DisableAudioTrack = boolean
         //是否需要立即执行
-        if (immediateApply){      }
+        if (immediateApply){
+            if (Para_DisableAudioTrack){
+                DisableAudioTrack()
+            }else{
+                EnableAudioTrack()
+            }
+        }
         //保存到数据库
         coroutine_saveOrFetchDataBase.launch {
             MediaItemRepo.get(singletonContext).update_PREFS_VideoOnly(MediaInfo_FileName,boolean)
@@ -1237,7 +1244,13 @@ object PlayerSingleton {
     fun set_Para_DisableVideoTrack(boolean: Boolean, immediateApply: Boolean){
         Para_DisableVideoTrack = boolean
         //是否需要立即执行
-        if (immediateApply){  }
+        if (immediateApply){
+            if (Para_DisableVideoTrack){
+                DisableVideoTrack()
+            }else{
+                EnableVideoTrack()
+            }
+        }
         //保存到数据库
         coroutine_saveOrFetchDataBase.launch {
             MediaItemRepo.get(singletonContext).update_PREFS_SoundOnly(MediaInfo_FileName,boolean)
@@ -1252,40 +1265,44 @@ object PlayerSingleton {
     private var paraApply_lastProgress = 0L
     private fun FetchDataBaseForItem(itemName: String){
         coroutine_saveOrFetchDataBase.launch {
-            //读取独立参数项
+            //读取保存的进度
             Para_saveLastProgress = MediaItemRepo.get(singletonContext).get_PREFS_saveLastPosition(MediaInfo_FileName)
+            paraApply_lastProgress = if (Para_saveLastProgress){
+                MediaItemRepo.get(singletonContext).get_value_LastPosition(MediaInfo_FileName)
+            }else{
+                0L
+            }
+            if (paraApply_lastProgress <= 20_000L || paraApply_lastProgress >= MediaInfo_Duration - 20_000L){
+                paraApply_lastProgress = 0L
+            }
 
             //应用独立设置项
-            ExecuteApplyPara(lastProgress = true, audioTrack = false, videoTrack = false)
-
-        }
-    }
-    @Suppress("SameParameterValue")
-    private fun ExecuteApplyPara(lastProgress: Boolean, audioTrack: Boolean, videoTrack: Boolean ){
-
-        if (lastProgress && Para_saveLastProgress){
-            coroutine_saveOrFetchDataBase.launch {
-                paraApply_lastProgress = MediaItemRepo.get(singletonContext).get_value_LastPosition(MediaInfo_FileName)
-
-                withContext(Dispatchers.Main){
-
-                    if (paraApply_lastProgress >= 10_000L && paraApply_lastProgress < _player?.duration!!){
-                        if (itemState_firstExoReady){
-                            _player?.seekTo(paraApply_lastProgress)
-
-                            paraApply_lastProgress = 0L
-                        }else{
-                            paraApply = true
-                        }
-                    }
-
-                }
-
+            withContext(Dispatchers.Main){
+                ExecuteApplyPara()
             }
+
+        }
+    }
+    //应用播放参数
+    private fun ExecuteApplyPara(){
+
+        if (itemState_firstExoReady){
+
+            paraApply = false
+
+            if (paraApply_lastProgress != 0L){
+                _player?.seekTo(paraApply_lastProgress)
+            }
+
+
+        }else{
+            paraApply = true
+
+
         }
 
     }
-    //轨道变更执行程序
+    //轨道启用和禁用
     private var Para_state_videoTrack_Disabled = true
     private var Para_state_audioTrack_Disabled = true
     fun DisableVideoTrack(){
