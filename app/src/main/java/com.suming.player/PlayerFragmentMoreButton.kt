@@ -70,6 +70,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
 
+
     @Suppress("DEPRECATION")
     override fun onStart() {
         super.onStart()
@@ -722,10 +723,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private fun updateLoopModeText(view: View){
         val ButtonTextLoopMode = view.findViewById<TextView>(R.id.ButtonTextLoopMode)
         ButtonTextLoopMode.text = when (PlayerListManager.getLoopMode(requireContext())) {
-            "ONE" -> "单曲循环"
-            "ALL" -> "全部循环"
-            "OFF" -> "关闭循环"
-            else -> "获取出错"
+            "ONE" -> "单集循环"
+            "ALL" -> "列表循环"
+            "OFF" -> "播完暂停"
+            else -> "未知"
         }
     }
     //倍速

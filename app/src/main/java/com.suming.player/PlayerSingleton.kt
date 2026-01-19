@@ -1006,8 +1006,10 @@ object PlayerSingleton {
         if (need_requestFocus) requestAudioFocus(singletonContext, force_request)
 
         //保险：重置倍速
-        if (_player != null && _player?.playbackParameters?.speed != Para_OriginalPlaySpeed)
-        player.setPlaybackSpeed(Para_OriginalPlaySpeed)
+        if (_player != null && _player?.playbackParameters?.speed != Para_OriginalPlaySpeed){
+            player.setPlaybackSpeed(Para_OriginalPlaySpeed)
+        }
+
 
         //开始播放
         _player?.play()
@@ -1210,15 +1212,14 @@ object PlayerSingleton {
     }
     fun set_Para_saveLastProgress(boolean: Boolean){
         Para_saveLastProgress = boolean
-        val currentPosition = _player?.currentPosition ?: 0L
+
         //保存到数据库
         coroutine_saveOrFetchDataBase.launch {
             MediaItemRepo.get(singletonContext).update_PREFS_saveLastPosition(MediaInfo_FileName,boolean)
-            if (currentPosition != 0L){
-                MediaItemRepo.get(singletonContext).update_value_LastPosition(MediaInfo_FileName,currentPosition)
-            }
-
         }
+        //开启保存进度循环
+        if (boolean){ startSaveProgressHandler() }else{ stopSaveProgressHandler() }
+
     }
     fun get_Para_DisableAudioTrack(): Boolean{
         return Para_DisableAudioTrack
@@ -1256,6 +1257,13 @@ object PlayerSingleton {
             MediaItemRepo.get(singletonContext).update_PREFS_SoundOnly(MediaInfo_FileName,boolean)
         }
     }
+    //重置独立播放参数
+    private fun clearItemPara(){
+        paraApply = false
+        Para_saveLastProgress = false
+        Para_DisableAudioTrack = false
+        Para_DisableVideoTrack = false
+    }
     //独立播放参数合集
     private var Para_saveLastProgress = false
     private var Para_DisableAudioTrack = false
@@ -1276,6 +1284,7 @@ object PlayerSingleton {
                 paraApply_lastProgress = 0L
             }
 
+
             //应用独立设置项
             withContext(Dispatchers.Main){
                 ExecuteApplyPara()
@@ -1285,22 +1294,21 @@ object PlayerSingleton {
     }
     //应用播放参数
     private fun ExecuteApplyPara(){
-
+        //已准备好：立即执行参数设定
         if (itemState_firstExoReady){
-
+            //执行后关闭标记
             paraApply = false
-
+            //判断时候需要恢复上次的进度
             if (paraApply_lastProgress != 0L){
                 _player?.seekTo(paraApply_lastProgress)
             }
-
-
-        }else{
-            paraApply = true
+            //开启保存进度循环丨注意：必须在媒体准备好后开启
+            if (Para_saveLastProgress){ startSaveProgressHandler() }else{ stopSaveProgressHandler() }
 
 
         }
-
+        //未准备好：设置paraApply标记供首次准备完成时调用
+        else{ paraApply = true }
     }
     //轨道启用和禁用
     private var Para_state_videoTrack_Disabled = true
@@ -1386,8 +1394,6 @@ object PlayerSingleton {
 
 
 
-
-
     //启动播放器单例 + 存入上下文引用
     lateinit var singletonContext: Context
     private var state_ContextSet = false
@@ -1453,6 +1459,35 @@ object PlayerSingleton {
             delay(60_000)
             DisableVideoTrack()
         }
+    }
+
+    //Runnable:保存播放进度
+    private var coroutine_saveProgress = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var state_saveProgress_Running = false
+    private val saveProgressHandler = Handler(Looper.getMainLooper())
+    private var saveProgress = object : Runnable{
+        override fun run() {
+            val currentProgress = _player?.currentPosition?: -1L
+
+            if (currentProgress == -1L) return
+
+            Log.d("SuMing","saveProgress: $currentProgress")
+
+            coroutine_saveProgress.launch {
+                MediaItemRepo.get(singletonContext).update_value_LastPosition(MediaInfo_FileName,currentProgress)
+            }
+
+            saveProgressHandler.postDelayed(this, 20_000)
+        }
+    }
+    private fun startSaveProgressHandler() {
+        if (state_saveProgress_Running) return
+        saveProgressHandler.post(saveProgress)
+        state_saveProgress_Running = true
+    }
+    private fun stopSaveProgressHandler() {
+        saveProgressHandler.removeCallbacks(saveProgress)
+        state_saveProgress_Running = false
     }
 
 

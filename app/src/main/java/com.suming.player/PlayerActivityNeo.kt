@@ -114,7 +114,7 @@ import kotlin.math.pow
 
 @UnstableApi
 @RequiresApi(Build.VERSION_CODES.Q)
-//@Suppress("unused")
+@Suppress("unused")
 class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -371,7 +371,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
 
 
-
         coroutine_loadFrequentlyUsedSetting.launch {
             //进度条停止滚动时尾帧使用关键帧
             vm.PREFS_UseSyncFrameWhenScrollerStop = SettingsRequestCenter.get_PREFS_UseSyncFrameWhenScrollerStop(this@PlayerActivityNeo)
@@ -401,6 +400,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //开启旋转监听器
             startOrientationListener()
         }
+
 
         coroutine_registerScroller.launch {
             //Scroller事件 gestureDetector层 -onSingleTap -onDown
@@ -577,6 +577,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             })
         }
+
 
         coroutine_registerControllerButton.launch {
             //退出按钮
@@ -909,7 +910,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                             longPress = false
                             player.setPlaybackSpeed(currentSpeed)
 
-                            setControllerVisibleNoAnimation()
+
                             val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
                             NoticeCard.visibility = View.GONE
                         }
