@@ -105,11 +105,8 @@ class PlayerService(): MediaSessionService() {
         //关闭服务
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-        //保存播放进度
-        //PlayerSingleton.savePositionToRoom()
-        //释放播放器
-        PlayerSingleton.DevastatePlayBundle(this)
-        PlayerSingleton.onTaskRemoved()
+        //关闭播放器
+        PlayerSingleton.stopPlayBundle(false,this)
     }
     //接收Intent额外信息
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)

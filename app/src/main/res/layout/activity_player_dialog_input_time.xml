@@ -1,84 +1,112 @@
-<LinearLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/dialog_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
+    android:maxWidth="500dp"
     android:orientation="vertical"
-    android:background="@color/Background"
-    tools:ignore="HardcodedText"
-    android:padding="24dp">
-    <!-- Dialog Title -->
-    <TextView
-        android:id="@+id/dialog_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="dialog_title"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:padding="6dp" />
-    <!-- Dialog Description -->
-    <TextView
-        android:id="@+id/dialog_description"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="dialog_description"
-        android:textSize="10sp"
-        android:padding="4dp"
-        android:gravity="center"
-        tools:ignore="SmallSp" />
-    <!-- Dialog Input -->
+    android:padding="24dp"
+    app:cardCornerRadius="20dp"
+    tools:ignore="HardcodedText">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:padding="4dp">
-        <EditText
-            android:id="@+id/dialog_input_hour"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="hour"
-            android:textSize="14sp"
-            android:inputType="number"
-            android:maxLength="1"
-            android:maxLines="1"
-            tools:ignore="Autofill" />
+        android:layout_margin="20dp"
+        android:orientation="vertical">
+        <!-- 对话框标题 -->
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/dialog_title"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="时"
-            android:textSize="10sp"
-            android:padding="4dp"
-            tools:ignore="SmallSp" />
-        <EditText
-            android:id="@+id/dialog_input_minute"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="minute"
-            android:textSize="14sp"
-            android:inputType="numberDecimal"
-            android:maxLength="5"
-            android:maxLines="1"
-            tools:ignore="Autofill" />
+            android:text="对话框标题"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="start"
+            />
+        <!-- 占位 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="5dp"/>
+        <!-- 对话框描述 -->
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/dialog_description"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=" 分 "
-            android:textSize="10sp"
-            android:padding="4dp"
-            tools:ignore="SmallSp" />
+            android:text="对话框描述"
+            android:gravity="start"
+            android:textSize="15sp"
+            />
+        <!-- 占位 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="10dp"/>
+
+        <!-- 时间输入框 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="4dp">
+            <EditText
+                android:id="@+id/dialog_input_hour"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="hour"
+                android:textSize="14sp"
+                android:inputType="number"
+                android:maxLength="1"
+                android:maxLines="1"
+                android:layout_weight="1"
+                tools:ignore="Autofill" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="时"
+                android:textSize="15sp"
+                android:padding="4dp"
+                tools:ignore="SmallSp" />
+            <EditText
+                android:id="@+id/dialog_input_minute"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="minute"
+                android:textSize="14sp"
+                android:inputType="numberDecimal"
+                android:maxLength="5"
+                android:maxLines="1"
+                android:layout_weight="1"
+                tools:ignore="Autofill" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" 分 "
+                android:textSize="15sp"
+                android:padding="4dp"
+                tools:ignore="SmallSp" />
+
+        </LinearLayout>
+
+        <!-- 单一操作按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dialog_button"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:shape="rectangle"
+            app:cornerRadius="10dp"
+            android:layout_gravity="center"
+            android:backgroundTint="@color/Button_Background_Recommend"
+            android:text="推荐按钮"
+            android:textColor="@color/Button_Text_Recommend"
+            android:textSize="12sp"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp"
+            android:layout_weight="1"
+            />
 
     </LinearLayout>
-
-    <!-- Dialog Button -->
-    <Button
-        android:id="@+id/dialog_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="@color/ButtonBg"
-        android:textColor="@color/ButtonText"
-        android:layout_gravity="center"
-        android:text="dialog_button" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

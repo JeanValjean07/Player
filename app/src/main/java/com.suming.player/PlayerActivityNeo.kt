@@ -328,7 +328,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
         }
         //启动播放器单例
-        PlayerSingleton.startPlayerSingleton(application)
+        PlayerSingleton.setupPlayerSingleton(application)
         //其他预设
         preCheck()
 
@@ -1146,6 +1146,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                     //把播放区域移回去
                     MovePlayArea_down()
                 }
+                "ExitRightNow" -> {
+                    EnsureExit_close_all_stuff()
+                }
             }
         }
         //播放列表返回值 FROM_FRAGMENT_PLAY_LIST
@@ -1654,7 +1657,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         stopVideoTimeSync()
         //停止服务端操作
         PlayerSingleton.clearMediaInfo(this@PlayerActivityNeo)
-        PlayerSingleton.DevastatePlayBundle(application)
+        PlayerSingleton.stopPlayBundle(false,application)
         finish()
     }
     private fun EnsureExit_but_keep_playing(){
@@ -1676,7 +1679,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         setResult(RESULT_OK, data)
         //不停止服务端操作
         if (playerReadyFrom_FirstEntry){
-            PlayerSingleton.DevastatePlayBundle(application)
+            PlayerSingleton.stopPlayBundle(false,application)
             PlayerSingleton.clearMediaInfo(this@PlayerActivityNeo)
         }
         finish()

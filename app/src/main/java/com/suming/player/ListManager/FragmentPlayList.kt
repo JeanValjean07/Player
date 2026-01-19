@@ -222,13 +222,8 @@ class FragmentPlayList: DialogFragment() {
         val ButtonStopPlaying = view.findViewById<ImageButton>(R.id.ButtonStopPlaying)
         ButtonStopPlaying.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            //记录当前位置
-            //PlayerSingleton.savePositionToRoom()
-            //清除上次播放信息
-            PlayerSingleton.clearMediaItem()
-            //PlayerSingleton.clearLastRecord(requireContext())
-            //销毁播放器
-            PlayerSingleton.DevastatePlayBundle(requireContext())
+            //关闭播放器
+            PlayerSingleton.stopPlayBundle(true,requireContext())
             //发回命令信息
             val result = bundleOf("KEY" to "stopPlaying")
             setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)

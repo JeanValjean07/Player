@@ -33,6 +33,7 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -417,7 +418,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                             chooseCountDownDuration(90,view); true
                         }
                         R.id.MenuAction_Input -> {
-                            setShutDownTimeByInput(); true
+                            setShutDownTimeByInput(view); true
                         }
                         else -> true
                     }
@@ -741,7 +742,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //不主动退出
     }
     private fun setSpeedByInput(){
-        val dialog = Dialog(requireContext())
+        val dialog = Dialog(requireContext()).apply {
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.activity_player_dialog_input_value, null)
         dialog.setContentView(dialogView)
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
@@ -797,7 +800,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private fun chooseCountDownDuration(countDownDuration_Min: Int,view: View){
         ToolVibrate().vibrate(requireContext())
         //设置自动关闭倒计时
-        PlayerSingleton.setCountDownTimer(countDownDuration_Min)
+        PlayerSingleton.set_timer_autoShut(countDownDuration_Min)
 
         //刷新显示文本
         updateAutoShutText(view)
@@ -806,19 +809,20 @@ class PlayerFragmentMoreButton: DialogFragment() {
     }
     private fun updateAutoShutText(view: View){
         val ButtonTextAutoShut = view.findViewById<TextView>(R.id.ButtonTextAutoShut)
-        val shutDownMoment = PlayerSingleton.getShutDownMoment()
+        val shutDownMoment = PlayerSingleton.get_timer_autoShut()
+        Log.d("SuMing","updateAutoShutText: $shutDownMoment")
         if (shutDownMoment == ""){
             ButtonTextAutoShut.text = "未设置"
-        }
-        else if (shutDownMoment == "shutdown_when_end"){
+        }else if(shutDownMoment == "shutdown_when_end"){
             ButtonTextAutoShut.text = "本次播放结束后关闭"
-        }
-        else{
+        }else{
             ButtonTextAutoShut.text = "将在${shutDownMoment}关闭"
         }
     }
-    private fun setShutDownTimeByInput(){
-        val dialog = Dialog(requireContext())
+    private fun setShutDownTimeByInput(view: View){
+        val dialog = Dialog(requireContext()).apply {
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.activity_player_dialog_input_time, null)
         dialog.setContentView(dialogView)
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
@@ -827,10 +831,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val EditTextMinute: EditText = dialogView.findViewById(R.id.dialog_input_minute)
         val Button: Button = dialogView.findViewById(R.id.dialog_button)
         //修改提示文本
-        title.text = "自定义：定时关闭时间"
-        Description.text = "请输入您的自定定时关闭时间"
-        EditTextHour.hint = "              "
-        EditTextMinute.hint = "              "
+        title.text = "定时关闭"
+        Description.text = "设置您期望的倒计时时长"
+        EditTextHour.hint = ""
+        EditTextMinute.hint = ""
         Button.text = "确定"
         //设置点击事件
         val imm = requireContext().getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
@@ -858,24 +862,23 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 return@setOnClickListener
             }
             if (hour == 0 && minute == 0){
-                requireContext().showCustomToast("您选择了立即关闭", Toast.LENGTH_SHORT, 3)
+                requireContext().showCustomToast("即将关闭", Toast.LENGTH_SHORT, 3)
                 lifecycleScope.launch {
                     delay(2000)
                     //关闭播放器
-                    //PlayerSingleton.savePositionToRoom()
-                    PlayerSingleton.onTaskRemoved()
-                    PlayerSingleton.DevastatePlayBundle(requireContext())
-                    //结束进程
-                    val pid = Process.myPid()
-                    Process.killProcess(pid)
+                    PlayerSingleton.stopPlayBundle(false,requireContext())
+                    //发回信息让播放页关闭
+                    val result = bundleOf("KEY" to "ExitRightNow")
+                    setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
                 }
+                return@setOnClickListener
             }
             //输入数值合规：转为分钟传入
             val totalMinutes = hour * 60 + minute
             //设置自动关闭倒计时
-            PlayerSingleton.setCountDownTimer(totalMinutes)
+            PlayerSingleton.set_timer_autoShut(totalMinutes)
             //刷新显示文本
-            updateAutoShutText(dialogView)
+            updateAutoShutText(view)
 
             //关闭对话框
             dialog.dismiss()

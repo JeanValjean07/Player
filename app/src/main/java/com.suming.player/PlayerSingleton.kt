@@ -24,7 +24,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.provider.MediaStore
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
@@ -62,7 +61,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.system.exitProcess
-import kotlin.time.Duration
 
 @SuppressLint("StaticFieldLeak")
 @UnstableApi
@@ -99,7 +97,7 @@ object PlayerSingleton {
             }
 
         //清除随单个播放器实例的状态
-        state_PlayerStateListenerAdded = false
+        playerState_PlayerStateListenerAdded = false
 
 
         return ExoPlayer
@@ -163,24 +161,21 @@ object PlayerSingleton {
         }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-            escapePlayerError()
-            Log.d("SuMing", "onPlayerError: ${error}")
-            Log.d("SuMing", "onPlayerError: ${error.errorCode}")
-            Log.d("SuMing", "onPlayerError: ${error.cause}")
+
         }
     }
-    private var state_PlayerStateListenerAdded = false
+    private var playerState_PlayerStateListenerAdded = false
     fun addPlayerStateListener(){
-        if (state_PlayerStateListenerAdded){
+        if (playerState_PlayerStateListenerAdded){
             return
         }
         player.removeListener(PlayerStateListener)
         player.addListener(PlayerStateListener)
-        state_PlayerStateListenerAdded = true
+        playerState_PlayerStateListenerAdded = true
     }
     fun removePlayerStateListener(){
         player.removeListener(PlayerStateListener)
-        state_PlayerStateListenerAdded = false
+        playerState_PlayerStateListenerAdded = false
     }
     //快速创建播放器并包含后续必要操作
     fun startSingletonExoPlayer(context: Context){
@@ -350,7 +345,9 @@ object PlayerSingleton {
             if (MediaInfo_FileName.isEmpty()) return@launch
             if (currentPosition == -1L) return@launch
 
-            saveOldItemData(oldItemName,currentPosition, oldItemDuration)
+            withContext(Dispatchers.Main){
+                saveOldItemData(oldItemName,currentPosition, oldItemDuration)
+            }
         }
 
 
@@ -402,8 +399,9 @@ object PlayerSingleton {
     //完成媒体项变更丨后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null){ return }
+
+
         //启动服务
-        Log.d("SuMing", "onMediaItemChanged")
         coroutine_startService.launch { startService() }
         //记录到上次播放清单
         coroutine_saveLastMediaRecord.launch { saveLastMediaRecord() }
@@ -418,7 +416,7 @@ object PlayerSingleton {
         ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
 
         //请求音频焦点
-        requestAudioFocus(singletonContext, force_request = false)
+        requestAudioFocus(objectContext, force_request = false)
 
 
     }
@@ -432,11 +430,11 @@ object PlayerSingleton {
 
     }
     private fun setServiceLink(newType: Int = -1){
-        val serviceLink = singletonContext.getSharedPreferences("serviceLink", MODE_PRIVATE)
+        val serviceLink = objectContext.getSharedPreferences("serviceLink", MODE_PRIVATE)
         //写入媒体类型
         serviceLink.edit{ putString("MediaInfo_MediaType", MediaInfo_MediaType).apply() }
         //写入视频播放器样式
-        val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(singletonContext)
+        val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(objectContext)
         when(playPageType){
             0 -> serviceLink.edit{ putInt("state_PlayerType", 1).apply() }
             1 ->  serviceLink.edit{ putInt("state_PlayerType", 2).apply() }
@@ -447,12 +445,12 @@ object PlayerSingleton {
         serviceLink.edit{ putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist).apply() }
     }
     private fun startMediaSession(){
-        connectToMediaSession(singletonContext)
+        connectToMediaSession(objectContext)
     }
     //写入上次播放记录丨私有函数丨可作为一条单独线程
     private var coroutine_saveLastMediaRecord = CoroutineScope(Dispatchers.IO)
     private fun saveLastMediaRecord(){
-        val lastRecord = singletonContext.getSharedPreferences("lastRecord", MODE_PRIVATE)
+        val lastRecord = objectContext.getSharedPreferences("lastRecord", MODE_PRIVATE)
         lastRecord.edit {
             putString("MediaInfo_MediaType", MediaInfo_MediaType)
             putString("MediaInfo_FileName", MediaInfo_FileName)
@@ -519,30 +517,49 @@ object PlayerSingleton {
         }, MoreExecutors.directExecutor())
     }
     //关闭媒体会话控制器
-    private fun stopMediaSession(context: Context){
+    private fun stopMediaSessionController(context: Context){
         MediaSessionController?.get()?.run { release() }
         controller = null
+        sessionState_MediaSession_connected = false
     }
     private fun stopServices(){
-        singletonContext.stopService(Intent(singletonContext, PlayerService::class.java))
+        objectContext.stopService(Intent(objectContext, PlayerService::class.java))
+        sessionState_MediaSession_connected = false
     }
-    //完全清除媒体会话
-    private fun DevastateMediaSessionBundle(context: Context){
-        //关闭服务
+    //清除媒体会话
+    private fun stopMediaSession(context: Context){
+        stopMediaSessionController(context)
         stopServices()
-        //关闭媒体会话
-        stopMediaSession(context)
-
         sessionState_MediaSession_connected = false
     }
 
 
-
-    //👀丨在播放列表中关闭播放并清除媒体记录
-    fun stopPlayBundle(context: Context){
-
-
-
+    //👀丨关闭各种组件
+    //关闭播放器核心
+    private fun DevastatePlayEnginBundle(context: Context){
+        //执行播放器释放
+        releasePlayer()
+        //播放器监听器跟随销毁,重置状态
+        playerState_PlayerStateListenerAdded = false
+    }
+    //完全清除媒体会话
+    private fun DevastateMediaSessionBundle(context: Context){
+        stopMediaSession(context)
+    }
+    //关闭监听器
+    private fun DevastateListener(){
+        stopListener()
+    }
+    //公共函数
+    fun stopPlayBundle(need_clear_record: Boolean, context: Context){
+        //清除播放记录
+        if (need_clear_record){ clearLastMediaRecord(context) }
+        //关闭媒体会话
+        DevastateMediaSessionBundle(context)
+        //关闭播放器
+        DevastatePlayEnginBundle(context)
+        //关闭监听器
+        DevastateListener()
     }
 
 
@@ -566,7 +583,7 @@ object PlayerSingleton {
             val sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
             val sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
             //读取所有媒体
-            val mediaStoreRepo = MediaStoreRepo.get(singletonContext)
+            val mediaStoreRepo = MediaStoreRepo.get(objectContext)
             val mediaStoreSettings = mediaStoreRepo.getAllVideosSorted(sortOrder, sortOrientation)
             val mediaItems = mediaStoreSettings
                 .map { setting ->
@@ -609,7 +626,7 @@ object PlayerSingleton {
             val sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
             val sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
             //读取所有媒体
-            val mediaStoreRepo = MediaStoreRepo.get(singletonContext)
+            val mediaStoreRepo = MediaStoreRepo.get(objectContext)
             val mediaStoreSettings = mediaStoreRepo.getAllVideosSorted(sortOrder, sortOrientation)
             val mediaItems = mediaStoreSettings
                 .map { setting ->
@@ -666,7 +683,7 @@ object PlayerSingleton {
     } //内部:更新当前媒体index
     private fun isNewUriValid(uri: Uri): Boolean{
         retriever = MediaMetadataRetriever()
-        try { retriever.setDataSource(singletonContext, uri) }
+        try { retriever.setDataSource(objectContext, uri) }
         catch (e: Exception){
             ToolEventBus.sendEvent("ExistInvalidMediaItem")
             //Log.e("SuMing", "checkNewUri: $e")
@@ -676,7 +693,7 @@ object PlayerSingleton {
     }
     private fun showNotification_MediaListNotPrepared(text: String) {
         val channelId = "toast_replace"
-        val nm = singletonContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        val nm = objectContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         val channel = NotificationChannel(channelId, "提示", NotificationManager.IMPORTANCE_HIGH)
             .apply {
@@ -685,7 +702,7 @@ object PlayerSingleton {
             }
         nm.createNotificationChannel(channel)
 
-        val notification = NotificationCompat.Builder(singletonContext, channelId)
+        val notification = NotificationCompat.Builder(objectContext, channelId)
             .setSmallIcon(R.drawable.ic_player_service_notification)
             .setContentTitle(null)
             .setContentText(text)
@@ -701,7 +718,7 @@ object PlayerSingleton {
     //播放列表:切换媒体
     private fun getTargetMediaUri(flag_next_or_previous: String): String{
         if (!state_MediaListProcess_complete){
-            singletonContext.showCustomToast("播放列表未加载完成", Toast.LENGTH_SHORT, 3)
+            objectContext.showCustomToast("播放列表未加载完成", Toast.LENGTH_SHORT, 3)
             return "error"
         }
         var indexCursor = currentMediaIndex
@@ -753,7 +770,7 @@ object PlayerSingleton {
             return targetUriString
         }
         else{
-            singletonContext.showCustomToast("未传入有效的上下参数",Toast.LENGTH_SHORT, 3)
+            objectContext.showCustomToast("未传入有效的上下参数",Toast.LENGTH_SHORT, 3)
             return "error"
         }
     }
@@ -765,13 +782,13 @@ object PlayerSingleton {
         //获取目标uri
         val targetUri = targetUriString.toUri()
         //解码目标媒体信息
-        val getMediaInfoResult = getMediaInfo(singletonContext,targetUri)
+        val getMediaInfoResult = getMediaInfo(objectContext,targetUri)
         if (!getMediaInfoResult){
-            singletonContext.showCustomToast("出错了",Toast.LENGTH_SHORT, 3)
+            objectContext.showCustomToast("出错了",Toast.LENGTH_SHORT, 3)
             return
         }
         //切换至目标媒体项
-        setNewMediaItem(targetUri, true, singletonContext)
+        setNewMediaItem(targetUri, true, objectContext)
 
 
     }
@@ -783,17 +800,17 @@ object PlayerSingleton {
         //获取目标uri
         val targetUri = targetUriString.toUri()
         //解码目标媒体信息
-        val getMediaInfoResult = getMediaInfo(singletonContext,targetUri)
+        val getMediaInfoResult = getMediaInfo(objectContext,targetUri)
         if (!getMediaInfoResult){
-            singletonContext.showCustomToast("出错了",Toast.LENGTH_SHORT, 3)
+            objectContext.showCustomToast("出错了",Toast.LENGTH_SHORT, 3)
             return
         }
         //切换至目标媒体项
-        setNewMediaItem(targetUri, true, singletonContext)
+        setNewMediaItem(targetUri, true, objectContext)
 
     }
     //读取媒体列表
-    //getMediaListFromDataBase(singletonContext)
+    //getMediaListFromDataBase(objectContext)
     //更新当前媒体index
     //updateMediaIndex(MediaInfo_MediaUriString)
 
@@ -825,24 +842,24 @@ object PlayerSingleton {
             }
             if (relevant.isNotEmpty()) {
                 state_HeadSetInserted = true
-                setVolumeLimit(singletonContext)
+                setVolumeLimit(objectContext)
             }
         }
     }
     private var state_AudioManager_Initialized = false
     private var state_DeviceCallback_Registered = false
     private var state_HeadSetInserted = false
-    fun initAudioManager(context: Context){
+    private fun initAudioManager(context: Context){
         audioManager = context.getSystemService(AUDIO_SERVICE) as AudioManager
         state_AudioManager_Initialized = true
     }
-    fun startAudioDeviceCallback(context: Context){
+    private fun startAudioDeviceCallback(context: Context){
         if (!state_AudioManager_Initialized){ initAudioManager(context) }
         if (state_DeviceCallback_Registered) return
         state_DeviceCallback_Registered = true
         audioManager.registerAudioDeviceCallback(DeviceCallback, null)
     }
-    fun stopAudioDeviceCallback(context: Context){
+    private fun stopAudioDeviceCallback(context: Context){
         if (!state_AudioManager_Initialized){
             initAudioManager(context)
         }
@@ -851,7 +868,7 @@ object PlayerSingleton {
     fun getState_isHeadsetPlugged(context: Context): Boolean {
         return state_HeadSetInserted
     }
-    private fun setVolumeLimit(context: Context){
+    fun setVolumeLimit(context: Context){
         if (!state_AudioManager_Initialized){
             initAudioManager(context)
         }
@@ -864,7 +881,7 @@ object PlayerSingleton {
     //音频焦点监听
     private lateinit var focusRequest: AudioFocusRequest
     private var state_focusRequest_Initialized = false
-    fun initFocusRequest(context: Context){
+    private fun initFocusRequest(context: Context){
         focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
             .setAudioAttributes(AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -894,7 +911,7 @@ object PlayerSingleton {
             .build()
         state_focusRequest_Initialized = true
     }
-    fun requestAudioFocus(context: Context, force_request: Boolean){
+    private fun requestAudioFocus(context: Context, force_request: Boolean){
         if (!state_focusRequest_Initialized){
             initFocusRequest(context)
         }
@@ -908,7 +925,7 @@ object PlayerSingleton {
         }
 
     }
-    fun releaseAudioFocus(context: Context){
+    private fun releaseAudioFocus(context: Context){
         if (!state_focusRequest_Initialized){
             initFocusRequest(context)
         }
@@ -919,12 +936,12 @@ object PlayerSingleton {
     }
     //事件总线
     private var state_EventBus_Registered = false
-    fun registerEventBus(context: Context){
+    private fun registerEventBus(context: Context){
         if (state_EventBus_Registered) return
         setupEventBus(context)
         state_EventBus_Registered = true
     }
-    fun unregisterEventBus(){
+    private fun unregisterEventBus(){
         disposable?.dispose()
         state_EventBus_Registered = false
     }
@@ -948,14 +965,24 @@ object PlayerSingleton {
             }
             "SessionController_Play" -> {
                 setWasPlaying(true)
-                requestAudioFocus(singletonContext, force_request = false)
+                requestAudioFocus(objectContext, force_request = false)
             }
             "SessionController_Pause" -> {
                 setWasPlaying(false)
             }
         }
     }
-
+    //开启/关闭所有监听器
+    fun startListener(){
+        registerEventBus(objectContext)
+        startAudioDeviceCallback(objectContext)
+        initFocusRequest(objectContext)
+    }
+    fun stopListener(){
+        unregisterEventBus()
+        stopAudioDeviceCallback(objectContext)
+        releaseAudioFocus(objectContext)
+    }
 
 
 
@@ -1003,7 +1030,7 @@ object PlayerSingleton {
 
 
         //请求音频焦点
-        if (need_requestFocus) requestAudioFocus(singletonContext, force_request)
+        if (need_requestFocus) requestAudioFocus(objectContext, force_request)
 
         //保险：重置倍速
         if (_player != null && _player?.playbackParameters?.speed != Para_OriginalPlaySpeed){
@@ -1038,115 +1065,9 @@ object PlayerSingleton {
         _player?.stop()
     }
     fun releasePlayer() {
-        _player?.stop()
         _player?.release()
         _player = null
-    }
-    //关闭播放器实例 + 服务 + 媒体会话
-    fun DevastatePlayBundle(context: Context){
-        //播放器监听器跟随销毁,重置状态
-        state_PlayerStateListenerAdded = false
-        //销毁媒体会话
-        DevastateMediaSessionBundle(context)
-        //执行播放器释放
-        releasePlayer()
-    }
-
-    //关闭所有监听器
-    fun onTaskRemoved(){
-        unregisterEventBus()
-        stopAudioDeviceCallback(singletonContext)
-        releaseAudioFocus(singletonContext)
-    }
-    //定时关闭倒计时：time：分钟
-    private var autoShutDown_Timer: CountDownTimer? = null
-    private var countDownDuration_Ms = 0
-    private var shutDownMoment = ""
-    private var state_autoShutDown_Reach = false
-    private var state_autoShutDown_PrefsReaded = false
-    private var PREFS_ShutDownWhenMediaEnd = false
-    private fun showNotification_AboutToShutDown() {
-        val channelId = "toast_replace"
-        val nm = singletonContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        val channel = NotificationChannel(channelId, "提示", NotificationManager.IMPORTANCE_HIGH)
-            .apply {
-                setSound(null, null)
-                enableVibration(false)
-            }
-        nm.createNotificationChannel(channel)
-
-        val notification = NotificationCompat.Builder(singletonContext, channelId)
-            .setSmallIcon(R.drawable.ic_player_service_notification)
-            .setContentTitle(null)
-            .setContentText("本次播放完毕后将自动关闭")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setDefaults(0)
-            .build()
-
-        nm.notify(System.currentTimeMillis().toInt(), notification)
-
-    }
-    private fun clearTimerShutDown(){
-        countDownDuration_Ms = 0
-        shutDownMoment = ""
-        state_autoShutDown_Reach = false
-        autoShutDown_Timer?.cancel()
-    }
-    private fun startTimerShutDown(countDownDuration_Ms: Int){
-        autoShutDown_Timer?.cancel()
-        autoShutDown_Timer = object : CountDownTimer(countDownDuration_Ms.toLong(), 1000000L) {
-            override fun onTick( millisUntilFinished: Long) {}
-            override fun onFinish() { autoShutDown_Reach() }
-        }.start()
-    }
-    private fun autoShutDown_Reach() {
-        if (PREFS_ShutDownWhenMediaEnd) {
-            countDownDuration_Ms = 0
-            shutDownMoment = "shutdown_when_end"
-            state_autoShutDown_Reach = true
-            showNotification_AboutToShutDown()
-        }
-        //直接关闭
-        else{
-            countDownDuration_Ms = 0
-            //保存单个媒体参数
-            saveParaToDataBase(MediaInfo_FileName, getMediaCurrentPosition(), MediaInfo_Duration)
-            //关闭播放器和监听器
-            onTaskRemoved()
-            DevastatePlayBundle(singletonContext)
-            //结束进程
-            Process.killProcess(Process.myPid())
-            exitProcess(0)
-        }
-    }
-    fun setCountDownTimer(CountDownDuration_Min: Int){
-        //传入0即为关闭
-        if (CountDownDuration_Min == 0){
-            clearTimerShutDown()
-            return
-        }
-        //记录倒计时时长,单位：毫秒
-        countDownDuration_Ms = (CountDownDuration_Min * 60_000L).toInt()
-        //计算关闭时间
-        //val nowDateTime: String = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        val nowMillis = System.currentTimeMillis()
-        val shutDownMillis = nowMillis + countDownDuration_Ms.toLong()  //分钟转毫秒
-        val pattern = java.text.SimpleDateFormat("HH时mm分ss秒", java.util.Locale.getDefault())
-        shutDownMoment = pattern.format(java.util.Date(shutDownMillis))
-        //启动倒计时
-        startTimerShutDown(countDownDuration_Ms)
-    }
-    fun getShutDownMoment(): String{
-        return shutDownMoment
-    }
-    fun get_PREFS_ShutDownWhenMediaEnd(): Boolean{
-        return PREFS_ShutDownWhenMediaEnd
-    }
-    fun set_PREFS_ShutDownWhenMediaEnd(isChecked: Boolean){
-        PREFS_ShutDownWhenMediaEnd = isChecked
-        state_autoShutDown_PrefsReaded = true
-        PREFS.edit{ putBoolean("PREFS_ShutDownWhenMediaEnd", isChecked) }
+        playerState_PlayerStateListenerAdded = false
     }
 
 
@@ -1171,21 +1092,14 @@ object PlayerSingleton {
     }
     private fun playEnd(){
         //本次播放完成后关闭
-        if (state_autoShutDown_Reach){
-            state_autoShutDown_Reach = false
-            countDownDuration_Ms = 0
-            _player?.stop()
-            //关闭监听器
-            onTaskRemoved()
+        if (timerState_autoShut_Reach){
+            //关闭倒计时(含清除状态)
+            timer_DisableAutoShut()
             //关闭
-            DevastatePlayBundle(singletonContext)
-            //结束进程
-            val pid = Process.myPid()
-            Process.killProcess(pid)
-            exitProcess(0)
+            stopPlayBundle(false,objectContext)
         }
         //从列表管理器获取循环模式
-        val currentLoopMode = PlayerListManager.getLoopMode(singletonContext)
+        val currentLoopMode = PlayerListManager.getLoopMode(objectContext)
         //根据循环模式执行不同操作
         when (currentLoopMode) {
             "ONE" -> {
@@ -1204,6 +1118,7 @@ object PlayerSingleton {
     }
 
 
+
     //👀丨独立播放参数丨指以para开头的变量
     private var coroutine_saveOrFetchDataBase = CoroutineScope(Dispatchers.IO)
     //公共函数丨从外部读取和修改独立播放参数丨注意：设置清单中的参数和当前实际运行参数不是同一个值
@@ -1215,7 +1130,7 @@ object PlayerSingleton {
 
         //保存到数据库
         coroutine_saveOrFetchDataBase.launch {
-            MediaItemRepo.get(singletonContext).update_PREFS_saveLastPosition(MediaInfo_FileName,boolean)
+            MediaItemRepo.get(objectContext).update_PREFS_saveLastPosition(MediaInfo_FileName,boolean)
         }
         //开启保存进度循环
         if (boolean){ startSaveProgressHandler() }else{ stopSaveProgressHandler() }
@@ -1236,7 +1151,7 @@ object PlayerSingleton {
         }
         //保存到数据库
         coroutine_saveOrFetchDataBase.launch {
-            MediaItemRepo.get(singletonContext).update_PREFS_VideoOnly(MediaInfo_FileName,boolean)
+            MediaItemRepo.get(objectContext).update_PREFS_VideoOnly(MediaInfo_FileName,boolean)
         }
     }
     fun get_Para_DisableVideoTrack(): Boolean{
@@ -1254,7 +1169,7 @@ object PlayerSingleton {
         }
         //保存到数据库
         coroutine_saveOrFetchDataBase.launch {
-            MediaItemRepo.get(singletonContext).update_PREFS_SoundOnly(MediaInfo_FileName,boolean)
+            MediaItemRepo.get(objectContext).update_PREFS_SoundOnly(MediaInfo_FileName,boolean)
         }
     }
     //重置独立播放参数
@@ -1274,9 +1189,9 @@ object PlayerSingleton {
     private fun FetchDataBaseForItem(itemName: String){
         coroutine_saveOrFetchDataBase.launch {
             //读取保存的进度
-            Para_saveLastProgress = MediaItemRepo.get(singletonContext).get_PREFS_saveLastPosition(MediaInfo_FileName)
+            Para_saveLastProgress = MediaItemRepo.get(objectContext).get_PREFS_saveLastPosition(MediaInfo_FileName)
             paraApply_lastProgress = if (Para_saveLastProgress){
-                MediaItemRepo.get(singletonContext).get_value_LastPosition(MediaInfo_FileName)
+                MediaItemRepo.get(objectContext).get_value_LastPosition(MediaInfo_FileName)
             }else{
                 0L
             }
@@ -1374,49 +1289,37 @@ object PlayerSingleton {
     }
     //保存独立播放参数
     private fun saveParaToDataBase(fileName: String,currentPosition:Long, duration: Long){
-        coroutine_saveOrFetchDataBase.launch {
-            //保存播放进度
-            if ( currentPosition >= 10_000L && currentPosition < duration - 20_000L) {
-                MediaItemRepo.get(singletonContext).update_value_LastPosition(fileName, currentPosition)
-            }
-            //保存倍速
+        //1.保存播放进度
+        saveProgress()
+        //2.
 
-            //保存轨道设置
 
-        }
 
     }
 
 
 
 
-
-
-
-
-    //启动播放器单例 + 存入上下文引用
-    lateinit var singletonContext: Context
-    private var state_ContextSet = false
-    private lateinit var PREFS: SharedPreferences
-    private fun setContext(ctx: Context) {
-        if (state_ContextSet) return
-        singletonContext = ctx.applicationContext
-        state_ContextSet = true
+    //初始化播放器单例
+    lateinit var objectContext: Context
+    private var objectState_contextSet = false
+    private fun setContext(context: Context) {
+        if (objectState_contextSet) return
+        objectContext = context.applicationContext
+        objectState_contextSet = true
     }
-    fun startPlayerSingleton(app: Application){
+    fun setupPlayerSingleton(app: Application){
         //设置上下文
         setContext(app)
-        //启动事件总线
-        registerEventBus(app)
-        //启动音频设备监听器
-        startAudioDeviceCallback(app)
-        //请求音频焦点
-        requestAudioFocus(app, force_request = false)
+
+        //启动监听器
 
 
     }
 
 
+
+    //其他播放器功能
     //后台播放时关闭视频轨道
     fun ActivityOnResume(context: Context){
         stopBackgroundPlay(context)
@@ -1460,25 +1363,28 @@ object PlayerSingleton {
             DisableVideoTrack()
         }
     }
-
     //Runnable:保存播放进度
     private var coroutine_saveProgress = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var state_saveProgress_Running = false
     private val saveProgressHandler = Handler(Looper.getMainLooper())
     private var saveProgress = object : Runnable{
         override fun run() {
-            val currentProgress = _player?.currentPosition?: -1L
 
-            if (currentProgress == -1L) return
-
-            Log.d("SuMing","saveProgress: $currentProgress")
-
-            coroutine_saveProgress.launch {
-                MediaItemRepo.get(singletonContext).update_value_LastPosition(MediaInfo_FileName,currentProgress)
-            }
+            saveProgress()
 
             saveProgressHandler.postDelayed(this, 20_000)
         }
+    }
+    private fun saveProgress(){
+        val currentProgress = _player?.currentPosition?: -1L
+
+        if (currentProgress == -1L) return
+        if (!Para_saveLastProgress) return
+
+        coroutine_saveProgress.launch {
+            MediaItemRepo.get(objectContext).update_value_LastPosition(MediaInfo_FileName,currentProgress)
+        }
+
     }
     private fun startSaveProgressHandler() {
         if (state_saveProgress_Running) return
@@ -1489,7 +1395,82 @@ object PlayerSingleton {
         saveProgressHandler.removeCallbacks(saveProgress)
         state_saveProgress_Running = false
     }
+    //定时关闭倒计时器
+    private var timer_autoShut: CountDownTimer? = null
+    private var countDownDuration_Ms = 0
+    private var shutDownMoment = ""
+    private var timerState_autoShut_Reach = false
+    private fun timer_notification() {
+        val channelId = "toast_replace"
+        val nm = objectContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
+        val channel = NotificationChannel(channelId, "提示", NotificationManager.IMPORTANCE_HIGH)
+            .apply {
+                setSound(null, null)
+                enableVibration(false)
+            }
+        nm.createNotificationChannel(channel)
+
+        val notification = NotificationCompat.Builder(objectContext, channelId)
+            .setSmallIcon(R.drawable.ic_player_service_notification)
+            .setContentTitle(null)
+            .setContentText("本次播放完毕后将自动关闭")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(0)
+            .build()
+
+        nm.notify(System.currentTimeMillis().toInt(), notification)
+
+    }
+    private fun timer_DisableAutoShut(){
+        countDownDuration_Ms = 0
+        shutDownMoment = ""
+        timerState_autoShut_Reach = false
+        timer_autoShut?.cancel()
+    }
+    private fun timer_startAutoShut(countDownDuration_Ms: Int){
+        timer_autoShut?.cancel()
+        timer_autoShut = object : CountDownTimer(countDownDuration_Ms.toLong(), 1000000L) {
+            override fun onTick( millisUntilFinished: Long) {}
+            override fun onFinish() { timerState_autoShut_Reach = true }
+        }.start()
+    }
+    private fun timer_autoShut_Reach() {
+        //需等待当前媒体结束后关闭
+        if (SettingsRequestCenter.get_PREFS_OnlyStopUnMediaEnd(objectContext)) {
+            countDownDuration_Ms = 0
+            shutDownMoment = "shutdown_when_end"
+            timerState_autoShut_Reach = true
+            timer_notification()
+        }
+        //直接关闭
+        else{
+            //关闭倒计时(含清除状态)
+            timer_DisableAutoShut()
+            //关闭播放器
+            stopPlayBundle(false,objectContext)
+        }
+    }
+    fun set_timer_autoShut(CountDownDuration_Min: Int){
+        //传入0即为关闭
+        if (CountDownDuration_Min == 0){
+            timer_DisableAutoShut()
+            return
+        }
+        //记录倒计时时长,单位：毫秒
+        countDownDuration_Ms = (CountDownDuration_Min * 60_000L).toInt()
+        //计算关闭时间
+        //val nowDateTime: String = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val nowMillis = System.currentTimeMillis()
+        val shutDownMillis = nowMillis + countDownDuration_Ms.toLong()  //分钟转毫秒
+        val pattern = java.text.SimpleDateFormat("HH时mm分ss秒", java.util.Locale.getDefault())
+        shutDownMoment = pattern.format(java.util.Date(shutDownMillis))
+        //启动倒计时
+        timer_startAutoShut(countDownDuration_Ms)
+    }
+    fun get_timer_autoShut(): String{
+        return shutDownMoment
+    }
 
 
 //object END

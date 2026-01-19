@@ -117,7 +117,7 @@ class MainActivity: AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main_old)
         //启动播放器单例
-        PlayerSingleton.startPlayerSingleton(application)
+        PlayerSingleton.setupPlayerSingleton(application)
         //界面实例获取
         preCheckAndInit()
         //表明首次启动信息

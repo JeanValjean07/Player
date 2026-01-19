@@ -77,5 +77,9 @@
     <color name="Text_Level_3">#F5F5F5</color>
     <color name="Text_Level_4">#EEEEEE</color>
 
+    <!-- 选单按钮 -->
+    <color name="MenuButton_Background_ffffff_111111">#111111</color>
+    <color name="MenuButton_Text">#FFFFFF</color>
+
 
 </resources>

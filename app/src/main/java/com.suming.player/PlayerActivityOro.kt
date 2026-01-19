@@ -311,7 +311,7 @@ class PlayerActivityOro: AppCompatActivity(){
 
 
         //启动播放器单例
-        PlayerSingleton.startPlayerSingleton(application)
+        PlayerSingleton.setupPlayerSingleton(application)
         //初始化
         preCheck()
 
@@ -1663,7 +1663,7 @@ class PlayerActivityOro: AppCompatActivity(){
         stopVideoTimeSync()
         //停止服务端操作
         PlayerSingleton.clearMediaInfo(this)
-        PlayerSingleton.DevastatePlayBundle(application)
+        PlayerSingleton.stopPlayBundle(false,application)
         finish()
     }
     private fun EnsureExit_but_keep_playing(){
@@ -1685,7 +1685,7 @@ class PlayerActivityOro: AppCompatActivity(){
         setResult(RESULT_OK, data)
         //不停止服务端操作
         if (playerReadyFrom_FirstEntry){
-            PlayerSingleton.DevastatePlayBundle(application)
+            PlayerSingleton.stopPlayBundle(false,application)
             PlayerSingleton.clearMediaInfo(this)
             stopFloatingWindow()
         }
