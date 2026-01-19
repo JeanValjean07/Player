@@ -28,7 +28,7 @@ class PlayerService(): MediaSessionService() {
     private var mediaSession: MediaSession? = null
     //服务专项设置和媒体信息
     private lateinit var serviceLink: SharedPreferences
-    private var state_PlayerType: Int = 0  // 0:经典 1:新晋
+    private var Info_PlayPageType: Int = 0  // 0:经典 1:新晋
     private var MediaInfo_MediaType: String? = null
     private var MediaInfo_MediaUriString: String? = null
     private var MediaInfo_FileName: String? = null
@@ -39,11 +39,11 @@ class PlayerService(): MediaSessionService() {
         super.onCreate()
         //读取配置文件
         serviceLink = getSharedPreferences("serviceLink", MODE_PRIVATE)
-        state_PlayerType = serviceLink.getInt("state_PlayerType", 0)
+        Info_PlayPageType = serviceLink.getInt("Info_PlayPageType", -1)
         MediaInfo_MediaType = serviceLink.getString("MediaInfo_MediaType", "error")
         MediaInfo_MediaUriString = serviceLink.getString("MediaInfo_MediaUriString", "error")
         MediaInfo_FileName = serviceLink.getString("MediaInfo_FileName", "error")
-
+        Log.d("SuMing","setServiceLink Info_PlayPageType = $Info_PlayPageType")
         //获取播放器实例
         val player = PlayerSingleton.getPlayer(application)
 
@@ -77,7 +77,7 @@ class PlayerService(): MediaSessionService() {
 
             }
             "video" -> {
-                when(state_PlayerType){
+                when(Info_PlayPageType){
                     0 -> { mediaSession?.setSessionActivity(createPendingIntentOro()) }
                     1 -> { mediaSession?.setSessionActivity(createPendingIntentNeo()) }
                 }
@@ -138,7 +138,7 @@ class PlayerService(): MediaSessionService() {
                     .build()
             }
             "video" -> {
-                when(state_PlayerType){
+                when(Info_PlayPageType){
                     0 -> {
                         return NotificationCompat.Builder(this, CHANNEL_ID)
                         .setContentIntent(createPendingIntentOro())

@@ -76,7 +76,6 @@ class MainMusicAdapter(
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
-        Log.d("SuMing", "MainMusicAdapter onBindViewHolder: $position")
         val item = getItem(position) ?: return
         holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }

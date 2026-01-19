@@ -24,6 +24,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
@@ -246,8 +247,6 @@ object PlayerSingleton {
         }
         if (NEW_MediaInfo_MediaTitle == ""){ NEW_MediaInfo_MediaTitle = "未知媒体标题" }
         if (NEW_MediaInfo_MediaArtist == "" || NEW_MediaInfo_MediaArtist == "<unknown>"){ NEW_MediaInfo_MediaArtist = "未知艺术家" }
-        //比对媒体类型
-        if (NEW_MediaInfo_MediaType != MediaInfo_MediaType){ DevastateMediaSessionBundle(context) }
 
         //刷新本地媒体信息变量
         updateMediaInfoValues(
@@ -402,7 +401,7 @@ object PlayerSingleton {
 
 
         //启动服务
-        coroutine_startService.launch { startService() }
+        startService()
         //记录到上次播放清单
         coroutine_saveLastMediaRecord.launch { saveLastMediaRecord() }
         //读取单个媒体播放设置
@@ -429,20 +428,26 @@ object PlayerSingleton {
         startMediaSession()
 
     }
-    private fun setServiceLink(newType: Int = -1){
+    private fun setServiceLink(newPageType: Int = -1){
         val serviceLink = objectContext.getSharedPreferences("serviceLink", MODE_PRIVATE)
         //写入媒体类型
         serviceLink.edit{ putString("MediaInfo_MediaType", MediaInfo_MediaType).apply() }
+
         //写入视频播放器样式
-        val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(objectContext)
-        when(playPageType){
-            0 -> serviceLink.edit{ putInt("state_PlayerType", 1).apply() }
-            1 ->  serviceLink.edit{ putInt("state_PlayerType", 2).apply() }
+        if (newPageType == -1){
+            val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(objectContext)
+            when(playPageType){
+                0 -> serviceLink.edit{ putInt("Info_PlayPageType", 0).apply() }
+                1 -> serviceLink.edit{ putInt("Info_PlayPageType", 1).apply() }
+            }
+        }else{
+            serviceLink.edit{ putInt("Info_PlayPageType", newPageType).apply() }
         }
         //写入其他媒体信息
         serviceLink.edit{ putString("MediaInfo_MediaUriString", MediaInfo_MediaUriString).apply() }
         serviceLink.edit{ putString("MediaInfo_FileName", MediaInfo_FileName).apply() }
         serviceLink.edit{ putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist).apply() }
+
     }
     private fun startMediaSession(){
         connectToMediaSession(objectContext)
@@ -509,6 +514,7 @@ object PlayerSingleton {
     //连接到媒体会话控制器
     private fun connectToMediaSession(context: Context){
         if (sessionState_MediaSession_connected) return
+        Log.d("SuMing","connectToMediaSession MediaInfo_MediaType = $MediaInfo_MediaType")
         val SessionToken = SessionToken(context as Application, ComponentName(context, PlayerService::class.java))
         MediaSessionController = MediaController.Builder(context, SessionToken).buildAsync()
         MediaSessionController?.addListener({
@@ -517,7 +523,7 @@ object PlayerSingleton {
         }, MoreExecutors.directExecutor())
     }
     //关闭媒体会话控制器
-    private fun stopMediaSessionController(context: Context){
+    private fun stopMediaSessionController(){
         MediaSessionController?.get()?.run { release() }
         controller = null
         sessionState_MediaSession_connected = false
@@ -527,8 +533,8 @@ object PlayerSingleton {
         sessionState_MediaSession_connected = false
     }
     //清除媒体会话
-    private fun stopMediaSession(context: Context){
-        stopMediaSessionController(context)
+    private fun stopMediaSession(){
+        stopMediaSessionController()
         stopServices()
         sessionState_MediaSession_connected = false
     }
@@ -543,8 +549,8 @@ object PlayerSingleton {
         playerState_PlayerStateListenerAdded = false
     }
     //完全清除媒体会话
-    private fun DevastateMediaSessionBundle(context: Context){
-        stopMediaSession(context)
+    private fun DevastateMediaSessionBundle(){
+        stopMediaSession()
     }
     //关闭监听器
     private fun DevastateListener(){
@@ -555,7 +561,7 @@ object PlayerSingleton {
         //清除播放记录
         if (need_clear_record){ clearLastMediaRecord(context) }
         //关闭媒体会话
-        DevastateMediaSessionBundle(context)
+        DevastateMediaSessionBundle()
         //关闭播放器
         DevastatePlayEnginBundle(context)
         //关闭监听器
@@ -989,14 +995,15 @@ object PlayerSingleton {
     //播放页样式切换，重启服务
     fun updatedPlayStyle(context: Context, newType: Int){
         //关闭媒体会话和服务
-        DevastateMediaSessionBundle(context)
+        DevastateMediaSessionBundle()
         //未播放时不执行
         if (_player?.currentMediaItem == null) return
         //写入新服务配置并启动媒体会话
-        setServiceLink(newType = newType)
+        setServiceLink(newPageType = newType)
         Handler(Looper.getMainLooper()).postDelayed({ connectToMediaSession(context) }, 2000)
 
     }
+
 
 
     //获取播放器播放状态
