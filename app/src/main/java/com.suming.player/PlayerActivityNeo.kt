@@ -305,7 +305,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     @OptIn(UnstableApi::class)
     @SuppressLint("CutPasteId",
-        "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
+        "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi",
+        "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -3268,6 +3269,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 videoSmartScrollHandler.postDelayed(this,delayGap)
             }
             else{
+                player.volume = 1f
                 if (lastSeekExecuted) return
                 lastSeekExecuted = true
 

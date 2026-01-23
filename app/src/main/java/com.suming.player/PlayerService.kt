@@ -6,8 +6,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
-import android.content.SharedPreferences
-import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
@@ -15,6 +13,11 @@ import androidx.core.app.NotificationCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 @UnstableApi
 @Suppress("unused")
@@ -26,24 +29,23 @@ class PlayerService(): MediaSessionService() {
     }
     //媒体会话实例
     private var mediaSession: MediaSession? = null
-    //服务专项设置和媒体信息
-    private lateinit var serviceLink: SharedPreferences
-    private var Info_PlayPageType: Int = 0  // 0:经典 1:新晋
-    private var MediaInfo_MediaType: String? = null
-    private var MediaInfo_MediaUriString: String? = null
-    private var MediaInfo_FileName: String? = null
+    //媒体信息
+    private var MediaInfo_MediaUriString = ""
+    private var MediaInfo_FileName = ""
+    private var MediaInfo_Artist = ""
+
 
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        //读取配置文件
-        serviceLink = getSharedPreferences("serviceLink", MODE_PRIVATE)
-        Info_PlayPageType = serviceLink.getInt("Info_PlayPageType", -1)
-        MediaInfo_MediaType = serviceLink.getString("MediaInfo_MediaType", "error")
-        MediaInfo_MediaUriString = serviceLink.getString("MediaInfo_MediaUriString", "error")
-        MediaInfo_FileName = serviceLink.getString("MediaInfo_FileName", "error")
-        Log.d("SuMing","setServiceLink Info_PlayPageType = $Info_PlayPageType")
+        //从serviceLinker获取信息丨按理说媒体会话还无需用到这些信息,供以后添加自定义通知使用
+        val (uriString, fileName, mediaArtist) = PlayerServiceLinker.getMediaBasicInfo()
+        MediaInfo_MediaUriString = uriString
+        MediaInfo_FileName = fileName
+        MediaInfo_Artist = mediaArtist
+
+
         //获取播放器实例
         val player = PlayerSingleton.getPlayer(application)
 
@@ -71,18 +73,10 @@ class PlayerService(): MediaSessionService() {
             })
             .build()
 
-        //设置会话点击意图
-        when(MediaInfo_MediaType){
-            "music" -> {
 
-            }
-            "video" -> {
-                when(Info_PlayPageType){
-                    0 -> { mediaSession?.setSessionActivity(createPendingIntentOro()) }
-                    1 -> { mediaSession?.setSessionActivity(createPendingIntentNeo()) }
-                }
-            }
-        }
+        //设置会话点击意图丨通过观察MediaType刷新
+        mediaSession?.setSessionActivity(createPendingIntentPicker())
+        //startObserve_MediaType()
 
     }
 
@@ -92,7 +86,9 @@ class PlayerService(): MediaSessionService() {
     //手动关闭服务时调用
     override fun onDestroy() {
         super.onDestroy()
-
+        //关闭媒体类型观察者
+        Job_observe?.cancel()
+        //关闭媒体会话
         mediaSession?.run {
             release()
             mediaSession = null
@@ -100,8 +96,13 @@ class PlayerService(): MediaSessionService() {
     }
     //仅在后台划卡时触发,而且前提是系统不执行强行停止
     override fun onTaskRemoved(rootIntent: Intent?) {
-        //销毁媒体会话
-        mediaSession?.release()
+        //关闭媒体会话
+        mediaSession?.run {
+            release()
+            mediaSession = null
+        }
+        //关闭媒体类型观察者
+        Job_observe?.cancel()
         //关闭服务
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -122,71 +123,36 @@ class PlayerService(): MediaSessionService() {
     }
 
 
-    //Functions
-    //自定义通知:构建常规通知
-    private fun BuildCustomizeNotification(): Notification {
-        when(MediaInfo_MediaType){
-            "music" -> {
-                return NotificationCompat.Builder(this, CHANNEL_ID)
-                    //.setContentIntent(createPendingIntentOro())  需更换音乐播放器
-                    .setContentText(MediaInfo_FileName)
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
-                    .setSmallIcon(R.drawable.ic_player_service_notification)
-                    .addAction(android.R.drawable.ic_media_play, "播放", BroadcastPlay())
-                    .addAction(android.R.drawable.ic_media_pause, "暂停", BroadcastPause())
-                    .setAutoCancel(false)
-                    .build()
-            }
-            "video" -> {
-                when(Info_PlayPageType){
-                    0 -> {
-                        return NotificationCompat.Builder(this, CHANNEL_ID)
-                        .setContentIntent(createPendingIntentOro())
-                        .setContentText(MediaInfo_FileName)
-                        .setPriority(NotificationCompat.PRIORITY_LOW)
-                        .setSmallIcon(R.drawable.ic_player_service_notification)
-                        .addAction(android.R.drawable.ic_media_play, "播放", BroadcastPlay())
-                        .addAction(android.R.drawable.ic_media_pause, "暂停", BroadcastPause())
-                        .setAutoCancel(false)
-                        .build()
-                    }
-                    1 -> {
-                        return NotificationCompat.Builder(this, CHANNEL_ID)
-                            .setContentIntent(createPendingIntentNeo())
-                            .setContentText(MediaInfo_FileName)
-                            .setPriority(NotificationCompat.PRIORITY_LOW)
-                            .setSmallIcon(R.drawable.ic_player_service_notification)
-                            .addAction(android.R.drawable.ic_media_play, "播放", BroadcastPlay())
-                            .addAction(android.R.drawable.ic_media_pause, "暂停", BroadcastPause())
-                            .setAutoCancel(false)
-                            .build()
-                    }
-                    else -> {
-                        return NotificationCompat.Builder(this, CHANNEL_ID)
-                            //.setContentIntent(createPendingIntentOro())
-                            .setContentText(MediaInfo_FileName)
-                            .setPriority(NotificationCompat.PRIORITY_LOW)
-                            .setSmallIcon(R.drawable.ic_player_service_notification)
-                            .addAction(android.R.drawable.ic_media_play, "播放", BroadcastPlay())
-                            .addAction(android.R.drawable.ic_media_pause, "暂停", BroadcastPause())
-                            .setAutoCancel(false)
-                            .build()
-                    }
-                }
-            }
-            else -> {
-                return NotificationCompat.Builder(this, CHANNEL_ID)
-                    //.setContentIntent(createPendingIntentOro())
-                    .setContentText(MediaInfo_FileName)
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
-                    .setSmallIcon(R.drawable.ic_player_service_notification)
-                    .addAction(android.R.drawable.ic_media_play, "播放", BroadcastPlay())
-                    .addAction(android.R.drawable.ic_media_pause, "暂停", BroadcastPause())
-                    .setAutoCancel(false)
-                    .build()
+    private var Job_observe: Job? = null
+    private var coroutine_observe = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private fun startObserve_MediaType(){
+        Job_observe?.cancel()
+        Job_observe = coroutine_observe.launch {
+            PlayerServiceLinker.MediaType.collect { mediaType ->
+
+
+
 
             }
         }
+    }
+
+
+    //Functions
+    //自定义通知:构建常规通知
+    private fun BuildCustomizeNotification(): Notification {
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            //.setContentIntent(createPendingIntentOro())
+            .setContentText(MediaInfo_FileName)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setSmallIcon(R.drawable.ic_player_service_notification)
+            .addAction(android.R.drawable.ic_media_play, "播放", BroadcastPlay())
+            .addAction(android.R.drawable.ic_media_pause, "暂停", BroadcastPause())
+            .setAutoCancel(false)
+            .build()
+
+
     }
     //自定义通知:构建自定布局通知
     private fun BuildCustomViewNotification(): Notification {
@@ -238,8 +204,16 @@ class PlayerService(): MediaSessionService() {
         nm.createNotificationChannel(channel)
     }
 
-    //通知卡片和媒体会话卡片:点击拉起
+    //通知卡片和媒体会话卡片-点击拉起意图
     @OptIn(UnstableApi::class)
+    private fun createPendingIntentPicker(): PendingIntent {
+        val intent = Intent(this, ExternalInvokeManager::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+            .putExtra("IntentSource", "FromPendingIntent")
+            .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
+        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
     private fun createPendingIntentNeo(): PendingIntent {
         val intent = Intent(this, PlayerActivityNeo::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -256,7 +230,10 @@ class PlayerService(): MediaSessionService() {
             .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
-    //自定义通知:播放指令
+
+
+
+    //已停用丨基于本地广播的播放指令
     @OptIn(UnstableApi::class)
     private fun BroadcastPlay(): PendingIntent {
         val intent = Intent(this, PlayerActionReceiver::class.java).apply {
@@ -264,7 +241,6 @@ class PlayerService(): MediaSessionService() {
         }
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
-    //自定义通知:暂停指令
     @OptIn(UnstableApi::class)
     private fun BroadcastPause(): PendingIntent {
         val intent = Intent(this, PlayerActionReceiver::class.java).apply {

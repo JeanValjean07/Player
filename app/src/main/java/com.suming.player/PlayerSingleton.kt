@@ -423,30 +423,17 @@ object PlayerSingleton {
     private var coroutine_startService = CoroutineScope(Dispatchers.IO)
     private fun startService(){
         //写入服务配置
-        setServiceLink()
+        setServiceLinker()
         //链接媒体会话
         startMediaSession()
 
     }
-    private fun setServiceLink(newPageType: Int = -1){
-        val serviceLink = objectContext.getSharedPreferences("serviceLink", MODE_PRIVATE)
+    private fun setServiceLinker(newPageType: Int = -1){
         //写入媒体类型
-        serviceLink.edit{ putString("MediaInfo_MediaType", MediaInfo_MediaType).apply() }
+        PlayerServiceLinker.setMediaInfo_MediaType(MediaInfo_MediaType)
+        //
+        PlayerServiceLinker.setMediaBasicInfo(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
 
-        //写入视频播放器样式
-        if (newPageType == -1){
-            val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(objectContext)
-            when(playPageType){
-                0 -> serviceLink.edit{ putInt("Info_PlayPageType", 0).apply() }
-                1 -> serviceLink.edit{ putInt("Info_PlayPageType", 1).apply() }
-            }
-        }else{
-            serviceLink.edit{ putInt("Info_PlayPageType", newPageType).apply() }
-        }
-        //写入其他媒体信息
-        serviceLink.edit{ putString("MediaInfo_MediaUriString", MediaInfo_MediaUriString).apply() }
-        serviceLink.edit{ putString("MediaInfo_FileName", MediaInfo_FileName).apply() }
-        serviceLink.edit{ putString("MediaInfo_MediaArtist", MediaInfo_MediaArtist).apply() }
 
     }
     private fun startMediaSession(){
@@ -824,7 +811,6 @@ object PlayerSingleton {
 
 
 
-
     //音频设备监听
     private lateinit var audioManager: AudioManager
     private val DeviceCallback = object : AudioDeviceCallback() {
@@ -999,7 +985,7 @@ object PlayerSingleton {
         //未播放时不执行
         if (_player?.currentMediaItem == null) return
         //写入新服务配置并启动媒体会话
-        setServiceLink(newPageType = newType)
+        setServiceLinker(newPageType = newType)
         Handler(Looper.getMainLooper()).postDelayed({ connectToMediaSession(context) }, 2000)
 
     }
