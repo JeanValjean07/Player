@@ -518,7 +518,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
             ButtonExtractFrame.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                context?.showCustomToast("暂不开放此功能", Toast.LENGTH_SHORT, 3)
+                context?.showCustomToast("暂不开放此功能", 3)
             }
 
             //视频信息
@@ -546,7 +546,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ButtonEqualizer.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
-                context?.showCustomToast("暂不开放此功能", Toast.LENGTH_SHORT, 3)
+                context?.showCustomToast("暂不开放此功能", 3)
 
                 /*
                 val result = bundleOf("KEY" to "Equalizer")
@@ -561,7 +561,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ButtonReCreateThumb.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
-                requireContext().showCustomToast("重新打开视频后生效", Toast.LENGTH_SHORT, 3)
+                requireContext().showCustomToast("重新打开视频后生效", 3)
 
                 val result = bundleOf("KEY" to "clearMiniature")
                 setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
@@ -761,7 +761,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         Button.setOnClickListener {
             val userInput = EditText.text.toString()
             if (userInput.isEmpty()){
-                requireContext().showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
+                requireContext().showCustomToast("未输入内容", 3)
             }
             else {
                 val inputValue = userInput.toFloat()
@@ -772,10 +772,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     //刷新显示文本
                     updatePlaySpeedText(dialogView)
 
-                    requireContext().showCustomToast("已将倍速设置为$inputValue", Toast.LENGTH_SHORT, 3)
+                    requireContext().showCustomToast("已将倍速设置为$inputValue", 3)
                 }
                 else {
-                    requireContext().showCustomToast("不允许该值", Toast.LENGTH_SHORT, 3)
+                    requireContext().showCustomToast("不允许该值", 3)
                 }
             }
             dialog.dismiss()
@@ -857,12 +857,12 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
             //不合规检查
             if (hourInput == null && minuteInput == null){
-                requireContext().showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
+                requireContext().showCustomToast("未输入内容", 3)
                 dialog.dismiss()
                 return@setOnClickListener
             }
             if (hour == 0 && minute == 0){
-                requireContext().showCustomToast("即将关闭", Toast.LENGTH_SHORT, 3)
+                requireContext().showCustomToast("即将关闭", 3)
                 lifecycleScope.launch {
                     delay(2000)
                     //关闭播放器

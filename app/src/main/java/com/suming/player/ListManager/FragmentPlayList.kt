@@ -528,7 +528,7 @@ class FragmentPlayList: DialogFragment() {
         if (flag == vm.PREFS_AcquiescePage){
             PREFS_List.edit { putInt("PREFS_AcquiescePage", -1) }
             vm.PREFS_AcquiescePage = -1
-            requireContext().showCustomToast("已无默认页签，将使用上一次关闭时的页签作为默认页签", Toast.LENGTH_SHORT, 2)
+            requireContext().showCustomToast("已无默认页签，将使用上一次关闭时的页签作为默认页签",2)
         }else{
             PREFS_List.edit { putInt("PREFS_AcquiescePage", flag) }
             vm.PREFS_AcquiescePage = flag
@@ -542,7 +542,7 @@ class FragmentPlayList: DialogFragment() {
     private fun onPlayClick(uriString: String) {
         if (uriString == PlayerSingleton.getMediaInfoUriString()){
             PlayerSingleton.continuePlay(true, force_request = true, need_fadeIn = false)
-            requireContext().showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
+            requireContext().showCustomToast("已在播放该媒体",3)
         }else{
             PlayerSingleton.setMediaItem(uriString.toUri(), true,requireContext())
             customDismiss()

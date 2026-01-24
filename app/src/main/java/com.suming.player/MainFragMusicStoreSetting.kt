@@ -223,7 +223,7 @@ class MainFragMusicStoreSetting: DialogFragment() {
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_gallery -> {
-                        requireContext().showCustomToast("暂不支持设为陈列架", Toast.LENGTH_SHORT, 3)
+                        requireContext().showCustomToast("暂不支持设为陈列架",  3)
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_last -> {
@@ -240,7 +240,7 @@ class MainFragMusicStoreSetting: DialogFragment() {
         val SyncSettingsCard = view.findViewById<LinearLayout>(R.id.SyncSettingsCard)
         SyncSettingsCard.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            requireContext().showCustomToast("这些设置会在音乐库和视频库之间同步", Toast.LENGTH_SHORT, 3)
+            requireContext().showCustomToast("这些设置会在音乐库和视频库之间同步",  3)
         }
 
 

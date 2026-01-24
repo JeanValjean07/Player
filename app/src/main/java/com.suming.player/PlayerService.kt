@@ -20,7 +20,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 @UnstableApi
-@Suppress("unused")
+//@Suppress("unused")
 class PlayerService(): MediaSessionService() {
     //通知标识变量
     companion object {
@@ -74,8 +74,8 @@ class PlayerService(): MediaSessionService() {
             .build()
 
 
-        //设置会话点击意图丨通过观察MediaType刷新
-        mediaSession?.setSessionActivity(createPendingIntentPicker())
+        //设置会话点击意图
+        mediaSession?.setSessionActivity(createPendingIntentManager())
         //startObserve_MediaType()
 
     }
@@ -206,12 +206,12 @@ class PlayerService(): MediaSessionService() {
 
     //通知卡片和媒体会话卡片-点击拉起意图
     @OptIn(UnstableApi::class)
-    private fun createPendingIntentPicker(): PendingIntent {
+    private fun createPendingIntentManager(): PendingIntent {
         val intent = Intent(this, ExternalInvokeManager::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
             .putExtra("IntentSource", "FromPendingIntent")
-            .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
+
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
     private fun createPendingIntentNeo(): PendingIntent {

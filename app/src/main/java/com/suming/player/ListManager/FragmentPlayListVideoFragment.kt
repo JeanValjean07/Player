@@ -107,10 +107,10 @@ class FragmentPlayListVideoFragment(
             //显示列表中项数
             val itemCount = recyclerView_video_adapter.itemCount
             if (itemCount == 0) {
-                requireContext().showCustomToast("目前还没有视频", Toast.LENGTH_SHORT, 2)
+                requireContext().showCustomToast("目前还没有视频", 2)
             }
             else{
-                requireContext().showCustomToast("包含${itemCount}条视频", Toast.LENGTH_SHORT, 2)
+                requireContext().showCustomToast("包含${itemCount}条视频", 2)
             }
         }
 
@@ -195,10 +195,10 @@ class FragmentPlayListVideoFragment(
         if (isSetSuccess){
             //更新当前播放列表
             onPlayListChange(0)
-            requireContext().showCustomToast("设置成功", Toast.LENGTH_SHORT, 2)
+            requireContext().showCustomToast("设置成功", 2)
         }
         else{
-            requireContext().showCustomToast("设置失败", Toast.LENGTH_SHORT, 2)
+            requireContext().showCustomToast("设置失败", 2)
         }
 
     }

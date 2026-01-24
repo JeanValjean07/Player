@@ -3,7 +3,6 @@ package com.suming.player
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
-import android.util.Log
 import androidx.core.content.edit
 
 @Suppress("unused")

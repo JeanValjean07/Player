@@ -123,10 +123,10 @@ class FragmentPlayListCustomFragment(
             //显示列表中项数
             val itemCount = recyclerView_custom_list_adapter.itemCount
             if (itemCount == 0) {
-                requireContext().showCustomToast("目前还没有媒体，可在其他列表中添加", Toast.LENGTH_SHORT, 2)
+                requireContext().showCustomToast("目前还没有媒体，可在其他列表中添加",2)
             }
             else{
-                requireContext().showCustomToast("包含${itemCount}个媒体", Toast.LENGTH_SHORT, 2)
+                requireContext().showCustomToast("包含${itemCount}个媒体",2)
             }
 
 
@@ -225,10 +225,10 @@ class FragmentPlayListCustomFragment(
         if (isSetSuccess){
             //更新当前播放列表
             onPlayListChange(0)
-            requireContext().showCustomToast("设置成功", Toast.LENGTH_SHORT, 2)
+            requireContext().showCustomToast("设置成功",2)
         }
         else{
-            requireContext().showCustomToast("设置失败", Toast.LENGTH_SHORT, 2)
+            requireContext().showCustomToast("设置失败",2)
         }
 
     }

@@ -102,7 +102,7 @@ class SettingsActivity: AppCompatActivity() {
             openSourceLicense.setOnClickListener {
                 ToolVibrate().vibrate(this@SettingsActivity)
 
-                showCustomToast("此功能正在替换实现方案,暂不提供",Toast.LENGTH_SHORT,3)
+                showCustomToast("此功能正在替换实现方案,暂不提供",3)
 
                 /*
                 val isMicroG_Exist = checkMicroG()
@@ -426,18 +426,16 @@ class SettingsActivity: AppCompatActivity() {
         when(playPageType){
             0 -> {
                 SettingsRequestCenter.set_PREFS_PlayPageType(0)
-                showCustomToast("成功设置播放页样式为经典版本", Toast.LENGTH_SHORT, 3)
+                showCustomToast("成功设置播放页样式为经典版本", 3)
                 updatePlayPageTypeText()
-                PlayerSingleton.updatedPlayStyle(application, 0)
             }
             1 -> {
                 SettingsRequestCenter.set_PREFS_PlayPageType(1)
-                showCustomToast("成功设置播放页样式为新晋版本", Toast.LENGTH_SHORT, 3)
+                showCustomToast("成功设置播放页样式为新晋版本", 3)
                 updatePlayPageTypeText()
-                PlayerSingleton.updatedPlayStyle(application, 1)
             }
             2 -> {
-                showCustomToast("当前包中未包含测试版界面", Toast.LENGTH_SHORT, 3)
+                showCustomToast("当前包中未包含测试版界面", 3)
             }
         }
     }
@@ -478,12 +476,12 @@ class SettingsActivity: AppCompatActivity() {
         Button.setOnClickListener {
             val gapInput = EditText.text.toString().toLongOrNull()
             if (gapInput == null || gapInput == 0L) {
-                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
+                showCustomToast("未输入内容", 3)
                 dialog.dismiss()
                 return@setOnClickListener
             }
             else if (gapInput > 1000) {
-                showCustomToast("寻帧间隔不能大于1秒", Toast.LENGTH_SHORT, 3)
+                showCustomToast("寻帧间隔不能大于1秒", 3)
                 dialog.dismiss()
                 return@setOnClickListener
             }
@@ -544,13 +542,13 @@ class SettingsActivity: AppCompatActivity() {
         Button.setOnClickListener {
             val gapInput = EditText.text.toString().toLongOrNull()
             if (gapInput == null || gapInput == 0L) {
-                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
+                showCustomToast("未输入内容", 3)
                 dialog.dismiss()
                 return@setOnClickListener
 
             }
             else if (gapInput > 1000) {
-                showCustomToast("时间更新间隔不能大于1秒", Toast.LENGTH_SHORT, 3)
+                showCustomToast("时间更新间隔不能大于1秒", 3)
                 dialog.dismiss()
                 return@setOnClickListener
             }
@@ -638,12 +636,12 @@ class SettingsActivity: AppCompatActivity() {
         val signingInfo = packageInfo.signingInfo
 
         if (signingInfo == null) {
-            showCustomToast("签名错误", Toast.LENGTH_SHORT, 3)
+            showCustomToast("签名错误", 3)
             return false
         }
 
         if (signingInfo.hasMultipleSigners()) {
-            showCustomToast("签名错误", Toast.LENGTH_SHORT, 3)
+            showCustomToast("签名错误", 3)
             return false
         }
 
@@ -655,10 +653,10 @@ class SettingsActivity: AppCompatActivity() {
             val c = cf.generateCertificate(input) as X509Certificate
             val name = c.subjectDN.name
             if (name.contains("Android Debug")) {
-                showCustomToast("当前程序可使用测试版界面", Toast.LENGTH_SHORT, 3)
+                showCustomToast("当前程序可使用测试版界面", 3)
                 return true
             }else{
-                showCustomToast("非Debug版本不能使用测试版页面", Toast.LENGTH_SHORT, 3)
+                showCustomToast("非Debug版本不能使用测试版页面", 3)
                 return false
             }
         }

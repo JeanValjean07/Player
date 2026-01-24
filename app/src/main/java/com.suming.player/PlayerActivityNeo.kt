@@ -32,6 +32,7 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.text.Editable
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -303,10 +304,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var coroutine_loadFrequentlyUsedSetting = CoroutineScope(Dispatchers.Main)
 
 
+
     @OptIn(UnstableApi::class)
-    @SuppressLint("CutPasteId",
-        "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi",
-        "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
+    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "ClickableViewAccessibility", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -339,28 +339,17 @@ class PlayerActivityNeo: AppCompatActivity(){
             //来自首次启动活动
             if (savedInstanceState == null){
                 //获取intent:< result: 1=获取成功 2=获取失败丨from:0=originIntent 1=pendingIntent丨uri丨>
-                var (result, from, uri) = inspectIntent(intent)
+                val (needSetItem, uri) = inspectIntent(intent)
 
-                //查询该链接是否已在播放中,决策是否需要设置媒体链接
-                val instruction_needSetNewItem = inspectCurrentPlayState(uri,from)
-
-                //处理获取的uri
-                if (uri == Uri.EMPTY){
-                    val (isViewModelUriValid, uriSavedInViewModel) = vm.getMediaUri()
-                    if (isViewModelUriValid){
-                        uri = uriSavedInViewModel
-                        vm.saveMediaUri(uri)
-                    }else{
-                        queryManualInputUri()
-                        return@launch
-                    }
-                }else{
-                    vm.saveMediaUri(uri)
-                }
+                Log.d("SuMing","inspectIntent: $needSetItem $uri")
 
                 //新建媒体项或绑定现有播放项
-                if (instruction_needSetNewItem){
-                    startPlayNewItem(uri)
+                if (needSetItem){
+                    if (uri == Uri.EMPTY){
+                        queryManualInputUri()
+                    }else{
+                        startPlayNewItem(uri)
+                    }
                 }else{
                     onBindExistingItem()
                 }
@@ -1041,7 +1030,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 "ExtractFrame" -> {
                     val videoPath = getFilePath(this, vm.MediaInfo_MediaUri)
                     if (videoPath == null){
-                        showCustomToast("视频绝对路径获取失败", Toast.LENGTH_SHORT, 3)
+                        showCustomToast("视频绝对路径获取失败", 3)
                         return@setFragmentResultListener
                     }
                     ExtractFrame(videoPath, vm.MediaInfo_FileName)
@@ -1121,7 +1110,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                             useDefaultCover(vm.MediaInfo_FileName)
                         }
                         "pickFromLocal" -> {
-                            showCustomToast("暂不支持此功能", Toast.LENGTH_SHORT, 3)
+                            showCustomToast("暂不支持此功能", 3)
                         }
                     }
                 }
@@ -1197,58 +1186,63 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
-    //检查intent并返回uri信息丨Triple<A: 1=获取链接成功 2=获取失败丨B: 0=从originIntent 1=从pendingIntent获取丨C:Uri>
-    private fun inspectIntent(intent: Intent): Triple<Int, Int, Uri>{
-        when (intent.action) {
-            //系统面板：分享
-            Intent.ACTION_SEND -> {
-                vm.state_FromSysStart = true
-                val intentUri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
-                //获取链接失败
-                return if (intentUri == null){
+    //检查来源和链接 < Boolean:是否需要设置链接 丨 uri:链接 >
+    private fun inspectIntent(intent: Intent): Pair<Boolean,Uri>{
+        val source = intent.getIntExtra("IntentSource", -1)
+        val intentUri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)?: Uri.EMPTY
+        Log.d("SuMing","intentUri: $intentUri ")
+        //启动来源标记 < 1 = ACTION_SEND/ACTION_VIEW 丨 2 = pending 丨 3 = 常规启动 >
+        when(source){
+            //ACTION_SEND/ACTION_VIEW
+            1 -> {
 
-                    Triple(2, 0, Uri.EMPTY)
-                }
-                //获取链接成功
-                else{
+                val (isCurrentItemExist, currentItemUri) = PlayerSingleton.getPlayState()
 
-                    Triple(1, 0, intentUri)
-                }
-            }
-            //系统面板：选择其他应用打开
-            Intent.ACTION_VIEW -> {
-                vm.state_FromSysStart = true
-                //尝试获取原始intent的uri
-                val intentUri = intent.data
-                //获取链接失败
-                return if (intentUri == null){
-
-                    Triple(2, 0, Uri.EMPTY)
-                }
-                //获取链接成功
-                else{
-
-                    Triple(1, 0, intentUri)
+                return if (isCurrentItemExist){
+                    if (intentUri == currentItemUri){
+                        Pair(false,Uri.EMPTY)
+                    }else{
+                        Pair(true,intentUri)
+                    }
+                }else{
+                    Pair(true,intentUri)
                 }
             }
-            //正常打开
+            //pending
+            2 -> {
+
+                return Pair(false,Uri.EMPTY)
+            }
+            //常规启动
+            3 -> {
+                val (isCurrentItemExist, currentItemUri) = PlayerSingleton.getPlayState()
+
+                Log.d("SuMing","getPlayState(): $isCurrentItemExist $currentItemUri")
+
+                return if (isCurrentItemExist){
+                    if (intentUri == currentItemUri){
+                        Pair(false,Uri.EMPTY)
+                    }else{
+                        Pair(true,intentUri)
+                    }
+                }else{
+                    Pair(true,intentUri)
+                }
+            }
+            //未知来源
             else -> {
-                vm.state_FromSysStart = false
-                //尝试获取原始intent的uri
-                val (successOriginal, intentUriOriginal) = inspectOriginalIntent()
-                if (successOriginal){ return Triple(1, 0, intentUriOriginal) }
-                //尝试获取pendingIntent的uri
-                val (successPending, intentUriPending) = inspectPendingIntent()
-                if (successPending){ return Triple(1, 1, intentUriPending) }
-                //没有获取到链接
-                return Triple(3, 0, Uri.EMPTY)
 
+                return Pair(false,Uri.EMPTY)
             }
+
+
+
         }
+
+
+
     }
-
-
-
+    //手动输入链接
     @SuppressLint("InflateParams")
     private fun queryManualInputUri(){
         val dialog = Dialog(this).apply {
@@ -1274,7 +1268,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         ButtonEnsure.setOnClickListener {
             val userInput = EditText.text.toString()
             if (userInput.isEmpty()){
-                showCustomToast("未输入内容", Toast.LENGTH_SHORT, 3)
+                showCustomToast("未输入内容", 3)
             }else{
                 val userInputUri = userInput.toUri()
                 if (isManualInputUriValid(userInputUri)){
@@ -1282,7 +1276,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     dialog.dismiss()
                     startPlayNewItem(userInputUri)
                 }else{
-                    showCustomToast("链接无效", Toast.LENGTH_SHORT, 3)
+                    showCustomToast("链接无效", 3)
                 }
             }
         }
@@ -1304,49 +1298,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
         }
     }
-    private fun inspectOriginalIntent(): Pair<Boolean, Uri>{
-        val intentUri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)?: Uri.EMPTY
-
-        return if (intentUri == Uri.EMPTY){
-            Pair(false, Uri.EMPTY)
-        }else{
-            Pair(true, intentUri)
-        }
-    }
-    private fun inspectPendingIntent(): Pair<Boolean, Uri>{
-        val FromPendingIntent = intent.getStringExtra("IntentSource") ?: "error"
-
-        if (FromPendingIntent == "FromPendingIntent"){
-            val intentUriString = intent.getStringExtra("MediaInfo_MediaUri") ?: "error"
-
-            return if (intentUriString == "error"){
-                Pair(false, Uri.EMPTY)
-            } else{
-                Pair(true, intentUriString.toUri())
-            }
-        }
-
-        return Pair(false, Uri.EMPTY)
-    }
-    //检查当前是否在播放,返回决定是否需要重新设置媒体丨intentType:< 0=originIntent 丨 1=pendingIntent>
-    private fun inspectCurrentPlayState(uri:Uri, intentType: Int): Boolean{
-        val (someItemExist,isUriSame ,_) = PlayerSingleton.getPlayState(uri)
-
-        //Log.d("SuMing", "someItemExist:${someItemExist},isUriSame:${isUriSame},intentType:${intentType}")
-
-        if (intentType == 0){
-
-            return if (someItemExist){ !isUriSame }else{ true }
-        }else if (intentType == 1){
-
-            return !someItemExist
-        }else{
-            showCustomToast("异常分支，请检查", Toast.LENGTH_SHORT, 3)
-            return if (someItemExist){ !isUriSame }else{ true }
-        }
-    }
-
-    //检查输入的链接是否有效
     private fun isManualInputUriValid(uri: Uri): Boolean{
         try{
             val retriever = MediaMetadataRetriever()
@@ -1399,7 +1350,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
             state_onPlayError = true
-            showCustomToast("播放错误: ${error.message}", Toast.LENGTH_SHORT, 3)
+            showCustomToast("播放错误: ${error.message}", 3)
         }
     }
     private var state_PlayerListenerAdded: Boolean = false
@@ -1559,7 +1510,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             .subscribe({
                 HandlePlayerEvent(it)
             }, {
-                showCustomToast("事件总线注册失败:${it.message}", Toast.LENGTH_SHORT,3)
+                showCustomToast("事件总线注册失败:${it.message}", 3)
             })
     }
     private fun HandlePlayerEvent(event: String) {
@@ -1924,6 +1875,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     @SuppressLint("UnsafeIntentLaunch")
     override fun onNewIntent(newIntent: Intent?) {
         super.onNewIntent(newIntent)
+        Log.d("SuMing","onNewIntent: ${newIntent}")
         if (newIntent?.action != null){
             when (newIntent.action) {
                 //系统面板：分享
@@ -1941,6 +1893,17 @@ class PlayerActivityNeo: AppCompatActivity(){
                 Intent.ACTION_VIEW -> {
                     vm.state_FromSysStart = true
                     val uri = newIntent.data ?: return finish()
+                    //判断是否是同一个视频
+                    if (uri == PlayerSingleton.getMediaInfoUri()) { return }
+                    else{
+                        //设置新的媒体项
+                        setNewMediaItem(uri)
+                    }
+                }
+                //
+                "ACTION_NEW_INTENT" -> {
+                    vm.state_FromSysStart = true
+                    val uri = newIntent.getParcelableExtra<Uri>("uri") ?: return finish()
                     //判断是否是同一个视频
                     if (uri == PlayerSingleton.getMediaInfoUri()) { return }
                     else{
@@ -2068,7 +2031,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         vm.BrightnessChanged = false
 
-        showCustomToast("已解除亮度控制,现在您可以使用系统亮度控制了", Toast.LENGTH_SHORT, 3)
+        showCustomToast("已解除亮度控制,现在您可以使用系统亮度控制了", 3)
     }
     //dp转px
     private fun dp2px(dpValue: Float): Int {
@@ -2247,7 +2210,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //发布完成消息
             val uriNumOnly = ContentUris.parseId(vm.MediaInfo_MediaUri)
             ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uriNumOnly.toString()))
-            showCustomToast("截取封面完成", Toast.LENGTH_SHORT,3)
+            showCustomToast("截取封面完成", 3)
             //恢复播放状态
             if (vm.wasPlaying){ player.play() }
         }
@@ -2275,7 +2238,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun useDefaultCover(filename: String){
         val defaultCoverBitmap = vectorToBitmap(this, R.drawable.ic_album_video_album)
         if (defaultCoverBitmap == null) {
-            showCustomToast("从本地文件提取默认封面素材失败", Toast.LENGTH_SHORT,3)
+            showCustomToast("从本地文件提取默认封面素材失败", 3)
             return
         }
         val processedBitmap = processCenterCrop(defaultCoverBitmap)
@@ -2289,7 +2252,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
         //发布完成消息
         ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", filename))
-        showCustomToast("已完成", Toast.LENGTH_SHORT,3)
+        showCustomToast("已完成", 3)
     }
     private fun processCenterCrop(src: Bitmap): Bitmap {
         //以后可以添加为传入量
@@ -2678,6 +2641,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //刷新进度条
     private fun updateScrollerAdapter(){
+
+        return
+
         lifecycleScope.launch(Dispatchers.IO) {
             //获取ViewModel
             val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
@@ -3032,7 +2998,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //错误直接退出
                     else -> {
-                        showCustomToast("播放器样式参数错误：既不是oro也不是neo", Toast.LENGTH_SHORT, 3)
+                        showCustomToast("播放器样式参数错误：既不是oro也不是neo", 3)
                         finish()
                     }
                 }
@@ -3051,7 +3017,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
                 //错误直接退出
                 else{
-                    showCustomToast("播放器样式参数错误：既不是oro也不是neo", Toast.LENGTH_SHORT, 3)
+                    showCustomToast("播放器样式参数错误：既不是oro也不是neo", 3)
                     finish()
                 }
             }

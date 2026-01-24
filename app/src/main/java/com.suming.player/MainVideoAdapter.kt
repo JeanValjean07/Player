@@ -117,12 +117,12 @@ class MainVideoAdapter(
             //注册点击
             popup_update_cover.setOnMenuItemClickListener {
                 ToolVibrate().vibrate(context)
-                context.showCustomToast("进入视频后,可在更多选项面板更新封面", Toast.LENGTH_SHORT, 3)
+                context.showCustomToast("进入视频后,可在更多选项面板更新封面", 3)
                 true
             }
             popup_hide_item.setOnMenuItemClickListener {
                 ToolVibrate().vibrate(context)
-                context.showCustomToast("已停止对隐藏视频功能的支持", Toast.LENGTH_SHORT, 3)
+                context.showCustomToast("已停止对隐藏视频功能的支持", 3)
                 true
             }
             popup_onSmallCardPlay.setOnMenuItemClickListener {

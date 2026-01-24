@@ -332,7 +332,7 @@ class PlayerActivityOro: AppCompatActivity(){
                     vm.state_FromSysStart = true
                     val uri = intent.data
                     if (uri == null){
-                        showCustomToast("链接无效，无法播放。可在附加Data中填入媒体uri", Toast.LENGTH_SHORT, 3)
+                        showCustomToast("链接无效，无法播放。可在附加Data中填入媒体uri",3)
                         finishAndRemoveTask()
                     }else{
                         MediaInfo_MediaUri = uri
@@ -368,8 +368,8 @@ class PlayerActivityOro: AppCompatActivity(){
                                     MediaInfo_MediaUri = saveInfoUri
                                 }
                                 else{
-                                    showCustomToast("视频链接无效", Toast.LENGTH_SHORT, 3)
-                                    showCustomToast("播放失败", Toast.LENGTH_SHORT, 3)
+                                    showCustomToast("视频链接无效",3)
+                                    showCustomToast("播放失败",3)
                                     onDestroy_fromErrorExit = true
                                     state_need_return = true
                                     finish()
@@ -1073,7 +1073,7 @@ class PlayerActivityOro: AppCompatActivity(){
                 "ExtractFrame" -> {
                     val videoPath = getFilePath(this, MediaInfo_MediaUri)
                     if (videoPath == null){
-                        showCustomToast("视频绝对路径获取失败", Toast.LENGTH_SHORT, 3)
+                        showCustomToast("视频绝对路径获取失败",3)
                         return@setFragmentResultListener
                     }
                     ExtractFrame(videoPath, vm.MediaInfo_FileName)
@@ -1154,7 +1154,7 @@ class PlayerActivityOro: AppCompatActivity(){
                             useDefaultCover(vm.MediaInfo_FileName)
                         }
                         "pickFromLocal" -> {
-                            showCustomToast("暂不支持此功能", Toast.LENGTH_SHORT, 3)
+                            showCustomToast("暂不支持此功能",3)
                         }
                     }
                 }
@@ -1267,10 +1267,10 @@ class PlayerActivityOro: AppCompatActivity(){
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             onMediaItemChanged(mediaItem)
         }
-        override fun onPlayerError(error: PlaybackException) {
+        override fun onPlayerError(error: PlaybackException)  {
             super.onPlayerError(error)
             state_onPlayError = true
-            showCustomToast("播放错误: ${error.message}", Toast.LENGTH_SHORT, 3)
+            showCustomToast("播放错误: ${error.message}",3)
         }
     }
     private var state_PlayerListenerAdded: Boolean = false
@@ -1424,7 +1424,7 @@ class PlayerActivityOro: AppCompatActivity(){
             .subscribe({
                 HandlePlayerEvent(it)
             }, {
-                showCustomToast("事件总线注册失败:${it.message}", Toast.LENGTH_SHORT,3)
+                showCustomToast("事件总线注册失败:${it.message}",3)
             })
     }
     private fun HandlePlayerEvent(event: String) {
@@ -2083,7 +2083,7 @@ class PlayerActivityOro: AppCompatActivity(){
 
         vm.BrightnessChanged = false
 
-        showCustomToast("已解除亮度控制,现在您可以使用系统亮度控制了", Toast.LENGTH_SHORT, 3)
+        showCustomToast("已解除亮度控制,现在您可以使用系统亮度控制了",3)
     }
     //dp转px
     private fun dp2px(dpValue: Float): Int {
@@ -2324,7 +2324,7 @@ class PlayerActivityOro: AppCompatActivity(){
             //发布完成消息
             val uriNumOnly = ContentUris.parseId(MediaInfo_MediaUri)
             ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uriNumOnly.toString()))
-            showCustomToast("截取封面完成", Toast.LENGTH_SHORT,3)
+            showCustomToast("截取封面完成", 3)
             //恢复播放状态
             if (vm.wasPlaying){ player.play() }
         }
@@ -2352,7 +2352,7 @@ class PlayerActivityOro: AppCompatActivity(){
     private fun useDefaultCover(filename: String){
         val defaultCoverBitmap = vectorToBitmap(this, R.drawable.ic_album_video_album)
         if (defaultCoverBitmap == null) {
-            showCustomToast("从本地文件提取默认封面素材失败", Toast.LENGTH_SHORT,3)
+            showCustomToast("从本地文件提取默认封面素材失败",3)
             return
         }
         val processedBitmap = processCenterCrop(defaultCoverBitmap)
@@ -2366,7 +2366,7 @@ class PlayerActivityOro: AppCompatActivity(){
         }
         //发布完成消息
         ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", filename))
-        showCustomToast("已完成", Toast.LENGTH_SHORT,3)
+        showCustomToast("已完成", 3)
     }
     private fun processCenterCrop(src: Bitmap): Bitmap {
         //以后可以添加为传入量
@@ -2931,7 +2931,7 @@ class PlayerActivityOro: AppCompatActivity(){
                     }
                     //错误直接退出
                     else -> {
-                        showCustomToast("播放器样式参数错误：既不是oro也不是neo", Toast.LENGTH_SHORT, 3)
+                        showCustomToast("播放器样式参数错误：既不是oro也不是neo", 3)
                         finish()
                     }
                 }
@@ -2950,7 +2950,7 @@ class PlayerActivityOro: AppCompatActivity(){
                 }
                 //错误直接退出
                 else{
-                    showCustomToast("播放器样式参数错误：既不是oro也不是neo", Toast.LENGTH_SHORT, 3)
+                    showCustomToast("播放器样式参数错误：既不是oro也不是neo", 3)
                     finish()
                 }
             }

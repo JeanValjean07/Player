@@ -9,7 +9,6 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -181,7 +180,6 @@ class MainMusicAdapter(
             }
             catch (e: Exception)  {
                 e.printStackTrace()
-                Log.e("SuMing", "generateCoverFrame: ${item.uriNumOnly} 生成缩略图异常: ${e.message}")
             }
             finally {
                 retriever.release()

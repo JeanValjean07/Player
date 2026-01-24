@@ -284,8 +284,7 @@ object PlayerSingleton {
 
         return absolutePath?.takeIf { File(it).exists() }
     } //根据uri合成绝对路径
-    private fun updateMediaInfoValues(NEW_MediaInfo_MediaType: String,
-        NEW_MediaInfo_MediaTitle: String,
+    private fun updateMediaInfoValues(NEW_MediaInfo_MediaType: String,NEW_MediaInfo_MediaTitle: String,
         NEW_MediaInfo_MediaArtist: String,
         NEW_MediaInfo_FileName: String,
         NEW_MediaInfo_Duration: Long,
@@ -432,7 +431,7 @@ object PlayerSingleton {
         //写入媒体类型
         PlayerServiceLinker.setMediaInfo_MediaType(MediaInfo_MediaType)
         //
-        PlayerServiceLinker.setMediaBasicInfo(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
+        PlayerServiceLinker.setMediaBasicInfo(MediaInfo_MediaUriString, MediaInfo_FileName, MediaInfo_MediaArtist)
 
 
     }
@@ -501,7 +500,6 @@ object PlayerSingleton {
     //连接到媒体会话控制器
     private fun connectToMediaSession(context: Context){
         if (sessionState_MediaSession_connected) return
-        Log.d("SuMing","connectToMediaSession MediaInfo_MediaType = $MediaInfo_MediaType")
         val SessionToken = SessionToken(context as Application, ComponentName(context, PlayerService::class.java))
         MediaSessionController = MediaController.Builder(context, SessionToken).buildAsync()
         MediaSessionController?.addListener({
@@ -654,7 +652,7 @@ object PlayerSingleton {
     fun getMediaList(context: Context): SnapshotStateList<MediaItemForVideo>{
         //未完成读取,返回空列表
         if (!state_MediaListProcess_complete){
-            context.showCustomToast("播放列表未加载完成", Toast.LENGTH_SHORT, 3)
+            context.showCustomToast("播放列表未加载完成",3)
             return emptyList
         }
         //已完成读取,返回播放列表
@@ -711,7 +709,7 @@ object PlayerSingleton {
     //播放列表:切换媒体
     private fun getTargetMediaUri(flag_next_or_previous: String): String{
         if (!state_MediaListProcess_complete){
-            objectContext.showCustomToast("播放列表未加载完成", Toast.LENGTH_SHORT, 3)
+            objectContext.showCustomToast("播放列表未加载完成",3)
             return "error"
         }
         var indexCursor = currentMediaIndex
@@ -763,7 +761,7 @@ object PlayerSingleton {
             return targetUriString
         }
         else{
-            objectContext.showCustomToast("未传入有效的上下参数",Toast.LENGTH_SHORT, 3)
+            objectContext.showCustomToast("未传入有效的上下参数",3)
             return "error"
         }
     }
@@ -777,7 +775,7 @@ object PlayerSingleton {
         //解码目标媒体信息
         val getMediaInfoResult = getMediaInfo(objectContext,targetUri)
         if (!getMediaInfoResult){
-            objectContext.showCustomToast("出错了",Toast.LENGTH_SHORT, 3)
+            objectContext.showCustomToast("出错了",3)
             return
         }
         //切换至目标媒体项
@@ -795,7 +793,7 @@ object PlayerSingleton {
         //解码目标媒体信息
         val getMediaInfoResult = getMediaInfo(objectContext,targetUri)
         if (!getMediaInfoResult){
-            objectContext.showCustomToast("出错了",Toast.LENGTH_SHORT, 3)
+            objectContext.showCustomToast("出错了",3)
             return
         }
         //切换至目标媒体项
@@ -944,7 +942,7 @@ object PlayerSingleton {
             .subscribe({
                 HandlePlayerEvent(it)
             }, {
-                context.showCustomToast("singleton事件总线注册失败:${it.message}", Toast.LENGTH_SHORT,3)
+                context.showCustomToast("singleton事件总线注册失败:${it.message}",3)
             })
     }
     private fun HandlePlayerEvent(event: String) {
@@ -978,31 +976,12 @@ object PlayerSingleton {
 
 
 
-    //播放页样式切换，重启服务
-    fun updatedPlayStyle(context: Context, newType: Int){
-        //关闭媒体会话和服务
-        DevastateMediaSessionBundle()
-        //未播放时不执行
-        if (_player?.currentMediaItem == null) return
-        //写入新服务配置并启动媒体会话
-        setServiceLinker(newPageType = newType)
-        Handler(Looper.getMainLooper()).postDelayed({ connectToMediaSession(context) }, 2000)
-
-    }
-
-
-
-    //获取播放器播放状态
-    fun getPlayState(uri_need_compare: Uri): Triple<Boolean, Boolean, Uri> {
-        if (_player?.currentMediaItem == null){
-            return Triple(false, false, MediaInfo_MediaUri)
+    //获取播放器播放状态 < Boolean=是否有媒体正在播放 丨 Uri：链接 >
+    fun getPlayState(): Pair<Boolean, Uri> {
+        return if (_player?.currentMediaItem == null){
+            Pair(false, Uri.EMPTY)
         }else{
-            //Log.d("SuMing", "uri_need_compare:${uri_need_compare},MediaInfo_MediaUri:${MediaInfo_MediaUri}")
-            if (uri_need_compare == MediaInfo_MediaUri){
-                return Triple(true, true, MediaInfo_MediaUri)
-            }else{
-                return Triple(true, false, MediaInfo_MediaUri)
-            }
+            Pair(true, MediaInfo_MediaUri)
         }
     } //获取当前播放状态
     fun getIsPlaying(): Boolean {

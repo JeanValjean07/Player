@@ -164,7 +164,7 @@ class MainActivity: AppCompatActivity() {
             if (PREFS_AcquiesceTab != "video" && PREFS_AcquiesceTab != "music" && PREFS_AcquiesceTab != "gallery" && PREFS_AcquiesceTab != "last"){
                 PREFS_AcquiesceTab = "video"
                 PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", "video").apply() }
-                showCustomToast("修复了默认页签设置", Toast.LENGTH_SHORT, 3)
+                showCustomToast("修复了默认页签设置",3)
             }
         }else{
             PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", "video").apply() }
@@ -179,7 +179,7 @@ class MainActivity: AppCompatActivity() {
             if (state_lastPage != "video" && state_lastPage != "music" && state_lastPage != "gallery"){
                 state_lastPage = "video"
                 PREFS_MediaStore.edit { putString("state_lastPage", "video").apply() }
-                showCustomToast("修复了默认页签设置", Toast.LENGTH_SHORT, 3)
+                showCustomToast("修复了默认页签设置",3)
             }
         }else{
             PREFS_MediaStore.edit { putString("state_lastPage", "video").apply() }
@@ -240,7 +240,7 @@ class MainActivity: AppCompatActivity() {
             //处理交互
             ToolVibrate().vibrate(this@MainActivity)
             //需要重做为单独的页面
-            showCustomToast("陈列架功能暂未开放", Toast.LENGTH_SHORT, 3)
+            showCustomToast("陈列架功能暂未开放",3)
         }
         //播放卡片
         PlayingCard = findViewById(R.id.PlayingCard)
@@ -293,7 +293,7 @@ class MainActivity: AppCompatActivity() {
                 showMusicList(false)
             }
             else{
-                showCustomToast("默认加载页面标识符错误，不知道要加载哪个页面", Toast.LENGTH_SHORT, 3)
+                showCustomToast("默认加载页面标识符错误，不知道要加载哪个页面",3)
             }
         }
         //恢复状态启动:
@@ -307,7 +307,7 @@ class MainActivity: AppCompatActivity() {
                 showMusicList(true)
             }
             else{
-                showCustomToast("从Bundle中恢复了错误的页面标识", Toast.LENGTH_SHORT, 3)
+                showCustomToast("从Bundle中恢复了错误的页面标识",3)
             }
             //滚动到上次位置
             //NestedScrollView_VideoList.post { NestedScrollView_VideoList.scrollY = savedInstanceState.getInt("state_NestedScrollView_Y", 0) }
@@ -670,7 +670,7 @@ class MainActivity: AppCompatActivity() {
         val newUri = uri
         val currentUri = PlayerSingleton.getMediaInfoUri()
         if (newUri == currentUri){
-            showCustomToast("已在播放该媒体", Toast.LENGTH_SHORT, 3)
+            showCustomToast("已在播放该媒体",3)
             PlayerSingleton.continuePlay(true, force_request = true, need_fadeIn = false)
             return
         }
@@ -691,11 +691,11 @@ class MainActivity: AppCompatActivity() {
         val isPermissionGranted = isPermissionGranted()
         if (!isPermissionGranted){
             if (isVersionAboveTiramisu){
-                showCustomToast("请先开启管理所有文件权限", Toast.LENGTH_SHORT, 3)
+                showCustomToast("请先开启管理所有文件权限",3)
                 val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
                 this.startActivity(intent)
             }else{
-                showCustomToast("请先开启媒体访问文件权限", Toast.LENGTH_SHORT, 3)
+                showCustomToast("请先开启媒体访问文件权限",3)
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                     .apply { data = "package:$packageName".toUri() }
                 startActivity(intent)
@@ -725,11 +725,11 @@ class MainActivity: AppCompatActivity() {
         val isPermissionGranted = isPermissionGranted()
         if (!isPermissionGranted){
             if (isVersionAboveTiramisu){
-                showCustomToast("请先开启管理所有文件权限", Toast.LENGTH_SHORT, 3)
+                showCustomToast("请先开启管理所有文件权限",3)
                 val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
                 this.startActivity(intent)
             }else{
-                showCustomToast("请先开启媒体访问文件权限", Toast.LENGTH_SHORT, 3)
+                showCustomToast("请先开启媒体访问文件权限",3)
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                     .apply { data = "package:$packageName".toUri() }
                 startActivity(intent)
@@ -790,7 +790,7 @@ class MainActivity: AppCompatActivity() {
             ButtonCardGallery.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
         }
         else{
-            showCustomToast("界面重置函数接收到预期外的参数", Toast.LENGTH_SHORT, 3)
+            showCustomToast("界面重置函数接收到预期外的参数",3)
         }
     }
     private fun listGoTop(){
@@ -808,7 +808,7 @@ class MainActivity: AppCompatActivity() {
                 main_video_list_adapter_RecyclerView.smoothScrollToPosition(0)
             }
             else -> {
-                showCustomToast("列表回顶函数接收到预期外的参数", Toast.LENGTH_SHORT, 3)
+                showCustomToast("列表回顶函数接收到预期外的参数",3)
             }
         }
     }
@@ -865,7 +865,7 @@ class MainActivity: AppCompatActivity() {
             }
             //类型未命中
             else{
-                showCustomToast("加载类型输入错误", Toast.LENGTH_SHORT, 3)
+                showCustomToast("加载类型输入错误",3)
             }
         }
     }
@@ -882,7 +882,7 @@ class MainActivity: AppCompatActivity() {
                     }
                     else{
                         Log.d("SuMing", "generalLoadVideo : 77777")
-                        showCustomToast("请先开启管理所有文件权限", Toast.LENGTH_SHORT, 3)
+                        showCustomToast("请先开启管理所有文件权限",3)
                         val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
                         this@MainActivity.startActivity(intent)
                     }
@@ -1008,9 +1008,11 @@ class MainActivity: AppCompatActivity() {
         when(playPageType){
             0 -> {
                 //构建intent
-                val intent = Intent(this, PlayerActivityOro::class.java).apply { putExtra("uri", uri) }
+                val intent = Intent(this, PlayerActivityOro::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                    .putExtra("uri", uri)
+                    .putExtra("IntentSource", 3)
                 //构建可选参数
                 val options = ActivityOptionsCompat.makeCustomAnimation(
                     this,
@@ -1028,10 +1030,13 @@ class MainActivity: AppCompatActivity() {
 
             }
             1 -> {
+                Log.d("SuMing","startVideoPlayer uri = $uri")
                 //构建intent
-                val intent = Intent(this, PlayerActivityNeo::class.java).apply { putExtra("uri", uri) }
+                val intent = Intent(this, PlayerActivityNeo::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                    .putExtra("uri", uri)
+                    .putExtra("IntentSource", 3)
                 //构建可选参数
                 val options = ActivityOptionsCompat.makeCustomAnimation(
                     this,
@@ -1094,11 +1099,11 @@ class MainActivity: AppCompatActivity() {
                 startVideoPlayer(uri)
             }
             "music" -> {
-                showCustomToast("暂不支持打开音乐播放页面", Toast.LENGTH_SHORT, 3)
+                showCustomToast("暂不支持打开音乐播放页面",3)
                 //startMusicPlayer(uri)
             }
             else -> {
-                showCustomToast("严重错误:未知的媒体类型", Toast.LENGTH_SHORT, 3)
+                showCustomToast("严重错误:未知的媒体类型",3)
             }
         }
     }
@@ -1187,7 +1192,7 @@ class MainActivity: AppCompatActivity() {
             .subscribe({
                 HandlePlayerEvent(it)
             }, {
-                showCustomToast("事件总线函数出现错误:${it.message}", Toast.LENGTH_SHORT,3)
+                showCustomToast("事件总线函数出现错误:${it.message}",3)
             })
     }
     private fun disposeEventBus() {
@@ -1265,7 +1270,7 @@ class MainActivity: AppCompatActivity() {
     private fun existInvalidMediaItem(){
         if (state_MediaStore_refreshed){ return }
         state_MediaStore_refreshed = true
-        showCustomToast("存在已失效的媒体项,将刷新列表", Toast.LENGTH_SHORT,3)
+        showCustomToast("存在已失效的媒体项,将刷新列表",3)
 
     }
     //保存加载状态

@@ -329,7 +329,15 @@ class PlayerScrollerAdapter(
     //生成和使用占位图
     private fun generatePlaceholder() {
         val retriever = MediaMetadataRetriever()
-        retriever.setDataSource(MediaInfo_AbsolutePath)
+        try {
+            retriever.setDataSource(MediaInfo_AbsolutePath)
+        }catch (_: Exception) {
+
+            return
+        }
+
+
+
         try {
             var wStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
             var hStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
