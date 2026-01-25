@@ -129,7 +129,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var videoTimeSyncGap = 50L
     private var scrollParam1 = 0
     private var scrollParam2 = 0
-    private var syncScrollRunnableGap = 16L
+
     //功能:倍速滚动
     private var lastPlaySpeed = 0f
     private var forceSeekGap = 5000L
@@ -145,11 +145,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var smartScrollRunnableRunning = false
     private var syncScrollRunnableRunning = false
 
-    //缩略图绘制参数
-    private var ScrollerInfo_MaxPicNumber = 20
-    private var ScrollerInfo_EachPicWidth = 0
-    private var ScrollerInfo_PicNumber = 0
-    private var ScrollerInfo_EachPicDuration: Int = 0
+
     //播放区域点击事件
     private var touchState_two_fingers = false
     private var ACTION_POINTER_DOWN = false
@@ -338,25 +334,39 @@ class PlayerActivityNeo: AppCompatActivity(){
         coroutine_main_startPlayVideo.launch {
             //来自首次启动活动
             if (savedInstanceState == null){
-                //获取intent:< result: 1=获取成功 2=获取失败丨from:0=originIntent 1=pendingIntent丨uri丨>
-                val (needSetItem, uri) = inspectIntent(intent)
 
-                Log.d("SuMing","inspectIntent: $needSetItem $uri")
+                //获取intent媒体链接
+                val (_, intentUri) = ExtractIntentUri(intent)
+                //获取来源标记
+                val source = ExtractIntentSource(intent)
+                //检查是否正在播放
+                val (_, nowUri) = getCurrentPlayState()
 
-                //新建媒体项或绑定现有播放项
-                if (needSetItem){
-                    if (uri == Uri.EMPTY){
-                        queryManualInputUri()
-                    }else{
-                        startPlayNewItem(uri)
+                //决策系统
+                //返回：1=需要新建播放项 2=需要连接现有播放项 3=报错退出 4=弹框输入
+                val decideSign = DecideEngine(intentUri,source,nowUri)
+                when(decideSign){
+                    1 -> {
+                        Log.d("SuMing","DecideEngine: 1")
+                        startPlayNewItem(intentUri)
                     }
-                }else{
-                    onBindExistingItem()
+                    2 -> {
+                        Log.d("SuMing","DecideEngine: 2")
+                        BindCurrentPlayingItem(nowUri)
+                    }
+                    3 -> {
+                        Log.d("SuMing","DecideEngine: 3")
+                        finish()
+                    }
+                    4 -> {
+                        Log.d("SuMing","DecideEngine: 4")
+                        queryManualInputUri()
+                    }
                 }
 
             }
             //来自重建活动
-            else{ onBindExistingItem() }
+            else{ BindCurrentPlayingItem(vm.MediaInfo_MediaUri) }
 
         }
 
@@ -1186,61 +1196,78 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
-    //检查来源和链接 < Boolean:是否需要设置链接 丨 uri:链接 >
-    private fun inspectIntent(intent: Intent): Pair<Boolean,Uri>{
-        val source = intent.getIntExtra("IntentSource", -1)
+    //提取链接
+    private fun ExtractIntentUri(intent: Intent): Pair<Boolean,Uri>{
         val intentUri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)?: Uri.EMPTY
-        Log.d("SuMing","intentUri: $intentUri ")
-        //启动来源标记 < 1 = ACTION_SEND/ACTION_VIEW 丨 2 = pending 丨 3 = 常规启动 >
+
+        return if (intentUri == Uri.EMPTY){
+            Pair(false,Uri.EMPTY)
+        }else{
+            Pair(true,intentUri)
+        }
+
+    }
+    //提取来源标记  < 返回值： -1=无法验证 丨 1=系统面板 丨 2= pendingIntent 丨 3= 常规启动 >
+    private fun ExtractIntentSource(intent: Intent): Int{
+        val source = intent.getIntExtra("IntentSource", -1)
+
+        if (source == -1) showCustomToast("无法验证启动来源标记", 3)
+
+        return source
+    }
+    //获取当前正在播放状态
+    private fun getCurrentPlayState(): Pair<Boolean,Uri>{
+        val (isCurrentItemExist, currentItemUri) = PlayerSingleton.getPlayState()
+        return if (isCurrentItemExist && currentItemUri != Uri.EMPTY){
+            Pair(true,currentItemUri)
+        }else{
+            Pair(false,Uri.EMPTY)
+        }
+    }
+    //决策系统 <返回：1=需要新建播放项 2=需要连接现有播放项 3=报错退出 4=弹框输入 >
+    private fun DecideEngine(intentUri: Uri,source: Int,nowUri: Uri): Int{
         when(source){
-            //ACTION_SEND/ACTION_VIEW
+            //无法验证启动来源标记
+            -1 -> {
+                return -1
+            }
+            //系统面板启动
             1 -> {
-
-                val (isCurrentItemExist, currentItemUri) = PlayerSingleton.getPlayState()
-
-                return if (isCurrentItemExist){
-                    if (intentUri == currentItemUri){
-                        Pair(false,Uri.EMPTY)
-                    }else{
-                        Pair(true,intentUri)
-                    }
+                return if (intentUri == Uri.EMPTY){
+                    3
                 }else{
-                    Pair(true,intentUri)
+                    1
                 }
             }
-            //pending
+            //pendingIntent启动
             2 -> {
-
-                return Pair(false,Uri.EMPTY)
+                return if (nowUri == Uri.EMPTY){
+                    3
+                }else{
+                    2
+                }
             }
             //常规启动
             3 -> {
-                val (isCurrentItemExist, currentItemUri) = PlayerSingleton.getPlayState()
-
-                Log.d("SuMing","getPlayState(): $isCurrentItemExist $currentItemUri")
-
-                return if (isCurrentItemExist){
-                    if (intentUri == currentItemUri){
-                        Pair(false,Uri.EMPTY)
+                return if (intentUri == Uri.EMPTY){
+                    if (nowUri == Uri.EMPTY){
+                        3
                     }else{
-                        Pair(true,intentUri)
+                        2
                     }
                 }else{
-                    Pair(true,intentUri)
+                    if (intentUri == nowUri){
+                        2
+                    }else{
+                        1
+                    }
                 }
             }
-            //未知来源
             else -> {
 
-                return Pair(false,Uri.EMPTY)
+                return 3
             }
-
-
-
         }
-
-
-
     }
     //手动输入链接
     @SuppressLint("InflateParams")
@@ -1406,36 +1433,12 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
             //已有媒体正是目标媒体,直接绑定
             else{
-                //播放已存在媒体
-                onPlayExistingItem()
+                BindCurrentPlayingItem(uri)
             }
         }
     }
-    //播放已有媒体
-    private fun onPlayExistingItem(){
-        //绑定播放器视图
-        playerView.player = null
-        playerView.player = player
-        //添加播放器事件监听
-        player.removeListener(PlayerStateListener)
-        player.addListener(PlayerStateListener)
-        state_PlayerListenerAdded = true
-        //关闭遮罩
-        closeCover(0,0)
-        //重置状态
-        playerReadyFrom_FirstEntry = false
-        //更新全局媒体信息变量
-        getMediaInfo(vm.MediaInfo_MediaUri)
-        //刷新视频进度线
-        updateTimeCard()
-        //刷新进度条
-        updateScrollerAdapter()
-        //刷新控制按钮
-        updateButtonState()
-
-    }
-    //重建时连接已有媒体
-    private fun onBindExistingItem(){
+    //连接正在播放的媒体
+    private fun BindCurrentPlayingItem(uri: Uri){
         //状态预置位
         vm.allowRecord_wasPlaying = true
         playerReadyFrom_FirstEntry = false
@@ -1455,7 +1458,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //重置状态
         playerReadyFrom_FirstEntry = false
         //更新全局媒体信息变量
-        getMediaInfo(vm.MediaInfo_MediaUri)
+        getMediaInfo(uri)
         //刷新视频进度线
         updateTimeCard()
         //刷新进度条
@@ -1464,8 +1467,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         updateButtonState()
         //隐藏顶部分割线
         HideTopLine()
-        //重新获取媒体信息
-        getMediaInfo(vm.MediaInfo_MediaUri)
 
     }
     //媒体项变更回调
@@ -1814,22 +1815,17 @@ class PlayerActivityNeo: AppCompatActivity(){
             //开启视频控件
             startScrollerSync()
             startVideoTimeSync()
-            //Log.d("SuMing","onResume: 决策函数运行中")
         }else{
             //活动重建
             if (vm.state_onStop_ByReBuild){
-                //Log.d("SuMing","onResume: 活动重建")
                 //开启视频控件
                 startScrollerSync()
                 startVideoTimeSync()
             }
             //首次启动
-            /*
             if (vm.state_onStop_ByRealExit){
-                //Log.d("SuMing","onResume: 首次启动")
-            }
 
-             */
+            }
             //活动暂退桌面：小窗模式在这里包含
             if (vm.state_onStop_ByLossFocus){
                 //可能来自浮窗
@@ -1845,7 +1841,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //开启视频控件
                 startScrollerSync()
                 startVideoTimeSync()
-                //Log.d("SuMing","onResume: 活动暂退桌面")
             }
             //通用步骤：
             //重置状态
@@ -1875,41 +1870,37 @@ class PlayerActivityNeo: AppCompatActivity(){
     @SuppressLint("UnsafeIntentLaunch")
     override fun onNewIntent(newIntent: Intent?) {
         super.onNewIntent(newIntent)
-        Log.d("SuMing","onNewIntent: ${newIntent}")
         if (newIntent?.action != null){
             when (newIntent.action) {
                 //系统面板：分享
                 Intent.ACTION_SEND -> {
                     vm.state_FromSysStart = true
-                    val uri = IntentCompat.getParcelableExtra(newIntent, Intent.EXTRA_STREAM, Uri::class.java) ?: return finish()
+                    val uri = IntentCompat.getParcelableExtra(newIntent, Intent.EXTRA_STREAM, Uri::class.java) ?: return
                     //判断是否是同一个视频
-                    if (uri == PlayerSingleton.getMediaInfoUri()) { return }
-                    else{
-                        //设置新的媒体项
-                        setNewMediaItem(uri)
-                    }
+                    if (uri == PlayerSingleton.getMediaInfoUri()) return
+                    //设置新的媒体项
+                    setNewMediaItem(uri)
+
                 }
                 //系统面板：选择其他应用打开
                 Intent.ACTION_VIEW -> {
                     vm.state_FromSysStart = true
-                    val uri = newIntent.data ?: return finish()
+                    val uri = newIntent.data ?: return
                     //判断是否是同一个视频
-                    if (uri == PlayerSingleton.getMediaInfoUri()) { return }
-                    else{
-                        //设置新的媒体项
-                        setNewMediaItem(uri)
-                    }
+                    if (uri == PlayerSingleton.getMediaInfoUri()) return
+                    //设置新的媒体项
+                    setNewMediaItem(uri)
+
                 }
-                //
+                //ACTION_NEW_INTENT
                 "ACTION_NEW_INTENT" -> {
                     vm.state_FromSysStart = true
-                    val uri = newIntent.getParcelableExtra<Uri>("uri") ?: return finish()
+                    val uri = IntentCompat.getParcelableExtra(newIntent, "uri", Uri::class.java) ?: return
                     //判断是否是同一个视频
-                    if (uri == PlayerSingleton.getMediaInfoUri()) { return }
-                    else{
-                        //设置新的媒体项
-                        setNewMediaItem(uri)
-                    }
+                    if (uri == PlayerSingleton.getMediaInfoUri()) return
+                    //设置新的媒体项
+                    setNewMediaItem(uri)
+
                 }
             }
         }
@@ -2640,95 +2631,107 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //刷新进度条
+    private val scrollerInfo_MaxPicNumber = 20
+    private var scrollerInfo_EachPicWidthPx = 0
+    private var scrollerInfo_PicNumber = 0
+    private var scrollerInfo_EachPicDuration = 0L
+    private var syncScrollerRunnableGap = 50L
     private fun updateScrollerAdapter(){
-
-        return
-
         lifecycleScope.launch(Dispatchers.IO) {
-            //获取ViewModel
+            //viewModel
             val playerScrollerViewModel by viewModels<PlayerScrollerViewModel>()
-            //预先规划文件夹结构并创建 + 基于文件名哈希区分
-            val SubDir_ThisMedia = File(cacheDir, "Media/${vm.MediaInfo_FileName.hashCode()}/scroller")
-            if (!SubDir_ThisMedia.exists()){
-                SubDir_ThisMedia.mkdirs()
+            //文件夹
+            File(cacheDir, "Media/${vm.MediaInfo_FileName.hashCode()}/scroller").apply{
+                mkdirs()
             }
 
-            //是否使用关键帧截取缩略图
-            var PREFS_UseSyncFrameInScroller = true
-            if (ScrollerInfo_EachPicDuration > 1000){ PREFS_UseSyncFrameInScroller = true }
 
-            //为超长进度条和普通进度条计算不同参数
+            //进度条绘制参数计算
+            scrollerInfo_EachPicWidthPx = (40 * DisplayMetrics.density).toInt()
+            //计算不同进度条所需参数
             val PREFS_UseSuperLongScroller = SettingsRequestCenter.get_PREFS_UseSuperLongScroller(this@PlayerActivityNeo)
             if (PREFS_UseSuperLongScroller){
-                ScrollerInfo_EachPicWidth = (47 * DisplayMetrics.density).toInt()
+                //< 输入 = 视频总长度ms 丨 输出 = 单图时长ms 总图数
                 if (vm.MediaInfo_MediaDuration > 1_0000_000L) {
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 500.0).toInt()
-                    ScrollerInfo_PicNumber = 500
+                    scrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 500.0).toLong()
+                    scrollerInfo_PicNumber = 500
                 }
                 else if (vm.MediaInfo_MediaDuration > 7500_000L) {
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 400.0).toInt()
-                    ScrollerInfo_PicNumber = 400
+                    scrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 400.0).toLong()
+                    scrollerInfo_PicNumber = 400
                 }
                 else if (vm.MediaInfo_MediaDuration > 5000_000L) {
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 300.0).toInt()
-                    ScrollerInfo_PicNumber = 300
+                    scrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 300.0).toLong()
+                    scrollerInfo_PicNumber = 300
                 }
                 else if (vm.MediaInfo_MediaDuration > 500_000L) {
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 200.0).toInt()
-                    ScrollerInfo_PicNumber = 200
+                    scrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration / 200.0).toLong()
+                    scrollerInfo_PicNumber = 200
                 }
                 else {
-                    ScrollerInfo_EachPicDuration = 1000
-                    ScrollerInfo_PicNumber = min((max((vm.MediaInfo_MediaDuration / 1000).toInt(), 1)), 500)
+                    scrollerInfo_EachPicDuration = 1000
+                    scrollerInfo_PicNumber = min((max((vm.MediaInfo_MediaDuration / 1000).toInt(), 1)), 500)
                 }
             }else{
-                if(vm.MediaInfo_MediaDuration / 1000 >= ScrollerInfo_MaxPicNumber) {
-                    ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration.div(100) * 100).toInt() / ScrollerInfo_MaxPicNumber
-                    ScrollerInfo_PicNumber = ScrollerInfo_MaxPicNumber
-                }else{
-                    ScrollerInfo_EachPicWidth = (40 * DisplayMetrics.density).toInt()
-                    ScrollerInfo_PicNumber = (vm.MediaInfo_MediaDuration / 1000).toInt() + 1
-                    ScrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration.div(100) * 100).toInt() / ScrollerInfo_PicNumber
+                //< 输入 = 视频总长度ms 丨 输出 = 单图时长ms 总图数
+                if(vm.MediaInfo_MediaDuration / 1000 >= scrollerInfo_MaxPicNumber) {
+                    scrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration.div(100) * 100) / scrollerInfo_MaxPicNumber
+                    scrollerInfo_PicNumber = scrollerInfo_MaxPicNumber
+                }
+                else{
+                    scrollerInfo_PicNumber = (vm.MediaInfo_MediaDuration / 1000).toInt() + 1
+                    scrollerInfo_EachPicDuration = (vm.MediaInfo_MediaDuration.div(100) * 100) / scrollerInfo_PicNumber
                 }
             }
-
-
-
             //移除查询参数
             val MediaInfo_AbsolutePath_clean = vm.MediaInfo_AbsolutePath.substringBefore("?")
+            //是否使用关键帧截取缩略图
+            var PREFS_UseSyncFrameInScroller = true
+            if (scrollerInfo_EachPicDuration > 1000L){ PREFS_UseSyncFrameInScroller = true }
+
+
+            //不符合条件时不开启
+            fun showErrorNotice(){
+                showCustomToast("进度条参数错误,无法绘制",3)
+            }
+            if (MediaInfo_AbsolutePath_clean.isEmpty()) {
+                showErrorNotice()
+                return@launch
+            }
+            if (scrollerInfo_PicNumber == 0 || scrollerInfo_EachPicDuration == 0L){
+                showErrorNotice()
+                return@launch
+            }
 
 
             //进度条边界设置
-            withContext(Dispatchers.Main){
-                setScrollerPadding()
-            }
-
-
+            withContext(Dispatchers.Main){ setScrollerPadding() }
             //绑定adapter
-            if (PREFS_UseSuperLongScroller){
-                withContext(Dispatchers.Main) {
+            withContext(Dispatchers.Main) {
+                //加长进度条
+                if (PREFS_UseSuperLongScroller){
                     scroller.adapter = PlayerScrollerLongAdapter(this@PlayerActivityNeo,
                         MediaInfo_AbsolutePath_clean,
                         vm.MediaInfo_FileName,
                         playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
+                        scrollerInfo_EachPicWidthPx,
+                        scrollerInfo_PicNumber,
+                        scrollerInfo_EachPicDuration.toInt(),
                         PREFS_UseSyncFrameInScroller,
                         scroller,
                         playerScrollerViewModel
                     )
                 }
-            }else{
-                withContext(Dispatchers.Main) {
-                    scroller.adapter = PlayerScrollerAdapter(this@PlayerActivityNeo,
+                //基础进度条
+                else{
+                    scroller.adapter = PlayerScrollerAdapter(
+                        this@PlayerActivityNeo,
                         MediaInfo_AbsolutePath_clean,
                         vm.MediaInfo_FileName,
                         playerScrollerViewModel.thumbItems,
-                        ScrollerInfo_EachPicWidth,
-                        ScrollerInfo_PicNumber,
-                        ScrollerInfo_EachPicDuration,
+                        scrollerInfo_EachPicWidthPx,
+                        scrollerInfo_PicNumber,
+                        scrollerInfo_EachPicDuration,
                         PREFS_UseSyncFrameInScroller,
                         scroller,
                         playerScrollerViewModel
@@ -2736,19 +2739,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
 
+
             //开启被控
-            fun startSyncScrollerGapControl(){
-                syncScrollRunnableGap = 0L
-                lifecycleScope.launch {
-                    delay(3000)
-                    syncScrollRunnableGap = ((vm.MediaInfo_MediaDuration / 1000) * (1000.0 / 3600)).toLong()
-                    if (PREFS_UseSuperLongScroller){ syncScrollRunnableGap = 10L }
-                }
-            }
-            startSyncScrollerGapControl()
             startScrollerSync()
-            delay(200)
-            startVideoTimeSync()
 
         }
     }
@@ -3152,12 +3145,11 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val syncScrollTask = object : Runnable {
         @SuppressLint("ServiceCast")
         override fun run() {
-
+            //标记运行
             syncScrollRunnableRunning = true
-            if (ScrollerInfo_EachPicDuration == 0){ return }
 
-            scrollParam1 = ( player.currentPosition / ScrollerInfo_EachPicDuration ).toInt()
-            scrollParam2 = (( player.currentPosition - scrollParam1 * ScrollerInfo_EachPicDuration ) * ScrollerInfo_EachPicWidth / ScrollerInfo_EachPicDuration ).toInt()
+            scrollParam1 = ( player.currentPosition / scrollerInfo_EachPicDuration ).toInt()
+            scrollParam2 = (( player.currentPosition - scrollParam1 * scrollerInfo_EachPicDuration ) * scrollerInfo_EachPicWidthPx / scrollerInfo_EachPicDuration ).toInt()
 
             if (vm.playEnd && !player.isPlaying){
                 scrollParam1 -= 1
@@ -3174,10 +3166,10 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun startScrollerSync() {
-        if (!vm.PREFS_LinkScroll){ return }
-        if (syncScrollRunnableRunning){
-            return
-        }
+        if (!vm.PREFS_LinkScroll) return
+        if (syncScrollRunnableRunning) return
+        if (scrollerInfo_EachPicDuration == 0L) return
+
         scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
         syncScrollTaskHandler.post(syncScrollTask)
     }

@@ -37,7 +37,7 @@ class PlayerScrollerAdapter(
     private val thumbItems: ObservableList<PlayerScrollerViewModel.scrollerItem>,
     private val scrollerParam_EachPicWidth: Int,
     private val scrollerParam_PicNumber: Int,
-    private val scrollerParam_EachPicDuration: Int,
+    private val scrollerParam_EachPicDuration: Long,
     private val PREFS_GenerateThumbSYNC: Boolean,
     private var recyclerView: RecyclerView? = null,
     private var PlayerScrollerVM: PlayerScrollerViewModel
@@ -58,7 +58,7 @@ class PlayerScrollerAdapter(
 
     //主线程初始化操作
     init {
-        //列表监听器(必选)
+        //列表监听器
         thumbItems.addOnListChangedCallback(object : ObservableList.OnListChangedCallback<ObservableList<PlayerScrollerViewModel.scrollerItem>>() {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChanged(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>) =

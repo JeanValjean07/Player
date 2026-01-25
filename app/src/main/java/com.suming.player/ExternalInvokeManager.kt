@@ -161,11 +161,9 @@ class ExternalInvokeManager : AppCompatActivity(){
         //构建intent
         val intent = Intent(this, PlayerActivityNeo::class.java).apply {
             putExtra("uri", uri)
+            putExtra("IntentSource", source)
             action = "ACTION_NEW_INTENT"
-        }
-            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-
-            .putExtra("IntentSource", source)
+        }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
 
         Log.d("SuMing","invoke startVideoNeoPage: $uri")
