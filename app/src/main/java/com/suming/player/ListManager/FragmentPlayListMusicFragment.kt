@@ -1,16 +1,18 @@
 package com.suming.player.ListManager
 
+import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -20,22 +22,25 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.PlayerViewModel
 import com.suming.player.R
 import com.suming.player.ToolVibrate
 import com.suming.player.showCustomToast
 import kotlinx.coroutines.launch
 import kotlin.getValue
+import androidx.core.net.toUri
+import androidx.media3.common.util.Log
 
 @UnstableApi
 @Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class FragmentPlayListMusicFragment(
-    private val onPlayClick: (String) -> Unit,
-    private val onAddToListClick: (String) -> Unit,
-    private val onPlayListChange: (Int) -> Unit,
-    private val onDefaultPageChange: (Int) -> Unit
-) : Fragment(R.layout.activity_player_fragment_play_list_live_page) {
+class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment_play_list_live_page){
+    companion object {
+        fun newInstance(): FragmentPlayListMusicFragment {
+            return FragmentPlayListMusicFragment().apply{
+                arguments = bundleOf()
+            }
+        }
+    }
     //共享ViewModel
     private val vm: PlayerListViewModel by activityViewModels()
     //当前页签
@@ -49,8 +54,10 @@ class FragmentPlayListMusicFragment(
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     //RecyclerView
     private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerView_music_adapter: FragmentPlayListMusicAdapter
+    private var recyclerView_music_adapter: FragmentPlayListMusicAdapter? = null
     private var state_adapter_load_complete = false
+
+
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -67,24 +74,26 @@ class FragmentPlayListMusicFragment(
             val popup = PopupMenu(requireContext(), pageSettingButton)
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
             val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
-            if (currentPageFlag == vm.PREFS_AcquiescePage) {
+            val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
+            if (currentPageFlag == acquiescePage){
                 menuItem_default_page.title = "取消设为默认显示页签"
             }else{
                 menuItem_default_page.title = "设为默认显示页签"
             }
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
-
+                    //设为当前播放列表
                     R.id.setting_set_as_current_list -> {
                         ToolVibrate().vibrate(requireContext())
-                        setAsCurrentPlayList()
+                        setAs_currentPlayList()
                         true
                     }
-
+                    //设置默认显示列表
                     R.id.setting_set_as_default_show_list -> {
                         ToolVibrate().vibrate(requireContext())
-                        //设置默认显示列表
-                        onDefaultPageChange(2)
+                        //设为默认显示列表
+                        setAs_acquiescePage()
+
                         true
                     }
 
@@ -97,10 +106,10 @@ class FragmentPlayListMusicFragment(
         val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
         ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
         ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
-        setCurrentListState()
+        updateCurrentListStateText()
         ButtonSetAsCurrentList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            setAsCurrentPlayList()
+            setAs_currentPlayList()
         }
         //按钮：总项数
         val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
@@ -109,7 +118,7 @@ class FragmentPlayListMusicFragment(
             //未加载完成前拒绝访问
             if (!state_adapter_load_complete) return@setOnClickListener
             //显示列表中项数
-            val itemCount = recyclerView_music_adapter.itemCount
+            val itemCount = recyclerView_music_adapter?.itemCount ?: 0
             if (itemCount == 0) {
                 requireContext().showCustomToast("目前还没有音乐",2)
             }
@@ -129,10 +138,8 @@ class FragmentPlayListMusicFragment(
         //初始化adapter + 设置点击事件
         recyclerView_music_adapter = FragmentPlayListMusicAdapter(
             requireContext(),
-            onAddToListClick = { uri -> onAddToListClick(uri) },
-            onPlayClick = {
-                onPlayClick(it)
-            },
+            onAddToListClick = { uriString -> onAddToListClick(uriString.toUri()) },
+            onPlayClick = { uriString -> onPlayClick(uriString.toUri()) },
         )
         //设置适配器
         recyclerView.adapter = recyclerView_music_adapter
@@ -143,11 +150,11 @@ class FragmentPlayListMusicFragment(
         //分页加载数据
         lifecycleScope.launch {
             pager.flow.collect { pagingData ->
-                recyclerView_music_adapter.submitData(pagingData)
+                recyclerView_music_adapter?.submitData(pagingData)
             }
         }
         //添加加载状态监听器
-        recyclerView_music_adapter.addLoadStateListener { loadState ->
+        recyclerView_music_adapter?.addLoadStateListener { loadState ->
             when (loadState.refresh) {
                 is LoadState.Loading -> {
                     showLoadingNotice()
@@ -166,16 +173,18 @@ class FragmentPlayListMusicFragment(
 
 
 
-    //外部Functions
+
+
+    //外部指令接收
     fun receiveInstruction(data: Any) {
         when (data) {
             is String -> {
                 when (data) {
-                    "switch_to_you" -> {
-                        switchedToThisList()
+                    "FRAGMENT_PASSIN_FOCUS" -> {
+                        onSwitchedToThisPage()
                     }
                     "changed_current_list" -> {
-                        setCurrentListState()
+                        updateCurrentListStateText()
                     }
                     "go_top" -> {
                         recyclerView.smoothScrollToPosition(0)
@@ -185,34 +194,66 @@ class FragmentPlayListMusicFragment(
 
         }
     }
-
-
     //切换到此列表
-    private fun switchedToThisList(){
-        setCurrentListState()
+    private var state_FragmentAttached = false
+    private fun onSwitchedToThisPage() {
+        if (!state_FragmentAttached) return
 
+        updateCurrentListStateText()
+        recyclerView_music_adapter?.refresh()
+    }
+
+
+    //添加到自定义
+    private fun onAddToListClick(uri: Uri){
+        ToolVibrate().vibrate(requireContext())
+
+
+
+    }
+    //播放项
+    private fun onPlayClick(uri: Uri){
+        ToolVibrate().vibrate(requireContext())
+
+
+    }
+
+
+    //设为默认显示列表
+    private fun setAs_acquiescePage(){
+        //判断是否已经是默认列表
+        val currentAcquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
+        if (currentAcquiescePage == currentPageFlag){
+            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), -1)
+            if (success) {
+                requireContext().showCustomToast("已取消默认页签,默认使用上次页签",2)
+                updateCurrentListStateText()
+            }
+        }else{
+            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), currentPageFlag)
+            if (success) {
+                requireContext().showCustomToast("设置成功",2)
+                updateCurrentListStateText()
+            }
+        }
     }
     //设置为当前播放列表
-    private fun setAsCurrentPlayList(){
-        val isSetSuccess = PlayerListManager.setPlayList("music")
-
+    private fun setAs_currentPlayList(){
+        val success = PlayerListManager.setPlayList("music")
         //更新当前播放列表
-        setCurrentListState()
-
-        if (isSetSuccess){
-            //更新当前播放列表
-            onPlayListChange(0)
+        updateCurrentListStateText()
+        //更新当前播放列表图标
+        if (success){
             requireContext().showCustomToast("设置成功",2)
-        }
-        else{
+            parentFragmentManager.setFragmentResult("FRAGMENT_MUSIC_LIST_FRAGMENT",
+                bundleOf("TOKEN" to "FRAGMENT_RETURN_MUSIC_LIST_ICON")
+            )
+        }else{
             requireContext().showCustomToast("设置失败",2)
         }
-
     }
-
-    //stable Functions
     //是否已经是当前播放列表
-    private fun setCurrentListState(){
+    private fun updateCurrentListStateText(){
         //判断是否是当前播放列表
         if (PlayerListManager.getCurrentList(requireContext()) == currentPageFlag){
             ButtonSetAsCurrentListText.text = "已设为当前播放列表"
@@ -236,7 +277,7 @@ class FragmentPlayListMusicFragment(
         //刷新状态
         state_adapter_load_complete = true
         //更新总项数文字
-        val itemCount = recyclerView_music_adapter.itemCount
+        val itemCount = recyclerView_music_adapter?.itemCount ?: 0
         showItemCount(itemCount)
         if (itemCount == 0) {
             showEmptyNotice()

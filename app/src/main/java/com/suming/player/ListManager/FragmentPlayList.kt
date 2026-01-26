@@ -8,6 +8,9 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -41,12 +44,16 @@ import com.suming.player.showCustomToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import androidx.core.content.edit
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @SuppressLint("ComposableNaming")
 @RequiresApi(Build.VERSION_CODES.Q)
 @UnstableApi
-@Suppress("unused")
-class FragmentPlayList: DialogFragment() {
+//@Suppress("unused")
+class FragmentPlayList: BottomSheetDialogFragment() {
     //静态方法
     companion object {
         fun newInstance(): FragmentPlayList =
@@ -58,12 +65,12 @@ class FragmentPlayList: DialogFragment() {
     }
     //共享ViewModel
     private val vm: PlayerListViewModel by activityViewModels()
-    //设置
-    private lateinit var PREFS_List: SharedPreferences
-    private var PREFS_AcquiescePage = 0
-    private var state_LastPage = 0
-    //协程作用域
-    private val viewModelScope = CoroutineScope(Dispatchers.IO)
+    //协程
+    private val coroutine_registerComponent = CoroutineScope(Dispatchers.IO)
+
+
+
+
     //横向按钮
     private lateinit var ButtonCardCustomList: CardView
     private lateinit var ButtonCardVideo: CardView
@@ -124,8 +131,6 @@ class FragmentPlayList: DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
-        //读取设置
-        PREFS_List = requireContext().getSharedPreferences("PREFS_List", Context.MODE_PRIVATE)
     }
 
     override fun onCreateView(
@@ -134,16 +139,125 @@ class FragmentPlayList: DialogFragment() {
     ): View = inflater.inflate(R.layout.activity_player_fragment_play_list, container, false)
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "SuspiciousIndentation")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        //设置卡片高度
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            val MainCard = view.findViewById<CardView>(R.id.main_card)
-            MainCard.layoutParams.height = (resources.displayMetrics.heightPixels * 0.7).toInt()
+        //初始化界面
+        initInterface(view)
+
+
+        coroutine_registerComponent.launch {
+            //按钮：退出
+            val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
+            buttonExit.setOnClickListener {
+                Dismiss()
+            }
+            //按钮：点击空白区域退出
+            val topArea = view.findViewById<View>(R.id.topArea)
+            topArea.setOnClickListener {
+                Dismiss()
+            }
+            //按钮：锁定页面
+            val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
+            ButtonLock.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                lockPage = !lockPage
+                if (lockPage) {
+                    ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
+                } else {
+                    ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
+                }
+            }
+            //按钮：上一曲
+            val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
+            ButtonPreviousMedia.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                PlayerSingleton.switchToPreviousMediaItem()
+                customDismiss(false)
+            }
+            //按钮：下一曲
+            val ButtonNextMedia = view.findViewById<ImageButton>(R.id.ButtonNextMedia)
+            ButtonNextMedia.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                PlayerSingleton.switchToNextMediaItem()
+                customDismiss(false)
+            }
+            //循环模式
+            val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
+            ButtonLoopMode.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                val popup = PopupMenu(requireContext(), ButtonLoopMode)
+                popup.menuInflater.inflate(R.menu.activity_player_popup_loop_mode, popup.menu)
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.LoopMode_ONE -> {
+                            chooseLoopMode("ONE"); true
+                        }
+                        R.id.LoopMode_ALL -> {
+                            chooseLoopMode("ALL"); true
+                        }
+                        R.id.LoopMode_OFF -> {
+                            chooseLoopMode("OFF"); true
+                        }
+                        else -> true
+                    }
+                }
+                popup.show()
+            }
+            //按钮：停止播放
+            val ButtonStopPlaying = view.findViewById<ImageButton>(R.id.ButtonStopPlaying)
+            ButtonStopPlaying.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //关闭播放器
+                PlayerSingleton.stopPlayBundle(true,requireContext())
+                //发回命令信息
+                val result = bundleOf("KEY" to "stopPlaying")
+                setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
+                //退出
+                customDismiss(false)
+            }
+            //按钮：当前播放列表
+            val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
+            ButtonCurrentListIcon = view.findViewById(R.id.ButtonCurrentListIcon)
+            ButtonCurrentList.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //弹出菜单切换当前播放列表
+                val popup = PopupMenu(requireContext(), ButtonCurrentList)
+                popup.menuInflater.inflate(R.menu.activity_play_list_popup_current_play_list, popup.menu)
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.list_custom -> {
+                            ToolVibrate().vibrate(requireContext())
+
+                            setCurrentPlayList(0)
+
+                            true
+                        }
+
+                        R.id.list_video_live -> {
+                            ToolVibrate().vibrate(requireContext())
+
+                            setCurrentPlayList(1)
+
+                            true
+                        }
+
+                        R.id.list_music_live -> {
+                            ToolVibrate().vibrate(requireContext())
+
+                            setCurrentPlayList(2)
+
+                            true
+                        }
+
+                        else -> true
+                    }
+                }
+                popup.show()
+            }
+            updateCurrentPlayListIcon()
+
+
+
         }
 
-
-
-
-        //初始化控件：不包含viewPager
         fun initElement(){
             TabScrollView = view.findViewById(R.id.TabScrollView)
             ButtonCardCustomList = view.findViewById(R.id.ButtonCardCustomList)
@@ -157,119 +271,9 @@ class FragmentPlayList: DialogFragment() {
             setLoopModeText()
         }
         initText()
-        //加载设置
-        loadSettings()
 
 
-        //按钮：退出
-        val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
-        buttonExit.setOnClickListener {
-            Dismiss()
-        }
-        //按钮：点击空白区域退出
-        val topArea = view.findViewById<View>(R.id.topArea)
-        topArea.setOnClickListener {
-            Dismiss()
-        }
-        //按钮：锁定页面
-        val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
-        ButtonLock.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            lockPage = !lockPage
-            if (lockPage) {
-                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
-            } else {
-                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
-            }
-        }
-        //按钮：上一曲
-        val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
-        ButtonPreviousMedia.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            PlayerSingleton.switchToPreviousMediaItem()
-            customDismiss(false)
-        }
-        //按钮：下一曲
-        val ButtonNextMedia = view.findViewById<ImageButton>(R.id.ButtonNextMedia)
-        ButtonNextMedia.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            PlayerSingleton.switchToNextMediaItem()
-            customDismiss(false)
-        }
-        //循环模式
-        val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
-        ButtonLoopMode.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            val popup = PopupMenu(requireContext(), ButtonLoopMode)
-            popup.menuInflater.inflate(R.menu.activity_player_popup_loop_mode, popup.menu)
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.LoopMode_ONE -> {
-                        chooseLoopMode("ONE"); true
-                    }
-                    R.id.LoopMode_ALL -> {
-                        chooseLoopMode("ALL"); true
-                    }
-                    R.id.LoopMode_OFF -> {
-                        chooseLoopMode("OFF"); true
-                    }
-                    else -> true
-                }
-            }
-            popup.show()
-        }
-        //按钮：停止播放
-        val ButtonStopPlaying = view.findViewById<ImageButton>(R.id.ButtonStopPlaying)
-        ButtonStopPlaying.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //关闭播放器
-            PlayerSingleton.stopPlayBundle(true,requireContext())
-            //发回命令信息
-            val result = bundleOf("KEY" to "stopPlaying")
-            setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
-            //退出
-            customDismiss(false)
-        }
-        //按钮：当前播放列表
-        val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
-        ButtonCurrentListIcon = view.findViewById(R.id.ButtonCurrentListIcon)
-        ButtonCurrentList.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //弹出菜单切换当前播放列表
-            val popup = PopupMenu(requireContext(), ButtonCurrentList)
-            popup.menuInflater.inflate(R.menu.activity_play_list_popup_current_play_list, popup.menu)
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.list_custom -> {
-                        ToolVibrate().vibrate(requireContext())
 
-                        setCurrentPlayList(0)
-
-                        true
-                    }
-
-                    R.id.list_video_live -> {
-                        ToolVibrate().vibrate(requireContext())
-
-                        setCurrentPlayList(1)
-
-                        true
-                    }
-
-                    R.id.list_music_live -> {
-                        ToolVibrate().vibrate(requireContext())
-
-                        setCurrentPlayList(2)
-
-                        true
-                    }
-
-                    else -> true
-                }
-            }
-            popup.show()
-        }
-        setCurrentPlayListIcon()
         //按钮：切换列表
         ButtonCardCustomList.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
@@ -286,38 +290,68 @@ class FragmentPlayList: DialogFragment() {
 
 
 
-
-        //ViewPager2
+        //viewPager2
         ViewPager = view.findViewById(R.id.ViewPager)
-        viewPagerAdapter = ViewPagerAdapter(
-            this,
-            onPlayClick = { uri -> onPlayClick(uri) },
-            onAddToListClick = { uri -> onAddToListClick(uri) },
-            onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) },
-            onPlayListChange = { flag -> onPlayListChange(flag) },
-            onDefaultPageChange = { flag -> onAcquiescePageChange(flag) }
-        )
+        viewPagerAdapter = ViewPagerAdapter(this)
         ViewPager.adapter = viewPagerAdapter
+        //开启页面监听器
         startViewPagerListener()
         //设置ViewPager缓存页面数量
-        ViewPager.offscreenPageLimit = 3
+        ViewPager.offscreenPageLimit = 2
         //默认显示列表
         ViewPager.post {
             if (viewPagerAdapter.itemCount > 0){
+                val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
                 //使用上一次的页面
-                if (PREFS_AcquiescePage == -1){
-                    ViewPager.setCurrentItem(state_LastPage, false)
+                if (acquiescePage == -1){
+                    val lastPageSign = PlayerListManager.get_state_LastPageSign(requireContext())
+                    ViewPager.setCurrentItem(lastPageSign, false)
                 }
                 //使用设置的固定默认页面
-                else if (PREFS_AcquiescePage in 0..2){
-                    ViewPager.setCurrentItem(PREFS_AcquiescePage, false)
+                else if (acquiescePage in 0..2){
+                    ViewPager.setCurrentItem(acquiescePage, false)
                 }
             }
         }
 
 
 
-        //监听返回手势(DialogFragment)
+        childFragmentManager.setFragmentResultListener("FRAGMENT_CUSTOM_LIST_FRAGMENT", this){ _, bundle ->
+            val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
+            when(token){
+                //需要刷新当前列表指示图标
+                "FRAGMENT_RETURN_UPDATE_LIST_ICON" -> {
+                    updateCurrentPlayListIcon()
+                }
+
+
+            }
+        }
+        childFragmentManager.setFragmentResultListener("FRAGMENT_VIDEO_LIST_FRAGMENT", this){ _, bundle ->
+            val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
+            when(token){
+                //需要刷新当前列表指示图标
+                "FRAGMENT_RETURN_UPDATE_LIST_ICON" -> {
+                    updateCurrentPlayListIcon()
+                }
+
+
+            }
+        }
+        childFragmentManager.setFragmentResultListener("FRAGMENT_MUSIC_LIST_FRAGMENT", this){ _, bundle ->
+            val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
+            when(token){
+                //需要刷新当前列表指示图标
+                "FRAGMENT_RETURN_UPDATE_LIST_ICON" -> {
+                    updateCurrentPlayListIcon()
+                }
+
+
+            }
+        }
+
+
+        //监听返回手势
         dialog?.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
                 Dismiss(false)
@@ -328,45 +362,37 @@ class FragmentPlayList: DialogFragment() {
     //onViewCreated END
     }
 
-    //ViewPager
-    //横向viewPager内部adapter类
+
+
+    //viewPager
     private lateinit var viewPagerAdapter: ViewPagerAdapter
     private class ViewPagerAdapter(
-        fragment: Fragment,
-        private val onPlayClick: (String) -> Unit,
-        private val onAddToListClick: (String) -> Unit,
-        private val onDeleteClick: (Long) -> Unit,
-        private val onPlayListChange: (Int) -> Unit,
-        private val onDefaultPageChange: (Int) -> Unit,
-    ): FragmentStateAdapter(fragment) {
+        innerFragment: Fragment,
+    ):FragmentStateAdapter(innerFragment){
         //保持子类引用
         private lateinit var FragmentPlayListCustomFragment: FragmentPlayListCustomFragment
         private lateinit var FragmentPlayListVideoFragment: FragmentPlayListVideoFragment
         private lateinit var FragmentPlayListMusicFragment: FragmentPlayListMusicFragment
 
-        //viewPager参数设置
+        //
         override fun getItemCount(): Int = 3
+        //
         override fun createFragment(position: Int): Fragment =
             when (position) {
-                0 -> {
-                    FragmentPlayListCustomFragment(onPlayClick = onPlayClick, onDeleteClick = onDeleteClick, onPlayListChange = onPlayListChange, onDefaultPageChange = onDefaultPageChange)
-                        .also { FragmentPlayListCustomFragment = it }
+                0 -> FragmentPlayListCustomFragment().also {
+                    FragmentPlayListCustomFragment = it
                 }
-                1 -> {
-                    FragmentPlayListVideoFragment(onPlayClick = onPlayClick, onAddToListClick = onAddToListClick, onPlayListChange = onPlayListChange, onDefaultPageChange = onDefaultPageChange)
-                        .also { FragmentPlayListVideoFragment = it }
-                }
-                2 -> {
-                    FragmentPlayListMusicFragment(
-                        onPlayClick = onPlayClick,
-                        onAddToListClick = onAddToListClick,
-                        onPlayListChange = onPlayListChange,
-                        onDefaultPageChange = onDefaultPageChange
-                    )
-                        .also { FragmentPlayListMusicFragment = it }
-                }
+
+                1 -> FragmentPlayListVideoFragment().also {
+                    FragmentPlayListVideoFragment = it }
+
+                2 -> FragmentPlayListMusicFragment().also {
+                    FragmentPlayListMusicFragment = it }
+
                 else -> ListFragment()
             }
+
+
 
         //功能传递
         fun sendDataToFragment(position: Int, data: Any) {
@@ -381,6 +407,7 @@ class FragmentPlayList: DialogFragment() {
     private lateinit var ViewPager: ViewPager2
     private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) {
+            saveLastPageSign(position)
             scrolledToPage(position)
         }
         override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {  }
@@ -397,7 +424,7 @@ class FragmentPlayList: DialogFragment() {
         ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
         state_viewPagerListener_started = false
     }
-    //页签更新：位置 + 颜色d
+    //页签更新：位置 + 颜色
     private fun scrolledToPage(position: Int){
         when(position){
             0 -> switchedToCustomPageByScroll()
@@ -430,20 +457,17 @@ class FragmentPlayList: DialogFragment() {
         updateCardColor(2)
     }
     private fun switchedToCustomPageByScroll(){
-        viewPagerAdapter.sendDataToFragment(0, "switch_to_you")
-        saveLastPage()
+        viewPagerAdapter.sendDataToFragment(0, "FRAGMENT_PASSIN_FOCUS")
         updateCardPosition(0)
         updateCardColor(0)
     }
     private fun switchedToVideoPageByScroll(){
-        viewPagerAdapter.sendDataToFragment(1, "switch_to_you")
-        saveLastPage()
+        viewPagerAdapter.sendDataToFragment(1, "FRAGMENT_PASSIN_FOCUS")
         updateCardPosition(1)
         updateCardColor(1)
     }
     private fun switchedToMusicPageByScroll(){
-        viewPagerAdapter.sendDataToFragment(2, "switch_to_you")
-        saveLastPage()
+        viewPagerAdapter.sendDataToFragment(2, "FRAGMENT_PASSIN_FOCUS")
         updateCardPosition(2)
         updateCardColor(2)
     }
@@ -482,8 +506,8 @@ class FragmentPlayList: DialogFragment() {
             }
         }
     }
-    //显示当前播放列表
-    private fun setCurrentPlayListIcon(){
+    //更新当前播放列表图标
+    private fun updateCurrentPlayListIcon(){
         val currentPlayList = PlayerListManager.getCurrentList(requireContext())
         when (currentPlayList) {
             0 -> {
@@ -499,7 +523,7 @@ class FragmentPlayList: DialogFragment() {
 
     }
     private fun onPlayListChange(flag: Int){
-        setCurrentPlayListIcon()
+        updateCurrentPlayListIcon()
     }
     private fun setCurrentPlayList(flag: Int){
         when(flag){
@@ -513,30 +537,24 @@ class FragmentPlayList: DialogFragment() {
                 PlayerListManager.setPlayList("music")
             }
         }
-        setCurrentPlayListIcon()
+        updateCurrentPlayListIcon()
         //发布消息
         for (f in 0..2){
             viewPagerAdapter.sendDataToFragment(f, "changed_current_list")
         }
     }
-    private fun saveLastPage(){
-        PREFS_List.edit { putInt("state_LastPage", ViewPager.currentItem) }
-        vm.state_LastPage = ViewPager.currentItem
-    }
-    //设置默认展示列表
-    private fun setAcquiescePage(flag: Int){
-        if (flag == vm.PREFS_AcquiescePage){
-            PREFS_List.edit { putInt("PREFS_AcquiescePage", -1) }
-            vm.PREFS_AcquiescePage = -1
-            requireContext().showCustomToast("已无默认页签，将使用上一次关闭时的页签作为默认页签",2)
-        }else{
-            PREFS_List.edit { putInt("PREFS_AcquiescePage", flag) }
-            vm.PREFS_AcquiescePage = flag
+    private var state_saveLastPageSign_First = true
+    private fun saveLastPageSign(position: Int){
+        //首个指令不保存
+        if (state_saveLastPageSign_First){
+            state_saveLastPageSign_First = false
+            return
         }
+        //向列表管理器设置
+        PlayerListManager.set_state_LastPageSign(requireContext(),position)
+
     }
-    private fun onAcquiescePageChange(flag: Int){
-        setAcquiescePage(flag)
-    }
+
 
     //播放点击事件
     private fun onPlayClick(uriString: String) {
@@ -561,17 +579,20 @@ class FragmentPlayList: DialogFragment() {
 
 
 
+    //初始化界面
+    private fun initInterface(view: View){
+        //设置卡片高度
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            val MainCard = view.findViewById<CardView>(R.id.main_card)
+            MainCard.layoutParams.height = (resources.displayMetrics.heightPixels * 0.7).toInt()
+        }
 
-    //Functions
-    //读取设置信息
-    private fun loadSettings(){
-        //默认显式页的签
-        PREFS_AcquiescePage = PREFS_List.getInt("PREFS_AcquiescePage", 0)
-        vm.PREFS_AcquiescePage = PREFS_AcquiescePage
-        //上一次显式的页签
-        state_LastPage = PREFS_List.getInt("state_LastPage", 0)
-        vm.state_LastPage = state_LastPage
+
     }
+
+
+
+
     //循环模式
     private fun chooseLoopMode(loopMode: String){
         ToolVibrate().vibrate(requireContext())

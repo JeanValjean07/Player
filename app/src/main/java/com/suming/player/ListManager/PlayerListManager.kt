@@ -315,6 +315,70 @@ object PlayerListManager {
 
     }
 
+
+
+    //默认页签
+    private var PREFS_AcquiescePage = -2
+    fun get_PREFS_AcquiescePage(context: Context): Int{
+        //确保已初始化设置清单
+        if (!state_PREFS_List_Initialized){
+            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
+            state_PREFS_List_Initialized = true
+        }
+        //过滤无效值
+        PREFS_AcquiescePage = PREFS_List.getInt("PREFS_AcquiescePage", -2)
+        if (PREFS_AcquiescePage == -2){
+            PREFS_List.edit{ putInt("PREFS_AcquiescePage", 0) }
+            PREFS_AcquiescePage = 0
+        }
+
+        return PREFS_AcquiescePage
+    }
+    fun set_PREFS_AcquiescePage(context: Context, page: Int): Boolean{
+        //确保已初始化设置清单
+        if (!state_PREFS_List_Initialized){
+            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
+            state_PREFS_List_Initialized = true
+        }
+        //过滤无效值
+        PREFS_AcquiescePage = page
+        PREFS_List.edit{ putInt("PREFS_AcquiescePage", page) }
+
+        return true
+    }
+    //上一次的页面
+    private var state_LastPageSign = -1
+    fun get_state_LastPageSign(context: Context): Int{
+        //确保已初始化设置清单
+        if (!state_PREFS_List_Initialized){
+            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
+            state_PREFS_List_Initialized = true
+        }
+        //过滤无效值
+        state_LastPageSign = PREFS_List.getInt("state_LastPageSign", -1)
+
+        if (state_LastPageSign == -1){
+            PREFS_List.edit{ putInt("state_LastPageSign", 0) }
+            state_LastPageSign = 0
+        }
+
+        return state_LastPageSign
+    }
+    fun set_state_LastPageSign(context: Context, page: Int): Boolean{
+        //确保已初始化设置清单
+        if (!state_PREFS_List_Initialized){
+            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
+            state_PREFS_List_Initialized = true
+        }
+        //过滤无效值
+        state_LastPageSign = page
+        PREFS_List.edit{ putInt("state_LastPageSign", page) }
+
+        return true
+    }
+
+
+
 }
 
 //MiniMediaItemForList包含：
