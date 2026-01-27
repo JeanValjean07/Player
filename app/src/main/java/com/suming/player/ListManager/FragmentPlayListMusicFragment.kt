@@ -169,35 +169,50 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
         }
 
 
+        //开启Fragment通信
+        registerFragmentResultListener()
+
+
+    //onViewCreated END
     }
 
 
+    //Fragment通信
+    //注册接收父Fragment返回值
+    private fun registerFragmentResultListener(){
+        parentFragmentManager.setFragmentResultListener("FRAGMENT_TOCHILD_MUSIC", this){ _, bundle ->
+            val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
+            //Log.d("SuMing", "registerFragmentResultListener music: token = $token")
+            when(token){
+                //页面获得焦点,执行必要的刷新操作
+                "FRAGMENT_PASSIN_FOCUS" -> {
+                    onFragmentFocused()
 
-
-
-    //外部指令接收
-    fun receiveInstruction(data: Any) {
-        when (data) {
-            is String -> {
-                when (data) {
-                    "FRAGMENT_PASSIN_FOCUS" -> {
-                        onSwitchedToThisPage()
-                    }
-                    "changed_current_list" -> {
-                        updateCurrentListStateText()
-                    }
-                    "go_top" -> {
-                        recyclerView.smoothScrollToPosition(0)
-                    }
                 }
-            }
+                //回滚到顶部
+                "FRAGMENT_PASSIN_SCROLLTOP" -> {
+                    recyclerView.smoothScrollToPosition(0)
+                }
 
+            }
         }
     }
+    //发送Fragment结果
+    private fun sendFragmentResult(key: String){
+        parentFragmentManager.setFragmentResult("FRAGMENT_BACKPARENT_MUSIC",
+            bundleOf("TOKEN" to key)
+        )
+    }
+
+
+
+
+
     //切换到此列表
-    private var state_FragmentAttached = false
-    private fun onSwitchedToThisPage() {
-        if (!state_FragmentAttached) return
+    private fun onFragmentFocused() {
+        Log.d("SuMing", "onFragmentFocused: 音乐列表获得焦点")
+
+
 
         updateCurrentListStateText()
         recyclerView_music_adapter?.refresh()

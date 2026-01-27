@@ -4,6 +4,7 @@
       <w>albumart</w>
       <w>audiofocus</w>
       <w>avfilter</w>
+      <w>backparent</w>
       <w>backtostart</w>
       <w>binded</w>
       <w>connec</w>
@@ -39,6 +40,7 @@
       <w>repic</w>
       <w>safegap</w>
       <w>savedinstance</w>
+      <w>scrolltop</w>
       <w>secureinterval</w>
       <w>seekonce</w>
       <w>setfulluser</w>
@@ -50,6 +52,7 @@
       <w>svgrepo</w>
       <w>swresample</w>
       <w>thats</w>
+      <w>tochild</w>
       <w>valjean</w>
       <w>vivo</w>
       <w>xjvm</w>

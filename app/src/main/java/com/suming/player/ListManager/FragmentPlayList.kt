@@ -315,7 +315,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
         }
 
 
-
+        //接收子Fragment返回值
         childFragmentManager.setFragmentResultListener("FRAGMENT_CUSTOM_LIST_FRAGMENT", this){ _, bundle ->
             val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
             when(token){
@@ -364,44 +364,27 @@ class FragmentPlayList: BottomSheetDialogFragment() {
 
 
 
+
     //viewPager
     private lateinit var viewPagerAdapter: ViewPagerAdapter
     private class ViewPagerAdapter(
         innerFragment: Fragment,
     ):FragmentStateAdapter(innerFragment){
-        //保持子类引用
-        private lateinit var FragmentPlayListCustomFragment: FragmentPlayListCustomFragment
-        private lateinit var FragmentPlayListVideoFragment: FragmentPlayListVideoFragment
-        private lateinit var FragmentPlayListMusicFragment: FragmentPlayListMusicFragment
 
         //
         override fun getItemCount(): Int = 3
         //
         override fun createFragment(position: Int): Fragment =
             when (position) {
-                0 -> FragmentPlayListCustomFragment().also {
-                    FragmentPlayListCustomFragment = it
-                }
+                0 -> FragmentPlayListCustomFragment()
 
-                1 -> FragmentPlayListVideoFragment().also {
-                    FragmentPlayListVideoFragment = it }
+                1 -> FragmentPlayListVideoFragment()
 
-                2 -> FragmentPlayListMusicFragment().also {
-                    FragmentPlayListMusicFragment = it }
+                2 -> FragmentPlayListMusicFragment()
 
                 else -> ListFragment()
             }
 
-
-
-        //功能传递
-        fun sendDataToFragment(position: Int, data: Any) {
-            when (position) {
-                0 -> FragmentPlayListCustomFragment.receiveInstruction(data)
-                1 -> FragmentPlayListVideoFragment.receiveInstruction(data)
-                2 -> FragmentPlayListMusicFragment.receiveInstruction(data)
-            }
-        }
     }
     //viewPager页面切换监听器
     private lateinit var ViewPager: ViewPager2
@@ -410,8 +393,12 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             saveLastPageSign(position)
             scrolledToPage(position)
         }
-        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {  }
-        override fun onPageScrollStateChanged(state: Int) {  }
+        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+
+        }
+        override fun onPageScrollStateChanged(state: Int) {
+
+        }
     }
     private var state_viewPagerListener_started = false
     private fun startViewPagerListener(){
@@ -424,6 +411,54 @@ class FragmentPlayList: BottomSheetDialogFragment() {
         ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
         state_viewPagerListener_started = false
     }
+
+
+    //向子Fragment传递消息
+    private fun sendDataToChildFragment(target: Any, data: String) {
+        var position = 0
+        //合成position
+        if (target is String){
+            position = when(target){
+                "custom" -> 0
+                "video" -> 1
+                "music" -> 2
+                else -> {
+                    requireContext().showCustomToast("标签未命中任何有效目标(String)")
+                    return
+                }
+            }
+        }else if (target is Int){
+            if (target in 0..2){
+                position = target
+            }else{
+                requireContext().showCustomToast("标签未命中任何有效目标(Int)")
+                return
+            }
+        }
+
+        Log.d("SuMing", "sendDataToChildFragment: position = $position, data = $data")
+        //发布消息
+        when (position) {
+            0 -> {
+                childFragmentManager.setFragmentResult("FRAGMENT_TOCHILD_CUSTOM", bundleOf(
+                    "TOKEN" to data
+                ))
+            }
+            1 -> {
+                childFragmentManager.setFragmentResult("FRAGMENT_TOCHILD_VIDEO", bundleOf(
+                    "TOKEN" to data
+                ))
+            }
+            2 -> {
+                childFragmentManager.setFragmentResult("FRAGMENT_TOCHILD_MUSIC", bundleOf(
+                    "TOKEN" to data
+                ))
+            }
+        }
+    }
+
+
+
     //页签更新：位置 + 颜色
     private fun scrolledToPage(position: Int){
         when(position){
@@ -434,7 +469,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
     }
     private fun switchToCustomPageByButton(){
         if (ViewPager.currentItem == 0) {
-            viewPagerAdapter.sendDataToFragment(0, "go_top")
+            sendDataToChildFragment(0, "FRAGMENT_PASSIN_SCROLLTOP")
             return
         }
         ViewPager.currentItem = 0
@@ -442,7 +477,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
     }
     private fun switchToVideoPageByButton(){
         if (ViewPager.currentItem == 1) {
-            viewPagerAdapter.sendDataToFragment(1, "go_top")
+            sendDataToChildFragment(1, "FRAGMENT_PASSIN_SCROLLTOP")
             return
         }
         ViewPager.currentItem = 1
@@ -450,24 +485,24 @@ class FragmentPlayList: BottomSheetDialogFragment() {
     }
     private fun switchToMusicPageByButton(){
         if (ViewPager.currentItem == 2) {
-            viewPagerAdapter.sendDataToFragment(2, "go_top")
+            sendDataToChildFragment(2, "FRAGMENT_PASSIN_SCROLLTOP")
             return
         }
         ViewPager.currentItem = 2
         updateCardColor(2)
     }
     private fun switchedToCustomPageByScroll(){
-        viewPagerAdapter.sendDataToFragment(0, "FRAGMENT_PASSIN_FOCUS")
+        sendDataToChildFragment(0, "FRAGMENT_PASSIN_FOCUS")
         updateCardPosition(0)
         updateCardColor(0)
     }
     private fun switchedToVideoPageByScroll(){
-        viewPagerAdapter.sendDataToFragment(1, "FRAGMENT_PASSIN_FOCUS")
+        sendDataToChildFragment(1, "FRAGMENT_PASSIN_FOCUS")
         updateCardPosition(1)
         updateCardColor(1)
     }
     private fun switchedToMusicPageByScroll(){
-        viewPagerAdapter.sendDataToFragment(2, "FRAGMENT_PASSIN_FOCUS")
+        sendDataToChildFragment(2, "FRAGMENT_PASSIN_FOCUS")
         updateCardPosition(2)
         updateCardColor(2)
     }
@@ -540,7 +575,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
         updateCurrentPlayListIcon()
         //发布消息
         for (f in 0..2){
-            viewPagerAdapter.sendDataToFragment(f, "changed_current_list")
+            //sendDataToChildFragment(f, "FRAGMENT_PASSIN_")
         }
     }
     private var state_saveLastPageSign_First = true
@@ -567,9 +602,9 @@ class FragmentPlayList: BottomSheetDialogFragment() {
         }
     }
     //删除点击事件
-    private fun onDeleteClick(uriNumOnly: Long) {
+    private fun onDeleteClick(uriNumOnly: Long)  {
         PlayerListManager.DeleteItemFromCustomList(uriNumOnly)
-        viewPagerAdapter.sendDataToFragment(0, "update")
+        sendDataToChildFragment(0, "update")
     }
     //添加到自定义列表点击事件
     private fun onAddToListClick(uriString: String) {

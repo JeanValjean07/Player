@@ -189,43 +189,50 @@ class FragmentPlayListCustomFragment():Fragment(R.layout.activity_player_fragmen
         }
 
 
+        //开启Fragment通信
+        registerFragmentResultListener()
+
+
     //onViewCreated END
     }
 
 
 
+    //Fragment通信
+    //注册接收父Fragment返回值
+    private fun registerFragmentResultListener(){
+        parentFragmentManager.setFragmentResultListener("FRAGMENT_TOCHILD_CUSTOM", this){ _, bundle ->
+            val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
+            //Log.d("SuMing", "registerFragmentResultListener custom: token = $token")
+            when(token){
+                //页面获得焦点,执行必要的刷新操作
+                "FRAGMENT_PASSIN_FOCUS" -> {
+                    onFragmentFocused()
 
-    //外部指令接收
-    fun receiveInstruction(data: Any) {
-        when (data) {
-            is String -> {
-                when(data){
-                    "FRAGMENT_PASSIN_FOCUS" -> {
-                        onFragmentFocused()
-
-                    }
-                    "changed_current_list" -> {
-                        updateCurrentListStateText()
-                    }
-                    "go_top" -> {
-                        recyclerView.smoothScrollToPosition(0)
-                    }
-                    "update" -> {
-                        recyclerView_custom_list_adapter?.refresh()
-                    }
                 }
-            }
+                //回滚到顶部
+                "FRAGMENT_PASSIN_SCROLLTOP" -> {
+                    recyclerView.smoothScrollToPosition(0)
+                }
 
+            }
         }
     }
-    //切换到此列表
-    private var state_FragmentAttached = false
-    private fun onFragmentFocused(){
-        if (!state_FragmentAttached) return
+    //发送Fragment结果
+    private fun sendFragmentResult(key: String){
+        parentFragmentManager.setFragmentResult("FRAGMENT_BACKPARENT_CUSTOM",
+            bundleOf("TOKEN" to key)
+        )
+    }
 
+
+    //切换到此列表
+    private fun onFragmentFocused(){
+        Log.d("SuMing", "onFragmentFocused: 自定义列表获得焦点")
         updateCurrentListStateText()
         recyclerView_custom_list_adapter?.refresh()
     }
+
 
     //播放项
     private fun onPlayClick(uri: Uri){
@@ -278,13 +285,11 @@ class FragmentPlayListCustomFragment():Fragment(R.layout.activity_player_fragmen
     }
     //刷新当前播放列表状态提示词
     private fun updateCurrentListStateText(){
-        if (!state_FragmentAttached) return
         //判断是否是当前播放列表
         if (PlayerListManager.getCurrentList(requireContext()) == currentPageFlag){
             ButtonSetAsCurrentListText.text = "已设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
-        }
-        else{
+        }else{
             ButtonSetAsCurrentListText.text = "设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_add)
         }
