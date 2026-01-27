@@ -143,6 +143,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
         initInterface(view)
 
 
+        //注册操作按钮
         coroutine_registerComponent.launch {
             //按钮：退出
             val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
@@ -213,7 +214,8 @@ class FragmentPlayList: BottomSheetDialogFragment() {
                 //退出
                 customDismiss(false)
             }
-            //按钮：当前播放列表
+
+            //卡片选单按钮：当前播放列表
             val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
             ButtonCurrentListIcon = view.findViewById(R.id.ButtonCurrentListIcon)
             ButtonCurrentList.setOnClickListener {
@@ -257,6 +259,9 @@ class FragmentPlayList: BottomSheetDialogFragment() {
 
 
         }
+
+
+
 
         fun initElement(){
             TabScrollView = view.findViewById(R.id.TabScrollView)
@@ -436,7 +441,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             }
         }
 
-        Log.d("SuMing", "sendDataToChildFragment: position = $position, data = $data")
+        //Log.d("SuMing", "sendDataToChildFragment: position = $position, data = $data")
         //发布消息
         when (position) {
             0 -> {
@@ -575,7 +580,8 @@ class FragmentPlayList: BottomSheetDialogFragment() {
         updateCurrentPlayListIcon()
         //发布消息
         for (f in 0..2){
-            //sendDataToChildFragment(f, "FRAGMENT_PASSIN_")
+            //卡片选单按钮：当前播放列表
+            sendDataToChildFragment(f, "FRAGMENT_PASSIN_FOCUS")
         }
     }
     private var state_saveLastPageSign_First = true
