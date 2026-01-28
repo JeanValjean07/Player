@@ -31,7 +31,7 @@ import androidx.core.net.toUri
 import androidx.media3.common.util.Log
 
 @UnstableApi
-@Suppress("unused")
+//@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
 class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment_play_list_live_page){
     companion object {
@@ -41,10 +41,14 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
             }
         }
     }
+    //当前页签(固定值)
+    private val flag_currentPage = 2
     //共享ViewModel
-    private val vm: PlayerListViewModel by activityViewModels()
-    //当前页签
-    private val currentPageFlag = 2
+    private val viewModel: PlayerListViewModel by activityViewModels()
+
+
+
+
     //加载中卡片
     private lateinit var LoadingState: LinearLayout
     private lateinit var LoadingStateText: TextView
@@ -75,7 +79,7 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
             popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
             val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
             val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
-            if (currentPageFlag == acquiescePage){
+            if (flag_currentPage == acquiescePage){
                 menuItem_default_page.title = "取消设为默认显示页签"
             }else{
                 menuItem_default_page.title = "设为默认显示页签"
@@ -176,13 +180,11 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
     //onViewCreated END
     }
 
-
     //Fragment通信
     //注册接收父Fragment返回值
     private fun registerFragmentResultListener(){
         parentFragmentManager.setFragmentResultListener("FRAGMENT_TOCHILD_MUSIC", this){ _, bundle ->
             val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
-            //Log.d("SuMing", "registerFragmentResultListener music: token = $token")
             when(token){
                 //页面获得焦点,执行必要的刷新操作
                 "FRAGMENT_PASSIN_FOCUS" -> {
@@ -193,7 +195,10 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
                 "FRAGMENT_PASSIN_SCROLLTOP" -> {
                     recyclerView.smoothScrollToPosition(0)
                 }
-
+                //当前播放列表更新
+                "FRAGMENT_PASSIN_CURRENT_LIST_UPDATE" -> {
+                    updateCurrentListStateText()
+                }
             }
         }
     }
@@ -204,16 +209,8 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
         )
     }
 
-
-
-
-
-    //切换到此列表
+    //页面获得焦点
     private fun onFragmentFocused() {
-        Log.d("SuMing", "onFragmentFocused: 音乐列表获得焦点")
-
-
-
         updateCurrentListStateText()
         recyclerView_music_adapter?.refresh()
     }
@@ -238,14 +235,14 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
     private fun setAs_acquiescePage(){
         //判断是否已经是默认列表
         val currentAcquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
-        if (currentAcquiescePage == currentPageFlag){
+        if (currentAcquiescePage == flag_currentPage){
             val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), -1)
             if (success) {
                 requireContext().showCustomToast("已取消默认页签,默认使用上次页签",2)
                 updateCurrentListStateText()
             }
         }else{
-            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), currentPageFlag)
+            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), flag_currentPage)
             if (success) {
                 requireContext().showCustomToast("设置成功",2)
                 updateCurrentListStateText()
@@ -270,7 +267,7 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
     //是否已经是当前播放列表
     private fun updateCurrentListStateText(){
         //判断是否是当前播放列表
-        if (PlayerListManager.getCurrentList(requireContext()) == currentPageFlag){
+        if (PlayerListManager.getCurrentList(requireContext()) == flag_currentPage){
             ButtonSetAsCurrentListText.text = "已设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
         }

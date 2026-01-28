@@ -53,7 +53,7 @@ import kotlinx.coroutines.launch
 @RequiresApi(Build.VERSION_CODES.Q)
 @UnstableApi
 //@Suppress("unused")
-class FragmentPlayList: BottomSheetDialogFragment() {
+class FragmentPlayList: DialogFragment() {
     //静态方法
     companion object {
         fun newInstance(): FragmentPlayList =
@@ -64,11 +64,9 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             }
     }
     //共享ViewModel
-    private val vm: PlayerListViewModel by activityViewModels()
+    private val viewModel: PlayerListViewModel by activityViewModels()
     //协程
     private val coroutine_registerComponent = CoroutineScope(Dispatchers.IO)
-
-
 
 
     //横向按钮
@@ -78,6 +76,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
     //横滑页签
     private lateinit var TabScrollView: HorizontalScrollView
     private lateinit var ButtonCurrentListIcon: ImageView
+
 
 
 
@@ -155,36 +154,25 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             topArea.setOnClickListener {
                 Dismiss()
             }
-            //按钮：锁定页面
-            val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
-            ButtonLock.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
-                lockPage = !lockPage
-                if (lockPage) {
-                    ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
-                } else {
-                    ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
-                }
-            }
+
             //按钮：上一曲
             val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
             ButtonPreviousMedia.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 PlayerSingleton.switchToPreviousMediaItem()
-                customDismiss(false)
             }
             //按钮：下一曲
             val ButtonNextMedia = view.findViewById<ImageButton>(R.id.ButtonNextMedia)
             ButtonNextMedia.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 PlayerSingleton.switchToNextMediaItem()
-                customDismiss(false)
             }
             //循环模式
-            val ButtonLoopMode = view.findViewById<TextView>(R.id.ButtonLoopMode)
-            ButtonLoopMode.setOnClickListener {
+            updateLoopModeText()
+            val ButtonCardLoopMode = view.findViewById<CardView>(R.id.ButtonCardLoopMode)
+            ButtonCardLoopMode.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                val popup = PopupMenu(requireContext(), ButtonLoopMode)
+                val popup = PopupMenu(requireContext(), ButtonCardLoopMode)
                 popup.menuInflater.inflate(R.menu.activity_player_popup_loop_mode, popup.menu)
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
@@ -202,6 +190,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
                 }
                 popup.show()
             }
+
             //按钮：停止播放
             val ButtonStopPlaying = view.findViewById<ImageButton>(R.id.ButtonStopPlaying)
             ButtonStopPlaying.setOnClickListener {
@@ -212,8 +201,9 @@ class FragmentPlayList: BottomSheetDialogFragment() {
                 val result = bundleOf("KEY" to "stopPlaying")
                 setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
                 //退出
-                customDismiss(false)
+                Dismiss(false)
             }
+
 
             //卡片选单按钮：当前播放列表
             val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
@@ -225,77 +215,57 @@ class FragmentPlayList: BottomSheetDialogFragment() {
                 popup.menuInflater.inflate(R.menu.activity_play_list_popup_current_play_list, popup.menu)
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
+                        //选择自定义列表
                         R.id.list_custom -> {
                             ToolVibrate().vibrate(requireContext())
-
-                            setCurrentPlayList(0)
+                            //选择目标播放列表
+                            set_currentPlayList(0)
 
                             true
                         }
-
+                        //选择视频列表
                         R.id.list_video_live -> {
                             ToolVibrate().vibrate(requireContext())
-
-                            setCurrentPlayList(1)
+                            //选择目标播放列表
+                            set_currentPlayList(1)
 
                             true
                         }
-
+                        //选择音乐列表
                         R.id.list_music_live -> {
                             ToolVibrate().vibrate(requireContext())
-
-                            setCurrentPlayList(2)
+                            //选择目标播放列表
+                            set_currentPlayList(2)
 
                             true
                         }
-
+                        //其他
                         else -> true
                     }
                 }
                 popup.show()
             }
-            updateCurrentPlayListIcon()
+            //横滑页签按钮
+            ButtonCardCustomList.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                switchToCustomPageByButton()
+            }
+            ButtonCardVideo.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                switchToVideoPageByButton()
+            }
+            ButtonCardMusic.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                switchToMusicPageByButton()
+            }
 
 
-
+        //coroutine_registerComponent END
         }
 
 
 
-
-        fun initElement(){
-            TabScrollView = view.findViewById(R.id.TabScrollView)
-            ButtonCardCustomList = view.findViewById(R.id.ButtonCardCustomList)
-            ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
-            ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
-        }
-        initElement()
-        //文本填写
-        fun initText(){
-            //循环模式
-            setLoopModeText()
-        }
-        initText()
-
-
-
-        //按钮：切换列表
-        ButtonCardCustomList.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            switchToCustomPageByButton()
-        }
-        ButtonCardVideo.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            switchToVideoPageByButton()
-        }
-        ButtonCardMusic.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            switchToMusicPageByButton()
-        }
-
-
-
-        //viewPager2
+        //启动viewPager
         ViewPager = view.findViewById(R.id.ViewPager)
         viewPagerAdapter = ViewPagerAdapter(this)
         ViewPager.adapter = viewPagerAdapter
@@ -326,9 +296,8 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             when(token){
                 //需要刷新当前列表指示图标
                 "FRAGMENT_RETURN_UPDATE_LIST_ICON" -> {
-                    updateCurrentPlayListIcon()
+                    updateIcon_currentPlayList()
                 }
-
 
             }
         }
@@ -337,7 +306,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             when(token){
                 //需要刷新当前列表指示图标
                 "FRAGMENT_RETURN_UPDATE_LIST_ICON" -> {
-                    updateCurrentPlayListIcon()
+                    updateIcon_currentPlayList()
                 }
 
 
@@ -348,7 +317,7 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             when(token){
                 //需要刷新当前列表指示图标
                 "FRAGMENT_RETURN_UPDATE_LIST_ICON" -> {
-                    updateCurrentPlayListIcon()
+                    updateIcon_currentPlayList()
                 }
 
 
@@ -366,7 +335,6 @@ class FragmentPlayList: BottomSheetDialogFragment() {
         }
     //onViewCreated END
     }
-
 
 
 
@@ -441,7 +409,6 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             }
         }
 
-        //Log.d("SuMing", "sendDataToChildFragment: position = $position, data = $data")
         //发布消息
         when (position) {
             0 -> {
@@ -464,53 +431,58 @@ class FragmentPlayList: BottomSheetDialogFragment() {
 
 
 
-    //页签更新：位置 + 颜色
+    //页签焦点
     private fun scrolledToPage(position: Int){
         when(position){
-            0 -> switchedToCustomPageByScroll()
-            1 -> switchedToVideoPageByScroll()
-            2 -> switchedToMusicPageByScroll()
+            0 -> onFocusPage_Custom()
+            1 -> onFocusPage_Video()
+            2 -> onFocusPage_Music()
         }
     }
-    private fun switchToCustomPageByButton(){
-        if (ViewPager.currentItem == 0) {
-            sendDataToChildFragment(0, "FRAGMENT_PASSIN_SCROLLTOP")
-            return
-        }
-        ViewPager.currentItem = 0
-        updateCardColor(0)
-    }
-    private fun switchToVideoPageByButton(){
-        if (ViewPager.currentItem == 1) {
-            sendDataToChildFragment(1, "FRAGMENT_PASSIN_SCROLLTOP")
-            return
-        }
-        ViewPager.currentItem = 1
-        updateCardColor(1)
-    }
-    private fun switchToMusicPageByButton(){
-        if (ViewPager.currentItem == 2) {
-            sendDataToChildFragment(2, "FRAGMENT_PASSIN_SCROLLTOP")
-            return
-        }
-        ViewPager.currentItem = 2
-        updateCardColor(2)
-    }
-    private fun switchedToCustomPageByScroll(){
+    private fun onFocusPage_Custom(){
         sendDataToChildFragment(0, "FRAGMENT_PASSIN_FOCUS")
         updateCardPosition(0)
         updateCardColor(0)
     }
-    private fun switchedToVideoPageByScroll(){
+    private fun onFocusPage_Video(){
         sendDataToChildFragment(1, "FRAGMENT_PASSIN_FOCUS")
         updateCardPosition(1)
         updateCardColor(1)
     }
-    private fun switchedToMusicPageByScroll(){
+    private fun onFocusPage_Music(){
         sendDataToChildFragment(2, "FRAGMENT_PASSIN_FOCUS")
         updateCardPosition(2)
         updateCardColor(2)
     }
+    //页签点击切换
+    private fun switchToCustomPageByButton(){
+        //已在此页时回到顶部
+        if (ViewPager.currentItem == 0) {
+            sendDataToChildFragment(0, "FRAGMENT_PASSIN_SCROLLTOP")
+            return
+        }
+        //切换到自定义页签
+        ViewPager.currentItem = 0
+    }
+    private fun switchToVideoPageByButton(){
+        //已在此页时回到顶部
+        if (ViewPager.currentItem == 1) {
+            sendDataToChildFragment(1, "FRAGMENT_PASSIN_SCROLLTOP")
+            return
+        }
+        //切换到视频页签
+        ViewPager.currentItem = 1
+    }
+    private fun switchToMusicPageByButton(){
+        //已在此页时回到顶部
+        if (ViewPager.currentItem == 2) {
+            sendDataToChildFragment(2, "FRAGMENT_PASSIN_SCROLLTOP")
+            return
+        }
+        //切换到音乐页签
+        ViewPager.currentItem = 2
+    }
+    //页签样式/位置更新
     private fun updateCardColor(position: Int){
         when(position){
             0 -> {
@@ -523,7 +495,6 @@ class FragmentPlayList: BottomSheetDialogFragment() {
                 ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
                 ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
             }
-
             2 -> {
                 ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
                 ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
@@ -546,8 +517,8 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             }
         }
     }
-    //更新当前播放列表图标
-    private fun updateCurrentPlayListIcon(){
+    //更新当前播放列表卡片指示图标丨消息触发
+    private fun updateIcon_currentPlayList(){
         val currentPlayList = PlayerListManager.getCurrentList(requireContext())
         when (currentPlayList) {
             0 -> {
@@ -560,30 +531,34 @@ class FragmentPlayList: BottomSheetDialogFragment() {
                 ButtonCurrentListIcon.setImageResource(R.drawable.ic_main_fragment_music_icon)
             }
         }
-
     }
-    private fun onPlayListChange(flag: Int){
-        updateCurrentPlayListIcon()
-    }
-    private fun setCurrentPlayList(flag: Int){
-        when(flag){
+    //设置当前播放列表
+    private fun set_currentPlayList(position: Int){
+        var success = false
+        when(position){
             0 -> {
-                PlayerListManager.setPlayList("custom")
+                success = PlayerListManager.setPlayList("custom")
             }
             1 -> {
-                PlayerListManager.setPlayList("video")
+                success = PlayerListManager.setPlayList("video")
             }
             2 -> {
-                PlayerListManager.setPlayList("music")
+                success = PlayerListManager.setPlayList("music")
             }
         }
-        updateCurrentPlayListIcon()
-        //发布消息
-        for (f in 0..2){
-            //卡片选单按钮：当前播放列表
-            sendDataToChildFragment(f, "FRAGMENT_PASSIN_FOCUS")
+        //通知子Fragment更新
+        val currentPage = ViewPager.currentItem
+        sendDataToChildFragment(currentPage, "FRAGMENT_PASSIN_CURRENT_LIST_UPDATE")
+        //更新当前播放列表指示图标
+        updateIcon_currentPlayList()
+        //更新当前播放列表图标
+        if (success){
+            requireContext().showCustomToast("设置成功",2)
+        }else{
+            requireContext().showCustomToast("设置失败",2)
         }
     }
+    //保存上次页签
     private var state_saveLastPageSign_First = true
     private fun saveLastPageSign(position: Int){
         //首个指令不保存
@@ -604,7 +579,6 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             requireContext().showCustomToast("已在播放该媒体",3)
         }else{
             PlayerSingleton.setMediaItem(uriString.toUri(), true,requireContext())
-            customDismiss()
         }
     }
     //删除点击事件
@@ -627,10 +601,13 @@ class FragmentPlayList: BottomSheetDialogFragment() {
             val MainCard = view.findViewById<CardView>(R.id.main_card)
             MainCard.layoutParams.height = (resources.displayMetrics.heightPixels * 0.7).toInt()
         }
-
+        //初始化全局元素
+        TabScrollView = view.findViewById(R.id.TabScrollView)
+        ButtonCardCustomList = view.findViewById(R.id.ButtonCardCustomList)
+        ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
+        ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
 
     }
-
 
 
 
@@ -646,26 +623,21 @@ class FragmentPlayList: BottomSheetDialogFragment() {
         }, requireContext())
 
         //刷新显示文本
-        setLoopModeText()
-        //不主动退出
+        updateLoopModeText()
+
     }
-    private fun setLoopModeText(){
+    private fun updateLoopModeText(){
         val currentLoopMode = PlayerListManager.getLoopMode(requireContext())
-        val ButtonLoopMode = view?.findViewById<TextView>(R.id.ButtonLoopMode)
-        ButtonLoopMode?.text = when (currentLoopMode) {
+        val ButtonTextLoopMode = view?.findViewById<TextView>(R.id.ButtonTextLoopMode)
+        ButtonTextLoopMode?.text = when (currentLoopMode) {
             "ONE" -> "单集循环"
             "ALL" -> "列表循环"
             "OFF" -> "播完暂停"
             else -> "未知模式"
         }
     }
+
     //自定义退出逻辑
-    private var lockPage = false
-    private fun customDismiss(flag_need_vibrate: Boolean = true){
-        if (!lockPage) {
-            Dismiss(flag_need_vibrate)
-        }
-    }
     private fun Dismiss(flag_need_vibrate: Boolean = true){
         if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
 
@@ -676,6 +648,6 @@ class FragmentPlayList: BottomSheetDialogFragment() {
         dismiss()
     }
 
-
+//Fragment END
 }
 
