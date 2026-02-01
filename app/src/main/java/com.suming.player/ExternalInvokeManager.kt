@@ -14,13 +14,9 @@ import androidx.media3.common.util.UnstableApi
 class ExternalInvokeManager : AppCompatActivity(){
 
 
-
-
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
 
         //启动来源标记 < 1 = ACTION_SEND/ACTION_VIEW 丨 2 = pending 丨 3 = 常规启动 >
         val (source,uri) = ExtractMediaUri(intent)
@@ -30,9 +26,8 @@ class ExternalInvokeManager : AppCompatActivity(){
 
 
 
-
         finish()
-
+    //onCreate END
     }
 
 
@@ -41,14 +36,12 @@ class ExternalInvokeManager : AppCompatActivity(){
         when (intent.action) {
             //系统面板：分享
             Intent.ACTION_SEND -> {
-
                 val intentUri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)?: Uri.EMPTY
 
                 return Pair(1,intentUri)
             }
             //系统面板：选择其他应用打开
             Intent.ACTION_VIEW -> {
-
                 val intentUri = intent.data ?: Uri.EMPTY
 
                 return Pair(1,intentUri)
@@ -60,19 +53,14 @@ class ExternalInvokeManager : AppCompatActivity(){
                     //来自pendingIntent时直接拉起播放页,不关注也不传入链接
 
                     return Pair(2,Uri.EMPTY)
-
                 }
                 //来自常规启动
                 else{
                     //来自常规启动时,不需要关注链接是否存在,由播放页处理
-
                     val intentUri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)?: Uri.EMPTY
 
-
                     return Pair(3,intentUri)
-
                 }
-
             }
         }
     }
@@ -84,19 +72,21 @@ class ExternalInvokeManager : AppCompatActivity(){
         val mediaType = PlayerSingleton.getMediaInfoType()
 
 
-
-
         //根据类型启动页面
+        //来自pendingIntent
         if (source == 2){
             when(mediaType){
                 "video" -> startVideoPage(uri,source)
                 "music" -> startMusicPage(uri,source)
                 else -> {
-                    showCustomToast("无法验证媒体类型",3)
-                    finish()
+                    finishAndRemoveTask()
+                    return
                 }
+
             }
-        }else if(source == 1){
+        }
+        //来自外部启动
+        else if(source == 1){
             //先主动判断媒体类型
             val (success,mediaType) = getMediaInfo(this,uri)
             if (!success){
@@ -104,7 +94,6 @@ class ExternalInvokeManager : AppCompatActivity(){
                 finish()
                 return
             }
-
 
             when(mediaType){
                 "video" -> startVideoPage(uri,source)
@@ -115,7 +104,6 @@ class ExternalInvokeManager : AppCompatActivity(){
                 }
             }
         }
-
 
     }
     //获取媒体信息
@@ -166,7 +154,6 @@ class ExternalInvokeManager : AppCompatActivity(){
         }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
 
-        Log.d("SuMing","invoke startVideoNeoPage: $uri")
         //启动
         startActivity(intent)
     }
@@ -188,5 +175,5 @@ class ExternalInvokeManager : AppCompatActivity(){
     }
 
 
-
+//class END
 }

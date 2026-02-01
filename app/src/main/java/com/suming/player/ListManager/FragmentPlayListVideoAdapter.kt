@@ -3,6 +3,7 @@ package com.suming.player.ListManager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,13 +24,13 @@ import java.io.File
 
 @Suppress("unused")
 class FragmentPlayListVideoAdapter(
-    private val context: Context,
+    context: Context,
     private val onAddToListClick: (String) -> Unit,
     private val onPlayClick: (String) -> Unit
-):PagingDataAdapter<MediaItemForVideo, FragmentPlayListVideoAdapter.ViewHolder>(diffCallback) {
-    //条目比较器
+):PagingDataAdapter<MediaItemForVideo, FragmentPlayListVideoAdapter.viewHolder>(Differ) {
     companion object {
-        val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
+        //比较器
+        val Differ = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
             override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
                 return oldItem.uriNumOnly == newItem.uriNumOnly
             }
@@ -37,9 +38,14 @@ class FragmentPlayListVideoAdapter(
                 return oldItem == newItem
             }
         }
+        //viewType
+        const val item_NORMAL = 0
+        const val item_NORMAL_ONGOING = 1
+        const val item_footer = 2
+
     }
-    //ViewHolder
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    //viewHolder
+    class viewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
         var itemFrameJob: Job? = null
         val itemName: TextView = itemView.findViewById(R.id.tvName)
@@ -53,13 +59,26 @@ class FragmentPlayListVideoAdapter(
 
 
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+
+    override fun getItemViewType(position: Int): Int {
+
+        return when (position) {
+            item_footer -> item_footer
+            else -> item_NORMAL
+        }
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): viewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_live_adapter_item, parent, false)
-        return ViewHolder(view)
+
+        return when (viewType) {
+            item_NORMAL -> viewHolder(view)
+            else -> viewHolder(view)
+        }
     }
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
-    override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
+    override fun onBindViewHolder(holder: viewHolder, position: Int)  {
         val item = getItem(position) ?: return
         holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = "未知艺术家"
@@ -71,14 +90,14 @@ class FragmentPlayListVideoAdapter(
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 
-    override fun onViewAttachedToWindow(holder: ViewHolder) {
+    override fun onViewAttachedToWindow(holder: viewHolder) {
         super.onViewAttachedToWindow(holder)
         val position = holder.bindingAdapterPosition
         val item = getItem(position) ?: return
 
     }
 
-    override fun onViewDetachedFromWindow(holder: ViewHolder) {
+    override fun onViewDetachedFromWindow(holder: viewHolder) {
         super.onViewDetachedFromWindow(holder)
         val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) return
@@ -87,11 +106,10 @@ class FragmentPlayListVideoAdapter(
 
 
 
-    //Functions
-    //暂无
-    //内部Functions
+
+
     //检查缩略图
-    private suspend fun setHolderFrame(item: MediaItemForVideo, holder: ViewHolder) {
+    private suspend fun setHolderFrame(item: MediaItemForVideo, holder: viewHolder) {
         val imageTag = item.uriNumOnly.toString()
         //记录holder的tag
         withContext(Dispatchers.Main) {
@@ -118,7 +136,5 @@ class FragmentPlayListVideoAdapter(
 
     }
 
-
-
-
+//adapter END
 }

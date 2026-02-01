@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,9 +28,9 @@ class FragmentPlayListCustomAdapter(
     private val context: Context,
     private val onDeleteClick: (Long) -> Unit,
     private val onPlayClick: (Uri) -> Unit
-):PagingDataAdapter<MiniMediaItemForList, FragmentPlayListCustomAdapter.ViewHolder>(DiffUtil)  {
-    //条目比较器 DiffUtil
+):PagingDataAdapter<MiniMediaItemForList, FragmentPlayListCustomAdapter.viewHolder>(DiffUtil)  {
     companion object {
+        //比较器
         val DiffUtil = object : DiffUtil.ItemCallback<MiniMediaItemForList>() {
             override fun areItemsTheSame(oldItem: MiniMediaItemForList, newItem: MiniMediaItemForList): Boolean {
                 return oldItem.uriNumOnly == newItem.uriNumOnly
@@ -38,9 +39,11 @@ class FragmentPlayListCustomAdapter(
                 return oldItem == newItem
             }
         }
+
+
     }
-    //ViewHolder
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    //viewHolder
+    class viewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
         var itemFrameJob: Job? = null
         val itemName: TextView = itemView.findViewById(R.id.tvName)
@@ -48,19 +51,24 @@ class FragmentPlayListCustomAdapter(
         val ButtonDelete: ImageView = itemView.findViewById(R.id.ButtonDelete)
         val ButtonPlay: ImageView = itemView.findViewById(R.id.ButtonPlay)
     }
-    //协程作用域
+    //普通卡片view
+    private lateinit var view : View
+    //协程
     private val coroutineScope_LoadFrame = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
 
 
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_custom_adapter_item, parent, false)
-        return ViewHolder(view)
+
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): viewHolder {
+        view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_custom_adapter_item, parent, false)
+
+        return viewHolder(view)
     }
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
-    override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
+    override fun onBindViewHolder(holder: viewHolder, position: Int)  {
         val item = getItem(position) ?: return
         holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
@@ -72,13 +80,13 @@ class FragmentPlayListCustomAdapter(
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 
-    override fun onViewAttachedToWindow(holder: ViewHolder) {
+    override fun onViewAttachedToWindow(holder: viewHolder) {
         super.onViewAttachedToWindow(holder)
         val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) return
     }
 
-    override fun onViewDetachedFromWindow(holder: ViewHolder) {
+    override fun onViewDetachedFromWindow(holder: viewHolder) {
         super.onViewDetachedFromWindow(holder)
         val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) return
@@ -87,11 +95,9 @@ class FragmentPlayListCustomAdapter(
 
 
 
-    //Functions
 
-    //内部Functions
     //检查缩略图
-    private suspend fun setHolderFrame(item: MiniMediaItemForList, holder: ViewHolder) {
+    private suspend fun setHolderFrame(item: MiniMediaItemForList, holder: viewHolder) {
         //设置文件
         var covers_path = File(context.filesDir, "miniature/music_cover")
         if (item.type == "video"){
@@ -108,5 +114,5 @@ class FragmentPlayListCustomAdapter(
         }
     }
 
-
+//adapter END
 }

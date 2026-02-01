@@ -294,6 +294,7 @@
         android:layout_height="70dp"
         android:layout_gravity="bottom"
         android:backgroundTint="@color/Background3"
+        android:clickable="true"
         app:cardElevation="10dp"
         app:cardCornerRadius="0dp"
         android:visibility="gone">

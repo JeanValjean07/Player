@@ -45,9 +45,6 @@
                         android:layout_marginStart="10dp"
                         android:layout_gravity="center"
                         android:backgroundTint="@color/ButtonCard_OFF"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@+id/pageSettingButton"
                         app:cardElevation="2dp"
                         app:cardCornerRadius="5dp">
                         <LinearLayout
@@ -127,6 +124,29 @@
                                 />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
+                    <!-- 测试 -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/ButtonForceRefresh"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@color/ButtonCard_OFF"
+                        app:cardElevation="2dp"
+                        app:cardCornerRadius="5dp">
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginEnd="10dp"
+                                android:layout_marginTop="5dp"
+                                android:layout_marginBottom="5dp"
+                                android:text="刷新"
+                                android:textColor="@color/HeadText"
+                                android:textSize="11sp"
+                                />
+                    </androidx.cardview.widget.CardView>
 
                     <!-- 末尾占位 -->
                     <View
@@ -182,23 +202,6 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <LinearLayout
-            android:id="@+id/LoadingState"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@color/Background3">
-            <TextView
-                android:id="@+id/LoadingStateText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="加载中"
-                android:textColor="@color/HeadText"
-                android:textSize="16sp"
-                />
-        </LinearLayout>
         <!-- recyclerview -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"

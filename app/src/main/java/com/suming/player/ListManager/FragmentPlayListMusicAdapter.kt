@@ -21,13 +21,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+@Suppress("unused")
 class FragmentPlayListMusicAdapter(
     context: Context,
     private val onAddToListClick: (String) -> Unit,
     private val onPlayClick: (String) -> Unit
-): PagingDataAdapter<MediaItemForMusic, FragmentPlayListMusicAdapter.ViewHolder>(diffCallback) {
-    //条目比较器
+): PagingDataAdapter<MediaItemForMusic, FragmentPlayListMusicAdapter.viewHolder>(diffCallback) {
     companion object {
+        //比较器
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForMusic>() {
             override fun areItemsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean {
                 return oldItem.uriNumOnly == newItem.uriNumOnly
@@ -36,9 +37,11 @@ class FragmentPlayListMusicAdapter(
                 return oldItem == newItem
             }
         }
+
+
     }
-    //ViewHolder
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    //viewHolder
+    class viewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
         var itemFrameJob: Job? = null
         val itemName: TextView = itemView.findViewById(R.id.tvName)
@@ -52,13 +55,13 @@ class FragmentPlayListMusicAdapter(
 
 
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): viewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_live_adapter_item, parent, false)
-        return ViewHolder(view)
+        return viewHolder(view)
     }
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
-    override fun onBindViewHolder(holder: ViewHolder, position: Int)  {
+    override fun onBindViewHolder(holder: viewHolder, position: Int)  {
         val item = getItem(position) ?: return
         holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
@@ -70,13 +73,13 @@ class FragmentPlayListMusicAdapter(
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 
-    override fun onViewAttachedToWindow(holder: ViewHolder) {
+    override fun onViewAttachedToWindow(holder: viewHolder) {
         super.onViewAttachedToWindow(holder)
         val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) return
     }
 
-    override fun onViewDetachedFromWindow(holder: ViewHolder) {
+    override fun onViewDetachedFromWindow(holder: viewHolder) {
         super.onViewDetachedFromWindow(holder)
         val position = holder.bindingAdapterPosition
         if (position == RecyclerView.NO_POSITION) return
@@ -85,11 +88,8 @@ class FragmentPlayListMusicAdapter(
 
 
 
-    //Functions
-    //暂无
-    //内部Functions
     //检查缩略图
-    private suspend fun setHolderFrame(item: MediaItemForMusic, holder: ViewHolder) {
+    private suspend fun setHolderFrame(item: MediaItemForMusic, holder: viewHolder) {
         val imageTag = item.filename.hashCode().toString()
         //记录holder的tag
         withContext(Dispatchers.Main) {
@@ -117,6 +117,5 @@ class FragmentPlayListMusicAdapter(
     }
 
 
-
-
+//adapter END
 }

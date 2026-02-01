@@ -1,16 +1,11 @@
 package com.suming.player.ListManager
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -20,7 +15,6 @@ import android.widget.HorizontalScrollView
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
@@ -43,10 +37,6 @@ import com.suming.player.ToolVibrate
 import com.suming.player.showCustomToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import androidx.core.content.edit
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("ComposableNaming")
@@ -68,14 +58,6 @@ class FragmentPlayList: DialogFragment() {
     //协程
     private val coroutine_registerComponent = CoroutineScope(Dispatchers.IO)
 
-
-    //横向按钮
-    private lateinit var ButtonCardCustomList: CardView
-    private lateinit var ButtonCardVideo: CardView
-    private lateinit var ButtonCardMusic: CardView
-    //横滑页签
-    private lateinit var TabScrollView: HorizontalScrollView
-    private lateinit var ButtonCurrentListIcon: ImageView
 
 
 
@@ -207,7 +189,7 @@ class FragmentPlayList: DialogFragment() {
 
             //卡片选单按钮：当前播放列表
             val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
-            ButtonCurrentListIcon = view.findViewById(R.id.ButtonCurrentListIcon)
+            ButtonIcon_currentPlayList = view.findViewById(R.id.ButtonCurrentListIcon)
             ButtonCurrentList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //弹出菜单切换当前播放列表
@@ -246,15 +228,15 @@ class FragmentPlayList: DialogFragment() {
                 popup.show()
             }
             //横滑页签按钮
-            ButtonCardCustomList.setOnClickListener {
+            ButtonCard_customList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 switchToCustomPageByButton()
             }
-            ButtonCardVideo.setOnClickListener {
+            ButtonCard_videoList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 switchToVideoPageByButton()
             }
-            ButtonCardMusic.setOnClickListener {
+            ButtonCard_musicList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 switchToMusicPageByButton()
             }
@@ -288,6 +270,7 @@ class FragmentPlayList: DialogFragment() {
                 }
             }
         }
+
 
 
         //接收子Fragment返回值
@@ -455,6 +438,10 @@ class FragmentPlayList: DialogFragment() {
         updateCardColor(2)
     }
     //页签点击切换
+    private lateinit var ButtonCard_Area: HorizontalScrollView
+    private lateinit var ButtonCard_customList: CardView
+    private lateinit var ButtonCard_videoList: CardView
+    private lateinit var ButtonCard_musicList: CardView
     private fun switchToCustomPageByButton(){
         //已在此页时回到顶部
         if (ViewPager.currentItem == 0) {
@@ -486,49 +473,50 @@ class FragmentPlayList: DialogFragment() {
     private fun updateCardColor(position: Int){
         when(position){
             0 -> {
-                ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
-                ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
             }
             1 -> {
-                ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
-                ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
             }
             2 -> {
-                ButtonCardCustomList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
             }
         }
     }
     private fun updateCardPosition(position: Int){
         when (position) {
             0 -> {
-                TabScrollView.smoothScrollTo(0, 0)
+                ButtonCard_Area.smoothScrollTo(0, 0)
             }
             1 -> {
-                val left = ButtonCardVideo.left
-                TabScrollView.smoothScrollTo(left, 0)
+                val left = ButtonCard_videoList.left
+                ButtonCard_Area.smoothScrollTo(left, 0)
             }
             2 -> {
-                val left = ButtonCardMusic.left
-                TabScrollView.smoothScrollTo(left, 0)
+                val left = ButtonCard_musicList.left
+                ButtonCard_Area.smoothScrollTo(left, 0)
             }
         }
     }
     //更新当前播放列表卡片指示图标丨消息触发
+    private lateinit var ButtonIcon_currentPlayList: ImageView
     private fun updateIcon_currentPlayList(){
         val currentPlayList = PlayerListManager.getCurrentList(requireContext())
         when (currentPlayList) {
             0 -> {
-                ButtonCurrentListIcon.setImageResource(R.drawable.ic_play_list_custom_list)
+                ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_play_list_custom_list)
             }
             1 -> {
-                ButtonCurrentListIcon.setImageResource(R.drawable.ic_main_fragment_video_icon)
+                ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_main_fragment_video_icon)
             }
             2 -> {
-                ButtonCurrentListIcon.setImageResource(R.drawable.ic_main_fragment_music_icon)
+                ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_main_fragment_music_icon)
             }
         }
     }
@@ -602,10 +590,10 @@ class FragmentPlayList: DialogFragment() {
             MainCard.layoutParams.height = (resources.displayMetrics.heightPixels * 0.7).toInt()
         }
         //初始化全局元素
-        TabScrollView = view.findViewById(R.id.TabScrollView)
-        ButtonCardCustomList = view.findViewById(R.id.ButtonCardCustomList)
-        ButtonCardVideo = view.findViewById(R.id.ButtonCardVideo)
-        ButtonCardMusic = view.findViewById(R.id.ButtonCardMusic)
+        ButtonCard_Area = view.findViewById(R.id.TabScrollView)
+        ButtonCard_customList = view.findViewById(R.id.ButtonCardCustomList)
+        ButtonCard_videoList = view.findViewById(R.id.ButtonCardVideo)
+        ButtonCard_musicList = view.findViewById(R.id.ButtonCardMusic)
 
     }
 

@@ -1,6 +1,5 @@
 package com.suming.player.ListManager
 
-import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,7 +15,6 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.LoadState
 import androidx.paging.Pager
@@ -26,6 +24,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.ToolVibrate
 import com.suming.player.showCustomToast
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @UnstableApi
@@ -43,7 +43,8 @@ class FragmentPlayListCustomFragment():Fragment(R.layout.activity_player_fragmen
     private val flag_currentPage = 0
     //共享ViewModel
     private val viewModel: PlayerListViewModel by activityViewModels()
-
+    //协程
+    private var coroutine_component = CoroutineScope(Dispatchers.IO)
 
 
     //加载中卡片
@@ -60,98 +61,109 @@ class FragmentPlayListCustomFragment():Fragment(R.layout.activity_player_fragmen
 
 
 
-
-
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        //加载中卡片
-        LoadingState = view.findViewById(R.id.LoadingState)
-        LoadingStateText = view.findViewById(R.id.LoadingStateText)
-        TextItemCount = view.findViewById(R.id.TextItemCount)
+        //初始化必要组件
+        fun initComponent(){
+            //加载中卡片
+            LoadingState = view.findViewById(R.id.LoadingState)
+            LoadingStateText = view.findViewById(R.id.LoadingStateText)
+            TextItemCount = view.findViewById(R.id.TextItemCount)
+        }
+        initComponent()
 
-        //页面设置按钮
-        val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
-        pageSettingButton.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //弹出页面选项菜单
-            val popup = PopupMenu(requireContext(), pageSettingButton)
-            popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
-            val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
-            val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
-            if (flag_currentPage == acquiescePage){
-                menuItem_default_page.title = "取消设为默认显示页签"
-            }else{
-                menuItem_default_page.title = "设为默认显示页签"
-            }
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    //设为当前播放列表
-                    R.id.setting_set_as_current_list -> {
-                        ToolVibrate().vibrate(requireContext())
 
-                        setAs_currentPlayList()
+        //开启Fragment通信
+        registerFragmentResultListener()
 
-                        true
-                    }
-                    //设置为默认显示列表
-                    R.id.setting_set_as_default_show_list -> {
-                        ToolVibrate().vibrate(requireContext())
-                        //设为默认显示列表
-                        setAs_acquiescePage()
 
-                        true
-                    }
-
-                    else -> true
+        //组件注册
+        coroutine_component.launch {
+            //页面设置按钮
+            val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
+            pageSettingButton.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //弹出页面选项菜单
+                val popup = PopupMenu(requireContext(), pageSettingButton)
+                popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
+                val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
+                val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
+                if (flag_currentPage == acquiescePage){
+                    menuItem_default_page.title = "取消设为默认显示页签"
+                }else{
+                    menuItem_default_page.title = "设为默认显示页签"
                 }
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        //设为当前播放列表
+                        R.id.setting_set_as_current_list -> {
+                            ToolVibrate().vibrate(requireContext())
+
+                            setAs_currentPlayList()
+
+                            true
+                        }
+                        //设置为默认显示列表
+                        R.id.setting_set_as_default_show_list -> {
+                            ToolVibrate().vibrate(requireContext())
+                            //设为默认显示列表
+                            setAs_acquiescePage()
+
+                            true
+                        }
+
+                        else -> true
+                    }
+                }
+                popup.show()
             }
-            popup.show()
-        }
-        //按钮：设为当前播放列表/已是当前播放列表
-        val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
-        ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
-        ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
-        updateCurrentListStateText()
-        ButtonSetAsCurrentList.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            setAs_currentPlayList()
-        }
-        //横滑选项按钮
-        //按钮：全部删除
-        val ButtonDeleteAllListItem = view.findViewById<View>(R.id.ButtonDeleteAllListItem)
-        ButtonDeleteAllListItem.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //清空自定义列表
-            PlayerListManager.clearCustomList()
-            //刷新适配器
-            recyclerView_custom_list_adapter?.refresh()
-        }
-        //按钮：总项数
-        val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
-        ButtonItemCount.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //未加载完成前拒绝访问
-            if (!state_adapter_load_complete) return@setOnClickListener
-            //显示列表中项数
-            val itemCount = recyclerView_custom_list_adapter?.itemCount
-            if (itemCount == 0) {
-                requireContext().showCustomToast("目前还没有媒体，可在其他列表中添加",2)
+            //按钮：设为当前播放列表/已是当前播放列表
+            val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
+            ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
+            ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
+            updateCurrentListStateText()
+            ButtonSetAsCurrentList.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                setAs_currentPlayList()
             }
-            else{
-                requireContext().showCustomToast("包含${itemCount}个媒体",2)
+            //横滑选项按钮
+            //按钮：全部删除
+            val ButtonDeleteAllListItem = view.findViewById<View>(R.id.ButtonDeleteAllListItem)
+            ButtonDeleteAllListItem.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //清空自定义列表
+                PlayerListManager.clearCustomList()
+                //刷新适配器
+                recyclerView_custom_list_adapter?.refresh()
             }
+            //按钮：总项数
+            val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
+            ButtonItemCount.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //未加载完成前拒绝访问
+                if (!state_adapter_load_complete) return@setOnClickListener
+                //显示列表中项数
+                val itemCount = recyclerView_custom_list_adapter?.itemCount
+                if (itemCount == 0) {
+                    requireContext().showCustomToast("目前还没有媒体，可在其他列表中添加",2)
+                }
+                else{
+                    requireContext().showCustomToast("包含${itemCount}个媒体",2)
+                }
 
 
+            }
+            //按钮：立即刷新
+            val ButtonUpdate = view.findViewById<CardView>(R.id.ButtonUpdate)
+            ButtonUpdate.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+
+                recyclerView_custom_list_adapter?.refresh()
+
+            }
         }
-        //按钮：立即刷新
-        val ButtonUpdate = view.findViewById<CardView>(R.id.ButtonUpdate)
-        ButtonUpdate.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
 
-            recyclerView_custom_list_adapter?.refresh()
-
-        }
 
 
         //初始化recyclerView
@@ -190,10 +202,6 @@ class FragmentPlayListCustomFragment():Fragment(R.layout.activity_player_fragmen
                 }
             }
         }
-
-
-        //开启Fragment通信
-        registerFragmentResultListener()
 
 
     //onViewCreated END

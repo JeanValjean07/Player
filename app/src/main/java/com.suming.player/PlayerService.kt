@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
@@ -73,19 +74,32 @@ class PlayerService(): MediaSessionService() {
             })
             .build()
 
-
         //设置会话点击意图
         mediaSession?.setSessionActivity(createPendingIntentManager())
-        //startObserve_MediaType()
 
+
+    //onCreate END
     }
+    //接收Intent额外信息
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        //取出数据
+        intent?.let {
+            //MediaInfo_MediaTitle = it.getStringExtra("info_to_service_MediaTitle")
+        }
 
+        //END
+        return START_REDELIVER_INTENT
+    }
+    //
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
         return mediaSession
     }
     //手动关闭服务时调用
     override fun onDestroy() {
         super.onDestroy()
+        //Log.d("SuMing","onDestroy")
         //关闭媒体类型观察者
         Job_observe?.cancel()
         //关闭媒体会话
@@ -96,6 +110,7 @@ class PlayerService(): MediaSessionService() {
     }
     //仅在后台划卡时触发,而且前提是系统不执行强行停止
     override fun onTaskRemoved(rootIntent: Intent?) {
+        //Log.d("SuMing","onTaskRemoved")
         //关闭媒体会话
         mediaSession?.run {
             release()
@@ -109,33 +124,10 @@ class PlayerService(): MediaSessionService() {
         //关闭播放器
         PlayerSingleton.stopPlayBundle(false,this)
     }
-    //接收Intent额外信息
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
-        //取出数据
-        intent?.let {
-             //MediaInfo_MediaTitle = it.getStringExtra("info_to_service_MediaTitle")
-        }
-
-        //END
-        return START_REDELIVER_INTENT
-    }
-
-
-    private var Job_observe: Job? = null
-    private var coroutine_observe = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private fun startObserve_MediaType(){
-        Job_observe?.cancel()
-        Job_observe = coroutine_observe.launch {
-            PlayerServiceLinker.MediaType.collect { mediaType ->
 
 
 
 
-            }
-        }
-    }
 
 
     //Functions
@@ -203,6 +195,20 @@ class PlayerService(): MediaSessionService() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(channel)
     }
+    //通过观察者动态更改pendingIntent(未启用)
+    private var Job_observe: Job? = null
+    private var coroutine_observe = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private fun startObserve_MediaType(){
+        Job_observe?.cancel()
+        Job_observe = coroutine_observe.launch {
+            PlayerServiceLinker.MediaType.collect { mediaType ->
+
+
+
+
+            }
+        }
+    }
 
     //通知卡片和媒体会话卡片-点击拉起意图
     @OptIn(UnstableApi::class)
@@ -232,7 +238,6 @@ class PlayerService(): MediaSessionService() {
     }
 
 
-
     //已停用丨基于本地广播的播放指令
     @OptIn(UnstableApi::class)
     private fun BroadcastPlay(): PendingIntent {
@@ -250,4 +255,5 @@ class PlayerService(): MediaSessionService() {
     }
 
 
+//service END
 }

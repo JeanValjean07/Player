@@ -347,19 +347,19 @@ class PlayerActivityNeo: AppCompatActivity(){
                 val decideSign = DecideEngine(intentUri,source,nowUri)
                 when(decideSign){
                     1 -> {
-                        Log.d("SuMing","DecideEngine: 1")
+                        //Log.d("SuMing","DecideEngine: 1")
                         startPlayNewItem(intentUri)
                     }
                     2 -> {
-                        Log.d("SuMing","DecideEngine: 2")
+                        //Log.d("SuMing","DecideEngine: 2")
                         BindCurrentPlayingItem(nowUri)
                     }
                     3 -> {
-                        Log.d("SuMing","DecideEngine: 3")
+                        //Log.d("SuMing","DecideEngine: 3")
                         finish()
                     }
                     4 -> {
-                        Log.d("SuMing","DecideEngine: 4")
+                        //Log.d("SuMing","DecideEngine: 4")
                         queryManualInputUri()
                     }
                 }

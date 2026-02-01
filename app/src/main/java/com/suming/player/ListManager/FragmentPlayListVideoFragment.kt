@@ -1,6 +1,5 @@
 package com.suming.player.ListManager
 
-import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -17,7 +16,6 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.LoadState
 import androidx.paging.Pager
@@ -27,10 +25,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.ToolVibrate
 import com.suming.player.showCustomToast
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @UnstableApi
-//@Suppress("unused")
+@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
 class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment_play_list_live_page){
     companion object {
@@ -44,93 +44,129 @@ class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment
     private val flag_currentPage = 1
     //共享ViewModel
     private val viewModel: PlayerListViewModel by activityViewModels()
+    //协程
+    private var coroutine_component = CoroutineScope(Dispatchers.IO)
 
 
 
-
-    //加载中卡片
-    private lateinit var LoadingState: LinearLayout
-    private lateinit var LoadingStateText: TextView
-    private lateinit var TextItemCount: TextView
     //当前播放列表
     private lateinit var ButtonSetAsCurrentListText: TextView
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     //RecyclerView
     private lateinit var recyclerView: RecyclerView
-    private var recyclerView_video_adapter: FragmentPlayListVideoAdapter? = null
+    private lateinit var recyclerView_video_adapter: FragmentPlayListVideoAdapter
     private var state_adapter_load_complete = false
-
 
 
 
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        //加载中卡片
-        LoadingState = view.findViewById(R.id.LoadingState)
-        LoadingStateText = view.findViewById(R.id.LoadingStateText)
-        TextItemCount = view.findViewById(R.id.TextItemCount)
 
-        //页面设置按钮
-        val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
-        pageSettingButton.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //弹出页面选项菜单
-            val popup = PopupMenu(requireContext(), pageSettingButton)
-            popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
-            val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
-            val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
-            if (flag_currentPage == acquiescePage){
-                menuItem_default_page.title = "取消设为默认显示页签"
-            }else{
-                menuItem_default_page.title = "设为默认显示页签"
+        //开启Fragment通信
+        registerFragmentResultListener()
+
+        //组件注册
+        coroutine_component.launch {
+            //页面设置按钮
+            val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
+            pageSettingButton.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //弹出页面选项菜单
+                val popup = PopupMenu(requireContext(), pageSettingButton)
+                popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
+                val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
+                val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
+                if (flag_currentPage == acquiescePage){
+                    menuItem_default_page.title = "取消设为默认显示页签"
+                }else{
+                    menuItem_default_page.title = "设为默认显示页签"
+                }
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        //设为当前播放列表
+                        R.id.setting_set_as_current_list -> {
+                            ToolVibrate().vibrate(requireContext())
+                            setAs_currentPlayList()
+                            true
+                        }
+                        //设置默认显示列表
+                        R.id.setting_set_as_default_show_list -> {
+                            ToolVibrate().vibrate(requireContext())
+                            //设为默认显示列表
+                            setAs_acquiescePage()
+
+                            true
+                        }
+
+                        else -> true
+                    }
+                }
+                popup.show()
             }
-            popup.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    //设为当前播放列表
-                    R.id.setting_set_as_current_list -> {
-                        ToolVibrate().vibrate(requireContext())
-                        setAs_currentPlayList()
-                        true
-                    }
-                    //设置默认显示列表
-                    R.id.setting_set_as_default_show_list -> {
-                        ToolVibrate().vibrate(requireContext())
-                        //设为默认显示列表
-                        setAs_acquiescePage()
-
-                        true
-                    }
-
-                    else -> true
+            //按钮：设为当前播放列表/已是当前播放列表
+            val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
+            ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
+            ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
+            updateCurrentListStateText()
+            ButtonSetAsCurrentList.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                setAs_currentPlayList()
+            }
+            //按钮：总项数
+            val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
+            ButtonItemCount.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //未加载完成前拒绝访问
+                if (!state_adapter_load_complete) return@setOnClickListener
+                //显示列表中项数
+                val itemCount = recyclerView_video_adapter.itemCount
+                if (itemCount == 0) {
+                    requireContext().showCustomToast("目前还没有视频", 2)
+                }
+                else{
+                    requireContext().showCustomToast("包含${itemCount}条视频", 2)
                 }
             }
-            popup.show()
-        }
-        //按钮：设为当前播放列表/已是当前播放列表
-        val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
-        ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
-        ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
-        updateCurrentListStateText()
-        ButtonSetAsCurrentList.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            setAs_currentPlayList()
-        }
-        //按钮：总项数
-        val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
-        ButtonItemCount.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            //未加载完成前拒绝访问
-            if (!state_adapter_load_complete) return@setOnClickListener
-            //显示列表中项数
-            val itemCount = recyclerView_video_adapter?.itemCount ?: 0
-            if (itemCount == 0) {
-                requireContext().showCustomToast("目前还没有视频", 2)
+            //强制刷新(此页面无需主动刷新)
+            val ButtonForceRefresh = view.findViewById<CardView>(R.id.ButtonForceRefresh)
+            ButtonForceRefresh.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+
+                recyclerView.smoothScrollToPosition(0)
+                recyclerView_video_adapter.refresh()
             }
-            else{
-                requireContext().showCustomToast("包含${itemCount}条视频", 2)
+
+            //检查代码
+            /*
+            Log.d("SuMing", "主适配器: ${recyclerView_video_adapter}")
+            Log.d("SuMing", "带页脚的适配器: ${recyclerView.adapter}")
+            Log.d("SuMing", "两个适配器是否相同: ${recyclerView_video_adapter == recyclerView.adapter}")
+            lifecycleScope.launch {
+                recyclerView_video_adapter.loadStateFlow.collect { loadState ->
+                    Log.d("SuMing", "===== 加载状态更新 =====")
+                    Log.d("SuMing", "刷新状态: ${loadState.refresh}")
+                    Log.d("SuMing", "前面追加状态: ${loadState.prepend}")
+                    Log.d("SuMing", "后面追加状态: ${loadState.append}")
+                    val appendState = loadState.append
+                    when (appendState) {
+                        is LoadState.Loading -> {
+                            Log.d("SuMing", "⚠️ 正在加载更多数据...")
+                        }
+                        is LoadState.NotLoading -> {
+                            Log.d("SuMing", "✅ 追加加载完成，是否到末尾: ${appendState.endOfPaginationReached}")
+                        }
+                        is LoadState.Error -> {
+                            Log.d("SuMing", "❌ 追加加载错误: ${appendState.error.message}")
+                        }
+                    }
+                }
             }
+
+             */
         }
+
+
 
         //初始化recyclerView
         recyclerView = view.findViewById(R.id.recyclerView)
@@ -142,26 +178,31 @@ class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment
                 onAddToListClick = { uriString -> onAddToListClick(uriString.toUri()) },
                 onPlayClick = { uriString -> onPlayClick(uriString.toUri()) },
             )
-        //设置适配器
-        recyclerView.adapter = recyclerView_video_adapter
-        //分页加载
+        //添加页脚
+        val adapterWithFooter = recyclerView_video_adapter.withLoadStateFooter(footer = FragmentListBottomSloganAdapter {
+                recyclerView_video_adapter.retry()
+            })
+        //设置adapter
+        recyclerView.adapter = adapterWithFooter
+
+        //开始分页加载
         val pager = Pager(PagingConfig(pageSize = 20)) {
-                FragmentPlayListVideoPagingSource(requireContext())
-            }
-        //分页加载数据
+            FragmentPlayListVideoPagingSource(requireContext())
+        }
         lifecycleScope.launch {
-                pager.flow.collect { pagingData ->
-                    recyclerView_video_adapter?.submitData(pagingData)
-                }
+            pager.flow.collect { pagingData ->
+                recyclerView_video_adapter.submitData(pagingData)
             }
+        }
+
         //添加加载状态监听器
-        recyclerView_video_adapter?.addLoadStateListener { loadState ->
+        recyclerView_video_adapter.addLoadStateListener { loadState ->
             when (loadState.refresh) {
                 is LoadState.Loading -> {
                     showLoadingNotice()
                 }
                 is LoadState.NotLoading -> {
-                    LoadingComplete()
+                    LoadingComplete(view)
                 }
                 is LoadState.Error -> {
                     showErrorNotice()
@@ -170,8 +211,14 @@ class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment
         }
 
 
-        //开启Fragment通信
-        registerFragmentResultListener()
+        //添加分割线
+        /*
+        recyclerView.addItemDecoration(DividerItemDecoration(
+                requireContext(),
+                LinearLayoutManager.VERTICAL
+            ))
+
+         */
 
 
     //onViewCreated END
@@ -209,7 +256,7 @@ class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment
     //页面获得焦点
     private fun onFragmentFocused(){
         updateCurrentListStateText()
-        recyclerView_video_adapter?.refresh()
+        //recyclerView_video_adapter.refresh()
     }
 
 
@@ -273,35 +320,32 @@ class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_add)
         }
     }
-    //加载状态提示
+    //加载状态提示(需要重做)
     private fun showLoadingNotice() {
-        LoadingStateText.text = "加载中"
-        LoadingState.visibility = View.VISIBLE
+
     }
     private fun showErrorNotice() {
-        LoadingStateText.text = "加载出现异常"
-        LoadingState.visibility = View.VISIBLE
+
     }
-    private fun LoadingComplete() {
+    private fun LoadingComplete(view: View) {
         //刷新状态
         state_adapter_load_complete = true
         //更新总项数文字
-        val itemCount = recyclerView_video_adapter?.itemCount ?: 0
-        showItemCount(itemCount)
+        val itemCount = recyclerView_video_adapter.itemCount
+        showItemCount(itemCount,view)
         if (itemCount == 0) {
             showEmptyNotice()
         }
-        else{
-            LoadingStateText.text = "加载完成"
-            LoadingState.visibility = View.GONE
-        }
+
     }
     private fun showEmptyNotice() {
-        LoadingStateText.text = "列表为空"
-        LoadingState.visibility = View.VISIBLE
+
     }
-    private fun showItemCount(count: Int) {
+    private fun showItemCount(count: Int,view: View) {
+        val TextItemCount = view.findViewById<TextView>(R.id.TextItemCount)
         TextItemCount.text = count.toString()
     }
 
+
+//Fragment END
 }
