@@ -152,6 +152,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_KeepPlayingWhenExit: Boolean = false
 
 
+
+
     //全新设置变量体系(仅保存需高频次访问的变量)
     var PREFS_UseOnlySyncFrameWhenSeek: Boolean = true
     var PREFS_UseSyncFrameWhenScrollerStop = true

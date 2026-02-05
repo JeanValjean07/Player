@@ -22,6 +22,7 @@ import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.edit
@@ -35,6 +36,7 @@ import androidx.media3.common.util.UnstableApi
 import kotlin.math.abs
 
 @UnstableApi
+@RequiresApi(Build.VERSION_CODES.Q)
 class MainFragVideoStoreSetting: DialogFragment() {
     //静态
     companion object {

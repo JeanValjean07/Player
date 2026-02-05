@@ -141,13 +141,13 @@ class FragmentPlayList: DialogFragment() {
             val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
             ButtonPreviousMedia.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                PlayerSingleton.switchToPreviousMediaItem()
+                PlayerSingleton.switchToPreviousMediaItem(requireContext())
             }
             //按钮：下一曲
             val ButtonNextMedia = view.findViewById<ImageButton>(R.id.ButtonNextMedia)
             ButtonNextMedia.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                PlayerSingleton.switchToNextMediaItem()
+                PlayerSingleton.switchToNextMediaItem(requireContext())
             }
             //循环模式
             updateLoopModeText()
@@ -563,7 +563,7 @@ class FragmentPlayList: DialogFragment() {
     //播放点击事件
     private fun onPlayClick(uriString: String) {
         if (uriString == PlayerSingleton.getMediaInfoUriString()){
-            PlayerSingleton.continuePlay(true, force_request = true, need_fadeIn = false)
+            PlayerSingleton.continuePlay(true, force_request = true, need_fadeIn = false,requireContext())
             requireContext().showCustomToast("已在播放该媒体",3)
         }else{
             PlayerSingleton.setMediaItem(uriString.toUri(), true,requireContext())

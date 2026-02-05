@@ -2,7 +2,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="200dp"
     android:orientation="vertical"
     android:padding="16dp"
     tools:ignore="HardcodedText" >
@@ -12,9 +12,11 @@
         android:id="@+id/stateText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
         android:layout_gravity="center"
+        android:textSize="13sp"
         android:text="加载状态"
-        android:textColor="@color/HeadText2"
+        android:textColor="@color/Text_Level_4"
         android:visibility="visible"
         />
 

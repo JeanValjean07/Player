@@ -254,7 +254,7 @@ class FloatingWindowService : Service() {
         mWindowManager!!.addView(mFloatingView, mParams)
 
 
-        val player = PlayerSingleton._player ?: throw IllegalStateException("Player not initialized")
+        val player = PlayerSingleton.getPlayerFromService() ?: throw IllegalStateException("Player not initialized")
 
         val playerView = mFloatingView!!.findViewById<View?>(R.id.player_view) as PlayerView
         playerView.player = player

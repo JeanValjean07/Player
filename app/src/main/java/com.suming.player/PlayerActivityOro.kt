@@ -309,9 +309,6 @@ class PlayerActivityOro: AppCompatActivity(){
         }
 
 
-
-        //启动播放器单例
-        PlayerSingleton.setupPlayerSingleton(application)
         //初始化
         preCheck()
 
@@ -1276,8 +1273,6 @@ class PlayerActivityOro: AppCompatActivity(){
     private var state_PlayerListenerAdded: Boolean = false
     //启动ExoPlayer
     private fun startExoPlayer(){
-        //确保单例端播放器已启动
-        PlayerSingleton.startSingletonExoPlayer(application)
         //添加播放器事件监听
         startExoPlayerListener()
 
@@ -2688,7 +2683,7 @@ class PlayerActivityOro: AppCompatActivity(){
     }
     @Suppress("SameParameterValue")
     private fun continuePlay(need_requestFocus: Boolean, force_request: Boolean, need_fadeIn: Boolean){
-        PlayerSingleton.continuePlay(need_requestFocus, force_request, need_fadeIn)
+        PlayerSingleton.continuePlay(need_requestFocus, force_request, need_fadeIn,this)
 
 
         //界面控件操作

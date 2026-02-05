@@ -7,15 +7,16 @@ import android.widget.TextView
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
+import com.suming.player.databinding.ActivityPlayerFragmentPlayListFooterBinding
 import com.suming.player.databinding.ActivityToolFragmentFooterBinding
 
 class FragmentListBottonSloganViewHolder(parent: ViewGroup, retry: () -> Unit):RecyclerView.ViewHolder(
-    LayoutInflater.from(parent.context).inflate(R.layout.activity_tool_fragment_footer, parent, false)
+    LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_footer, parent, false)
 ){
 
-    private val binding = ActivityToolFragmentFooterBinding.bind(itemView)
+    private val binding = ActivityPlayerFragmentPlayListFooterBinding.bind(itemView)
 
-    private val FooterText: TextView = binding.FooterText
+    private val FooterText: TextView = binding.stateText
 
 
 
@@ -31,7 +32,7 @@ class FragmentListBottonSloganViewHolder(parent: ViewGroup, retry: () -> Unit):R
             }
             is LoadState.NotLoading -> {
                 FooterText.visibility = View.VISIBLE
-                FooterText.text = "加载完成"
+                FooterText.text = "没有更多了"
             }
 
         }

@@ -135,13 +135,6 @@ class ExternalInvokeManager : AppCompatActivity(){
             1 -> startVideoNeoPage(uri,source)
         }
 
-        //构建intent
-        val intent = Intent(this, PlayerActivityNeo::class.java).apply { putExtra("uri", uri) }
-            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            .putExtra("IntentSource", source)
-
-        //启动
-        startActivity(intent)
     }
     //启动视频页面neo
     @OptIn(UnstableApi::class)

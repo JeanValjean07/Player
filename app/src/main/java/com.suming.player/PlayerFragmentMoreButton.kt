@@ -332,7 +332,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 ToolVibrate().vibrate(requireContext())
                 //修改设置
                 val isChecked = switch_saveLastPosition.isChecked
-                PlayerSingleton.set_Para_saveLastProgress(isChecked)
+                PlayerSingleton.set_Para_saveLastProgress(isChecked,requireContext())
 
                 //不发回结果
                 customDismiss()

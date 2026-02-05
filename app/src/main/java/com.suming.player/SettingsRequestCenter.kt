@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import androidx.core.content.edit
+import kotlin.math.sqrt
 
 @Suppress("unused")
 object SettingsRequestCenter {
@@ -386,11 +387,28 @@ object SettingsRequestCenter {
         if (PREFS_EnsurePortraitWhenExit == -1) {
             PREFS_EnsurePortraitWhenExit = PREFS_PlayVideoPage.getInt("PREFS_EnsurePortraitWhenExit", -1)
             if (PREFS_EnsurePortraitWhenExit == -1) {
-                PREFS_EnsurePortraitWhenExit = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_EnsurePortraitWhenExit", 0) }
+                val isDeviceTablet = isDeviceTablet(context)
+                if (isDeviceTablet){
+                    PREFS_PlayVideoPage.edit { putInt("PREFS_EnsurePortraitWhenExit", 0) }
+                    PREFS_EnsurePortraitWhenExit = 0
+                }else{
+                    PREFS_PlayVideoPage.edit { putInt("PREFS_EnsurePortraitWhenExit", 1) }
+                    PREFS_EnsurePortraitWhenExit = 1
+                }
             }
         }
         return PREFS_EnsurePortraitWhenExit == 1
+    }
+    private fun isDeviceTablet(context: Context): Boolean{
+        val displayMetrics = context.resources.displayMetrics
+        val widthInches = displayMetrics.widthPixels / displayMetrics.xdpi
+        val heightInches = displayMetrics.heightPixels / displayMetrics.ydpi
+
+        //计算屏幕对角线尺寸inch
+        val diagonalInches = sqrt(widthInches * widthInches + heightInches * heightInches)
+
+        //默认把7英寸以上算做平板
+        return diagonalInches >= 7.0
     }
     //播放区域移动动画
     private var PREFS_EnablePlayAreaMoveAnim = -1

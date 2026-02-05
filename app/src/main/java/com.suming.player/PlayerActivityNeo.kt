@@ -1,5 +1,6 @@
 package com.suming.player
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.BroadcastReceiver
@@ -324,8 +325,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
         }
-        //启动播放器单例
-        PlayerSingleton.setupPlayerSingleton(application)
+
         //其他预设
         preCheck()
 
@@ -1196,6 +1196,67 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
+    //展开动画
+    private fun viewFold(view: LinearLayout) {
+        //设置初始高度为0
+        view.measure(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        val targetHeight = view.measuredHeight
+
+        // 如果目标高度为0，则无需动画
+        if (targetHeight <= 0) return
+        // 如果当前高度已经是目标高度，则无需动画
+        if (view.layoutParams.height == targetHeight) return
+
+        // 初始高度设为0 (为了动画能从0开始)
+        view.layoutParams.height = 0
+        view.visibility = View.VISIBLE
+
+
+        val animator = ValueAnimator.ofInt(0, targetHeight)
+
+        // 3. 设置动画更新监听器
+        animator.addUpdateListener { animation ->
+            val animatedValue = animation.animatedValue as Int
+            view.layoutParams.height = animatedValue
+            view.requestLayout()
+        }
+        animator.duration = 200
+
+        animator.start()
+    }
+    private fun viewExpand(view: LinearLayout) {
+        //设置初始高度为0
+        view.measure(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        val targetHeight = view.measuredHeight
+
+        // 如果目标高度为0，则无需动画
+        if (targetHeight <= 0) return
+        // 如果当前高度已经是目标高度，则无需动画
+        if (view.layoutParams.height == targetHeight) return
+
+        // 初始高度设为0 (为了动画能从0开始)
+        view.layoutParams.height = 0
+        view.visibility = View.VISIBLE
+
+
+        val animator = ValueAnimator.ofInt(0, targetHeight)
+
+        // 3. 设置动画更新监听器
+        animator.addUpdateListener { animation ->
+            val animatedValue = animation.animatedValue as Int
+            view.layoutParams.height = animatedValue
+            view.requestLayout()
+        }
+        animator.duration = 200
+
+        animator.start()
+    }
     //提取链接
     private fun ExtractIntentUri(intent: Intent): Pair<Boolean,Uri>{
         val intentUri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)?: Uri.EMPTY
@@ -1383,8 +1444,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var state_PlayerListenerAdded: Boolean = false
     //启动ExoPlayer
     private fun startExoPlayer(){
-        //确保单例端播放器已启动
-        PlayerSingleton.startSingletonExoPlayer(application)
+
         //添加播放器事件监听
         startExoPlayerListener()
 
@@ -1822,10 +1882,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 startScrollerSync()
                 startVideoTimeSync()
             }
-            //首次启动
-            if (vm.state_onStop_ByRealExit){
-
-            }
+            //首次启动 暂无动作 vm.state_onStop_ByRealExit
             //活动暂退桌面：小窗模式在这里包含
             if (vm.state_onStop_ByLossFocus){
                 //可能来自浮窗
@@ -1842,7 +1899,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 startScrollerSync()
                 startVideoTimeSync()
             }
-            //通用步骤：
+            //通用
             //重置状态
             vm.set_onStop_all_reset()
         }
@@ -2064,25 +2121,10 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun clearMiniature(){
         File(filesDir, "miniature/${vm.MediaInfo_FileName.hashCode()}/scroller").deleteRecursively()
     }
-    //视频区域抬高(含Job)
-    @Suppress("DEPRECATION")
-    private fun MoveYaxisCalculate(){
-        val displayMetrics = DisplayMetrics()
-
-        windowManager.defaultDisplay.getMetrics(displayMetrics)
-
-        val density = displayMetrics.density
-
-        val heightPx = displayMetrics.heightPixels
-        val heightHalfPx = (heightPx / 2.0).toFloat()
-        val cardTopMarginPx = 300 * density
-
-        value_PlayAreaMoveDistance = heightHalfPx - ((cardTopMarginPx + vm.statusBarHeight) / 2)
-
-    }
+    //视频区域抬高
     private fun MovePlayArea_down(){
         if (vm.PREFS_EnablePlayAreaMoveAnim) {
-            //取消Job:播放区域上移
+            //取消原区域上移任务
             MovePlayAreaJob?.cancel()
 
             playerView.animate()
@@ -2095,17 +2137,14 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun MovePlayArea_up() {
-        if (value_PlayAreaMoveDistance == 0f){
-            MoveYaxisCalculate()
-        }
         if (vm.PREFS_EnablePlayAreaMoveAnim){
             playerView.animate()
-                .translationY(-value_PlayAreaMoveDistance)
+                .translationY(-(ValueManager.get_Value_PlayAreaMoveDistance(this)))
                 .setInterpolator(DecelerateInterpolator())
                 .setDuration(300)
                 .start()
         }else{
-            playerView.translationY = -value_PlayAreaMoveDistance
+            playerView.translationY = -ValueManager.get_Value_PlayAreaMoveDistance(this)
         }
     }
     private var MovePlayAreaJob: Job? = null
@@ -2116,7 +2155,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             MovePlayArea_up()
         }
     }
-    private var value_PlayAreaMoveDistance = 0f
     //提取帧函数
     private fun ExtractFrame(videoPath: String, filename: String) {
         val frameExtractor = FrameExtractor(object : FrameListener {
@@ -2568,7 +2606,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     @Suppress("SameParameterValue")
     private fun continuePlay(need_requestFocus: Boolean, force_request: Boolean, need_fadeIn: Boolean){
-        PlayerSingleton.continuePlay(need_requestFocus, force_request, need_fadeIn)
+        PlayerSingleton.continuePlay(need_requestFocus, force_request, need_fadeIn,this)
 
 
         //界面控件操作
