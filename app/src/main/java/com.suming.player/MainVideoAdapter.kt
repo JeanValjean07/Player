@@ -103,7 +103,11 @@ class MainVideoAdapter(
         holder.tvFrameLoadingJob?.cancel()
         holder.tvFrameLoadingJob = CoroutineScope_LoadCoverFrame.launch(Dispatchers.IO) { setHolderFrame(item, holder) }
         //点击事件设定
-        holder.TouchPad.setOnClickListener { onItemClick(item.uriString.toUri()) }
+        holder.TouchPad.setOnClickListener {
+            ToolVibrate().vibrate(context)
+            //
+            onItemClick(item.uriString.toUri())
+        }
         holder.tvDuration.setOnClickListener { onDurationClick(item) }
         holder.tvOption.setOnClickListener {
             ToolVibrate().vibrate(context)

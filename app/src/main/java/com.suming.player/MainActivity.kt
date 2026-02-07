@@ -15,13 +15,11 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PersistableBundle
 import android.provider.Settings
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
@@ -189,12 +187,8 @@ class MainActivity: AppCompatActivity() {
         //按钮：指南
         val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
         ButtonGuidance.setOnClickListener {
-
-            //val mediaItem = PlayerSingleton.getCurrentMediaItem()
-            //Log.d("SuMing", "ButtonGuidance: $mediaItem")
-
-
             ToolVibrate().vibrate(this@MainActivity)
+            //
             val intent = Intent(this, GuidanceActivity::class.java)
             startActivity(intent)
         }
@@ -370,7 +364,7 @@ class MainActivity: AppCompatActivity() {
 
                 }
                 "ClosedBeforePlayerReady" -> {
-                    Log.d("SuMing", "ClosedBeforePlayerReady : ${result.data?.getStringExtra("ClosedBeforePlayerReady") ?: "null"}")
+
                 }
             }
         }
@@ -454,7 +448,6 @@ class MainActivity: AppCompatActivity() {
 
     //启动底部播放卡片
     private fun startBottomMediaCard(){
-        Log.d("SuMing", "startBottomMediaCard")
         //检查是否正在播放媒体
         val (isNowPlaying, _) = getNowPlayingMediaItem()
         if (isNowPlaying){
@@ -466,24 +459,18 @@ class MainActivity: AppCompatActivity() {
             updateCardContent(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
 
         }else{
-            Log.d("SuMing", "startBottomMediaCard: 当前未在播放")
             //从记录管理器获取上次播放记录
             val (MediaInfo_MediaUriString, _, _) = MediaRecordManager(this).get_MediaInfo()
-            Log.d("SuMing", "startBottomMediaCard: $MediaInfo_MediaUriString")
             //检查上次播放记录是否有效
             if (MediaInfo_MediaUriString == ""){
                 closeBottomMediaCardNoAnim()
                 return
             }else{
-                Log.d("SuMing", "startBottomMediaCard: 链接不为空")
                 val isLastMediaValid = isUriStringValid(MediaInfo_MediaUriString)
-                Log.d("SuMing", "startBottomMediaCard: $isLastMediaValid")
+                //有效时设置媒体
                 if (isLastMediaValid){
-                    //设置媒体
-                    Log.d("SuMing", "startBottomMediaCard: 链接有效，设置媒体")
-                    setNewMediaItem(MediaInfo_MediaUriString.toUri(),true)
+                    setNewMediaItem(MediaInfo_MediaUriString.toUri(),false)
                 }
-
             }
         }
     }
@@ -597,7 +584,6 @@ class MainActivity: AppCompatActivity() {
                     }
                 }
             } else {
-                Log.d("SuMing", "BindPlayingCardSmallPlayer : 封面图不存在")
                 null
             }
             PlayingCard_Image.setImageURI(cover_img_uri)
@@ -764,20 +750,15 @@ class MainActivity: AppCompatActivity() {
         }
         //本次启动第一次加载视频
         if (PREFS_QueryNewVideoOnStart){
-            //Log.d("SuMing", "generalLoadVideo : 11111")
             if (!state_VideoDataBaseReaded_N_AdapterBinded){
-                //Log.d("SuMing", "generalLoadVideo : 22222")
                 checkPermissionThenStartLoad("video")
             }
         }
         else{
-            //Log.d("SuMing", "generalLoadVideo : 33333")
             if (state_MusicMediaStoreReaded){
-                //Log.d("SuMing", "generalLoadVideo : 44444")
                 LoadDataBase_N_BindAdapter("video")
             }
             else{
-                //Log.d("SuMing", "generalLoadVideo : 55555")
                 checkPermissionThenStartLoad("video")
             }
         }
@@ -903,11 +884,9 @@ class MainActivity: AppCompatActivity() {
                 isVersionAboveTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 if (isVersionAboveTiramisu){
                     if (Environment.isExternalStorageManager()){
-                        Log.d("SuMing", "generalLoadVideo : 66666")
                         startLoadFromMediaStore(flag_video_or_music)
                     }
                     else{
-                        Log.d("SuMing", "generalLoadVideo : 77777")
                         showCustomToast("请先开启管理所有文件权限",3)
                         val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
                         this@MainActivity.startActivity(intent)
@@ -1023,7 +1002,6 @@ class MainActivity: AppCompatActivity() {
     }
     //启动播放器
     private fun startVideoPlayer(uri: Uri){
-        ToolVibrate().vibrate(this@MainActivity)
         //防止快速发起
         if (System.currentTimeMillis() - lock_clickMillisLock < 800) {
             return
@@ -1056,7 +1034,6 @@ class MainActivity: AppCompatActivity() {
 
             }
             1 -> {
-                Log.d("SuMing","startVideoPlayer uri = $uri")
                 //构建intent
                 val intent = Intent(this, PlayerActivityNeo::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -1229,7 +1206,6 @@ class MainActivity: AppCompatActivity() {
         when (event) {
             //视频更新完成
             "QueryFromMediaStoreVideoComplete" -> {
-                Log.d("SuMing", "HandlePlayerEvent: MediaStore_Video_Query_Complete")
                 //关提示卡
                 setLoadingText("读取完成", true, 5000)
                 //修改是否完成过加载记录
@@ -1237,10 +1213,7 @@ class MainActivity: AppCompatActivity() {
                 //数据已经保存到数据库,开始从数据库解析
                 if (state_VideoDataBaseReaded_N_AdapterBinded){
                     main_video_list_adapter.refresh()
-                    Log.d("SuMing", "HandlePlayerEvent: MediaStore_Video_Query_Complete_2")
-
                 }else{
-                    Log.d("SuMing", "HandlePlayerEvent: MediaStore_Video_Query_Complete_3")
                     LoadDataBase_N_BindAdapter("video")
                 }
 
@@ -1256,7 +1229,6 @@ class MainActivity: AppCompatActivity() {
                     main_music_list_adapter.refresh()
 
                 }else{
-                    Log.d("SuMing", "HandlePlayerEvent: MediaStore_Music_Query_Complete")
                     LoadDataBase_N_BindAdapter("music")
                 }
             }
@@ -1272,7 +1244,6 @@ class MainActivity: AppCompatActivity() {
             "MediaStore_Refresh_Complete" -> {
                 main_video_list_adapter.refresh()
                 //让播放器重读媒体列表
-                //Log.d("SuMing", "HandlePlayerEvent: MediaStore_Video_Query_Complete")
                 PlayerSingleton.getMediaListByDataBaseChange(application)
             }
             "ExistInvalidMediaItem" -> {

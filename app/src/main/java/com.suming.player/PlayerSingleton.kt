@@ -22,15 +22,11 @@ import android.net.Uri
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
-import android.os.Process
 import android.provider.MediaStore
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.NotificationCompat
 import androidx.core.content.FileProvider
-import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.C.WAKE_MODE_NETWORK
@@ -61,7 +57,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.system.exitProcess
 
 @SuppressLint("StaticFieldLeak")
 @UnstableApi
@@ -69,7 +64,6 @@ import kotlin.system.exitProcess
 object PlayerSingleton {
     //播放器实例
     private var _player: ExoPlayer? = null
-    private val player: ExoPlayer get() = _player ?: throw IllegalStateException("发生错误")
     //播放器组件
     fun getTrackSelector(context: Context): DefaultTrackSelector =
         inner_trackSelector ?: synchronized(this) {
@@ -338,14 +332,12 @@ object PlayerSingleton {
                 saveOldItemData(oldItemName,currentPosition, oldItemDuration, context)
             }
         }
-        Log.d("SuMing", "setNewMediaItem: 保存上个媒体的信息")
 
         //👻丨正式开始设置新媒体项的流程
         //解码新媒体信息丨确认媒体有效前不会刷新本地媒体信息
-        Log.d("SuMing", "setNewMediaItem: 解码新媒体信息")
         val success = getMediaInfo(context, itemUri)
         if (!success) return false
-        Log.d("SuMing", "setNewMediaItem: 解码新媒体信息成功")
+
 
         //重置单个媒体状态
         clearItemState()
@@ -368,7 +360,6 @@ object PlayerSingleton {
             )
             .build()
         _player?.setMediaItem(mediaItem)
-        Log.d("SuMing", "setNewMediaItem: 合成并设置媒体项")
 
         return true
     }
@@ -389,9 +380,7 @@ object PlayerSingleton {
     }
     //完成媒体项变更丨后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?, context: Context){
-        Log.d("SuMing", "onMediaItemChanged: 媒体项变更")
         if (mediaItem == null){ return }
-
 
         //启动服务
         startService(context)
