@@ -15,7 +15,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:cardBackgroundColor="@color/Background3"
+        app:cardBackgroundColor="@color/THEME_1_Background_BackArea"
         app:cardCornerRadius="8dp"
         app:cardElevation="10dp"
         android:clickable="true">
@@ -110,7 +110,7 @@
                             android:layout_height="20dp"
                             android:layout_marginEnd="10dp"
                             android:layout_gravity="center"
-                            android:backgroundTint="@color/MenuButton_Background_ffffff_111111"
+                            android:backgroundTint="@color/THEME_1_Background_ButtonCard"
                             app:layout_constraintTop_toTopOf="parent"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"

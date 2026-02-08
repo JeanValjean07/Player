@@ -366,10 +366,14 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             }
             //来自重建活动
-            else{ BindCurrentPlayingItem(vm.MediaInfo_MediaUri) }
+            else{
+                //绑定正在播放的媒体
+                BindCurrentPlayingItem(vm.MediaInfo_MediaUri)
+                //隐藏顶部卡线
+                HideTopLine()
+            }
 
         }
-
 
         coroutine_loadFrequentlyUsedSetting.launch {
             //进度条停止滚动时尾帧使用关键帧
@@ -393,14 +397,12 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         }
 
-
         coroutine_registerListener.launch {
             //RxJava事件总线
             registerEventBus()
             //开启旋转监听器
             startOrientationListener()
         }
-
 
         coroutine_registerScroller.launch {
             //Scroller事件 gestureDetector层 -onSingleTap -onDown
@@ -577,7 +579,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             })
         }
-
 
         coroutine_registerControllerButton.launch {
             //退出按钮
@@ -995,7 +996,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 onTouchEvent(event)
             }
         }
-
 
 
 
@@ -1523,10 +1523,10 @@ class PlayerActivityNeo: AppCompatActivity(){
         updateTimeCard()
         //刷新进度条
         updateScrollerAdapter()
+        //更新时间戳
+        updateTimeCard()
         //刷新控制按钮
         updateButtonState()
-        //隐藏顶部分割线
-        HideTopLine()
 
     }
     //媒体项变更回调
@@ -2656,7 +2656,10 @@ class PlayerActivityNeo: AppCompatActivity(){
     private lateinit var playerView: PlayerView //播放区域
     //刷新视频总长度
     private fun updateTimeCard(){
-        controller_timer_total.text = FormatTime_onlyNum(vm.MediaInfo_MediaDuration.toLong())
+        //设置时间戳-总时长显示位
+        controller_timer_total.text = FormatTime_onlyNum(vm.MediaInfo_MediaDuration)
+        //开始时间戳更新(TODO:需升级为仅在视频正播放时开启)
+        startVideoTimeSync()
     }
     //刷新按钮状态
     private fun updateButtonState(){
@@ -2674,6 +2677,19 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var scrollerInfo_PicNumber = 0
     private var scrollerInfo_EachPicDuration = 0L
     private var syncScrollerRunnableGap = 50L
+    private fun foldScrollerArea(){
+        val player_scroller_center_line = findViewById<View>(R.id.player_scroller_center_line)
+        val controller_scroller_container = findViewById<ConstraintLayout>(R.id.controller_scroller_container)
+        val controller_bottom_padding = findViewById<View>(R.id.controller_bottom_padding)
+
+        player_scroller_center_line.visibility = View.GONE
+
+        controller_scroller_container.visibility = View.GONE
+
+        controller_bottom_padding.background = null
+
+
+    }
     private fun updateScrollerAdapter(){
         lifecycleScope.launch(Dispatchers.IO) {
             //viewModel
@@ -2728,18 +2744,17 @@ class PlayerActivityNeo: AppCompatActivity(){
             if (scrollerInfo_EachPicDuration > 1000L){ PREFS_UseSyncFrameInScroller = true }
 
 
+
             //不符合条件时不开启
-            fun showErrorNotice(){
-                showCustomToast("进度条参数错误,无法绘制",3)
-            }
             if (MediaInfo_AbsolutePath_clean.isEmpty()) {
-                showErrorNotice()
+                withContext(Dispatchers.Main){ foldScrollerArea() }
                 return@launch
             }
-            if (scrollerInfo_PicNumber == 0 || scrollerInfo_EachPicDuration == 0L){
-                showErrorNotice()
+            if (scrollerInfo_PicNumber == 0 || scrollerInfo_EachPicDuration == 0L) {
+                withContext(Dispatchers.Main){ foldScrollerArea() }
                 return@launch
             }
+
 
 
             //进度条边界设置

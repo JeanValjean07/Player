@@ -136,8 +136,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
 
 
-
-
         //注册基础按钮
         coroutine_registerBasicButton.launch {
             //按钮：退出
@@ -283,7 +281,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 }
             }
         }
-
         //注册开关
         coroutine_registerSwitch.launch {
             //开启方向监听器
@@ -338,7 +335,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 customDismiss()
             }
         }
-
         //注册选单按钮
         coroutine_registerMenuButton.launch {
             //循环模式
@@ -427,7 +423,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
         }
-
         //注册顶部功能键
         coroutine_registerFunctionalButtonTop.launch {
             //截屏
@@ -457,7 +452,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
         }
-
         //注册功能键
         coroutine_registerFunctionalButton.launch {
 
@@ -592,7 +586,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
         }
-
         //注册进度条相关功能
         coroutine_registerSeekBarStuff.launch {
             val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
@@ -606,10 +599,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 val ButtonAlwaysSeek = view.findViewById<FrameLayout>(R.id.ButtonActualAlwaysSeek)
                 val ButtonAlwaysSeekMaterial = view.findViewById<MaterialButton>(R.id.ButtonMaterialAlwaysSeek)
                 fun updateButtonAlwaysSeekColor(){
-                    if (vm.PREFS_AlwaysSeek) {
-                        ButtonAlwaysSeekMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.Button_Switch_Background_ON))
+                    if (vm.PREFS_AlwaysSeek){
+                        ButtonAlwaysSeekMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.THEME_1_Background_ButtonCircle_ON))
                     }else{
-                        ButtonAlwaysSeekMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.Button_Switch_Background_OFF))
+                        ButtonAlwaysSeekMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.THEME_1_Background_ButtonCircle_OFF))
                     }
                 }
                 updateButtonAlwaysSeekColor()
@@ -633,10 +626,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 val ButtonLinkScroll = view.findViewById<FrameLayout>(R.id.ButtonActualLinkScroll)
                 val ButtonLinkScrollMaterial = view.findViewById<MaterialButton>(R.id.ButtonMaterialLinkScroll)
                 fun updateButtonLinkScrollColor(){
-                    if (vm.PREFS_LinkScroll) {
-                        ButtonLinkScrollMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.Button_Switch_Background_ON))
+                    if (vm.PREFS_LinkScroll){
+                        ButtonLinkScrollMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.THEME_1_Background_ButtonCircle_ON))
                     }else{
-                        ButtonLinkScrollMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.Button_Switch_Background_OFF))
+                        ButtonLinkScrollMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.THEME_1_Background_ButtonCircle_OFF))
                     }
                 }
                 updateButtonLinkScrollColor()
@@ -660,10 +653,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 val ButtonTapJump = view.findViewById<FrameLayout>(R.id.ButtonActualTapJump)
                 val ButtonTapJumpMaterial = view.findViewById<MaterialButton>(R.id.ButtonMaterialTapJump)
                 fun updateButtonTapJumpColor(){
-                    if (vm.PREFS_TapJump) {
-                        ButtonTapJumpMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.Button_Switch_Background_ON))
+                    if (vm.PREFS_TapJump){
+                        ButtonTapJumpMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.THEME_1_Background_ButtonCircle_ON))
                     }else{
-                        ButtonTapJumpMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.Button_Switch_Background_OFF))
+                        ButtonTapJumpMaterial.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.THEME_1_Background_ButtonCircle_OFF))
                     }
                 }
                 updateButtonTapJumpColor()
@@ -686,8 +679,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
         }
-
-
 
 
         //监听返回手势(DialogFragment)

@@ -112,7 +112,6 @@
         android:id="@+id/controllerLayer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:translationZ="2dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -162,7 +161,6 @@
             android:id="@+id/controller_bottom_constraint"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:translationZ="2dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
@@ -174,7 +172,7 @@
                 android:orientation="horizontal"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toTopOf="@+id/controller_scroller_top_line">
+                app:layout_constraintBottom_toTopOf="@+id/controller_scroller_container">
                 <!-- 当前时间 -->
                 <androidx.cardview.widget.CardView
                     android:id="@+id/controller_timer_card"
@@ -336,55 +334,66 @@
                 </FrameLayout>
 
             </LinearLayout>
-            <!-- 顶部分隔线 -->
-            <View
-                android:id="@+id/controller_scroller_top_line"
-                android:layout_width="match_parent"
-                android:layout_height="0.05dp"
-                android:background="@color/player_scroller_top_line"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toTopOf="@+id/controller_scroller_container"
-                />
-            <!-- 中间竖线 -->
-            <View
-                android:id="@+id/player_scroller_center_line"
-                android:layout_width="2dp"
-                android:layout_height="40dp"
-                android:background="@color/player_scroller_center_line"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/controller_scroller_container"
-                android:elevation="4dp"
-                />
-            <!-- 缩略图进度条 -->
+
+            <!-- 缩略图区 -->
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/controller_scroller_container"
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
-                android:orientation="horizontal"
-                android:clickable="true"
-                android:background="@color/Background"
-                android:paddingBottom="30dp"
-                android:translationZ="3dp"
+                android:layout_height="40dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent">
+                app:layout_constraintBottom_toTopOf="@+id/controller_bottom_padding"
+                android:background="@color/Background"
+                android:clickable="true">
+                <!-- 缩略图区顶部分隔线 -->
+                <View
+                    android:id="@+id/controller_scroller_top_line"
+                    android:layout_width="match_parent"
+                    android:layout_height="0.05dp"
+                    android:background="@color/player_scroller_top_line"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    />
+                <!-- 缩略图进度条 -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/controller_scroller_recyclerView"
                     android:layout_width="match_parent"
                     android:layout_height="35dp"
                     android:layout_gravity="center"
                     android:orientation="horizontal"
-                    android:translationZ="4dp"
                     android:adjustViewBounds="false"
                     android:clipToPadding="false"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    />
+                <!-- 中间竖线 -->
+                <View
+                    android:id="@+id/player_scroller_center_line"
+                    android:layout_width="2dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:background="@color/player_scroller_center_line"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    />
             </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- 底部抬高 -->
+            <View
+                android:id="@+id/controller_bottom_padding"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:background="@color/Background"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>

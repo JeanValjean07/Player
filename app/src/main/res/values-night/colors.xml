@@ -81,5 +81,12 @@
     <color name="MenuButton_Background_ffffff_111111">#111111</color>
     <color name="MenuButton_Text">#FFFFFF</color>
 
+    <!-- 颜色套装 -->
+    <color name="THEME_1_Background_BackArea">#111111</color>
+    <color name="THEME_1_Background_ContentCard">#212121</color>
+    <color name="THEME_1_Background_ButtonCard">#000000</color>
+    <color name="THEME_1_Background_ButtonCircle_OFF">#424242</color>
+    <color name="THEME_1_Background_ButtonCircle_ON">#E1BEE7</color>
+
 
 </resources>
