@@ -801,7 +801,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private fun updateAutoShutText(view: View){
         val ButtonTextAutoShut = view.findViewById<TextView>(R.id.ButtonTextAutoShut)
         val shutDownMoment = PlayerSingleton.get_timer_autoShut()
-        Log.d("SuMing","updateAutoShutText: $shutDownMoment")
+
         if (shutDownMoment == ""){
             ButtonTextAutoShut.text = "未设置"
         }else if(shutDownMoment == "shutdown_when_end"){

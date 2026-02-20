@@ -28,7 +28,7 @@ class MediaRecordManager(context: Context) {
         }
     }
 
-    //外部读取保存的媒体项
+    //外部读取保存的媒体项 < uriString, 文件名, 艺术家>
     fun get_MediaInfo(): Triple<String, String, String>{
         val MediaInfo_MediaUriString = INFO_MediaRecord.getString("MediaInfo_MediaUriString", "") ?: ""
         val MediaInfo_FileName = INFO_MediaRecord.getString("MediaInfo_FileName", "") ?: ""
