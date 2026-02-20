@@ -28,7 +28,7 @@ object SettingsRequestCenter {
 
 
     //PREFS in PREFS_MainPage
-    //禁用主页面小播放器
+    //禁用主页面小播放器(默认设置区分机型)
     private var PREFS_DisableMainPageSmallPlayer = -1
     fun set_PREFS_DisableMainPageSmallPlayer(enable: Boolean){
         PREFS_DisableMainPageSmallPlayer = if (enable) 1 else 0
@@ -75,17 +75,13 @@ object SettingsRequestCenter {
             PREFS_DisableMediaArtWork = PREFS_PlayEngin.getInt("PREFS_DisableMediaArtWork", -1)
             if (PREFS_DisableMediaArtWork == -1){
                 PREFS_DisableMediaArtWork = 0
-                if (Build.BRAND.equals("huawei",ignoreCase = true)){
-                    PREFS_PlayEngin.edit { putInt("PREFS_DisableMediaArtWork", 0) }
-                }else{
-                    PREFS_PlayEngin.edit { putInt("PREFS_DisableMediaArtWork", 0) }
-                }
+                PREFS_PlayEngin.edit { putInt("PREFS_DisableMediaArtWork", 0) }
             }
         }
 
         return PREFS_DisableMediaArtWork == 1
     }
-    //后台播放时关闭视频轨道
+    //后台播放时关闭视频轨道(默认设置区分安卓版本)
     private var PREFS_DisableVideoTrackOnBack = -1
     fun set_PREFS_DisableVideoTrackOnBack(disable: Boolean){
         PREFS_DisableVideoTrackOnBack = if (disable) 1 else 0
@@ -254,7 +250,7 @@ object SettingsRequestCenter {
 
         return PREFS_EnableTapJump == 1
     }
-    //使用高刷新率
+    //使用高刷新率(默认设置区分机型)
     private var PREFS_EnableHighRefreshRate = -1
     fun set_PREFS_EnableHighRefreshRate(enable: Boolean){
         PREFS_EnableHighRefreshRate = if (enable) 1 else 0
@@ -371,7 +367,7 @@ object SettingsRequestCenter {
         }
         return PREFS_DisableFragmentGesture == 1
     }
-    //退出时确保是竖屏
+    //退出时确保是竖屏(默认设置区分设备dpi)
     private var PREFS_EnsurePortraitWhenExit = -1
     fun set_PREFS_EnsurePortraitWhenExit(enable: Boolean){
         PREFS_EnsurePortraitWhenExit = if (enable) 1 else 0
