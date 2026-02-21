@@ -319,10 +319,6 @@ object PlayerSingleton {
     fun getMediaWHratio(): Float {
         //获取视频宽高比
         val ratio_W_by_H = MediaInfo_VideoWidth.toFloat() / MediaInfo_VideoHeight.toFloat()
-        Log.d("SuMing","当前宽: $MediaInfo_VideoWidth")
-        Log.d("SuMing","当前高: $MediaInfo_VideoHeight")
-        Log.d("SuMing","当前宽高比: $ratio_W_by_H")
-
 
         return ratio_W_by_H
     }

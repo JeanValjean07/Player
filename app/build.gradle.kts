@@ -76,6 +76,7 @@ dependencies {
     implementation(libs.foundation.layout)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.compose.foundation.foundation.layout)
+    implementation(libs.androidx.core.animation)
     ksp("androidx.room:room-compiler:2.6.1")
     //RxJava
     implementation("io.reactivex.rxjava3:rxjava:3.1.5")

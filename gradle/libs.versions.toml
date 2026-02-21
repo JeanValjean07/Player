@@ -23,6 +23,7 @@ library = "3.2.0-alpha11"
 foundationLayoutVersion = "1.9.4"
 datastoreCore = "1.1.7"
 androidxFoundationLayout = "1.10.0"
+coreAnimation = "1.0.0"
 
 
 [libraries]
@@ -48,6 +49,7 @@ androidx-library = { group = "androidx.databinding", name = "library", version.r
 foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
 androidx-compose-foundation-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "androidxFoundationLayout" }
+androidx-core-animation = { group = "androidx.core", name = "core-animation", version.ref = "coreAnimation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

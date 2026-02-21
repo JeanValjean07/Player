@@ -15,7 +15,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PersistableBundle
 import android.provider.Settings
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
@@ -32,6 +31,9 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
+import android.animation.ValueAnimator
+import android.util.Log
+import android.view.animation.DecelerateInterpolator
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
@@ -96,11 +98,7 @@ class MainActivity: AppCompatActivity() {
     private var state_onFirstStart = false
     private var state_PlayingCard_showing = false
     private var state_PlayingCard_gone = true
-    //</editor-fold>
-    //播放中卡片
-    //<editor-fold desc="播放中卡片">
 
-    //</editor-fold>
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -522,7 +520,17 @@ class MainActivity: AppCompatActivity() {
             //卡片已是目标宽度
             if (cardWidth == cardHeight) return
 
-            //变换卡片宽度(以后添加动画)
+            //变换卡片宽度
+            val animator = ValueAnimator.ofInt(cardWidth, cardHeight)
+            animator.duration = 500
+            animator.interpolator = DecelerateInterpolator()
+            animator.addUpdateListener { animation ->
+                val animatedValue = animation.animatedValue as Int
+                val layoutParams = PlayingCard_Artwork.layoutParams
+                layoutParams.width = animatedValue
+                PlayingCard_Artwork.layoutParams = layoutParams
+            }
+            animator.start()
             PlayingCard_Artwork.layoutParams.width = cardHeight
 
         }
@@ -551,6 +559,7 @@ class MainActivity: AppCompatActivity() {
         if (state_BottomBarArtwork_type != 1){
             //清除所有子视图
             PlayingCard_Artwork.removeAllViews()
+            PlayingCard_Artwork_Video = null
             //变换卡片宽高
             transformCardSize_toSquare()
             //创建图片视图
@@ -574,10 +583,13 @@ class MainActivity: AppCompatActivity() {
 
         //置入图片
         state_BottomBarArtwork_ImageUri = uriNumOnly
-
         val artworkUri = getArtworkUri(MediaInfo_MediaType)
-
         PlayingCard_Artwork_Image?.setImageURI(artworkUri)
+
+        PlayingCard_Artwork_Image?.setOnClickListener {
+            val artworkUri = getArtworkUri(MediaInfo_MediaType)
+            PlayingCard_Artwork_Image?.setImageURI(artworkUri)
+        }
 
     }
     private fun updateBottomBarArtwork_Video(){
@@ -597,16 +609,25 @@ class MainActivity: AppCompatActivity() {
             val ratio_W_by_H = PlayerSingleton.getMediaWHratio()
             //计算目标宽度
             var targetWidth = (cardHeight * ratio_W_by_H).toInt()
-
             //数值过滤：卡片宽度不得小于高度,不得大于两倍高度
             if (targetWidth < cardHeight) targetWidth = cardHeight
             if (targetWidth > cardHeight * 2) targetWidth = (cardHeight * 2)
 
+
             //卡片已是目标宽度时跳过
             if (cardWidth == targetWidth) return
 
-            //变换卡片宽度(以后添加动画)
-            PlayingCard_Artwork.layoutParams.width = targetWidth
+            //变换卡片宽度
+            val animator = ValueAnimator.ofInt( cardWidth, targetWidth)
+            animator.duration = 500
+            animator.interpolator = DecelerateInterpolator()
+            animator.addUpdateListener { animation ->
+                val animatedValue = animation.animatedValue as Int
+                val layoutParams = PlayingCard_Artwork.layoutParams
+                layoutParams.width = animatedValue
+                PlayingCard_Artwork.layoutParams = layoutParams
+            }
+            animator.start()
 
         }
 
@@ -615,7 +636,8 @@ class MainActivity: AppCompatActivity() {
         if (state_BottomBarArtwork_type != 2){
             //清除所有子视图
             PlayingCard_Artwork.removeAllViews()
-
+            PlayingCard_Artwork_Image = null
+            state_BottomBarArtwork_ImageUri = ""
             //创建视频视图
             PlayingCard_Artwork_Video = PlayerView(this).apply {
 
@@ -641,7 +663,7 @@ class MainActivity: AppCompatActivity() {
 
         //(测试用)点击重新绑定视频视图
         PlayingCard_Artwork_Video?.setOnClickListener {
-            BindVideoPlayView()
+            updateBottomBarArtwork_Video()
         }
 
     }
@@ -656,7 +678,11 @@ class MainActivity: AppCompatActivity() {
 
         PlayingCard.visibility = View.VISIBLE
         PlayingCard.translationY = 300f
-        PlayingCard.animate().translationY(0f).setDuration(500).start()
+        PlayingCard.animate()
+            .translationY(0f)
+            .setInterpolator(DecelerateInterpolator())
+            .setDuration(500)
+            .start()
     }
     private fun motionBottomBar_Retract(){
         if (!state_BottomBar_all_inited) initBottomBar_Elements()
@@ -665,10 +691,9 @@ class MainActivity: AppCompatActivity() {
 
 
         PlayingCard.animate().translationY(300f)
-            .withEndAction{
-            PlayingCard.visibility = View.GONE
-        }
-            .setDuration(500).start()
+            .withEndAction{ PlayingCard.visibility = View.GONE }
+            .setInterpolator(DecelerateInterpolator())
+            .setDuration(800).start()
     }
     //BottomBar初始化
     //<editor-fold desc="//BottomBar元素实例">
