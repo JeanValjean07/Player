@@ -243,8 +243,8 @@ object SettingsRequestCenter {
         if (PREFS_EnableTapJump == -1) {
             PREFS_EnableTapJump = PREFS_PlayVideoPage.getInt("PREFS_EnableTapJump", -1)
             if (PREFS_EnableTapJump == -1) {
-                PREFS_EnableTapJump = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_EnableTapJump", 0) }
+                PREFS_EnableTapJump = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_EnableTapJump", 1) }
             }
         }
 

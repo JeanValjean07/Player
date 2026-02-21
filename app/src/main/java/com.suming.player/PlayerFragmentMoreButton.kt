@@ -886,7 +886,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private var lockPage = false
     private fun customDismiss(){
         if (!lockPage) {
-            Dismiss()
+            Dismiss(false)
         }
     }
     private fun Dismiss(flag_need_vibrate: Boolean = true){
