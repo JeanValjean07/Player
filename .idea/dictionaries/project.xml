@@ -19,6 +19,7 @@
       <w>fmpeg</w>
       <w>getprop</w>
       <w>hmmss</w>
+      <w>hratio</w>
       <w>infoto</w>
       <w>inited</w>
       <w>iqoo</w>
@@ -55,6 +56,7 @@
       <w>tochild</w>
       <w>valjean</w>
       <w>vivo</w>
+      <w>wratio</w>
       <w>xjvm</w>
     </words>
   </dictionary>

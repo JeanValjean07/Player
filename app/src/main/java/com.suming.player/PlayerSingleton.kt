@@ -23,6 +23,7 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.Log
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.NotificationCompat
@@ -34,6 +35,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -224,6 +226,8 @@ object PlayerSingleton {
         val NEW_MediaInfo_Duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: -1L
         val NEW_MediaInfo_AbsolutePath = getFilePath(context, uri).toString()
         val NEW_MediaInfo_FileName = (File(NEW_MediaInfo_AbsolutePath)).name ?: ""
+        val NEW_MediaInfo_VideoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toInt() ?: 0
+        val NEW_MediaInfo_VideoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toInt() ?: 0
         //处理值
         if (NEW_MediaInfo_MediaType.contains("video")){
             NEW_MediaInfo_MediaType = "video"
@@ -243,6 +247,8 @@ object PlayerSingleton {
             NEW_MediaInfo_AbsolutePath,
             NEW_MediaInfo_MediaUri,
             NEW_MediaInfo_MediaUriString,
+            NEW_MediaInfo_VideoWidth,
+            NEW_MediaInfo_VideoHeight,
         )
 
         //
@@ -275,7 +281,9 @@ object PlayerSingleton {
         NEW_MediaInfo_Duration: Long,
         NEW_MediaInfo_AbsolutePath: String,
         NEW_MediaInfo_MediaUri: Uri,
-        NEW_MediaInfo_MediaUriString: String,){
+        NEW_MediaInfo_MediaUriString: String,
+        NEW_MediaInfo_VideoWidth: Int,
+        NEW_MediaInfo_VideoHeight: Int,){
         MediaInfo_MediaType = NEW_MediaInfo_MediaType
         MediaInfo_MediaTitle = NEW_MediaInfo_MediaTitle
         MediaInfo_MediaArtist = NEW_MediaInfo_MediaArtist
@@ -284,6 +292,8 @@ object PlayerSingleton {
         MediaInfo_AbsolutePath = NEW_MediaInfo_AbsolutePath
         MediaInfo_MediaUri = NEW_MediaInfo_MediaUri
         MediaInfo_MediaUriString = NEW_MediaInfo_MediaUriString
+        MediaInfo_VideoWidth = NEW_MediaInfo_VideoWidth
+        MediaInfo_VideoHeight = NEW_MediaInfo_VideoHeight
     }
     //获取媒体信息丨公共函数
     fun getMediaInfoUri(): Uri {
@@ -303,6 +313,18 @@ object PlayerSingleton {
     }
     fun getMediaCurrentPosition(): Long {
         return _player?.currentPosition ?: -1
+    }
+    private var MediaInfo_VideoWidth = 0
+    private var MediaInfo_VideoHeight = 0
+    fun getMediaWHratio(): Float {
+        //获取视频宽高比
+        val ratio_W_by_H = MediaInfo_VideoWidth.toFloat() / MediaInfo_VideoHeight.toFloat()
+        Log.d("SuMing","当前宽: $MediaInfo_VideoWidth")
+        Log.d("SuMing","当前高: $MediaInfo_VideoHeight")
+        Log.d("SuMing","当前宽高比: $ratio_W_by_H")
+
+
+        return ratio_W_by_H
     }
     fun clearMediaInfo(context: Context) {
         MediaInfo_MediaType = ""

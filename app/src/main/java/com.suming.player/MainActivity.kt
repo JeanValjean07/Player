@@ -15,6 +15,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PersistableBundle
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
@@ -513,10 +514,45 @@ class MainActivity: AppCompatActivity() {
 
     }
     private fun updateBottomBarArtwork_Image(uriNumOnly: String, MediaInfo_MediaType: String){
+        //变换卡片大小
+        fun transformCardSize_toSquare(){
+            //保持卡片高度不变
+            val cardHeight = PlayingCard_Artwork.height
+            val cardWidth = PlayingCard_Artwork.width
+            //卡片已是目标宽度
+            if (cardWidth == cardHeight) return
+
+            //变换卡片宽度(以后添加动画)
+            PlayingCard_Artwork.layoutParams.width = cardHeight
+
+        }
+        //获取插图链接(注意：媒体类型字段参与路径组成)
+        fun getArtworkUri(MediaType: String): Uri{
+            val cover_path = File(filesDir, "miniature/${MediaType}_cover")
+            val cover_img = File(cover_path, "${uriNumOnly}.webp")
+            val cover_img_uri = if (cover_img.exists()) {
+                try {
+                    FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img)
+                }
+                catch (_: Exception) {
+                    if (cover_img.canRead()) {
+                        cover_img.toUri()
+                    } else {
+                        null
+                    }
+                }
+            }else{ null }
+
+            return cover_img_uri ?: Uri.EMPTY
+        }
+
+
         //当前不是图片类型时清除所有子视图
         if (state_BottomBarArtwork_type != 1){
             //清除所有子视图
             PlayingCard_Artwork.removeAllViews()
+            //变换卡片宽高
+            transformCardSize_toSquare()
             //创建图片视图
             PlayingCard_Artwork_Image = ImageView(this).apply {
 
@@ -538,28 +574,48 @@ class MainActivity: AppCompatActivity() {
 
         //置入图片
         state_BottomBarArtwork_ImageUri = uriNumOnly
-        val cover_path = File(filesDir, "miniature/${MediaInfo_MediaType}_cover")
-        val cover_img = File(cover_path, "${uriNumOnly}.webp")
-        val cover_img_uri = if (cover_img.exists()) {
-            try {
-                FileProvider.getUriForFile(applicationContext, "${applicationContext.packageName}.provider", cover_img)
-            }
-            catch (_: Exception) {
-                if (cover_img.canRead()) {
-                    cover_img.toUri()
-                } else {
-                    null
-                }
-            }
-        }else{ null }
-        PlayingCard_Artwork_Image?.setImageURI(cover_img_uri)
+
+        val artworkUri = getArtworkUri(MediaInfo_MediaType)
+
+        PlayingCard_Artwork_Image?.setImageURI(artworkUri)
 
     }
     private fun updateBottomBarArtwork_Video(){
+        //绑定视频视图
+        fun BindVideoPlayView(){
+            if (PlayingCard_Artwork_Video == null) return
+
+            PlayingCard_Artwork_Video?.player = null
+            PlayingCard_Artwork_Video?.player = PlayerSingleton.getPlayer(this@MainActivity)
+        }
+        //变换卡片宽度
+        fun transformCardSize_adaptVideo(){
+            //保持卡片高度不变
+            val cardHeight = PlayingCard_Artwork.height
+            val cardWidth = PlayingCard_Artwork.width
+            //获取视频宽高比,计算目标高度px
+            val ratio_W_by_H = PlayerSingleton.getMediaWHratio()
+            //计算目标宽度
+            var targetWidth = (cardHeight * ratio_W_by_H).toInt()
+
+            //数值过滤：卡片宽度不得小于高度,不得大于两倍高度
+            if (targetWidth < cardHeight) targetWidth = cardHeight
+            if (targetWidth > cardHeight * 2) targetWidth = (cardHeight * 2)
+
+            //卡片已是目标宽度时跳过
+            if (cardWidth == targetWidth) return
+
+            //变换卡片宽度(以后添加动画)
+            PlayingCard_Artwork.layoutParams.width = targetWidth
+
+        }
+
+
         //当前不是图片类型时清除所有子视图
         if (state_BottomBarArtwork_type != 2){
             //清除所有子视图
             PlayingCard_Artwork.removeAllViews()
+
             //创建视频视图
             PlayingCard_Artwork_Video = PlayerView(this).apply {
 
@@ -577,13 +633,10 @@ class MainActivity: AppCompatActivity() {
             state_BottomBarArtwork_type = 2
         }
 
-        //绑定视频视图
-        fun BindVideoPlayView(){
-            if (PlayingCard_Artwork_Video == null) return
+        //变换卡片宽度
+        transformCardSize_adaptVideo()
 
-            PlayingCard_Artwork_Video?.player = null
-            PlayingCard_Artwork_Video?.player = PlayerSingleton.getPlayer(this@MainActivity)
-        }
+        //绑定播放视图
         BindVideoPlayView()
 
         //(测试用)点击重新绑定视频视图
