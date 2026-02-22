@@ -523,7 +523,7 @@ class MainActivity: AppCompatActivity() {
             //变换卡片宽度
             val animator = ValueAnimator.ofInt(cardWidth, cardHeight)
             animator.duration = 500
-            animator.interpolator = DecelerateInterpolator()
+            animator.interpolator = DecelerateInterpolator(2f)
             animator.addUpdateListener { animation ->
                 val animatedValue = animation.animatedValue as Int
                 val layoutParams = PlayingCard_Artwork.layoutParams
@@ -620,7 +620,7 @@ class MainActivity: AppCompatActivity() {
             //变换卡片宽度
             val animator = ValueAnimator.ofInt( cardWidth, targetWidth)
             animator.duration = 500
-            animator.interpolator = DecelerateInterpolator()
+            animator.interpolator = DecelerateInterpolator(2f)
             animator.addUpdateListener { animation ->
                 val animatedValue = animation.animatedValue as Int
                 val layoutParams = PlayingCard_Artwork.layoutParams
@@ -680,7 +680,7 @@ class MainActivity: AppCompatActivity() {
         PlayingCard.translationY = 300f
         PlayingCard.animate()
             .translationY(0f)
-            .setInterpolator(DecelerateInterpolator())
+            .setInterpolator(DecelerateInterpolator(2f))
             .setDuration(500)
             .start()
     }
@@ -692,7 +692,7 @@ class MainActivity: AppCompatActivity() {
 
         PlayingCard.animate().translationY(300f)
             .withEndAction{ PlayingCard.visibility = View.GONE }
-            .setInterpolator(DecelerateInterpolator())
+            .setInterpolator(DecelerateInterpolator(2f))
             .setDuration(800).start()
     }
     //BottomBar初始化

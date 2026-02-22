@@ -50,6 +50,7 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AnticipateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -2129,8 +2130,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             playerView.animate()
                 .translationY(0f)
-                .setInterpolator(DecelerateInterpolator())
-                .setDuration(300)
+                .setInterpolator(DecelerateInterpolator(3f))
+                .setDuration(500)
                 .start()
         }else{
             playerView.translationY = 0f
@@ -2140,8 +2141,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (vm.PREFS_EnablePlayAreaMoveAnim){
             playerView.animate()
                 .translationY(-(ValueManager.get_Value_PlayAreaMoveDistance(this)))
-                .setInterpolator(DecelerateInterpolator())
-                .setDuration(300)
+                .setInterpolator(DecelerateInterpolator(3f))
+                .setDuration(500)
                 .start()
         }else{
             playerView.translationY = -ValueManager.get_Value_PlayAreaMoveDistance(this)
