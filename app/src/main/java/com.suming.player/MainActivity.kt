@@ -116,7 +116,6 @@ class MainActivity: AppCompatActivity() {
 
         PlayerSingleton.setContext(application)
 
-
         //内容避让状态栏并预读取状态栏高度写入设置
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -350,7 +349,9 @@ class MainActivity: AppCompatActivity() {
         if (state_onFirstStart){
             state_onFirstStart = false
 
-            continueLastItem()
+            Handler(Looper.getMainLooper()).postDelayed({
+                continueLastItem()
+            }, 1000)
 
         }else{
 
@@ -418,21 +419,26 @@ class MainActivity: AppCompatActivity() {
     }  //!主链路入口
     //首次启动时继续上次播放
     private fun continueLastItem(){
-        //检查是否已经有媒体正在播放
-        if (isAnyMediaOngoing().first){
-            //有正在播放的媒体,直接刷新BottomBar
-            updateBottomBar()
+        lifecycleScope.launch {
+            //检查是否已经有媒体正在播放
+            if (isAnyMediaOngoing().first){
+                //有正在播放的媒体,直接刷新BottomBar
+                withContext(Dispatchers.Main){
+                    updateBottomBar()
+                }
 
-            return
+                return@launch
+            }
+            //获取上次播放记录
+            val (MediaInfo_MediaUriString, _, _) = MediaRecordManager(this@MainActivity).get_MediaInfo()
+            //检查上次播放记录是否有效
+            if (MediaInfo_MediaUriString.isEmpty()) return@launch
+            if (!isUriStringValid(MediaInfo_MediaUriString)) return@launch
+            //有上次播放记录,尝试播放
+            withContext(Dispatchers.Main){
+                setNewMediaItem(MediaInfo_MediaUriString.toUri(), false)
+            }
         }
-        //获取上次播放记录
-        val (MediaInfo_MediaUriString, _, _) = MediaRecordManager(this).get_MediaInfo()
-        //检查上次播放记录是否有效
-        if (MediaInfo_MediaUriString.isEmpty()) return
-        if (!isUriStringValid(MediaInfo_MediaUriString)) return
-        //有上次播放记录,尝试播放
-        setNewMediaItem(MediaInfo_MediaUriString.toUri(), false)
-
     }
 
 
@@ -603,32 +609,44 @@ class MainActivity: AppCompatActivity() {
         //变换卡片宽度
         fun transformCardSize_adaptVideo(){
             //保持卡片高度不变
-            val cardHeight = PlayingCard_Artwork.height
-            val cardWidth = PlayingCard_Artwork.width
-            //获取视频宽高比,计算目标高度px
-            val ratio_W_by_H = PlayerSingleton.getMediaWHratio()
-            //计算目标宽度
-            var targetWidth = (cardHeight * ratio_W_by_H).toInt()
-            //数值过滤：卡片宽度不得小于高度,不得大于两倍高度
-            if (targetWidth < cardHeight) targetWidth = cardHeight
-            if (targetWidth > cardHeight * 2) targetWidth = (cardHeight * 2)
+            lifecycleScope.launch {
+                //获取当前插画区域宽高
+                var cardHeight = PlayingCard_Artwork.height
+                var cardWidth = PlayingCard_Artwork.width
+                //确保获取到正确的宽高(待添加退避措施)
+                do {
+                    delay(10)
+                    cardHeight = PlayingCard_Artwork.height
+                    cardWidth = PlayingCard_Artwork.width
+                } while (cardWidth == 0)
 
 
-            //卡片已是目标宽度时跳过
-            if (cardWidth == targetWidth) return
+                //获取视频宽高比,计算目标高度px
+                val ratio_W_by_H = PlayerSingleton.getMediaWHratio()
+                //计算目标宽度
+                var targetWidth = (cardHeight * ratio_W_by_H).toInt()
+                //数值过滤：卡片宽度不得小于高度,不得大于两倍高度
+                if (targetWidth < cardHeight) targetWidth = cardHeight
+                if (targetWidth > cardHeight * 2) targetWidth = (cardHeight * 2)
 
-            //变换卡片宽度
-            val animator = ValueAnimator.ofInt( cardWidth, targetWidth)
-            animator.duration = 500
-            animator.interpolator = DecelerateInterpolator(2f)
-            animator.addUpdateListener { animation ->
-                val animatedValue = animation.animatedValue as Int
-                val layoutParams = PlayingCard_Artwork.layoutParams
-                layoutParams.width = animatedValue
-                PlayingCard_Artwork.layoutParams = layoutParams
+                //卡片已是目标宽度时跳过
+                if (cardWidth == targetWidth) return@launch
+
+                withContext(Dispatchers.Main){
+                    //变换卡片宽度
+                    val animator = ValueAnimator.ofInt( cardWidth, targetWidth)
+                    animator.duration = 500
+                    animator.interpolator = DecelerateInterpolator(2f)
+                    animator.addUpdateListener { animation ->
+                        val animatedValue = animation.animatedValue as Int
+                        val layoutParams = PlayingCard_Artwork.layoutParams
+                        layoutParams.width = animatedValue
+                        PlayingCard_Artwork.layoutParams = layoutParams
+                    }
+                    animator.start()
+
+                }
             }
-            animator.start()
-
         }
 
 
@@ -712,10 +730,10 @@ class MainActivity: AppCompatActivity() {
         if (state_BottomBar_all_inited) return
         //元素初始化
         PlayingCard = findViewById(R.id.PlayingCard)
-        PlayingCard_InfoContainer = findViewById(R.id.PlayingCard_InfoContainer) //实际可打开播放页的点击区域
+        PlayingCard_Artwork = findViewById(R.id.PlayingCard_Artwork)
+        PlayingCard_InfoContainer = findViewById(R.id.PlayingCard_InfoContainer)
         PlayingCard_TextMediaName = findViewById(R.id.PlayingCard_MediaName)
         PlayingCard_TextMediaArtist = findViewById(R.id.PlayingCard_MediaArtist)
-        PlayingCard_Artwork = findViewById(R.id.PlayingCard_Artwork)
         PlayingCard_ButtonPlay = findViewById(R.id.PlayingCard_ButtonPlay)
         PlayingCard_ButtonList = findViewById(R.id.PlayingCard_ButtonList)
         //设置点击事件

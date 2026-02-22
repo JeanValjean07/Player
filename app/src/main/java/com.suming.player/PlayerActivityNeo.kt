@@ -2131,7 +2131,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             playerView.animate()
                 .translationY(0f)
                 .setInterpolator(DecelerateInterpolator(3f))
-                .setDuration(500)
+                .setDuration(700)
                 .start()
         }else{
             playerView.translationY = 0f
@@ -2142,7 +2142,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             playerView.animate()
                 .translationY(-(ValueManager.get_Value_PlayAreaMoveDistance(this)))
                 .setInterpolator(DecelerateInterpolator(3f))
-                .setDuration(500)
+                .setDuration(700)
                 .start()
         }else{
             playerView.translationY = -ValueManager.get_Value_PlayAreaMoveDistance(this)
