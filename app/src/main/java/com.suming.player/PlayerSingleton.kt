@@ -202,6 +202,7 @@ object PlayerSingleton {
 
 
     //媒体信息
+    private var MediaInfo_MediaStoreID = ""
     private var MediaInfo_MediaType = ""
     private var MediaInfo_MediaTitle = ""
     private var MediaInfo_MediaArtist = ""
@@ -237,7 +238,30 @@ object PlayerSingleton {
         if (NEW_MediaInfo_MediaTitle == ""){ NEW_MediaInfo_MediaTitle = "未知媒体标题" }
         if (NEW_MediaInfo_MediaArtist == "" || NEW_MediaInfo_MediaArtist == "<unknown>"){ NEW_MediaInfo_MediaArtist = "未知艺术家" }
 
+        //测试原始链接
+        MediaUriCombiner.getMediaIDByMediaUri(NEW_MediaInfo_MediaUri)
+
         //刷新本地媒体信息变量
+        fun updateMediaInfoValues(NEW_MediaInfo_MediaType: String,NEW_MediaInfo_MediaTitle: String,
+                                      NEW_MediaInfo_MediaArtist: String,
+                                      NEW_MediaInfo_FileName: String,
+                                      NEW_MediaInfo_Duration: Long,
+                                      NEW_MediaInfo_AbsolutePath: String,
+                                      NEW_MediaInfo_MediaUri: Uri,
+                                      NEW_MediaInfo_MediaUriString: String,
+                                      NEW_MediaInfo_VideoWidth: Int,
+                                      NEW_MediaInfo_VideoHeight: Int){
+            MediaInfo_MediaType = NEW_MediaInfo_MediaType
+            MediaInfo_MediaTitle = NEW_MediaInfo_MediaTitle
+            MediaInfo_MediaArtist = NEW_MediaInfo_MediaArtist
+            MediaInfo_FileName = NEW_MediaInfo_FileName
+            MediaInfo_Duration = NEW_MediaInfo_Duration
+            MediaInfo_AbsolutePath = NEW_MediaInfo_AbsolutePath
+            MediaInfo_MediaUri = NEW_MediaInfo_MediaUri
+            MediaInfo_MediaUriString = NEW_MediaInfo_MediaUriString
+            MediaInfo_VideoWidth = NEW_MediaInfo_VideoWidth
+            MediaInfo_VideoHeight = NEW_MediaInfo_VideoHeight
+        }
         updateMediaInfoValues(
             NEW_MediaInfo_MediaType,
             NEW_MediaInfo_MediaTitle,
@@ -251,9 +275,8 @@ object PlayerSingleton {
             NEW_MediaInfo_VideoHeight,
         )
 
-        //
+        //释放资源
         retriever.release()
-
         return true
     }
     private fun getFilePath(context: Context, uri: Uri): String? {
@@ -275,26 +298,6 @@ object PlayerSingleton {
 
         return absolutePath?.takeIf { File(it).exists() }
     } //根据uri合成绝对路径
-    private fun updateMediaInfoValues(NEW_MediaInfo_MediaType: String,NEW_MediaInfo_MediaTitle: String,
-        NEW_MediaInfo_MediaArtist: String,
-        NEW_MediaInfo_FileName: String,
-        NEW_MediaInfo_Duration: Long,
-        NEW_MediaInfo_AbsolutePath: String,
-        NEW_MediaInfo_MediaUri: Uri,
-        NEW_MediaInfo_MediaUriString: String,
-        NEW_MediaInfo_VideoWidth: Int,
-        NEW_MediaInfo_VideoHeight: Int,){
-        MediaInfo_MediaType = NEW_MediaInfo_MediaType
-        MediaInfo_MediaTitle = NEW_MediaInfo_MediaTitle
-        MediaInfo_MediaArtist = NEW_MediaInfo_MediaArtist
-        MediaInfo_FileName = NEW_MediaInfo_FileName
-        MediaInfo_Duration = NEW_MediaInfo_Duration
-        MediaInfo_AbsolutePath = NEW_MediaInfo_AbsolutePath
-        MediaInfo_MediaUri = NEW_MediaInfo_MediaUri
-        MediaInfo_MediaUriString = NEW_MediaInfo_MediaUriString
-        MediaInfo_VideoWidth = NEW_MediaInfo_VideoWidth
-        MediaInfo_VideoHeight = NEW_MediaInfo_VideoHeight
-    }
     //获取媒体信息丨公共函数
     fun getMediaInfoUri(): Uri {
         return MediaInfo_MediaUri
@@ -311,9 +314,16 @@ object PlayerSingleton {
     fun getMediaInfoType(): String {
         return MediaInfo_MediaType
     }
+    //获取当前播放进度
     fun getMediaCurrentPosition(): Long {
         return _player?.currentPosition ?: -1
     }
+    //媒体唯一身份识别：类型+ID
+    fun getCurrentMediaIdentity(): Pair<String, String> {
+        return Pair(MediaInfo_MediaType, MediaInfo_MediaStoreID)
+    }
+    //视频宽高
+    //<editor-fold desc="//视频宽高值&获取接口">
     private var MediaInfo_VideoWidth = 0
     private var MediaInfo_VideoHeight = 0
     fun getMediaWHratio(): Float {
@@ -322,6 +332,8 @@ object PlayerSingleton {
 
         return ratio_W_by_H
     }
+    //</editor-fold>
+    //???
     fun clearMediaInfo(context: Context) {
         MediaInfo_MediaType = ""
         MediaInfo_MediaTitle = ""
@@ -383,7 +395,6 @@ object PlayerSingleton {
     }
     //设置媒体项丨公共函数丨需要带一层过滤
     fun setMediaItem(itemUri: Uri, playWhenReady: Boolean, context: Context): Boolean {
-
         //设置新媒体项
         val success = setNewMediaItem(itemUri, playWhenReady, context)
 

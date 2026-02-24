@@ -56,6 +56,7 @@ import data.MediaDataReader.MediaDataBaseReaderForMusic
 import data.MediaDataReader.MediaDataBaseReaderForVideo
 import data.MediaDataReader.MediaStoreReaderForMusic
 import data.MediaDataReader.MediaStoreReaderForVideo
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -91,14 +92,16 @@ class MainActivity: AppCompatActivity() {
     private var PREFS_QueryNewVideoOnStart = false
     private var PREFS_AcquiesceTab = "video"
     //状态信息
-    //<editor-fold desc="状态信息">
     private var state_FromFirstMediaStoreRead = false
     private var state_currentPage = ""
     private var state_lastPage = ""
     private var state_onFirstStart = false
     private var state_PlayingCard_showing = false
     private var state_PlayingCard_gone = true
-
+    //协程
+    private var coroutine_registerInterface = CoroutineScope(Dispatchers.Main)
+    private var coroutine_setupGestureListener = CoroutineScope(Dispatchers.Main)
+    private var coroutine_setupFragmentLinker = CoroutineScope(Dispatchers.Main)
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -178,59 +181,10 @@ class MainActivity: AppCompatActivity() {
             state_lastPage = "video"
         }
 
-        //按钮：指南
-        val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
-        ButtonGuidance.setOnClickListener {
-            ToolVibrate().vibrate(this@MainActivity)
-            //
-            val intent = Intent(this, GuidanceActivity::class.java)
-            startActivity(intent)
-        }
-        //按钮：设置
-        val ButtonSettings= findViewById<Button>(R.id.buttonSetting)
-        ButtonSettings.setOnClickListener {
-            ToolVibrate().vibrate(this@MainActivity)
-            val intent = Intent(this, SettingsActivity::class.java)
-            startActivity(intent)
-        }
-        //提示卡点击时关闭
-        val NoticeCard = findViewById<CardView>(R.id.noticeCard)
-        NoticeCard.setOnClickListener {
-            ToolVibrate().vibrate(this@MainActivity)
-            NoticeCard.visibility = View.GONE
-        }
-        //按钮：安卓媒体库设置
-        val ButtonMediaStoreSetting = findViewById<ImageButton>(R.id.ButtonMediaStoreSetting)
-        ButtonMediaStoreSetting.setOnClickListener {
-            ToolVibrate().vibrate(this@MainActivity)
-            if (state_currentPage == "video"){
-                MainFragVideoStoreSetting.newInstance().show(supportFragmentManager, "MainFragVideoStoreSetting")
-            }
-            else if (state_currentPage == "music"){
-                MainFragMusicStoreSetting.newInstance().show(supportFragmentManager, "MainFragMusicStoreSetting")
-            }
-        }
-        //页签按钮
-        ButtonCardMusic.setOnClickListener {
-            //处理交互
-            ToolVibrate().vibrate(this@MainActivity)
-            //显示音乐列表
-            showMusicList(false)
-        }
-        ButtonCardVideo.setOnClickListener {
-            //处理交互
-            ToolVibrate().vibrate(this@MainActivity)
-            //显示视频列表
-            showVideoList(false)
 
-        }
-        ButtonCardGallery.setOnClickListener {
-            //处理交互
-            ToolVibrate().vibrate(this@MainActivity)
-            //需要重做为单独的页面
-            showCustomToast("陈列架功能暂未开放",3)
-        }
-        //播放卡片
+
+
+
 
         //
         if (savedInstanceState == null){
@@ -270,51 +224,114 @@ class MainActivity: AppCompatActivity() {
             //NestedScrollView_VideoList.post { NestedScrollView_VideoList.scrollY = savedInstanceState.getInt("state_NestedScrollView_Y", 0) }
         }
 
-        //视频媒体库设置返回值
-        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_VIDEO_MediaStore", this) { _, bundle ->
-            val ReceiveKey = bundle.getString("KEY")
-            when(ReceiveKey){
-                "RenovateAdapter" -> {
-                    main_video_list_adapter.refresh()
+        //注册界面控件
+        coroutine_registerInterface.launch {
+            //按钮：指南
+            val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
+            ButtonGuidance.setOnClickListener {
+                ToolVibrate().vibrate(this@MainActivity)
+                //
+                val intent = Intent(this@MainActivity, GuidanceActivity::class.java)
+                startActivity(intent)
+            }
+            //按钮：设置
+            val ButtonSettings= findViewById<Button>(R.id.buttonSetting)
+            ButtonSettings.setOnClickListener {
+                ToolVibrate().vibrate(this@MainActivity)
+                val intent = Intent(this@MainActivity, SettingsActivity::class.java)
+                startActivity(intent)
+            }
+            //提示卡点击时关闭
+            val NoticeCard = findViewById<CardView>(R.id.noticeCard)
+            NoticeCard.setOnClickListener {
+                ToolVibrate().vibrate(this@MainActivity)
+                NoticeCard.visibility = View.GONE
+            }
+            //按钮：安卓媒体库设置
+            val ButtonMediaStoreSetting = findViewById<ImageButton>(R.id.ButtonMediaStoreSetting)
+            ButtonMediaStoreSetting.setOnClickListener {
+                ToolVibrate().vibrate(this@MainActivity)
+                if (state_currentPage == "video"){
+                    MainFragVideoStoreSetting.newInstance().show(supportFragmentManager, "MainFragVideoStoreSetting")
                 }
-                "QueryFromMediaStoreVideo" -> {
-                    startLoadFromMediaStore("video")
+                else if (state_currentPage == "music"){
+                    MainFragMusicStoreSetting.newInstance().show(supportFragmentManager, "MainFragMusicStoreSetting")
                 }
             }
-        }
-        //音乐媒体库设置返回值
-        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MUSIC_MediaStore", this) { _, bundle ->
-            val ReceiveKey = bundle.getString("KEY")
-            when(ReceiveKey){
-                "RenovateAdapter" -> {
-                    main_music_list_adapter.refresh()
-                }
-                "QueryFromMediaStoreMusic" -> {
-                    startLoadFromMediaStore("music")
-                }
+            //页签按钮
+            ButtonCardMusic.setOnClickListener {
+                //处理交互
+                ToolVibrate().vibrate(this@MainActivity)
+                //显示音乐列表
+                showMusicList(false)
             }
-        }
-        //播放列表返回值 FROM_FRAGMENT_PLAY_LIST
-        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_PLAY_LIST", this) { _, bundle ->
-            val ReceiveKey = bundle.getString("KEY")
-            when(ReceiveKey){
-                //切换逻辑由播放器单例接管
-                //退出逻辑
-                "Dismiss" -> {
+            ButtonCardVideo.setOnClickListener {
+                //处理交互
+                ToolVibrate().vibrate(this@MainActivity)
+                //显示视频列表
+                showVideoList(false)
 
+            }
+            ButtonCardGallery.setOnClickListener {
+                //处理交互
+                ToolVibrate().vibrate(this@MainActivity)
+                //需要重做为单独的页面
+                showCustomToast("陈列架功能暂未开放",3)
+            }
+        }
+
+        //注册Fragment通信
+        coroutine_setupFragmentLinker.launch {
+            //视频媒体库设置返回值
+            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_VIDEO_MediaStore", this@MainActivity) { _, bundle ->
+                val ReceiveKey = bundle.getString("KEY")
+                when(ReceiveKey){
+                    "RenovateAdapter" -> {
+                        main_video_list_adapter.refresh()
+                    }
+                    "QueryFromMediaStoreVideo" -> {
+                        startLoadFromMediaStore("video")
+                    }
                 }
-                //更新小卡片
-                "stopPlaying" -> {
-                    updateBottomBar()
+            }
+            //音乐媒体库设置返回值
+            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MUSIC_MediaStore", this@MainActivity) { _, bundle ->
+                val ReceiveKey = bundle.getString("KEY")
+                when(ReceiveKey){
+                    "RenovateAdapter" -> {
+                        main_music_list_adapter.refresh()
+                    }
+                    "QueryFromMediaStoreMusic" -> {
+                        startLoadFromMediaStore("music")
+                    }
+                }
+            }
+            //播放列表返回值 FROM_FRAGMENT_PLAY_LIST
+            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_PLAY_LIST", this@MainActivity) { _, bundle ->
+                val ReceiveKey = bundle.getString("KEY")
+                when(ReceiveKey){
+                    //切换逻辑由播放器单例接管
+                    //退出逻辑
+                    "Dismiss" -> {
+
+                    }
+                    //更新小卡片
+                    "stopPlaying" -> {
+                        updateBottomBar()
+                    }
                 }
             }
         }
-        //监听返回手势
-        onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                finish()
-            }
-        })
+
+        //手势监听线程
+        coroutine_setupGestureListener.launch {
+            //监听返回手势
+            onBackPressedDispatcher.addCallback(this@MainActivity, object: OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    moveTaskToBack(false)
+                }
+            })
+        }
     //onCreate END
     }
     //错误接收器:detailLauncher

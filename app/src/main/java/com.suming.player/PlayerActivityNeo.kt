@@ -3147,6 +3147,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         //初始化界面参数
         updateScreenParameters()
 
+        PlayerSingleton.setContext(application)
+
         //获取自动旋转状态
         rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
         //亮度
