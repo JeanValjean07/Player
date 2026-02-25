@@ -50,7 +50,6 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.AnticipateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -97,7 +96,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.suming.player.ListManager.FragmentPlayList
 import com.suming.player.ListManager.PlayerListManager
-import data.DataBaseMediaItem.MediaItemRepo
 import data.DataBaseMediaItem.MediaItemSetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -333,45 +331,38 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //启动主播放线程
         coroutine_main_startPlayVideo.launch {
-            //来自首次启动活动
+            //首次启动时,非首次启动时直接绑定
             if (savedInstanceState == null){
-
-                //获取intent媒体链接
+                //获取原始链接并转换为标准格式链接
                 val (_, intentUri) = ExtractIntentUri(intent)
-                //获取来源标记
-                val source = ExtractIntentSource(intent)
-                //检查是否正在播放
-                val (_, nowUri) = getCurrentPlayState()
+                val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUri, this@PlayerActivityNeo)
+                //检查是否正在播放,获取正在播放项的链接
+                val ongoingUriStandard = PlayerSingleton.getCurrentMediaStandardUriString().toUri()
+                //获取启动来源标志位
+                val startSourceSign = ExtractIntentSource(intent)
+
 
                 //决策系统
                 //返回：1=需要新建播放项 2=需要连接现有播放项 3=报错退出 4=弹框输入
-                val decideSign = DecideEngine(intentUri,source,nowUri)
+                val decideSign = DecideEngine(intentUriStandard,ongoingUriStandard, startSourceSign)
                 when(decideSign){
                     1 -> {
-                        //Log.d("SuMing","DecideEngine: 1")
-                        startPlayNewItem(intentUri)
+                        startPlayNewItem(intentUriStandard)
                     }
                     2 -> {
-                        //Log.d("SuMing","DecideEngine: 2")
-                        BindCurrentPlayingItem(nowUri)
+                        BindCurrentPlayingItem(ongoingUriStandard)
                     }
                     3 -> {
-                        //Log.d("SuMing","DecideEngine: 3")
                         finish()
                     }
                     4 -> {
-                        //Log.d("SuMing","DecideEngine: 4")
                         queryManualInputUri()
                     }
                 }
 
-            }
-            //来自重建活动
-            else{
+            }else{
                 //绑定正在播放的媒体
                 BindCurrentPlayingItem(vm.MediaInfo_MediaUri)
-                //隐藏顶部卡线
-                HideTopLine()
             }
 
         }
@@ -1197,77 +1188,18 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
-    //展开动画
-    private fun viewFold(view: LinearLayout) {
-        //设置初始高度为0
-        view.measure(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        val targetHeight = view.measuredHeight
 
-        // 如果目标高度为0，则无需动画
-        if (targetHeight <= 0) return
-        // 如果当前高度已经是目标高度，则无需动画
-        if (view.layoutParams.height == targetHeight) return
-
-        // 初始高度设为0 (为了动画能从0开始)
-        view.layoutParams.height = 0
-        view.visibility = View.VISIBLE
-
-
-        val animator = ValueAnimator.ofInt(0, targetHeight)
-
-        // 3. 设置动画更新监听器
-        animator.addUpdateListener { animation ->
-            val animatedValue = animation.animatedValue as Int
-            view.layoutParams.height = animatedValue
-            view.requestLayout()
-        }
-        animator.duration = 200
-
-        animator.start()
-    }
-    private fun viewExpand(view: LinearLayout) {
-        //设置初始高度为0
-        view.measure(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        val targetHeight = view.measuredHeight
-
-        // 如果目标高度为0，则无需动画
-        if (targetHeight <= 0) return
-        // 如果当前高度已经是目标高度，则无需动画
-        if (view.layoutParams.height == targetHeight) return
-
-        // 初始高度设为0 (为了动画能从0开始)
-        view.layoutParams.height = 0
-        view.visibility = View.VISIBLE
-
-
-        val animator = ValueAnimator.ofInt(0, targetHeight)
-
-        // 3. 设置动画更新监听器
-        animator.addUpdateListener { animation ->
-            val animatedValue = animation.animatedValue as Int
-            view.layoutParams.height = animatedValue
-            view.requestLayout()
-        }
-        animator.duration = 200
-
-        animator.start()
-    }
     //提取链接
     private fun ExtractIntentUri(intent: Intent): Pair<Boolean,Uri>{
+        //获取原始链接
         val intentUri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)?: Uri.EMPTY
+
 
         return if (intentUri == Uri.EMPTY){
             Pair(false,Uri.EMPTY)
         }else{
             Pair(true,intentUri)
         }
-
     }
     //提取来源标记  < 返回值： -1=无法验证 丨 1=系统面板 丨 2= pendingIntent 丨 3= 常规启动 >
     private fun ExtractIntentSource(intent: Intent): Int{
@@ -1279,54 +1211,63 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //获取当前正在播放状态
     private fun getCurrentPlayState(): Pair<Boolean,Uri>{
+
         val (isCurrentItemExist, currentItemUri) = PlayerSingleton.getPlayState()
+
+
         return if (isCurrentItemExist && currentItemUri != Uri.EMPTY){
             Pair(true,currentItemUri)
         }else{
             Pair(false,Uri.EMPTY)
         }
     }
-    //决策系统 <返回：1=需要新建播放项 2=需要连接现有播放项 3=报错退出 4=弹框输入 >
-    private fun DecideEngine(intentUri: Uri,source: Int,nowUri: Uri): Int{
+    //决策系统丨<返回值< 1 = 新建播放项目丨2 = 连接现有播放项目丨3 = 报错退出丨4 = 弹框输入 >>
+    private fun DecideEngine(intentUriStandard: Uri, ongoingUriStandard: Uri, source: Int,): Int{
         when(source){
             //无法验证启动来源标记
             -1 -> {
                 return -1
             }
-            //系统面板启动
+            //系统分享/用其他应用打开
             1 -> {
-                return if (intentUri == Uri.EMPTY){
+                return if (intentUriStandard == Uri.EMPTY){
+                    showCustomToast("链接为空,播放失败")
                     3
                 }else{
-                    1
-                }
-            }
-            //pendingIntent启动
-            2 -> {
-                return if (nowUri == Uri.EMPTY){
-                    3
-                }else{
-                    2
-                }
-            }
-            //常规启动
-            3 -> {
-                return if (intentUri == Uri.EMPTY){
-                    if (nowUri == Uri.EMPTY){
-                        3
-                    }else{
-                        2
-                    }
-                }else{
-                    if (intentUri == nowUri){
+                    if (intentUriStandard == ongoingUriStandard){
                         2
                     }else{
                         1
                     }
                 }
             }
+            //通知中心/播控中心
+            2 -> {
+                return if (ongoingUriStandard == Uri.EMPTY){
+                    showCustomToast("当前媒体已失效")
+                    3
+                }else{
+                    2
+                }
+            }
+            //应用内常规启动
+            3 -> {
+                return if (intentUriStandard == Uri.EMPTY){
+                    if (ongoingUriStandard == Uri.EMPTY){
+                        3
+                    }else{
+                        2
+                    }
+                }else{
+                    if (intentUriStandard == ongoingUriStandard){
+                        2
+                    }else{
+                        1
+                    }
+                }
+            }
+            //其他
             else -> {
-
                 return 3
             }
         }
@@ -1397,7 +1338,67 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
         return true
     }
+    //展开动画
+    private fun viewFold(view: LinearLayout) {
+        //设置初始高度为0
+        view.measure(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        val targetHeight = view.measuredHeight
 
+        // 如果目标高度为0，则无需动画
+        if (targetHeight <= 0) return
+        // 如果当前高度已经是目标高度，则无需动画
+        if (view.layoutParams.height == targetHeight) return
+
+        // 初始高度设为0 (为了动画能从0开始)
+        view.layoutParams.height = 0
+        view.visibility = View.VISIBLE
+
+
+        val animator = ValueAnimator.ofInt(0, targetHeight)
+
+        // 3. 设置动画更新监听器
+        animator.addUpdateListener { animation ->
+            val animatedValue = animation.animatedValue as Int
+            view.layoutParams.height = animatedValue
+            view.requestLayout()
+        }
+        animator.duration = 200
+
+        animator.start()
+    }
+    private fun viewExpand(view: LinearLayout) {
+        //设置初始高度为0
+        view.measure(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        val targetHeight = view.measuredHeight
+
+        // 如果目标高度为0，则无需动画
+        if (targetHeight <= 0) return
+        // 如果当前高度已经是目标高度，则无需动画
+        if (view.layoutParams.height == targetHeight) return
+
+        // 初始高度设为0 (为了动画能从0开始)
+        view.layoutParams.height = 0
+        view.visibility = View.VISIBLE
+
+
+        val animator = ValueAnimator.ofInt(0, targetHeight)
+
+        // 3. 设置动画更新监听器
+        animator.addUpdateListener { animation ->
+            val animatedValue = animation.animatedValue as Int
+            view.layoutParams.height = animatedValue
+            view.requestLayout()
+        }
+        animator.duration = 200
+
+        animator.start()
+    }
     //播放器监听器
     private val PlayerStateListener = object : Player.Listener {
         @SuppressLint("SwitchIntDef")
@@ -1469,10 +1470,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             //刷新本地媒体信息变量
             val successGetInfo = getMediaInfo(uri)
 
-            if (successGetInfo){
-
-
-            }
         }
     }
     //开启播放新媒体项

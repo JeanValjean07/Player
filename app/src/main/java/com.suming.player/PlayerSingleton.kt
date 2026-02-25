@@ -23,7 +23,6 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.util.Log
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.NotificationCompat
@@ -35,7 +34,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -62,7 +60,7 @@ import java.io.File
 
 @SuppressLint("StaticFieldLeak")
 @UnstableApi
-@Suppress("unused","")
+//@Suppress("unused")
 object PlayerSingleton {
     //播放器实例
     private var _player: ExoPlayer? = null
@@ -202,23 +200,68 @@ object PlayerSingleton {
 
 
     //媒体信息
-    private var MediaInfo_MediaStoreID = ""
+    //<editor-fold desc="//媒体信息变量合集">
+    private var MediaInfo_MediaUniqueID = ""  //媒体唯一ID()
     private var MediaInfo_MediaType = ""
     private var MediaInfo_MediaTitle = ""
     private var MediaInfo_MediaArtist = ""
     private var MediaInfo_FileName = ""
     private var MediaInfo_Duration = 0L
     private var MediaInfo_AbsolutePath = ""
-    private var MediaInfo_MediaUri = Uri.EMPTY!!
-    private var MediaInfo_MediaUriString = ""
+    private var MediaInfo_MediaUri = Uri.EMPTY!!  //原始获取媒体链接
+    private var MediaInfo_MediaUriString = ""          //原始获取媒体链接字符串
+    private var MediaInfo_MediaUriStandard = ""        //标准链接格式(content://media/external/(?video|audio)/media/114514)
+    //</editor-fold>
     //媒体信息解码器
+    //<editor-fold desc="//媒体信息解码工具函数&子线程">
     private lateinit var retriever: MediaMetadataRetriever
+    //子线程丨计算 UniqueID & 标准链接
+    private var coroutine_getMediaUniqueID = CoroutineScope(Dispatchers.IO)
+    private fun calculateUniqueID(mediaUri: Uri){
+        coroutine_getMediaUniqueID.launch {
+            //计算媒体唯一识别ID
+            val NEW_MediaInfo_MediaStoreID = MediaUriManager.getMediaIDByMediaUri(mediaUri,contextApplication)
+            //获取标准链接
+            val NEW_MediaInfo_MediaUriStandard = MediaUriManager.getStandardMediaUri(mediaUri,contextApplication)
+
+            //刷新变量到本地
+            MediaInfo_MediaUniqueID = NEW_MediaInfo_MediaStoreID
+            MediaInfo_MediaUriStandard = NEW_MediaInfo_MediaUriStandard.toString()
+
+            //计入播放记录
+            MediaRecordManager(contextApplication).save_MediaInfo_toRecordUniqueID_main(NEW_MediaInfo_MediaStoreID)
+        }
+    }
+    //工具函数丨根据uri获得绝对路径
+    private fun getFilePath(context: Context, uri: Uri): String? {
+        val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
+            Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
+        } else {
+            uri
+        }
+        val absolutePath: String? = when (cleanUri.scheme) {
+            ContentResolver.SCHEME_CONTENT -> {
+                val projection = arrayOf(MediaStore.Video.Media.DATA)
+                context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
+                    if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
+                }
+            }
+            ContentResolver.SCHEME_FILE    -> cleanUri.path
+            else                           -> cleanUri.path
+        }
+
+        return absolutePath?.takeIf { File(it).exists() }
+    }
+    //</editor-fold>
     private fun getMediaInfo(context: Context, uri: Uri): Boolean{
         retriever = MediaMetadataRetriever()
-        //测试是否能正常读取
-        try { retriever.setDataSource(context, uri) }
-        catch (_: Exception) { return false }
-        //获取新的媒体信息
+        //尝试解码
+        try {
+            retriever.setDataSource(context, uri)
+        }catch(_: Exception){
+            return false
+        }
+        //解码获得新媒体的信息
         val NEW_MediaInfo_MediaUri = uri
         val NEW_MediaInfo_MediaUriString = uri.toString()
         var NEW_MediaInfo_MediaType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: ""
@@ -237,9 +280,8 @@ object PlayerSingleton {
         }
         if (NEW_MediaInfo_MediaTitle == ""){ NEW_MediaInfo_MediaTitle = "未知媒体标题" }
         if (NEW_MediaInfo_MediaArtist == "" || NEW_MediaInfo_MediaArtist == "<unknown>"){ NEW_MediaInfo_MediaArtist = "未知艺术家" }
-
-        //测试原始链接
-        MediaUriCombiner.getMediaIDByMediaUri(NEW_MediaInfo_MediaUri)
+        //计算媒体ID
+        calculateUniqueID(NEW_MediaInfo_MediaUri)
 
         //刷新本地媒体信息变量
         fun updateMediaInfoValues(NEW_MediaInfo_MediaType: String,NEW_MediaInfo_MediaTitle: String,
@@ -279,26 +321,48 @@ object PlayerSingleton {
         retriever.release()
         return true
     }
-    private fun getFilePath(context: Context, uri: Uri): String? {
-        val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
-            Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
-        } else {
-            uri
-        }
-        val absolutePath: String? = when (cleanUri.scheme) {
-            ContentResolver.SCHEME_CONTENT -> {
-                val projection = arrayOf(MediaStore.Video.Media.DATA)
-                context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
-                    if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
-                }
-            }
-            ContentResolver.SCHEME_FILE    -> cleanUri.path
-            else                           -> cleanUri.path
-        }
+    //外部获取
+    //<editor-fold desc="//外部获取当前信息接口">
+    //视频宽高值&获取接口
+    private var MediaInfo_VideoWidth = 0
+    private var MediaInfo_VideoHeight = 0
+    fun getMediaWHratio(): Float {
+        //获取视频宽高比
+        val ratio_W_by_H = MediaInfo_VideoWidth.toFloat() / MediaInfo_VideoHeight.toFloat()
 
-        return absolutePath?.takeIf { File(it).exists() }
-    } //根据uri合成绝对路径
-    //获取媒体信息丨公共函数
+        return ratio_W_by_H
+    }
+    //获取当前播放进度
+    fun getMediaCurrentPosition(): Long {
+        return _player?.currentPosition ?: -1
+    }
+    //媒体唯一身份识别：类型+ID
+    fun getCurrentMediaIdentity(): Pair<String, String> {
+        return Pair(MediaInfo_MediaType, MediaInfo_MediaUniqueID)
+    }
+    fun isthisUriOngoing(uriNeedCheck: Uri): Boolean {
+        //如果传入标准链接,就直接对比标准链接
+        if (MediaUriManager.isMediaUriStandard(uriNeedCheck)){
+
+            return uriNeedCheck.toString() == MediaInfo_MediaUriStandard
+        }
+        //若不是标准链接,先转成标准链接,再对比
+        val standardUriNeedCheck = MediaUriManager.getStandardMediaUri(uriNeedCheck,contextApplication) ?: return false
+
+
+        return standardUriNeedCheck.toString() == MediaInfo_MediaUriStandard
+    } //直接返回判断结果
+    //获取当前标准链接
+    fun getCurrentMediaStandardUriString(): String {
+
+        return MediaInfo_MediaUriStandard
+    }
+
+
+    //</editor-fold>
+
+
+
     fun getMediaInfoUri(): Uri {
         return MediaInfo_MediaUri
     }
@@ -314,25 +378,9 @@ object PlayerSingleton {
     fun getMediaInfoType(): String {
         return MediaInfo_MediaType
     }
-    //获取当前播放进度
-    fun getMediaCurrentPosition(): Long {
-        return _player?.currentPosition ?: -1
-    }
-    //媒体唯一身份识别：类型+ID
-    fun getCurrentMediaIdentity(): Pair<String, String> {
-        return Pair(MediaInfo_MediaType, MediaInfo_MediaStoreID)
-    }
-    //视频宽高
-    //<editor-fold desc="//视频宽高值&获取接口">
-    private var MediaInfo_VideoWidth = 0
-    private var MediaInfo_VideoHeight = 0
-    fun getMediaWHratio(): Float {
-        //获取视频宽高比
-        val ratio_W_by_H = MediaInfo_VideoWidth.toFloat() / MediaInfo_VideoHeight.toFloat()
 
-        return ratio_W_by_H
-    }
-    //</editor-fold>
+
+
     //???
     fun clearMediaInfo(context: Context) {
         MediaInfo_MediaType = ""
@@ -349,6 +397,10 @@ object PlayerSingleton {
     //👀媒体项变更
     //确认设置新媒体项丨私有
     private fun setNewMediaItem(itemUri: Uri, playWhenReady: Boolean, context: Context): Boolean {
+        //先判断是否是正在播放的媒体
+        if (isthisUriOngoing(itemUri)) return false
+
+        //进入设置新媒体项的流程
         //保存上个媒体的信息
         val oldItemName = MediaInfo_FileName
         val oldItemDuration = MediaInfo_Duration
@@ -368,7 +420,6 @@ object PlayerSingleton {
         val success = getMediaInfo(context, itemUri)
         if (!success) return false
 
-
         //重置单个媒体状态
         clearItemState()
         //设置播放状态
@@ -380,14 +431,12 @@ object PlayerSingleton {
         //开始构建mediaItem
         val mediaItem = MediaItem.Builder()
             .setUri(MediaInfo_MediaUri)
-            .setMediaId(MediaInfo_MediaUriString)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
+            //.setMediaId(MediaInfo_MediaUriString)
+            .setMediaMetadata(MediaMetadata.Builder()
                     .setTitle(MediaInfo_FileName)
                     .setArtist(MediaInfo_MediaArtist)
                     .setArtworkUri(cover_img_uri)
-                    .build()
-            )
+                    .build())
             .build()
         _player?.setMediaItem(mediaItem)
 
@@ -409,12 +458,14 @@ object PlayerSingleton {
     }
     //完成媒体项变更丨后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?, context: Context){
-        if (mediaItem == null){ return }
+        if (mediaItem == null) return
 
         //启动服务
         startService(context)
         //记录到上次播放清单
-        coroutine_saveLastMediaRecord.launch { saveLastMediaRecord(context) }
+        coroutine_saveLastMediaRecord.launch {
+            saveLastMediaRecordMain(context)
+        }
         //读取单个媒体播放设置
         coroutine_saveOrFetchDataBase.launch {
             FetchDataBaseForItem(MediaInfo_FileName ,context)
@@ -424,37 +475,31 @@ object PlayerSingleton {
 
         //发布通告
         ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
-
         //请求音频焦点
         requestAudioFocus(context, force_request = false)
 
-
     }
     //启动服务和媒体会话
-    private var coroutine_startService = CoroutineScope(Dispatchers.IO)
     private fun startService(context: Context){
         //写入服务配置
         setServiceLinker()
         //链接媒体会话
         startMediaSession(context)
-
     }
-    private fun setServiceLinker(newPageType: Int = -1){
+    private fun setServiceLinker(){
         //写入媒体类型
         PlayerServiceLinker.setMediaInfo_MediaType(MediaInfo_MediaType)
-        //
+        //写入基本信息
         PlayerServiceLinker.setMediaBasicInfo(MediaInfo_MediaUriString, MediaInfo_FileName, MediaInfo_MediaArtist)
-
-
     }
     private fun startMediaSession(context: Context){
         connectToMediaSession(context)
     }
     //写入上次播放记录丨私有函数丨可作为一条单独线程
     private var coroutine_saveLastMediaRecord = CoroutineScope(Dispatchers.IO)
-    private fun saveLastMediaRecord(context: Context){
+    private fun saveLastMediaRecordMain(context: Context){
         //把记录保存到记录管理器
-        MediaRecordManager(context).save_MediaInfo_toRecord(MediaInfo_MediaUriString, MediaInfo_FileName, MediaInfo_MediaArtist)
+        MediaRecordManager(context).save_MediaInfo_toRecord_main(MediaInfo_FileName, MediaInfo_MediaArtist, MediaInfo_MediaType)
     }
     private fun clearLastMediaRecord(context: Context){
         //清除记录管理器中的记录

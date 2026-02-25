@@ -32,7 +32,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import android.animation.ValueAnimator
-import android.util.Log
 import android.view.animation.DecelerateInterpolator
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityOptionsCompat
@@ -446,12 +445,19 @@ class MainActivity: AppCompatActivity() {
 
                 return@launch
             }
-            //获取上次播放记录
-            val (MediaInfo_MediaUriString, _, _) = MediaRecordManager(this@MainActivity).get_MediaInfo()
+            //获取上次播放记录 < 唯一ID, 类型 >
+            val (MediaInfo_MediaUniqueID, MediaInfo_MediaType) = MediaRecordManager(this@MainActivity).get_MediaInfo_UniqueID()
+            val MediaInfo_MediaUriString = MediaUriManager.getMediaUriStringByMediaID(MediaInfo_MediaUniqueID, MediaInfo_MediaType)
+
             //检查上次播放记录是否有效
-            if (MediaInfo_MediaUriString.isEmpty()) return@launch
-            if (!isUriStringValid(MediaInfo_MediaUriString)) return@launch
-            //有上次播放记录,尝试播放
+            if (MediaInfo_MediaUriString.isEmpty()){
+                return@launch
+            }
+            if (!isUriStringValid(MediaInfo_MediaUriString)){
+                return@launch
+            }
+
+            //播放记录有效,尝试播放
             withContext(Dispatchers.Main){
                 setNewMediaItem(MediaInfo_MediaUriString.toUri(), false)
             }
