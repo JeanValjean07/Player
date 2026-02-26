@@ -115,7 +115,7 @@ import kotlin.math.pow
 
 @UnstableApi
 @RequiresApi(Build.VERSION_CODES.Q)
-@Suppress("unused")
+//@Suppress("unused")
 class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -292,12 +292,16 @@ class PlayerActivityNeo: AppCompatActivity(){
     //ViewModel
     private val vm: PlayerViewModel by viewModels()
     //协程
+    //<editor-fold desc="//协程清单">
     private var coroutine_main_setupInterface = CoroutineScope(Dispatchers.Main)
     private var coroutine_main_startPlayVideo = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerControllerButton = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerScroller = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerListener = CoroutineScope(Dispatchers.Main)
     private var coroutine_loadFrequentlyUsedSetting = CoroutineScope(Dispatchers.Main)
+    private var coroutine_registerGestureListener = CoroutineScope(Dispatchers.Main)
+    private var coroutine_registerFragmentLinker = CoroutineScope(Dispatchers.Main)
+    //</editor-fold>
 
 
 
@@ -306,7 +310,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //初始化界面
+        //界面初始化
+        //<editor-fold desc="//界面初始化 & 预设置">
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_player_type_neo)
@@ -324,6 +329,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
         }
+        //</editor-fold>
 
         //其他预设
         preCheck()
@@ -334,7 +340,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //首次启动时,非首次启动时直接绑定
             if (savedInstanceState == null){
                 //获取原始链接并转换为标准格式链接
-                val (_, intentUri) = ExtractIntentUri(intent)
+                val intentUri = ExtractIntentUri(intent)
                 val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUri, this@PlayerActivityNeo)
                 //检查是否正在播放,获取正在播放项的链接
                 val ongoingUriStandard = PlayerSingleton.getCurrentMediaStandardUriString().toUri()
@@ -342,8 +348,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 val startSourceSign = ExtractIntentSource(intent)
 
 
-                //决策系统
-                //返回：1=需要新建播放项 2=需要连接现有播放项 3=报错退出 4=弹框输入
+                //传入决策系统丨<返回值< 1 = 新建媒体项目丨2 = 连接现有媒体项目丨3 = 主动退出丨4 = 主动请求输入 >>
                 val decideSign = DecideEngine(intentUriStandard,ongoingUriStandard, startSourceSign)
                 when(decideSign){
                     1 -> {
@@ -361,12 +366,13 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
 
             }else{
-                //绑定正在播放的媒体
+                //来自活动重建,直接连接当前媒体
                 BindCurrentPlayingItem(vm.MediaInfo_MediaUri)
             }
 
         }
 
+        //缓存需要频繁取用的变量
         coroutine_loadFrequentlyUsedSetting.launch {
             //进度条停止滚动时尾帧使用关键帧
             vm.PREFS_UseSyncFrameWhenScrollerStop = SettingsRequestCenter.get_PREFS_UseSyncFrameWhenScrollerStop(this@PlayerActivityNeo)
@@ -389,6 +395,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         }
 
+        //注册监听器
         coroutine_registerListener.launch {
             //RxJava事件总线
             registerEventBus()
@@ -396,6 +403,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             startOrientationListener()
         }
 
+        //注册进度条控制逻辑
         coroutine_registerScroller.launch {
             //Scroller事件 gestureDetector层 -onSingleTap -onDown
             val gestureDetectorScroller = GestureDetector(this@PlayerActivityNeo, object : SimpleOnGestureListener() {
@@ -571,7 +579,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             })
         }
-
+        //注册控制按钮
         coroutine_registerControllerButton.launch {
             //退出按钮
             val ButtonExit = findViewById<ImageButton>(R.id.TopBarArea_ButtonExit)
@@ -989,239 +997,231 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
         }
 
-
-
-        //均衡器页面返回值
-        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_EQUALIZER", this) { _, bundle ->
-            val ReceiveKey = bundle.getString("KEY")
-            if (ReceiveKey == "Add"){
-                for (i in 0 until equalizer.numberOfBands) {
-                    val gain = +3000
-                    equalizer.setBandLevel(i.toShort(), gain.toShort())
-                    notice("均衡器 +1(${equalizer.getBandLevel(i.toShort())/1000})", 1000)
+        //注册Fragment通信
+        coroutine_registerFragmentLinker.launch{
+            //均衡器页面返回值
+            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_EQUALIZER", this@PlayerActivityNeo) { _, bundle ->
+                val ReceiveKey = bundle.getString("KEY")
+                if (ReceiveKey == "Add"){
+                    for (i in 0 until equalizer.numberOfBands) {
+                        val gain = +3000
+                        equalizer.setBandLevel(i.toShort(), gain.toShort())
+                        notice("均衡器 +1(${equalizer.getBandLevel(i.toShort())/1000})", 1000)
+                    }
                 }
+                else if (ReceiveKey == "Sub"){
+                    for (i in 0 until equalizer.numberOfBands) {
+                        val gain = -3000
+                        equalizer.setBandLevel(i.toShort(), gain.toShort())
+                        notice("均衡器 -1(${equalizer.getBandLevel(i.toShort())/1000})", 1000)
+                    }
+                }
+
+
             }
-            else if (ReceiveKey == "Sub"){
-                for (i in 0 until equalizer.numberOfBands) {
-                    val gain = -3000
-                    equalizer.setBandLevel(i.toShort(), gain.toShort())
-                    notice("均衡器 -1(${equalizer.getBandLevel(i.toShort())/1000})", 1000)
-                }
-            }
+            //更多按钮页面返回值 FROM_FRAGMENT_MORE_BUTTON
+            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MORE_BUTTON", this@PlayerActivityNeo) { _, bundle ->
+                val ReceiveKey = bundle.getString("KEY")
+                when(ReceiveKey){
+                    //顶部横排
+                    "Capture" -> {
+                        captureScreenShot()
 
-
-        }
-        //更多按钮页面返回值 FROM_FRAGMENT_MORE_BUTTON
-        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MORE_BUTTON", this) { _, bundle ->
-            val ReceiveKey = bundle.getString("KEY")
-            when(ReceiveKey){
-                //顶部横排
-                "Capture" -> {
-                    captureScreenShot()
-
-                }
-                "BackToStart" -> {
-                    player.seekTo(0)
-                    player.play()
-                    startScrollerSync()
-                    notice("回到视频起始", 3000)
-                }
-                "PlayList" -> {
-                    FragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
-                }
-                "ExtractFrame" -> {
-                    val videoPath = getFilePath(this, vm.MediaInfo_MediaUri)
-                    if (videoPath == null){
-                        showCustomToast("视频绝对路径获取失败", 3)
-                        return@setFragmentResultListener
                     }
-                    ExtractFrame(videoPath, vm.MediaInfo_FileName)
-                }
-                //旋转监听器
-                "EnableOriListener" -> {
-                    val target = bundle.getBoolean("target")
-                    if (target){
-                        startOrientationListener()
-                        notice("已开启方向监听器", 1000)
-                    }else{
-                        stopOrientationListener()
-                        notice("已关闭方向监听器", 1000)
+                    "BackToStart" -> {
+                        player.seekTo(0)
+                        player.play()
+                        startScrollerSync()
+                        notice("回到视频起始", 3000)
                     }
-                }
-                //进度条
-                "AlwaysSeek" -> {
-                    changeStateAlwaysSeek(bundle.getBoolean("target"))
-                }
-                "LinkScroll" -> {
-                    changeStateLinkScroll(bundle.getBoolean("target"))
-                }
-                "TapJump" -> {
-                    changeStateTapJump(bundle.getBoolean("target"))
-                }
-                //开启小窗
-                "StartPiP" -> {
-                    startFloatingWindow()
-                }
-                //底部按钮
-                "VideoInfo" -> {
-                    //读取数据
-                    val retriever = MediaMetadataRetriever()
-                    retriever.setDataSource(vm.MediaInfo_AbsolutePath)
-                    val videoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-                    val videoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-                    val videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                    val videoFps = fps
-                    val captureFps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)
-                    val videoMimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
-                    val videoBitrate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
-
-                    val videoFileName = vm.MediaInfo_FileName
-                    val videoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                    val videoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                    val videoDate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)
-
-                    //将数据传递给Fragment
-                    val videoInfoFragment = PlayerFragmentVideoInfo.newInstance(
-                        videoWidth?.toInt() ?: 0,
-                        videoHeight?.toInt() ?: 0,
-                        videoDuration?.toLong() ?: 0,
-                        videoFps,
-                        captureFps?.toFloat() ?: 0f,
-                        videoMimeType ?: "",
-                        videoBitrate?.toLong() ?: 0,
-                        videoFileName,
-                        videoTitle ?: "",
-                        videoArtist ?: "",
-                        videoDate ?: ""
-                    )
-                    videoInfoFragment.show(supportFragmentManager, "PlayerVideoInfoFragment")
-                }
-                "SysShare" -> {
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        delay(500)
-                        shareVideo(this@PlayerActivityNeo, vm.MediaInfo_MediaUri)
+                    "PlayList" -> {
+                        FragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
                     }
-                }
-                "updateCoverFrame" -> {
-                    val Method = bundle.getString("Method")
-                    when(Method){
-                        "useCurrentFrame" -> {
-                            CaptureCurrentFrameAsCover(vm.MediaInfo_FileName)
+                    "ExtractFrame" -> {
+                        val videoPath = getFilePath(this@PlayerActivityNeo, vm.MediaInfo_MediaUri)
+                        if (videoPath == null){
+                            showCustomToast("视频绝对路径获取失败", 3)
+                            return@setFragmentResultListener
                         }
-                        "useDefaultCover" -> {
-                            useDefaultCover(vm.MediaInfo_FileName)
-                        }
-                        "pickFromLocal" -> {
-                            showCustomToast("暂不支持此功能", 3)
+                        ExtractFrame(videoPath, vm.MediaInfo_FileName)
+                    }
+                    //旋转监听器
+                    "EnableOriListener" -> {
+                        val target = bundle.getBoolean("target")
+                        if (target){
+                            startOrientationListener()
+                            notice("已开启方向监听器", 1000)
+                        }else{
+                            stopOrientationListener()
+                            notice("已关闭方向监听器", 1000)
                         }
                     }
-                }
-                "Equalizer" -> {
-                    PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
-                }
-                "clearMiniature" -> {
-                    clearMiniature()
-                }
-                "UnBindBrightness" -> {
-                    unBindBrightness()
-                }
-                //错误处理
-                "BindPlayView" -> {
-                    playerView.player = null
-                    playerView.player = player
-                }
-                //退出事件
-                "Dismiss" -> {
-                    //开启被控组件
-                    startScrollerSync()
-                    startVideoTimeSync()
-                    //把播放区域移回去
-                    MovePlayArea_down()
-                }
-                "ExitRightNow" -> {
-                    EnsureExit_close_all_stuff()
+                    //进度条
+                    "AlwaysSeek" -> {
+                        changeStateAlwaysSeek(bundle.getBoolean("target"))
+                    }
+                    "LinkScroll" -> {
+                        changeStateLinkScroll(bundle.getBoolean("target"))
+                    }
+                    "TapJump" -> {
+                        changeStateTapJump(bundle.getBoolean("target"))
+                    }
+                    //开启小窗
+                    "StartPiP" -> {
+                        startFloatingWindow()
+                    }
+                    //底部按钮
+                    "VideoInfo" -> {
+                        //读取数据
+                        val retriever = MediaMetadataRetriever()
+                        retriever.setDataSource(vm.MediaInfo_AbsolutePath)
+                        val videoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                        val videoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                        val videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                        val videoFps = fps
+                        val captureFps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)
+                        val videoMimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
+                        val videoBitrate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
+
+                        val videoFileName = vm.MediaInfo_FileName
+                        val videoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+                        val videoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                        val videoDate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)
+
+                        //将数据传递给Fragment
+                        val videoInfoFragment = PlayerFragmentVideoInfo.newInstance(
+                            videoWidth?.toInt() ?: 0,
+                            videoHeight?.toInt() ?: 0,
+                            videoDuration?.toLong() ?: 0,
+                            videoFps,
+                            captureFps?.toFloat() ?: 0f,
+                            videoMimeType ?: "",
+                            videoBitrate?.toLong() ?: 0,
+                            videoFileName,
+                            videoTitle ?: "",
+                            videoArtist ?: "",
+                            videoDate ?: ""
+                        )
+                        videoInfoFragment.show(supportFragmentManager, "PlayerVideoInfoFragment")
+                    }
+                    "SysShare" -> {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            delay(500)
+                            shareVideo(this@PlayerActivityNeo, vm.MediaInfo_MediaUri)
+                        }
+                    }
+                    "updateCoverFrame" -> {
+                        val Method = bundle.getString("Method")
+                        when(Method){
+                            "useCurrentFrame" -> {
+                                CaptureCurrentFrameAsCover(PlayerSingleton.getCurrentMediaUniqueID())
+                            }
+                            "useDefaultCover" -> {
+                                useDefaultCover(PlayerSingleton.getCurrentMediaUniqueID())
+                            }
+                            "pickFromLocal" -> {
+                                showCustomToast("暂不支持此功能", 3)
+                            }
+                        }
+                    }
+                    "Equalizer" -> {
+                        PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, "PlayerEqualizerFragment")
+                    }
+                    "clearMiniature" -> {
+                        clearMiniature()
+                    }
+                    "UnBindBrightness" -> {
+                        unBindBrightness()
+                    }
+                    //错误处理
+                    "BindPlayView" -> {
+                        playerView.player = null
+                        playerView.player = player
+                    }
+                    //退出事件
+                    "Dismiss" -> {
+                        //开启被控组件
+                        startScrollerSync()
+                        startVideoTimeSync()
+                        //把播放区域移回去
+                        MovePlayArea_down()
+                    }
+                    "ExitRightNow" -> {
+                        EnsureExit_close_all_stuff()
+                    }
                 }
             }
-        }
-        //播放列表返回值 FROM_FRAGMENT_PLAY_LIST
-        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_PLAY_LIST", this) { _, bundle ->
-            val ReceiveKey = bundle.getString("KEY")
-            when(ReceiveKey){
-                //切换逻辑由播放器单例接管
-                //停止播放并退出
-                "stopPlaying" -> {
-                    finish()
-                }
-                //退出逻辑
-                "Dismiss" -> {
-                    //开启被控组件
-                    startScrollerSync()
-                    startVideoTimeSync()
-                    //把播放区域移回去
-                    MovePlayArea_down()
+            //播放列表返回值 FROM_FRAGMENT_PLAY_LIST
+            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_PLAY_LIST", this@PlayerActivityNeo) { _, bundle ->
+                val ReceiveKey = bundle.getString("KEY")
+                when(ReceiveKey){
+                    //切换逻辑由播放器单例接管
+                    //停止播放并退出
+                    "stopPlaying" -> {
+                        finish()
+                    }
+                    //退出逻辑
+                    "Dismiss" -> {
+                        //开启被控组件
+                        startScrollerSync()
+                        startVideoTimeSync()
+                        //把播放区域移回去
+                        MovePlayArea_down()
+                    }
                 }
             }
-        }
-        //媒体信息列表返回值 FROM_FRAGMENT_VIDEO_INFO
-        supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_VIDEO_INFO", this) { _, bundle ->
-            val ReceiveKey = bundle.getString("KEY")
-            when(ReceiveKey){
-                "Dismiss" -> {
-                    //开启被控组件
-                    startScrollerSync()
-                    startVideoTimeSync()
-                    //把播放区域移回去
-                    MovePlayArea_down()
+            //媒体信息列表返回值 FROM_FRAGMENT_VIDEO_INFO
+            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_VIDEO_INFO", this@PlayerActivityNeo) { _, bundle ->
+                val ReceiveKey = bundle.getString("KEY")
+                when(ReceiveKey){
+                    "Dismiss" -> {
+                        //开启被控组件
+                        startScrollerSync()
+                        startVideoTimeSync()
+                        //把播放区域移回去
+                        MovePlayArea_down()
+                    }
                 }
             }
         }
 
-        //表明页面状态 需要区分页面类型 flag_page_type
-        vm.state_player_type = "Neo"
-        //监听系统手势返回
-        onBackPressedDispatcher.addCallback(this, object: OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                ExitByCheckOrientation()
-            }
-        })
+
+        //监听系统手势
+        coroutine_registerGestureListener.launch{
+            //监听系统手势返回
+            onBackPressedDispatcher.addCallback(this@PlayerActivityNeo, object: OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    ExitByCheckOrientation()
+                }
+            })
+        }
     //onCreate END
     }
 
 
 
-    //提取链接
-    private fun ExtractIntentUri(intent: Intent): Pair<Boolean,Uri>{
+    //提取原始链接
+    private fun ExtractIntentUri(intent: Intent): Uri {
         //获取原始链接
         val intentUri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)?: Uri.EMPTY
 
 
         return if (intentUri == Uri.EMPTY){
-            Pair(false,Uri.EMPTY)
+            Uri.EMPTY
         }else{
-            Pair(true,intentUri)
+            intentUri
         }
     }
-    //提取来源标记  < 返回值： -1=无法验证 丨 1=系统面板 丨 2= pendingIntent 丨 3= 常规启动 >
+    //提取来源标记丨<返回值< 0 = 不期望的分支丨1 = 系统分享&调用面板丨2 = 通知&播控中心丨3 = 常规启动 >>
     private fun ExtractIntentSource(intent: Intent): Int{
-        val source = intent.getIntExtra("IntentSource", -1)
+        //提取预先写入在intent中的标志位
+        val startSourceSign = intent.getIntExtra("IntentSource", 0)
+        //未写入标记时的警告机制(标志位不期望取出0值)
+        if (startSourceSign == 0) showCustomToast("无法验证启动来源,检查调用处是否漏传标志位", 3)
 
-        if (source == -1) showCustomToast("无法验证启动来源标记", 3)
-
-        return source
+        return startSourceSign
     }
-    //获取当前正在播放状态
-    private fun getCurrentPlayState(): Pair<Boolean,Uri>{
-
-        val (isCurrentItemExist, currentItemUri) = PlayerSingleton.getPlayState()
-
-
-        return if (isCurrentItemExist && currentItemUri != Uri.EMPTY){
-            Pair(true,currentItemUri)
-        }else{
-            Pair(false,Uri.EMPTY)
-        }
-    }
-    //决策系统丨<返回值< 1 = 新建播放项目丨2 = 连接现有播放项目丨3 = 报错退出丨4 = 弹框输入 >>
+    //决策系统丨<返回值< 1 = 新建播放项目丨2 = 连接现有播放项目丨3 = 主动退出丨4 = 主动请求输入 >>
     private fun DecideEngine(intentUriStandard: Uri, ongoingUriStandard: Uri, source: Int,): Int{
         when(source){
             //无法验证启动来源标记
@@ -2226,17 +2226,16 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //更新封面
     @SuppressLint("UseKtx")
-    private fun CaptureCurrentFrameAsCover(filename: String) {
+    private fun CaptureCurrentFrameAsCover(uniqueID: String) {
         fun handleSuccess(bitmap: Bitmap) {
             //创建文件占位并保存
-            val cover_file = File(filesDir, "miniature/video_cover/${filename.hashCode()}.webp")
+            val cover_file = File(filesDir, "miniature/video_cover/${uniqueID}.webp")
             cover_file.parentFile?.mkdirs()
             cover_file.outputStream().use {
                 bitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
             }
             //发布完成消息
-            val uriNumOnly = ContentUris.parseId(vm.MediaInfo_MediaUri)
-            ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uriNumOnly.toString()))
+            ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uniqueID))
             showCustomToast("截取封面完成", 3)
             //恢复播放状态
             if (vm.wasPlaying){ player.play() }
@@ -2262,7 +2261,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             )
         }
     }
-    private fun useDefaultCover(filename: String){
+    private fun useDefaultCover(uniqueID: String){
         val defaultCoverBitmap = vectorToBitmap(this, R.drawable.ic_album_video_album)
         if (defaultCoverBitmap == null) {
             showCustomToast("从本地文件提取默认封面素材失败", 3)
@@ -2273,12 +2272,12 @@ class PlayerActivityNeo: AppCompatActivity(){
         val covers_path = File(filesDir, "miniature/video_cover")
         if (!covers_path.exists()) { covers_path.mkdirs() }
         //保存图片
-        val cover_item_file = File(covers_path, "${filename.hashCode()}.webp")
+        val cover_item_file = File(covers_path, "${uniqueID}.webp")
         cover_item_file.outputStream().use {
             processedBitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
         }
         //发布完成消息
-        ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", filename))
+        ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uniqueID))
         showCustomToast("已完成", 3)
     }
     private fun processCenterCrop(src: Bitmap): Bitmap {
@@ -3143,7 +3142,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         initElement()
         //初始化界面参数
         updateScreenParameters()
-
+        //表明页面状态
+        vm.state_player_type = "Neo"
+        //向播放器传入必要上下文
         PlayerSingleton.setContext(application)
 
         //获取自动旋转状态

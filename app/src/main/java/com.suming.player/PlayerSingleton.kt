@@ -23,6 +23,7 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.util.Log
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.NotificationCompat
@@ -199,7 +200,7 @@ object PlayerSingleton {
     }
 
 
-    //媒体信息
+    //👀丨媒体信息集中管理
     //<editor-fold desc="//媒体信息变量合集">
     private var MediaInfo_MediaUniqueID = ""  //媒体唯一ID()
     private var MediaInfo_MediaType = ""
@@ -321,25 +322,30 @@ object PlayerSingleton {
         retriever.release()
         return true
     }
-    //外部获取
+    //外部获取信息
     //<editor-fold desc="//外部获取当前信息接口">
-    //视频宽高值&获取接口
-    private var MediaInfo_VideoWidth = 0
-    private var MediaInfo_VideoHeight = 0
+    //获取当前媒体的 视频宽高值&获取比例
     fun getMediaWHratio(): Float {
         //获取视频宽高比
         val ratio_W_by_H = MediaInfo_VideoWidth.toFloat() / MediaInfo_VideoHeight.toFloat()
 
         return ratio_W_by_H
     }
-    //获取当前播放进度
+    private var MediaInfo_VideoWidth = 0
+    private var MediaInfo_VideoHeight = 0
+    //获取当前媒体的 播放进度
     fun getMediaCurrentPosition(): Long {
         return _player?.currentPosition ?: -1
     }
-    //媒体唯一身份识别：类型+ID
+    //获取当前媒体的 唯一身份识别(类型+ID)
     fun getCurrentMediaIdentity(): Pair<String, String> {
         return Pair(MediaInfo_MediaType, MediaInfo_MediaUniqueID)
     }
+    //获取当前媒体的 唯一ID
+    fun getCurrentMediaUniqueID(): String {
+        return MediaInfo_MediaUniqueID
+    }
+    //判断传入的链接是否指向正在播放的项
     fun isthisUriOngoing(uriNeedCheck: Uri): Boolean {
         //如果传入标准链接,就直接对比标准链接
         if (MediaUriManager.isMediaUriStandard(uriNeedCheck)){
@@ -347,12 +353,11 @@ object PlayerSingleton {
             return uriNeedCheck.toString() == MediaInfo_MediaUriStandard
         }
         //若不是标准链接,先转成标准链接,再对比
-        val standardUriNeedCheck = MediaUriManager.getStandardMediaUri(uriNeedCheck,contextApplication) ?: return false
-
+        val standardUriNeedCheck = MediaUriManager.getStandardMediaUri(uriNeedCheck,contextApplication)
 
         return standardUriNeedCheck.toString() == MediaInfo_MediaUriStandard
-    } //直接返回判断结果
-    //获取当前标准链接
+    }
+    //获取当前媒体的 标准链接
     fun getCurrentMediaStandardUriString(): String {
 
         return MediaInfo_MediaUriStandard
@@ -394,7 +399,7 @@ object PlayerSingleton {
 
 
 
-    //👀媒体项变更
+    //👀丨媒体项变更流程
     //确认设置新媒体项丨私有
     private fun setNewMediaItem(itemUri: Uri, playWhenReady: Boolean, context: Context): Boolean {
         //先判断是否是正在播放的媒体
@@ -917,6 +922,7 @@ object PlayerSingleton {
     }
     //音频焦点监听
     private lateinit var focusRequest: AudioFocusRequest
+    private var coroutine_focusRequest_wait = CoroutineScope(Dispatchers.IO)
     private var state_focusRequest_Initialized = false
     private fun initFocusRequest(context: Context){
         focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
@@ -949,18 +955,28 @@ object PlayerSingleton {
         state_focusRequest_Initialized = true
     }
     private fun requestAudioFocus(context: Context, force_request: Boolean){
-        if (!state_focusRequest_Initialized){
-            initFocusRequest(context)
-        }
-        if (!state_AudioManager_Initialized){
-            initAudioManager(context)
-        }
-        if (force_request){
-            audioManager.requestAudioFocus(focusRequest)
-        }else if(_player?.isPlaying != true ) {
-            audioManager.requestAudioFocus(focusRequest)
-        }
+        coroutine_focusRequest_wait.launch {
+            if (!state_focusRequest_Initialized){
+                initFocusRequest(context)
+            }
+            if (!state_AudioManager_Initialized){
+                initAudioManager(context)
+            }
+            delay(500)
 
+            withContext(Dispatchers.Main){
+                if (force_request){
+                    audioManager.requestAudioFocus(focusRequest)
+                }else{
+                    if (_player == null) return@withContext
+                    if (_player?.isPlaying == true ) {
+                        audioManager.requestAudioFocus(focusRequest)
+                    }
+
+                }
+            }
+
+        }
     }
     private fun releaseAudioFocus(context: Context){
         if (!state_focusRequest_Initialized){

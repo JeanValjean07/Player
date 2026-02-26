@@ -157,16 +157,16 @@ class MainVideoAdapter(
 
     //Functions
     //更新指定位置的封面
-    fun updateCoverForVideo(uriNumOnly: Long) {
+    fun updateCoverForVideo(uniqueID: String)  {
         //先检查新图是否存在
         val covers_path = File(context.filesDir, "miniature/cover")
-        val cover_file = File(covers_path, "${uriNumOnly}.webp")
+        val cover_file = File(covers_path, "${uniqueID}.webp")
         if (cover_file.exists()) {
             val bitmap = BitmapFactory.decodeFile(cover_file.absolutePath)
         }
         //遍历列表并换图
         snapshot().forEachIndexed { index, mediaItem ->
-            if (mediaItem?.uriNumOnly == uriNumOnly) {
+            if (mediaItem?.uriNumOnly == uniqueID.toLong()) {
                 notifyItemChanged(index)
             }
         }

@@ -1430,8 +1430,7 @@ class MainActivity: AppCompatActivity() {
         when (it.key) {
             "PlayerActivity_CoverChanged" -> {
                 it.stringInfo?.let { uriNumOnlyString ->
-                    val uriNumOnly = uriNumOnlyString.toLong()
-                    main_video_list_adapter.updateCoverForVideo(uriNumOnly)
+                    main_video_list_adapter.updateCoverForVideo(uriNumOnlyString)
                 }
             }
         }
