@@ -157,7 +157,7 @@ class MediaStoreReaderForVideo(
 
             MediaStoreSetting(
                 //基本：唯一标识：视频的媒体库id,同时也是uriNumOnly的值
-                MARK_ID = video.id.toString(),
+                MARK_MediaUniqueID = video.id.toString(),
                 info_uri_string = video.uriString,
                 info_uri_numOnly = video.uriNumOnly,
                 info_filename = video.filename,
@@ -203,7 +203,7 @@ class MediaStoreReaderForVideo(
         val allVideos = mediaStoreRepo.getAllVideos()
         //找出数据库中存在但不在当前读取列表中的视频ID
         val deletedVideoIds = allVideos
-            .map { it.MARK_ID }
+            .map { it.MARK_MediaUniqueID }
             .filterNot { currentVideoIds.contains(it) }
         //批量删除
         if (deletedVideoIds.isNotEmpty()) {

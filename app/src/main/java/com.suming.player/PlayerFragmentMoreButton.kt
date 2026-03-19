@@ -61,13 +61,15 @@ class PlayerFragmentMoreButton: DialogFragment() {
     //共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
     //协程
+    //<editor-fold desc="//协程清单">
     private var coroutine_registerSwitch = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerMenuButton = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerBasicButton = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerFunctionalButtonTop = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerFunctionalButton = CoroutineScope(Dispatchers.Main)
     private var coroutine_registerSeekBarStuff = CoroutineScope(Dispatchers.Main)
-
+    private var coroutine_registerGestureListener = CoroutineScope(Dispatchers.Main)
+    //</editor-fold>
 
 
 
@@ -455,11 +457,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //注册功能键
         coroutine_registerFunctionalButton.launch {
 
-
-
-
-
-
             //开启小窗
             val ButtonStartPiP = view.findViewById<TextView>(R.id.ButtonStartPiP)
             ButtonStartPiP.setOnClickListener {
@@ -482,7 +479,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                             val result = bundleOf("KEY" to "updateCoverFrame", "Method" to "useCurrentFrame")
                             setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
 
-                            Dismiss();true
+                            Dismiss(false);true
                         }
 
                         R.id.item_useDefaultCover -> {
@@ -680,14 +677,16 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
         }
 
-
-        //监听返回手势(DialogFragment)
-        dialog?.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                Dismiss(false)
-                return@setOnKeyListener true
+        //系统手势监听
+        coroutine_registerGestureListener.launch {
+            //监听返回手势
+            dialog?.setOnKeyListener { _, keyCode, event ->
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                    Dismiss(false)
+                    return@setOnKeyListener true
+                }
+                return@setOnKeyListener false
             }
-            return@setOnKeyListener false
         }
     //onViewCreated END
     }

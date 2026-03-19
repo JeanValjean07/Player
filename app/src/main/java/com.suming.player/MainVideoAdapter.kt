@@ -79,13 +79,13 @@ class MainVideoAdapter(
     private val CoroutineScope_GenerateCover = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val CoroutineScope_LoadCoverFrame = CoroutineScope(Dispatchers.IO + SupervisorJob())
     //图片池和加载动画
-    private var FadeInAnimation: AlphaAnimation = AlphaAnimation(0.0f, 1.0f)
-    private val covers_path = File(context.filesDir, "miniature/video_cover")
+    private var FadeInAnimation: AlphaAnimation = AlphaAnimation(0.0f, 1.0f).apply { duration = 100 }
+    private var coverFramePath = StorageManager.get_ArtworkPath_cover_video(context)
 
 
 
     init {
-        FadeInAnimation.duration = 100
+
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -189,16 +189,18 @@ class MainVideoAdapter(
     }
     //检查缩略图
     private suspend fun setHolderFrame(item: MediaItemForVideo, holder: ViewHolder)  {
-        val imageTag = item.uriNumOnly.toString()
         //记录holder的tag
+        val imageTag = item.uriNumOnly.toString()
         withContext(Dispatchers.Main) {
             holder.tvFrame.tag = imageTag
         }
-        //设置文件
-        val cover_item_file = File(covers_path, "${item.uriNumOnly}.webp")
-        //检查是否存在
-        if (cover_item_file.exists()){
-            val frame = BitmapFactory.decodeFile(cover_item_file.absolutePath)
+        //取出目标缩略图文件
+        val coverFrame = File(coverFramePath, "${item.uriNumOnly}.webp")
+        //检查目标缩略图是否存在(存在时取出并放置该图片,不存在时立即截取)
+        if (coverFrame.exists()){
+            //取出图片
+            val frame = BitmapFactory.decodeFile(coverFrame.absolutePath)
+            //设置图片
             withContext(Dispatchers.Main){
                 if (holder.tvFrame.tag == imageTag) {
                     holder.tvFrame.setImageBitmap(frame)
@@ -207,9 +209,8 @@ class MainVideoAdapter(
                     frame?.recycle()
                 }
             }
-        }
-        //不存在,生成图片
-        else{
+        }else{
+            //不存在时立即截取
             generateCoverFrame(item, holder)
         }
 
@@ -225,22 +226,18 @@ class MainVideoAdapter(
                 }
                 //获取视频封面帧
                 var bitmap = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                //检查是否为黑屏
+                //检查是否取图成功
                 if (bitmap != null){
+                    //检查是否是纯黑图,纯黑时换个地方取图
                     if (isDarkFrame(bitmap)) {
                         bitmap = retriever.getFrameAtTime(item.durationMs * 1000 / 2, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                     }
+                    //检查是否取图成功
                     if (bitmap != null) {
-                        //创建目录
-                        if (!covers_path.exists()) {
-                            covers_path.mkdirs()
-                        }
-                        //图片裁剪：最好裁剪成ImageView一样的比例
-                        val targetWidth = 400
-                        val targetHeight = (targetWidth * 9 / 10)
+                        //图片裁剪(?优化方向)
                         val processedBitmap = processCenterCrop(bitmap)
                         //保存图片
-                        val cover_item_file = File(covers_path, "${item.uriNumOnly}.webp")
+                        val cover_item_file = File(coverFramePath, "${item.uriNumOnly}.webp")
                         cover_item_file.outputStream().use {
                             processedBitmap.compress(Bitmap.CompressFormat.WEBP, 50, it)
                         }
@@ -250,14 +247,11 @@ class MainVideoAdapter(
                             //holder.tvFrame.startAnimation(FadeInAnimation)
                         }
 
+                        //资源回收
                         if (bitmap != processedBitmap) {
                             bitmap.recycle()
                         }
                     }
-                }
-                //使用默认占位图
-                else{
-
                 }
             }
             catch (e: Exception) {
@@ -321,6 +315,5 @@ class MainVideoAdapter(
         }
         return darkCount.toFloat() / totalCount >= ratioThreshold
     }
-
 
 }

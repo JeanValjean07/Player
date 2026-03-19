@@ -8,14 +8,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:ignore="HardcodedText">
-    <!-- 顶部分隔线 -->
-    <View
-        android:id="@+id/TopLine"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/player_scroller_top_line"
-        app:layout_constraintTop_toTopOf="parent"
-        android:translationZ="5dp"/>
+
 
     <!-- 小型提示卡片 -->
     <androidx.cardview.widget.CardView

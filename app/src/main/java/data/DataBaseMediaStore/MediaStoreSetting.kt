@@ -1,13 +1,14 @@
 package data.DataBaseMediaStore
 
-import android.net.Uri
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "MediaStore")
 data class MediaStoreSetting(
     @PrimaryKey
-    val MARK_ID: String,
+    //使用媒体库分配的唯一ID作为主键
+    val MARK_MediaUniqueID: String,
+    //其他字段
     val info_uri_string: String = "",
     val info_uri_numOnly: Long = 0L,
     val info_filename: String = "",
@@ -24,7 +25,7 @@ data class MediaStoreSetting(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as  MediaStoreSetting
-        return MARK_ID == other.MARK_ID &&
+        return MARK_MediaUniqueID == other.MARK_MediaUniqueID &&
                 info_uri_string == other.info_uri_string &&
                 info_uri_numOnly == other.info_uri_numOnly &&
                 info_filename == other.info_filename &&
@@ -42,6 +43,6 @@ data class MediaStoreSetting(
     //修改数据库结构时记得同步修改预置数据类
 
     override fun hashCode(): Int {
-        return MARK_ID.hashCode()
+        return MARK_MediaUniqueID.hashCode()
     }
 }

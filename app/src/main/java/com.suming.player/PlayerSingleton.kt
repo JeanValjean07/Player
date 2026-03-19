@@ -23,7 +23,6 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.util.Log
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.core.app.NotificationCompat
@@ -513,17 +512,17 @@ object PlayerSingleton {
     //其他工具函数
     private fun getCoverImgUri(context: Context): Uri?{
         val covers_path_music = File(context.filesDir, "miniature/music_cover")
-        val covers_path_video = File(context.filesDir, "miniature/video_cover")
+
         val MediaInfo_uriNumOnly = MediaInfo_MediaUri.lastPathSegment
         val cover_img_path = when (MediaInfo_MediaType) {
             "video" -> {
-                File(covers_path_video, "${MediaInfo_uriNumOnly}.webp")
+                File(StorageManager.get_ArtworkPath_cover_video(context), "${MediaInfo_uriNumOnly}.webp")
             }
             "music" -> {
                 File(covers_path_music, "${MediaInfo_uriNumOnly}.webp")
             }
             else -> {
-                File(covers_path_video, "${MediaInfo_uriNumOnly}.webp")
+                File(StorageManager.get_ArtworkPath_cover_video(context), "${MediaInfo_uriNumOnly}.webp")
             }
         }
         val cover_img_uri = if(SettingsRequestCenter.get_PREFS_DisableMediaArtWork(context)){
@@ -631,9 +630,9 @@ object PlayerSingleton {
             val mediaItems = mediaStoreSettings
                 .map { setting ->
                     MediaItemForVideo(
-                        id = setting.MARK_ID.toLongOrNull() ?: 0,
+                        id = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
                         uriString = setting.info_uri_string,
-                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
+                        uriNumOnly = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
                         filename = setting.info_filename,
                         title = setting.info_title,
                         artist = setting.info_artist,
@@ -674,9 +673,9 @@ object PlayerSingleton {
             val mediaItems = mediaStoreSettings
                 .map { setting ->
                     MediaItemForVideo(
-                        id = setting.MARK_ID.toLongOrNull() ?: 0,
+                        id = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
                         uriString = setting.info_uri_string,
-                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
+                        uriNumOnly = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
                         filename = setting.info_filename,
                         title = setting.info_title,
                         artist = setting.info_artist,

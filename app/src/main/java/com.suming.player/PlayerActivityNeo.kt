@@ -1837,8 +1837,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
         state_EnterAnimationCompleted = true
-        //隐藏顶部分割线
-        HideTopLine()
+
     }
 
     override fun onPause() {
@@ -1995,8 +1994,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         //判断退出方式
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
             if (state_FromExitKeepPlaying){
-                //显示顶部分割线
-                ShowTopLine()
                 //使用收起动画
                 overridePendingTransition(
                     R.anim.slide_just_appear,
@@ -2058,15 +2055,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun stopOnStopDecider() {
         onStopDecideHandler.removeCallbacks(onStopDecideTask)
         vm.state_onStopDecider_Running = false
-    }
-    //隐藏顶部分割线
-    private fun HideTopLine(){
-        val TopLine = findViewById<View>(R.id.TopLine)
-        TopLine.visibility = View.GONE
-    }
-    private fun ShowTopLine(){
-        val TopLine = findViewById<View>(R.id.TopLine)
-        TopLine.visibility = View.VISIBLE
     }
     //解除亮度控制
     private fun unBindBrightness(){
@@ -2696,6 +2684,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 mkdirs()
             }
 
+            scroller.adapter = null
 
             //进度条绘制参数计算
             scrollerInfo_EachPicWidthPx = (40 * DisplayMetrics.density).toInt()

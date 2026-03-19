@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import androidx.core.net.toUri
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import data.DataBaseMediaStore.MediaStoreRepo
@@ -57,9 +56,9 @@ class MediaDataBaseReaderForVideo(
             val mediaItems = mediaStoreSettings
                 .map { setting ->
                     MediaItemForVideo(
-                        id = setting.MARK_ID.toLongOrNull() ?: 0,
+                        id = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
                         uriString = setting.info_uri_string,
-                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
+                        uriNumOnly = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
                         filename = setting.info_filename,
                         title = setting.info_title,
                         artist = setting.info_artist,

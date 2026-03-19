@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.os.Looper
+import android.util.Log
 import android.util.LruCache
 import android.view.LayoutInflater
 import android.view.View
@@ -58,17 +59,15 @@ class PlayerScrollerAdapter(
 
     //主线程初始化操作
     init {
+        Log.d("SuMing", "init PlayerScrollerAdapter: ${MediaInfo_FileName}")
         //列表监听器
         thumbItems.addOnListChangedCallback(object : ObservableList.OnListChangedCallback<ObservableList<PlayerScrollerViewModel.scrollerItem>>() {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChanged(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>) =
                 notifyDataSetChanged()
-
-            override fun onItemRangeChanged(
-                sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
+            override fun onItemRangeChanged(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
                 positionStart: Int,
-                itemCount: Int
-            ) {
+                itemCount: Int) {
                 if (Looper.myLooper() == Looper.getMainLooper()) {
                     notifyItemRangeChanged(positionStart, itemCount)
                 } else {
@@ -77,43 +76,35 @@ class PlayerScrollerAdapter(
                     }
                 }
             }
-
-            override fun onItemRangeInserted(
-                sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
+            override fun onItemRangeInserted(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
                 positionStart: Int,
-                itemCount: Int
-            ) {
+                itemCount: Int) {
                 recyclerView?.post {
                     if (itemCount == 1) notifyItemInserted(positionStart)
                     else notifyItemRangeInserted(positionStart, itemCount)
                 }
             }
-
-            override fun onItemRangeMoved(
-                sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
+            override fun onItemRangeMoved(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
                 fromPosition: Int,
                 toPosition: Int,
-                itemCount: Int
-            ) {
+                itemCount: Int) {
                 recyclerView?.post {
                     for (i in 0 until itemCount) {
                         notifyItemMoved(fromPosition + i, toPosition + i)
                     }
                 }
             }
-
-
-            override fun onItemRangeRemoved(
-                sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
+            override fun onItemRangeRemoved(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
                 positionStart: Int,
-                itemCount: Int
-            ) {
+                itemCount: Int) {
                 recyclerView?.post {
                     notifyItemRangeRemoved(positionStart, itemCount)
                 }
             }
         })
         //添加自定义的初始化时操作
+        //清除现有缓存
+        BitmapCache.evictAll()
         //加载已有图
         loadFrame()
 
@@ -148,6 +139,7 @@ class PlayerScrollerAdapter(
     }
 
     override fun onBindViewHolder(holder: scrollerViewHolder, position: Int) {
+        Log.d("SuMing", "onBindViewHolder: position $position")
         //指定单图宽度
         holder.itemView.updateLayoutParams<ViewGroup.LayoutParams> { this.width = scrollerParam_EachPicWidth }
         //绑定图片
@@ -164,7 +156,9 @@ class PlayerScrollerAdapter(
         super.onViewAttachedToWindow(holder)
         val position = holder.bindingAdapterPosition
 
+        Log.d("SuMing", "onViewAttachedToWindow: position $position")
         if (BitmapCache.get(position) == null){
+            Log.d("SuMing", "onViewAttachedToWindow: generateFrame(position) $position")
             holder.generateThumbJob = coroutineScopeGenerateFrame.launch(Dispatchers.IO) { generateFrame(position) }
         }
 
@@ -305,6 +299,7 @@ class PlayerScrollerAdapter(
     private suspend fun saveFrame(ratio: Float, position: Int, frame: Bitmap?) {
         val item = thumbItems[position]
         if (frame != null) {
+            Log.d("SuMing", "saveFrame: ${MediaInfo_FileName}  $position")
             val save_file_path = File(context.filesDir, "miniature/${MediaInfo_FileName.hashCode()}/scroller/${position}.jpg")
             save_file_path.parentFile?.mkdirs()
             save_file_path.outputStream().use {

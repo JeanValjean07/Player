@@ -38,9 +38,9 @@ class FragmentPlayListVideoPagingSource(
             val mediaItems = mediaStoreSettings
                 .map { setting ->
                     MediaItemForVideo(
-                        id = setting.MARK_ID.toLongOrNull() ?: 0,
+                        id = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
                         uriString = setting.info_uri_string,
-                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
+                        uriNumOnly = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
                         filename = setting.info_filename,
                         title = setting.info_title,
                         artist = setting.info_artist,
