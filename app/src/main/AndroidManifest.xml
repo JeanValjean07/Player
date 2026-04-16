@@ -36,6 +36,7 @@
         <activity android:name=".MainActivity"
             android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
+            android:hardwareAccelerated="true"
             android:label="播放器"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
@@ -50,6 +51,7 @@
             android:theme="@style/THEME_Player"
             android:label="播放器Neo"
             android:screenOrientation="unspecified"
+            android:hardwareAccelerated="true"
             android:configChanges="orientation|screenSize|screenLayout"
             android:launchMode="singleTask"
             android:exported="true"

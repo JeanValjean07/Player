@@ -978,6 +978,72 @@
                             android:text="仅控制拖动进度条时的时间戳刷新间隔。由于系统优化问题，部分系统在此更新间隔过短时出现掉帧。请根据设备情况适当调整。正常播放时的时间刷新间隔为1000毫秒，不提供修改。"
                             android:textSize="12sp" />
                     </LinearLayout>
+                    <!--  选单：进度条位置更新间隔  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:layout_weight="0"
+                                android:text="进度条位置刷新间隔"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCard_scrollerUpdateGap"
+                                android:layout_width="wrap_content"
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="2dp"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:cardElevation="1dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:id="@+id/ButtonText_scrollerUpdateGap"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="match_parent"
+                                        android:layout_marginStart="5dp"
+                                        android:gravity="center"
+                                        android:text="当前时间戳刷新间隔"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp"
+                                        />
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:padding="2dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_setting_arrow_down"
+                                        tools:ignore="ContentDescription" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                        </LinearLayout>
+                        <!--  提示信息  -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="播放时的进度条位置刷新间隔。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                     <!--  选单：播放器寻帧间隔  -->
                     <LinearLayout
                         android:layout_width="wrap_content"

@@ -3204,7 +3204,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                 scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
 
-                syncScrollTaskHandler.postDelayed(this, 1)
+                syncScrollTaskHandler.postDelayed(this, 33)
             }
         }
     }
