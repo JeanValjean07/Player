@@ -32,7 +32,10 @@
         tools:replace="android:allowBackup"
         tools:ignore="ForegroundServicePermission"
         tools:targetApi="33">
-        <!-- 主页:视频列表 -->
+
+
+
+        <!-- 主页 -->
         <activity android:name=".MainActivity"
             android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
@@ -122,7 +125,7 @@
 
 
         <!-- 后台播放服务 -->
-        <service android:name=".PlayerService"
+        <service android:name=".ActivityComponent.PlayerService.PlayerService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
@@ -132,7 +135,7 @@
             </intent-filter>
         </service>
         <!-- 悬浮窗服务 -->
-        <service android:name=".FloatingWindowService"
+        <service android:name=".IndepService.FloatingWindowService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
@@ -154,7 +157,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- 开放源代码许可
+        <!-- 谷歌oss
         <activity android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
             android:theme="@style/THEME_OSS"
             android:screenOrientation="portrait"
