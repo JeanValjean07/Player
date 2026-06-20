@@ -28,6 +28,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.ListFragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
@@ -35,8 +36,8 @@ import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("ComposableNaming")
@@ -44,7 +45,6 @@ import kotlinx.coroutines.launch
 @UnstableApi
 //@Suppress("unused")
 class FragmentPlayList: DialogFragment() {
-    //静态方法
     companion object {
         fun newInstance(): FragmentPlayList =
             FragmentPlayList().apply {
@@ -53,11 +53,9 @@ class FragmentPlayList: DialogFragment() {
                 )
             }
     }
-    //共享ViewModel
-    private val viewModel: PlayerListViewModel by activityViewModels()
-    //协程
-    private val coroutine_registerComponent = CoroutineScope(Dispatchers.IO)
 
+    //连接到ViewModel
+    private val viewModel: PlayerListViewModel by activityViewModels()
 
 
 
@@ -121,11 +119,71 @@ class FragmentPlayList: DialogFragment() {
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "SuspiciousIndentation")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //初始化界面
-        initInterface(view)
+        init(view)
+
+        register(view)
 
 
-        //注册操作按钮
-        coroutine_registerComponent.launch {
+        registerFragment()
+
+
+        registerViewPager(view)
+
+
+    }
+
+    private fun init(view: View){
+        //初始化全局元素
+        ButtonCard_Area = view.findViewById(R.id.TabScrollView)
+        ButtonCard_customList = view.findViewById(R.id.ButtonCardCustomList)
+        ButtonCard_videoList = view.findViewById(R.id.ButtonCardVideo)
+        ButtonCard_musicList = view.findViewById(R.id.ButtonCardMusic)
+
+        lifecycleScope.launch(Dispatchers.Main) {
+            //设置卡片高度
+            setCardHeight(view)
+
+
+
+            //执行其他
+            delay(500)
+            //监听返回手势
+            dialog?.setOnKeyListener { _, keyCode, event ->
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                    Dismiss(false)
+                    return@setOnKeyListener true
+                }
+                return@setOnKeyListener false
+            }
+        }
+    }
+    private fun setCardHeight(view: View){
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            //读取屏幕信息
+            val screenHeightPx = resources.displayMetrics.heightPixels
+            val targetHeightPx = (screenHeightPx * 0.7).toInt()
+            val density = resources.displayMetrics.density
+            val screenHeightDp = (screenHeightPx / density).toInt()
+            //操作主卡片视图
+            val mainCard = view.findViewById<CardView>(R.id.main_card)
+            mainCard.post {
+                if (screenHeightDp < 450){
+                    mainCard.layoutParams.height = screenHeightPx
+                }else{
+                    mainCard.layoutParams.height = targetHeightPx
+                }
+                mainCard.requestLayout()
+            }
+        }
+    }
+
+
+
+
+
+    //Main Thread Functions
+    private fun register(view: View){
+        lifecycleScope.launch(Dispatchers.Main) {
             //按钮：退出
             val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
             buttonExit.setOnClickListener {
@@ -241,39 +299,10 @@ class FragmentPlayList: DialogFragment() {
                 switchToMusicPageByButton()
             }
 
-
-        //coroutine_registerComponent END
         }
+    }
 
-
-
-        //启动viewPager
-        ViewPager = view.findViewById(R.id.ViewPager)
-        viewPagerAdapter = ViewPagerAdapter(this)
-        ViewPager.adapter = viewPagerAdapter
-        //开启页面监听器
-        startViewPagerListener()
-        //设置ViewPager缓存页面数量
-        ViewPager.offscreenPageLimit = 2
-        //默认显示列表
-        ViewPager.post {
-            if (viewPagerAdapter.itemCount > 0){
-                val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
-                //使用上一次的页面
-                if (acquiescePage == -1){
-                    val lastPageSign = PlayerListManager.get_state_LastPageSign(requireContext())
-                    ViewPager.setCurrentItem(lastPageSign, false)
-                }
-                //使用设置的固定默认页面
-                else if (acquiescePage in 0..2){
-                    ViewPager.setCurrentItem(acquiescePage, false)
-                }
-            }
-        }
-
-
-
-        //接收子Fragment返回值
+    private fun registerFragment(){
         childFragmentManager.setFragmentResultListener("FRAGMENT_CUSTOM_LIST_FRAGMENT", this){ _, bundle ->
             val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
             when(token){
@@ -307,18 +336,35 @@ class FragmentPlayList: DialogFragment() {
             }
         }
 
-
-        //监听返回手势
-        dialog?.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                Dismiss(false)
-                return@setOnKeyListener true
-            }
-            return@setOnKeyListener false
-        }
-    //onViewCreated END
     }
 
+    private fun registerViewPager(view: View){
+        //启动viewPager
+        ViewPager = view.findViewById(R.id.ViewPager)
+        viewPagerAdapter = ViewPagerAdapter(this)
+        ViewPager.adapter = viewPagerAdapter
+        //开启页面监听器
+        startViewPagerListener()
+        //设置ViewPager缓存页面数量
+        ViewPager.offscreenPageLimit = 2
+        //默认显示列表
+        ViewPager.post {
+            if (viewPagerAdapter.itemCount > 0){
+                val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
+                //使用上一次的页面
+                if (acquiescePage == -1){
+                    val lastPageSign = PlayerListManager.get_state_LastPageSign(requireContext())
+                    ViewPager.setCurrentItem(lastPageSign, false)
+                }
+                //使用设置的固定默认页面
+                else if (acquiescePage in 0..2){
+                    ViewPager.setCurrentItem(acquiescePage, false)
+                }
+            }
+        }
+
+
+    }
 
 
     //viewPager
@@ -332,11 +378,11 @@ class FragmentPlayList: DialogFragment() {
         //
         override fun createFragment(position: Int): Fragment =
             when (position) {
-                0 -> FragmentPlayListCustomFragment()
+                0 -> CustomListFragment()
 
-                1 -> FragmentPlayListVideoFragment()
+                1 -> VideoListFragment()
 
-                2 -> FragmentPlayListMusicFragment()
+                2 -> MusicListFragment()
 
                 else -> ListFragment()
             }
@@ -582,20 +628,6 @@ class FragmentPlayList: DialogFragment() {
 
 
 
-    //初始化界面
-    private fun initInterface(view: View){
-        //设置卡片高度
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            val MainCard = view.findViewById<CardView>(R.id.main_card)
-            MainCard.layoutParams.height = (resources.displayMetrics.heightPixels * 0.7).toInt()
-        }
-        //初始化全局元素
-        ButtonCard_Area = view.findViewById(R.id.TabScrollView)
-        ButtonCard_customList = view.findViewById(R.id.ButtonCardCustomList)
-        ButtonCard_videoList = view.findViewById(R.id.ButtonCardVideo)
-        ButtonCard_musicList = view.findViewById(R.id.ButtonCardMusic)
-
-    }
 
 
 

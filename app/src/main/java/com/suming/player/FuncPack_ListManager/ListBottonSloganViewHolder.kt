@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.databinding.ActivityPlayerFragmentPlayListFooterBinding
 
-class FragmentListBottonSloganViewHolder(parent: ViewGroup, retry: () -> Unit):RecyclerView.ViewHolder(
+class ListBottonSloganViewHolder(parent: ViewGroup, retry: () -> Unit):RecyclerView.ViewHolder(
     LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_footer, parent, false)
 ){
 

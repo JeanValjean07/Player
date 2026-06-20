@@ -28,26 +28,28 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @UnstableApi
 @RequiresApi(Build.VERSION_CODES.Q)
-class MainFragVideoStoreSetting: DialogFragment() {
-    //静态
+class FragmentVideoStoreSetting: DialogFragment() {
     companion object {
         fun newInstance():
-                MainFragVideoStoreSetting = MainFragVideoStoreSetting().apply { arguments =
+                FragmentVideoStoreSetting = FragmentVideoStoreSetting().apply { arguments =
             bundleOf()
         }
     }
     //自动关闭标志位
     private var lockPage = false
-    //开关
-    private lateinit var switch_EnableFileExistCheck: SwitchCompat
-    private lateinit var switch_QueryNewVideoOnStart: SwitchCompat
+
+
     //常规设置项
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
@@ -56,6 +58,8 @@ class MainFragVideoStoreSetting: DialogFragment() {
     //排序设置项
     private var PREFS_video_sortOrder: String = "info_title"
     private var PREFS_video_sortOrientation: String = "DESC"
+
+
 
 
     override fun onStart() {
@@ -110,9 +114,59 @@ class MainFragVideoStoreSetting: DialogFragment() {
 
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        //初始化
+        init(view)
+
+        register(view)
+
+
+    }
+
+    private fun init(view: View){
+        lifecycleScope.launch(Dispatchers.Main) {
+            //设置卡片高度
+            setCardHeight(view)
+
+
+            //执行其他
+            delay(500)
+            //监听返回手势
+            dialog?.setOnKeyListener { _, keyCode, event ->
+                if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                    Dismiss(false)
+                    return@setOnKeyListener true
+                }
+                return@setOnKeyListener false
+            }
+        }
+    }
+    private fun setCardHeight(view: View){
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            //读取屏幕信息
+            val screenHeightPx = resources.displayMetrics.heightPixels
+            val targetHeightPx = (screenHeightPx * 0.7).toInt()
+            val density = resources.displayMetrics.density
+            val screenHeightDp = (screenHeightPx / density).toInt()
+            //操作主卡片视图
+            val mainCard = view.findViewById<CardView>(R.id.main_card)
+            mainCard.post {
+                if (screenHeightDp < 450){
+                    mainCard.layoutParams.height = screenHeightPx
+                }else{
+                    mainCard.layoutParams.height = targetHeightPx
+                }
+                mainCard.requestLayout()
+            }
+        }
+    }
+
+
+
+    //Main Thread Functions
+    private fun register(view: View){
         //开关实例初始化
-        switch_EnableFileExistCheck = view.findViewById(R.id.switch_EnableFileExistCheck)
-        switch_QueryNewVideoOnStart = view.findViewById(R.id.switch_QueryNewVideoOnStart)
+        val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
+        val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
         //读取设置
         PREFS_MediaStore = context?.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)!!
         if (!PREFS_MediaStore.contains("PREFS_EnableFileExistCheck")) {
@@ -313,16 +367,6 @@ class MainFragVideoStoreSetting: DialogFragment() {
         }
 
 
-
-        //监听返回手势(DialogFragment)
-        dialog?.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                Dismiss(false)
-                return@setOnKeyListener true
-            }
-            return@setOnKeyListener false
-        }
-    //onViewCreated END
     }
 
 

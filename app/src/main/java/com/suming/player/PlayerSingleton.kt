@@ -48,7 +48,7 @@ import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncPack_ListManager.PlayerListManager
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaUriManager
-import com.suming.player.FuncionalPack.StorageManager
+import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.DataPack.DataBaseMediaItem.MediaItemRepo
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
@@ -526,7 +526,7 @@ object PlayerSingleton {
         val cover_img_path = when (MediaInfo_MediaType) {
             "video" -> {
                 File(
-                    StorageManager.get_ArtworkPath_cover_video(context),
+                    ArtworkFrameManager.get_Artwork_Path_video(context),
                     "${MediaInfo_uriNumOnly}.webp"
                 )
             }
@@ -535,7 +535,7 @@ object PlayerSingleton {
             }
             else -> {
                 File(
-                    StorageManager.get_ArtworkPath_cover_video(context),
+                    ArtworkFrameManager.get_Artwork_Path_video(context),
                     "${MediaInfo_uriNumOnly}.webp"
                 )
             }

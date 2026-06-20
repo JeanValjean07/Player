@@ -9,7 +9,7 @@ import com.suming.player.DataPack.MediaModel.MediaItemForMusic
 
 @UnstableApi
 @Suppress("unused")
-class FragmentPlayListMusicPagingSource(
+class MusicListPagingSource(
     private val context: Context,
 ) : PagingSource<Int, MediaItemForMusic>() {
 

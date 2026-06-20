@@ -18,11 +18,11 @@ class PlayerListViewModel(application: Application) : AndroidViewModel(applicati
 
 
     //
-    var FragmentPlayListCustomFragment: FragmentPlayListCustomFragment? = null
+    var FragmentPlayListCustomFragment: CustomListFragment? = null
 
-    var FragmentPlayListVideoFragment: FragmentPlayListVideoFragment? = null
+    var FragmentPlayListVideoFragment: VideoListFragment? = null
 
-    var FragmentPlayListMusicFragment: FragmentPlayListMusicFragment? = null
+    var FragmentPlayListMusicFragment: MusicListFragment? = null
 
 
 

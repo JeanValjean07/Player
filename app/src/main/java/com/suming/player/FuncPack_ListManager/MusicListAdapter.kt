@@ -2,6 +2,7 @@ package com.suming.player.FuncPack_ListManager
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.View
@@ -11,8 +12,10 @@ import android.widget.TextView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterMusic.ViewHolder
 import com.suming.player.R
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.FuncionalPack.ArtworkFrameManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,11 +25,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 @Suppress("unused")
-class FragmentPlayListMusicAdapter(
-    context: Context,
+class MusicListAdapter(
+    private val context: Context,
     private val onAddToListClick: (String) -> Unit,
     private val onPlayClick: (String) -> Unit
-): PagingDataAdapter<MediaItemForMusic, FragmentPlayListMusicAdapter.viewHolder>(diffCallback) {
+): PagingDataAdapter<MediaItemForMusic, MusicListAdapter.viewHolder>(diffCallback) {
     companion object {
         //比较器
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForMusic>() {
@@ -40,7 +43,8 @@ class FragmentPlayListMusicAdapter(
 
 
     }
-    //viewHolder
+
+
     class viewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
         var itemFrameJob: Job? = null
@@ -49,9 +53,9 @@ class FragmentPlayListMusicAdapter(
         val ButtonAddToList: ImageView = itemView.findViewById(R.id.ButtonAddToList)
         val ButtonPlay: ImageView = itemView.findViewById(R.id.ButtonPlay)
     }
-    //协程作用域
-    private val coroutineScope_LoadFrame = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val covers_path = File(context.filesDir, "miniature/music_cover")
+    //协程
+    private val coroutine_loadArtwork = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val coroutine_loadArtwork_in = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
 
 
@@ -66,7 +70,9 @@ class FragmentPlayListMusicAdapter(
         holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
         holder.itemFrameJob?.cancel()
-        holder.itemFrameJob = coroutineScope_LoadFrame.launch { setHolderFrame(item, holder) }
+        holder.itemFrameJob = coroutine_loadArtwork.launch {
+            loadArtworkFrame(item, holder)
+        }
         //点击事件设定
         holder.ButtonAddToList.setOnClickListener { onAddToListClick(item.uriString) }
         holder.ButtonPlay.setOnClickListener { onPlayClick(item.uriString) }
@@ -88,34 +94,34 @@ class FragmentPlayListMusicAdapter(
 
 
 
-    //检查缩略图
-    private suspend fun setHolderFrame(item: MediaItemForMusic, holder: viewHolder) {
-        val imageTag = item.filename.hashCode().toString()
+    //Long Thread Functions
+    private fun loadArtworkFrame(item: MediaItemForMusic, holder: viewHolder)   {
         //记录holder的tag
-        withContext(Dispatchers.Main) {
-            holder.itemFrame.tag = imageTag
-        }
-        //设置文件
-        val cover_item_file = File(covers_path, "${item.uriNumOnly}.webp")
-        //检查是否存在
-        if (cover_item_file.exists()){
-            val frame = BitmapFactory.decodeFile(cover_item_file.absolutePath)
-            withContext(Dispatchers.Main) {
-                if (holder.itemFrame.tag == imageTag) {
-                    holder.itemFrame.setImageBitmap(frame)
-                    //holder.itemFrame.startAnimation(FadeInAnimation)
-                } else {
-                    frame?.recycle()
+        val imageTag = item.uriNumOnly.hashCode().toString()
+        holder.itemFrame.tag = imageTag
+
+        //取出目标缩略图文件
+        coroutine_loadArtwork_in.launch {
+            val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, ArtworkFrameManager.artwork_type_audio, item.uriNumOnly)
+            if (Bitmap != null){
+                //推到ImageView
+                withContext(Dispatchers.Main) {
+                    if (holder.itemFrame.tag == imageTag) {
+                        submitToImageView(holder,Bitmap)
+                    }else{ Bitmap.recycle() }
                 }
             }
         }
-        //不存在,生成图片
-        else{
-           //generateCoverFrame(item, holder)
-        }
+    }
+
+    //推送到ImageView
+    private fun submitToImageView(holder: viewHolder,Bitmap : Bitmap){
+        holder.itemFrame.setImageBitmap(Bitmap)
 
     }
 
 
-//adapter END
+
+
+
 }

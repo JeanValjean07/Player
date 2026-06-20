@@ -59,8 +59,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
             bundleOf()
         }
     }
+
     //连接到共享ViewModel
     private val vm: PlayerViewModel by activityViewModels()
+
 
 
 
@@ -133,10 +135,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private fun init(view: View){
         lifecycleScope.launch(Dispatchers.Main) {
             //设置卡片高度
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-                val MainCard = view.findViewById<CardView>(R.id.main_card)
-                MainCard.layoutParams.height = (resources.displayMetrics.heightPixels * 0.7).toInt()
-            }
+            setCardHeight(view)
 
 
             //执行其他
@@ -151,6 +150,25 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
         }
     }
+    private fun setCardHeight(view: View){
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
+            //读取屏幕信息
+            val screenHeightPx = resources.displayMetrics.heightPixels
+            val targetHeightPx = (screenHeightPx * 0.7).toInt()
+            val density = resources.displayMetrics.density
+            val screenHeightDp = (screenHeightPx / density).toInt()
+            //操作主卡片视图
+            val mainCard = view.findViewById<CardView>(R.id.main_card)
+            mainCard.post {
+                if (screenHeightDp < 450){
+                    mainCard.layoutParams.height = screenHeightPx
+                }else{
+                    mainCard.layoutParams.height = targetHeightPx
+                }
+                mainCard.requestLayout()
+            }
+        }
+    }
 
 
 
@@ -158,6 +176,95 @@ class PlayerFragmentMoreButton: DialogFragment() {
     @SuppressLint("ClickableViewAccessibility")
     private fun register(view: View){
         lifecycleScope.launch(Dispatchers.Main) {
+            //delay(100)
+
+
+            //循环模式
+            updateLoopModeText(view)
+            val ButtonCardLoopMode = view.findViewById<CardView>(R.id.ButtonCardLoopMode)
+            ButtonCardLoopMode.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                val popup = PopupMenu(requireContext(), ButtonCardLoopMode)
+                popup.menuInflater.inflate(R.menu.activity_player_popup_loop_mode, popup.menu)
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.LoopMode_ONE -> {
+                            chooseLoopMode("ONE",view); true
+                        }
+                        R.id.LoopMode_ALL -> {
+                            chooseLoopMode("ALL",view); true
+                        }
+                        R.id.LoopMode_OFF -> {
+                            chooseLoopMode("OFF",view); true
+                        }
+                        else -> true
+                    }
+                }
+                popup.show()
+            }
+            //倍速管理
+            updatePlaySpeedText(view)
+            val ButtonCardPlaySpeed = view.findViewById<CardView>(R.id.ButtonCardPlaySpeed)
+            ButtonCardPlaySpeed.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                val popup = PopupMenu(requireContext(), ButtonCardPlaySpeed)
+                popup.menuInflater.inflate(R.menu.activity_player_popup_video_speed, popup.menu)
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.MenuAction_0_5 -> {
+                            choosePresetSpeed(0.5f,view); true
+                        }
+                        R.id.MenuAction_1_0 -> {
+                            choosePresetSpeed(1.0f,view); true
+                        }
+                        R.id.MenuAction_1_5 -> {
+                            choosePresetSpeed(1.5f,view); true
+                        }
+                        R.id.MenuAction_2_0 -> {
+                            choosePresetSpeed(2.0f,view); true
+                        }
+                        R.id.MenuAction_Input -> {
+                            setSpeedByInput(); true
+                        }
+                        else -> true
+                    }
+                }
+                popup.show()
+            }
+            //定时关闭
+            updateAutoShutText(view)
+            val ButtonCardAutoShut = view.findViewById<CardView>(R.id.ButtonCardAutoShut)
+            ButtonCardAutoShut.setOnClickListener { _ ->
+                ToolVibrate().vibrate(requireContext())
+                val popup = PopupMenu(requireContext(), ButtonCardAutoShut)
+                popup.menuInflater.inflate(R.menu.activity_player_popup_timer_shut_down, popup.menu)
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.MenuAction_0 -> {
+                            chooseCountDownDuration(0,view); true
+                        }
+                        R.id.MenuAction_15 -> {
+                            chooseCountDownDuration(15,view); true
+                        }
+                        R.id.MenuAction_30 -> {
+                            chooseCountDownDuration(30,view); true
+                        }
+                        R.id.MenuAction_60 -> {
+                            chooseCountDownDuration(60,view); true
+                        }
+                        R.id.MenuAction_90 -> {
+                            chooseCountDownDuration(90,view); true
+                        }
+                        R.id.MenuAction_Input -> {
+                            setShutDownTimeByInput(view); true
+                        }
+                        else -> true
+                    }
+                }
+                popup.show()
+            }
+
+
             //按钮：退出
             val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
             ButtonExit.setOnClickListener {
@@ -355,90 +462,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
 
-            //循环模式
-            updateLoopModeText(view)
-            val ButtonCardLoopMode = view.findViewById<CardView>(R.id.ButtonCardLoopMode)
-            ButtonCardLoopMode.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
-                val popup = PopupMenu(requireContext(), ButtonCardLoopMode)
-                popup.menuInflater.inflate(R.menu.activity_player_popup_loop_mode, popup.menu)
-                popup.setOnMenuItemClickListener { item ->
-                    when (item.itemId) {
-                        R.id.LoopMode_ONE -> {
-                            chooseLoopMode("ONE",view); true
-                        }
-                        R.id.LoopMode_ALL -> {
-                            chooseLoopMode("ALL",view); true
-                        }
-                        R.id.LoopMode_OFF -> {
-                            chooseLoopMode("OFF",view); true
-                        }
-                        else -> true
-                    }
-                }
-                popup.show()
-            }
-            //倍速管理
-            updatePlaySpeedText(view)
-            val ButtonCardPlaySpeed = view.findViewById<CardView>(R.id.ButtonCardPlaySpeed)
-            ButtonCardPlaySpeed.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
-                val popup = PopupMenu(requireContext(), ButtonCardPlaySpeed)
-                popup.menuInflater.inflate(R.menu.activity_player_popup_video_speed, popup.menu)
-                popup.setOnMenuItemClickListener { item ->
-                    when (item.itemId) {
-                        R.id.MenuAction_0_5 -> {
-                            choosePresetSpeed(0.5f,view); true
-                        }
-                        R.id.MenuAction_1_0 -> {
-                            choosePresetSpeed(1.0f,view); true
-                        }
-                        R.id.MenuAction_1_5 -> {
-                            choosePresetSpeed(1.5f,view); true
-                        }
-                        R.id.MenuAction_2_0 -> {
-                            choosePresetSpeed(2.0f,view); true
-                        }
-                        R.id.MenuAction_Input -> {
-                            setSpeedByInput(); true
-                        }
-                        else -> true
-                    }
-                }
-                popup.show()
-            }
-            //定时关闭
-            updateAutoShutText(view)
-            val ButtonCardAutoShut = view.findViewById<CardView>(R.id.ButtonCardAutoShut)
-            ButtonCardAutoShut.setOnClickListener { _ ->
-                ToolVibrate().vibrate(requireContext())
-                val popup = PopupMenu(requireContext(), ButtonCardAutoShut)
-                popup.menuInflater.inflate(R.menu.activity_player_popup_timer_shut_down, popup.menu)
-                popup.setOnMenuItemClickListener { item ->
-                    when (item.itemId) {
-                        R.id.MenuAction_0 -> {
-                            chooseCountDownDuration(0,view); true
-                        }
-                        R.id.MenuAction_15 -> {
-                            chooseCountDownDuration(15,view); true
-                        }
-                        R.id.MenuAction_30 -> {
-                            chooseCountDownDuration(30,view); true
-                        }
-                        R.id.MenuAction_60 -> {
-                            chooseCountDownDuration(60,view); true
-                        }
-                        R.id.MenuAction_90 -> {
-                            chooseCountDownDuration(90,view); true
-                        }
-                        R.id.MenuAction_Input -> {
-                            setShutDownTimeByInput(view); true
-                        }
-                        else -> true
-                    }
-                }
-                popup.show()
-            }
+
+
+
 
 
             //截屏

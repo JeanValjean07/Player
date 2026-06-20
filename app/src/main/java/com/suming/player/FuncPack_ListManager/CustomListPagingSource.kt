@@ -8,7 +8,7 @@ import com.suming.player.DataPack.MediaModel.MiniMediaItemForList
 
 @UnstableApi
 @Suppress("unused")
-class FragmentPlayListCustomPagingSource(
+class CustomListPagingSource(
     private val context: Context,
 ) : PagingSource<Int, MiniMediaItemForList>() {
 

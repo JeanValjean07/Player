@@ -9,7 +9,7 @@ import com.suming.player.DataPack.MediaModel.MediaItemForVideo
 
 @UnstableApi
 @Suppress("unused")
-class FragmentPlayListVideoPagingSource(
+class VideoListPagingSource(
     private val context: Context,
 ) : PagingSource<Int, MediaItemForVideo>() {
 

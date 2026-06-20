@@ -4,15 +4,15 @@ import android.view.ViewGroup
 import androidx.paging.LoadState
 import androidx.paging.LoadStateAdapter
 
-class FragmentListBottomSloganAdapter(private val retry: () -> Unit):LoadStateAdapter<FragmentListBottonSloganViewHolder>() {
+class ListBottomSloganAdapter(private val retry: () -> Unit):LoadStateAdapter<ListBottonSloganViewHolder>() {
 
 
-    override fun onCreateViewHolder(parent: ViewGroup, loadState: LoadState):FragmentListBottonSloganViewHolder{
+    override fun onCreateViewHolder(parent: ViewGroup, loadState: LoadState):ListBottonSloganViewHolder{
 
-        return FragmentListBottonSloganViewHolder(parent, retry)
+        return ListBottonSloganViewHolder(parent, retry)
     }
 
-    override fun onBindViewHolder(holder: FragmentListBottonSloganViewHolder, loadState: LoadState){
+    override fun onBindViewHolder(holder: ListBottonSloganViewHolder, loadState: LoadState){
         holder.bind(loadState)
     }
 

@@ -109,6 +109,8 @@ import com.suming.player.FuncionalPack.FrameListener
 import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.IndepService.FloatingWindowService
 import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
+import com.suming.player.FuncionalPack.ArtworkCapturer
+import com.suming.player.FuncionalPack.ArtworkFrameManager
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.CoroutineScope
@@ -2234,17 +2236,21 @@ class PlayerActivityNeo: AppCompatActivity(){
     @SuppressLint("UseKtx")
     private fun CaptureCurrentFrameAsCover(uniqueID: String) {
         fun handleSuccess(bitmap: Bitmap) {
-            //创建文件占位并保存
-            val cover_file = File(filesDir, "miniature/video_cover/${uniqueID}.webp")
-            cover_file.parentFile?.mkdirs()
-            cover_file.outputStream().use {
-                bitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
-            }
+            //保存图片
+            ArtworkFrameManager.save_Artwork_Frame_Bitmap(
+                this@PlayerActivityNeo,
+                ArtworkFrameManager.artwork_type_video,
+                uniqueID.toLong(),
+                bitmap
+            )
+
+            //恢复播放状态
+            if (vm.wasPlaying){ player.play() }
+
             //发布完成消息
             ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uniqueID))
             showCustomToast("截取封面完成", 3)
-            //恢复播放状态
-            if (vm.wasPlaying){ player.play() }
+
         }
         //记录原本的播放状态
         vm.wasPlaying = player.isPlaying
@@ -2268,60 +2274,26 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun useDefaultCover(uniqueID: String){
-        val defaultCoverBitmap = vectorToBitmap(this, R.drawable.ic_album_video_album)
-        if (defaultCoverBitmap == null) {
-            showCustomToast("从本地文件提取默认封面素材失败", 3)
+        //获取默认封面
+        val bitmap = ArtworkCapturer.getDefaultVideoCoverFrame(this@PlayerActivityNeo)
+        if (bitmap == null) {
+            showCustomToast("默认封面素材提取失败", 3)
             return
         }
-        val processedBitmap = processCenterCrop(defaultCoverBitmap)
-        //创建目录
-        val covers_path = File(filesDir, "miniature/video_cover")
-        if (!covers_path.exists()) { covers_path.mkdirs() }
+
         //保存图片
-        val cover_item_file = File(covers_path, "${uniqueID}.webp")
-        cover_item_file.outputStream().use {
-            processedBitmap.compress(Bitmap.CompressFormat.WEBP, 100, it)
-        }
+        ArtworkFrameManager.save_Artwork_Frame_Bitmap(
+            this@PlayerActivityNeo,
+            ArtworkFrameManager.artwork_type_video,
+            uniqueID.toLong(),
+            bitmap
+        )
+
+
         //发布完成消息
         ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uniqueID))
         showCustomToast("已完成", 3)
     }
-    private fun processCenterCrop(src: Bitmap): Bitmap {
-        //以后可以添加为传入量
-        //processCenterCrop(src: Bitmap, targetWidth: Int = 300, targetHeight: Int): Bitmap {
-        val targetWidth = 400
-        val targetHeight = (targetWidth * 10 / 9)
-
-        val srcWidth = src.width
-        val srcHeight = src.height
-
-        val scale = (targetWidth.toFloat() / srcWidth).coerceAtLeast(targetHeight.toFloat() / srcHeight)
-
-        val scaledWidth = scale * srcWidth
-        val scaledHeight = scale * srcHeight
-
-        val left = (targetWidth - scaledWidth) / 2f
-        val top = (targetHeight - scaledHeight) / 2f
-
-        val targetBitmap = createBitmap(targetWidth, targetHeight, Bitmap.Config.RGB_565)
-        val canvas = Canvas(targetBitmap)
-        val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG)
-
-        val destRect = RectF(left, top, left + scaledWidth, top + scaledHeight)
-        canvas.drawBitmap(src, null, destRect, paint)
-
-        return targetBitmap
-    }
-    private fun vectorToBitmap(context: Context, @DrawableRes resId: Int): Bitmap? {
-        val drawable = AppCompatResources.getDrawable(context, resId) ?: return null
-
-        val bitmap = createBitmap(400, 600)
-        val canvas = Canvas(bitmap)
-        drawable.setBounds(0, 0, canvas.width, canvas.height)
-        drawable.draw(canvas)
-
-        return bitmap
-    } //矢量图转Bitmap
     //分享视频by uri
     private fun shareVideo(context: Context, videoUri: Uri) {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -2895,8 +2867,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //进度条端点配置:仅在新晋播放页使用
     private fun setScrollerPadding(){
 
-        scroller.layoutManager =
-            LinearLayoutManager(this@PlayerActivityNeo, LinearLayoutManager.HORIZONTAL, false)
+        scroller.layoutManager = LinearLayoutManager(this@PlayerActivityNeo, LinearLayoutManager.HORIZONTAL, false)
         scroller.itemAnimator = null
         scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         scroller.layoutParams.width = 0

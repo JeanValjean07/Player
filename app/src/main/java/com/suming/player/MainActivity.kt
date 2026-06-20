@@ -50,10 +50,10 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.ActivityComponent.MainActivity.MainFragMusicStoreSetting
-import com.suming.player.ActivityComponent.MainActivity.MainFragVideoStoreSetting
-import com.suming.player.ActivityComponent.MainActivity.MainMusicAdapter
-import com.suming.player.ActivityComponent.MainActivity.MainVideoAdapter
+import com.suming.player.ActivityComponent.MainActivity.FragmentMusicStoreSetting
+import com.suming.player.ActivityComponent.MainActivity.FragmentVideoStoreSetting
+import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterMusic
+import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterVideo
 import com.suming.player.ActivityComponent.MainActivity.MainViewModel
 import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.AddonTools.ToolVibrate
@@ -67,7 +67,6 @@ import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForVideo
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -87,8 +86,8 @@ class MainActivity: AppCompatActivity() {
     private var lock_clickMillisLock = 0L
     //界面控件元素
     //<editor-fold desc="界面控件元素">
-    private lateinit var main_video_list_adapter: MainVideoAdapter
-    private lateinit var main_music_list_adapter: MainMusicAdapter
+    private lateinit var main_video_list_adapter: RecyclerAdapterVideo
+    private lateinit var main_music_list_adapter: RecyclerAdapterMusic
     private lateinit var main_video_list_adapter_RecyclerView: RecyclerView
     private lateinit var main_music_list_adapter_RecyclerView: RecyclerView
     private lateinit var AppBarTitle: TextView
@@ -109,10 +108,6 @@ class MainActivity: AppCompatActivity() {
     private var state_onFirstStart = false
     private var state_PlayingCard_showing = false
     private var state_PlayingCard_gone = true
-    //协程
-    private var coroutine_registerInterface = CoroutineScope(Dispatchers.Main)
-    private var coroutine_setupGestureListener = CoroutineScope(Dispatchers.Main)
-    private var coroutine_setupFragmentLinker = CoroutineScope(Dispatchers.Main)
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -195,8 +190,6 @@ class MainActivity: AppCompatActivity() {
 
 
 
-
-
         //
         if (savedInstanceState == null){
             //使用上一次的页面
@@ -235,8 +228,10 @@ class MainActivity: AppCompatActivity() {
             //NestedScrollView_VideoList.post { NestedScrollView_VideoList.scrollY = savedInstanceState.getInt("state_NestedScrollView_Y", 0) }
         }
 
+
         //注册界面控件
-        coroutine_registerInterface.launch {
+        lifecycleScope.launch (Dispatchers.Main) {
+            delay(500)
             //按钮：指南
             val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
             ButtonGuidance.setOnClickListener {
@@ -263,10 +258,10 @@ class MainActivity: AppCompatActivity() {
             ButtonMediaStoreSetting.setOnClickListener {
                 ToolVibrate().vibrate(this@MainActivity)
                 if (state_currentPage == "video"){
-                    MainFragVideoStoreSetting.newInstance().show(supportFragmentManager, "MainFragVideoStoreSetting")
+                    FragmentVideoStoreSetting.newInstance().show(supportFragmentManager, "MainFragVideoStoreSetting")
                 }
                 else if (state_currentPage == "music"){
-                    MainFragMusicStoreSetting.newInstance().show(supportFragmentManager, "MainFragMusicStoreSetting")
+                    FragmentMusicStoreSetting.newInstance().show(supportFragmentManager, "MainFragMusicStoreSetting")
                 }
             }
             //页签按钮
@@ -290,9 +285,9 @@ class MainActivity: AppCompatActivity() {
                 showCustomToast("陈列架功能暂未开放",3)
             }
         }
-
         //注册Fragment通信
-        coroutine_setupFragmentLinker.launch {
+        lifecycleScope.launch (Dispatchers.Main) {
+            delay(500)
             //视频媒体库设置返回值
             supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_VIDEO_MediaStore", this@MainActivity) { _, bundle ->
                 val ReceiveKey = bundle.getString("KEY")
@@ -333,9 +328,9 @@ class MainActivity: AppCompatActivity() {
                 }
             }
         }
-
-        //手势监听线程
-        coroutine_setupGestureListener.launch {
+        //手势监听
+        lifecycleScope.launch (Dispatchers.Main) {
+            delay(500)
             //监听返回手势
             onBackPressedDispatcher.addCallback(this@MainActivity, object: OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
@@ -1115,10 +1110,9 @@ class MainActivity: AppCompatActivity() {
             if (state_VideoDataBaseReaded_N_AdapterBinded){ return }
             state_VideoDataBaseReaded_N_AdapterBinded = true
             //设置列表布局管理器
-            main_video_list_adapter_RecyclerView.layoutManager =
-                LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+            main_video_list_adapter_RecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
             //注册点击事件
-            main_video_list_adapter = MainVideoAdapter(
+            main_video_list_adapter = RecyclerAdapterVideo(
                 context = this,
                 onItemClick = { uri ->
                     startVideoPlayer(uri)
@@ -1142,6 +1136,8 @@ class MainActivity: AppCompatActivity() {
                     startSmallCardPlay(uri.toUri(), title)
                 }
             )
+            //增加sidePadding
+            main_video_list_adapter_RecyclerView.setPadding(0, 0, 0, 300)
             //设置adapter
             main_video_list_adapter_RecyclerView.adapter = main_video_list_adapter
             //分页加载
@@ -1161,10 +1157,9 @@ class MainActivity: AppCompatActivity() {
             if (state_MusicDataBaseReaded_N_AdapterBinded){ return }
             state_MusicDataBaseReaded_N_AdapterBinded = true
             //设置列表布局管理器
-            main_music_list_adapter_RecyclerView.layoutManager =
-                LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+            main_music_list_adapter_RecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
             //注册点击事件
-            main_music_list_adapter = MainMusicAdapter(
+            main_music_list_adapter = RecyclerAdapterMusic(
                 context = this,
                 onItemClick = { uri ->
                     ToolVibrate().vibrate(this@MainActivity)
@@ -1175,6 +1170,8 @@ class MainActivity: AppCompatActivity() {
 
                 },
             )
+            //增加sidePadding
+            main_music_list_adapter_RecyclerView.setPadding(0, 0, 0, 300)
             //设置adapter
             main_music_list_adapter_RecyclerView.adapter = main_music_list_adapter
             //分页加载
@@ -1184,7 +1181,7 @@ class MainActivity: AppCompatActivity() {
                     prefetchDistance = 40,
                     enablePlaceholders = false,
                     initialLoadSize = 200,
-                    maxSize = PagingConfig.Companion.MAX_SIZE_UNBOUNDED,
+                    maxSize = PagingConfig.MAX_SIZE_UNBOUNDED,
                     jumpThreshold = Int.MIN_VALUE
                 )
             ) {
@@ -1457,8 +1454,8 @@ class MainActivity: AppCompatActivity() {
     private val disposable_withExtraString = ToolEventBus.events_withExtraString.subscribe {
         when (it.key) {
             "PlayerActivity_CoverChanged" -> {
-                it.stringInfo?.let { uriNumOnlyString ->
-                    main_video_list_adapter.updateCoverForVideo(uriNumOnlyString)
+                it.stringInfo?.let { uriNumOnly ->
+                    main_video_list_adapter.updateCoverForVideo(uriNumOnly.toLong())
                 }
             }
         }

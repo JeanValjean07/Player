@@ -31,10 +31,10 @@ import kotlinx.coroutines.launch
 @UnstableApi
 @Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment_play_list_live_page){
+class VideoListFragment():Fragment(R.layout.activity_player_fragment_play_list_live_page){
     companion object {
-        fun newInstance(): FragmentPlayListVideoFragment {
-            return FragmentPlayListVideoFragment().apply{
+        fun newInstance(): VideoListFragment {
+            return VideoListFragment().apply{
                 arguments = bundleOf()
             }
         }
@@ -53,7 +53,7 @@ class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     //RecyclerView
     private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerView_video_adapter: FragmentPlayListVideoAdapter
+    private lateinit var recyclerView_video_adapter: VideoListAdapter
     private var state_adapter_load_complete = false
 
 
@@ -172,13 +172,13 @@ class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment
         //设置管理器
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         //初始化adapter + 设置点击事件
-        recyclerView_video_adapter = FragmentPlayListVideoAdapter(
+        recyclerView_video_adapter = VideoListAdapter(
                 requireContext(),
                 onAddToListClick = { uriString -> onAddToListClick(uriString.toUri()) },
                 onPlayClick = { uriString -> onPlayClick(uriString.toUri()) },
             )
         //添加页脚
-        val adapterWithFooter = recyclerView_video_adapter.withLoadStateFooter(footer = FragmentListBottomSloganAdapter {
+        val adapterWithFooter = recyclerView_video_adapter.withLoadStateFooter(footer = ListBottomSloganAdapter {
                 recyclerView_video_adapter.retry()
             })
         //设置adapter
@@ -186,7 +186,7 @@ class FragmentPlayListVideoFragment():Fragment(R.layout.activity_player_fragment
 
         //开始分页加载
         val pager = Pager(PagingConfig(pageSize = 20)) {
-            FragmentPlayListVideoPagingSource(requireContext())
+            VideoListPagingSource(requireContext())
         }
         lifecycleScope.launch {
             pager.flow.collect { pagingData ->

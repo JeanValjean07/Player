@@ -31,10 +31,10 @@ import kotlinx.coroutines.launch
 @UnstableApi
 //@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class FragmentPlayListCustomFragment():Fragment(R.layout.activity_player_fragment_play_list_custom_page){
+class CustomListFragment():Fragment(R.layout.activity_player_fragment_play_list_custom_page){
     companion object {
-        fun newInstance(): FragmentPlayListCustomFragment {
-            return FragmentPlayListCustomFragment().apply{
+        fun newInstance(): CustomListFragment {
+            return CustomListFragment().apply{
                 arguments = bundleOf()
             }
         }
@@ -56,7 +56,7 @@ class FragmentPlayListCustomFragment():Fragment(R.layout.activity_player_fragmen
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     //recyclerView
     private lateinit var recyclerView: RecyclerView
-    private var recyclerView_custom_list_adapter: FragmentPlayListCustomAdapter? = null
+    private var recyclerView_custom_list_adapter: CustomListAdapter? = null
     private var state_adapter_load_complete = false
 
 
@@ -171,7 +171,7 @@ class FragmentPlayListCustomFragment():Fragment(R.layout.activity_player_fragmen
         //设置管理器
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         //合成适配器
-        recyclerView_custom_list_adapter = FragmentPlayListCustomAdapter(
+        recyclerView_custom_list_adapter = CustomListAdapter(
             requireContext(),
             onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) },
             onPlayClick = { uri -> onPlayClick(uri) },
@@ -180,7 +180,7 @@ class FragmentPlayListCustomFragment():Fragment(R.layout.activity_player_fragmen
         recyclerView.adapter = recyclerView_custom_list_adapter
         //分页加载
         val pager = Pager(PagingConfig(pageSize = 20)) {
-            FragmentPlayListCustomPagingSource(requireContext())
+            CustomListPagingSource(requireContext())
         }
         //分页加载数据
         lifecycleScope.launch{

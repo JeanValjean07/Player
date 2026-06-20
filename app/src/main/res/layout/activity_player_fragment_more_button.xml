@@ -56,6 +56,7 @@
                         android:tooltipText="关闭本页面" />
                     <!-- 标题文本：更多选项 -->
                     <TextView
+                        android:id="@+id/title_force_view"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="更多选项"

@@ -23,11 +23,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 @Suppress("unused")
-class FragmentPlayListCustomAdapter(
+class CustomListAdapter(
     private val context: Context,
     private val onDeleteClick: (Long) -> Unit,
     private val onPlayClick: (Uri) -> Unit
-):PagingDataAdapter<MiniMediaItemForList, FragmentPlayListCustomAdapter.viewHolder>(DiffUtil)  {
+):PagingDataAdapter<MiniMediaItemForList, CustomListAdapter.viewHolder>(DiffUtil)  {
     companion object {
         //比较器
         val DiffUtil = object : DiffUtil.ItemCallback<MiniMediaItemForList>() {

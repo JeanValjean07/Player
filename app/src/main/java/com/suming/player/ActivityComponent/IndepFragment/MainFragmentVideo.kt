@@ -1,4 +1,4 @@
-package com.suming.player.ActivityComponent.MainActivity
+package com.suming.player.ActivityComponent.IndepFragment
 
 import android.os.Build
 import android.os.Bundle
@@ -19,13 +19,13 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.FuncPack_ListManager.FragmentPlayListMusicAdapter
-import com.suming.player.FuncPack_ListManager.FragmentPlayListMusicPagingSource
+import com.suming.player.AddonTools.ToolVibrate
+import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncPack_ListManager.MusicListAdapter
+import com.suming.player.FuncPack_ListManager.MusicListPagingSource
 import com.suming.player.FuncPack_ListManager.PlayerListManager
 import com.suming.player.FuncPack_ListManager.PlayerListViewModel
 import com.suming.player.R
-import com.suming.player.AddonTools.ToolVibrate
-import com.suming.player.AddonTools.showCustomToast
 import kotlinx.coroutines.launch
 
 @UnstableApi
@@ -50,7 +50,7 @@ class MainFragmentVideo(
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     //RecyclerView
     private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerView_music_adapter: FragmentPlayListMusicAdapter
+    private lateinit var recyclerView_music_adapter: MusicListAdapter
     private var state_adapter_load_complete = false
 
     @OptIn(UnstableApi::class)
@@ -128,7 +128,7 @@ class MainFragmentVideo(
         //设置管理器
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         //初始化adapter + 设置点击事件
-        recyclerView_music_adapter = FragmentPlayListMusicAdapter(
+        recyclerView_music_adapter = MusicListAdapter(
             requireContext(),
             onAddToListClick = { uri -> onAddToListClick(uri) },
             onPlayClick = {
@@ -139,7 +139,7 @@ class MainFragmentVideo(
         recyclerView.adapter = recyclerView_music_adapter
         //分页加载
         val pager = Pager(PagingConfig(pageSize = 20)) {
-            FragmentPlayListMusicPagingSource(requireContext())
+            MusicListPagingSource(requireContext())
         }
         //分页加载数据
         lifecycleScope.launch {

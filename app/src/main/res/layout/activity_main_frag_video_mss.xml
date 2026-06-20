@@ -12,17 +12,16 @@
     android:padding="0dp"
     tools:ignore="HardcodedText" >
     <androidx.cardview.widget.CardView
-        android:id="@+id/mainCard"
+        android:id="@+id/main_card"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardCornerRadius="8dp"
-        app:cardBackgroundColor="@color/Background3"
+        android:layout_height="500dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="500dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:cardElevation="10dp">
+        app:cardCornerRadius="8dp"
+        app:cardBackgroundColor="@color/THEME_1_Background_BackArea"
+        app:cardElevation="10dp"
+        android:clickable="true">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -31,10 +31,10 @@ import kotlinx.coroutines.launch
 @UnstableApi
 //@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment_play_list_live_page){
+class MusicListFragment():Fragment(R.layout.activity_player_fragment_play_list_live_page){
     companion object {
-        fun newInstance(): FragmentPlayListMusicFragment {
-            return FragmentPlayListMusicFragment().apply{
+        fun newInstance(): MusicListFragment {
+            return MusicListFragment().apply{
                 arguments = bundleOf()
             }
         }
@@ -53,7 +53,7 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     //RecyclerView
     private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerView_music_adapter: FragmentPlayListMusicAdapter
+    private lateinit var recyclerView_music_adapter: MusicListAdapter
     private var state_adapter_load_complete = false
 
 
@@ -146,13 +146,13 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
         //设置管理器
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         //初始化adapter + 设置点击事件
-        recyclerView_music_adapter = FragmentPlayListMusicAdapter(
+        recyclerView_music_adapter = MusicListAdapter(
             requireContext(),
             onAddToListClick = { uriString -> onAddToListClick(uriString.toUri()) },
             onPlayClick = { uriString -> onPlayClick(uriString.toUri()) },
         )
         //添加页脚
-        val adapterWithFooter = recyclerView_music_adapter.withLoadStateFooter(footer = FragmentListBottomSloganAdapter {
+        val adapterWithFooter = recyclerView_music_adapter.withLoadStateFooter(footer = ListBottomSloganAdapter {
             recyclerView_music_adapter.retry()
         })
         //设置adapter
@@ -160,7 +160,7 @@ class FragmentPlayListMusicFragment():Fragment(R.layout.activity_player_fragment
 
         //开始分页加载
         val pager = Pager(PagingConfig(pageSize = 20)) {
-            FragmentPlayListMusicPagingSource(requireContext())
+            MusicListPagingSource(requireContext())
         }
         lifecycleScope.launch {
             pager.flow.collect { pagingData ->
