@@ -5,7 +5,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
@@ -18,10 +17,9 @@ import com.suming.player.ExternalInvokeManager
 import com.suming.player.PlayerActionReceiver
 import com.suming.player.PlayerActivityNeo
 import com.suming.player.PlayerActivityOro
-import com.suming.player.ActivityComponent.PlayerService.PlayerServiceLinker
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
-import com.suming.player.AddonTools.ToolCustomNotificationSession
+import com.suming.player.AddonTools.CustomNotificationSession
 import com.suming.player.ActivityComponent.PlayerActivity.ToolPlayerWrapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +58,7 @@ class PlayerService(): MediaSessionService() {
         val player = PlayerSingleton.getPlayer(application)
 
         //指定通知,包含设置自定义控制按钮和播控中心小图标
-        setMediaNotificationProvider(ToolCustomNotificationSession(this))
+        setMediaNotificationProvider(CustomNotificationSession(this))
         //创建媒体会话包装器
         val wrapper = ToolPlayerWrapper(player)
 

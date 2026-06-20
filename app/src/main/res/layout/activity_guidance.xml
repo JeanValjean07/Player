@@ -70,6 +70,7 @@
                 android:layout_marginTop="2dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp">
                 <LinearLayout
@@ -104,6 +105,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp">
                 <LinearLayout
@@ -151,6 +153,7 @@
                 android:layout_marginTop="1dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp"
                 android:visibility="gone">
@@ -178,6 +181,7 @@
                 android:layout_marginTop="1dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="5dp"
                 android:visibility="gone">

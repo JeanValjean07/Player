@@ -83,7 +83,7 @@ class MainVideoAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_adapter_video_items, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_list_item_video, parent, false)
         return ViewHolder(view)
     }
 

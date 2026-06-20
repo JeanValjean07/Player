@@ -5,7 +5,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import java.security.MessageDigest
 
-object ToolIdentifyMicroG {
+object IdentifyMicroG {
     //GMS官方证书哈希
     private val GOOGLE_CERT_SHA256 = listOf(
         "38918a453d07199354f8b19af05ec6562ced2788d4ec7b53f58250727e986f18",

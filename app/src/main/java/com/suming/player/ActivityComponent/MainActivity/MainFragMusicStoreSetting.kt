@@ -107,7 +107,7 @@ class MainFragMusicStoreSetting: DialogFragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.activity_main_frag_music_media_store_setting, container, false)
+    ): View = inflater.inflate(R.layout.activity_main_frag_music_mss, container, false)
 
     @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")

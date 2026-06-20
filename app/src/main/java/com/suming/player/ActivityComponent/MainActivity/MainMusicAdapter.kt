@@ -70,7 +70,7 @@ class MainMusicAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_adapter_music_items, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_list_item_music, parent, false)
         return ViewHolder(view)
     }
 

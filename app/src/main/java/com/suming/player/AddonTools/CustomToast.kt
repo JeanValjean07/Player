@@ -13,7 +13,7 @@ fun Context.showCustomToast(message: String, position: Int = 3) {
 
     val activity = this as? Activity ?: return
     val inflater: LayoutInflater = activity.layoutInflater
-    val layout: View = inflater.inflate(R.layout.toast, activity.findViewById(R.id.custom_toast_root))
+    val layout: View = inflater.inflate(R.layout.addon_custom_toast, activity.findViewById(R.id.custom_toast_root))
     val textView: TextView = layout.findViewById(R.id.ToastText)
     textView.text = message
     val toast = Toast(this)

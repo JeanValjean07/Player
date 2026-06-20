@@ -82,7 +82,9 @@
 
     <!-- 颜色套装 -->
     <color name="THEME_1_Background_BackArea">#FFFFFF</color>
-    <color name="THEME_1_Background_ContentCard">#FAFAFA</color>
+    <color name="THEME_1_Background_ContentCard">#FFFFFFFF</color>
+    <color name="THEME_1_Background_CardOnCard_light">#FFFFFFFF</color>
+    <color name="THEME_1_Background_CardOnCard_dark">#FFFAFAFA</color>
     <color name="THEME_1_Background_ButtonCard">#FFFFFF</color>
     <color name="THEME_1_Background_ButtonCircle_OFF">#EEEEEE</color>
     <color name="THEME_1_Background_ButtonCircle_ON">#E1BEE7</color>

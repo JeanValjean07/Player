@@ -106,7 +106,7 @@ class MainFragVideoStoreSetting: DialogFragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.activity_main_frag_video_media_store_setting, container, false)
+    ): View = inflater.inflate(R.layout.activity_main_frag_video_mss, container, false)
 
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

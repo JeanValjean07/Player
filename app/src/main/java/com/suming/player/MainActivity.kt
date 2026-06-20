@@ -122,7 +122,7 @@ class MainActivity: AppCompatActivity() {
         //界面设置
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main_old)
+        setContentView(R.layout.activity_main_activity)
         //界面实例获取
         preCheckAndInit()
         //表明首次启动信息

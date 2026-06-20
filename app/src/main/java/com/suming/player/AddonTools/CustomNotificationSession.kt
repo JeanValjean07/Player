@@ -13,7 +13,7 @@ import com.google.common.collect.ImmutableList
 import com.suming.player.R
 
 @OptIn(UnstableApi::class)
-class ToolCustomNotificationSession(context: Context): DefaultMediaNotificationProvider(context) {
+class CustomNotificationSession(context: Context): DefaultMediaNotificationProvider(context) {
 
     @SuppressLint("RestrictedApi")
     @OptIn(UnstableApi::class)
