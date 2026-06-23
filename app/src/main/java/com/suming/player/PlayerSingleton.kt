@@ -5,26 +5,14 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ComponentName
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import android.media.AudioAttributes
-import android.media.AudioDeviceCallback
-import android.media.AudioDeviceInfo
-import android.media.AudioFocusRequest
-import android.media.AudioManager
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
-import android.provider.MediaStore
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.toMutableStateList
+import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -42,18 +30,18 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
-import com.suming.player.ActivityComponent.PlayerService.PlayerServiceLinker
 import com.suming.player.AddonTools.ToolEventBus
-import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.DataBaseMediaItem.MediaItemRepo
+import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
+import com.suming.player.DataPack.MediaInfo
 import com.suming.player.FuncPack_ListManager.PlayerListManager
+import com.suming.player.FuncionalPack.ArtworkFrameManager
+import com.suming.player.FuncionalPack.MediaDataBaseMaster
+import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaUriManager
-import com.suming.player.FuncionalPack.ArtworkFrameManager
-import com.suming.player.DataPack.DataBaseMediaItem.MediaItemRepo
-import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.Disposable
+import com.suming.player.FuncionalPack.PlayerInFoCenter
+import com.suming.player.FuncionalPack.PlayerListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -61,40 +49,34 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@SuppressLint("StaticFieldLeak")
 @UnstableApi
-//@Suppress("unused")
+@Suppress("unused")
 object PlayerSingleton {
-    //播放器实例
-    private var _player: ExoPlayer? = null
-    //播放器组件
-    fun getTrackSelector(context: Context): DefaultTrackSelector =
-        inner_trackSelector ?: synchronized(this) {
-            inner_trackSelector ?: DefaultTrackSelector(context)
-                .also { inner_trackSelector = it }
+    //应用引用
+    private lateinit var context: Application
+    fun setContext(context: Context){
+        //检查是不是applicationContext
+        if (context is Application) {
+            this.context = context
+        }
+    }
+    fun getApplicationContext(): Context = context.applicationContext
 
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "PlayerSingleton: $msg")
         }
-    fun getRendererFactory(context: Context): RenderersFactory =
-        inner_rendererFactory ?: synchronized(this) {
-            inner_rendererFactory ?: DefaultRenderersFactory(context)
-                //.setEnableDecoderFallback(true)
-                .also { inner_rendererFactory = it }
-        }
-    fun createCustomCodecFactory(): MediaCodecAdapter.Factory {
-        return MediaCodecAdapter.Factory.DEFAULT
     }
-    private var inner_trackSelector: DefaultTrackSelector? = null
-    private var inner_rendererFactory: RenderersFactory? = null
-    //外部获取播放器&组件
-    fun getPlayerFromService(): ExoPlayer?{
-        return _player
-    }
-    //创建播放器
+
+    //播放器内部实例
+    private var _player: ExoPlayer? = null
+
+    //初始化播放器
     private fun buildPlayer(context: Context): ExoPlayer {
         val trackSelector = getTrackSelector(context)
         val rendererFactory = getRendererFactory(context)
@@ -113,7 +95,8 @@ object PlayerSingleton {
 
         return ExoPlayer
     }
-    fun getPlayer(context: Context): ExoPlayer = _player ?: synchronized(this) {
+    //获取播放器,未启动时将播放器初始化
+    fun getInitPlayer(context: Context): ExoPlayer = _player ?: synchronized(this) {
         _player ?: buildPlayer(context).also { _player = it }
     }.also {
         stateLock_isPlayerInitialized = true
@@ -122,6 +105,34 @@ object PlayerSingleton {
         //添加播放器状态监听
         addPlayerStateListener()
     }
+    //获取播放器但不初始化
+    fun getPlayer(): ExoPlayer? = _player
+
+    //播放器组件
+    fun getTrackSelector(context: Context): DefaultTrackSelector =
+        inner_trackSelector ?: synchronized(this) {
+            inner_trackSelector ?: DefaultTrackSelector(context)
+                .also { inner_trackSelector = it }
+
+        }
+    fun getRendererFactory(context: Context): RenderersFactory =
+        inner_rendererFactory ?: synchronized(this) {
+            inner_rendererFactory ?: DefaultRenderersFactory(context)
+                //.setEnableDecoderFallback(true)
+                .also { inner_rendererFactory = it }
+        }
+    fun createCustomCodecFactory(): MediaCodecAdapter.Factory {
+        @Suppress("DEPRECATION")
+        return MediaCodecAdapter.Factory.DEFAULT
+    }
+    @SuppressLint("StaticFieldLeak")
+    private var inner_trackSelector: DefaultTrackSelector? = null
+    private var inner_rendererFactory: RenderersFactory? = null
+    //外部获取播放器&组件
+    fun getPlayerFromService(): ExoPlayer?{
+        return _player
+    }
+
     //播放器初始化监听
     private val initializationCallbacks = mutableListOf<() -> Unit>()
     private var stateLock_isPlayerInitialized = false
@@ -134,29 +145,27 @@ object PlayerSingleton {
             }
         }
     }
+
     //播放器回调监听
     private val PlayerStateListener = object : Player.Listener {
         @SuppressLint("SwitchIntDef")
         override fun onPlaybackStateChanged(state: Int) {
             when (state) {
-                Player.STATE_READY -> { playerReady() }
-                Player.STATE_ENDED -> {
-                    playEnd(contextApplication)
-                }
-                Player.STATE_IDLE -> {
-
-                }
+                Player.STATE_READY ->  playState_Ready()
+                Player.STATE_ENDED ->  playState_End(context)
+                Player.STATE_IDLE ->  {   }
             }
         }
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            ToolEventBus.sendEvent("PlayerSingleton_PlaybackStateChanged")
+            //修改可观察标志,触发更新
+            PlayerInFoCenter.updateObservableIsPlaying(isPlaying)
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            onMediaItemChanged(mediaItem,contextApplication)
+            onMediaItemChanged(mediaItem,context)
         }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-
+            onFatalErrorOccur(error)
         }
     }
     private var playerState_PlayerStateListenerAdded = false
@@ -173,401 +182,191 @@ object PlayerSingleton {
     }
 
 
-    //
-    private lateinit var contextApplication: Context
-    fun setContext(context: Context){
-        contextApplication = context.applicationContext
-    }
 
     //播放器错误处理
-    private fun escapePlayerError(){
-        //缓存原本的媒体uri
-        val currentMediaUri = MediaInfo_MediaUri
-        //清除
-        _player?.clearMediaItems()
-        //重新设置媒体
-        _player?.playWhenReady = true
-        //合成并设置媒体项
-        val mediaItem = MediaItem.Builder()
-            .setUri(MediaInfo_MediaUri)
-            .setMediaId(MediaInfo_MediaUriString)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setTitle(MediaInfo_FileName)
-                    .setArtist(MediaInfo_MediaArtist)
-                    .build()
-            )
-            .build()
-        _player?.setMediaItem(mediaItem)
+    private fun onFatalErrorOccur(error: PlaybackException){
+        consoleLog("播放器错误:${error} message:${error.message} cause:${error.cause} errorCodeName:${error.errorCodeName}")
 
-
-        _player?.prepare()
+        //记录原本的媒体uri,然后重启播放器
 
 
     }
 
 
-    //👀丨媒体信息集中管理
-    //<editor-fold desc="//媒体信息变量合集">
-    private var MediaInfo_MediaUniqueID = ""  //媒体唯一ID()
-    private var MediaInfo_MediaType = ""
-    private var MediaInfo_MediaTitle = ""
-    private var MediaInfo_MediaArtist = ""
-    private var MediaInfo_FileName = ""
-    private var MediaInfo_Duration = 0L
-    private var MediaInfo_AbsolutePath = ""
-    private var MediaInfo_MediaUri = Uri.EMPTY!!  //原始获取媒体链接
-    private var MediaInfo_MediaUriString = ""          //原始获取媒体链接字符串
-    private var MediaInfo_MediaUriStandard = ""        //标准链接格式(content://media/external/(?video|audio)/media/114514)
-    //</editor-fold>
-    //媒体信息解码器
-    //<editor-fold desc="//媒体信息解码工具函数&子线程">
-    private lateinit var retriever: MediaMetadataRetriever
-    //子线程丨计算 UniqueID & 标准链接
-    private var coroutine_getMediaUniqueID = CoroutineScope(Dispatchers.IO)
-    private fun calculateUniqueID(mediaUri: Uri){
-        coroutine_getMediaUniqueID.launch {
-            //计算媒体唯一识别ID
-            val NEW_MediaInfo_MediaStoreID = MediaUriManager.getMediaIDByMediaUri(mediaUri,contextApplication)
-            //获取标准链接
-            val NEW_MediaInfo_MediaUriStandard = MediaUriManager.getStandardMediaUri(mediaUri,contextApplication)
 
-            //刷新变量到本地
-            MediaInfo_MediaUniqueID = NEW_MediaInfo_MediaStoreID
-            MediaInfo_MediaUriStandard = NEW_MediaInfo_MediaUriStandard.toString()
-
-            //计入播放记录
-            MediaRecordManager(contextApplication).save_MediaInfo_toRecordUniqueID_main(NEW_MediaInfo_MediaStoreID)
-        }
-    }
-    //工具函数丨根据uri获得绝对路径
-    private fun getFilePath(context: Context, uri: Uri): String? {
-        val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
-            Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
-        } else {
-            uri
-        }
-        val absolutePath: String? = when (cleanUri.scheme) {
-            ContentResolver.SCHEME_CONTENT -> {
-                val projection = arrayOf(MediaStore.Video.Media.DATA)
-                context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
-                    if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
-                }
-            }
-            ContentResolver.SCHEME_FILE    -> cleanUri.path
-            else                           -> cleanUri.path
-        }
-
-        return absolutePath?.takeIf { File(it).exists() }
-    }
-    //</editor-fold>
-    private fun getMediaInfo(context: Context, uri: Uri): Boolean{
-        retriever = MediaMetadataRetriever()
-        //尝试解码
-        try {
-            retriever.setDataSource(context, uri)
-        }catch(_: Exception){
-            return false
-        }
-        //解码获得新媒体的信息
-        val NEW_MediaInfo_MediaUri = uri
-        val NEW_MediaInfo_MediaUriString = uri.toString()
-        var NEW_MediaInfo_MediaType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: ""
-        var NEW_MediaInfo_MediaTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
-        var NEW_MediaInfo_MediaArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
-        val NEW_MediaInfo_Duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: -1L
-        val NEW_MediaInfo_AbsolutePath = getFilePath(context, uri).toString()
-        val NEW_MediaInfo_FileName = (File(NEW_MediaInfo_AbsolutePath)).name ?: ""
-        val NEW_MediaInfo_VideoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toInt() ?: 0
-        val NEW_MediaInfo_VideoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toInt() ?: 0
-        //处理值
-        if (NEW_MediaInfo_MediaType.contains("video")){
-            NEW_MediaInfo_MediaType = "video"
-        }else if(NEW_MediaInfo_MediaType.contains("audio")){
-            NEW_MediaInfo_MediaType = "music"
-        }
-        if (NEW_MediaInfo_MediaTitle == ""){ NEW_MediaInfo_MediaTitle = "未知媒体标题" }
-        if (NEW_MediaInfo_MediaArtist == "" || NEW_MediaInfo_MediaArtist == "<unknown>"){ NEW_MediaInfo_MediaArtist = "未知艺术家" }
-        //计算媒体ID
-        calculateUniqueID(NEW_MediaInfo_MediaUri)
-
-        //刷新本地媒体信息变量
-        fun updateMediaInfoValues(NEW_MediaInfo_MediaType: String, NEW_MediaInfo_MediaTitle: String,
-                                  NEW_MediaInfo_MediaArtist: String,
-                                  NEW_MediaInfo_FileName: String,
-                                  NEW_MediaInfo_Duration: Long,
-                                  NEW_MediaInfo_AbsolutePath: String,
-                                  NEW_MediaInfo_MediaUri: Uri,
-                                  NEW_MediaInfo_MediaUriString: String,
-                                  NEW_MediaInfo_VideoWidth: Int,
-                                  NEW_MediaInfo_VideoHeight: Int){
-            MediaInfo_MediaType = NEW_MediaInfo_MediaType
-            MediaInfo_MediaTitle = NEW_MediaInfo_MediaTitle
-            MediaInfo_MediaArtist = NEW_MediaInfo_MediaArtist
-            MediaInfo_FileName = NEW_MediaInfo_FileName
-            MediaInfo_Duration = NEW_MediaInfo_Duration
-            MediaInfo_AbsolutePath = NEW_MediaInfo_AbsolutePath
-            MediaInfo_MediaUri = NEW_MediaInfo_MediaUri
-            MediaInfo_MediaUriString = NEW_MediaInfo_MediaUriString
-            MediaInfo_VideoWidth = NEW_MediaInfo_VideoWidth
-            MediaInfo_VideoHeight = NEW_MediaInfo_VideoHeight
-        }
-        updateMediaInfoValues(
-            NEW_MediaInfo_MediaType,
-            NEW_MediaInfo_MediaTitle,
-            NEW_MediaInfo_MediaArtist,
-            NEW_MediaInfo_FileName,
-            NEW_MediaInfo_Duration,
-            NEW_MediaInfo_AbsolutePath,
-            NEW_MediaInfo_MediaUri,
-            NEW_MediaInfo_MediaUriString,
-            NEW_MediaInfo_VideoWidth,
-            NEW_MediaInfo_VideoHeight,
-        )
-
-        //释放资源
-        retriever.release()
-        return true
-    }
-    //外部获取信息
-    //<editor-fold desc="//外部获取当前信息接口">
-    //获取当前媒体的 视频宽高值&获取比例
-    fun getMediaWHratio(): Float {
-        //获取视频宽高比
-        val ratio_W_by_H = MediaInfo_VideoWidth.toFloat() / MediaInfo_VideoHeight.toFloat()
-
-        return ratio_W_by_H
-    }
-    private var MediaInfo_VideoWidth = 0
-    private var MediaInfo_VideoHeight = 0
-    //获取当前媒体的 播放进度
-    fun getMediaCurrentPosition(): Long {
+    //获取当前媒体的播放进度
+    fun getEnginCurrentProgress(): Long {
         return _player?.currentPosition ?: -1
     }
-    //获取当前媒体的 唯一身份识别(类型+ID)
-    fun getCurrentMediaIdentity(): Pair<String, String> {
-        return Pair(MediaInfo_MediaType, MediaInfo_MediaUniqueID)
-    }
-    //获取当前媒体的 唯一ID
-    fun getCurrentMediaUniqueID(): String {
-        return MediaInfo_MediaUniqueID
-    }
-    //判断传入的链接是否指向正在播放的项
+
+    //判断传入的链接是否为正在播放的项(核心)//TODO
     fun isthisUriOngoing(uriNeedCheck: Uri): Boolean {
+        //从播放核心获取信息
+        val MediaInfo_MediaUriStandard = "114514"
+
         //如果传入标准链接,就直接对比标准链接
         if (MediaUriManager.isMediaUriStandard(uriNeedCheck)){
 
             return uriNeedCheck.toString() == MediaInfo_MediaUriStandard
         }
         //若不是标准链接,先转成标准链接,再对比
-        val standardUriNeedCheck = MediaUriManager.getStandardMediaUri(uriNeedCheck,contextApplication)
+        val standardUriNeedCheck = MediaUriManager.getStandardMediaUri(uriNeedCheck,context)
 
         return standardUriNeedCheck.toString() == MediaInfo_MediaUriStandard
     }
-    //获取当前媒体的 标准链接
-    fun getCurrentMediaStandardUriString(): String {
-
-        return MediaInfo_MediaUriStandard
-    }
-
-
-    //</editor-fold>
 
 
 
-    fun getMediaInfoUri(): Uri {
-        return MediaInfo_MediaUri
-    }
-    fun getMediaInfoUriString(): String {
-        return MediaInfo_MediaUriString
-    }
-    fun getMediaInfoFileName(): String {
-        return MediaInfo_FileName
-    }
-    fun getMediaInfoForMain(): Triple<String, String, String> {
-        return Triple(MediaInfo_MediaType, MediaInfo_FileName, MediaInfo_MediaArtist)
-    }
-    fun getMediaInfoType(): String {
-        return MediaInfo_MediaType
-    }
-
-
-
-    //???
-    fun clearMediaInfo(context: Context) {
-        MediaInfo_MediaType = ""
-        MediaInfo_MediaTitle = ""
-        MediaInfo_MediaArtist = ""
-        MediaInfo_MediaUriString = ""
-        MediaInfo_MediaUri = Uri.EMPTY
-        //写入配置
-        clearLastMediaRecord(context)
-    }
-
-
-
-    //👀丨媒体项变更流程
-    //确认设置新媒体项丨私有
-    private fun setNewMediaItem(itemUri: Uri, playWhenReady: Boolean, context: Context): Boolean {
+    //Long Process Functions
+    //设置/变更媒体(设置新媒体项)
+    private fun setMediaItemCore(uri: Uri, playWhenReady: Boolean, context: Context): Boolean {
         //先判断是否是正在播放的媒体
-        if (isthisUriOngoing(itemUri)) return false
+        if (isthisUriOngoing(uri)) return false
 
-        //进入设置新媒体项的流程
-        //保存上个媒体的信息
-        val oldItemName = MediaInfo_FileName
-        val oldItemDuration = MediaInfo_Duration
-        val currentPosition = getMediaCurrentPosition()
-        coroutine_saveOldItemData.launch {
-
-            if (MediaInfo_FileName.isEmpty()) return@launch
-            if (currentPosition == -1L) return@launch
-
-            withContext(Dispatchers.Main) {
-                saveOldItemData(oldItemName, currentPosition, oldItemDuration, context)
-            }
+        //保存上个媒体的需要保存的东西
+        if (MediaInfoPackLocal != null){
+            saveLastMediaInfo(context,MediaInfoPackLocal!!)
         }
 
-        //👻丨正式开始设置新媒体项的流程
-        //解码新媒体信息丨确认媒体有效前不会刷新本地媒体信息
-        val success = getMediaInfo(context, itemUri)
-        if (!success) return false
+
+        //解码新媒体信息
+        MediaInfoPackLocal = null
+        retrieveMediaInFo(context, uri)
+        if (MediaInfoPackLocal == null){
+            return false
+        }
+        //把信息传递给PlayerInFoCenter
+        PlayerInFoCenter.setMediaInfoPack(MediaInfoPackLocal!!)
 
         //重置单个媒体状态
         clearItemState()
+
+
         //设置播放状态
         _player?.playWhenReady = playWhenReady
 
         //合成并设置媒体项
-        val cover_img_uri = getCoverImgUri(context)
+        val cover_img_uri = getArtworkFrameUri(context, uri)
 
         //开始构建mediaItem
         val mediaItem = MediaItem.Builder()
-            .setUri(MediaInfo_MediaUri)
-            //.setMediaId(MediaInfo_MediaUriString)
+            .setUri(MediaInfoPackLocal!!.MediaInfo_MediaUri)
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setTitle(MediaInfo_FileName)
-                    .setArtist(MediaInfo_MediaArtist)
+                    .setTitle(MediaInfoPackLocal!!.MediaInfo_FileName)
+                    .setArtist(MediaInfoPackLocal!!.MediaInfo_MediaArtist)
                     .setArtworkUri(cover_img_uri)
                     .build())
             .build()
+
+        //设置给播放器
         _player?.setMediaItem(mediaItem)
 
         return true
     }
-    //设置媒体项丨公共函数丨需要带一层过滤
-    fun setMediaItem(itemUri: Uri, playWhenReady: Boolean, context: Context): Boolean {
+    //设置新媒体项的外部接口(以后可以加些过滤)(返回是否设置成功)
+    fun setMediaItem(uri: Uri, playWhenReady: Boolean, context: Context): Boolean {
         //设置新媒体项
-        val success = setNewMediaItem(itemUri, playWhenReady, context)
+        val success = setMediaItemCore(uri, playWhenReady, context)
 
         return success
     }
-    //保存上个媒体的需保存内容
-    private var coroutine_saveOldItemData = CoroutineScope(Dispatchers.IO)
-    private fun saveOldItemData(fileName: String, currentPosition: Long, duration: Long, context: Context){
-
-        saveParaToDataBase(fileName, currentPosition, duration, context)
-
-    }
-    //完成媒体项变更丨后续操作
+    //完成媒体项变更的后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?, context: Context){
         if (mediaItem == null) return
 
-        //启动服务
-        startService(context)
-        //记录到上次播放清单
-        coroutine_saveLastMediaRecord.launch {
-            saveLastMediaRecordMain(context)
-        }
-        //读取单个媒体播放设置
-        coroutine_saveOrFetchDataBase.launch {
-            FetchDataBaseForItem(MediaInfo_FileName ,context)
+        //启动服务和媒体会话
+        startSessionService(context)
 
-        }
+        //记录到清单
+        writeToRecord(context,MediaInfoPackLocal?.MediaInfo_MediaUriString ?: "")
+
+        //读取单个媒体播放设置(由MediaDataBaseMaster读取并传回)
+        val DataBaseID = MediaInfoPackLocal?.MediaInfo_DataBaseID ?: ""
+        MediaDataBaseMaster.fetchMediaItemPack(itemID = DataBaseID, context = context)
 
 
-        //发布通告
-        ToolEventBus.sendEvent("PlayerSingleton_MediaItemChanged")
+
         //请求音频焦点
-        requestAudioFocus(context, force_request = false)
+        PlayerListener.requestAudioFocus(context, force_request = false)
+
+        //修改可观察标志,触发更新
+        PlayerInFoCenter.updateObservableUriString(MediaInfoPackLocal?.MediaInfo_MediaUriString ?: "")
 
     }
-    //启动服务和媒体会话
-    private fun startService(context: Context){
-        //写入服务配置
-        setServiceLinker()
-        //链接媒体会话
-        startMediaSession(context)
-    }
-    private fun setServiceLinker(){
-        //写入媒体类型
-        PlayerServiceLinker.setMediaInfo_MediaType(MediaInfo_MediaType)
-        //写入基本信息
-        PlayerServiceLinker.setMediaBasicInfo(MediaInfo_MediaUriString, MediaInfo_FileName, MediaInfo_MediaArtist)
-    }
-    private fun startMediaSession(context: Context){
-        connectToMediaSession(context)
-    }
-    //写入上次播放记录丨私有函数丨可作为一条单独线程
-    private var coroutine_saveLastMediaRecord = CoroutineScope(Dispatchers.IO)
-    private fun saveLastMediaRecordMain(context: Context){
-        //把记录保存到记录管理器
-        MediaRecordManager(context).save_MediaInfo_toRecord_main(MediaInfo_FileName, MediaInfo_MediaArtist, MediaInfo_MediaType)
-    }
-    private fun clearLastMediaRecord(context: Context){
-        //清除记录管理器中的记录
-        MediaRecordManager(context).clear_MediaInfo()
-    }
-    //其他工具函数
-    private fun getCoverImgUri(context: Context): Uri?{
-        val covers_path_music = File(context.filesDir, "miniature/music_cover")
 
-        val MediaInfo_uriNumOnly = MediaInfo_MediaUri.lastPathSegment
-        val cover_img_path = when (MediaInfo_MediaType) {
-            "video" -> {
-                File(
-                    ArtworkFrameManager.get_Artwork_Path_video(context),
-                    "${MediaInfo_uriNumOnly}.webp"
-                )
-            }
-            "music" -> {
-                File(covers_path_music, "${MediaInfo_uriNumOnly}.webp")
-            }
-            else -> {
-                File(
-                    ArtworkFrameManager.get_Artwork_Path_video(context),
-                    "${MediaInfo_uriNumOnly}.webp"
-                )
-            }
+    //保存上个媒体的需保存内容
+    private fun saveLastMediaInfo(context:Context ,oldInfoPack: MediaInfo){
+        //获取当前媒体ID数据
+        val DataBaseID = oldInfoPack.MediaInfo_DataBaseID
+        val mediaDuration = oldInfoPack.MediaInfo_Duration
+        val currentPosition = _player?.currentPosition ?: 0L
+
+        //保存播放进度
+        if(currentPosition in 0..mediaDuration){
+            //使用MediaDataBaseMaster承担保存任务
+            MediaDataBaseMaster.saveProgress(
+                itemID = DataBaseID,
+                currentPosition = currentPosition,
+                duration = mediaDuration,
+                context = context
+            )
         }
-        val cover_img_uri = if(SettingsRequestCenter.get_PREFS_DisableMediaArtWork(context)){
-            null
-        }else if(cover_img_path.exists()) {
-            try {
-                FileProvider.getUriForFile(context, "${context.packageName}.provider", cover_img_path)
-            }
-            catch (e: Exception) {
-                if (cover_img_path.canRead()) {
-                    cover_img_path.toUri()
-                } else {
-                    null
-                }
-            }
-        }else{ null }
+
+
+    }
+
+    //读取媒体信息
+    private var MediaInfoPackLocal: MediaInfo? = null
+    private fun retrieveMediaInFo(context: Context,uri: Uri){
+        val (_,_MediaInfoPack) = MediaInfoRetriever.retrieveMediaInfo(context,uri)
+
+        MediaInfoPackLocal = _MediaInfoPack
+    }
+    //记下到播放记录
+    private fun writeToRecord(context: Context,uriStandard: String){
+        //把记录保存到记录管理器
+        MediaRecordManager(context).writeOneRecord(uriStandard)
+    }
+    //获取艺术图链接
+    private fun getArtworkFrameUri(context: Context, uri: Uri): Uri?{
+        if (uri != MediaInfoPackLocal!!.MediaInfo_MediaUri){
+            consoleLog("发生了严重错误 getArtworkFrameUri")
+            return null
+        }
+
+        //
+        val uriNumOnly = MediaInfoPackLocal!!.MediaInfo_MediaUriNumOnly
+        val mediaType = MediaInfoPackLocal!!.MediaInfo_MediaType
+
+        var cover_img_uri = Uri.EMPTY
+        if ( SettingsRequestCenter.get_PREFS_DisableMediaArtWork(context) ) {
+            return null
+        }else{
+            //从ArtworkFrameManager获取即可
+            cover_img_uri = ArtworkFrameManager.get_Artwork_Frame_Uri(context, mediaType, uriNumOnly)
+
+        }
 
         return cover_img_uri
     }
+    //启动服务和媒体会话
+    private fun startSessionService(context: Context){
+        //链接到媒体会话
+        connectToMediaSession(context)
+        //未来可能需要自行写入信息以支持自定义通知
+    }
 
 
-    //👻丨媒体会话
+
+    //媒体会话和服务
     private var controller: MediaController? = null
     private var MediaSessionController: ListenableFuture<MediaController>? = null
     private var sessionState_MediaSession_connected = false
     //连接到媒体会话控制器
     private fun connectToMediaSession(context: Context){
         if (sessionState_MediaSession_connected) return
-        val SessionToken =
-            SessionToken(context as Application, ComponentName(context, PlayerService::class.java))
+        val SessionToken = SessionToken(context as Application, ComponentName(context, PlayerService::class.java))
         MediaSessionController = MediaController.Builder(context, SessionToken).buildAsync()
         MediaSessionController?.addListener({
             controller = MediaSessionController?.get()
@@ -584,12 +383,18 @@ object PlayerSingleton {
         context.stopService(Intent(context, PlayerService::class.java))
         sessionState_MediaSession_connected = false
     }
-    //清除媒体会话
-    private fun stopMediaSession(context: Context){
+    //外部接口-完整清除媒体会话
+    fun stopMediaSession(context: Context){
         stopMediaSessionController()
         stopServices(context)
         sessionState_MediaSession_connected = false
     }
+    //外部接口-完整启动媒体会话
+    fun startMediaSession(context: Context){
+        //用内部接口
+        startSessionService(context)
+    }
+
 
 
     //👀丨关闭各种组件
@@ -604,481 +409,53 @@ object PlayerSingleton {
     private fun DevastateMediaSessionBundle(context: Context){
         stopMediaSession(context)
     }
-    //关闭监听器
-    private fun DevastateListener(context: Context){
-        stopListener(context = context)
-    }
-    //公共函数
-    fun stopPlayBundle(need_clear_record: Boolean, context: Context){
-        //清除播放记录
-        if (need_clear_record){ clearLastMediaRecord(context) }
-        //关闭媒体会话
-        DevastateMediaSessionBundle(context)
-        //关闭播放器
-        DevastatePlayEnginBundle(context)
-        //关闭监听器
-        DevastateListener(context)
-    }
 
 
 
-    //播放列表
-    private val coroutineScope_getPlayList = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private lateinit var PREFS_MediaStore: SharedPreferences
-    private lateinit var mediaItemsMutableSnapshot: SnapshotStateList<MediaItemForVideo>
-    private var emptyList = emptyList<MediaItemForVideo>().toMutableStateList()
-    private var currentMediaIndex = 0
-    private var maxMediaIndex = 0
-    private var state_MediaListProcess_complete = false
-    private var MediaInfo_VideoUri: Uri = Uri.EMPTY
-    private fun getMediaListFromDataBase(context: Context){
-        //已读取列表,不再重复读取
-        if (state_MediaListProcess_complete){ return }
-        //读取播放列表
-        coroutineScope_getPlayList.launch(Dispatchers.IO) {
-            //读取设置
-            PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore",
-                Context.MODE_PRIVATE
-            )
-            val sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
-            val sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
-            //读取所有媒体
-            val mediaStoreRepo = MediaStoreRepo.Companion.get(context)
-            val mediaStoreSettings = mediaStoreRepo.getAllVideosSorted(sortOrder, sortOrientation)
-            val mediaItems = mediaStoreSettings
-                .map { setting ->
-                    MediaItemForVideo(
-                        id = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
-                        uriString = setting.info_uri_string,
-                        uriNumOnly = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
-                        filename = setting.info_filename,
-                        title = setting.info_title,
-                        artist = setting.info_artist,
-                        durationMs = setting.info_duration,
-                        //视频专属
-                        res = setting.info_resolution,
-                        //其他
-                        path = setting.info_path,
-                        sizeBytes = setting.info_file_size,
-                        dateAdded = setting.info_date_added,
-                        format = setting.info_format,
-                    )
-                }
 
-            //转换为可观察列表
-            mediaItemsMutableSnapshot = mediaItems.toMutableStateList()
-
-            //反定位当前媒体index
-            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == MediaInfo_MediaUriString }
-            maxMediaIndex = mediaItemsMutableSnapshot.size - 1
-
-            //保存完后公布状态
-            state_MediaListProcess_complete = true
+    //获取当前在播放的媒体项的链接(来自播放核心)(也可在PlayerInFoCenter获取缓存)
+    fun getState_currentMediaItem_Uri(): Pair<Boolean, Uri> {
+        if (_player == null) {
+            return Pair(false, Uri.EMPTY)
         }
 
-    } //内部:从数据库读取播放列表
-    fun getMediaListByDataBaseChange(context: Context){
-        state_MediaListProcess_complete = false
-        coroutineScope_getPlayList.launch(Dispatchers.IO) {
-            //Log.d("SuMing", "getMediaListByDataBaseChange")
-            //读取设置
-            PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore",
-                Context.MODE_PRIVATE
-            )
-            val sortOrder = PREFS_MediaStore.getString("PREFS_SortOrder", "info_title") ?: "info_title"
-            val sortOrientation = PREFS_MediaStore.getString("PREFS_SortOrientation", "DESC") ?: "DESC"
-            //读取所有媒体
-            val mediaStoreRepo = MediaStoreRepo.Companion.get(context)
-            val mediaStoreSettings = mediaStoreRepo.getAllVideosSorted(sortOrder, sortOrientation)
-            val mediaItems = mediaStoreSettings
-                .map { setting ->
-                    MediaItemForVideo(
-                        id = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
-                        uriString = setting.info_uri_string,
-                        uriNumOnly = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
-                        filename = setting.info_filename,
-                        title = setting.info_title,
-                        artist = setting.info_artist,
-                        durationMs = setting.info_duration,
-                        //视频专属
-                        res = setting.info_resolution,
-                        //其他
-                        path = setting.info_path,
-                        sizeBytes = setting.info_file_size,
-                        dateAdded = setting.info_date_added,
-                        format = setting.info_format,
-                    )
-                }
+        val currentMediaItem = _player?.currentMediaItem
 
-            //转换为可观察列表
-            mediaItemsMutableSnapshot = mediaItems.toMutableStateList()
-            //反定位当前媒体index
-            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == MediaInfo_MediaUriString }
-            maxMediaIndex = mediaItemsMutableSnapshot.size - 1
-
-            //保存完后公布状态
-            state_MediaListProcess_complete = true
+        if (currentMediaItem == null){
+            consoleLog("getState_currentItem: currentMediaItem is null")
+            return Pair(false, Uri.EMPTY)
         }
-    }
-    fun getMediaList(context: Context): SnapshotStateList<MediaItemForVideo> {
-        //未完成读取,返回空列表
-        if (!state_MediaListProcess_complete){
-            context.showCustomToast("播放列表未加载完成",3)
-            return emptyList
-        }
-        //已完成读取,返回播放列表
-        return mediaItemsMutableSnapshot
-    } //外部作用域获取列表
-    fun isMediaListProcessComplete(): Boolean{
-        return state_MediaListProcess_complete
-    } //播放列表是否已完成读取
-    fun updateMediaList(context: Context){
-        getMediaListFromDataBase(context)
-    } //更新播放列表
-    fun deleteMediaItem(uriString: String){
-        mediaItemsMutableSnapshot.removeIf { it.uriString == uriString }
-
-    } //删除播放列表中的项
-    private fun updateMediaIndex(itemUriString: String){
-        if (!state_MediaListProcess_complete) return
-        currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == itemUriString }
-    } //内部:更新当前媒体index
-    private fun isNewUriValid(uri: Uri, context: Context): Boolean{
-        retriever = MediaMetadataRetriever()
-        try { retriever.setDataSource(context, uri) }
-        catch (e: Exception){
-            ToolEventBus.sendEvent("ExistInvalidMediaItem")
-            //Log.e("SuMing", "checkNewUri: $e")
-            return false
-        }
-        return true
-    }
-    private fun showNotification_MediaListNotPrepared(text: String, context: Context) {
-        val channelId = "toast_replace"
-        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        val channel = NotificationChannel(channelId, "提示", NotificationManager.IMPORTANCE_HIGH)
-            .apply {
-                setSound(null, null)
-                enableVibration(false)
-            }
-        nm.createNotificationChannel(channel)
-
-        val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_player_service_notification)
-            .setContentTitle(null)
-            .setContentText(text)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setDefaults(0)
-            .setAutoCancel(true)
-            .setTimeoutAfter(5_000)
-            .build()
-
-        nm.notify(System.currentTimeMillis().toInt(), notification)
-
-    }  //显示未准备通知
-    //播放列表:切换媒体
-    private fun getTargetMediaUri(flag_next_or_previous: String, context: Context): String{
-        if (!state_MediaListProcess_complete){
-            context.showCustomToast("播放列表未加载完成",3)
-            return "error"
-        }
-        var indexCursor = currentMediaIndex
-        var indexTryCount = 0
-        val maxCursorCount = maxMediaIndex
-        var targetUriString = ""
-        if (flag_next_or_previous == "next"){
-            while (targetUriString == "" || targetUriString == "error"){
-                indexCursor++
-                //Log.d("SuMing", "indexCursor: $indexCursor  maxCursorCount: $maxCursorCount")
-                if (indexCursor > maxCursorCount){
-                    indexCursor = 0
-                }
-                targetUriString = mediaItemsMutableSnapshot.getOrNull(indexCursor)?.uriString ?: ""
-                //Log.d("SuMing", "indexCursor: $indexCursor  targetUriString: $targetUriString")
-                indexTryCount++
-                val newUriValid = isNewUriValid(targetUriString.toUri(),context)
-                //Log.d("SuMing", "检查newUriValid: $newUriValid")
-                if (!newUriValid){ targetUriString = "error" }
-                //Log.d("SuMing", "变更后的uri targetUriString: $targetUriString")
-                if (indexTryCount > maxCursorCount){
-                    //Log.d("SuMing", "indexTryCount: $indexTryCount  maxCursorCount: $maxCursorCount")
-                    targetUriString = "error"
-                    break
-                }
-                //Log.d("SuMing", "检查末尾 targetUriString: $targetUriString")
-            }
-            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == targetUriString }
-            return targetUriString
-        }
-        else if (flag_next_or_previous == "previous"){
-            //Log.d("SuMing", "切换上一曲")
-            while (targetUriString == "" || targetUriString == "error"){
-                indexCursor--
-                if (indexCursor < 0){
-                    indexCursor = maxCursorCount
-                }
-                targetUriString = mediaItemsMutableSnapshot.getOrNull(indexCursor)?.uriString ?: ""
-                //Log.d("SuMing", "indexCursor: $indexCursor  targetUriString: $targetUriString")
-                indexTryCount++
-                val newUriValid = isNewUriValid(targetUriString.toUri(),context)
-                if (!newUriValid){ targetUriString = "error" }
-                if (indexTryCount > maxCursorCount){
-                    targetUriString = "error"
-                    break
-                }
-            }
-            currentMediaIndex = mediaItemsMutableSnapshot.indexOfFirst { it.uriString == targetUriString }
-            return targetUriString
-        }
-        else{
-            context.showCustomToast("未传入有效的上下参数",3)
-            return "error"
-        }
-    }
-    fun switchToNextMediaItem(context: Context){
-        //尝试获取目标uri
-        val targetUriString = getTargetMediaUri("next",context)
-        //检查uri是否有效
-        if (targetUriString == "error"){ return }
-        //获取目标uri
-        val targetUri = targetUriString.toUri()
-        //解码目标媒体信息
-        val getMediaInfoResult = getMediaInfo(context,targetUri)
-        if (!getMediaInfoResult){
-            context.showCustomToast("出错了",3)
-            return
-        }
-        //切换至目标媒体项
-        setNewMediaItem(targetUri, true, context)
-
-
-    }
-    fun switchToPreviousMediaItem(context: Context){
-        //尝试获取目标uri
-        val targetUriString = getTargetMediaUri("previous",context)
-        //检查uri是否有效,若有效,刷新index
-        if (targetUriString == "error"){ return }
-        //获取目标uri
-        val targetUri = targetUriString.toUri()
-        //解码目标媒体信息
-        val getMediaInfoResult = getMediaInfo(context,targetUri)
-        if (!getMediaInfoResult){
-            context.showCustomToast("出错了",3)
-            return
-        }
-        //切换至目标媒体项
-        setNewMediaItem(targetUri, true, context)
-
-    }
-    //读取媒体列表
-    //getMediaListFromDataBase(context)
-    //更新当前媒体index
-    //updateMediaIndex(MediaInfo_MediaUriString)
-
-
-
-
-
-    //音频设备监听
-    private lateinit var audioManager: AudioManager
-    private val DeviceCallback = object : AudioDeviceCallback() {
-        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) {
-            val relevant = removedDevices.filter {
-                it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
-                        it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
-                        it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
-            }
-            if (relevant.isNotEmpty()) {
-                state_HeadSetInserted = false
-                recessPlay(need_fadeOut = false)
-            }
-        }
-        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
-            val relevant = addedDevices.filter {
-                it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
-                        it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
-                        it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
-                        it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
-            }
-            if (relevant.isNotEmpty()) {
-                state_HeadSetInserted = true
-                setVolumeLimit(contextApplication)
-            }
-        }
-    }
-    private var state_AudioManager_Initialized = false
-    private var state_DeviceCallback_Registered = false
-    private var state_HeadSetInserted = false
-    private fun initAudioManager(context: Context){
-        audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        state_AudioManager_Initialized = true
-    }
-    private fun startAudioDeviceCallback(context: Context){
-        if (!state_AudioManager_Initialized){ initAudioManager(context) }
-        if (state_DeviceCallback_Registered) return
-        state_DeviceCallback_Registered = true
-        audioManager.registerAudioDeviceCallback(DeviceCallback, null)
-    }
-    private fun stopAudioDeviceCallback(context: Context){
-        if (!state_AudioManager_Initialized){
-            initAudioManager(context)
-        }
-        audioManager.unregisterAudioDeviceCallback(DeviceCallback)
-    }
-    fun getState_isHeadsetPlugged(context: Context): Boolean {
-        return state_HeadSetInserted
-    }
-    fun setVolumeLimit(context: Context){
-        if (!state_AudioManager_Initialized){
-            initAudioManager(context)
-        }
-        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-        if (currentVolume >= (maxVolume*0.6).toInt()){
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (maxVolume*0.6).toInt(), 0)
-        }
-    }
-    //音频焦点监听
-    private lateinit var focusRequest: AudioFocusRequest
-    private var coroutine_focusRequest_wait = CoroutineScope(Dispatchers.IO)
-    private var state_focusRequest_Initialized = false
-    private fun initFocusRequest(context: Context){
-        focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build()
-            )
-            //音频焦点变化监听
-            .setOnAudioFocusChangeListener { focusChange ->
-                when (focusChange) {
-                    AudioManager.AUDIOFOCUS_LOSS -> {
-
-                    }
-                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                        recessPlay(need_fadeOut = true)
-                    }
-                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-
-                    }
-                    AudioManager.AUDIOFOCUS_GAIN -> {
-                        if (playState_wasPlaying){
-                            continuePlay(need_requestFocus = true, force_request = true, need_fadeIn = true, context)
-                        }
-
-                    }
-                }
-            }
-            .build()
-        state_focusRequest_Initialized = true
-    }
-    private fun requestAudioFocus(context: Context, force_request: Boolean){
-        coroutine_focusRequest_wait.launch {
-            if (!state_focusRequest_Initialized){
-                initFocusRequest(context)
-            }
-            if (!state_AudioManager_Initialized){
-                initAudioManager(context)
-            }
-            delay(500)
-
-            withContext(Dispatchers.Main) {
-                if (force_request) {
-                    audioManager.requestAudioFocus(focusRequest)
-                } else {
-                    if (_player == null) return@withContext
-                    if (_player?.isPlaying == true) {
-                        audioManager.requestAudioFocus(focusRequest)
-                    }
-
-                }
-            }
-
-        }
-    }
-    private fun releaseAudioFocus(context: Context){
-        if (!state_focusRequest_Initialized){
-            initFocusRequest(context)
-        }
-        if (!state_AudioManager_Initialized){
-            initAudioManager(context)
-        }
-        audioManager.abandonAudioFocusRequest(focusRequest)
-    }
-    //事件总线
-    private var state_EventBus_Registered = false
-    private fun registerEventBus(context: Context){
-        if (state_EventBus_Registered) return
-        setupEventBus(context)
-        state_EventBus_Registered = true
-    }
-    private fun unregisterEventBus(){
-        disposable?.dispose()
-        state_EventBus_Registered = false
-    }
-    private var disposable: Disposable? = null
-    private fun setupEventBus(context: Context) {
-        disposable = ToolEventBus.events
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                HandlePlayerEvent(it,context)
-            }, {
-                context.showCustomToast("singleton事件总线注册失败:${it.message}",3)
-            })
-    }
-    private fun HandlePlayerEvent(event: String, context: Context) {
-        when (event) {
-            "SessionController_Next" -> {
-                switchToNextMediaItem(context)
-            }
-            "SessionController_Previous" -> {
-                switchToPreviousMediaItem(context)
-            }
-            "SessionController_Play" -> {
-                setWasPlaying(true)
-                requestAudioFocus(context, force_request = false)
-            }
-            "SessionController_Pause" -> {
-                setWasPlaying(false)
-            }
-        }
-    }
-    //开启/关闭所有监听器
-    fun startListener(context: Context){
-        registerEventBus(context)
-        startAudioDeviceCallback(context)
-        initFocusRequest(context)
-    }
-    fun stopListener(context: Context){
-        unregisterEventBus()
-        stopAudioDeviceCallback(context)
-        releaseAudioFocus(context)
-    }
-
-
-
-    //获取播放器播放状态 < Boolean=是否有媒体正在播放 丨 Uri：链接 >
-    fun getPlayState(): Pair<Boolean, Uri> {
-        return if (_player?.currentMediaItem == null){
-            Pair(false, Uri.EMPTY)
+        val uri = currentMediaItem.localConfiguration?.uri
+        if (uri == null){
+            consoleLog("getState_currentItem: uri is null")
+            return Pair(false, Uri.EMPTY)
         }else{
-            Pair(true, MediaInfo_MediaUri)
+            consoleLog("getState_currentItem: currentMediaItem uri: $uri")
+            return Pair(true, uri)
         }
-    } //获取当前播放状态
-    fun getIsPlaying(): Boolean {
+
+    }
+    //是否正在播放
+    fun getState_isNowPlaying(): Boolean {
         return _player?.isPlaying ?: false
-    } //是否正在播放
-    fun getCurrentMediaItem(): MediaItem? {
+    }
+    //获取当前媒体项完整数据包
+    fun getState_currentMediaItem_Pack(): MediaItem? {
         val currentMediaItem = _player?.currentMediaItem
 
         return currentMediaItem
-    } //获取当前媒体项
+    }
+    //获取当前播放进度
+    fun getState_currentPosition(): Long {
+        return _player?.currentPosition ?: 0L
+    }
+
     //播放和暂停
     private var playState_playEnd = false
     private var playState_wasPlaying = false
-    fun continuePlay(need_requestFocus: Boolean, force_request: Boolean, need_fadeIn: Boolean, context: Context) {
+    //继续/开始播放
+    fun continuePlay(requestFocus: Boolean = true, context: Context) {
+        //播放结束时自动回到起始并重播
         if (playState_playEnd){
             playState_playEnd = false
             _player?.seekTo(0)
@@ -1087,251 +464,193 @@ object PlayerSingleton {
 
 
         //请求音频焦点
-        if (need_requestFocus) requestAudioFocus(context, force_request)
+        if (requestFocus){
+            PlayerListener.requestAudioFocus(context,requestFocus)
+        }
 
-        //保险：重置倍速
+        //保险操作
+        //1.重置倍速
         if (_player != null && _player?.playbackParameters?.speed != Para_OriginalPlaySpeed){
             _player?.setPlaybackSpeed(Para_OriginalPlaySpeed)
         }
 
 
-        //开始播放
+        //最终开始播放
         _player?.play()
-    } //开始/继续播放
-    fun recessPlay(need_fadeOut: Boolean) {
+
+    }
+    //暂停播放
+    fun pausePlay(){
+        //修改播放标记,记录本次暂停之前,到底有没有真的处于播放状态
         if (_player?.isPlaying == true){
-            setWasPlaying(true)
+            setState_wasPlaying(true)
         }else{
-            setWasPlaying(false)
+            setState_wasPlaying(false)
         }
+
+        //最终暂停
         _player?.pause()
 
-    } //暂停播放
-    fun setWasPlaying(wasPlaying: Boolean){
+    }
+    //特殊情况下手动设置是否继续播放的标志
+    fun setState_wasPlaying(wasPlaying: Boolean){
         playState_wasPlaying = wasPlaying
     }
-    fun cancelPlayEnd(){
+    fun cancelState_PlayEnd(){
         playState_playEnd = false
     }
-    //清除媒体项
-    fun clearMediaItem() {
-        _player?.clearMediaItems()
+
+    //播放状态
+    private var singleItemState_readyOnce = false            //视频是否首次Ready
+    private var singleItemState_notApply = false             //单个媒体参数是否已经应用
+    //重置单个媒体播放状态
+    private fun clearItemState(){
+        singleItemState_readyOnce = false
+        singleItemState_notApply = false
+        mark_needApplyPara = false
     }
-    //挂起和释放播放器
-    fun stopPlayer() {
-        _player?.stop()
+    //播放状态-已准备好
+    private fun playState_Ready(){
+        singleItemState_readyOnce = true
+        //本次是否需要应用独立的项参数
+        if (mark_needApplyPara){ ApplyParameters()}
+
     }
+    private var mark_needApplyPara = false
+    //播放状态-当前媒体结束
+    private fun playState_End(context: Context){
+        //若开启了本次播放完成后关闭功能
+        if (timerState_autoShut_Reach){
+            //关闭倒计时(含清除状态)
+            timer_DisableAutoShut()
+            //让播放暂停
+            pausePlay()
+        }
+        //告知列表管理器本次播放完成的消息,并带上当前媒体的链接
+
+
+    }
+    //由列表管理器进行操作
+    //循环播放-寻到视频起始并播放
+    fun ListCommand_repeatMedia(){
+        _player?.seekTo(0)
+        continuePlay(true,context)
+    }
+    //播完暂停-暂停视频
+    fun ListCommand_justStop(){
+        playState_playEnd = true
+        pausePlay()
+    }
+    //列表模式-由列表管理器告知下一个媒体该放什么
+    fun ListCommand_playNewItem(){
+
+    }
+
+
+
+
+
+    //释放播放器
     fun releasePlayer() {
-        _player?.release()
+        releasePlayer_standardExo()
         _player = null
         playerState_PlayerStateListenerAdded = false
     }
 
 
-
-
-
-    //👀丨单个媒体的播放状态
-    private var itemState_firstExoReady = false
-    private var itemState_firstStartExecuted = false
-    //重置单个媒体播放状态
-    private fun clearItemState(){
-        itemState_firstExoReady = false
-        itemState_firstStartExecuted = false
-
-    }
-    //播放状态
-    private fun playerReady(){
-        itemState_firstExoReady = true
-        //是否需要应用独立的项参数
-        if (paraApply){ ExecuteApplyPara() }
-
-    }
-    private fun playEnd(context: Context){
-        //本次播放完成后关闭
-        if (timerState_autoShut_Reach){
-            //关闭倒计时(含清除状态)
-            timer_DisableAutoShut()
-            //关闭
-            stopPlayBundle(false,context)
-        }
-        //从列表管理器获取循环模式
-        val currentLoopMode = PlayerListManager.getLoopMode(context)
-        //根据循环模式执行不同操作
-        when (currentLoopMode) {
-            "ONE" -> {
-                _player?.seekTo(0)
-                continuePlay(need_requestFocus = false, force_request = false, need_fadeIn = false, context)
-            }
-            "ALL" -> {
-                switchToNextMediaItem(context)
-            }
-            "OFF" -> {
-                playState_playEnd = true
-                recessPlay(need_fadeOut = false)
-                ToolEventBus.sendEvent("PlayerSingleton_PlaybackStateChanged")
-            }
-        }
+    //ExoPlayer标准方法
+    //清除媒体项
+    fun clearMediaItem_standardExo() { _player?.clearMediaItems() }
+    //挂起
+    fun stopPlayer_standardExo() { _player?.stop() }
+    //释放
+    fun releasePlayer_standardExo() {
+        _player?.release()
     }
 
 
 
-    //👀丨独立播放参数丨指以para开头的变量
-    private var coroutine_saveOrFetchDataBase = CoroutineScope(Dispatchers.IO)
-    //公共函数丨从外部读取和修改独立播放参数丨注意：设置清单中的参数和当前实际运行参数不是同一个值
-    fun get_Para_saveLastProgress(): Boolean{
-        return Para_saveLastProgress
-    }
-    fun set_Para_saveLastProgress(boolean: Boolean, context: Context){
-        Para_saveLastProgress = boolean
-
-        //保存到数据库
-        coroutine_saveOrFetchDataBase.launch {
-            MediaItemRepo.Companion.get(context).update_PREFS_saveLastPosition(MediaInfo_FileName,boolean)
-        }
-        //开启保存进度循环
-        if (boolean){ startSaveProgressHandler() }else{ stopSaveProgressHandler() }
-
-    }
-    fun get_Para_DisableAudioTrack(): Boolean{
-        return Para_DisableAudioTrack
-    }
-    fun set_Para_DisableAudioTrack(boolean: Boolean, immediateApply: Boolean, context: Context){
-        Para_DisableAudioTrack = boolean
-        //是否需要立即执行
-        if (immediateApply){
-            if (Para_DisableAudioTrack){
-                DisableAudioTrack()
-            }else{
-                EnableAudioTrack()
-            }
-        }
-        //保存到数据库
-        coroutine_saveOrFetchDataBase.launch {
-            MediaItemRepo.Companion.get(context).update_PREFS_VideoOnly(MediaInfo_FileName,boolean)
-        }
-    }
-    fun get_Para_DisableVideoTrack(): Boolean{
-        return Para_DisableVideoTrack
-    }
-    fun set_Para_DisableVideoTrack(boolean: Boolean, immediateApply: Boolean, context: Context){
-        Para_DisableVideoTrack = boolean
-        //是否需要立即执行
-        if (immediateApply){
-            if (Para_DisableVideoTrack){
-                DisableVideoTrack()
-            }else{
-                EnableVideoTrack()
-            }
-        }
-        //保存到数据库
-        coroutine_saveOrFetchDataBase.launch {
-            MediaItemRepo.Companion.get(context).update_PREFS_SoundOnly(MediaInfo_FileName,boolean)
-        }
-    }
-    //重置独立播放参数
-    private fun clearItemPara(){
-        paraApply = false
-        Para_saveLastProgress = false
-        Para_DisableAudioTrack = false
-        Para_DisableVideoTrack = false
-    }
-    //独立播放参数合集
-    private var Para_saveLastProgress = false
-    private var Para_DisableAudioTrack = false
-    private var Para_DisableVideoTrack = false
-    //独立播放参数读取和应用
-    private var paraApply = false
-    private var paraApply_lastProgress = 0L
-    private fun FetchDataBaseForItem(itemName: String, context: Context){
-        coroutine_saveOrFetchDataBase.launch {
-            //读取保存的进度
-            Para_saveLastProgress = MediaItemRepo.Companion.get(context).get_PREFS_saveLastPosition(MediaInfo_FileName)
-            paraApply_lastProgress = if (Para_saveLastProgress){
-                MediaItemRepo.Companion.get(context).get_value_LastPosition(MediaInfo_FileName)
-            }else{
-                0L
-            }
-            if (paraApply_lastProgress <= 20_000L || paraApply_lastProgress >= MediaInfo_Duration - 20_000L){
-                paraApply_lastProgress = 0L
-            }
-
-
-            //应用独立设置项
-            withContext(Dispatchers.Main) {
-                ExecuteApplyPara()
-            }
-
-        }
-    }
+    //来自数据库的单个媒体参数
     //应用播放参数
-    private fun ExecuteApplyPara(){
-        //已准备好：立即执行参数设定
-        if (itemState_firstExoReady){
+    private fun ApplyParameters(){
+        //视频已经Ready,立即应用参数
+        if (singleItemState_readyOnce){
             //执行后关闭标记
-            paraApply = false
-            //判断时候需要恢复上次的进度
-            if (paraApply_lastProgress != 0L){
-                _player?.seekTo(paraApply_lastProgress)
+            mark_needApplyPara = false
+            //先解包
+            val para_saveProgress = itemParaPack?.PREFS_SaveProgress ?: false
+            val state_lastPosition = itemParaPack?.State_LastPosition ?: 0L
+
+            if (para_saveProgress){
+                if (state_lastPosition > 0L){
+                    ApplyParametersCore(state_lastPosition)
+                }
             }
-            //开启保存进度循环丨注意：必须在媒体准备好后开启
-            if (Para_saveLastProgress){ startSaveProgressHandler() }else{ stopSaveProgressHandler() }
 
-
+        }else{
+            mark_needApplyPara = true
         }
-        //未准备好：设置paraApply标记供首次准备完成时调用
-        else{ paraApply = true }
     }
-    //轨道启用和禁用
-    private var Para_state_videoTrack_Disabled = true
-    private var Para_state_audioTrack_Disabled = true
-    fun DisableVideoTrack(){
+    private fun ApplyParametersCore(lastPosition: Long){
+        _player?.seekTo(lastPosition)
+    }
+    private var itemParaPack: MediaItemSetting? = null
+    //接收MediaDataBaseMaster发回的完整参数包
+    fun receiveParameters(itemPara: MediaItemSetting){
+        itemParaPack = itemPara
+
+        ApplyParameters()
+    }
+
+
+
+
+    //轨道启用和禁用(需升级为引用计数自动切换)
+    private var state_VideoTrack_Disabled = true
+    private var state_AudioTrack_Disabled = true
+    fun trackAffair_DisableVideoTrack(){
         //防止重复执行
-        if (Para_state_videoTrack_Disabled) return
+        if (state_VideoTrack_Disabled) return
         //执行禁用视频轨道
+        state_VideoTrack_Disabled = true
         inner_trackSelector?.parameters = inner_trackSelector!!
             .buildUponParameters()
             .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)
             .build()
 
-        Para_state_videoTrack_Disabled = true
-
     }
-    fun EnableVideoTrack(){
+    fun trackAffair_EnableVideoTrack(){
         //
-        if (Para_state_videoTrack_Disabled){
+        if (state_VideoTrack_Disabled){
+            state_VideoTrack_Disabled = false
             inner_trackSelector?.parameters = inner_trackSelector!!
                 .buildUponParameters()
                 .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
                 .build()
 
-            Para_state_videoTrack_Disabled = false
         }
     }
-    fun DisableAudioTrack(){
+    fun trackAffair_DisableAudioTrack(){
         //
-        if (Para_state_audioTrack_Disabled) return
-        //
+        if (state_AudioTrack_Disabled) return
+        //执行禁用音频轨道
+        state_AudioTrack_Disabled = true
         inner_trackSelector?.parameters = inner_trackSelector!!
             .buildUponParameters()
             .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
             .build()
 
-        Para_state_audioTrack_Disabled = true
-
     }
-    fun EnableAudioTrack(){
-        //
-        if (Para_state_audioTrack_Disabled){
+    fun trackAffair_EnableAudioTrack(){
+        if (state_AudioTrack_Disabled){
+            state_AudioTrack_Disabled = false
             inner_trackSelector?.parameters = inner_trackSelector!!
                 .buildUponParameters()
                 .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
                 .build()
         }
-
-        Para_state_audioTrack_Disabled = false
-
     }
+
     //倍速管理
     private var Para_OriginalPlaySpeed = 1.0f
     fun setPlaySpeed(speed: Float){
@@ -1344,96 +663,44 @@ object PlayerSingleton {
     fun getPlaySpeed(): Pair<Float, Float>{
         return Pair(_player?.playbackParameters?.speed ?: 1.0f, Para_OriginalPlaySpeed)
     }
-    //保存独立播放参数
-    private fun saveParaToDataBase(fileName: String,currentPosition:Long, duration: Long, context: Context){
-        //1.保存播放进度
-        saveProgress(context)
-        //2.
-
-
-
-    }
 
 
 
 
     //其他播放器功能
-    //后台播放时关闭视频轨道
+    //前台状态汇总器
+    //注意：后台播放控制功能仅在播放页才生效,如果在主页并开启了MiniView,则永远保持开启后台播放,无法关闭
+    //ActivityOnResume和ActivityOnStop仅接收视频播放页传回的回调
     fun ActivityOnResume(context: Context){
         stopBackgroundPlay(context)
     }
     fun ActivityOnStop(context: Context){
         startBackgroundPlay(context)
     }
-    //开始/结束后台播放状态
+    //开始后台播放-操作合集
     private fun startBackgroundPlay(context: Context){
-        //开启后台播放功能：开始关闭视频轨道倒计时
+        //检查是否开启后台播放功能
         if (SettingsRequestCenter.get_PREFS_BackgroundPlay(context)){
-            if (SettingsRequestCenter.get_PREFS_DisableVideoTrackOnBack(context)){
-                if (_player?.currentMediaItem != null && _player?.isPlaying == true){
-                    closeVideoTrackJob()
-                }
-            }
+
+        }else{
+            pausePlay()
         }
-        //关闭后台播放功能：直接暂停
-        else{ recessPlay(true) }
     }
+    //回到前台播放-操作合集
     private fun stopBackgroundPlay(context: Context){
-        //开启后台播放功能：关闭视频轨道倒计时 + 恢复视频轨道
-        closeVideoTrackJob?.cancel()
+        //检查是否开启后台播放功能
         if (SettingsRequestCenter.get_PREFS_BackgroundPlay(context)){
-            if (Para_state_videoTrack_Disabled){ EnableVideoTrack() }
-        }
-        //关闭后台播放功能：开始继续播放
-        else{
+
+        }else{
+            //关闭后台播放功能：开始继续播放
             if(playState_wasPlaying){
-                continuePlay(need_requestFocus = false, force_request = true, need_fadeIn = true, context)
+                continuePlay(true, context)
             }
         }
     }
-    //关闭视频轨道倒计时
-    private var coroutineScope_closeVideoTrackJob: CoroutineScope =
-        CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private var closeVideoTrackJob: Job? = null
-    private fun closeVideoTrackJob() {
-        closeVideoTrackJob?.cancel()
-        closeVideoTrackJob = coroutineScope_closeVideoTrackJob.launch {
-            delay(60_000)
-            DisableVideoTrack()
-        }
-    }
-    //Runnable:保存播放进度
-    private var coroutine_saveProgress = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private var state_saveProgress_Running = false
-    private val saveProgressHandler = Handler(Looper.getMainLooper())
-    private var saveProgress = object : Runnable{
-        override fun run() {
 
-            saveProgress(contextApplication)
 
-            saveProgressHandler.postDelayed(this, 20_000)
-        }
-    }
-    private fun saveProgress(context: Context){
-        val currentProgress = _player?.currentPosition?: -1L
 
-        if (currentProgress == -1L) return
-        if (!Para_saveLastProgress) return
-
-        coroutine_saveProgress.launch {
-            MediaItemRepo.Companion.get(context).update_value_LastPosition(MediaInfo_FileName,currentProgress)
-        }
-
-    }
-    private fun startSaveProgressHandler() {
-        if (state_saveProgress_Running) return
-        saveProgressHandler.post(saveProgress)
-        state_saveProgress_Running = true
-    }
-    private fun stopSaveProgressHandler() {
-        saveProgressHandler.removeCallbacks(saveProgress)
-        state_saveProgress_Running = false
-    }
     //定时关闭倒计时器
     private var timer_autoShut: CountDownTimer? = null
     private var countDownDuration_Ms = 0
@@ -1486,8 +753,10 @@ object PlayerSingleton {
         else{
             //关闭倒计时(含清除状态)
             timer_DisableAutoShut()
+            //关闭监听器
+            PlayerListener.stopListener(context)
             //关闭播放器
-            stopPlayBundle(false,context)
+            stopPlayer_standardExo()
         }
     }
     fun set_timer_autoShut(CountDownDuration_Min: Int){

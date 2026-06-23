@@ -2,12 +2,11 @@ package com.suming.player.ActivityComponent.MainActivity
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +21,7 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
@@ -33,6 +33,8 @@ import androidx.media3.common.util.UnstableApi
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.SettingsRequestCenter
+import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -48,17 +50,6 @@ class FragmentVideoStoreSetting: DialogFragment() {
     }
     //自动关闭标志位
     private var lockPage = false
-
-
-    //常规设置项
-    private lateinit var PREFS_MediaStore: SharedPreferences
-    private var PREFS_EnableFileExistCheck: Boolean = false
-    private var PREFS_QueryNewVideoOnStart: Boolean = false
-    private var PREFS_AcquiesceTab: String = ""
-    //排序设置项
-    private var PREFS_video_sortOrder: String = "info_title"
-    private var PREFS_video_sortOrientation: String = "DESC"
-
 
 
 
@@ -123,6 +114,10 @@ class FragmentVideoStoreSetting: DialogFragment() {
     }
 
     private fun init(view: View){
+        //
+        SortMethodText = view.findViewById(R.id.current_sort)
+        SortOrientationText = view.findViewById(R.id.current_sort_orientation)
+        //
         lifecycleScope.launch(Dispatchers.Main) {
             //设置卡片高度
             setCardHeight(view)
@@ -167,49 +162,30 @@ class FragmentVideoStoreSetting: DialogFragment() {
         //开关实例初始化
         val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
         val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
-        //读取设置
-        PREFS_MediaStore = context?.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)!!
-        if (!PREFS_MediaStore.contains("PREFS_EnableFileExistCheck")) {
-            PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", false) }
-            PREFS_EnableFileExistCheck = false
-        } else {
-            PREFS_EnableFileExistCheck = PREFS_MediaStore.getBoolean("PREFS_EnableFileExistCheck", false)
-        }
-        if (!PREFS_MediaStore.contains("PREFS_QueryNewVideoOnStart")) {
-            PREFS_MediaStore.edit { putBoolean("PREFS_QueryNewVideoOnStart", false) }
-            PREFS_QueryNewVideoOnStart = false
-        } else {
-            PREFS_QueryNewVideoOnStart = PREFS_MediaStore.getBoolean("PREFS_QueryNewVideoOnStart", false)
-        }
-
-        if (PREFS_MediaStore.contains("PREFS_AcquiesceTab")){
-            PREFS_AcquiesceTab = PREFS_MediaStore.getString("PREFS_AcquiesceTab", "video")?: "error"
-            if (PREFS_AcquiesceTab == "error"){
-                PREFS_AcquiesceTab = "video"
-                PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
-            }
-        }else{
-            PREFS_AcquiesceTab = "video"
-            PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
-        }
         //开关置位
-        switch_EnableFileExistCheck.isChecked = PREFS_EnableFileExistCheck
-        switch_QueryNewVideoOnStart.isChecked = PREFS_QueryNewVideoOnStart
+        switch_EnableFileExistCheck.isChecked = SettingsRequestCenter.get_PREFS_EnableFileExistCheck( requireContext())
+        switch_QueryNewVideoOnStart.isChecked = SettingsRequestCenter.get_PREFS_QueryNewVideoOnStart( requireContext())
         //开关点击事件
         switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", isChecked) }
+            SettingsRequestCenter.set_PREFS_EnableFileExistCheck(requireContext(), isChecked)
         }
         switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putBoolean("PREFS_QueryNewVideoOnStart", isChecked) }
+            SettingsRequestCenter.set_PREFS_QueryNewVideoOnStart(requireContext(), isChecked)
+        }
+
+        val ButtonVideoIcon = view.findViewById<ImageButton>(R.id.ButtonVideoIcon)
+        ButtonVideoIcon.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+
+            requireContext().showCustomToast("哎呀,骇亖我力")
         }
 
 
         //按钮：退出
-        val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
+        val ButtonExit = view.findViewById<CircleButton>(R.id.buttonExit)
         ButtonExit.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
             dismiss()
         }
         //按钮：点击空白区域退出
@@ -219,15 +195,14 @@ class FragmentVideoStoreSetting: DialogFragment() {
             dismiss()
         }
         //按钮：锁定页面
-        val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
+        val ButtonLock = view.findViewById<CircleButton>(R.id.buttonLock)
         ButtonLock.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
             lockPage = !lockPage
             if (lockPage){
-                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
+                ButtonLock.setIconDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_more_button_lock_on))
             }
             else{
-                ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
+                ButtonLock.setIconDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_more_button_lock_off))
             }
         }
         //按钮：重读媒体库
@@ -241,14 +216,18 @@ class FragmentVideoStoreSetting: DialogFragment() {
         //默认页签
         val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
         fun setAcquiesceTabText(){
-            if (PREFS_AcquiesceTab == "video"){
-                ButtonTextChangeDefaultTab.text = "视频"
-            }
-            else if (PREFS_AcquiesceTab == "music"){
-                ButtonTextChangeDefaultTab.text = "音乐"
-            }
-            else if (PREFS_AcquiesceTab == "last"){
-                ButtonTextChangeDefaultTab.text = "上一次的页面"
+            val AcquiesceTab = SettingsRequestCenter.get_PREFS_AcquiesceTab(requireContext())
+            when(AcquiesceTab){
+                SettingsRequestCenter.tab_mark_video -> {
+                    ButtonTextChangeDefaultTab.text = "视频"
+                }
+                SettingsRequestCenter.tab_mark_music -> {
+                    ButtonTextChangeDefaultTab.text = "音乐"
+                }
+                SettingsRequestCenter.tab_mark_last -> {
+                    ButtonTextChangeDefaultTab.text = "上一次的页面"
+                }
+
             }
         }
         setAcquiesceTabText()
@@ -263,15 +242,17 @@ class FragmentVideoStoreSetting: DialogFragment() {
                 ToolVibrate().vibrate(requireContext())
                 when (item.itemId) {
                     R.id.page_video -> {
-                        PREFS_AcquiesceTab = "video"
+                        SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_video)
+
                         setAcquiesceTabText()
-                        PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
+
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_music -> {
-                        PREFS_AcquiesceTab = "music"
+                        SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_music)
+
                         setAcquiesceTabText()
-                        PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
+
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_gallery -> {
@@ -279,9 +260,10 @@ class FragmentVideoStoreSetting: DialogFragment() {
                         return@setOnMenuItemClickListener true
                     }
                     R.id.page_last -> {
-                        PREFS_AcquiesceTab = "last"
+                        SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_last)
+
                         setAcquiesceTabText()
-                        PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
+
                         return@setOnMenuItemClickListener true
                     }
                 }
@@ -296,75 +278,77 @@ class FragmentVideoStoreSetting: DialogFragment() {
         }
 
         //排序方法预读
-        setAndShowSortOrder("")
-        setAndShowOrientationType("")
+        updateSortMethodText("")
+        updateSortOrientationText("")
 
 
         //展开排序区域
         val SortOrderArea = view.findViewById<LinearLayout>(R.id.sort_type_area)
         SortOrderArea.visibility = View.GONE
-        //刷新
+        //排序操作按钮(面板收起时,展开面板, 面板展开时,触发刷新)
         val ButtonChangeSortOrder = view.findViewById<TextView>(R.id.ButtonChangeSort)
         ButtonChangeSortOrder.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            if (ButtonChangeSortOrder.text == "更改"){
-                ButtonChangeSortOrder.text = "保存并刷新"
-                expand(SortOrderArea)
-            }
-            else if(ButtonChangeSortOrder.text == "保存并刷新"){
+            //
+            if (state_expanded){
+                //报告并退出
                 val result = bundleOf("KEY" to "RenovateAdapter")
                 setFragmentResult("FROM_FRAGMENT_VIDEO_MediaStore", result)
                 customDismiss()
+            }else{
+                //展开面板并替换显示文本
+                ButtonChangeSortOrder.text = "保存并刷新"
+                expand(SortOrderArea)
             }
-        }
-        //排序方法
-        val SortOrder_info_title = view.findViewById<TextView>(R.id.sort_name)
-        val SortOrder_info_duration = view.findViewById<TextView>(R.id.sort_duration)
-        val SortOrder_info_date_added = view.findViewById<TextView>(R.id.sort_date_added)
-        val SortOrder_info_file_size = view.findViewById<TextView>(R.id.sort_file_size)
-        val SortOrder_info_mime_type = view.findViewById<TextView>(R.id.sort_mime_type)
-        SortOrder_info_title.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_video_sortOrder", "info_title") }
-            setAndShowSortOrder("info_title")
-        }
-        SortOrder_info_duration.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_video_sortOrder", "info_duration") }
-            setAndShowSortOrder("info_duration")
-        }
-        SortOrder_info_date_added.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_video_sortOrder", "info_date_added") }
-            setAndShowSortOrder("info_date_added")
-        }
-        SortOrder_info_file_size.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_video_sortOrder", "info_file_size") }
-            setAndShowSortOrder("info_file_size")
-        }
-        SortOrder_info_mime_type.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-            PREFS_MediaStore.edit { putString("PREFS_video_sortOrder", "info_mime_type") }
-            setAndShowSortOrder("info_mime_type")
         }
         //降序和升序
         val ButtonChangeSortOrientation = view.findViewById<TextView>(R.id.ButtonChangeSortOrientation)
         ButtonChangeSortOrientation.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            //升序改降序
-            if (PREFS_video_sortOrientation == "ASC"){
-                PREFS_MediaStore.edit { putString("PREFS_video_sortOrientation", "DESC") }
-                PREFS_video_sortOrientation = "DESC"
-                setAndShowOrientationType("DESC")
-            }
-            //降序改升序
-            else if (PREFS_video_sortOrientation == "DESC"){
-                PREFS_MediaStore.edit { putString("PREFS_video_sortOrientation", "ASC") }
-                PREFS_video_sortOrientation = "ASC"
-                setAndShowOrientationType("ASC")
+            //读取当前升降序配置
+            val PREFS_video_sortOrientation = SettingsRequestCenter.get_PREFS_video_sortOrientation(requireContext())
+            //取反并保存
+            if (PREFS_video_sortOrientation == SettingsRequestCenter.sort_orientation_ASC){
+                SettingsRequestCenter.set_PREFS_video_sortOrientation(requireContext(), SettingsRequestCenter.sort_orientation_DESC)
+                updateSortOrientationText(SettingsRequestCenter.sort_orientation_DESC)
+            }else if (PREFS_video_sortOrientation == SettingsRequestCenter.sort_orientation_DESC){
+                SettingsRequestCenter.set_PREFS_video_sortOrientation(requireContext(), SettingsRequestCenter.sort_orientation_ASC)
+                updateSortOrientationText(SettingsRequestCenter.sort_orientation_ASC)
             }
         }
+        //排序方法选择区
+        val sort_method_filename = view.findViewById<TextView>(R.id.sort_method_filename)
+        val sort_method_duration = view.findViewById<TextView>(R.id.sort_method_duration)
+        val sort_method_date_added = view.findViewById<TextView>(R.id.sort_method_date_added)
+        val sort_method_file_size = view.findViewById<TextView>(R.id.sort_method_file_size)
+        val sort_method_mime_type = view.findViewById<TextView>(R.id.sort_method_mime_type)
+        sort_method_filename.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            //设置排序方法
+            SettingsRequestCenter.set_PREFS_video_sortMethod(requireContext(), SettingsRequestCenter.sort_method_filename)
+            updateSortMethodText(SettingsRequestCenter.sort_method_filename)
+        }
+        sort_method_duration.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            SettingsRequestCenter.set_PREFS_video_sortMethod(requireContext(), SettingsRequestCenter.sort_method_duration)
+            updateSortMethodText(SettingsRequestCenter.sort_method_duration)
+        }
+        sort_method_date_added.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            SettingsRequestCenter.set_PREFS_video_sortMethod(requireContext(), SettingsRequestCenter.sort_method_date_added)
+            updateSortMethodText(SettingsRequestCenter.sort_method_date_added)
+        }
+        sort_method_file_size.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            SettingsRequestCenter.set_PREFS_video_sortMethod(requireContext(), SettingsRequestCenter.sort_method_file_size)
+            updateSortMethodText(SettingsRequestCenter.sort_method_file_size)
+        }
+        sort_method_mime_type.setOnClickListener {
+            ToolVibrate().vibrate(requireContext())
+            SettingsRequestCenter.set_PREFS_video_sortMethod(requireContext(), SettingsRequestCenter.sort_method_mime_type)
+            updateSortMethodText(SettingsRequestCenter.sort_method_mime_type)
+        }
+
 
 
     }
@@ -373,6 +357,9 @@ class FragmentVideoStoreSetting: DialogFragment() {
     //Functions
     //展开动画
     private fun expand(view: LinearLayout) {
+        if (state_expanded) return
+        state_expanded = true
+
         //设置初始高度为0
         view.measure(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -402,103 +389,60 @@ class FragmentVideoStoreSetting: DialogFragment() {
 
         animator.start()
     }
+    private var state_expanded = false
     //文本显示
-    private fun setAndShowSortOrder(type: String){
-        val current_sort_type = view?.findViewById<TextView>(R.id.current_sort)
-        when(type){
-            "info_title" -> {
-                current_sort_type?.text = "已选择：文件名"
-                PREFS_video_sortOrder = "info_title"
+    private lateinit var SortMethodText : TextView
+    private fun updateSortMethodText(sortMethod: String = ""){
+        var targetSortMethod = ""
+        if (sortMethod == "") {
+            targetSortMethod = SettingsRequestCenter.get_PREFS_video_sortMethod(requireContext())
+        }else{
+            targetSortMethod = sortMethod
+        }
+
+        when(targetSortMethod){
+            SettingsRequestCenter.sort_method_filename -> {
+                SortMethodText.text = "文件名"
             }
-            "info_duration" -> {
-                current_sort_type?.text = "已选择：时长"
-                PREFS_video_sortOrder = "info_duration"
+            SettingsRequestCenter.sort_method_duration -> {
+                SortMethodText.text = "时长"
             }
-            "info_date_added" -> {
-                current_sort_type?.text = "已选择：添加日期"
-                PREFS_video_sortOrder = "info_date_added"
+            SettingsRequestCenter.sort_method_date_added -> {
+                SortMethodText.text = "添加日期"
             }
-            "info_file_size" -> {
-                current_sort_type?.text = "已选择：文件大小"
-                PREFS_video_sortOrder = "info_file_size"
+            SettingsRequestCenter.sort_method_file_size -> {
+                SortMethodText.text = "文件大小"
             }
-            "info_mime_type" -> {
-                current_sort_type?.text = "已选择：文件格式"
-                PREFS_video_sortOrder = "info_mime_type"
+            SettingsRequestCenter.sort_method_mime_type -> {
+                SortMethodText.text = "文件格式"
             }
-            "" -> {
-                if (PREFS_MediaStore.contains("PREFS_video_sortOrder")){
-                    PREFS_video_sortOrder = PREFS_MediaStore.getString("PREFS_video_sortOrder", "info_title") ?: "info_title"
-                    //根据PREFS_video_sortOrder设置current_sort_type
-                    if ( PREFS_video_sortOrder == "info_title"){
-                        current_sort_type?.text = "文件名"
-                        PREFS_video_sortOrder = "info_title"
-                    }
-                    else if ( PREFS_video_sortOrder == "info_duration"){
-                        current_sort_type?.text = "时长"
-                        PREFS_video_sortOrder = "info_duration"
-                    }
-                    else if ( PREFS_video_sortOrder == "info_date_added"){
-                        current_sort_type?.text = "添加日期"
-                        PREFS_video_sortOrder = "info_date_added"
-                    }
-                    else if ( PREFS_video_sortOrder == "info_file_size"){
-                        current_sort_type?.text = "文件大小"
-                        PREFS_video_sortOrder = "info_file_size"
-                    }
-                    else if ( PREFS_video_sortOrder == "info_mime_type"){
-                        current_sort_type?.text = "文件格式"
-                        PREFS_video_sortOrder = "info_mime_type"
-                    }
-                    else {
-                        PREFS_MediaStore.edit { putString("PREFS_video_sortOrder", "info_title") }
-                        current_sort_type?.text = "文件名"
-                        PREFS_video_sortOrder = "info_title"
-                    }
-                }
-                else{
-                    PREFS_MediaStore.edit { putString("PREFS_video_sortOrder", "info_title") }
-                    current_sort_type?.text = "文件名"
-                    PREFS_video_sortOrder = "info_title"
-                }
+            else -> {
+                SortMethodText.text = "读取时发生错误"
             }
         }
     }
-    private fun setAndShowOrientationType(type_DESC_or_ASC: String){
-        val current_sort_orientation = view?.findViewById<TextView>(R.id.current_sort_orientation)
-        when(type_DESC_or_ASC){
-            "DESC" -> {
-                current_sort_orientation?.text = "已修改为降序"
-                PREFS_video_sortOrientation = "DESC"
+    private lateinit var SortOrientationText : TextView
+    private fun updateSortOrientationText(sortOrientation: String = ""){
+        var targetSortOrientation = ""
+        if (sortOrientation == "") {
+            //未传入目标时，自己读取
+            targetSortOrientation = SettingsRequestCenter.get_PREFS_video_sortOrientation(requireContext())
+        }else{
+            targetSortOrientation = sortOrientation
+        }
+
+        when(targetSortOrientation){
+            SettingsRequestCenter.sort_orientation_DESC -> {
+                SortOrientationText.text = "降序"
             }
-            "ASC" -> {
-                current_sort_orientation?.text = "已修改为升序"
-                PREFS_video_sortOrientation = "ASC"
+            SettingsRequestCenter.sort_orientation_ASC -> {
+                SortOrientationText.text = "升序"
             }
-            "" -> {
-                if (PREFS_MediaStore.contains("PREFS_video_sortOrientation")){
-                    PREFS_video_sortOrientation = PREFS_MediaStore.getString("PREFS_video_sortOrientation", "DESC") ?: "DESC"
-                    if (PREFS_video_sortOrientation == "DESC"){
-                        current_sort_orientation?.text = "降序"
-                        PREFS_video_sortOrientation = "DESC"
-                    }
-                    else if (PREFS_video_sortOrientation == "ASC"){
-                        current_sort_orientation?.text = "升序"
-                        PREFS_video_sortOrientation = "ASC"
-                    }
-                    else {
-                        PREFS_MediaStore.edit { putString("PREFS_video_sortOrientation", "DESC") }
-                        current_sort_orientation?.text = "降序"
-                        PREFS_video_sortOrientation = "DESC"
-                    }
-                }
-                else{
-                    PREFS_MediaStore.edit { putString("PREFS_video_sortOrientation", "DESC") }
-                    current_sort_orientation?.text = "降序"
-                    PREFS_video_sortOrientation = "DESC"
-                }
+            else -> {
+                SortOrientationText.text = "读取时发生错误"
             }
         }
+
     }
     //自定义退出逻辑
     private fun customDismiss(){
@@ -513,6 +457,13 @@ class FragmentVideoStoreSetting: DialogFragment() {
         setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
         dismiss()
 
+    }
+
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "MainActivity: $msg")
+        }
     }
 
 }

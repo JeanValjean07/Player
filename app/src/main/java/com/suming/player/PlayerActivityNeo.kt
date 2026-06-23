@@ -10,13 +10,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
-import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.RectF
 import android.hardware.display.DisplayManager
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
@@ -53,19 +49,16 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.NotificationManagerCompat
@@ -90,7 +83,6 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.button.MaterialButton
 import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentEqualizer
 import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentVideoInfo
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerFragmentMoreButton
@@ -102,15 +94,18 @@ import com.suming.player.AddonTools.Event
 import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
 import com.suming.player.FuncPack_ListManager.FragmentPlayList
 import com.suming.player.FuncPack_ListManager.PlayerListManager
+import com.suming.player.FuncionalPack.ArtworkCapturer
+import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.FrameExtractor
 import com.suming.player.FuncionalPack.FrameListener
 import com.suming.player.FuncionalPack.MediaUriManager
+import com.suming.player.FuncionalPack.PlayerInFoCenter
+import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.IndepService.FloatingWindowService
-import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
-import com.suming.player.FuncionalPack.ArtworkCapturer
-import com.suming.player.FuncionalPack.ArtworkFrameManager
+import com.suming.player.ViewWidget.CircleButton
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.CoroutineScope
@@ -304,11 +299,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     //</editor-fold>
 
     //获取播放器实例
-    private val player get() = PlayerSingleton.getPlayer(application)
+    private val player get() = PlayerSingleton.getInitPlayer(application)
     //ViewModel
     private val vm: PlayerViewModel by viewModels()
-    //协程
-
 
 
 
@@ -333,7 +326,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 val intentUri = ExtractIntentUri(intent)
                 val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUri, this@PlayerActivityNeo)
                 //检查是否正在播放,获取正在播放项的链接
-                val ongoingUriStandard = PlayerSingleton.getCurrentMediaStandardUriString().toUri()
+                val ongoingUriStandard = PlayerSingleton.getState_currentMediaItem_Uri().second
                 //获取启动来源标志位
                 val startSourceSign = ExtractIntentSource(intent)
 
@@ -619,9 +612,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                 noticeCard.visibility = View.GONE
             }
             //按钮：暂停/继续播放
-            val ButtonPause = findViewById<ImageButton>(R.id.controller_button_playorpause)
-            ButtonPause.setOnClickListener {
-                ToolVibrate().vibrate(this@PlayerActivityNeo)
+            val PauseButton = findViewById<CircleButton>(R.id.ButtonPause)
+            PauseButton.setOnClickListener {
+
                 if (player.isPlaying) {
                     scroller.stopScroll()
                     recessPlay(need_fadeOut = false)
@@ -642,8 +635,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
             //按钮：切换横屏
-            val ButtonLandscape = findViewById<ImageButton>(R.id.controller_button_landscape)
-            ButtonLandscape.setOnTouchListener { _, event ->
+            val ButtonLandscapeButton = findViewById<CircleButton>(R.id.ButtonLandscape)
+            ButtonLandscapeButton.setOnTouchListener { _, event ->
                 when (event.actionMasked){
                     MotionEvent.ACTION_DOWN -> {
                         ToolVibrate().vibrate(this@PlayerActivityNeo)
@@ -664,9 +657,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                 onTouchEvent(event)
             }
             //按钮：更多选项
-            val ButtonMore = findViewById<ImageButton>(R.id.controller_button_more)
-            ButtonMore.setOnClickListener {
-                ToolVibrate().vibrate(this@PlayerActivityNeo)
+            val ButtonMoreOption = findViewById<CircleButton>(R.id.ButtonMoreOption)
+            ButtonMoreOption.setOnClickListener {
+
                 //防止快速点击
                 if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                     return@setOnClickListener
@@ -677,7 +670,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 stopScrollerSync()
                 if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { MovePlayAreaJob() }
                 //启动弹窗
-                PlayerFragmentMoreButton.Companion.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
+                PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, "PlayerMoreButtonFragment")
             }
             //播放区域点击事件
             val gestureDetectorPlayArea = GestureDetector(
@@ -900,7 +893,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                             touchLeft = true
                         }
                         else if(finger1x > DisplayMetric_ScreenWidth * 0.8){
-                            state_HeadSetInserted = PlayerSingleton.getState_isHeadsetPlugged(this@PlayerActivityNeo)
+                            state_HeadSetInserted = PlayerListener.getState_isHeadsetPlugged(this@PlayerActivityNeo)
                             touchRight = true
                         }
                         else{
@@ -1131,10 +1124,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                         val Method = bundle.getString("Method")
                         when(Method){
                             "useCurrentFrame" -> {
-                                CaptureCurrentFrameAsCover(PlayerSingleton.getCurrentMediaUniqueID())
+                                CaptureCurrentFrameAsCover(PlayerInFoCenter.getMediaUniqueID(this@PlayerActivityNeo).second)
                             }
                             "useDefaultCover" -> {
-                                useDefaultCover(PlayerSingleton.getCurrentMediaUniqueID())
+                                useDefaultCover(PlayerInFoCenter.getMediaUniqueID(this@PlayerActivityNeo).second)
                             }
                             "pickFromLocal" -> {
                                 showCustomToast("暂不支持此功能", 3)
@@ -1494,15 +1487,15 @@ class PlayerActivityNeo: AppCompatActivity(){
         //根据uri提取基础视频信息
         getMediaInfo(uri)
         //检查是否需要设置新的媒体项
-        val currentMediaItem = PlayerSingleton.getCurrentMediaItem()
+        val currentMediaItem = PlayerSingleton.getState_currentMediaItem_Pack()
         if (currentMediaItem == null){
             //设置新媒体项
             setNewMediaItem(uri)
         }else{
             //检查已有媒体信息
-            val currentUri = PlayerSingleton.getMediaInfoUri()
+            val currentUri = PlayerInFoCenter.getMediaUniqueID(this@PlayerActivityNeo).second
             //已有媒体不是目标媒体,需要设置新媒体
-            if (currentUri != uri){
+            if (currentUri != uri.toString()){
                 //设置新媒体项
                 setNewMediaItem(uri)
             }
@@ -1548,7 +1541,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null){ return }
         //检查媒体类型
-        if (PlayerSingleton.getMediaInfoType() == "music"){
+        if (PlayerInFoCenter.getMediaInfoType(this@PlayerActivityNeo).second == "music"){
             EnsureExit_but_keep_playing()
             return
         }
@@ -1683,9 +1676,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         stopVideoSeek()
         stopScrollerSync()
         stopVideoTimeSync()
-        //停止服务端操作
-        PlayerSingleton.clearMediaInfo(this@PlayerActivityNeo)
-        PlayerSingleton.stopPlayBundle(false,application)
+
         finish()
     }
     private fun EnsureExit_but_keep_playing(){
@@ -1706,10 +1697,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         val data = Intent().apply { putExtra("key", "EnsureExitButKeepPlaying") }
         setResult(RESULT_OK, data)
         //不停止服务端操作
-        if (playerReadyFrom_FirstEntry){
-            PlayerSingleton.stopPlayBundle(false,application)
-            PlayerSingleton.clearMediaInfo(this@PlayerActivityNeo)
-        }
         finish()
     }
     //关闭遮罩:输入1带淡出,输入0直接消失
@@ -1948,7 +1935,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     vm.state_FromSysStart = true
                     val uri = IntentCompat.getParcelableExtra(newIntent, Intent.EXTRA_STREAM, Uri::class.java) ?: return
                     //判断是否是同一个视频
-                    if (uri == PlayerSingleton.getMediaInfoUri()) return
+                    if (uri == PlayerSingleton.getState_currentMediaItem_Uri()) return
                     //设置新的媒体项
                     setNewMediaItem(uri)
 
@@ -1958,7 +1945,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     vm.state_FromSysStart = true
                     val uri = newIntent.data ?: return
                     //判断是否是同一个视频
-                    if (uri == PlayerSingleton.getMediaInfoUri()) return
+                    if (uri == PlayerSingleton.getState_currentMediaItem_Uri()) return
                     //设置新的媒体项
                     setNewMediaItem(uri)
 
@@ -1968,7 +1955,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     vm.state_FromSysStart = true
                     val uri = IntentCompat.getParcelableExtra(newIntent, "uri", Uri::class.java) ?: return
                     //判断是否是同一个视频
-                    if (uri == PlayerSingleton.getMediaInfoUri()) return
+                    if (uri == PlayerSingleton.getState_currentMediaItem_Uri()) return
                     //设置新的媒体项
                     setNewMediaItem(uri)
 
@@ -2574,14 +2561,14 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     @Suppress("SameParameterValue")
     private fun recessPlay(need_fadeOut: Boolean){
-        PlayerSingleton.recessPlay(need_fadeOut)
+        PlayerSingleton.pausePlay()
 
         stopVideoTimeSync()
         stopScrollerSync()
     }
     @Suppress("SameParameterValue")
     private fun continuePlay(need_requestFocus: Boolean, force_request: Boolean, need_fadeIn: Boolean){
-        PlayerSingleton.continuePlay(need_requestFocus, force_request, need_fadeIn,this)
+        PlayerSingleton.continuePlay(need_requestFocus,this)
 
 
         //界面控件操作
@@ -2638,12 +2625,13 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //刷新按钮状态
     private fun updateButtonState(){
-        val Button = findViewById<ImageView>(R.id.controller_button_playorpause)
+        val PauseButton = findViewById<CircleButton>(R.id.ButtonPause)
+
         if (player.isPlaying){
-            Button.setImageResource(R.drawable.ic_controller_neo_pause)
+            PauseButton.setIconResource(R.drawable.ic_controller_neo_pause)
         }
         else{
-            Button.setImageResource(R.drawable.ic_controller_neo_play)
+            PauseButton.setIconResource(R.drawable.ic_controller_neo_play)
         }
     }
     //刷新进度条
@@ -2977,12 +2965,13 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //刷新横屏按钮
     private fun updateLandscapeButton(){
-        val ButtonMaterialSwitchLandscape = findViewById<MaterialButton>(R.id.buttonMaterialSwitchLandscape)
+        val ButtonLandscape = findViewById<CircleButton>(R.id.ButtonLandscape)
+
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBgClosed))
+            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.THEME_1_Background_ContentCard))
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            ButtonMaterialSwitchLandscape.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBg))
+            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBg))
         }
 
     }

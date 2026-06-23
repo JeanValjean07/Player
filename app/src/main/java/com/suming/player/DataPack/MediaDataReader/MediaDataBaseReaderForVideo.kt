@@ -2,18 +2,16 @@ package com.suming.player.DataPack.MediaDataReader
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
-import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.SettingsRequestCenter
 
-class MediaDataBaseReaderForVideo(
-    private val context: Context,
-) : PagingSource<Int, MediaItemForVideo>() {
-    //设置和设置项
-    private lateinit var PREFS_MediaStore: SharedPreferences
+class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<Int, MediaItemForVideo>() {
+
 
 
     override fun getRefreshKey(state: PagingState<Int, MediaItemForVideo>): Int? {
@@ -31,22 +29,10 @@ class MediaDataBaseReaderForVideo(
             val mediaStoreRepo = MediaStoreRepo.get(context)
             val totalCount = mediaStoreRepo.getTotalCount()
             //排序字段
-            var sortOrder: String
-            var sortOrientation: String
-            //读取媒体库设置
-            PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-            if (PREFS_MediaStore.contains("PREFS_video_sortOrder")){
-                sortOrder = PREFS_MediaStore.getString("PREFS_video_sortOrder", "info_title") ?: "info_title"
-            }else{
-                sortOrder = "info_title"
-                PREFS_MediaStore.edit { putString("PREFS_video_sortOrder", "info_title").apply() }
-            }
-            if (PREFS_MediaStore.contains("PREFS_video_sortOrientation")){
-                sortOrientation = PREFS_MediaStore.getString("PREFS_video_sortOrientation", "DESC") ?: "DESC"
-            }else{
-                sortOrientation = "DESC"
-                PREFS_MediaStore.edit { putString("PREFS_video_sortOrientation", "DESC").apply() }
-            }
+            val sortOrder = SettingsRequestCenter.get_PREFS_video_sortMethod(context)
+            val sortOrientation = SettingsRequestCenter.get_PREFS_video_sortOrientation(context)
+            consoleLog("sortOrder: $sortOrder, sortOrientation: $sortOrientation")
+
             val sortMethod = "$sortOrder $sortOrientation"
 
             //按页获取数据
@@ -85,6 +71,14 @@ class MediaDataBaseReaderForVideo(
         }
         catch (e: Exception) {
             return LoadResult.Error(e)
+        }
+    }
+
+
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "MediaDataBaseReaderForVideo: $msg")
         }
     }
 

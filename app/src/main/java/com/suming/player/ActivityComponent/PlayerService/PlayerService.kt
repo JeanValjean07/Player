@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
@@ -19,8 +20,10 @@ import com.suming.player.PlayerActivityNeo
 import com.suming.player.PlayerActivityOro
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
-import com.suming.player.AddonTools.CustomNotificationSession
+import com.suming.player.ActivityComponent.PlayerService.CustomNotificationSession
 import com.suming.player.ActivityComponent.PlayerActivity.ToolPlayerWrapper
+import com.suming.player.FuncionalPack.BroadcastActions
+import com.suming.player.MusicPlayer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,37 +31,42 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 @UnstableApi
-//@Suppress("unused")
-class PlayerService(): MediaSessionService() {
-    //通知标识变量
+@Suppress("unused")
+class PlayerService: MediaSessionService() {
     companion object {
         const val NOTIF_ID = 1
         const val CHANNEL_ID = "playback"
     }
-    //媒体会话实例
+
+    //媒体会话
     private var mediaSession: MediaSession? = null
-    //媒体信息
-    private var MediaInfo_MediaUriString = ""
-    private var MediaInfo_FileName = ""
-    private var MediaInfo_Artist = ""
+
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "PlayerService: $msg")
+        }
+    }
 
 
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        consoleLog("触发 onCreate")
         //从serviceLinker获取信息丨按理说媒体会话还无需用到这些信息,供以后添加自定义通知使用
-        val (uriString, fileName, mediaArtist) = PlayerServiceLinker.getMediaBasicInfo()
+        val (uriString, fileName, mediaArtist) = ServiceConnector.getMediaBasicInfo()
         MediaInfo_MediaUriString = uriString
         MediaInfo_FileName = fileName
         MediaInfo_Artist = mediaArtist
 
 
-        //获取播放器实例
-        val player = PlayerSingleton.getPlayer(application)
+        //获取播放器
+        val player = PlayerSingleton.getInitPlayer(application)
 
         //指定通知,包含设置自定义控制按钮和播控中心小图标
         setMediaNotificationProvider(CustomNotificationSession(this))
+
         //创建媒体会话包装器
         val wrapper = ToolPlayerWrapper(player)
 
@@ -85,60 +93,77 @@ class PlayerService(): MediaSessionService() {
         mediaSession?.setSessionActivity(createPendingIntentManager())
 
 
-    //onCreate END
+
     }
     //接收Intent额外信息
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        consoleLog("触发 onStartCommand")
         super.onStartCommand(intent, flags, startId)
-        //取出数据
-        intent?.let {
-            //MediaInfo_MediaTitle = it.getStringExtra("info_to_service_MediaTitle")
-        }
+        //取出intent的数据
+        //getMediaInfo(intent)
 
-        //END
+
+
+
         return START_REDELIVER_INTENT
     }
-    //
+    //获取媒体会话
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+        consoleLog("触发 onGetSession")
+
         return mediaSession
     }
     //手动关闭服务时调用
     override fun onDestroy() {
         super.onDestroy()
-        //Log.d("SuMing","onDestroy")
-        //关闭媒体类型观察者
-        Job_observe?.cancel()
+        consoleLog("触发 onDestroy")
+
         //关闭媒体会话
-        mediaSession?.run {
-            release()
-            mediaSession = null
-        }
+        releaseMediaSession()
+
+
     }
     //仅在后台划卡时触发,而且前提是系统不执行强行停止
     override fun onTaskRemoved(rootIntent: Intent?) {
-        //Log.d("SuMing","onTaskRemoved")
+        consoleLog("触发 onTaskRemoved")
         //关闭媒体会话
-        mediaSession?.run {
-            release()
-            mediaSession = null
-        }
-        //关闭媒体类型观察者
-        Job_observe?.cancel()
+        releaseMediaSession()
+
         //关闭服务
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
-        //关闭播放器
-        PlayerSingleton.stopPlayBundle(false,this)
+
+        //关闭播放器(改为仅暂停视频和关闭监听)(暂时停用)
+        //PlayerSingleton.stopPlayBundle(false,this)
     }
 
 
 
 
+    //关闭媒体会话
+    private fun releaseMediaSession() {
+        mediaSession?.run {
+            release()
+            mediaSession = null
+        }
+    }
 
 
-    //Functions
-    //自定义通知:构建常规通知
+    //媒体信息
+    private var MediaInfo_MediaUriString = ""
+    private var MediaInfo_FileName = ""
+    private var MediaInfo_Artist = ""
+    private fun getMediaInfo(intent: Intent?){
+        intent?.let {
+            MediaInfo_MediaUriString = it.getStringExtra("info_to_service_MediaUriString") ?: ""
+            MediaInfo_FileName = it.getStringExtra("info_to_service_FileName") ?: ""
+            MediaInfo_Artist = it.getStringExtra("info_to_service_Artist") ?: ""
+        }
+    }
+
+
+    //构建自定义通知(自定标题+横排文本按钮)
     private fun BuildCustomizeNotification(): Notification {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
@@ -153,7 +178,7 @@ class PlayerService(): MediaSessionService() {
 
 
     }
-    //自定义通知:构建自定布局通知
+    //构建纯自定布局通知(完全自定布局)
     private fun BuildCustomViewNotification(): Notification {
         // 1. 创建 RemoteViews
         val remoteView = RemoteViews(packageName, R.layout.notification_player)
@@ -196,7 +221,7 @@ class PlayerService(): MediaSessionService() {
             .setStyle(NotificationCompat.DecoratedCustomViewStyle()) // 让系统给加圆角/背景
             .build()
     }
-    //自定义通知:创建通知通道
+    //创建通知通道
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
@@ -209,23 +234,21 @@ class PlayerService(): MediaSessionService() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(channel)
     }
-    //通过观察者动态更改pendingIntent(未启用)
+
+
+    //通过观察者动态更改拉起活动意图(未启用)
     private var Job_observe: Job? = null
-    private var coroutine_observe = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private fun startObserve_MediaType(){
+    private var coroutine_observe = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private fun startObserve_PendingIntent(){
         Job_observe?.cancel()
         Job_observe = coroutine_observe.launch {
-            PlayerServiceLinker.MediaType.collect { mediaType ->
-
-
-
+            ServiceConnector.MediaType.collect { mediaType ->
 
             }
         }
     }
-
-    //通知卡片和媒体会话卡片-点击拉起意图
-    @OptIn(UnstableApi::class)
+    //拉起活动意图(暂未使用)
+    //直接拉起管理器,管理器自动判断到底拉起哪个页面
     private fun createPendingIntentManager(): PendingIntent {
         val intent = Intent(this, ExternalInvokeManager::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -234,7 +257,7 @@ class PlayerService(): MediaSessionService() {
 
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
-    private fun createPendingIntentNeo(): PendingIntent {
+    private fun createPendingIntentVideoNeo(): PendingIntent {
         val intent = Intent(this, PlayerActivityNeo::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
@@ -242,8 +265,16 @@ class PlayerService(): MediaSessionService() {
             .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
-    private fun createPendingIntentOro(): PendingIntent {
+    private fun createPendingIntentVideoOro(): PendingIntent {
         val intent = Intent(this, PlayerActivityOro::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+            .putExtra("IntentSource", "FromPendingIntent")
+            .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
+        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+    private fun createPendingIntentMusic(): PendingIntent {
+        val intent = Intent(this, MusicPlayer::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
             .putExtra("IntentSource", "FromPendingIntent")
@@ -252,19 +283,20 @@ class PlayerService(): MediaSessionService() {
     }
 
 
-    //已停用丨基于本地广播的播放指令
-    @OptIn(UnstableApi::class)
+    //基于广播的播放指令(暂未使用)
     private fun BroadcastPlay(): PendingIntent {
-        val intent = Intent(this, PlayerActionReceiver::class.java).apply {
-            action = "PLAYER_PLAY"
-        }
+        val intent = Intent(this, PlayerActionReceiver::class.java)
+        //加入action
+        intent.apply { action = BroadcastActions.broadcast_action_play }
+
+
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
-    @OptIn(UnstableApi::class)
     private fun BroadcastPause(): PendingIntent {
-        val intent = Intent(this, PlayerActionReceiver::class.java).apply {
-            action = "PLAYER_PAUSE"
-        }
+        val intent = Intent(this, PlayerActionReceiver::class.java)
+        //加入action
+        intent.apply { action = BroadcastActions.broadcast_action_pause }
+
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 

@@ -3,7 +3,7 @@ package com.suming.player.ActivityComponent.PlayerService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-object PlayerServiceLinker {
+object ServiceConnector {
 
     private var MediaInfo_MediaType = ""
     private var MediaInfo_MediaUriString: String = ""

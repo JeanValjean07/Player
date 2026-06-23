@@ -2,6 +2,7 @@ package com.suming.player.DataPack.DataBaseMediaStore
 
 import android.content.Context
 import androidx.sqlite.db.SimpleSQLiteQuery
+import com.suming.player.SettingsRequestCenter
 
 class MediaStoreRepo private constructor(context: Context) {
 
@@ -40,37 +41,45 @@ class MediaStoreRepo private constructor(context: Context) {
         val offset = page * pageSize
 
         return when (sortOrder) {
-            "info_title ASC" -> dao.getAllVideosPagedByTitleAsc(pageSize, offset)
-            "info_title DESC" -> dao.getAllVideosPagedByTitleDesc(pageSize, offset)
-            "info_date_added ASC" -> dao.getAllVideosPagedByDateAddedAsc(pageSize, offset)
-            "info_date_added DESC" -> dao.getAllVideosPagedByDateAddedDesc(pageSize, offset)
-            "info_duration ASC" -> dao.getAllVideosPagedByDurationAsc(pageSize, offset)
-            "info_duration DESC" -> dao.getAllVideosPagedByDurationDesc(pageSize, offset)
-            "info_file_size ASC" -> dao.getAllVideosPagedByFileSizeAsc(pageSize, offset)
-            "info_file_size DESC" -> dao.getAllVideosPagedByFileSizeDesc(pageSize, offset)
-            "info_mime_type ASC" -> dao.getAllVideosPagedByMimeTypeAsc(pageSize, offset)
-            "info_mime_type DESC" -> dao.getAllVideosPagedByMimeTypeDesc(pageSize, offset)
-            else -> dao.getAllVideosPagedByTitleDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_filename} ${SettingsRequestCenter.sort_orientation_ASC}" -> dao.getAllVideosPagedByTitleAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_filename} ${SettingsRequestCenter.sort_orientation_DESC}" -> dao.getAllVideosPagedByTitleDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_date_added} ${SettingsRequestCenter.sort_orientation_ASC}"  -> dao.getAllVideosPagedByDateAddedAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_date_added} ${SettingsRequestCenter.sort_orientation_DESC}"  -> dao.getAllVideosPagedByDateAddedDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_duration} ${SettingsRequestCenter.sort_orientation_ASC}"  -> dao.getAllVideosPagedByDurationAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_duration} ${SettingsRequestCenter.sort_orientation_DESC}"  -> dao.getAllVideosPagedByDurationDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_file_size} ${SettingsRequestCenter.sort_orientation_ASC}"  -> dao.getAllVideosPagedByFileSizeAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_file_size} ${SettingsRequestCenter.sort_orientation_DESC}"  -> dao.getAllVideosPagedByFileSizeDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_mime_type} ${SettingsRequestCenter.sort_orientation_ASC}"  -> dao.getAllVideosPagedByMimeTypeAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_mime_type} ${SettingsRequestCenter.sort_orientation_DESC}"  -> dao.getAllVideosPagedByMimeTypeDesc(pageSize, offset)
+            else -> {
+                dao.getAllVideosPagedByTitleDesc(pageSize, offset)
+            }
         }
     }
 
-    //根据排序方法获取所有视频
-    suspend fun getAllVideosSorted11(sortField: String = "info_title", sortOrientation: String = "ASC"): List<MediaStoreSetting> {
+    //根据排序方法获取所有视频(不可用)
+    suspend fun getAllVideosSortedEnhanced(sortField: String = "info_title", sortOrientation: String = "ASC"): List<MediaStoreSetting> {
         //白名单防注入
         val safeField = when (sortField) {
-            "info_title", "info_date_added", "info_file_size", "info_duration", "info_mime_type" -> sortField
-            else -> "info_title"
+            SettingsRequestCenter.sort_method_filename,
+            SettingsRequestCenter.sort_method_date_added,
+            SettingsRequestCenter.sort_method_file_size,
+            SettingsRequestCenter.sort_method_duration,
+            SettingsRequestCenter.sort_method_mime_type -> sortField
+            else -> {
+                SettingsRequestCenter.sort_method_date_added
+            }
         }
         val safeOrder = when (sortOrientation) {
-            "ASC", "DESC" -> sortOrientation
-            else -> "ASC"
+            SettingsRequestCenter.sort_orientation_ASC, SettingsRequestCenter.sort_orientation_DESC -> sortOrientation
+            else -> SettingsRequestCenter.sort_orientation_ASC
         }
         val sql = "SELECT * FROM MediaStore ORDER BY $safeField $safeOrder"
         val query = SimpleSQLiteQuery(sql)
         return dao.getAllVideosSorted(query)
     }
-    //排序方式: info_title / info_date_added / info_file_size / info_duration / info_mime_type
-    //排序方向: ASC / DESC
+
+
     suspend fun getAllVideosSorted(
         sortOrder: String,
         sortOrientation: String

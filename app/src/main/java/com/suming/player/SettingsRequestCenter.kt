@@ -3,61 +3,294 @@ package com.suming.player
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
+import android.util.Log
 import androidx.core.content.edit
 import kotlin.math.sqrt
 
 @Suppress("unused")
 object SettingsRequestCenter {
 
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "SettingsRequestCenter: $msg")
+        }
+    }
+
     //设置清单
-    private lateinit var PREFS_PlayEngin: SharedPreferences
-    private lateinit var PREFS_PlayVideoPage: SharedPreferences
     private lateinit var PREFS_PlayMusicPage: SharedPreferences
     private lateinit var PREFS_DataBase: SharedPreferences
     private lateinit var PREFS_PlayList: SharedPreferences
-    private lateinit var PREFS_MainPage: SharedPreferences
+
     //设置清单标记
-    private var state_PREFS_PlayEngin_initialized = false
-    private var state_PREFS_PlayVideoPage_initialized = false
     private var state_PREFS_PlayMusicPage_initialized = false
-    private var state_PREFS_DataBase_initialized = false
     private var state_PREFS_PlayList_initialized = false
-    private var state_PREFS_MainPage_initialized = false
 
 
 
 
-    //PREFS in PREFS_MainPage
-    //禁用主页面小播放器(默认设置区分机型)
+
+    //👝 Pandora_MainPage 首页相关配置 -------------------------------------------------------------
+    private var Pandora_MainPage: SharedPreferences? = null
+    const val Pandora_MainPage_Name = "Pandora_MainPage"
+    private fun OpenPandora_MainPage(context: Context){
+        if (Pandora_MainPage == null){
+            Pandora_MainPage = context.getSharedPreferences(Pandora_MainPage_Name, 0)
+        }
+    }
+    //禁用主页面小播放器
     private var PREFS_DisableMainPageSmallPlayer = -1
-    fun set_PREFS_DisableMainPageSmallPlayer(enable: Boolean){
+    const val PREFS_DisableMainPageSmallPlayer_Name = "PREFS_DisableMainPageSmallPlayer"
+    fun set_PREFS_DisableMainPageSmallPlayer(context: Context, enable: Boolean){
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        //设置时转为int写入本地缓存
         PREFS_DisableMainPageSmallPlayer = if (enable) 1 else 0
-        PREFS_MainPage.edit { putInt("PREFS_DisableMainPageSmallPlayer", if (enable) 1 else 0) }
+        //写入配置单
+        Pandora_MainPage!!.edit { putInt(PREFS_DisableMainPageSmallPlayer_Name, if (enable) 1 else 0) }
     }
     fun get_PREFS_DisableMainPageSmallPlayer(context: Context): Boolean {
-        //确保配置清单已初始化
-        if (!state_PREFS_MainPage_initialized) {
-            PREFS_MainPage = context.getSharedPreferences("PREFS_MainPage", 0)
-            state_PREFS_MainPage_initialized = true
-        }
-        //确保配置项已被读取过
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        //仅在未读取过时才读取(也就是值为-1时)
         if (PREFS_DisableMainPageSmallPlayer == -1) {
-            PREFS_DisableMainPageSmallPlayer = PREFS_MainPage.getInt("PREFS_DisableMainPageSmallPlayer", -1)
+            //从配置单读取
+            PREFS_DisableMainPageSmallPlayer = Pandora_MainPage!!.getInt(PREFS_DisableMainPageSmallPlayer_Name, -1)
+            //如果配置单内无该项,写入默认值
             if (PREFS_DisableMainPageSmallPlayer == -1) {
+                //默认设为开启
+                PREFS_DisableMainPageSmallPlayer = 0
+                Pandora_MainPage!!.edit { putInt(PREFS_DisableMainPageSmallPlayer_Name, 0) }
+
+                /*
+                //按机型判断
                 if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
                     PREFS_DisableMainPageSmallPlayer = 1
-                    PREFS_MainPage.edit { putInt("PREFS_DisableMainPageSmallPlayer", 1) }
+                    Pandora_MainPage!!.edit { putInt(PREFS_DisableMainPageSmallPlayer_Name, 1) }
                 }else{
                     PREFS_DisableMainPageSmallPlayer = 0
-                    PREFS_MainPage.edit { putInt("PREFS_DisableMainPageSmallPlayer", 0) }
+                    Pandora_MainPage!!.edit { putInt(PREFS_DisableMainPageSmallPlayer_Name, 0) }
                 }
+
+                 */
             }
         }
+        //返回结果
         return PREFS_DisableMainPageSmallPlayer == 1
+    }
+    //每次启动时都重新读取媒体
+    private var PREFS_QueryNewVideoOnStart = -1
+    const val PREFS_QueryNewVideoOnStart_Name = "PREFS_QueryNewVideoOnStart"
+    fun set_PREFS_QueryNewVideoOnStart(context: Context, enable: Boolean){
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        //设置时转为int写入本地缓存
+        PREFS_QueryNewVideoOnStart = if (enable) 1 else 0
+        //写入配置单
+        Pandora_MainPage!!.edit { putInt(PREFS_QueryNewVideoOnStart_Name, if (enable) 1 else 0) }
+    }
+    fun get_PREFS_QueryNewVideoOnStart(context: Context): Boolean {
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        //仅在未读取过时才读取(也就是值为-1时)
+        if (PREFS_QueryNewVideoOnStart == -1) {
+            //从配置单读取
+            PREFS_QueryNewVideoOnStart = Pandora_MainPage!!.getInt(PREFS_QueryNewVideoOnStart_Name, -1)
+            //如果配置单内无该项,写入默认值
+            if (PREFS_QueryNewVideoOnStart == -1) {
+                //默认设为关闭
+                PREFS_QueryNewVideoOnStart = 0
+                Pandora_MainPage!!.edit { putInt(PREFS_QueryNewVideoOnStart_Name, 0) }
+            }
+        }
+        //返回结果
+        return PREFS_QueryNewVideoOnStart == 1
+    }
+    //默认显示页签
+    const val tab_mark_video = "acquiesce_tab_video"
+    const val tab_mark_music = "acquiesce_tab_music"
+    const val tab_mark_gallery = "acquiesce_tab_gallery"
+    const val tab_mark_last = "acquiesce_tab_last"
+    const val tab_mark_null = ""
+    const val PREFS_AcquiesceTab_Name = "PREFS_AcquiesceTab"
+    private var PREFS_AcquiesceTab = tab_mark_null
+    fun set_PREFS_AcquiesceTab(context: Context, target: String){
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        consoleLog("set_PREFS_AcquiesceTab: $target")
+        //写入本地缓存
+        PREFS_AcquiesceTab = target
+        //写入配置单
+        Pandora_MainPage!!.edit { putString(PREFS_AcquiesceTab_Name, target) }
+    }
+    fun get_PREFS_AcquiesceTab(context: Context): String {
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        //仅在未读取过时才读取(也就是值为时)
+        if (PREFS_AcquiesceTab == tab_mark_null) {
+            //从配置单读取
+            PREFS_AcquiesceTab = Pandora_MainPage!!.getString(PREFS_AcquiesceTab_Name, tab_mark_null) ?: tab_mark_null
+            //如果配置单内无该项,写入默认值
+            if (PREFS_AcquiesceTab == tab_mark_null) {
+                //默认设为关闭
+                PREFS_AcquiesceTab = tab_mark_video
+                Pandora_MainPage!!.edit { putString(PREFS_AcquiesceTab_Name,tab_mark_video ) }
+            }
+        }
+        //返回结果
+        return PREFS_AcquiesceTab
+    }
+    //State 上次停留的页签
+    private var State_LastStayTab = tab_mark_null
+    const val State_LastStayTab_Name = "State_LastStayTab"
+    fun set_State_LastStayTab(context: Context, target: String){
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        //设置时转为int写入本地缓存
+        State_LastStayTab = target
+        //写入配置单
+        Pandora_MainPage!!.edit { putString(State_LastStayTab_Name, target) }
+    }
+    fun get_State_LastStayTab(context: Context): String {
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        //仅在未读取过时才读取(也就是值为""时)
+        if (State_LastStayTab == tab_mark_null) {
+            //从配置单读取
+            State_LastStayTab = Pandora_MainPage!!.getString(State_LastStayTab_Name, tab_mark_null) ?: tab_mark_null
+
+            //默认保持为空
+            //为空时返回保底视频,但不写入
+            if (State_LastStayTab == tab_mark_null){
+                State_LastStayTab = tab_mark_video
+            }
+
+        }
+        //返回结果
+        return State_LastStayTab
     }
 
 
-    //PREFS in PREFS_PlayEngin
+
+
+    //👝 Pandora_MediaStore 媒体库相关配置 -------------------------------------------------------------
+    private var Pandora_MediaStore: SharedPreferences? = null
+    const val Pandora_MediaStore_Name = "Pandora_MediaStore"
+    private fun OpenPandora_MediaStore(context: Context){
+        if (Pandora_MediaStore == null){
+            Pandora_MediaStore = context.getSharedPreferences(Pandora_MediaStore_Name, 0)
+        }
+    }
+    //读取时检查文件是否有效
+    private var PREFS_EnableFileExistCheck = -1
+    const val PREFS_EnableFileExistCheck_Name = "PREFS_EnableFileExistCheck"
+    fun set_PREFS_EnableFileExistCheck(context: Context, enable: Boolean){
+        OpenPandora_MediaStore(context)
+
+        PREFS_EnableFileExistCheck = if (enable) 1 else 0
+
+        Pandora_MediaStore!!.edit { putInt(PREFS_EnableFileExistCheck_Name, if (enable) 1 else 0) }
+
+    }
+    fun get_PREFS_EnableFileExistCheck(context: Context): Boolean{
+        OpenPandora_MediaStore(context)
+
+        if (PREFS_EnableFileExistCheck == -1){
+            PREFS_EnableFileExistCheck = Pandora_MediaStore!!.getInt(PREFS_EnableFileExistCheck_Name, -1)
+            if (PREFS_EnableFileExistCheck == -1){
+                //默认设为关闭
+                PREFS_EnableFileExistCheck = 0
+                Pandora_MediaStore!!.edit { putInt(PREFS_EnableFileExistCheck_Name, 0) }
+            }
+        }
+
+        return PREFS_EnableFileExistCheck == 1
+    }
+    //通用排序方式
+    const val sort_method_filename = "sort_method_filename"
+    const val sort_method_duration = "sort_method_duration"
+    const val sort_method_date_added = "sort_method_date_added"
+    const val sort_method_file_size = "sort_method_file_size"
+    const val sort_method_mime_type = "sort_method_mime_type"
+    const val sort_method_null = "sort_method_null"
+    //视频专属排序方式(暂无?)
+    //音频专属排序方式(暂无?)
+    //视频列表排序方式
+    private var PREFS_video_sortMethod = sort_method_null
+    const val sort_method_video = "sort_method_video"
+    fun set_PREFS_video_sortMethod(context: Context, method: String){
+        OpenPandora_MediaStore(context)
+
+        PREFS_video_sortMethod = method
+        Pandora_MediaStore!!.edit { putString(sort_method_video, method) }
+    }
+    fun get_PREFS_video_sortMethod(context: Context): String{
+        OpenPandora_MediaStore(context)
+
+        PREFS_video_sortMethod = Pandora_MediaStore!!.getString(sort_method_video, sort_method_null) ?: sort_method_null
+        if (PREFS_video_sortMethod == sort_method_null){
+            //默认设为添加时间
+            PREFS_video_sortMethod = sort_method_date_added
+            Pandora_MediaStore!!.edit { putString(sort_method_video, sort_method_date_added) }
+        }
+
+        return PREFS_video_sortMethod
+    }
+
+    //音乐列表排序方式
+    private var PREFS_audio_sortMethod = sort_method_null
+    const val sort_method_audio = "sort_method_audio"
+    fun set_PREFS_audio_sortMethod(context: Context, method: String){
+        OpenPandora_MediaStore(context)
+
+        PREFS_audio_sortMethod = method
+        Pandora_MediaStore!!.edit { putString(sort_method_audio, method) }
+    }
+    fun get_PREFS_audio_sortMethod(context: Context): String{
+        OpenPandora_MediaStore(context)
+
+        PREFS_audio_sortMethod = Pandora_MediaStore!!.getString(sort_method_audio, sort_method_null) ?: sort_method_null
+        if (PREFS_audio_sortMethod == sort_method_null){
+            //默认设为添加时间
+            PREFS_audio_sortMethod = sort_method_date_added
+            Pandora_MediaStore!!.edit { putString(sort_method_audio, sort_method_date_added) }
+        }
+
+        return PREFS_audio_sortMethod
+    }
+
+
+
+    //升降序
+    const val sort_orientation_DESC = "sort_orientation_DESC" //降序
+    const val sort_orientation_ASC = "sort_orientation_ASC"   //升序
+    //升序和降序-视频
+    private var PREFS_video_sortOrientation = sort_orientation_ASC
+    const val sort_orientation_video = "sort_orientation_video"
+    fun set_PREFS_video_sortOrientation(context: Context, orientation: String){
+        PREFS_video_sortOrientation = orientation
+        Pandora_MediaStore!!.edit { putString(sort_orientation_video, orientation) }
+    }
+    fun get_PREFS_video_sortOrientation(context: Context): String{
+        return PREFS_video_sortOrientation
+    }
+    //升序和降序-音频
+    private var PREFS_audio_sortOrientation = sort_orientation_ASC
+    const val sort_orientation_audio = "sort_orientation_audio"
+    fun set_PREFS_audio_sortOrientation(context: Context, orientation: String){
+        PREFS_audio_sortOrientation = orientation
+        Pandora_MediaStore!!.edit { putString(sort_orientation_audio, orientation) }
+    }
+    fun get_PREFS_audio_sortOrientation(context: Context): String{
+        return PREFS_audio_sortOrientation
+    }
+
+
+
+
+    //PREFS in PREFS_PlayEngin -------------------------------------------------------------
+    private lateinit var PREFS_PlayEngin: SharedPreferences
+    private var state_PREFS_PlayEngin_initialized = false
     //禁用媒体会话插入预览图
     private var PREFS_DisableMediaArtWork = -1
     fun set_PREFS_DisableMediaArtWork(disable: Boolean){
@@ -134,7 +367,9 @@ object SettingsRequestCenter {
     }
 
 
-    //PREFS in PREFS_PlayVideoPage
+    //PREFS in PREFS_PlayVideoPage -------------------------------------------------------------
+    private lateinit var PREFS_PlayVideoPage: SharedPreferences
+    private var state_PREFS_PlayVideoPage_initialized = false
     //后台播放
     private var PREFS_BackgroundPlay = -1
     fun set_PREFS_BackgroundPlay(backgroundPlay: Boolean){
@@ -654,6 +889,7 @@ object SettingsRequestCenter {
 
         return VALUE_Int_statusBarHeight != -1
     }
+
 
 
 

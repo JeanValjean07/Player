@@ -8,16 +8,14 @@
     android:background="@color/Background"
     android:fitsSystemWindows="false"
     tools:context=".SettingsActivity"
-    tools:ignore="HardcodedText,TooDeepLayout">
+    tools:ignore="HardcodedText,TooDeepLayout,UnusedAttribute">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/HeadBackground"
-        android:outlineSpotShadowColor="@color/HeadText"
         app:liftOnScrollColor="@color/HeadBackground"
-        android:outlineAmbientShadowColor="@color/HeadText"
-        tools:targetApi="28">
+        android:outlineSpotShadowColor="@color/HeadText">
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/TopBarArea"
             android:layout_width="match_parent"

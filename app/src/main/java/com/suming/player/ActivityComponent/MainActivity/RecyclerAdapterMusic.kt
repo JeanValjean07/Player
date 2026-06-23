@@ -195,7 +195,7 @@ class RecyclerAdapterMusic(
     private var FadeInAnimation: AlphaAnimation = AlphaAnimation(0.0f, 1.0f).apply { duration = 250 }
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
+    private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
             Log.d("SuMing", "RecyclerAdapterMusic: $msg")
         }

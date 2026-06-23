@@ -216,7 +216,7 @@ class SettingsActivity: AppCompatActivity() {
             switch_DisableMainPageSmallPlayer.isChecked = SettingsRequestCenter.get_PREFS_DisableMainPageSmallPlayer(this@SettingsActivity)
             switch_DisableMainPageSmallPlayer.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
-                SettingsRequestCenter.set_PREFS_DisableMainPageSmallPlayer(isChecked)
+                SettingsRequestCenter.set_PREFS_DisableMainPageSmallPlayer(this@SettingsActivity, isChecked)
             }
             //使用超长进度条
             val switch_UseSuperLongScroller = findViewById<SwitchCompat>(R.id.UseSuperLongScroller)

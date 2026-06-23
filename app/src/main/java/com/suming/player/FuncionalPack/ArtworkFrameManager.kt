@@ -3,10 +3,12 @@ package com.suming.player.FuncionalPack
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Log
+import androidx.core.content.FileProvider
 import java.io.File
 
-//@Suppress("unused")
+@Suppress("unused")
 object ArtworkFrameManager {
 
     //此对象承担缩略图的获取和保存工作
@@ -31,7 +33,7 @@ object ArtworkFrameManager {
         artwork_File_path_audio = get_Artwork_Path_music(context)
     }
 
-    //获取Artwork(自动获取)
+    //获取Artwork图片(自动获取)
     fun get_Artwork_Frame_Bitmap(context: Context,type: String, artwork_name_uriNumOnly: Long): Bitmap? {
         when(type){
             artwork_type_video -> {
@@ -78,6 +80,44 @@ object ArtworkFrameManager {
             }
         }
     }
+
+    //获取Artwork的uri
+    fun get_Artwork_Frame_Uri(context: Context,type: String, artwork_name_uriNumOnly: Long): Uri? {
+        when(type){
+            artwork_type_video -> {
+                //拿到保存路径
+                if (artwork_File_path_video == null){
+                    initFile(context)
+                }
+                //根据文件名去找图
+                val artwork_Frame_File = File(artwork_File_path_video, "${artwork_name_uriNumOnly}.webp")
+                //拿到文件uri
+                if(artwork_Frame_File.exists()){
+                    return FileProvider.getUriForFile(context, "${context.packageName}.provider", artwork_Frame_File)
+                }
+                return null
+            }
+            artwork_type_audio -> {
+                //拿到保存路径
+                if (artwork_File_path_audio == null){
+                    initFile(context)
+                }
+                //根据文件名去找图
+                val artwork_Frame_File = File(artwork_File_path_audio, "${artwork_name_uriNumOnly}.webp")
+                //拿到文件uri
+                if(artwork_Frame_File.exists()){
+                    return FileProvider.getUriForFile(context, "${context.packageName}.provider", artwork_Frame_File)
+                }
+                return null
+            }
+            else -> {
+                //传入了非目标类型,记录日志
+                consoleLog("ArtworkFrameManager: 传入了非目标类型: $type")
+                return null
+            }
+        }
+    }
+
 
     //获取artwork的原保存路径
     fun get_Artwork_Path_video(context: Context): File {
@@ -146,10 +186,6 @@ object ArtworkFrameManager {
 
 
     }
-
-
-
-
 
 
 

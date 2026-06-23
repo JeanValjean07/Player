@@ -91,4 +91,11 @@
     <color name="THEME_1_Background_ButtonCircle_ON">#E1BEE7</color>
 
 
+    <!-- 渐变色值 -->
+    <color name="BrushArea_Top_Background">#EE111111</color>
+    <color name="BrushArea_Middle">#B3111111</color>
+    <color name="BrushArea_Bottom">#00000000</color>
+
+
+
 </resources>

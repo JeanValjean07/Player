@@ -199,13 +199,13 @@ class FragmentPlayList: DialogFragment() {
             val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
             ButtonPreviousMedia.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                PlayerSingleton.switchToPreviousMediaItem(requireContext())
+                //PlayerSingleton.switchToPreviousMediaItem(requireContext())
             }
             //按钮：下一曲
             val ButtonNextMedia = view.findViewById<ImageButton>(R.id.ButtonNextMedia)
             ButtonNextMedia.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                PlayerSingleton.switchToNextMediaItem(requireContext())
+                //PlayerSingleton.switchToNextMediaItem(requireContext())
             }
             //循环模式
             updateLoopModeText()
@@ -236,7 +236,7 @@ class FragmentPlayList: DialogFragment() {
             ButtonStopPlaying.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //关闭播放器
-                PlayerSingleton.stopPlayBundle(true,requireContext())
+                //PlayerSingleton.stopPlayBundle(true,requireContext())
                 //发回命令信息
                 val result = bundleOf("KEY" to "stopPlaying")
                 setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
@@ -608,8 +608,8 @@ class FragmentPlayList: DialogFragment() {
 
     //播放点击事件
     private fun onPlayClick(uriString: String) {
-        if (uriString == PlayerSingleton.getMediaInfoUriString()){
-            PlayerSingleton.continuePlay(true, force_request = true, need_fadeIn = false,requireContext())
+        if (uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
+            PlayerSingleton.continuePlay(true,requireContext())
             requireContext().showCustomToast("已在播放该媒体",3)
         }else{
             PlayerSingleton.setMediaItem(uriString.toUri(), true,requireContext())

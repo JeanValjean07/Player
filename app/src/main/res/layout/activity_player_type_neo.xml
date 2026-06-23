@@ -174,7 +174,7 @@
                     android:layout_gravity="center"
                     android:backgroundTint="@color/Background4"
                     app:cardCornerRadius="5dp"
-                    app:cardElevation="0dp"
+                    app:cardElevation="5dp"
                     android:layout_marginStart="10dp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -228,103 +228,52 @@
                     android:layout_weight="1"/>
 
                 <!-- 按钮：更多选项 -->
-                <FrameLayout
-                    android:id="@+id/buttonMoreButton"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
+                <com.suming.player.ViewWidget.CircleButton
+                    android:id="@+id/ButtonMoreOption"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/ic_controller_more"
                     android:layout_gravity="center"
-                    android:padding="5dp">
-                    <com.google.android.material.button.MaterialButton
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:backgroundTint="@color/ButtonBgClosed"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp"
-                        />
-                    <ImageButton
-                        android:id="@+id/controller_button_more"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center"
-                        android:padding="6dp"
-                        android:elevation="2dp"
-                        android:scaleType="centerCrop"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_controller_more"
-                        tools:ignore="ContentDescription"
-                        />
-                </FrameLayout>
+                    app:buttonSize="50dp"
+                    app:mainColor="@color/THEME_1_Background_ContentCard"
+                    app:shadowOffset="4dp"
+                    app:circlePadding="100dp"
+                    app:iconPadding="120dp"
+                    app:shadowRadius="8dp"
+                    app:shadowColor="#33000000"
+                    />
                 <!-- 按钮：切换横屏 -->
-                <FrameLayout
-                    android:id="@+id/buttonSwitchLandscape"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
+                <com.suming.player.ViewWidget.CircleButton
+                    android:id="@+id/ButtonLandscape"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:src="@drawable/ic_controller_landscape"
                     android:layout_gravity="center"
-                    android:padding="5dp">
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/buttonMaterialSwitchLandscape"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:backgroundTint="@color/ButtonBg"
-                        android:elevation="10dp"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-                    <ImageButton
-                        android:id="@+id/controller_button_landscape"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center"
-                        android:gravity="center"
-                        android:elevation="2dp"
-                        android:padding="6dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_controller_landscape"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        tools:ignore="ContentDescription"
-                        />
-
-                </FrameLayout>
+                    app:buttonSize="50dp"
+                    app:mainColor="@color/THEME_1_Background_ContentCard"
+                    app:shadowOffset="4dp"
+                    app:circlePadding="100dp"
+                    app:iconPadding="120dp"
+                    app:shadowRadius="8dp"
+                    app:shadowColor="#33000000"
+                    />
                 <!-- 按钮：暂停/开始 -->
-                <FrameLayout
-                    android:id="@+id/buttonPauseContainer"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
+                <com.suming.player.ViewWidget.CircleButton
+                    android:id="@+id/ButtonPause"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginEnd="5dp"
+                    android:src="@drawable/ic_controller_neo_play"
                     android:layout_gravity="center"
-                    android:layout_marginEnd="15dp"
-                    android:padding="5dp">
-                    <com.google.android.material.button.MaterialButton
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:backgroundTint="@color/ButtonBg"
-                        android:insetLeft="0dp"
-                        android:insetTop="0dp"
-                        android:insetRight="0dp"
-                        android:insetBottom="0dp"
-                        android:padding="0dp"
-                        app:cornerRadius="100dp" />
-                    <ImageButton
-                        android:id="@+id/controller_button_playorpause"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center"
-                        android:gravity="center"
-                        android:elevation="2dp"
-                        android:padding="10dp"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_controller_neo_play"
-                        android:visibility="visible"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        tools:ignore="ContentDescription"
-                        />
-                </FrameLayout>
+                    app:buttonSize="50dp"
+                    app:mainColor="@color/ButtonBg"
+                    app:shadowOffset="4dp"
+                    app:circlePadding="100dp"
+                    app:iconPadding="170dp"
+                    app:shadowRadius="8dp"
+                    app:shadowColor="#33000000"
+                    />
+
 
             </LinearLayout>
 

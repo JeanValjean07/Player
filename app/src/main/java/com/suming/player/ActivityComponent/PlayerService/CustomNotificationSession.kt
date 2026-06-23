@@ -1,4 +1,4 @@
-package com.suming.player.AddonTools
+package com.suming.player.ActivityComponent.PlayerService
 
 import android.annotation.SuppressLint
 import android.content.Context

@@ -116,6 +116,8 @@ import kotlin.math.pow
 @RequiresApi(Build.VERSION_CODES.Q)
 //@Suppress("unused")
 class PlayerActivityOro: AppCompatActivity(){
+
+    /*
     //变量初始化
     //<editor-fold desc="变量初始化">
     //音量配置参数
@@ -297,8 +299,10 @@ class PlayerActivityOro: AppCompatActivity(){
 
     //</editor-fold>
 
+     */
 
 
+/*
 
     //获取播放器实例
     private val player get() = PlayerSingleton.getPlayer(application)
@@ -1257,7 +1261,9 @@ class PlayerActivityOro: AppCompatActivity(){
         //onCreate END
     }
 
+ */
 
+/*
 
     //Testing Functions
     //播放器监听器
@@ -1861,7 +1867,9 @@ class PlayerActivityOro: AppCompatActivity(){
     }
 
 
+ */
 
+    /*
     //some callBacks
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
@@ -2040,7 +2048,9 @@ class PlayerActivityOro: AppCompatActivity(){
     }
 
 
+     */
 
+/*
     //退出动作决策程序
     private var state_onDestroy_reach = false
     private var state_onSaveInstanceState_reach = false
@@ -2641,6 +2651,10 @@ class PlayerActivityOro: AppCompatActivity(){
 
     }
 
+
+ */  */
+
+    /*
     private fun playerReady(){
         isSeekReady = true
         if (playerReadyFrom_FirstEntry) {
@@ -3223,6 +3237,8 @@ class PlayerActivityOro: AppCompatActivity(){
             EnsureExit(false)
         }
     }
+
+     */
 
 
 }

@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.IntentCompat
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.PlayerInFoCenter
 
 class ExternalInvokeManager : AppCompatActivity(){
 
@@ -69,7 +70,7 @@ class ExternalInvokeManager : AppCompatActivity(){
     @OptIn(UnstableApi::class)
     private fun startPageByMediaType(uri: Uri, source: Int){
         //从播放器获取类型
-        val mediaType = PlayerSingleton.getMediaInfoType()
+        val mediaType = PlayerInFoCenter.getMediaInfoType(this).second
 
 
         //根据类型启动页面

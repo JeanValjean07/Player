@@ -44,6 +44,7 @@ import com.suming.player.R
 import com.suming.player.SettingsRequestCenter
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -450,12 +451,12 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
             //保存播放进度
             val switch_saveLastPosition = view.findViewById<SwitchCompat>(R.id.Switch_SavePositionWhenExit)
-            switch_saveLastPosition.isChecked = PlayerSingleton.get_Para_saveLastProgress()
+            switch_saveLastPosition.isChecked = MediaDataBaseMaster.get_PREFS_saveProgress("",requireContext())
             switch_saveLastPosition.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //修改设置
                 val isChecked = switch_saveLastPosition.isChecked
-                PlayerSingleton.set_Para_saveLastProgress(isChecked,requireContext())
+                MediaDataBaseMaster.set_PREFS_saveProgress("",isChecked,requireContext())
 
                 //不发回结果
                 customDismiss()
@@ -890,7 +891,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 lifecycleScope.launch {
                     delay(2000)
                     //关闭播放器
-                    PlayerSingleton.stopPlayBundle(false,requireContext())
+                    PlayerSingleton.pausePlay()
                     //发回信息让播放页关闭
                     val result = bundleOf("KEY" to "ExitRightNow")
                     setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 自定义view - 圆形按钮 CircleButton -->
+    <declare-styleable name="CircleButton">
+        <attr name="circlePadding" format="dimension" />
+        <attr name="buttonSize" format="dimension" />
+        <attr name="iconPadding" format="dimension" />
+        <attr name="shadowOffset" format="dimension" />
+        <attr name="shadowRadius" format="dimension" />
+        <attr name="mainColor" format="color" />
+        <attr name="pressedColor" format="color" />
+        <attr name="shadowColor" format="color" />
+        <attr name="android:src" />
+    </declare-styleable>
+
+
+
+
+
+
+
+
+
+</resources>

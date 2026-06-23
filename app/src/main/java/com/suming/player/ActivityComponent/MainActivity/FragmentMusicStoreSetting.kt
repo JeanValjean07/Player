@@ -33,6 +33,7 @@ import androidx.media3.common.util.UnstableApi
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -54,7 +55,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
     private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
     private var PREFS_QueryNewVideoOnStart: Boolean = false
-    private var PREFS_AcquiesceTab: String = ""
+
     //排序设置项
     private var PREFS_music_sortOrder: String = "info_title"
     private var PREFS_music_sortOrientation: String = "DESC"
@@ -184,16 +185,8 @@ class FragmentMusicStoreSetting: DialogFragment() {
             } else {
                 PREFS_QueryNewVideoOnStart = PREFS_MediaStore.getBoolean("PREFS_QueryNewVideoOnStart", false)
             }
-            if (PREFS_MediaStore.contains("PREFS_AcquiesceTab")){
-                PREFS_AcquiesceTab = PREFS_MediaStore.getString("PREFS_AcquiesceTab", "video")?: "error"
-                if (PREFS_AcquiesceTab == "error"){
-                    PREFS_AcquiesceTab = "video"
-                    PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
-                }
-            }else{
-                PREFS_AcquiesceTab = "video"
-                PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
-            }
+
+
 
             //执行主线程操作
             withContext(Dispatchers.Main){
@@ -212,6 +205,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
                     ToolVibrate().vibrate(requireContext())
                     PREFS_MediaStore.edit { putBoolean("PREFS_QueryNewVideoOnStart", isChecked) }
                 }
+
 
                 //按钮：退出
                 val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
@@ -248,14 +242,18 @@ class FragmentMusicStoreSetting: DialogFragment() {
                 //默认页签
                 val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
                 fun setAcquiesceTabText(){
-                    if (PREFS_AcquiesceTab == "video"){
-                        ButtonTextChangeDefaultTab.text = "视频"
-                    }
-                    else if (PREFS_AcquiesceTab == "music"){
-                        ButtonTextChangeDefaultTab.text = "音乐"
-                    }
-                    else if (PREFS_AcquiesceTab == "last"){
-                        ButtonTextChangeDefaultTab.text = "上一次的页面"
+                    val AcquiesceTab = SettingsRequestCenter.get_PREFS_AcquiesceTab(requireContext())
+                    when(AcquiesceTab){
+                        SettingsRequestCenter.tab_mark_video -> {
+                            ButtonTextChangeDefaultTab.text = "视频"
+                        }
+                        SettingsRequestCenter.tab_mark_music -> {
+                            ButtonTextChangeDefaultTab.text = "音乐"
+                        }
+                        SettingsRequestCenter.tab_mark_last -> {
+                            ButtonTextChangeDefaultTab.text = "上一次的页面"
+                        }
+
                     }
                 }
                 setAcquiesceTabText()
@@ -270,15 +268,17 @@ class FragmentMusicStoreSetting: DialogFragment() {
                         ToolVibrate().vibrate(requireContext())
                         when (item.itemId) {
                             R.id.page_video -> {
-                                PREFS_AcquiesceTab = "video"
+                                SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_video)
+
                                 setAcquiesceTabText()
-                                PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
+
                                 return@setOnMenuItemClickListener true
                             }
                             R.id.page_music -> {
-                                PREFS_AcquiesceTab = "music"
+                                SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_music)
+
                                 setAcquiesceTabText()
-                                PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
+
                                 return@setOnMenuItemClickListener true
                             }
                             R.id.page_gallery -> {
@@ -286,9 +286,10 @@ class FragmentMusicStoreSetting: DialogFragment() {
                                 return@setOnMenuItemClickListener true
                             }
                             R.id.page_last -> {
-                                PREFS_AcquiesceTab = "last"
+                                SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_last)
+
                                 setAcquiesceTabText()
-                                PREFS_MediaStore.edit { putString("PREFS_AcquiesceTab", PREFS_AcquiesceTab) }
+
                                 return@setOnMenuItemClickListener true
                             }
                         }
@@ -381,6 +382,8 @@ class FragmentMusicStoreSetting: DialogFragment() {
             }
         }
     }
+
+
 
 
 

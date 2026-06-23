@@ -290,7 +290,7 @@ class RecyclerAdapterVideo(
 
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
+    private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
             Log.d("SuMing", "RecyclerAdapterVideo: $msg")
         }

@@ -8,17 +8,15 @@
     android:background="@color/Background"
     android:fitsSystemWindows="false"
     tools:context=".MainActivity"
-    tools:ignore="HardcodedText" >
+    tools:ignore="HardcodedText,UnusedAttribute">
     <!-- 标题栏 -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/HeadBackground"
-        android:outlineSpotShadowColor="@color/HeadText"
         app:liftOnScrollColor="@color/HeadBackground"
-        android:outlineAmbientShadowColor="@color/HeadText"
-        tools:targetApi="28">
+        android:outlineSpotShadowColor="@color/HeadText">
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:background="@color/Background"

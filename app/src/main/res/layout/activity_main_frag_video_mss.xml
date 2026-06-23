@@ -10,7 +10,7 @@
     android:clipChildren="false"
     android:background="@android:color/transparent"
     android:padding="0dp"
-    tools:ignore="HardcodedText" >
+    tools:ignore="HardcodedText,UnusedAttribute">
     <androidx.cardview.widget.CardView
         android:id="@+id/main_card"
         android:layout_width="match_parent"
@@ -22,84 +22,124 @@
         app:cardBackgroundColor="@color/THEME_1_Background_BackArea"
         app:cardElevation="10dp"
         android:clickable="true">
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <!-- 标题#：更多选项# -->
-            <com.google.android.material.appbar.AppBarLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            android:layout_height="match_parent">
+
+            <!-- 标题 -->
+            <FrameLayout
+                android:id="@+id/AppBarContainer"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:outlineSpotShadowColor="@color/HeadText"
-                app:liftOnScrollColor="@color/HeadBackground"
-                android:outlineAmbientShadowColor="@color/HeadText">
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:translationZ="5dp">
+                <!-- BrushArea -->
+                <View
+                    android:id="@+id/gradientMask"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:alpha="100"
+                    android:background="@drawable/vec_brush_area_v1" />
                 <!-- 标题：更多选项 -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="start"
+                    android:background="@android:color/transparent"
+                    android:clickable="false"
                     android:orientation="horizontal">
                     <!-- 按钮：退出 -->
-                    <ImageButton
+                    <com.suming.player.ViewWidget.CircleButton
                         android:id="@+id/buttonExit"
-                        android:layout_width="41dp"
-                        android:layout_height="41dp"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginTop="5dp"
-                        android:gravity="start"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginStart="5dp"
+                        android:src="@drawable/ic_play_list_close"
+                        android:layout_gravity="center"
+                        app:buttonSize="50dp"
+                        app:mainColor="@color/THEME_1_Background_ContentCard"
+                        app:shadowOffset="4dp"
+                        app:circlePadding="100dp"
+                        app:iconPadding="120dp"
+                        app:shadowRadius="8dp"
+                        app:shadowColor="#33000000"
+                        />
+                    <ImageButton
+                        android:id="@+id/ButtonVideoIcon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:contentDescription="哎呀,骇亖我力"
                         android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
                         android:src="@drawable/ic_main_fragment_video_icon"
-                        android:contentDescription="关闭本页面"
-                        android:tooltipText="关闭本页面" />
+                        />
                     <!-- 标题文本：设置 -->
                     <TextView
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
                         android:text="视频库选项"
                         android:textColor="@color/HeadText"
                         android:textSize="20sp" />
+
                     <View
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1"/>
                     <!-- 按钮：页面锁定 -->
-                    <ImageButton
+                    <com.suming.player.ViewWidget.CircleButton
                         android:id="@+id/buttonLock"
-                        android:layout_width="41dp"
-                        android:layout_height="41dp"
-                        android:layout_marginEnd="10dp"
-                        android:layout_gravity="center"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginEnd="5dp"
                         android:src="@drawable/ic_more_button_lock_off"
-                        tools:ignore="ContentDescription" />
+                        android:layout_gravity="center"
+                        app:iconPadding="120dp"
+                        app:circlePadding="100dp"
+                        app:buttonSize="50dp"
+                        app:mainColor="@color/THEME_1_Background_ContentCard"
+                        app:shadowOffset="4dp"
+                        app:shadowRadius="8dp"
+                        app:shadowColor="#33000000"
+                        />
+
                 </LinearLayout>
-            </com.google.android.material.appbar.AppBarLayout>
-            <!-- 滚动区域# -->
+
+            </FrameLayout>
+
+            <!-- 内容区域 -->
             <androidx.core.widget.NestedScrollView
                 android:id="@+id/NestedScrollView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:translationZ="0dp"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior">
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-                    <!-- 重读媒体库 -->
+                    <!-- 高度占位 -->
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp" />
+                    <!-- 重读媒体库按钮 -->
                     <androidx.cardview.widget.CardView
                         android:id="@+id/ButtonReLoadFromMediaStore"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
+                        android:layout_marginTop="5dp"
                         android:layout_marginBottom="10dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
                         app:cardCornerRadius="10dp"
-                        app:cardElevation="3dp">
+                        app:cardElevation="5dp">
                         <TextView
                             android:id="@+id/ButtonTextReLoadFromMediaStore"
                             android:layout_width="match_parent"
@@ -119,9 +159,9 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
                         android:layout_marginBottom="10dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -156,7 +196,7 @@
                                     android:id="@+id/current_sort"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="当前排序方式"
+                                    android:text="#加载中"
                                     android:textSize="12sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
@@ -203,7 +243,7 @@
                                         android:id="@+id/current_sort_orientation"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="当前排序顺序"
+                                        android:text="#加载中"
                                         android:textSize="12sp"
                                         android:layout_gravity="center"
                                         android:layout_marginStart="10dp"
@@ -227,7 +267,7 @@
                                 </LinearLayout>
                                 <!-- 排序方式列表 -->
                                 <TextView
-                                    android:id="@+id/sort_name"
+                                    android:id="@+id/sort_method_filename"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:text="文件名"
@@ -238,7 +278,7 @@
                                     android:layout_gravity="start"
                                     android:textColor="@color/Text2"/>
                                 <TextView
-                                    android:id="@+id/sort_duration"
+                                    android:id="@+id/sort_method_duration"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:text="时长"
@@ -249,7 +289,7 @@
                                     android:layout_gravity="start"
                                     android:textColor="@color/Text2"/>
                                 <TextView
-                                    android:id="@+id/sort_date_added"
+                                    android:id="@+id/sort_method_date_added"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:text="添加日期"
@@ -260,7 +300,7 @@
                                     android:layout_gravity="start"
                                     android:textColor="@color/Text2"/>
                                 <TextView
-                                    android:id="@+id/sort_file_size"
+                                    android:id="@+id/sort_method_file_size"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:text="文件大小"
@@ -271,7 +311,7 @@
                                     android:layout_gravity="start"
                                     android:textColor="@color/Text2"/>
                                 <TextView
-                                    android:id="@+id/sort_mime_type"
+                                    android:id="@+id/sort_method_mime_type"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:text="文件格式"
@@ -290,9 +330,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -305,7 +345,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:minHeight="40dp"
-                                android:orientation="horizontal">
+                                android:orientation="horizontal"
+                                tools:ignore="UselessParent">
                                 <ImageView
                                     android:layout_width="21dp"
                                     android:layout_height="22dp"
@@ -333,9 +374,9 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginTop="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -399,7 +440,7 @@
                                     android:id="@+id/ButtonTextChangeDefaultTab"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="#当前默认页签"
+                                    android:text="#加载中"
                                     android:textSize="14sp"
                                     android:gravity="center"
                                     android:layout_gravity="center"
@@ -490,10 +531,10 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
                         android:layout_marginTop="10dp"
-                        android:layout_marginBottom="400dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        android:layout_marginBottom="250dp"
+                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -566,6 +607,7 @@
                     </androidx.cardview.widget.CardView>
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
-        </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>
