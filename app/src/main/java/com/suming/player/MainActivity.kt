@@ -304,7 +304,9 @@ class MainActivity: AppCompatActivity() {
                 val MediaInfo_Uri = getLastRecordMedia()
                 if (MediaInfo_Uri != null) {
                     withContext(Dispatchers.Main) {
-                        setMediaItem(MediaInfo_Uri, false)
+                        if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)){
+                            setMediaItem(MediaInfo_Uri, false)
+                        }
                     }
                 }
             }

@@ -8,7 +8,7 @@
     android:background="@color/Background"
     android:fitsSystemWindows="false"
     tools:context=".SettingsActivity"
-    tools:ignore="HardcodedText,TooDeepLayout,UnusedAttribute">
+    tools:ignore="HardcodedText,TooDeepLayout,UnusedAttribute,TooManyViews" >
 
     <!-- 标题区域(含渐变区) -->
     <FrameLayout
@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:alpha="100"
-            android:background="@drawable/vec_brush_area_v1"
+            android:background="@drawable/vec_brush_area_v1_color"
             />
         <!-- 顶部栏核心内容 -->
         <LinearLayout
@@ -38,7 +38,7 @@
                 android:layout_gravity="center"
                 android:layout_marginStart="5dp"
                 app:buttonSize="50dp"
-                app:mainColor="@color/CircleButton_Background"
+                app:mainColor="@color/MainColorPack_CardButtonBackground"
                 app:shadowOffset="4dp"
                 app:circlePadding="100dp"
                 app:iconPadding="120dp"
@@ -85,7 +85,7 @@
                 android:layout_marginTop="2dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="5dp"
-                android:backgroundTint="@color/THEME_1_Background_ContentCard"
+                android:backgroundTint="@color/MainColorPack_ContentCardBackground"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="10dp">
                 <LinearLayout
@@ -132,7 +132,7 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                android:backgroundTint="@color/THEME_1_Background_ContentCard"
+                android:backgroundTint="@color/MainColorPack_ContentCardBackground"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="10dp">
                 <LinearLayout
@@ -168,7 +168,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                android:backgroundTint="@color/THEME_1_Background_ContentCard"
+                android:backgroundTint="@color/MainColorPack_ContentCardBackground"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="10dp">
                 <LinearLayout
@@ -197,7 +197,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:gravity="center"
-                                android:text="退出视频后继续在首页底栏中播放"
+                                android:text="启用首页MiniView"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
@@ -215,7 +215,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="开启后，使用返回键退出视频时，视频将在列表底部播放卡片中继续播放，长按退出按钮则为退出并停止播放。若不开启，单击退出按钮为退出并停止播放，长按则为退出但继续播放。从播放页中间下滑时，默认保持播放。保持播放时，不再受后台播放控制。"
+                            android:text="开启后，使用返回键退出视频时，视频将在列表底部播放卡片中继续播放，长按退出按钮则为退出并停止播放。若不开启，单击退出按钮为退出并停止播放，长按则为退出但继续播放。从播放页中间下滑退出时，强制启用底栏并保持播放保持播放。保持播放时，不再受后台播放控制。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：首页卡片不使用视频  -->
@@ -253,6 +253,41 @@
                             android:text="在部分机型上存在界面合成问题，导致含播放器的页面掉帧卡顿。如果确认您的设备开次此选项后没有问题，可选择开启。"
                             android:textSize="12sp" />
                     </LinearLayout>
+                    <!--  开关：每次启动时继续播放上次的视频  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:text="启动时继续播放上次的媒体"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/EnableContinuePlay"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                app:thumbTint="@color/switchThumbColor"
+                                app:trackTint="@color/switchTrackColor" />
+                        </LinearLayout>
+                        <!-- 提示文本 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="每次启动App时继续播放上一次的媒体，但不会自动开始播放。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -263,7 +298,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                android:backgroundTint="@color/THEME_1_Background_ContentCard"
+                android:backgroundTint="@color/MainColorPack_ContentCardBackground"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="10dp">
                 <LinearLayout
@@ -553,7 +588,8 @@
                             <View
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1" />
+                                android:layout_weight="1"
+                                />
                             <androidx.appcompat.widget.SwitchCompat
                                 android:id="@+id/EnableHighRefreshRate"
                                 android:layout_width="wrap_content"
@@ -1138,7 +1174,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                android:backgroundTint="@color/THEME_1_Background_ContentCard"
+                android:backgroundTint="@color/MainColorPack_ContentCardBackground"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="10dp">
                 <LinearLayout
@@ -1199,7 +1235,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                android:backgroundTint="@color/THEME_1_Background_ContentCard"
+                android:backgroundTint="@color/MainColorPack_ContentCardBackground"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="10dp">
                 <LinearLayout
@@ -1289,7 +1325,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
-                android:backgroundTint="@color/THEME_1_Background_ContentCard"
+                android:backgroundTint="@color/MainColorPack_ContentCardBackground"
                 app:cardCornerRadius="15dp"
                 app:cardElevation="10dp">
                 <LinearLayout

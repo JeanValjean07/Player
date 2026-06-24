@@ -19,7 +19,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:cardCornerRadius="8dp"
-        app:cardBackgroundColor="@color/THEME_1_Background_BackArea"
+        app:cardBackgroundColor="@color/SecondaryColorPack_SurfaceBackground"
         app:cardElevation="10dp"
         android:clickable="true">
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -42,7 +42,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:alpha="100"
-                    android:background="@drawable/vec_brush_area_v1" />
+                    android:background="@drawable/vec_brush_area_v2_smooth" />
                 <!-- 标题：更多选项 -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -60,7 +60,7 @@
                         android:src="@drawable/ic_play_list_close"
                         android:layout_gravity="center"
                         app:buttonSize="50dp"
-                        app:mainColor="@color/THEME_1_Background_ContentCard"
+                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
                         app:shadowOffset="4dp"
                         app:circlePadding="100dp"
                         app:iconPadding="120dp"
@@ -91,7 +91,7 @@
                         app:iconPadding="120dp"
                         app:circlePadding="100dp"
                         app:buttonSize="50dp"
-                        app:mainColor="@color/THEME_1_Background_ContentCard"
+                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
                         app:shadowOffset="4dp"
                         app:shadowRadius="8dp"
                         app:shadowColor="#33000000"
@@ -110,8 +110,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:translationZ="0dp"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior">
+                android:translationZ="0dp">
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -129,7 +128,7 @@
                         android:layout_marginEnd="10dp"
                         android:layout_marginTop="5dp"
                         android:layout_marginBottom="10dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="10dp"
                         app:cardElevation="5dp">
                         <TextView
@@ -151,7 +150,7 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
                         android:layout_marginBottom="10dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="5dp">
                         <LinearLayout
@@ -322,7 +321,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="5dp">
                         <LinearLayout
@@ -366,7 +365,7 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginTop="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="5dp">
                         <LinearLayout
@@ -524,7 +523,7 @@
                         android:layout_marginEnd="10dp"
                         android:layout_marginTop="10dp"
                         android:layout_marginBottom="250dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="5dp">
                         <LinearLayout

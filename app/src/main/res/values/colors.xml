@@ -30,9 +30,9 @@
     <color name="CardViewBottom">#FFFFFF</color>
     <color name="switchTrackColor">#FF9E9E9E</color>
     <color name="switchThumbColor">#FF000000</color>
-    <color name="Black">#000000</color>
+
     <color name="BlackGrey">#101010</color>
-    <color name="White">#FFFFFF</color>
+
     <color name="WhiteGrey2">#F5F5F5</color>
     <color name="BlackGrey2">#212121</color>
     <color name="TransparentHeadBackground">#90FFFFFF</color>
@@ -90,11 +90,24 @@
     <color name="THEME_1_Background_ButtonCircle_ON">#E1BEE7</color>
     <color name="CircleButton_Background">#FFFFFFFF</color>
 
-    <!-- 渐变色值 -->
-    <color name="BrushArea_Top_Background">#EEFFFFFF</color>
-    <color name="BrushArea_Middle">#CCFFFFFF</color>
-    <color name="BrushArea_Bottom">#00FFFFFF</color>
+    <!-- 一级页面颜色配置 -->
+    <color name="MainColorPack_SurfaceBackground">#FFFFFFFF</color>
+    <color name="MainColorPack_BrushColorTop">#EEFFFFFF</color>
+    <color name="MainColorPack_BrushColorMiddle">#CCFFFFFF</color>
+    <color name="MainColorPack_ContentCardBackground">#FFFFFFFF</color>
+    <color name="MainColorPack_CardButtonBackground">#FFFFFFFF</color>
+
+    <!-- 二级页面颜色配置 -->
+    <color name="SecondaryColorPack_SurfaceBackground">#FFFFFFFF</color>
+    <color name="SecondaryColorPack_BrushColorTop">#EEFFFFFF</color>
+    <color name="SecondaryColorPack_BrushColorMiddle">#CCFFFFFF</color>
+    <color name="SecondaryColorPack_ContentCardBackground">#FFFFFFFF</color>
+    <color name="SecondaryColorPack_CardButtonBackground">#FFFFFFFF</color>
 
 
+    <!-- 工具颜色 -->
+    <color name="White">#FFFFFFFF</color>
+    <color name="Black">#FF000000</color>
+    <color name="NullColor">#00000000</color>
 
 </resources>

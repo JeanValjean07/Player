@@ -106,6 +106,36 @@ object SettingsRequestCenter {
         //返回结果
         return PREFS_QueryNewMediaOnStart == 1
     }
+    //每次启动时继续上次的媒体
+    private var PREFS_EnableContinuePlay = -1
+    const val PREFS_EnableContinuePlay_Name = "PREFS_EnableContinuePlay"
+    fun set_PREFS_EnableContinuePlay(context: Context, enable: Boolean){
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        //设置时转为int写入本地缓存
+        PREFS_EnableContinuePlay = if (enable) 1 else 0
+        //写入配置单
+        Pandora_MainPage!!.edit { putInt(PREFS_EnableContinuePlay_Name, if (enable) 1 else 0) }
+    }
+    fun get_PREFS_EnableContinuePlay(context: Context): Boolean {
+        //确保配置单已初始化
+        OpenPandora_MainPage(context)
+        //仅在未读取过时才读取(也就是值为-1时)
+        if (PREFS_EnableContinuePlay == -1) {
+            //从配置单读取
+            PREFS_EnableContinuePlay = Pandora_MainPage!!.getInt(PREFS_EnableContinuePlay_Name, -1)
+            //如果配置单内无该项,写入默认值
+            if (PREFS_EnableContinuePlay == -1) {
+                //默认设为开启
+                PREFS_EnableContinuePlay = 1
+                Pandora_MainPage!!.edit { putInt(PREFS_EnableContinuePlay_Name, 1) }
+            }
+        }
+        //返回结果
+        return PREFS_EnableContinuePlay == 1
+    }
+
+
     //默认显示页签
     const val tab_mark_video = "acquiesce_tab_video"
     const val tab_mark_music = "acquiesce_tab_music"

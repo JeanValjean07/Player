@@ -154,6 +154,13 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_AlwaysUseDarkTheme(isChecked)
             }
+            //启动时继续上次的媒体
+            val switch_EnableContinuePlay = findViewById<SwitchCompat>(R.id.EnableContinuePlay)
+            switch_EnableContinuePlay.isChecked = SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@SettingsActivity)
+            switch_EnableContinuePlay.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_EnableContinuePlay(this@SettingsActivity, isChecked)
+            }
             //使用高刷新率
             val switch_EnableHighRefreshRate = findViewById<SwitchCompat>(R.id.EnableHighRefreshRate)
             switch_EnableHighRefreshRate.isChecked = SettingsRequestCenter.get_PREFS_LockRefreshRate(this@SettingsActivity)

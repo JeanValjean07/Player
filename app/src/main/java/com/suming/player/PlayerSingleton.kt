@@ -61,7 +61,10 @@ object PlayerSingleton {
     fun setContext(context: Context){
         //检查是不是applicationContext
         if (context is Application) {
+            consoleLog("PlayerSingleton.setContext")
             this.context = context
+        }else{
+            consoleLog("PlayerSingleton.setContext error")
         }
     }
     fun getApplicationContext(): Context = context.applicationContext
