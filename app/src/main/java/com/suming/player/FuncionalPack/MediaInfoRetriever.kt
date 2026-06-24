@@ -41,7 +41,7 @@ object MediaInfoRetriever {
 
 
 
-    fun setMediaUri(uri: Uri): Boolean {
+    fun setMediaUri(context: Context, uri: Uri): Boolean {
         if (retriever == null) {
             initRetriever()
         }
@@ -49,13 +49,13 @@ object MediaInfoRetriever {
             return true
         }
         try{
-            retriever?.setDataSource(uri.toString())
+            retriever?.setDataSource(getFilePath(context, uri).toString())
             current_uriString = uri.toString()
 
             return true
         }catch (e: Exception){
             current_uriString = ""
-            consoleLog("setDataSource 时发生错误: ${e.message}")
+            consoleLog("setMediaUri - setDataSource 时发生错误: $e")
             return false
         }
 
@@ -69,7 +69,7 @@ object MediaInfoRetriever {
         //设置数据源
         var success = false
         if(current_uriString != MediaInfo_MediaUri.toString()) {
-            success = setMediaUri(MediaInfo_MediaUri)
+            success = setMediaUri(context, MediaInfo_MediaUri)
         }
 
         //开始解码信息
@@ -77,19 +77,32 @@ object MediaInfoRetriever {
             val (MediaInfo_MediaUniqueID,MediaInfo_MediaUriStandard) = calculateUniqueID(context,MediaInfo_MediaUri)
             val MediaInfo_MediaUriString = MediaInfo_MediaUri.toString()
             val MediaInfo_MediaUriNumOnly = MediaInfo_MediaUniqueID.toLong()
+            consoleLog( "MediaInfo_MediaUriNumOnly: $MediaInfo_MediaUriNumOnly, " +
+                        "MediaInfo_MediaUniqueID: $MediaInfo_MediaUniqueID, " +
+                        "MediaInfo_MediaUriStandard: $MediaInfo_MediaUriStandard" )
             //
             var MediaInfo_MediaType = retriever?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: ""
             val MediaInfo_AbsolutePath = getFilePath(context, MediaInfo_MediaUri).toString()
             val MediaInfo_FileName = (File(MediaInfo_AbsolutePath)).name ?: ""
             var MediaInfo_MediaTitle = retriever?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
             var MediaInfo_MediaArtist = retriever?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST) ?: ""
+            consoleLog( "MediaInfo_MediaTitle: $MediaInfo_MediaTitle, " +
+                        "MediaInfo_MediaArtist: $MediaInfo_MediaArtist, " +
+                        "MediaInfo_MediaType: $MediaInfo_MediaType, " +
+                        "MediaInfo_FileName: $MediaInfo_FileName, " +
+                        "MediaInfo_AbsolutePath: $MediaInfo_AbsolutePath, " )
             //
             val MediaInfo_Duration = retriever?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: -1L
             //
             val MediaInfo_VideoWidth = retriever?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toInt() ?: 0
             val MediaInfo_VideoHeight = retriever?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toInt() ?: 0
+            consoleLog( "MediaInfo_Duration: $MediaInfo_Duration, " +
+                "MediaInfo_VideoWidth: $MediaInfo_VideoWidth, " +
+                "MediaInfo_VideoHeight: $MediaInfo_VideoHeight, " )
+            //
             //计算数据库专用ID
             val MediaInfo_DataBaseID = BuildItemID(MediaInfo_MediaType,MediaInfo_MediaUriNumOnly.toString())
+            consoleLog( "MediaInfo_DataBaseID: $MediaInfo_DataBaseID, " )
 
             //过滤获取的信息
             if (MediaInfo_MediaType.contains("video")){
@@ -99,7 +112,9 @@ object MediaInfoRetriever {
             }
             if (MediaInfo_MediaTitle == ""){ MediaInfo_MediaTitle = "未知媒体标题" }
             if (MediaInfo_MediaArtist == "" || MediaInfo_MediaArtist == "<unknown>"){ MediaInfo_MediaArtist = "未知艺术家" }
-
+            consoleLog( "MediaInfo_MediaTitle: $MediaInfo_MediaTitle, " +
+                        "MediaInfo_MediaArtist: $MediaInfo_MediaArtist, " +
+                        "MediaInfo_MediaType: $MediaInfo_MediaType, " )
 
             //合成数据包
             val MediaInfoPack = MediaInfo(

@@ -48,7 +48,6 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -99,6 +98,7 @@ import com.suming.player.FuncPack_ListManager.FragmentPlayList
 import com.suming.player.FuncPack_ListManager.PlayerListManager
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
+import com.suming.player.FuncionalPack.ConnectCenter
 import com.suming.player.FuncionalPack.FrameExtractor
 import com.suming.player.FuncionalPack.FrameListener
 import com.suming.player.FuncionalPack.MediaUriManager
@@ -568,7 +568,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //注册控制按钮
         lifecycleScope.launch(Dispatchers.Main) {
             //退出按钮
-            val ButtonExit = findViewById<ImageButton>(R.id.TopBarArea_ButtonExit)
+            val ButtonExit = findViewById<CircleButton>(R.id.TopBarArea_ButtonExit)
             ButtonExit.setOnTouchListener { _, event ->
                 when (event.actionMasked){
                     MotionEvent.ACTION_DOWN -> {
@@ -590,7 +590,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 onTouchEvent(event)
             }
             //更多选项
-            val TopBarArea_ButtonMoreOptions = findViewById<ImageButton>(R.id.TopBarArea_ButtonMoreOptions)
+            val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
                 ToolVibrate().vibrate(this@PlayerActivityNeo)
                 //防止快速点击
@@ -1124,10 +1124,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                         val Method = bundle.getString("Method")
                         when(Method){
                             "useCurrentFrame" -> {
-                                CaptureCurrentFrameAsCover(PlayerInFoCenter.getMediaUniqueID(this@PlayerActivityNeo).second)
+                                updateCoverFrame_captureCurrentFrame(PlayerInFoCenter.getMediaUriNumOnly(this@PlayerActivityNeo).second)
                             }
                             "useDefaultCover" -> {
-                                useDefaultCover(PlayerInFoCenter.getMediaUniqueID(this@PlayerActivityNeo).second)
+                                updateCoverFrame_useDefaultCover(PlayerInFoCenter.getMediaUriNumOnly(this@PlayerActivityNeo).second)
                             }
                             "pickFromLocal" -> {
                                 showCustomToast("暂不支持此功能", 3)
@@ -2220,14 +2220,13 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //更新封面
-    @SuppressLint("UseKtx")
-    private fun CaptureCurrentFrameAsCover(uniqueID: String) {
+    private fun updateCoverFrame_captureCurrentFrame(uriNumOnly: Long){
         fun handleSuccess(bitmap: Bitmap) {
             //保存图片
             ArtworkFrameManager.save_Artwork_Frame_Bitmap(
                 this@PlayerActivityNeo,
                 ArtworkFrameManager.artwork_type_video,
-                uniqueID.toLong(),
+                uriNumOnly,
                 bitmap
             )
 
@@ -2235,7 +2234,8 @@ class PlayerActivityNeo: AppCompatActivity(){
             if (vm.wasPlaying){ player.play() }
 
             //发布完成消息
-            ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uniqueID))
+            updateCoverFrame_publishMessage(uriNumOnly)
+
             showCustomToast("截取封面完成", 3)
 
         }
@@ -2260,7 +2260,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             )
         }
     }
-    private fun useDefaultCover(uniqueID: String){
+    private fun updateCoverFrame_useDefaultCover(uriNumOnly: Long){
         //获取默认封面
         val bitmap = ArtworkCapturer.getDefaultVideoCoverFrame(this@PlayerActivityNeo)
         if (bitmap == null) {
@@ -2272,14 +2272,19 @@ class PlayerActivityNeo: AppCompatActivity(){
         ArtworkFrameManager.save_Artwork_Frame_Bitmap(
             this@PlayerActivityNeo,
             ArtworkFrameManager.artwork_type_video,
-            uniqueID.toLong(),
+            uriNumOnly,
             bitmap
         )
 
-
         //发布完成消息
-        ToolEventBus.sendEvent_withExtraString(Event("PlayerActivity_CoverChanged", uniqueID))
+        updateCoverFrame_publishMessage(uriNumOnly)
+
+
         showCustomToast("已完成", 3)
+    }
+    private fun updateCoverFrame_publishMessage(uriNumOnly: Long){
+        ConnectCenter.setCoverFrameUpdateEvent_targetUriNumOnly(uriNumOnly)
+        ConnectCenter.setState_connector(ConnectCenter.connector_event_cover_frame_update)
     }
     //分享视频by uri
     private fun shareVideo(context: Context, videoUri: Uri) {
@@ -2968,10 +2973,10 @@ class PlayerActivityNeo: AppCompatActivity(){
         val ButtonLandscape = findViewById<CircleButton>(R.id.ButtonLandscape)
 
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.THEME_1_Background_ContentCard))
+            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.THEME_1_Background_ButtonCircle_OFF))
         }
         else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.ButtonBg))
+            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.THEME_1_Background_ButtonCircle_ON))
         }
 
     }

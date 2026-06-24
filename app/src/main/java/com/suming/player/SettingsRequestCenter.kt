@@ -79,32 +79,32 @@ object SettingsRequestCenter {
         return PREFS_DisableMainPageSmallPlayer == 1
     }
     //每次启动时都重新读取媒体
-    private var PREFS_QueryNewVideoOnStart = -1
-    const val PREFS_QueryNewVideoOnStart_Name = "PREFS_QueryNewVideoOnStart"
-    fun set_PREFS_QueryNewVideoOnStart(context: Context, enable: Boolean){
+    private var PREFS_QueryNewMediaOnStart = -1
+    const val PREFS_QueryNewMediaOnStart_Name = "PREFS_QueryNewMediaOnStart"
+    fun set_PREFS_QueryNewMediaOnStart(context: Context, enable: Boolean){
         //确保配置单已初始化
         OpenPandora_MainPage(context)
         //设置时转为int写入本地缓存
-        PREFS_QueryNewVideoOnStart = if (enable) 1 else 0
+        PREFS_QueryNewMediaOnStart = if (enable) 1 else 0
         //写入配置单
-        Pandora_MainPage!!.edit { putInt(PREFS_QueryNewVideoOnStart_Name, if (enable) 1 else 0) }
+        Pandora_MainPage!!.edit { putInt(PREFS_QueryNewMediaOnStart_Name, if (enable) 1 else 0) }
     }
-    fun get_PREFS_QueryNewVideoOnStart(context: Context): Boolean {
+    fun get_PREFS_QueryNewMediaOnStart(context: Context): Boolean {
         //确保配置单已初始化
         OpenPandora_MainPage(context)
         //仅在未读取过时才读取(也就是值为-1时)
-        if (PREFS_QueryNewVideoOnStart == -1) {
+        if (PREFS_QueryNewMediaOnStart == -1) {
             //从配置单读取
-            PREFS_QueryNewVideoOnStart = Pandora_MainPage!!.getInt(PREFS_QueryNewVideoOnStart_Name, -1)
+            PREFS_QueryNewMediaOnStart = Pandora_MainPage!!.getInt(PREFS_QueryNewMediaOnStart_Name, -1)
             //如果配置单内无该项,写入默认值
-            if (PREFS_QueryNewVideoOnStart == -1) {
+            if (PREFS_QueryNewMediaOnStart == -1) {
                 //默认设为关闭
-                PREFS_QueryNewVideoOnStart = 0
-                Pandora_MainPage!!.edit { putInt(PREFS_QueryNewVideoOnStart_Name, 0) }
+                PREFS_QueryNewMediaOnStart = 0
+                Pandora_MainPage!!.edit { putInt(PREFS_QueryNewMediaOnStart_Name, 0) }
             }
         }
         //返回结果
-        return PREFS_QueryNewVideoOnStart == 1
+        return PREFS_QueryNewMediaOnStart == 1
     }
     //默认显示页签
     const val tab_mark_video = "acquiesce_tab_video"

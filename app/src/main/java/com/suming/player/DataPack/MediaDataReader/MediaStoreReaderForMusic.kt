@@ -10,7 +10,9 @@ import androidx.core.content.edit
 import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.DataPack.DataBaseMusicStore.MusicStoreRepo
 import com.suming.player.DataPack.DataBaseMusicStore.MusicStoreSetting
+import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -20,24 +22,17 @@ class MediaStoreReaderForMusic(
     private val contentResolver: ContentResolver,
 ) {
     //设置项
-    private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
 
-
-    fun preCheck() {
-        PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)
-        if (!PREFS_MediaStore.contains("PREFS_EnableFileExistCheck")) {
-            PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", false) }
-            PREFS_EnableFileExistCheck = false
-        }else{
-            PREFS_EnableFileExistCheck = PREFS_MediaStore.getBoolean("PREFS_EnableFileExistCheck", false)
-        }
-
+    private fun init(){
+        PREFS_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
     }
 
+
+    //读取所有音乐
     suspend fun readAllMusics(): List<MediaItemForMusic> {
         //读取设置
-        preCheck()
+        init()
 
         //初始化列表
         val list = mutableListOf<MediaItemForMusic>()
@@ -212,8 +207,9 @@ class MediaStoreReaderForMusic(
                 }
             }
         }
-        //发布删除完成通知
-        ToolEventBus.sendEvent("QueryFromMediaStoreMusicComplete")
+
+        //发布完成通知
+        DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_success)
     }
 
 }

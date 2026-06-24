@@ -93,7 +93,12 @@ object ArtworkFrameManager {
                 val artwork_Frame_File = File(artwork_File_path_video, "${artwork_name_uriNumOnly}.webp")
                 //拿到文件uri
                 if(artwork_Frame_File.exists()){
-                    return FileProvider.getUriForFile(context, "${context.packageName}.provider", artwork_Frame_File)
+                    return try {
+                        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", artwork_Frame_File)
+                    }catch (e: Exception){
+                        consoleLog("ArtworkFrameManager: 获取视频文件的缩略图uri失败: $e , ${e.message}")
+                        null
+                    }
                 }
                 return null
             }
@@ -192,7 +197,7 @@ object ArtworkFrameManager {
 
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", msg)
         }

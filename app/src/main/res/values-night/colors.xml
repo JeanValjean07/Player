@@ -89,6 +89,7 @@
     <color name="THEME_1_Background_ButtonCard">#000000</color>
     <color name="THEME_1_Background_ButtonCircle_OFF">#424242</color>
     <color name="THEME_1_Background_ButtonCircle_ON">#E1BEE7</color>
+    <color name="CircleButton_Background">#FF212121</color>
 
 
     <!-- 渐变色值 -->

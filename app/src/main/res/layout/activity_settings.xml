@@ -2,7 +2,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_settings"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/Background"
@@ -10,58 +10,73 @@
     tools:context=".SettingsActivity"
     tools:ignore="HardcodedText,TooDeepLayout,UnusedAttribute">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <!-- 标题区域(含渐变区) -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/HeadBackground"
-        app:liftOnScrollColor="@color/HeadBackground"
-        android:outlineSpotShadowColor="@color/HeadText">
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/TopBarArea"
+        android:background="@android:color/transparent"
+        android:translationZ="5dp">
+        <!-- BrushArea -->
+        <View
+            android:id="@+id/AppBarGradientMask"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:background="@android:color/transparent"
-            app:contentInsetStart="0dp"
-            android:elevation="1dp">
-            <LinearLayout
-                android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:alpha="100"
+            android:background="@drawable/vec_brush_area_v1"
+            />
+        <!-- 顶部栏核心内容 -->
+        <LinearLayout
+            android:id="@+id/AppBarCore"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:orientation="horizontal">
+            <com.suming.player.ViewWidget.CircleButton
+                android:id="@+id/buttonExit"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_general_back"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                app:buttonSize="50dp"
+                app:mainColor="@color/CircleButton_Background"
+                app:shadowOffset="4dp"
+                app:circlePadding="100dp"
+                app:iconPadding="120dp"
+                app:shadowRadius="8dp"
+                app:shadowColor="#33000000"
+                />
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:orientation="horizontal">
-                <ImageButton
-                    android:id="@+id/buttonExit"
-                    android:layout_width="50dp"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="start|center"
-                    android:layout_marginStart="5dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="退出"
-                    android:padding="11dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_general_exit"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="start|center"
-                    android:gravity="center"
-                    android:padding="5dp"
-                    android:text="设置"
-                    android:textColor="@color/HeadText"
-                    android:textSize="20sp" />
-            </LinearLayout>
-        </androidx.appcompat.widget.Toolbar>
-    </com.google.android.material.appbar.AppBarLayout>
+                android:layout_gravity="start|center"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="设置"
+                android:textColor="@color/HeadText"
+                android:textSize="20sp" />
+        </LinearLayout>
 
+    </FrameLayout>
+
+    <!-- 内容区域 -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/NestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:fitsSystemWindows="false">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:paddingBottom="100dp"
             tools:targetApi="28">
+            <!-- 内容区域顶部占位 -->
+            <Space
+                android:id="@+id/AppBarSpacer"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                />
+
             <!-- 版本卡片 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -72,7 +87,7 @@
                 android:layout_marginBottom="5dp"
                 android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="5dp">
+                app:cardElevation="10dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -104,7 +119,7 @@
                             android:layout_gravity="center"
                             android:layout_marginEnd="10dp"
                             android:layout_weight="0"
-                            android:text="version"
+                            android:text="加载中"
                             android:textSize="11sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -119,7 +134,7 @@
                 android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="5dp">
+                app:cardElevation="10dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -155,7 +170,7 @@
                 android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="15dp"
-                app:cardElevation="3dp">
+                app:cardElevation="10dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -250,7 +265,7 @@
                 android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="15dp"
-                app:cardElevation="3dp">
+                app:cardElevation="10dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -311,7 +326,7 @@
                                     android:layout_height="match_parent"
                                     android:layout_marginStart="5dp"
                                     android:gravity="center"
-                                    android:text="当前样式"
+                                    android:text="加载中"
                                     android:textColor="@color/HeadText"
                                     android:textSize="11sp" />
                                 <ImageView
@@ -957,7 +972,7 @@
                                         android:layout_height="match_parent"
                                         android:layout_marginStart="5dp"
                                         android:gravity="center"
-                                        android:text="当前时间戳刷新间隔"
+                                        android:text="加载中"
                                         android:textColor="@color/HeadText"
                                         android:textSize="11sp"
                                         />
@@ -1023,7 +1038,7 @@
                                         android:layout_height="match_parent"
                                         android:layout_marginStart="5dp"
                                         android:gravity="center"
-                                        android:text="当前时间戳刷新间隔"
+                                        android:text="加载中"
                                         android:textColor="@color/HeadText"
                                         android:textSize="11sp"
                                         />
@@ -1088,7 +1103,7 @@
                                         android:layout_height="match_parent"
                                         android:layout_marginStart="5dp"
                                         android:gravity="center"
-                                        android:text="当前寻帧间隔"
+                                        android:text="加载中"
                                         android:textColor="@color/HeadText"
                                         android:textSize="11sp"
                                         />
@@ -1125,7 +1140,7 @@
                 android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="15dp"
-                app:cardElevation="3dp">
+                app:cardElevation="10dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1186,7 +1201,7 @@
                 android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="15dp"
-                app:cardElevation="3dp">
+                app:cardElevation="10dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1241,7 +1256,7 @@
                                         android:layout_height="match_parent"
                                         android:layout_marginStart="5dp"
                                         android:gravity="center"
-                                        android:text="当前振动模式"
+                                        android:text="加载中"
                                         android:textColor="@color/HeadText"
                                         android:textSize="11sp"
                                         />
@@ -1276,7 +1291,7 @@
                 android:layout_marginBottom="10dp"
                 android:backgroundTint="@color/THEME_1_Background_ContentCard"
                 app:cardCornerRadius="15dp"
-                app:cardElevation="3dp">
+                app:cardElevation="10dp">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

@@ -7,8 +7,6 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.Bitmap
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -38,7 +36,6 @@ import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
@@ -62,14 +59,17 @@ import com.suming.player.ActivityComponent.MainActivity.MainViewModel
 import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
+import com.suming.player.DataPack.DataBaseMusicStore.MusicStoreRepo
+import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.FuncPack_ListManager.FragmentPlayList
 import com.suming.player.FuncionalPack.MediaRecordManager
-import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForVideo
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForVideo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
+import com.suming.player.FuncionalPack.ConnectCenter
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.PlayerInFoCenter
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -79,7 +79,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import kotlin.getValue
 
 //@Suppress("unused")
@@ -88,35 +87,14 @@ import kotlin.getValue
 class MainActivity: AppCompatActivity() {
     //连接ViewModel
     private val mainViewModel: MainViewModel by viewModels()
-    //权限检查
-    private val REQUEST_STORAGE_PERMISSION = 1001
+
     //防止快速点击
     private var lock_clickMillisLock = 0L
-    //界面控件元素
-    //<editor-fold desc="界面控件元素">
-    private lateinit var main_video_list_adapter: RecyclerAdapterVideo
-    private lateinit var main_music_list_adapter: RecyclerAdapterMusic
-    private lateinit var ListRecyclerView_Video: RecyclerView
-    private lateinit var ListRecyclerView_Music: RecyclerView
-    private lateinit var AppBarTitle: TextView
-    private lateinit var AppBarNoticeText: TextView
-    private lateinit var ButtonCardMusic: CardView
-    private lateinit var ButtonCardVideo: CardView
-    private lateinit var ButtonCardGallery: CardView
-    //</editor-fold>
-    //设置和设置项
-    private lateinit var PREFS_MediaStore: SharedPreferences
 
 
-    //状态信息
-    private var state_FromFirstMediaStoreRead = false
 
 
-    private var state_onFirstStart = false
-
-    private var state_PlayingCard_gone = true
-
-
+    @RequiresApi(Build.VERSION_CODES.R)
     @SuppressLint("ClickableViewAccessibility")
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,29 +102,7 @@ class MainActivity: AppCompatActivity() {
         //界面设置
         display()
         //初始化
-        init(savedInstanceState)
-
-
-
-        //读取媒体库设置
-        PREFS_MediaStore = getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-
-
-
-        if (PREFS_MediaStore.contains("state_VideoMediaStoreReaded")){
-            state_VideoMediaStoreReaded = PREFS_MediaStore.getBoolean("state_VideoMediaStoreReaded", false)
-        }else{
-            PREFS_MediaStore.edit { putBoolean("state_VideoMediaStoreReaded", false).apply() }
-            state_VideoMediaStoreReaded = false
-        }
-        if (PREFS_MediaStore.contains("state_MusicMediaStoreReaded")){
-            state_MusicMediaStoreReaded = PREFS_MediaStore.getBoolean("state_MusicMediaStoreReaded", false)
-        }else{
-            PREFS_MediaStore.edit { putBoolean("state_MusicMediaStoreReaded", false).apply() }
-            state_MusicMediaStoreReaded = false
-        }
-
-
+        init()
 
 
 
@@ -162,42 +118,21 @@ class MainActivity: AppCompatActivity() {
         //显示列表
         showMediaList(savedInstanceState)
 
-    }
-    //错误接收器:detailLauncher
-    @SuppressLint("UnsafeOptInUsageError")
-    private val detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        result: ActivityResult ->
-        if (result.resultCode == RESULT_OK) {
-            when(result.data?.getStringExtra("key")){
-                "EnsureExitCloseAllStuff" -> {
+        setupEventObserver()
 
-                }
-                "EnsureExitButKeepPlaying" -> {
-
-                }
-                "ClosedBeforePlayerReady" -> {
-
-                }
-            }
-        }
     }
     //onResume时更新一些设置变量
     override fun onResume() {
         super.onResume()
-        //注册事件总线监听器
-        setupEventBus()
+
         //更新MiniView
         showMiniViewLongProcess()
-
-        //刷新状态和设置
-        state_MediaStore_refreshed = false
 
     }
 
     override fun onPause() {
         super.onPause()
-        //关闭事件总线监听器
-        disposeEventBus()
+
     }
 
     override fun onDestroy() {
@@ -205,7 +140,7 @@ class MainActivity: AppCompatActivity() {
 
     }
 
-    private fun init(savedInstanceState: Bundle?){
+    private fun init(){
         //获取主要列表视图
         ListRecyclerView_Video = findViewById(R.id.recyclerview_video_list)
         ListRecyclerView_Music = findViewById(R.id.recyclerview_music_list)
@@ -215,18 +150,10 @@ class MainActivity: AppCompatActivity() {
         ButtonCardVideo = findViewById(R.id.ButtonCardVideo)
         ButtonCardGallery = findViewById(R.id.ButtonCardGallery)
 
+
         //获取MiniView视图
         initMiniView()
 
-
-        //表明首次启动信息
-        state_onFirstStart = savedInstanceState == null
-
-        //传入引用(需传入application级别引用)
-        PlayerSingleton.setContext(application)
-
-        //事件总线注册
-        setupEventBus()
 
         //手势监听
         lifecycleScope.launch (Dispatchers.Main) {
@@ -271,7 +198,7 @@ class MainActivity: AppCompatActivity() {
                         main_video_list_adapter.refresh()
                     }
                     "QueryFromMediaStoreVideo" -> {
-                        startLoadFromMediaStore("video")
+                        startLocalMediaReader("video")
                     }
                 }
             }
@@ -283,7 +210,7 @@ class MainActivity: AppCompatActivity() {
                         main_music_list_adapter.refresh()
                     }
                     "QueryFromMediaStoreMusic" -> {
-                        startLoadFromMediaStore("music")
+                        startLocalMediaReader("music")
                     }
                 }
             }
@@ -363,6 +290,7 @@ class MainActivity: AppCompatActivity() {
     //主业务(检查上次停留的媒体)
     private fun mainBusiness(){
         lifecycleScope.launch (Dispatchers.IO) {
+            delay(700)
             //检查MiniView观察者是否已启动
             withContext(Dispatchers.Main) {
                 //启动MiniView观察者
@@ -370,41 +298,36 @@ class MainActivity: AppCompatActivity() {
             }
             //MiniView的显示交给观察自动进行,此处只负责媒体的设置
             //检查是否有媒体正在播放
-            if (!isAnyMediaOngoing().first){
+            val isAnyMediaOngoing = withContext(Dispatchers.Main){ isAnyMediaOngoing().first }
+            if (!isAnyMediaOngoing){
                 //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
                 val MediaInfo_Uri = getLastRecordMedia()
                 if (MediaInfo_Uri != null) {
-                    setMediaItem(MediaInfo_Uri, false)
+                    withContext(Dispatchers.Main) {
+                        setMediaItem(MediaInfo_Uri, false)
+                    }
                 }
             }
         }
     }
 
-
-
-    //启动小型播放区域
-    private fun startMiniView(){
-
-    }
     //显示页面
+    @RequiresApi(Build.VERSION_CODES.R)
     private fun showMediaList(savedInstanceState: Bundle?){
-        if (savedInstanceState == null){
-            val PREFS_AcquiesceTab = SettingsRequestCenter.get_PREFS_AcquiesceTab(this@MainActivity)
-            //根据设置项显示列表
-            when(PREFS_AcquiesceTab){
-                SettingsRequestCenter.tab_mark_video -> {
-                    showVideoList()
+        lifecycleScope.launch(Dispatchers.IO){
+            //检查权限
+            val (isPermissionGranted, _) = checkPermissionAndVersion()
+            if (isPermissionGranted){
+                //显示列表
+                var targetList = ""
+                targetList = if (savedInstanceState == null){
+                    SettingsRequestCenter.get_PREFS_AcquiesceTab(this@MainActivity)
+                }else{
+                    mainViewModel.state_current_tab
                 }
-                SettingsRequestCenter.tab_mark_music -> {
-                    showMusicList()
-                }
-                SettingsRequestCenter.tab_mark_gallery -> {
-                    //暂未开放,重定向到视频页
-                    showVideoList()
-                }
-                SettingsRequestCenter.tab_mark_last -> {
-                    val State_LastStayTab = readLastPageThenShow()
-                    when (State_LastStayTab) {
+                //根据设置项显示列表
+                withContext(Dispatchers.Main){
+                    when(targetList){
                         SettingsRequestCenter.tab_mark_video -> {
                             showVideoList()
                         }
@@ -415,30 +338,30 @@ class MainActivity: AppCompatActivity() {
                             //暂未开放,重定向到视频页
                             showVideoList()
                         }
+                        SettingsRequestCenter.tab_mark_last -> {
+                            val State_LastStayTab = readLastPageThenShow()
+                            when (State_LastStayTab) {
+                                SettingsRequestCenter.tab_mark_video -> {
+                                    showVideoList()
+                                }
+                                SettingsRequestCenter.tab_mark_music -> {
+                                    showMusicList()
+                                }
+                                SettingsRequestCenter.tab_mark_gallery -> {
+                                    //暂未开放,重定向到视频页
+                                    showVideoList()
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        }else{
-            when(mainViewModel.state_current_tab){
-                SettingsRequestCenter.tab_mark_video -> {
-                    showVideoList()
-                }
-                SettingsRequestCenter.tab_mark_music -> {
-                    showMusicList()
-                }
-                SettingsRequestCenter.tab_mark_gallery -> {
-                    //暂未开放,重定向到视频页
-                    showVideoList()
-                }
-                else -> {
-                    showCustomToast("发生了一些错误",3)
-                    showVideoList()
+            }else{
+                withContext(Dispatchers.Main){
+                    startSettingPage()
                 }
             }
         }
     }
-
-
 
     //读取上一次的页面
     private fun readLastPageThenShow(): String{
@@ -447,46 +370,204 @@ class MainActivity: AppCompatActivity() {
 
         return State_LastStayTab
     }
-
     //显示视频列表
     private fun showVideoList(){
-        //页面标识防重复
-        if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_video && state_VideoDataBaseReaded_N_AdapterBinded){
-            listGoTop()
-            return
+        lifecycleScope.launch(Dispatchers.IO) {
+            //页面标识防重复
+            if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_video && state_VideoRecyclerView_started){
+                withContext(Dispatchers.Main){
+                    listGoTop()
+                }
+                return@launch
+            }
+            mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_video
+            //记录状态
+            SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_video)
+
+            withContext(Dispatchers.Main){
+                //界面切换
+                setVideoElement()
+                resetElement("video")
+                //加载事务
+                showVideoListCore()
+            }
+
         }
-        mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_video
-        //记录状态
-        SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_video)
-        //界面切换
-        setVideoElement()
-        resetElement("video")
-        //加载事务
-        Handler(Looper.getMainLooper()).postDelayed({
-            generalLoadVideo()
-        }, 100)
-
-
     }
     //显示音乐列表
     private fun showMusicList(){
-        //页面标识防重复
-        if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_music && state_MusicDataBaseReaded_N_AdapterBinded){
-            listGoTop()
-            return
-        }
-        mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_music
-        //记录状态
-        SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_music)
-        //界面切换
-        setMusicElement()
-        resetElement("music")
-        //加载事务
-        Handler(Looper.getMainLooper()).postDelayed({
-            generalLoadMusic()
-        }, 100)
+        lifecycleScope.launch(Dispatchers.IO) {
+            //页面标识防重复
+            if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_music && state_MusicRecyclerView_started){
+                withContext(Dispatchers.Main){
+                    listGoTop()
+                }
+                return@launch
+            }
+            mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_music
+            //记录状态
+            SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_music)
 
+            withContext(Dispatchers.Main){
+                //界面切换
+                setMusicElement()
+                resetElement("music")
+                //加载事务
+                showMusicListCore()
+            }
+        }
     }
+
+    //视频列表核心
+    @SuppressLint("NewApi")
+    private fun showVideoListCore(){
+        consoleLog("showVideoListCore")
+        //启动视频列表
+        startVideoRecyclerView()
+        val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this)
+        //检查本地数据库是否已有音乐数据
+        lifecycleScope.launch(Dispatchers.IO) {
+            if (MediaStoreRepo(this@MainActivity).isEmpty()){
+                consoleLog("showVideoListCore : 本地数据库视频数据为空")
+                //从系统读取视频
+                withContext(Dispatchers.Main){
+                    startLocalMediaReader("video")
+                }
+            }else{
+                consoleLog("showVideoListCore : 本地数据库视频数据不为空")
+                //直接从本地数据库读取
+
+            }
+        }
+        //是否需要读取新视频
+        if (queryNew){
+
+        }else{
+
+        }
+    }
+    private var state_VideoRecyclerView_started = false
+    private lateinit var main_video_list_adapter: RecyclerAdapterVideo
+    private lateinit var ListRecyclerView_Video: RecyclerView
+    private fun startVideoRecyclerView(){
+        if (state_VideoRecyclerView_started) return
+        state_VideoRecyclerView_started = true
+        //设置列表布局管理器
+        ListRecyclerView_Video.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        //注册点击事件
+        main_video_list_adapter = RecyclerAdapterVideo(
+            context = this,
+            onItemClick = { uri ->
+                startVideoPlayer(uri)
+            },
+            onDurationClick = { item ->
+                ToolVibrate().vibrate(this@MainActivity)
+                notice("视频时长:${FormatTime_withChar(item.durationMs)}", 2000)
+            },
+            onFormatClick = { item, format ->
+                ToolVibrate().vibrate(this@MainActivity)
+                notice("视频格式:${item.format}", 3000)
+            },
+            onOptionClick = { item ->
+                ToolVibrate().vibrate(this@MainActivity)
+                val popup = PopupMenu(this, ListRecyclerView_Video)
+                popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
+                popup.setOnMenuItemClickListener { /*handle*/; true }
+                popup.show()
+            },
+            onSmallCardPlay = { uri, title ->
+                startMiniViewPlay(uri.toUri())
+            }
+        )
+        //增加sidePadding
+        ListRecyclerView_Video.setPadding(0, 0, 0, 300)
+        //设置adapter
+        ListRecyclerView_Video.adapter = main_video_list_adapter
+        //分页加载
+        val pager = Pager(PagingConfig(pageSize = 20)) {
+            MediaDataBaseReaderForVideo(context = this@MainActivity)
+        }
+        //分页加载数据
+        lifecycleScope.launch {
+            pager.flow.collect { pagingData ->
+                main_video_list_adapter.submitData(pagingData)
+            }
+        }
+    }
+    //音乐列表核心
+    @SuppressLint("NewApi")
+    private fun showMusicListCore(){
+        consoleLog("showMusicListCore")
+        //启动音乐列表
+        startMusicRecyclerView()
+        val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this)
+        //检查本地数据库是否已有音乐数据
+        lifecycleScope.launch(Dispatchers.IO) {
+            if (MusicStoreRepo(this@MainActivity).isEmpty()){
+                consoleLog("showMusicList数据库音乐数据为空")
+                //从系统读取音乐
+                withContext(Dispatchers.Main){
+                    startLocalMediaReader("music")
+                }
+            }else{
+                consoleLog("showMusicList数据库音乐数据不为空")
+                //直接从本地数据库读取
+
+            }
+        }
+        if (queryNew){
+
+        }else{
+
+        }
+    }
+    private var state_MusicRecyclerView_started = false
+    private lateinit var main_music_list_adapter: RecyclerAdapterMusic
+    private lateinit var ListRecyclerView_Music: RecyclerView
+    private fun startMusicRecyclerView(){
+        if (state_MusicRecyclerView_started) return
+        state_MusicRecyclerView_started = true
+        //设置列表布局管理器
+        ListRecyclerView_Music.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        //注册点击事件
+        main_music_list_adapter = RecyclerAdapterMusic(
+            context = this,
+            onItemClick = { uri ->
+                ToolVibrate().vibrate(this@MainActivity)
+                startMusicPlayer(uri)
+            },
+            onOptionsClick = { item, view ->
+                ToolVibrate().vibrate(this@MainActivity)
+
+            },
+        )
+        //增加sidePadding
+        ListRecyclerView_Music.setPadding(0, 0, 0, 300)
+        //设置adapter
+        ListRecyclerView_Music.adapter = main_music_list_adapter
+        //分页加载
+        val pager = Pager(
+            PagingConfig(
+                pageSize = 25,
+                prefetchDistance = 40,
+                enablePlaceholders = false,
+                initialLoadSize = 200,
+                maxSize = PagingConfig.MAX_SIZE_UNBOUNDED,
+                jumpThreshold = Int.MIN_VALUE
+            )
+        ) {
+            MediaDataBaseReaderForMusic(context = this@MainActivity)
+        }
+        //分页加载数据
+        lifecycleScope.launch {
+            pager.flow.collect { pagingData ->
+                main_music_list_adapter.submitData(pagingData)
+            }
+        }
+    }
+
+
+
     //获取上次播放记录
     private fun getLastRecordMedia(): Uri?{
         //获取上次播放记录
@@ -506,17 +587,22 @@ class MainActivity: AppCompatActivity() {
     private fun startMiniViewObserver() {
         if (miniViewObserverRunning) return
         miniViewObserverRunning = true
-        //
+        consoleLog("startMiniViewObserver 启动MiniView观察者 ")
+        //启动MiniView观察者
         lifecycleScope.launch {
             //观察媒体变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInFoCenter.uriString.collect { _ ->
+                PlayerInFoCenter.uriString.collect { uriString ->
+                    consoleLog("MiniView观察者 观察到媒体变更: $uriString")
                     showMiniViewLongProcess()
                 }
             }
+        }
+        lifecycleScope.launch {
             //观察播放状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInFoCenter.isPlaying.collect { newState ->
+                    consoleLog("MiniView观察者 观察到播放状态变更: newState = $newState")
                     updateMiniViewPauseButton(newState)
                 }
             }
@@ -559,6 +645,7 @@ class MainActivity: AppCompatActivity() {
             ToolVibrate().vibrate(this@MainActivity)
             //启动播放页
             val uri = PlayerInFoCenter.getMediaUriString(this).second.toUri()
+            consoleLog("PlayingCard_InfoContainer 点击事件 触发播放页: $uri")
             startPlayerFromMiniView(uri)
         }
         PlayingCard_ButtonPlay.setOnClickListener {
@@ -785,7 +872,6 @@ class MainActivity: AppCompatActivity() {
     private lateinit var PlayingCard_ButtonList: ImageButton
 
 
-
     //检查是否有媒体正在在播放并获取链接
     private fun isAnyMediaOngoing(): Pair<Boolean, String>{
         //从播放器获取当前媒体状态
@@ -798,8 +884,6 @@ class MainActivity: AppCompatActivity() {
             Pair(false,"")
         }
     }
-
-
 
     //设置新的媒体项
     private fun setMediaItem(MediaInfo_MediaUri: Uri, playWhenReady: Boolean){
@@ -826,78 +910,26 @@ class MainActivity: AppCompatActivity() {
 
     }
 
-
-
-    //页签切换
-    private var state_MusicMediaStoreReaded = false
-    private var state_MusicDataBaseReaded_N_AdapterBinded = false
-    @SuppressLint("NewApi")
-    private fun generalLoadMusic(){
-        //检查权限
-        val isPermissionGranted = isPermissionGranted()
-        if (!isPermissionGranted){
-            if (isVersionAboveTiramisu){
-                showCustomToast("请先开启管理所有文件权限",3)
-                val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                this.startActivity(intent)
-            }else{
-                showCustomToast("请先开启媒体访问文件权限",3)
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .apply { data = "package:$packageName".toUri() }
-                startActivity(intent)
-            }
-            return
-        }
-        //本次启动第一次加载音乐
-        if (SettingsRequestCenter.get_PREFS_QueryNewVideoOnStart(this)){
-            if (!state_MusicDataBaseReaded_N_AdapterBinded){
-                checkPermissionThenStartLoad("music")
-            }
-        }
-        else{
-            if (state_MusicMediaStoreReaded){
-                LoadDataBase_N_BindAdapter("music")
-            }
-            else{
-                checkPermissionThenStartLoad("music")
+    //从读取本地视频和音乐(列表自动感知刷新)
+    private fun startLocalMediaReader(flag_video_or_music: String){
+        setLoadingText("正在读取本地媒体", false, 0)
+        DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
+        //发起加载
+        lifecycleScope.launch(Dispatchers.IO) {
+            when(flag_video_or_music){
+                "video" -> {
+                    val mediaReader = MediaStoreReaderForVideo(this@MainActivity, contentResolver)
+                    mediaReader.readAndSaveAllVideos()
+                }
+                "music" -> {
+                    val musicReader = MediaStoreReaderForMusic(this@MainActivity, contentResolver)
+                    musicReader.readAndSaveAllMusics()
+                }
             }
         }
     }
-    private var state_VideoMediaStoreReaded = false
-    private var state_VideoDataBaseReaded_N_AdapterBinded = false
-    @SuppressLint("NewApi")
-    private fun generalLoadVideo(){
-        //检查权限
-        val isPermissionGranted = isPermissionGranted()
-        if (!isPermissionGranted){
-            if (isVersionAboveTiramisu){
-                showCustomToast("请先开启管理所有文件权限",3)
-                val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                this.startActivity(intent)
-            }else{
-                showCustomToast("请先开启媒体访问文件权限",3)
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .apply { data = "package:$packageName".toUri() }
-                startActivity(intent)
-            }
-            return
-        }
-        //本次启动第一次加载视频
-        if (SettingsRequestCenter.get_PREFS_QueryNewVideoOnStart(this)){
-            if (!state_VideoDataBaseReaded_N_AdapterBinded){
-                checkPermissionThenStartLoad("video")
-            }
-        }
-        else{
-            if (state_MusicMediaStoreReaded){
-                LoadDataBase_N_BindAdapter("video")
-            }
-            else{
-                checkPermissionThenStartLoad("video")
-            }
-        }
 
-    }
+
     //页签切换变更页面信息
     private fun setMusicElement(){
         mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_music
@@ -907,7 +939,6 @@ class MainActivity: AppCompatActivity() {
         ListRecyclerView_Video.visibility = View.GONE
         ListRecyclerView_Music.visibility = View.VISIBLE
 
-        PREFS_MediaStore.edit{ putString("state_lastPage", "music") }
 
     }
     private fun setVideoElement(){
@@ -917,8 +948,6 @@ class MainActivity: AppCompatActivity() {
 
         ListRecyclerView_Video.visibility = View.VISIBLE
         ListRecyclerView_Music.visibility = View.GONE
-
-        PREFS_MediaStore.edit{ putString("state_lastPage", "video") }
 
     }
     private fun resetElement(avoid: String){
@@ -937,23 +966,45 @@ class MainActivity: AppCompatActivity() {
     private fun listGoTop(){
         when (mainViewModel.state_current_tab) {
             SettingsRequestCenter.tab_mark_music -> {
-                if (state_MusicDataBaseReaded_N_AdapterBinded) {
-                    main_music_list_adapter.refresh()
-                }
+                if (!state_MusicRecyclerView_started) return
+
+                main_music_list_adapter.refresh()
+
                 ListRecyclerView_Music.smoothScrollToPosition(0)
             }
             SettingsRequestCenter.tab_mark_video -> {
-                if (state_VideoDataBaseReaded_N_AdapterBinded) {
-                    main_video_list_adapter.refresh()
-                }
+                if (!state_VideoRecyclerView_started) return
+
+                main_video_list_adapter.refresh()
+
                 ListRecyclerView_Video.smoothScrollToPosition(0)
-            }
-            else -> {
-                showCustomToast("发生了一些错误",3)
             }
         }
     }
+    //界面控件元素
+    private lateinit var AppBarTitle: TextView
+    private lateinit var AppBarNoticeText: TextView
+    private lateinit var ButtonCardMusic: CardView
+    private lateinit var ButtonCardVideo: CardView
+    private lateinit var ButtonCardGallery: CardView
 
+    //刷新列表
+    private fun refreshList(){
+        //检查当前所在列表
+        when (mainViewModel.state_current_tab) {
+            SettingsRequestCenter.tab_mark_music -> {
+                if (!state_MusicRecyclerView_started) return
+
+                main_music_list_adapter.refresh()
+
+            }
+            SettingsRequestCenter.tab_mark_video -> {
+                if (!state_VideoRecyclerView_started) return
+
+                main_video_list_adapter.refresh()
+            }
+        }
+    }
 
     //提示内容合集
     private var setLoadingTextJob: Job? = null
@@ -973,168 +1024,10 @@ class MainActivity: AppCompatActivity() {
         AppBarNoticeText.text = ""
         AppBarNoticeText.visibility = View.GONE
     }
-    private fun setNeedPermissionIcon(){
 
 
-    }
-    //从媒体库接口读取
-    private fun startLoadFromMediaStore(flag_video_or_music: String){
-        setLoadingText("正在读取媒体库", false, 0)
-        //发起后台线程加载
-        lifecycleScope.launch(Dispatchers.IO) {
-            //视频
-            if (flag_video_or_music == "video"){
-                val mediaReader = MediaStoreReaderForVideo(this@MainActivity, contentResolver)
-                mediaReader.readAndSaveAllVideos()
-            }
-            //音乐
-            else if(flag_video_or_music == "music"){
-                val musicReader = MediaStoreReaderForMusic(this@MainActivity, contentResolver)
-                musicReader.readAndSaveAllMusics()
-            }
-            //类型未命中
-            else{
-                showCustomToast("加载类型输入错误",3)
-            }
-        }
-    }
-    @RequiresApi(Build.VERSION_CODES.R)
-    private fun checkPermissionThenStartLoad(flag_video_or_music: String){
-        lifecycleScope.launch(Dispatchers.IO) {
-            withContext(Dispatchers.Main) {
-                //权限检查
-                isVersionAboveTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                if (isVersionAboveTiramisu) {
-                    if (Environment.isExternalStorageManager()) {
-                        startLoadFromMediaStore(flag_video_or_music)
-                    } else {
-                        showCustomToast("请先开启管理所有文件权限", 3)
-                        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                        this@MainActivity.startActivity(intent)
-                    }
-                } else {
-                    val requiredPermission = Manifest.permission.READ_EXTERNAL_STORAGE
-                    //权限未授予
-                    if (ContextCompat.checkSelfPermission(
-                            this@MainActivity,
-                            requiredPermission
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        ActivityCompat.requestPermissions(
-                            this@MainActivity,
-                            arrayOf(requiredPermission),
-                            REQUEST_STORAGE_PERMISSION
-                        )
-                        //权限提示
-                        setNeedPermissionIcon()
 
-                        startCheckPermission()
-                    }
-                    //权限已授予
-                    else {
-                        startLoadFromMediaStore(flag_video_or_music)
-                    }
-                }
-            }
-        }
-    }
-    //从本地数据库加载+绑定列表+点击事件+包含视频和音频
-    private fun LoadDataBase_N_BindAdapter(flag_video_or_music: String) {
-        //使用视频adapter
-        if (flag_video_or_music == "video"){
-            if (state_VideoDataBaseReaded_N_AdapterBinded){ return }
-            state_VideoDataBaseReaded_N_AdapterBinded = true
-            //设置列表布局管理器
-            ListRecyclerView_Video.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-            //注册点击事件
-            main_video_list_adapter = RecyclerAdapterVideo(
-                context = this,
-                onItemClick = { uri ->
-                    startVideoPlayer(uri)
-                },
-                onDurationClick = { item ->
-                    ToolVibrate().vibrate(this@MainActivity)
-                    notice("视频时长:${FormatTime_withChar(item.durationMs)}", 2000)
-                },
-                onFormatClick = { item, format ->
-                    ToolVibrate().vibrate(this@MainActivity)
-                    notice("视频格式:${item.format}", 3000)
-                },
-                onOptionClick = { item ->
-                    ToolVibrate().vibrate(this@MainActivity)
-                    val popup = PopupMenu(this, ListRecyclerView_Video)
-                    popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
-                    popup.setOnMenuItemClickListener { /*handle*/; true }
-                    popup.show()
-                },
-                onSmallCardPlay = { uri, title ->
-                    startMiniViewPlay(uri.toUri())
-                }
-            )
-            //增加sidePadding
-            ListRecyclerView_Video.setPadding(0, 0, 0, 300)
-            //设置adapter
-            ListRecyclerView_Video.adapter = main_video_list_adapter
-            //分页加载
-            val pager = Pager(PagingConfig(pageSize = 20)) {
-                MediaDataBaseReaderForVideo(context = this@MainActivity)
-            }
-            //分页加载数据
-            lifecycleScope.launch {
-                pager.flow.collect { pagingData ->
-                    main_video_list_adapter.submitData(pagingData)
-                }
-            }
 
-        }
-        //使用音乐adapter
-        else if(flag_video_or_music == "music"){
-            if (state_MusicDataBaseReaded_N_AdapterBinded){ return }
-            state_MusicDataBaseReaded_N_AdapterBinded = true
-            //设置列表布局管理器
-            ListRecyclerView_Music.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-            //注册点击事件
-            main_music_list_adapter = RecyclerAdapterMusic(
-                context = this,
-                onItemClick = { uri ->
-                    ToolVibrate().vibrate(this@MainActivity)
-                    startMusicPlayer(uri)
-                },
-                onOptionsClick = { item, view ->
-                    ToolVibrate().vibrate(this@MainActivity)
-
-                },
-            )
-            //增加sidePadding
-            ListRecyclerView_Music.setPadding(0, 0, 0, 300)
-            //设置adapter
-            ListRecyclerView_Music.adapter = main_music_list_adapter
-            //分页加载
-            val pager = Pager(
-                PagingConfig(
-                    pageSize = 25,
-                    prefetchDistance = 40,
-                    enablePlaceholders = false,
-                    initialLoadSize = 200,
-                    maxSize = PagingConfig.MAX_SIZE_UNBOUNDED,
-                    jumpThreshold = Int.MIN_VALUE
-                )
-            ) {
-                MediaDataBaseReaderForMusic(context = this@MainActivity)
-            }
-            //分页加载数据
-            lifecycleScope.launch {
-                pager.flow.collect { pagingData ->
-                    main_music_list_adapter.submitData(pagingData)
-                }
-            }
-
-        }
-        //严重错误
-        else{
-            notice("严重错误:未知的加载板块flag", 5000)
-        }
-    }
     //启动播放器
     private fun startVideoPlayer(uri: Uri){
         //防止快速发起
@@ -1160,10 +1053,10 @@ class MainActivity: AppCompatActivity() {
 
                 //启动活动
                 if (state_miniView_showing){
-                    detailLauncher.launch(intent, options)
+                    startActivity(intent, options.toBundle())
 
                 }else{
-                    detailLauncher.launch(intent)
+                    startActivity(intent)
                 }
 
             }
@@ -1183,10 +1076,10 @@ class MainActivity: AppCompatActivity() {
 
                 //启动活动
                 if (state_miniView_showing){
-                    detailLauncher.launch(intent, options)
+                    startActivity(intent, options.toBundle())
 
                 }else{
-                    detailLauncher.launch(intent)
+                    startActivity(intent)
                 }
             }
         }
@@ -1236,6 +1129,7 @@ class MainActivity: AppCompatActivity() {
     }
     private fun startPlayerFromMiniView(uri: Uri){
         val (_,MediaInfo_MediaType) = PlayerInFoCenter.getMediaInfoType(this,uri.toString())
+        consoleLog("PlayingCard_InfoContainer 点击事件 媒体类型: $MediaInfo_MediaType")
         when (MediaInfo_MediaType) {
             PlayerInFoCenter.mediaType_Video -> {
                 startVideoPlayer(uri)
@@ -1277,147 +1171,69 @@ class MainActivity: AppCompatActivity() {
             String.format("%02d时%02d分%02d秒",  hours, minutes, seconds)
         }
     }
-    //Runnable:检查权限循环
-    private fun isPermissionGranted(): Boolean{
-        isVersionAboveTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+    //检查权限
+    private fun checkPermissionAndVersion(): Pair<Boolean, Boolean>{
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            Environment.isExternalStorageManager()
-        }
-        else{
+            Pair(Environment.isExternalStorageManager(), true)
+        }else{
             val requiredPermission = Manifest.permission.READ_EXTERNAL_STORAGE
-            ContextCompat.checkSelfPermission(this, requiredPermission) == PackageManager.PERMISSION_GRANTED
+            Pair(ContextCompat.checkSelfPermission(this, requiredPermission) == PackageManager.PERMISSION_GRANTED, false)
         }
     }
-    private val checkPermissionHandler = Handler(Looper.getMainLooper())
-    private var isVersionAboveTiramisu = false
-    private var checkPermission = object : Runnable{
-        @RequiresApi(Build.VERSION_CODES.R)
-        override fun run() {
-            if (isVersionAboveTiramisu){
-                if (!Environment.isExternalStorageManager()){
-                    val intent = Intent(
-                        Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION,
-                        "package:${this@MainActivity.packageName}".toUri()
-                    )
-                    this@MainActivity.startActivity(intent)
-                }
-            }
-            else{
-                val requiredPermission = Manifest.permission.READ_EXTERNAL_STORAGE
-                if (ContextCompat.checkSelfPermission(this@MainActivity, requiredPermission) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(this@MainActivity, arrayOf(requiredPermission), REQUEST_STORAGE_PERMISSION)
-                    checkPermissionHandler.postDelayed(this, 100)
-                }
-                //进行最终读取操作
-                else{
-                    startLoadFromMediaStore("video")
-                    startLoadFromMediaStore("music")
-                }
-            }
+    private fun startSettingPage(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+
+            showCustomToast("请先开启管理所有文件权限",3)
+
+            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            startActivity(intent)
+        }else{
+
+            showCustomToast("请先开启媒体访问文件权限",3)
+
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { data = "package:$packageName".toUri() }
+            startActivity(intent)
         }
     }
-    private fun startCheckPermission() {
-        isVersionAboveTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-        checkPermissionHandler.post(checkPermission)
-    }
-    private fun stopCheckPermission() {
-        checkPermissionHandler.removeCallbacks(checkPermission)
-    }
-    //RxJava事件总线
-    private var disposable: Disposable? = null
-    private var disposableInitialized = false
-    private fun setupEventBus() {
-        if (disposableInitialized){ return }
-        disposableInitialized = true
-        disposable = ToolEventBus.events
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                HandlePlayerEvent(it)
-            }, {
-                showCustomToast("事件总线函数出现错误:${it.message}",3)
-            })
-    }
-    private fun disposeEventBus() {
-        disposable?.dispose()
-        disposableInitialized = false
-    }
-    private fun HandlePlayerEvent(event: String) {
-        when (event) {
-            //视频更新完成
-            "QueryFromMediaStoreVideoComplete" -> {
-                //关提示卡
-                setLoadingText("读取完成", true, 5000)
-                //修改是否完成过加载记录
-                saveLoadState("video")
-                //数据已经保存到数据库,开始从数据库解析
-                if (state_VideoDataBaseReaded_N_AdapterBinded){
-                    main_video_list_adapter.refresh()
-                }else{
-                    LoadDataBase_N_BindAdapter("video")
-                }
-
-            }
-            //音乐更新完成
-            "QueryFromMediaStoreMusicComplete" -> {
-                //关提示卡
-                setLoadingText("读取完成", true, 5000)
-                //修改是否完成过加载记录
-                saveLoadState("music")
-                //数据已经保存到数据库,开始从数据库解析
-                if (state_MusicDataBaseReaded_N_AdapterBinded){
-                    main_music_list_adapter.refresh()
-
-                }else{
-                    LoadDataBase_N_BindAdapter("music")
-                }
-            }
-
-
-            //????
-            "MediaStore_Refresh_Complete" -> {
-                main_video_list_adapter.refresh()
-
-            }
-            "ExistInvalidMediaItem" -> {
-                existInvalidMediaItem()
-            }
+    //检查权限并直接跳转
+    private fun checkPermissionAndStartSettingPage() {
+        val (isPermissionGranted, _) = checkPermissionAndVersion()
+        if (!isPermissionGranted){
+            startSettingPage()
         }
     }
-    private val disposable_withExtraString = ToolEventBus.events_withExtraString.subscribe {
-        when (it.key) {
-            "PlayerActivity_CoverChanged" -> {
-                it.stringInfo?.let { uriNumOnly ->
-                    main_video_list_adapter.updateCoverForVideo(uriNumOnly.toLong())
+    //事件观察
+    private var eventObserver_started = false
+    private fun setupEventObserver() {
+        if (eventObserver_started){ return }
+        eventObserver_started = true
+        //启动观察列表状态
+        lifecycleScope.launch {
+            //观察加载状态变更
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                DataBaseStateConnector.state_queryDisk.collect { state ->
+                    consoleLog("观察到加载状态变更: $state")
+                    //读取完成
+                    if (state.contains(DataBaseStateConnector.state_queryDisk_success)) {
+                        //刷新列表
+                        setLoadingText("读取完成",true,2000)
+
+                        //刷新列表
+                        refreshList()
+                    }
                 }
             }
         }
-    }
-    //刷新列表
-    private var state_MediaStore_refreshed = false
-    private fun existInvalidMediaItem(){
-        if (state_MediaStore_refreshed){ return }
-        state_MediaStore_refreshed = true
-        showCustomToast("存在已失效的媒体项,将刷新列表",3)
-
-    }
-    //保存加载状态
-    private fun saveLoadState(type: String) {
-        if (type == "video"){
-            PREFS_MediaStore.edit { putBoolean("state_VideoMediaStoreReaded", true).apply() }
-        }
-        else if (type == "music"){
-            PREFS_MediaStore.edit { putBoolean("state_MusicMediaStoreReaded", true).apply() }
-        }
-    }
-    //设置高刷新率
-    @Suppress("DEPRECATION")
-    private fun setHighRefreshRate() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val wm = windowManager
-            val mode = wm.defaultDisplay.mode
-            val fps = mode.refreshRate
-            window.attributes = window.attributes.apply {
-                preferredRefreshRate = fps
+        //启动杂项观察
+        lifecycleScope.launch {
+            //观察杂项连接器变更
+            ConnectCenter.state_connector.collect { state ->
+                consoleLog("观察到杂项连接器变更: $state")
+                //更新封面帧
+                if (state.contains(ConnectCenter.connector_event_cover_frame_update)){
+                    val uriNumOnly = ConnectCenter.getCoverFrameUpdateEvent_targetUriNumOnly()
+                    main_video_list_adapter.updateCoverForVideo(uriNumOnly)
+                }
             }
         }
 

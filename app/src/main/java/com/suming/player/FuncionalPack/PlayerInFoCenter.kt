@@ -58,6 +58,8 @@ object PlayerInFoCenter {
     //接收信息解码器传入的媒体信息
     fun setMediaInfoPack(MediaInfoPack: MediaInfo) {
         this.MediaInfoPackage = MediaInfoPack
+        consoleLog("setMediaInfoPack 设置媒体信息: ${MediaInfoPack.MediaInfo_MediaUriString}")
+        current_uriString = MediaInfoPack.MediaInfo_MediaUriString
         //更新内部可观察标签
         updateObservableUriString(MediaInfoPack.MediaInfo_MediaUriString)
     }
@@ -69,8 +71,9 @@ object PlayerInFoCenter {
     //外部获取信息
     //检查媒体,媒体不同时,先读取新的信息
     const val uriString_for_check_null = ""
-    fun checkMediaInfoPack(context: Context,uriString: String): Boolean{
-        if (uriString != uriString_for_check_null){
+    private var current_uriString = ""
+    fun checkMediaInfoPack(context: Context,uriString: String = current_uriString): Boolean{
+        if (uriString != current_uriString){
             //更新一次信息
             val (success, _) = MediaInfoRetriever.retrieveMediaInfo(context,uriString.toUri())
 
@@ -82,7 +85,7 @@ object PlayerInFoCenter {
         return true
     }
     //获取视频宽高比(aspect ratio 宽/高)
-    fun getMediaAspectRatio(context: Context,uriStringForCheck: String = uriString_for_check_null): Pair<Boolean,Float> {
+    fun getMediaAspectRatio(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,Float> {
         val success = checkMediaInfoPack(context,uriStringForCheck)
         if(!success){
             return Pair(false,1f)
@@ -125,7 +128,7 @@ object PlayerInFoCenter {
         return progress
     }
     //获取当前媒体的唯一ID
-    fun getMediaUniqueID(context: Context,uriStringForCheck: String = uriString_for_check_null): Pair<Boolean,String> {
+    fun getMediaUniqueID(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
         val success = checkMediaInfoPack(context,uriStringForCheck)
         if (!success){
             return Pair(false,"哎呀,骇亖我力")
@@ -136,7 +139,7 @@ object PlayerInFoCenter {
         return Pair(false, MediaInfo_MediaUniqueID)
     }
     //获取当前媒体的uriNumOnly
-    fun getMediaUriNumOnly(context: Context,uriStringForCheck: String = uriString_for_check_null): Pair<Boolean, Long> {
+    fun getMediaUriNumOnly(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean, Long> {
         val success = checkMediaInfoPack(context,uriStringForCheck)
         if (!success){
             return Pair(false,114514L)
@@ -147,7 +150,7 @@ object PlayerInFoCenter {
         return Pair(false, MediaInfo_MediaUriNumOnly)
     }
     //获取当前媒体的标准链接
-    fun getMediaUriStandard(context: Context,uriStringForCheck: String = uriString_for_check_null): Pair<Boolean, String> {
+    fun getMediaUriStandard(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean, String> {
         val success = checkMediaInfoPack(context,uriStringForCheck)
         if (!success){
             return Pair(false,"哎呀,骇亖我力")
@@ -158,9 +161,12 @@ object PlayerInFoCenter {
         return Pair(false, MediaInfo_MediaUriStandard)
     }
     //获取当前媒体的uriString
-    fun getMediaUriString(context: Context,uriStringForCheck: String = uriString_for_check_null): Pair<Boolean,String> {
+    fun getMediaUriString(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
         val success = checkMediaInfoPack(context,uriStringForCheck)
         if (!success){
+            return Pair(false,"哎呀,骇亖我力")
+        }
+        if (MediaInfoPackage == null){
             return Pair(false,"哎呀,骇亖我力")
         }
 
@@ -169,7 +175,7 @@ object PlayerInFoCenter {
         return Pair(false, MediaInfo_MediaUriString)
     }
     //获取媒体是视频还是音乐
-    fun getMediaInfoType(context: Context,uriStringForCheck: String = uriString_for_check_null): Pair<Boolean,String> {
+    fun getMediaInfoType(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
         val success = checkMediaInfoPack(context,uriStringForCheck)
         if (!success){
             return Pair(false,"哎呀,骇亖我力")
@@ -184,7 +190,7 @@ object PlayerInFoCenter {
         return Pair(false, MediaInfo_MediaType)
     }
     //获取当前媒体的文件名
-    fun getMediaFileName(context: Context,uriStringForCheck: String = uriString_for_check_null): Pair<Boolean,String> {
+    fun getMediaFileName(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
         val success = checkMediaInfoPack(context,uriStringForCheck)
         if (!success){
             return Pair(false,"哎呀,骇亖我力")
@@ -195,7 +201,7 @@ object PlayerInFoCenter {
         return Pair(false, MediaInfo_MediaFileName)
     }
     //获取当前媒体的艺术家
-    fun getMediaArtist(context: Context,uriStringForCheck: String = uriString_for_check_null): Pair<Boolean,String> {
+    fun getMediaArtist(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
         val success = checkMediaInfoPack(context,uriStringForCheck)
         if (!success){
             return Pair(false,"哎呀,骇亖我力")
@@ -206,7 +212,7 @@ object PlayerInFoCenter {
         return Pair(false, MediaInfo_MediaArtist)
     }
     //获取当前媒体的总时长
-    fun getMediaDuration(context: Context,uriStringForCheck: String = uriString_for_check_null): Pair<Boolean, Long> {
+    fun getMediaDuration(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean, Long> {
         val success = checkMediaInfoPack(context,uriStringForCheck)
         if (!success){
             return Pair(false,-114514L)
@@ -242,6 +248,7 @@ object PlayerInFoCenter {
 
         return standardUriNeedCheck.toString() == MediaInfo_MediaUriStandard
     }
+
 
 
     //其他外部控制

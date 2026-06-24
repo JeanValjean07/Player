@@ -70,6 +70,9 @@ interface MediaStoreDao {
     @Query("DELETE FROM MediaStore")
     suspend fun clearAll()
 
+    //检查该库是否为空
+    @Query("SELECT COUNT(*) FROM MediaStore")
+    suspend fun getCount(): Int
 
 
 

@@ -474,6 +474,8 @@ object PlayerSingleton {
             _player?.setPlaybackSpeed(Para_OriginalPlaySpeed)
         }
 
+        //写入可观察信息
+        PlayerInFoCenter.updateObservableIsPlaying(true)
 
         //最终开始播放
         _player?.play()
@@ -487,6 +489,9 @@ object PlayerSingleton {
         }else{
             setState_wasPlaying(false)
         }
+
+        //写入可观察信息
+        PlayerInFoCenter.updateObservableIsPlaying(false)
 
         //最终暂停
         _player?.pause()

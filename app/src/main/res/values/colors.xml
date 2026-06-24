@@ -86,8 +86,9 @@
     <color name="THEME_1_Background_CardOnCard_light">#FFFFFFFF</color>
     <color name="THEME_1_Background_CardOnCard_dark">#FFFAFAFA</color>
     <color name="THEME_1_Background_ButtonCard">#FFFFFF</color>
-    <color name="THEME_1_Background_ButtonCircle_OFF">#EEEEEE</color>
+    <color name="THEME_1_Background_ButtonCircle_OFF">#FAFAFA</color>
     <color name="THEME_1_Background_ButtonCircle_ON">#E1BEE7</color>
+    <color name="CircleButton_Background">#FFFFFFFF</color>
 
     <!-- 渐变色值 -->
     <color name="BrushArea_Top_Background">#EEFFFFFF</color>

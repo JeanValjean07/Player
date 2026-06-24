@@ -67,14 +67,6 @@
                         app:shadowRadius="8dp"
                         app:shadowColor="#33000000"
                         />
-                    <ImageButton
-                        android:id="@+id/ButtonVideoIcon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:contentDescription="哎呀,骇亖我力"
-                        android:backgroundTint="@android:color/transparent"
-                        android:src="@drawable/ic_main_fragment_video_icon"
-                        />
                     <!-- 标题文本：设置 -->
                     <TextView
                         android:layout_width="wrap_content"

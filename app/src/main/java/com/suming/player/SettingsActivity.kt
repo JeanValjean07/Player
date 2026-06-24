@@ -9,10 +9,13 @@ import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.Space
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
@@ -27,14 +30,17 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.ActivityComponent.SettingsActivity.SettingsFragmentDeleteCover
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.cert.CertificateFactory
@@ -46,48 +52,46 @@ import java.security.cert.X509Certificate
 @RequiresApi(Build.VERSION_CODES.Q)
 class SettingsActivity: AppCompatActivity() {
 
-    //协程
-    private var coroutine_setSwitch = CoroutineScope(Dispatchers.Main)
-    private var coroutine_setButtonAndInfo = CoroutineScope(Dispatchers.Main)
-    private var coroutine_setMenuButton = CoroutineScope(Dispatchers.Main)
-    private var coroutine_setBasicFunctionalButton = CoroutineScope(Dispatchers.Main)
 
 
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //界面处理
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_settings)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_settings)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        //初始化
+        init()
 
 
+        registerController()
 
-        //注册基本操作按钮 + 读取显示版本号
-        coroutine_setButtonAndInfo.launch {
+        registerSettings()
+
+
+    }
+
+    private fun init(){
+        display()
+
+
+    }
+
+
+    private fun registerController(){
+        lifecycleScope.launch(Dispatchers.Main) {
             //显示版本
-            val version = packageManager.getPackageInfo(packageName, 0).versionName
-            val versionText = findViewById<TextView>(R.id.version)
-            versionText.text = "版本: $version"
-            //按钮：返回
-            val ButtonBack = findViewById<ImageButton>(R.id.buttonExit)
-            ButtonBack.setOnClickListener {
-                ToolVibrate().vibrate(this@SettingsActivity)
-                finish()
+            lifecycleScope.launch(Dispatchers.IO) {
+                val version = packageManager.getPackageInfo(packageName, 0).versionName
+                delay(500)
+                withContext(Dispatchers.Main) {
+                    val versionText = findViewById<TextView>(R.id.version)
+                    versionText.text = "版本: $version"
+                }
             }
-            //点击顶部区域回顶
-            val TopBarArea = findViewById<View>(R.id.TopBarArea)
-            TopBarArea.setOnClickListener {
-                ToolVibrate().vibrate(this@SettingsActivity)
-                //回到顶部
-                val NestedScrollView = findViewById<NestedScrollView>(R.id.NestedScrollView)
-                NestedScrollView.smoothScrollTo(0, 0)
+
+            //按钮：返回
+            val ButtonBack = findViewById<CircleButton>(R.id.buttonExit)
+            ButtonBack.setOnClickListener {
+                finish()
             }
             //按钮：前往项目Github仓库页
             val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
@@ -130,10 +134,12 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 startActivity(Intent(this@SettingsActivity, DeviceInfoActivity::class.java))
             }
-        }
 
-        //注册开关
-        coroutine_setSwitch.launch {
+        }
+    }
+
+    private fun registerSettings(){
+        lifecycleScope.launch(Dispatchers.Main) {
             //媒体会话不使用封面图片
             val switch_DisableMediaArtWork = findViewById<SwitchCompat>(R.id.DisableMediaArtWork)
             switch_DisableMediaArtWork.isChecked = SettingsRequestCenter.get_PREFS_DisableMediaArtWork(this@SettingsActivity)
@@ -240,10 +246,6 @@ class SettingsActivity: AppCompatActivity() {
                 SettingsRequestCenter.set_PREFS_DisableVideoTrackOnBack(isChecked)
             }
 
-        }
-
-        //注册选单按钮
-        coroutine_setMenuButton.launch {
             //播放页样式
             val ButtonPlayerType = findViewById<CardView>(R.id.ButtonPlayerType)
             updatePlayPageTypeText()
@@ -388,10 +390,6 @@ class SettingsActivity: AppCompatActivity() {
                 popup.show()
             }
 
-        }
-
-        //注册基础功能单击按钮
-        coroutine_setBasicFunctionalButton.launch {
             //重新生成封面
             val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
             ButtonRemoveAllThumbPath.setOnClickListener {
@@ -413,16 +411,15 @@ class SettingsActivity: AppCompatActivity() {
                     }
                 }
             }
+
         }
-
-
-
-    //onCreate END
     }
 
 
 
-    //Functions
+
+
+
     //播放页样式
     private fun choosePlayPageType(playPageType: Int){
         when(playPageType){
@@ -611,6 +608,40 @@ class SettingsActivity: AppCompatActivity() {
     }
 
 
+    //界面配置
+    private var statusBarHeight = 0
+    private lateinit var AppBarGradientMask: View
+    private lateinit var AppBarCore: LinearLayout
+    private lateinit var AppBarSpacer: Space
+    private fun display(){
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_settings)
+        //初始化顶部栏
+        AppBarGradientMask = findViewById(R.id.AppBarGradientMask)
+        AppBarCore = findViewById(R.id.AppBarCore)
+        AppBarSpacer = findViewById(R.id.AppBarSpacer)
+        //获取状态栏高度
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
+
+            statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            onStatusBarHeightGet(statusBarHeight)
+
+            insets
+        }
+    }
+    private fun onStatusBarHeightGet(statusBarHeight: Int){
+        AppBarGradientMask.layoutParams.height = statusBarHeight + dpToPx(60f).toInt()
+        (AppBarCore.layoutParams as ViewGroup.MarginLayoutParams).topMargin = statusBarHeight
+        AppBarSpacer.layoutParams.height = statusBarHeight + dpToPx(60f).toInt()
+    }
+    private fun dpToPx(dp: Float): Float {
+        val metrics = resources.displayMetrics
+        return dp * metrics.density
+    }
+    private fun pxToDp(px: Float): Float {
+        val metrics = resources.displayMetrics
+        return px / metrics.density
+    }
 
     //检查应用列表
     private var packageNumber = 0

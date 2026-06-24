@@ -3,17 +3,15 @@ package com.suming.player.DataPack.MediaDataReader
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
-import android.content.SharedPreferences
 import android.provider.MediaStore
 import android.util.Log
-import androidx.core.content.edit
 import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreSetting
+import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
-import kotlinx.coroutines.CoroutineScope
+import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -21,27 +19,21 @@ class MediaStoreReaderForVideo(
     private val context: Context,
     private val contentResolver: ContentResolver,
 ) {
-    //协程作用域：保存到数据库
-    private val coroutineScope_save_to_room = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     //设置项
-    private lateinit var PREFS_MediaStore: SharedPreferences
     private var PREFS_EnableFileExistCheck: Boolean = false
 
 
-    fun preCheck() {
-        PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", Context.MODE_PRIVATE)
-        if (!PREFS_MediaStore.contains("PREFS_EnableFileExistCheck")) {
-            PREFS_MediaStore.edit { putBoolean("PREFS_EnableFileExistCheck", false) }
-            PREFS_EnableFileExistCheck = false
-        }else{
-            PREFS_EnableFileExistCheck = PREFS_MediaStore.getBoolean("PREFS_EnableFileExistCheck", false)
-        }
-
+    private fun init(){
+        PREFS_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
     }
 
+
+
+
     suspend fun readAllVideos(): List<MediaItemForVideo> {
-        //读取设置
-        preCheck()
+        init()
+
 
         //初始化列表
         val list = mutableListOf<MediaItemForVideo>()
@@ -143,8 +135,6 @@ class MediaStoreReaderForVideo(
 
     }
 
-
-    //Functions
     //保存到数据库
     suspend fun saveVideosToDatabase(videos: List<MediaItemForVideo>) {
 
@@ -182,14 +172,18 @@ class MediaStoreReaderForVideo(
 
         }
     }
-    //类功能主入口：读取所有视频并保存到数据库
+
+    //读取所有视频并保存到数据库
     suspend fun readAndSaveAllVideos(): List<MediaItemForVideo> {
         val videos = readAllVideos()
 
         saveVideosToDatabase(videos)
 
         return videos
-    }  //!主链路入口
+    }
+
+
+
     //存在检查
     private fun isFileExist(path: String): Boolean {
         return try {
@@ -213,8 +207,9 @@ class MediaStoreReaderForVideo(
                 }
             }
         }
-        //发布删除完成通知
-        ToolEventBus.sendEvent("QueryFromMediaStoreVideoComplete")
+
+        //发布完成通知
+        DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_success)
 
     }
 

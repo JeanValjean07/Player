@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-@Suppress("unused")
+//@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
 class RecyclerAdapterVideo(
     private val context: Context,

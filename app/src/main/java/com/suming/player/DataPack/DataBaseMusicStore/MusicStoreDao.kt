@@ -71,6 +71,10 @@ interface MusicStoreDao {
     @Query("DELETE FROM MusicStore")
     suspend fun clearAll()
 
+    //检查该库是否为空
+    @Query("SELECT COUNT(*) FROM MusicStore")
+    suspend fun getCount(): Int
+
 
 
 

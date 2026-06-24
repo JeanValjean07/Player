@@ -99,7 +99,6 @@
             />
     </FrameLayout>
 
-
     <!-- 控件层 -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/controllerLayer"
@@ -110,45 +109,55 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:fitsSystemWindows="true">
+
         <!-- 顶部横排按钮区 -->
         <LinearLayout
             android:id="@+id/controller_top_bar"
             android:layout_width="match_parent"
-            android:layout_height="45dp"
+            android:layout_height="60dp"
             android:orientation="horizontal"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
             <!-- 悬浮返回键 -->
-            <ImageButton
+            <com.suming.player.ViewWidget.CircleButton
                 android:id="@+id/TopBarArea_ButtonExit"
-                android:layout_width="40dp"
-                android:layout_height="match_parent"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="单击退出,长按开启小窗"
-                android:padding="6dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_general_exit_stroke"
-                android:layout_marginStart="8dp"
-                android:layout_weight="0"/>
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_general_back_dark_only"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                app:buttonSize="50dp"
+                app:mainColor="@color/THEME_1_Background_ButtonCircle_OFF"
+                app:shadowOffset="4dp"
+                app:circlePadding="100dp"
+                app:iconPadding="120dp"
+                app:shadowRadius="8dp"
+                app:shadowColor="#33000000"
+                />
             <!-- 占位 -->
             <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
                 android:layout_weight="1"/>
-            <!-- 更多选项 -->
-            <ImageButton
+            <!-- 按钮：更多选项 -->
+            <com.suming.player.ViewWidget.CircleButton
                 android:id="@+id/TopBarArea_ButtonMoreOptions"
-                android:layout_width="40dp"
-                android:layout_height="match_parent"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="更多选项"
-                android:padding="6dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_general_more_options_stroke"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="0" />
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_controller_more"
+                android:layout_gravity="center"
+                android:layout_marginEnd="5dp"
+                app:buttonSize="50dp"
+                app:mainColor="@color/THEME_1_Background_ButtonCircle_OFF"
+                app:shadowOffset="4dp"
+                app:circlePadding="100dp"
+                app:iconPadding="120dp"
+                app:shadowRadius="8dp"
+                app:shadowColor="#33000000"
+                />
         </LinearLayout>
+
         <!-- 底部控件区域 -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/controller_bottom_constraint"
@@ -172,9 +181,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:backgroundTint="@color/Background4"
+                    android:backgroundTint="@color/THEME_1_Background_ButtonCircle_OFF"
                     app:cardCornerRadius="5dp"
-                    app:cardElevation="5dp"
+                    app:cardElevation="1dp"
                     android:layout_marginStart="10dp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -235,7 +244,7 @@
                     android:src="@drawable/ic_controller_more"
                     android:layout_gravity="center"
                     app:buttonSize="50dp"
-                    app:mainColor="@color/THEME_1_Background_ContentCard"
+                    app:mainColor="@color/THEME_1_Background_ButtonCircle_OFF"
                     app:shadowOffset="4dp"
                     app:circlePadding="100dp"
                     app:iconPadding="120dp"
@@ -250,7 +259,7 @@
                     android:src="@drawable/ic_controller_landscape"
                     android:layout_gravity="center"
                     app:buttonSize="50dp"
-                    app:mainColor="@color/THEME_1_Background_ContentCard"
+                    app:mainColor="@color/THEME_1_Background_ButtonCircle_OFF"
                     app:shadowOffset="4dp"
                     app:circlePadding="100dp"
                     app:iconPadding="120dp"
@@ -338,7 +347,7 @@
                 />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

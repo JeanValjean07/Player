@@ -103,7 +103,7 @@
 
         <!-- 设置 -->
         <activity android:name=".SettingsActivity"
-            android:theme="@style/THEME_BASIC"
+            android:theme="@style/THEME_FULL_SCREEN"
             android:screenOrientation="portrait"
             android:label="设置"
             android:exported="true"
@@ -139,7 +139,7 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse" />
-        <!-- provider -->
+        <!-- File Provider -->
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"

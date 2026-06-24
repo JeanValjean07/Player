@@ -3,7 +3,7 @@ package com.suming.player.DataPack.DataBaseMusicStore
 import android.content.Context
 import androidx.sqlite.db.SimpleSQLiteQuery
 
-class MusicStoreRepo private constructor(context: Context) {
+class MusicStoreRepo(context: Context) {
 
     companion object {
         @Volatile
@@ -102,6 +102,9 @@ class MusicStoreRepo private constructor(context: Context) {
 
     //清空所有数据
     suspend fun clearAll() = dao.clearAll()
+
+    //检查该库是否为空
+    suspend fun isEmpty(): Boolean = dao.getCount() == 0
 
 
 

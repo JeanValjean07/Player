@@ -4,8 +4,7 @@ import android.content.Context
 import androidx.sqlite.db.SimpleSQLiteQuery
 import com.suming.player.SettingsRequestCenter
 
-class MediaStoreRepo private constructor(context: Context) {
-
+class MediaStoreRepo(context: Context) {
     companion object {
         @Volatile
         private var INSTANCE: MediaStoreRepo? = null
@@ -14,15 +13,11 @@ class MediaStoreRepo private constructor(context: Context) {
                 MediaStoreRepo(context.applicationContext).also { INSTANCE = it }
             }
     }
-
     private val dao = MediaStoreDataBase.get(context).mediaStoreDao()
-
     suspend fun saveSetting(item: MediaStoreSetting) = dao.insertOrUpdate(item)
-
     suspend fun getSetting(path: String): MediaStoreSetting? = dao[path]
-
-
     suspend fun insertOrUpdateAll(items: List<MediaStoreSetting>) = dao.insertOrUpdateAll(items)
+
 
     //保存单个视频信息
     suspend fun saveVideo(video: MediaStoreSetting) = dao.insertOrUpdate(video)
@@ -80,10 +75,8 @@ class MediaStoreRepo private constructor(context: Context) {
     }
 
 
-    suspend fun getAllVideosSorted(
-        sortOrder: String,
-        sortOrientation: String
-    ): List<MediaStoreSetting> {
+    suspend fun getAllVideosSorted( sortOrder: String,
+        sortOrientation: String ): List<MediaStoreSetting> {
         //白名单防注入
         val safeField = when (sortOrder) {
             "info_title", "info_date_added", "info_file_size", "info_duration", "info_mime_type" -> sortOrder
@@ -111,9 +104,8 @@ class MediaStoreRepo private constructor(context: Context) {
     //清空所有数据
     suspend fun clearAll() = dao.clearAll()
 
-
-
-
+    //检查该库是否为空
+    suspend fun isEmpty(): Boolean = dao.getCount() == 0
 
 
 

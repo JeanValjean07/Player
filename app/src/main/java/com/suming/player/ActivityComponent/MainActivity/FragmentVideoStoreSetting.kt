@@ -22,7 +22,6 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -164,7 +163,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
         val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
         //开关置位
         switch_EnableFileExistCheck.isChecked = SettingsRequestCenter.get_PREFS_EnableFileExistCheck( requireContext())
-        switch_QueryNewVideoOnStart.isChecked = SettingsRequestCenter.get_PREFS_QueryNewVideoOnStart( requireContext())
+        switch_QueryNewVideoOnStart.isChecked = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart( requireContext())
         //开关点击事件
         switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
@@ -172,14 +171,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
         }
         switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
             ToolVibrate().vibrate(requireContext())
-            SettingsRequestCenter.set_PREFS_QueryNewVideoOnStart(requireContext(), isChecked)
-        }
-
-        val ButtonVideoIcon = view.findViewById<ImageButton>(R.id.ButtonVideoIcon)
-        ButtonVideoIcon.setOnClickListener {
-            ToolVibrate().vibrate(requireContext())
-
-            requireContext().showCustomToast("哎呀,骇亖我力")
+            SettingsRequestCenter.set_PREFS_QueryNewMediaOnStart(requireContext(), isChecked)
         }
 
 

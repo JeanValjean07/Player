@@ -15,7 +15,12 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
-
+    <!-- 全屏边到边主题 -->
+    <style name="THEME_FULL_SCREEN" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
 
 
 
