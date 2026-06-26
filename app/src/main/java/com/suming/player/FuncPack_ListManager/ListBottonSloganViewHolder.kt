@@ -7,13 +7,13 @@ import android.widget.TextView
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
-import com.suming.player.databinding.ActivityPlayerFragmentPlayListFooterBinding
+import com.suming.player.databinding.AddonRecyclerviewFooterBinding
 
 class ListBottonSloganViewHolder(parent: ViewGroup, retry: () -> Unit):RecyclerView.ViewHolder(
-    LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_footer, parent, false)
+    LayoutInflater.from(parent.context).inflate(R.layout.addon_recyclerview_footer, parent, false)
 ){
 
-    private val binding = ActivityPlayerFragmentPlayListFooterBinding.bind(itemView)
+    private val binding = AddonRecyclerviewFooterBinding.bind(itemView)
 
     private val FooterText: TextView = binding.stateText
 

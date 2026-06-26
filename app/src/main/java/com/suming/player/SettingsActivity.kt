@@ -13,7 +13,6 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Space
 import android.widget.TextView
@@ -27,9 +26,7 @@ import androidx.cardview.widget.CardView
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.ActivityComponent.SettingsActivity.SettingsFragmentDeleteCover
@@ -473,7 +470,7 @@ class SettingsActivity: AppCompatActivity() {
         val dialog = Dialog(this).apply {
             window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         }
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_input_value, null)
         dialog.setContentView(dialogView)
 
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
@@ -539,7 +536,7 @@ class SettingsActivity: AppCompatActivity() {
         val dialog = Dialog(this).apply {
             window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         }
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_value, null)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_input_value, null)
         dialog.setContentView(dialogView)
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
         val Description: TextView = dialogView.findViewById(R.id.dialog_description)

@@ -3,7 +3,6 @@ package com.suming.player.FuncPack_ListManager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +11,6 @@ import android.widget.TextView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterMusic.ViewHolder
 import com.suming.player.R
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
 import com.suming.player.FuncionalPack.ArtworkFrameManager
@@ -22,7 +20,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 @Suppress("unused")
 class MusicListAdapter(
@@ -60,7 +57,7 @@ class MusicListAdapter(
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): viewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_live_adapter_item, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.fragment_play_list_live_item, parent, false)
         return viewHolder(view)
     }
 

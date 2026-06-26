@@ -36,7 +36,7 @@ class MainFragmentVideo(
     private val onAddToListClick: (String) -> Unit,
     private val onPlayListChange: (Int) -> Unit,
     private val onDefaultPageChange: (Int) -> Unit
-) : Fragment(R.layout.activity_player_fragment_play_list_live_page) {
+) : Fragment(R.layout.fragment_play_list_live_page) {
     //共享ViewModel
     private val vm: PlayerListViewModel by activityViewModels()
     //当前页签

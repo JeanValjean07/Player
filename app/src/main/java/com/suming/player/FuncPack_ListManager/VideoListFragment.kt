@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 @UnstableApi
 @Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class VideoListFragment():Fragment(R.layout.activity_player_fragment_play_list_live_page){
+class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
     companion object {
         fun newInstance(): VideoListFragment {
             return VideoListFragment().apply{

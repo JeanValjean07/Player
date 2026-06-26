@@ -1334,7 +1334,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         val dialog = Dialog(this).apply {
             window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         }
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.activity_player_dialog_input_uri, null)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_input_uri, null)
         dialog.setContentView(dialogView)
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
         val Description: TextView = dialogView.findViewById(R.id.dialog_description)

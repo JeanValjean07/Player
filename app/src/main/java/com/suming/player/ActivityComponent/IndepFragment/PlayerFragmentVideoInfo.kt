@@ -171,7 +171,7 @@ class PlayerFragmentVideoInfo: DialogFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.activity_player_fragment_video_info, container, false)
+    ): View = inflater.inflate(R.layout.fragment_media_info, container, false)
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility",
         "CutPasteId"
     )

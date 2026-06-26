@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 @UnstableApi
 //@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class CustomListFragment():Fragment(R.layout.activity_player_fragment_play_list_custom_page){
+class CustomListFragment():Fragment(R.layout.fragment_play_list_custom_page){
     companion object {
         fun newInstance(): CustomListFragment {
             return CustomListFragment().apply{

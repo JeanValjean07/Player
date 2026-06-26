@@ -15,7 +15,6 @@ import androidx.core.view.updateLayoutParams
 import androidx.databinding.ObservableList
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.ActivityComponent.PlayerActivity.PlayerScrollerViewModel
 import com.suming.player.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +58,7 @@ class PlayerScrollerLongAdapter(
 
     @SuppressLint("NotifyDataSetChanged")
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThumbViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_adapter_scroller_item, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_scroller_item, parent, false)
 
         //媒体文件更新,需要更换数据源
         if (MediaInfo_FileName != PlayerScrollerVM.last_MediaInfo_FileName){
