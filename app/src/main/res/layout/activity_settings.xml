@@ -288,6 +288,41 @@
                             android:text="每次启动App时继续播放上一次的媒体，但不会自动开始播放。"
                             android:textSize="12sp" />
                     </LinearLayout>
+                    <!--  开关：后台划卡时关闭播放器  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:text="后台划卡时关闭播放器"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/StopPlayerWhenTaskRemoved"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                app:thumbTint="@color/switchThumbColor"
+                                app:trackTint="@color/switchTrackColor" />
+                        </LinearLayout>
+                        <!-- 提示文本 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="划掉后台卡片时停止播放并关闭播放器。此选项还受系统电源配置限制。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 

@@ -195,6 +195,16 @@ object PlayerSingleton {
 
     }
 
+    //销毁播放器并关闭媒体会话
+    fun stopPlayEngine(){
+        //销毁播放器
+        releasePlayer()
+        //重置媒体状态
+        PlayerInFoCenter.clearCurrentMediaInfo()
+        //关闭本侧的媒体会话
+        stopMediaSession(context)
+
+    }
 
 
     //获取当前媒体的播放进度
@@ -369,6 +379,7 @@ object PlayerSingleton {
     //连接到媒体会话控制器
     private fun connectToMediaSession(context: Context){
         if (sessionState_MediaSession_connected) return
+        sessionState_MediaSession_connected = true
         val SessionToken = SessionToken(context as Application, ComponentName(context, PlayerService::class.java))
         MediaSessionController = MediaController.Builder(context, SessionToken).buildAsync()
         MediaSessionController?.addListener({
@@ -379,6 +390,7 @@ object PlayerSingleton {
     //关闭媒体会话控制器
     private fun stopMediaSessionController(){
         MediaSessionController?.get()?.run { release() }
+        MediaSessionController = null
         controller = null
         sessionState_MediaSession_connected = false
     }

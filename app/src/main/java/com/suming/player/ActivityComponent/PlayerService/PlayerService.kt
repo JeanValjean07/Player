@@ -11,6 +11,7 @@ import android.widget.RemoteViews
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -24,6 +25,7 @@ import com.suming.player.ActivityComponent.PlayerService.CustomNotificationSessi
 import com.suming.player.ActivityComponent.PlayerActivity.ToolPlayerWrapper
 import com.suming.player.FuncionalPack.BroadcastActions
 import com.suming.player.MusicPlayer
+import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -42,7 +44,7 @@ class PlayerService: MediaSessionService() {
     private var mediaSession: MediaSession? = null
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "PlayerService: $msg")
         }
@@ -74,6 +76,8 @@ class PlayerService: MediaSessionService() {
         mediaSession = MediaSession.Builder(this, wrapper)
             .setCallback(object : MediaSession.Callback {
                 override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
+                    consoleLog("触发 onConnect")
+
                     return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                         .setAvailableSessionCommands(MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS)
                         .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
@@ -84,21 +88,58 @@ class PlayerService: MediaSessionService() {
                 }
                 override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
                     super.onPostConnect(session, controller)
-
+                    consoleLog("触发 onPostConnect")
+                }
+                override fun onPlayerInteractionFinished( session: MediaSession,
+                    controllerInfo: MediaSession.ControllerInfo,
+                    playerCommands: Player.Commands ) {
+                    super.onPlayerInteractionFinished(session, controllerInfo, playerCommands)
+                    consoleLog("触发 onPlayerInteractionFinished")
+                    //遍历所有可能的命令
+                    if (playerCommands.contains(Player.COMMAND_PLAY_PAUSE)) {
+                        consoleLog("播放/暂停")
+                    }
+                    if (playerCommands.contains(Player.COMMAND_SEEK_TO_NEXT)) {
+                        consoleLog("下一曲")
+                    }
+                    if (playerCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS)) {
+                        consoleLog("上一曲")
+                    }
+                    if (playerCommands.contains(Player.COMMAND_STOP)) {
+                        consoleLog("停止")
+                        stopPlayEngine()
+                    }
+                    if (playerCommands.contains(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)) {
+                        consoleLog("定位默认")
+                    }
+                    if (playerCommands.contains(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)) {
+                        consoleLog("当前媒体定位")
+                    }
+                    if (playerCommands.contains(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)) {
+                        consoleLog("下一媒体")
+                    }
+                    if (playerCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)) {
+                        consoleLog("上一媒体")
+                    }
+                    if (playerCommands.contains(Player.COMMAND_SET_SHUFFLE_MODE)) {
+                        consoleLog("随机模式")
+                    }
+                    if (playerCommands.contains(Player.COMMAND_SET_REPEAT_MODE)) {
+                        consoleLog("循环模式")
+                    }
                 }
             })
             .build()
 
+
         //设置会话点击意图
         mediaSession?.setSessionActivity(createPendingIntentManager())
-
-
 
     }
     //接收Intent额外信息
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        consoleLog("触发 onStartCommand")
+        //consoleLog("触发 onStartCommand, intent: $intent, intent.action: ${intent?.action}, flags: $flags, startId: $startId")
         super.onStartCommand(intent, flags, startId)
         //取出intent的数据
         //getMediaInfo(intent)
@@ -114,43 +155,62 @@ class PlayerService: MediaSessionService() {
 
         return mediaSession
     }
-    //手动关闭服务时调用
+
     override fun onDestroy() {
         super.onDestroy()
         consoleLog("触发 onDestroy")
-
-        //关闭媒体会话
-        releaseMediaSession()
-
 
     }
     //仅在后台划卡时触发,而且前提是系统不执行强行停止
     override fun onTaskRemoved(rootIntent: Intent?) {
         consoleLog("触发 onTaskRemoved")
-        //关闭媒体会话
-        releaseMediaSession()
 
-        //关闭服务
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
+        if(SettingsRequestCenter.get_PREFS_StopPlayerWhenTaskRemoved(this)){
 
-        //关闭播放器(改为仅暂停视频和关闭监听)(暂时停用)
-        //PlayerSingleton.stopPlayBundle(false,this)
+            stopPlayEngine()
+
+        }
+
     }
 
 
 
 
-    //关闭媒体会话
+    //External Operation Functions
+    //销毁播放器和媒体会话
+    private fun stopPlayEngine() {
+        PlayerSingleton.stopPlayEngine()
+        //关闭本地的媒体会话和服务
+        stopLocalAll()
+    }
+
+
+
+    //Internal Operation Functions
+    //关闭媒体会话实例
     private fun releaseMediaSession() {
         mediaSession?.run {
             release()
             mediaSession = null
         }
     }
+    //关闭服务
+    private fun stopService() {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+    //全套关闭本地服务
+    private fun stopLocalAll() {
+        releaseMediaSession()
+        stopService()
+    }
 
 
-    //媒体信息
+
+
+
+    //Functions
+    //媒体信息 从intent获取媒体信息工具函数
     private var MediaInfo_MediaUriString = ""
     private var MediaInfo_FileName = ""
     private var MediaInfo_Artist = ""
@@ -161,7 +221,6 @@ class PlayerService: MediaSessionService() {
             MediaInfo_Artist = it.getStringExtra("info_to_service_Artist") ?: ""
         }
     }
-
 
     //构建自定义通知(自定标题+横排文本按钮)
     private fun BuildCustomizeNotification(): Notification {

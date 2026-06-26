@@ -9,7 +9,6 @@
     android:layout_height="match_parent"
     tools:ignore="HardcodedText">
 
-
     <!-- 小型提示卡片 -->
     <androidx.cardview.widget.CardView
         android:id="@+id/NoticeCard"

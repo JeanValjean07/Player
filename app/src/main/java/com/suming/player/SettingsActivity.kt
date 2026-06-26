@@ -161,6 +161,13 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_EnableContinuePlay(this@SettingsActivity, isChecked)
             }
+            //后台划卡时关闭播放器
+            val switch_StopPlayerWhenTaskRemoved = findViewById<SwitchCompat>(R.id.StopPlayerWhenTaskRemoved)
+            switch_StopPlayerWhenTaskRemoved.isChecked = SettingsRequestCenter.get_PREFS_StopPlayerWhenTaskRemoved(this@SettingsActivity)
+            switch_StopPlayerWhenTaskRemoved.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.set_PREFS_StopPlayerWhenTaskRemoved(isChecked)
+            }
             //使用高刷新率
             val switch_EnableHighRefreshRate = findViewById<SwitchCompat>(R.id.EnableHighRefreshRate)
             switch_EnableHighRefreshRate.isChecked = SettingsRequestCenter.get_PREFS_LockRefreshRate(this@SettingsActivity)

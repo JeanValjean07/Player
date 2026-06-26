@@ -157,6 +157,14 @@
                 <action android:name="PLAYER_PAUSE"/>
             </intent-filter>
         </receiver>
+        <!-- 媒体会话操作接收器(没用) -->
+        <receiver
+            android:name="androidx.media3.session.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
 
         <!-- 谷歌oss
         <activity android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"

@@ -24,8 +24,6 @@ object PlayerInFoCenter {
 
     //承担播放状态和媒体信息
 
-    const val mediaType_Music = "music"
-    const val mediaType_Video = "video"
 
     //是否已设置媒体
     var state_item_set: Boolean = false
@@ -183,7 +181,7 @@ object PlayerInFoCenter {
 
         val MediaInfo_MediaType = MediaInfoPackage!!.MediaInfo_MediaType
 
-        if (MediaInfo_MediaType != mediaType_Video && MediaInfo_MediaType != mediaType_Music){
+        if (MediaInfo_MediaType != MediaTypeCenter.mediaType_Video && MediaInfo_MediaType != MediaTypeCenter.mediaType_Music){
             return Pair(false,"哎呀,骇亖我力")
         }
 
@@ -251,14 +249,15 @@ object PlayerInFoCenter {
 
 
 
-    //其他外部控制
-    //清除当前信息包(疑似没用过)
-    fun clearMediaInfoPack(context: Context) {
+
+    //清除当前媒体信息(记得清除解码器链接缓存)
+    fun clearCurrentMediaInfo() {
         MediaInfoPackage = null
-
+        //清除解码器链接缓存
+        MediaInfoRetriever.clearRetrieverUriCache()
+        //修改可观察标记
+        updateObservableUriString("")
     }
-
-
 
 
 

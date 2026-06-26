@@ -1,0 +1,15 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText">
+    <item
+        android:id="@+id/platform_coolapk"
+        android:title="酷安" />
+    <item
+        android:id="@+id/platform_bilibili"
+        android:title="哔哩哔哩" />
+    <item
+        android:id="@+id/platform_github_issue"
+        android:title="GitHub Issue" />
+
+</menu>

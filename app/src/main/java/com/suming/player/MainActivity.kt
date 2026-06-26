@@ -71,6 +71,7 @@ import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForVideo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
 import com.suming.player.FuncionalPack.MediaInfoRetriever
+import com.suming.player.FuncionalPack.MediaTypeCenter
 import com.suming.player.FuncionalPack.PlayerInFoCenter
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
@@ -90,8 +91,6 @@ class MainActivity: AppCompatActivity() {
 
     //防止快速点击
     private var lock_clickMillisLock = 0L
-
-
 
 
     @RequiresApi(Build.VERSION_CODES.R)
@@ -429,7 +428,7 @@ class MainActivity: AppCompatActivity() {
         val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this)
         //检查本地数据库是否已有音乐数据
         lifecycleScope.launch(Dispatchers.IO) {
-            if (MediaStoreRepo(this@MainActivity).isEmpty()){
+            if (MediaStoreRepo(this@MainActivity).isEmpty() || queryNew){
                 consoleLog("showVideoListCore : 本地数据库视频数据为空")
                 //从系统读取视频
                 withContext(Dispatchers.Main){
@@ -441,12 +440,7 @@ class MainActivity: AppCompatActivity() {
 
             }
         }
-        //是否需要读取新视频
-        if (queryNew){
 
-        }else{
-
-        }
     }
     private var state_VideoRecyclerView_started = false
     private lateinit var main_video_list_adapter: RecyclerAdapterVideo
@@ -505,22 +499,13 @@ class MainActivity: AppCompatActivity() {
         val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this)
         //检查本地数据库是否已有音乐数据
         lifecycleScope.launch(Dispatchers.IO) {
-            if (MusicStoreRepo(this@MainActivity).isEmpty()){
+            if (MusicStoreRepo(this@MainActivity).isEmpty() || queryNew){
                 consoleLog("showMusicList数据库音乐数据为空")
                 //从系统读取音乐
                 withContext(Dispatchers.Main){
-                    startLocalMediaReader("music")
+                    startLocalMediaReader(MediaTypeCenter.mediaType_Music)
                 }
-            }else{
-                consoleLog("showMusicList数据库音乐数据不为空")
-                //直接从本地数据库读取
-
             }
-        }
-        if (queryNew){
-
-        }else{
-
         }
     }
     private var state_MusicRecyclerView_started = false
@@ -682,8 +667,8 @@ class MainActivity: AppCompatActivity() {
             updateMiniViewArtwork_Image(uriNumOnly.toString(), type)
         }else{
             when(type){
-                PlayerInFoCenter.mediaType_Music -> updateMiniViewArtwork_Image(uriNumOnly.toString(), type)
-                PlayerInFoCenter.mediaType_Video -> updateMiniViewArtwork_Video()
+                MediaTypeCenter.mediaType_Music -> updateMiniViewArtwork_Image(uriNumOnly.toString(), type)
+                MediaTypeCenter.mediaType_Video -> updateMiniViewArtwork_Video()
             }
         }
 
@@ -713,7 +698,7 @@ class MainActivity: AppCompatActivity() {
         }
 
         //当前不是图片类型时,清除子视图并重建为图片视图
-        if (state_MiniViewArtwork_type != 1){
+        if (state_MiniViewArtwork_type != mini_view_type_image){
             //清除所有子视图
             PlayingCard_Artwork.removeAllViews()
             PlayingCard_Artwork_Video = null
@@ -732,7 +717,7 @@ class MainActivity: AppCompatActivity() {
             }
             //添加图片视图
             PlayingCard_Artwork.addView(PlayingCard_Artwork_Image)
-            state_MiniViewArtwork_type = 1
+            state_MiniViewArtwork_type = mini_view_type_image
         }
 
         //判断是否为同一张图片
@@ -803,8 +788,8 @@ class MainActivity: AppCompatActivity() {
             }
         }
 
-        //当前不是图片类型时清除所有子视图
-        if (state_MiniViewArtwork_type != 2){
+        //当前不是视频类型时清除所有子视图
+        if (state_MiniViewArtwork_type != mini_view_type_video){
             //清除所有子视图
             PlayingCard_Artwork.removeAllViews()
             PlayingCard_Artwork_Image = null
@@ -823,7 +808,7 @@ class MainActivity: AppCompatActivity() {
             }
             //添加视频视图
             PlayingCard_Artwork.addView(PlayingCard_Artwork_Video)
-            state_MiniViewArtwork_type = 2
+            state_MiniViewArtwork_type = mini_view_type_video
         }
 
         //变换卡片宽度
@@ -838,7 +823,10 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
-    private var state_MiniViewArtwork_type = 0 //< 0:无 1:图片 2:视频 >
+    val mini_view_type_null = "mini_view_type_null"
+    val mini_view_type_image = "mini_view_type_image"
+    val mini_view_type_video = "mini_view_type_video"
+    private var state_MiniViewArtwork_type = mini_view_type_null
     private var state_MiniViewArtwork_ImageUri = ""
     private fun miniView_ExpandAnim(){
         if (state_miniView_showing) return
@@ -1133,10 +1121,10 @@ class MainActivity: AppCompatActivity() {
         val (_,MediaInfo_MediaType) = PlayerInFoCenter.getMediaInfoType(this,uri.toString())
         consoleLog("PlayingCard_InfoContainer 点击事件 媒体类型: $MediaInfo_MediaType")
         when (MediaInfo_MediaType) {
-            PlayerInFoCenter.mediaType_Video -> {
+            MediaTypeCenter.mediaType_Video -> {
                 startVideoPlayer(uri)
             }
-            PlayerInFoCenter.mediaType_Music -> {
+            MediaTypeCenter.mediaType_Music -> {
                 showCustomToast("暂不支持打开音乐播放页面",3)
                 //startMusicPlayer(uri)
             }
@@ -1242,7 +1230,7 @@ class MainActivity: AppCompatActivity() {
     }
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
+    private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
             Log.d("SuMing", "MainActivity: $msg")
         }

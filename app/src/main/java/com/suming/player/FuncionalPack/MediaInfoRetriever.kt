@@ -20,23 +20,27 @@ object MediaInfoRetriever {
     }
 
     private var retriever: MediaMetadataRetriever? = null
-    private var current_uriString = ""
 
 
-
+    //初始化解码器
     fun initRetriever() {
         if (retriever != null) {
             return
         }
         retriever = MediaMetadataRetriever()
     }
-
+    //释放解码器
     fun releaseRetriever() {
         if (retriever == null) {
             return
         }
         retriever?.release()
         retriever = null
+    }
+    //链接缓存+清除方法
+    private var current_uriString = ""
+    fun clearRetrieverUriCache(){
+        current_uriString = ""
     }
 
 
@@ -63,13 +67,17 @@ object MediaInfoRetriever {
 
     //解码一个媒体
     fun retrieveMediaInfo(context: Context, MediaInfo_MediaUri: Uri): Pair<Boolean,MediaInfo> {
+        consoleLog("retrieveMediaInfo - 需要解码 MediaInfo_MediaUri: $MediaInfo_MediaUri")
         //解码器初始化
         if(retriever == null) initRetriever()
 
         //设置数据源
         var success = false
         if(current_uriString != MediaInfo_MediaUri.toString()) {
+            consoleLog("retrieveMediaInfo -成功开始解码 MediaInfo_MediaUri: $MediaInfo_MediaUri")
             success = setMediaUri(context, MediaInfo_MediaUri)
+        }else{
+            consoleLog("retrieveMediaInfo -链接未变,无需解码 MediaInfo_MediaUri: $MediaInfo_MediaUri")
         }
 
         //开始解码信息
@@ -106,9 +114,9 @@ object MediaInfoRetriever {
 
             //过滤获取的信息
             if (MediaInfo_MediaType.contains("video")){
-                MediaInfo_MediaType = PlayerInFoCenter.mediaType_Video
+                MediaInfo_MediaType = MediaTypeCenter.mediaType_Video
             }else if(MediaInfo_MediaType.contains("audio")){
-                MediaInfo_MediaType = PlayerInFoCenter.mediaType_Music
+                MediaInfo_MediaType = MediaTypeCenter.mediaType_Music
             }
             if (MediaInfo_MediaTitle == ""){ MediaInfo_MediaTitle = "未知媒体标题" }
             if (MediaInfo_MediaArtist == "" || MediaInfo_MediaArtist == "<unknown>"){ MediaInfo_MediaArtist = "未知艺术家" }

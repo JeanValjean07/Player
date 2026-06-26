@@ -266,7 +266,6 @@ object SettingsRequestCenter {
 
         return PREFS_video_sortMethod
     }
-
     //音乐列表排序方式
     private var PREFS_audio_sortMethod = sort_method_null
     const val sort_method_audio = "sort_method_audio"
@@ -288,9 +287,6 @@ object SettingsRequestCenter {
 
         return PREFS_audio_sortMethod
     }
-
-
-
     //升降序
     const val sort_orientation_DESC = "sort_orientation_DESC" //降序
     const val sort_orientation_ASC = "sort_orientation_ASC"   //升序
@@ -394,6 +390,30 @@ object SettingsRequestCenter {
         }
 
         return PREFS_OnlyStopUnMediaEnd == 1
+    }
+    //后台划卡时关闭播放器
+    private var PREFS_StopPlayerWhenTaskRemoved = -1
+    const val PREFS_StopPlayerWhenTaskRemoved_Name = "PREFS_StopPlayerWhenTaskRemoved"
+    fun set_PREFS_StopPlayerWhenTaskRemoved(stopPlayerWhenTaskRemoved: Boolean){
+        PREFS_StopPlayerWhenTaskRemoved = if (stopPlayerWhenTaskRemoved) 1 else 0
+        PREFS_PlayEngin.edit { putInt(PREFS_StopPlayerWhenTaskRemoved_Name, if (stopPlayerWhenTaskRemoved) 1 else 0) }
+    }
+    fun get_PREFS_StopPlayerWhenTaskRemoved(context: Context): Boolean{
+        //确保配置清单已初始化
+        if (!state_PREFS_PlayEngin_initialized){
+            PREFS_PlayEngin = context.getSharedPreferences("PREFS_PlayEngin", 0)
+            state_PREFS_PlayEngin_initialized = true
+        }
+        //确保配置项已被读取过
+        if (PREFS_StopPlayerWhenTaskRemoved == -1){
+            PREFS_StopPlayerWhenTaskRemoved = PREFS_PlayEngin.getInt(PREFS_StopPlayerWhenTaskRemoved_Name, -1)
+            if (PREFS_StopPlayerWhenTaskRemoved == -1){
+                PREFS_StopPlayerWhenTaskRemoved = 1
+                PREFS_PlayEngin.edit { putInt(PREFS_StopPlayerWhenTaskRemoved_Name, 1) }
+            }
+        }
+
+        return PREFS_StopPlayerWhenTaskRemoved == 1
     }
 
 

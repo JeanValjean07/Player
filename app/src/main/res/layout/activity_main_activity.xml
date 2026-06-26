@@ -9,6 +9,7 @@
     android:fitsSystemWindows="false"
     tools:context=".MainActivity"
     tools:ignore="HardcodedText,UnusedAttribute">
+
     <!-- 标题栏 -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -235,9 +236,6 @@
     </com.google.android.material.appbar.AppBarLayout>
 
 
-
-
-
     <!-- 视频库列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerview_video_list"
@@ -248,7 +246,6 @@
         android:scrollbars="vertical"
         android:overScrollMode="always"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
-
     <!-- 音乐库列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerview_music_list"
@@ -297,7 +294,7 @@
         android:clickable="true"
         app:cardElevation="10dp"
         app:cardCornerRadius="0dp"
-        android:visibility="gone">
+        android:visibility="v">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
