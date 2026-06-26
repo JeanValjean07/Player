@@ -19,9 +19,9 @@ class ApplicationGlobal : Application() {
     }
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
+    private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
-            Log.d("SuMing", "PlayerSingleton: $msg")
+            Log.d("SuMing", "ApplicationGlobal: $msg")
         }
     }
 

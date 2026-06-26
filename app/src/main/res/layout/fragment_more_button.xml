@@ -2,7 +2,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/topArea"
+    android:id="@+id/out_area"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -13,47 +13,57 @@
         android:layout_width="match_parent"
         android:layout_height="500dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:cardCornerRadius="8dp"
-        app:cardBackgroundColor="@color/THEME_1_Background_BackArea"
+        app:cardCornerRadius="10dp"
+        app:cardBackgroundColor="@color/SecondaryColorPack_SurfaceBackground"
         app:cardElevation="10dp"
         android:clickable="true">
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="0dp"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <com.google.android.material.appbar.AppBarLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <!-- 标题 -->
+            <FrameLayout
+                android:id="@+id/AppBarContainer"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:outlineSpotShadowColor="@color/HeadText"
-                app:liftOnScrollColor="@color/HeadBackground"
-                android:outlineAmbientShadowColor="@color/HeadText">
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:translationZ="5dp">
+                <!-- BrushArea -->
+                <View
+                    android:id="@+id/gradientMask"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:alpha="100"
+                    android:background="@drawable/vec_brush_area_v2_smooth" />
                 <!-- 标题：更多选项 -->
                 <LinearLayout
                     android:id="@+id/TopBarArea"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:orientation="horizontal">
                     <!-- 按钮：退出 -->
-                    <ImageButton
+                    <com.suming.player.ViewWidget.CircleButton
                         android:id="@+id/buttonExit"
-                        android:layout_width="41dp"
-                        android:layout_height="41dp"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginTop="5dp"
-                        android:gravity="start"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_more_button_exit"
-                        android:contentDescription="关闭本页面"
-                        android:tooltipText="关闭本页面" />
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginStart="5dp"
+                        android:src="@drawable/ic_general_close"
+                        android:layout_gravity="center"
+                        app:buttonSize="50dp"
+                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
+                        app:shadowOffset="4dp"
+                        app:circlePadding="100dp"
+                        app:iconPadding="120dp"
+                        app:shadowRadius="8dp"
+                        app:shadowColor="#33000000"
+                        />
                     <!-- 标题文本：更多选项 -->
                     <TextView
                         android:id="@+id/title_force_view"
@@ -120,25 +130,35 @@
                         android:src="@drawable/ic_more_button_lock_off"
                         tools:ignore="ContentDescription" />
                 </LinearLayout>
-            </com.google.android.material.appbar.AppBarLayout>
+            </FrameLayout>
 
+            <!-- 内容区域 -->
             <androidx.core.widget.NestedScrollView
                 android:id="@+id/NestedScrollView"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
+                    <!-- 高度占位 -->
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp" />
                     <!-- 功能卡1：后台播放 + 循环播放 + 倍速 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -402,9 +422,9 @@
                         android:layout_marginTop="10dp"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -585,9 +605,9 @@
                         android:layout_marginTop="10dp"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -750,9 +770,9 @@
                         android:layout_marginTop="10dp"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -1006,9 +1026,9 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
                         android:layout_marginBottom="30dp"
-                        app:cardBackgroundColor="@color/THEME_1_Background_ContentCard"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -1062,6 +1082,6 @@
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -115,7 +115,7 @@ class FragmentPlayList: DialogFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.activity_player_fragment_play_list, container, false)
+    ): View = inflater.inflate(R.layout.fragment_play_list, container, false)
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "SuspiciousIndentation")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //初始化界面
@@ -190,7 +190,7 @@ class FragmentPlayList: DialogFragment() {
                 Dismiss()
             }
             //按钮：点击空白区域退出
-            val topArea = view.findViewById<View>(R.id.topArea)
+            val topArea = view.findViewById<View>(R.id.out_area)
             topArea.setOnClickListener {
                 Dismiss()
             }

@@ -298,6 +298,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //</editor-fold>
 
+    //context
+    val context = this@PlayerActivityNeo
     //获取播放器引用
     private val player get() = PlayerSingleton.getInitPlayer(application)
     //连接到viewModel
@@ -318,7 +320,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
         mainBusiness(savedInstanceState)
-
 
 
         //缓存需要频繁取用的变量
@@ -363,24 +364,30 @@ class PlayerActivityNeo: AppCompatActivity(){
         setContentView(R.layout.activity_player_type_neo)
         //视图初始化
         scroller = findViewById(R.id.controller_scroller_recyclerView)
-        controller_bottom_bar = findViewById(R.id.controller_bottom_bar) //底部按钮区域
+        controller_bottom_bar = findViewById(R.id.controller_bottom_bar)
         rootConstraint = findViewById(R.id.rootConstraint)
-        controllerLayer = findViewById(R.id.controllerLayer) //控件层
-        controller_top_bar = findViewById(R.id.controller_top_bar) //顶部按钮区域
-        controller_timer_current = findViewById(R.id.controller_timer_current) //当前时间
-        controller_timer_total = findViewById(R.id.controller_timer_total) //总时间
-        NoticeCard = findViewById(R.id.NoticeCard) //通知胶囊卡片
-        playerView = findViewById(R.id.playerView) //播放区域
+        controllerLayer = findViewById(R.id.controllerLayer)
+        controller_top_bar = findViewById(R.id.controller_top_bar)
+        controller_timer_current = findViewById(R.id.controller_timer_current)
+        controller_timer_total = findViewById(R.id.controller_timer_total)
+        noticeCapsule = findViewById(R.id.noticeCapsule)
+        playerView = findViewById(R.id.playerView)
 
-        //使用深色主题
-        if (SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(this)){
-            delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
-        }
+        //是否开启了强制深色主题
+        if (SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(this)) delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
+
+
+        //读取并缓存当前颜色模式
+        isDarkTheme = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+        //读取当前屏幕方向
+        isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+        //设置标识
+        playerViewModel.state_player_type = "Neo"
 
         //初始化界面参数
         updateScreenParameters()
-        //设置标识
-        playerViewModel.state_player_type = "Neo"
 
 
         //获取自动旋转状态
@@ -617,26 +624,21 @@ class PlayerActivityNeo: AppCompatActivity(){
             //更多选项
             val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
-                ToolVibrate().vibrate(this@PlayerActivityNeo)
                 //防止快速点击
                 if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                     return@setOnClickListener
                 }
                 clickMillis_MoreOptionPage = System.currentTimeMillis()
-                //关闭时间和进度条同步
-                stopVideoTimeSync()
-                stopScrollerSync()
-                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { MovePlayAreaJob() }
                 //启动弹窗
                 startMoreButtonFragment()
             }
             //提示卡点击时关闭
-            val noticeCard = findViewById<CardView>(R.id.NoticeCard)
+            val noticeCard = findViewById<CardView>(R.id.noticeCapsule)
             noticeCard.setOnClickListener {
                 ToolVibrate().vibrate(this@PlayerActivityNeo)
                 noticeCard.visibility = View.GONE
             }
-            //按钮：暂停/继续播放
+            //暂停/继续播放
             val PauseButton = findViewById<CircleButton>(R.id.ButtonPause)
             PauseButton.setOnClickListener {
 
@@ -659,7 +661,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                 }
             }
-            //按钮：切换横屏
+            //切换横屏
             val ButtonLandscapeButton = findViewById<CircleButton>(R.id.ButtonLandscape)
             ButtonLandscapeButton.setOnTouchListener { _, event ->
                 when (event.actionMasked){
@@ -681,7 +683,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
                 onTouchEvent(event)
             }
-            //按钮：更多选项
+            //更多选项
             val ButtonMoreOption = findViewById<CircleButton>(R.id.ButtonMoreOption)
             ButtonMoreOption.setOnClickListener {
                 //防止快速点击
@@ -689,10 +691,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                     return@setOnClickListener
                 }
                 clickMillis_MoreOptionPage = System.currentTimeMillis()
-                //关闭时间和进度条同步 + 移动播放区域
-                stopVideoTimeSync()
-                stopScrollerSync()
-                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) { MovePlayAreaJob() }
                 //启动弹窗
                 startMoreButtonFragment()
             }
@@ -946,7 +944,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                             player.setPlaybackSpeed(currentSpeed)
 
 
-                            val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
+                            val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
                             NoticeCard.visibility = View.GONE
                         }
                         //事件处理:下滑退出但保持播放
@@ -1033,7 +1031,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //注册Fragment监听器
         lifecycleScope.launch(Dispatchers.Main) {
             //均衡器面板
-            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_equalizer, this@PlayerActivityNeo) { _, bundle ->
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_equalizer, context) { _, bundle ->
                 val receive_key = bundle.getString(FragmentConnector.receive_key)
                 when(receive_key){
                     //开启/退出事件
@@ -1054,7 +1052,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
             //更多操作面板
-            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_more_button, this@PlayerActivityNeo) { _, bundle ->
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_more_button, context) { _, bundle ->
                 val receive_key = bundle.getString(FragmentConnector.receive_key)
                 when(receive_key){
                     //截屏
@@ -1162,17 +1160,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                     FragmentConnector.fragment_more_button_unlock_brightness_control -> unlockBrightnessControl()
                     //开启/退出事件
                     FragmentConnector.fragment_event_close -> {
-                        //开启被控组件
-                        startScrollerSync()
-                        startVideoTimeSync()
-                        //播放区域移移动(暂未启用)
+                        onFragmentClose()
                     }
                     FragmentConnector.fragment_event_open -> {
-                        //关闭被控组件
-                        stopScrollerSync()
-                        stopVideoTimeSync()
-                        //播放区域移移动(暂未启用)
-
+                        onFragmentOpen()
                     }
                     //重新绑定播放器视图
                     FragmentConnector.fragment_more_button_bind_play_view -> BindPlayerView()
@@ -2032,19 +2023,19 @@ class PlayerActivityNeo: AppCompatActivity(){
     //android:configChanges="orientation|screenSize|screenLayout"
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        //横屏
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            //更新界面显示
-            updateScreenParameters()
-            //启动隐藏控件倒计时
-            startIdleTimer()
-
-        }
-        //竖屏
-        else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            //更新界面显示
-            updateScreenParameters()
-
+        when(newConfig.orientation){
+            //切换至横屏
+            Configuration.ORIENTATION_LANDSCAPE -> {
+                isLandscape = true
+                updateScreenParameters()
+                //启动隐藏控件倒计时
+                startIdleTimer()
+            }
+            //切换至竖屏
+            Configuration.ORIENTATION_PORTRAIT -> {
+                isLandscape = false
+                updateScreenParameters()
+            }
         }
     }
     @Suppress("DEPRECATION")
@@ -2090,6 +2081,21 @@ class PlayerActivityNeo: AppCompatActivity(){
             stopOrientationListener()
             notice("已关闭方向监听器", 1000)
         }
+    }
+    //响应Fragment开启/关闭事件
+    private fun onFragmentOpen(){
+        //关闭被控组件
+        stopScrollerSync()
+        stopVideoTimeSync()
+        //播放区域移移动
+        MovePlayAreaJob()
+    }
+    private fun onFragmentClose(){
+        //开启被控组件
+        startScrollerSync()
+        startVideoTimeSync()
+        //播放区域移移动
+        MovePlayArea_down()
     }
 
     //退出动作决策程序
@@ -2195,6 +2201,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //视频区域抬高
     private fun MovePlayArea_down(){
+        if (isLandscape) return
         if (playerViewModel.PREFS_EnablePlayAreaMoveAnim) {
             //取消原区域上移任务
             MovePlayAreaJob?.cancel()
@@ -2210,17 +2217,17 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun MovePlayArea_up() {
         if (playerViewModel.PREFS_EnablePlayAreaMoveAnim){
-            playerView.animate()
-                .translationY(-(ValueManager.get_Value_PlayAreaMoveDistance(this)))
-                .setInterpolator(DecelerateInterpolator(3f))
-                .setDuration(700)
-                .start()
-        }else{
-            playerView.translationY = -ValueManager.get_Value_PlayAreaMoveDistance(this)
+                playerView.animate()
+                    .translationY(-(ValueManager.get_Value_PlayAreaMoveDistance(context)))
+                    .setInterpolator(DecelerateInterpolator(3f))
+                    .setDuration(700)
+                    .start()
+
         }
     }
     private var MovePlayAreaJob: Job? = null
     private fun MovePlayAreaJob() {
+        if (isLandscape) return
         MovePlayAreaJob?.cancel()
         MovePlayAreaJob = lifecycleScope.launch {
             delay(500)
@@ -2701,7 +2708,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private lateinit var controller_top_bar : LinearLayout //顶部按钮区域
     private lateinit var controller_timer_current : TextView //当前时间
     private lateinit var controller_timer_total : TextView //总时间
-    private lateinit var NoticeCard : CardView //通知胶囊卡片
+    private lateinit var noticeCapsule : CardView //通知胶囊卡片
     private lateinit var playerView: PlayerView //播放区域
     //刷新视频总长度
     private fun updateTimeCard(){
@@ -2709,17 +2716,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         controller_timer_total.text = FormatTime_onlyNum(playerViewModel.MediaInfo_MediaDuration)
         //开始时间戳更新(TODO:需升级为仅在视频正播放时开启)
         startVideoTimeSync()
-    }
-    //刷新按钮状态
-    private fun updateButtonState(){
-        val PauseButton = findViewById<CircleButton>(R.id.ButtonPause)
-
-        if (player.isPlaying){
-            PauseButton.setIconResource(R.drawable.ic_controller_neo_pause)
-        }
-        else{
-            PauseButton.setIconResource(R.drawable.ic_controller_neo_play)
-        }
     }
     //刷新进度条
     private val scrollerInfo_MaxPicNumber = 20
@@ -2851,6 +2847,9 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         }
     }
+    //缓存显示配置
+    private var isDarkTheme = false  //深色模式
+    private var isLandscape = false  //横屏
     //控件隐藏和显示
     private fun setControllerInvisibleNoAnimation() {
         //状态标记变更
@@ -2939,7 +2938,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             setControllerVisible()
         }
     }
-    //进度条端点配置:仅在新晋播放页使用
+    //进度条内边距设置
     private fun setScrollerPadding(){
 
         scroller.layoutManager = LinearLayoutManager(this@PlayerActivityNeo, LinearLayoutManager.HORIZONTAL, false)
@@ -2994,11 +2993,11 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     //状态栏配置
-    @Suppress("DEPRECATION")
     private fun setStatusBarParams(){
         //横屏
         if (state_screen_orientation == 1){
             //控件层参数
+            @Suppress("DEPRECATION")
             ViewCompat.setFitsSystemWindows(controllerLayer, false)
             controllerLayer.requestLayout()
 
@@ -3016,6 +3015,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //三星专用:显示到挖空区域
                 window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             } else {
+                @Suppress("DEPRECATION")
                 window.decorView.systemUiVisibility = (
                         View.SYSTEM_UI_FLAG_FULLSCREEN
                                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -3050,27 +3050,44 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
         }
     }
-    //刷新横屏按钮
+    //刷新按钮状态
     private fun updateLandscapeButton(){
         val ButtonLandscape = findViewById<CircleButton>(R.id.ButtonLandscape)
-
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.THEME_1_Background_ButtonCircle_OFF))
+        //动态切换颜色和Icon的TintColor
+        if (isLandscape) {
+            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.MainColorPack_CardButtonBackground_state_ON))
+            if(isDarkTheme){
+                ButtonLandscape.setIconTintColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.Black))
+            }else{
+                ButtonLandscape.setIconTintColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.Black))
+            }
+        }else{
+            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.MainColorPack_CardButtonBackground_state_OFF))
+            if(isDarkTheme){
+                ButtonLandscape.setIconTintColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.White))
+            }else{
+                ButtonLandscape.setIconTintColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.black))
+            }
         }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.THEME_1_Background_ButtonCircle_ON))
-        }
 
-    }
+    } //横屏按钮
+    private fun updateButtonState(){
+        val pauseButton = findViewById<CircleButton>(R.id.ButtonPause)
+        if (player.isPlaying){
+            pauseButton.setIconResource(R.drawable.ic_controller_neo_pause)
+        }else{
+            pauseButton.setIconResource(R.drawable.ic_controller_neo_play)
+        }
+    }   //暂停按钮
     //通知卡片位置设置
     private fun setNoticeCardPosition(){
         //横屏
         if (state_screen_orientation == 1) {
-            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(5f))
+            (noticeCapsule.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(5f))
         }
         //竖屏
         else if (state_screen_orientation == 0) {
-            (NoticeCard.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(100f))
+            (noticeCapsule.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(100f))
         }
     }
     //调整控件位置
@@ -3127,7 +3144,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //恢复隐藏控件状态
         if (!playerViewModel.state_controllerShowing){ setControllerInvisibleNoAnimation() }
 
-        //刷新横屏按钮(经典页面自动跳过)
+        //刷新横屏按钮
         updateLandscapeButton()
         //设定进度条边界
         setScrollerPadding()
@@ -3181,7 +3198,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                 scrollerLayoutManager.scrollToPositionWithOffset(scrollParam1, -scrollParam2)
 
-                syncScrollTaskHandler.postDelayed(this, 33)
+                syncScrollTaskHandler.postDelayed(this, 200)
             }
         }
     }
@@ -3393,7 +3410,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         showNoticeJob?.cancel()
         showNoticeJob = lifecycleScope.launch {
             val NoticeCardText = findViewById<TextView>(R.id.NoticeCardText)
-            val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
+            val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
             NoticeCard.visibility = View.VISIBLE
             NoticeCardText.text = text
             delay(duration)
@@ -3404,7 +3421,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         showNoticeJobLong?.cancel()
         showNoticeJobLong = lifecycleScope.launch {
             val NoticeCardText = findViewById<TextView>(R.id.NoticeCardText)
-            val NoticeCard = findViewById<CardView>(R.id.NoticeCard)
+            val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
             NoticeCard.visibility = View.VISIBLE
             NoticeCardText.text = text
         }
@@ -3434,6 +3451,13 @@ class PlayerActivityNeo: AppCompatActivity(){
             delay(500)
             ToolVibrate().vibrate(this@PlayerActivityNeo)
             EnsureExit(false)
+        }
+    }
+
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "PlayerActivityNeo: $msg")
         }
     }
 

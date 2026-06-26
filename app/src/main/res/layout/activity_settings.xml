@@ -497,7 +497,7 @@
                             android:layout_marginStart="10dp"
                             android:textColor="@color/Text2" />
                     </LinearLayout>
-                    <!--  开关:播放区域移动动画  -->
+                    <!--  开关:播放区域移动  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -511,7 +511,7 @@
                                 android:layout_height="match_parent"
                                 android:gravity="center"
                                 android:layout_weight="0"
-                                android:text="播放区域随面板移动动画"
+                                android:text="播放区域随面板移动"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
@@ -530,7 +530,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="若移动过程出现卡顿可考虑关闭。移动动画卡顿通常不是性能原因，而是暂时性的，由于系统暂未完成此处的优化工作，或底层出现暂时性问题导致。"
+                            android:text="若移动过程出现卡顿可考虑关闭。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:关闭卡片下滑手势  -->
@@ -638,7 +638,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="若您的设备在播放时被系统限制刷新率，可开启此开关来强制使用高刷新率。仅支持安卓11及以上版本，不保证一定生效。"
+                            android:text="已废弃"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:后台播放时关闭视频轨道  -->

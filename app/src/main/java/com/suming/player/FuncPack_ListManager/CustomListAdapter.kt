@@ -61,7 +61,7 @@ class CustomListAdapter(
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): viewHolder {
-        view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_fragment_play_list_custom_adapter_item, parent, false)
+        view = LayoutInflater.from(parent.context).inflate(R.layout.fragment_play_list_item_custom, parent, false)
 
         return viewHolder(view)
     }

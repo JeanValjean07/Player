@@ -21,7 +21,6 @@ import com.suming.player.PlayerActivityNeo
 import com.suming.player.PlayerActivityOro
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
-import com.suming.player.ActivityComponent.PlayerService.CustomNotificationSession
 import com.suming.player.ActivityComponent.PlayerActivity.ToolPlayerWrapper
 import com.suming.player.FuncionalPack.BroadcastActions
 import com.suming.player.MusicPlayer
@@ -44,7 +43,7 @@ class PlayerService: MediaSessionService() {
     private var mediaSession: MediaSession? = null
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
+    private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
             Log.d("SuMing", "PlayerService: $msg")
         }
@@ -240,7 +239,7 @@ class PlayerService: MediaSessionService() {
     //构建纯自定布局通知(完全自定布局)
     private fun BuildCustomViewNotification(): Notification {
         // 1. 创建 RemoteViews
-        val remoteView = RemoteViews(packageName, R.layout.notification_player)
+        val remoteView = RemoteViews(packageName, R.layout.notification_custom_controller)
 
         // 2. 给每个按钮挂 PendingIntent（用 requestCode 区分）
         remoteView.setOnClickPendingIntent(

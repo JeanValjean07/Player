@@ -97,6 +97,9 @@
     <color name="MainColorPack_BrushColorMiddle">#CC000000</color>
     <color name="MainColorPack_ContentCardBackground">#FF151515</color>
     <color name="MainColorPack_CardButtonBackground">#FF151515</color>
+    <color name="MainColorPack_CardButtonBackground_state_ON">#FF9575CD</color>
+    <color name="MainColorPack_CardButtonBackground_state_OFF">#FF151515</color>
+    <color name="MainColorPack_CardButtonBackground_noState_themeColor">#FF9575CD</color>
 
     <!-- 二级页面颜色配置 -->
     <color name="SecondaryColorPack_SurfaceBackground">#FF151515</color>

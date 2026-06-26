@@ -99,7 +99,7 @@ class SettingsFragmentDeleteCover: DialogFragment() {
             dismiss()
         }
         //按钮：点击空白区域退出
-        val topArea = view.findViewById<View>(R.id.topArea)
+        val topArea = view.findViewById<View>(R.id.out_area)
         topArea.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             dismiss()

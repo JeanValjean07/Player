@@ -18,7 +18,7 @@
         android:translationZ="5dp"/>
     <!-- 小型提示卡片 -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/NoticeCard"
+        android:id="@+id/noticeCapsule"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center|top"
@@ -294,7 +294,7 @@
                         android:gravity="center"
                         android:padding="5dp"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/ic_controller_oro_landscape"
+                        android:src="@drawable/ic_player_oro_landscape"
                         tools:ignore="ContentDescription"
                         />
                     <!-- 暂停/开始 -->

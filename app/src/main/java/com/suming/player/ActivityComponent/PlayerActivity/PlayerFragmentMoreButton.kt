@@ -6,9 +6,9 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -20,7 +20,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
@@ -46,6 +45,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
+import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -121,7 +121,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.activity_player_fragment_more_button, container, false)
+    ): View = inflater.inflate(R.layout.fragment_more_button, container, false)
 
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility", "CutPasteId")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -133,12 +133,22 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     }
 
-    private fun init(view: View){
-        lifecycleScope.launch(Dispatchers.Main) {
-            //设置卡片高度
-            setCardHeight(view)
+    override fun onResume() {
+        super.onResume()
 
-        }
+        //发布开启事件
+        returnFragment(FragmentConnector.fragment_event_open)
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        //发布关闭事件
+        returnFragment(FragmentConnector.fragment_event_close)
+    }
+
+    private fun init(view: View){
+        //设置卡片
+        display(view)
+
     }
 
 
@@ -171,15 +181,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
             updateAutoShutText()
 
             //退出
-            val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
+            val ButtonExit = view.findViewById<CircleButton>(R.id.buttonExit)
             ButtonExit.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
-                Dismiss()
+                dismiss()
             }
             //点击空白区域退出
-            val topArea = view.findViewById<View>(R.id.topArea)
+            val topArea = view.findViewById<View>(R.id.out_area)
             topArea.setOnClickListener {
-                Dismiss()
+                dismiss()
             }
             //锁定页面
             val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
@@ -242,7 +251,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                             }
                             MotionEvent.ACTION_UP -> {
                                 if (deltaY >= 400f){
-                                    Dismiss()
+                                    dismiss()
                                 }else{
                                     RootCard.animate()
                                         .translationY(0f)
@@ -300,7 +309,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                                     return@setOnTouchListener false
                                 }
                                 if (deltaX >= 200f){
-                                    Dismiss()
+                                    dismiss()
                                 }else{
                                     RootCard.animate()
                                         .translationX(0f)
@@ -363,28 +372,28 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ButtonCapture.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 returnFragment(FragmentConnector.fragment_more_button_capture_frame)
-                Dismiss()
+                dismiss()
             }
             //打开播放列表
             val ButtonPlayList = view.findViewById<ImageButton>(R.id.ButtonPlayList)
             ButtonPlayList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 returnFragment(FragmentConnector.fragment_more_button_start_play_list)
-                Dismiss()
+                dismiss()
             }
             //回到视频起始
             val ButtonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
             ButtonBackToStart.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 returnFragment(FragmentConnector.fragment_more_button_back_to_start)
-                Dismiss()
+                dismiss()
             }
 
             //开启小窗
             val ButtonStartPiP = view.findViewById<TextView>(R.id.ButtonStartPiP)
             ButtonStartPiP.setOnClickListener {
                 returnFragment(FragmentConnector.fragment_more_button_start_pip_window)
-                Dismiss()
+                dismiss()
             }
             //更新封面
             val ButtonUpdateCover = view.findViewById<TextView>(R.id.buttonUpdateCover)
@@ -404,17 +413,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ButtonVideoInfo.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 returnFragment(FragmentConnector.fragment_more_button_open_video_info)
-                Dismiss()
+                dismiss()
             }
             //分享
             val ButtonSysShare = view.findViewById<TextView>(R.id.buttonSysShare)
             ButtonSysShare.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-
-                val result = bundleOf("KEY" to "SysShare")
-                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
-                Dismiss()
+                returnFragment(FragmentConnector.fragment_more_button_sys_share_video)
+                dismiss()
             }
             //均衡器
             val ButtonEqualizer = view.findViewById<TextView>(R.id.buttonEqualizer)
@@ -436,21 +442,21 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ButtonClearMiniature.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 returnFragment(FragmentConnector.fragment_more_button_clear_miniature)
-                Dismiss()
+                dismiss()
             }
             //解除亮度控制
             val ButtonUnBindBrightness = view.findViewById<TextView>(R.id.ButtonUnBindBrightness)
             ButtonUnBindBrightness.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 returnFragment(FragmentConnector.fragment_more_button_unlock_brightness_control)
-                Dismiss()
+                dismiss()
             }
             //绑定播放视图
             val ButtonBindPlayView = view.findViewById<TextView>(R.id.ButtonBindPlayView)
             ButtonBindPlayView.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 returnFragment(FragmentConnector.fragment_more_button_bind_play_view)
-                Dismiss()
+                dismiss()
             }
 
             //注册进度条相关功能(经典播放页时不显示进度条相关功能)
@@ -547,16 +553,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
             }
 
-            //监听返回手势
-            dialog?.setOnKeyListener { _, keyCode, event ->
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                    Dismiss()
-                    return@setOnKeyListener true
-                }
-                return@setOnKeyListener false
-            }
-            //监听返回手势后发布面板开启事件
-            returnFragment(FragmentConnector.fragment_event_open)
 
         }
     }
@@ -564,11 +560,11 @@ class PlayerFragmentMoreButton: DialogFragment() {
     //发布事件
     private fun returnFragment(event: String){
         val result = bundleOf(FragmentConnector.receive_key to event)
-        setFragmentResult(FragmentConnector.request_key, result)
+        setFragmentResult(FragmentConnector.fragment_request_key_more_button, result)
     }
     private fun returnFragment(event: String,extra: String){
         val result = bundleOf(FragmentConnector.receive_key to event,FragmentConnector.extra_key to extra)
-        setFragmentResult(FragmentConnector.request_key, result)
+        setFragmentResult(FragmentConnector.fragment_request_key_more_button, result)
     }
 
 
@@ -582,19 +578,19 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 R.id.item_useCurrentFrame -> {
                     ToolVibrate().vibrate(requireContext())
                     returnFragment(FragmentConnector.fragment_more_button_update_cover_frame,FragmentConnector.update_cover_frame_use_current_frame)
-                    Dismiss();true
+                    dismiss();true
                 }
                 //更新封面-使用默认封面
                 R.id.item_useDefaultCover -> {
                     ToolVibrate().vibrate(requireContext())
                     returnFragment(FragmentConnector.fragment_more_button_update_cover_frame,FragmentConnector.update_cover_frame_use_default_frame)
-                    Dismiss();true
+                    dismiss();true
                 }
                 //更新封面-选择本地图片
                 R.id.item_pickFromLocal -> {
                     ToolVibrate().vibrate(requireContext())
                     returnFragment(FragmentConnector.fragment_more_button_update_cover_frame,FragmentConnector.update_cover_frame_pick_local_frame)
-                    Dismiss();true
+                    dismiss();true
                 }
                 else -> true
             }
@@ -856,17 +852,43 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     //Tool Functions
     //设置面板高度
-    private fun setCardHeight(view: View){
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            //读取屏幕信息
-            val screenHeightPx = resources.displayMetrics.heightPixels
-            val targetHeightPx = (screenHeightPx * 0.7).toInt()
-            val density = resources.displayMetrics.density
-            val screenHeightDp = (screenHeightPx / density).toInt()
-            //操作主卡片视图
-            val mainCard = view.findViewById<CardView>(R.id.main_card)
+    private fun display(view: View){
+        //获取当前屏幕方向
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //操作主卡片视图
+        val mainCard = view.findViewById<CardView>(R.id.main_card)
+        //读取屏幕信息
+        val screenHeightPx = resources.displayMetrics.heightPixels
+        val screenWidthPx = resources.displayMetrics.widthPixels
+        val density = resources.displayMetrics.density
+
+        if (isLandscape){
+            //计算目标宽度
+            val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
             mainCard.post {
-                if (screenHeightDp < 450){
+                if (targetScreenHeightDp < 50){
+                    mainCard.layoutParams.width = screenWidthPx
+                }else{
+                    mainCard.layoutParams.width = targetScreenWidthPx
+                }
+                //把高度改为match parent
+                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+
+                val statusBarHeight = getStatusBarHeightFromView(mainCard)
+                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
+
+                mainCard.requestLayout()
+            }
+
+        }else{
+            //计算目标高度
+            val targetHeightPx = (screenHeightPx * 0.7).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 450){
                     mainCard.layoutParams.height = screenHeightPx
                 }else{
                     mainCard.layoutParams.height = targetHeightPx
@@ -875,19 +897,18 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
         }
     }
+    fun getStatusBarHeightFromView(view: View): Int {
+        val rect = Rect()
+        view.getWindowVisibleDisplayFrame(rect)
+        return rect.top
+    }
     //自定义退出逻辑
     private var lockPage = false
     private fun customDismiss(){
         if (!lockPage) {
-            Dismiss()
+            dismiss()
         }
-    }  //需要由面板锁定接管的,记得调用customDismiss
-    private fun Dismiss(){
-        //发布关闭事件
-        returnFragment(FragmentConnector.fragment_event_close)
-        //执行关闭操作
-        dismiss()
-
     }
+
 
 }

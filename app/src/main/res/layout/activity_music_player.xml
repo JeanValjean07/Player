@@ -202,7 +202,7 @@
                         android:layout_marginStart="1dp"
                         android:layout_marginTop="1dp"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/ic_controller_more"
+                        android:src="@drawable/ic_general_more_opt"
                         tools:ignore="ContentDescription" />
                 </FrameLayout>
             </FrameLayout>
@@ -283,7 +283,7 @@
 
     <!-- 小型提示卡片 -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/NoticeCard"
+        android:id="@+id/noticeCapsule"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center|top"

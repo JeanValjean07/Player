@@ -7,6 +7,8 @@ import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.Handler
@@ -227,7 +229,7 @@ class CircleButton @JvmOverloads constructor(
     }
 
 
-
+    //外部控制
     fun setIconDrawable(drawable: Drawable?) {
         this.iconDrawable = drawable
         if (drawable != null) {
@@ -239,8 +241,13 @@ class CircleButton @JvmOverloads constructor(
         invalidate()
     }
     fun setIconResource(resId: Int) {
-        val drawable = ContextCompat.getDrawable(getContext(), resId)
+        val drawable = ContextCompat.getDrawable(context, resId)
         setIconDrawable(drawable)
+    }
+    fun setIconTintColor(color: Int) {
+        iconPaint?.color = color
+        iconPaint?.colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN)
+        invalidate()
     }
     fun setMainColor(color: Int) {
         this.mainColor = color

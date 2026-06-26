@@ -14,7 +14,6 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
-import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
@@ -181,7 +180,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
             dismiss()
         }
         //按钮：点击空白区域退出
-        val topArea = view.findViewById<View>(R.id.topArea)
+        val topArea = view.findViewById<View>(R.id.out_area)
         topArea.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
             dismiss()
