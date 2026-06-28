@@ -4,29 +4,26 @@ import androidx.databinding.ObservableArrayList
 import androidx.lifecycle.ViewModel
 
 @Suppress("unused")
-class PlayerScrollerViewModel(): ViewModel(){
+class PlayerScrollerViewModel : ViewModel(){
 
+    //可观察缩略图列表
+    private val _frames = ObservableArrayList<scrollerItem>()
+    val frames: ObservableArrayList<scrollerItem> = _frames
 
-    private val _thumbItems = ObservableArrayList<scrollerItem>()
-
-    val thumbItems: ObservableArrayList<scrollerItem> = _thumbItems
-
-
+    //缩略图单项数据类
     data class scrollerItem(
-
-        var currentThumbType: Boolean = false,         //当前缩略图类型,true为实图,false为占位图
-
-        var thumbGeneratingRunning: Boolean = false,   //是否正在生成缩略图
+        //当前缩略图类型,true为实图,false为占位图
+        var currentThumbType: Boolean = false,
+        //是否正在生成缩略图
+        var thumbGeneratingRunning: Boolean = false,
 
     )
 
-    var last_MediaInfo_FileName = ""
-
 
     //更新缩略图列表
-    fun updateThumbs(list: List<scrollerItem>) {
-        _thumbItems.clear()
-        _thumbItems.addAll(list)
+    fun updateFrames(list: List<scrollerItem>) {
+        _frames.clear()
+        _frames.addAll(list)
     }
 
 

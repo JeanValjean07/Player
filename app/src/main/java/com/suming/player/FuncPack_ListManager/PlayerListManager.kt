@@ -209,6 +209,9 @@ object PlayerListManager {
 
     //循环模式
     var PREFS_LoopMode = ""
+    const val LOOP_MODE_OFF = "OFF"
+    const val LOOP_MODE_ONE = "ONE"
+    const val LOOP_MODE_ALL = "ALL"
     @SuppressLint("StaticFieldLeak")
     fun setLoopMode(mode: String, context: Context) {
         //确保已初始化设置清单
@@ -648,6 +651,3 @@ object PlayerListManager {
 
 
 }
-
-//MiniMediaItemForList包含：
-//id uri uriNumOnly filename title artist type

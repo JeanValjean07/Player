@@ -128,8 +128,8 @@ object MediaDataBaseMaster {
         override fun run() {
             //从播放器拿当前进度和duration
             val currentPosition = PlayerSingleton.getState_currentPosition()
-            val duration = PlayerInFoCenter.getMediaDuration()
-            val itemDataBaseID = PlayerInFoCenter.getItemDataBaseID()
+            val duration = PlayerInfoCenter.getMediaDuration()
+            val itemDataBaseID = PlayerInfoCenter.getItemDataBaseID()
             val context = PlayerSingleton.getApplicationContext()
 
             if (duration <= 0) return

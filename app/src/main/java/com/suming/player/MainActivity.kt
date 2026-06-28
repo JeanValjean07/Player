@@ -4,17 +4,15 @@ import android.Manifest
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.Button
@@ -25,18 +23,14 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
-import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -45,7 +39,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -56,7 +49,6 @@ import com.suming.player.ActivityComponent.MainActivity.FragmentVideoStoreSettin
 import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterMusic
 import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterVideo
 import com.suming.player.ActivityComponent.MainActivity.MainViewModel
-import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
@@ -72,9 +64,7 @@ import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaTypeCenter
-import com.suming.player.FuncionalPack.PlayerInFoCenter
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.Disposable
+import com.suming.player.FuncionalPack.PlayerInfoCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -579,7 +569,7 @@ class MainActivity: AppCompatActivity() {
         lifecycleScope.launch {
             //观察媒体变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInFoCenter.uriString.collect { uriString ->
+                PlayerInfoCenter.uriString.collect { uriString ->
                     consoleLog("MiniView观察者 观察到媒体变更: $uriString")
                     showMiniViewLongProcess()
                 }
@@ -588,7 +578,7 @@ class MainActivity: AppCompatActivity() {
         lifecycleScope.launch {
             //观察播放状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInFoCenter.isPlaying.collect { newState ->
+                PlayerInfoCenter.isPlaying.collect { newState ->
                     consoleLog("MiniView观察者 观察到播放状态变更: newState = $newState")
                     updateMiniViewPauseButton(newState)
                 }
@@ -598,7 +588,7 @@ class MainActivity: AppCompatActivity() {
     //显示MiniView LongProcess-把任务全部执行完,禁止扔到其他函数作用域
     private fun showMiniViewLongProcess(){
         //从PlayerStateMediaInfo获取所有信息
-        val MediaInfoPack = PlayerInFoCenter.getMediaInfoPack()
+        val MediaInfoPack = PlayerInfoCenter.getMediaInfoPack()
         if (MediaInfoPack == null) {
             miniView_RetractAnim()
             return
@@ -631,9 +621,14 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_InfoContainer.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
             //启动播放页
-            val uri = PlayerInFoCenter.getMediaUriString(this).second.toUri()
-            consoleLog("PlayingCard_InfoContainer 点击事件 触发播放页: $uri")
-            startPlayerFromMiniView(uri)
+            val uriString = PlayerInfoCenter.getMediaUriString()
+            if (uriString != ""){
+                val uri = uriString.toUri()
+                consoleLog("PlayingCard_InfoContainer 点击事件 触发播放页: $uri")
+                startPlayerFromMiniView(uri)
+            }else{
+                showCustomToast("失败")
+            }
         }
         PlayingCard_ButtonPlay.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
@@ -739,6 +734,7 @@ class MainActivity: AppCompatActivity() {
             state_MiniViewArtwork_ImageUri = uriNumOnly
         }
     }
+    @SuppressLint("InflateParams")
     private fun updateMiniViewArtwork_Video(){
         //绑定到视频
         fun connectToPlayEngine(){
@@ -761,7 +757,7 @@ class MainActivity: AppCompatActivity() {
 
 
                 //获取视频宽高比,计算目标高度px
-                val aspectRatio = PlayerInFoCenter.getMediaAspectRatio(this@MainActivity).second
+                val aspectRatio = PlayerInfoCenter.getMediaAspectRatio()
                 //计算目标宽度
                 var targetWidth = (cardHeight * aspectRatio).toInt()
                 //数值过滤：卡片宽度不得小于高度,不得大于两倍高度
@@ -795,17 +791,10 @@ class MainActivity: AppCompatActivity() {
             PlayingCard_Artwork_Image = null
             state_MiniViewArtwork_ImageUri = ""
             //创建视频视图
-            PlayingCard_Artwork_Video = PlayerView(this).apply {
+            PlayingCard_Artwork_Video = LayoutInflater.from(this)
+                .inflate(R.layout.piece_player_view_texture_ver, null, false) as PlayerView
 
-                layoutParams = FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT
-                )
 
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-
-                useController = false
-            }
             //添加视频视图
             PlayingCard_Artwork.addView(PlayingCard_Artwork_Video)
             state_MiniViewArtwork_type = mini_view_type_video
@@ -889,7 +878,7 @@ class MainActivity: AppCompatActivity() {
     private fun startMiniViewPlay(uri: Uri){
         //比对上次播放媒体信息与当前播放媒体信息
         val newUri = uri.toString()
-        val (_,currentUri) = PlayerInFoCenter.getMediaUriString(this)
+        val currentUri = PlayerInfoCenter.getMediaUriString()
         if (newUri == currentUri){
             showCustomToast("已在播放该媒体",3)
             PlayerSingleton.continuePlay(true,this)
@@ -1118,7 +1107,7 @@ class MainActivity: AppCompatActivity() {
          */
     }
     private fun startPlayerFromMiniView(uri: Uri){
-        val (_,MediaInfo_MediaType) = PlayerInFoCenter.getMediaInfoType(this,uri.toString())
+        val MediaInfo_MediaType = PlayerInfoCenter.getMediaInfoType()
         consoleLog("PlayingCard_InfoContainer 点击事件 媒体类型: $MediaInfo_MediaType")
         when (MediaInfo_MediaType) {
             MediaTypeCenter.mediaType_Video -> {

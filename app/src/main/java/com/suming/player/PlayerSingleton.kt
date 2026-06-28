@@ -9,8 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.CountDownTimer
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.C
@@ -30,8 +28,6 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
-import com.suming.player.AddonTools.ToolEventBus
-import com.suming.player.DataPack.DataBaseMediaItem.MediaItemRepo
 import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
 import com.suming.player.DataPack.MediaInfo
 import com.suming.player.FuncPack_ListManager.PlayerListManager
@@ -40,15 +36,8 @@ import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaUriManager
-import com.suming.player.FuncionalPack.PlayerInFoCenter
+import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -161,7 +150,7 @@ object PlayerSingleton {
         }
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             //修改可观察标志,触发更新
-            PlayerInFoCenter.updateObservableIsPlaying(isPlaying)
+            PlayerInfoCenter.updateObservableIsPlaying(isPlaying)
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             onMediaItemChanged(mediaItem,context)
@@ -200,7 +189,7 @@ object PlayerSingleton {
         //销毁播放器
         releasePlayer()
         //重置媒体状态
-        PlayerInFoCenter.clearCurrentMediaInfo()
+        PlayerInfoCenter.clearCurrentMediaInfo()
         //关闭本侧的媒体会话
         stopMediaSession(context)
 
@@ -249,7 +238,7 @@ object PlayerSingleton {
             return false
         }
         //把信息传递给PlayerInFoCenter
-        PlayerInFoCenter.setMediaInfoPack(MediaInfoPackLocal!!)
+        PlayerInfoCenter.setMediaInfoPack(MediaInfoPackLocal!!)
 
         //重置单个媒体状态
         clearItemState()
@@ -304,7 +293,7 @@ object PlayerSingleton {
         PlayerListener.requestAudioFocus(context, force_request = false)
 
         //修改可观察标志,触发更新
-        PlayerInFoCenter.updateObservableUriString(MediaInfoPackLocal?.MediaInfo_MediaUriString ?: "")
+        PlayerInfoCenter.updateObservableUriString(MediaInfoPackLocal?.MediaInfo_MediaUriString ?: "")
 
     }
 
@@ -412,43 +401,27 @@ object PlayerSingleton {
 
 
 
-    //👀丨关闭各种组件
-    //关闭播放器核心
-    private fun DevastatePlayEnginBundle(context: Context){
-        //执行播放器释放
-        releasePlayer()
-        //播放器监听器跟随销毁,重置状态
-        playerState_PlayerStateListenerAdded = false
-    }
-    //完全清除媒体会话
-    private fun DevastateMediaSessionBundle(context: Context){
-        stopMediaSession(context)
-    }
-
-
-
-
     //获取当前在播放的媒体项的链接(来自播放核心)(也可在PlayerInFoCenter获取缓存)
     fun getState_currentMediaItem_Uri(): Pair<Boolean, Uri> {
         if (_player == null) {
             return Pair(false, Uri.EMPTY)
         }
-
+        //检查当前媒体
         val currentMediaItem = _player?.currentMediaItem
-
         if (currentMediaItem == null){
-            consoleLog("getState_currentItem: currentMediaItem is null")
-            return Pair(false, Uri.EMPTY)
-        }
-        val uri = currentMediaItem.localConfiguration?.uri
-        if (uri == null){
-            consoleLog("getState_currentItem: uri is null")
+
             return Pair(false, Uri.EMPTY)
         }else{
-            consoleLog("getState_currentItem: currentMediaItem uri: $uri")
-            return Pair(true, uri)
-        }
+            val uri = currentMediaItem.localConfiguration?.uri
 
+            return if (uri == null){
+
+                Pair(false, Uri.EMPTY)
+            }else{
+
+                Pair(true, uri)
+            }
+        }
     }
     //是否正在播放
     fun getState_isNowPlaying(): Boolean {
@@ -490,7 +463,7 @@ object PlayerSingleton {
         }
 
         //写入可观察信息
-        PlayerInFoCenter.updateObservableIsPlaying(true)
+        PlayerInfoCenter.updateObservableIsPlaying(true)
 
         //最终开始播放
         _player?.play()
@@ -506,7 +479,7 @@ object PlayerSingleton {
         }
 
         //写入可观察信息
-        PlayerInFoCenter.updateObservableIsPlaying(false)
+        PlayerInfoCenter.updateObservableIsPlaying(false)
 
         //最终暂停
         _player?.pause()
@@ -546,23 +519,28 @@ object PlayerSingleton {
             //让播放暂停
             pausePlay()
         }
-        //告知列表管理器本次播放完成的消息,并带上当前媒体的链接
-
-
+        //检查循环模式
+        val loopMode = PlayerListManager.getLoopMode(context)
+        when(loopMode){
+            PlayerListManager.LOOP_MODE_OFF -> justStop()
+            PlayerListManager.LOOP_MODE_ONE -> repeatMedia()
+            PlayerListManager.LOOP_MODE_ALL -> requireNextMedia()
+            else -> justStop()
+        }
     }
     //由列表管理器进行操作
     //循环播放-寻到视频起始并播放
-    fun ListCommand_repeatMedia(){
+    fun repeatMedia(){
         _player?.seekTo(0)
         continuePlay(true,context)
     }
     //播完暂停-暂停视频
-    fun ListCommand_justStop(){
+    fun justStop(){
         playState_playEnd = true
         pausePlay()
     }
     //列表模式-由列表管理器告知下一个媒体该放什么
-    fun ListCommand_playNewItem(){
+    fun requireNextMedia(){
 
     }
 

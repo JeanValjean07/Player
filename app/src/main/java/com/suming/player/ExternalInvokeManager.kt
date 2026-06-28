@@ -5,12 +5,15 @@ import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.IntentCompat
+import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.FuncionalPack.PlayerInFoCenter
+import com.suming.player.FuncionalPack.MediaInfoRetriever
+import com.suming.player.FuncionalPack.PlayerInfoCenter
 
 class ExternalInvokeManager : AppCompatActivity(){
 
@@ -19,20 +22,38 @@ class ExternalInvokeManager : AppCompatActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        //启动来源标记 < 1 = ACTION_SEND/ACTION_VIEW 丨 2 = pending 丨 3 = 常规启动 >
-        val (source,uri) = ExtractMediaUri(intent)
-
-        //根据媒体类型启动页面
-        startPageByMediaType(uri,source)
-
-
+        mainBusiness()
 
         finish()
-    //onCreate END
+
+    }
+
+    //主业务
+    private fun mainBusiness(){
+        //提取uri
+        val (source,uri) = ExtractMediaUri(intent)
+        val uriString = uri.toString()
+
+        //区分来源
+        when(source){
+            //以新链接为目标
+            1 -> {
+                processOutSource(uriString, source)
+            }
+            //以正在播放项为目标
+            2 -> {
+                processPending()
+            }
+            else -> {
+                consoleLog("来源不明")
+                fail()
+            }
+        }
+
     }
 
 
-    //从intent提取uri信息
+    //从intent提取uri和source
     private fun ExtractMediaUri(intent: Intent): Pair<Int, Uri> {
         when (intent.action) {
             //系统面板：分享
@@ -65,21 +86,64 @@ class ExternalInvokeManager : AppCompatActivity(){
             }
         }
     }
+    //以新链接为目标
+    private fun processOutSource(targetUriString: String,source: Int){
+        consoleLog("以新链接为目标 processOutSource")
+        if (targetUriString != ""){
+            //检查链接有效性和媒体类型
+            val (success, mediaType) = MediaInfoRetriever.getUriStringMediaType(this,targetUriString)
+            if (success){
+                startPageByMediaType(targetUriString.toUri(), source,mediaType)
+            }else{
+                consoleLog("链接有效性检查失败")
+                fail()
+            }
+        }else{
+            consoleLog("新链接为空,无法播放")
+            fail()
+        }
+    }
+    //以正在播放项为目标
+    @OptIn(UnstableApi::class)
+    private fun processPending(){
+        consoleLog("以正在播放项为目标 processPending")
+        //检查正在播放的媒体
+        val (ongoing , uri) = PlayerSingleton.getState_currentMediaItem_Uri()
+        val uriString = uri.toString()
+        if (ongoing){
+            if (uriString != ""){
+                startVideoPage(uri)
+            }else{
+                fail("页面启动失败")
+            }
+        }else{
+            fail("当前未播放任何媒体")
+        }
+    }
+
+
+
+
+
+    private fun fail(failMsg: String = "失败"){
+        showCustomToast(failMsg)
+        finishAndRemoveTask()
+        return
+    }
+
+
 
     //根据媒体类型启动
     @OptIn(UnstableApi::class)
-    private fun startPageByMediaType(uri: Uri, source: Int){
-        //从播放器获取类型
-        val mediaType = PlayerInFoCenter.getMediaInfoType(this).second
-
-
+    private fun startPageByMediaType(uri: Uri, source: Int, type: String){
         //根据类型启动页面
         //来自pendingIntent
         if (source == 2){
-            when(mediaType){
-                "video" -> startVideoPage(uri,source)
-                "music" -> startMusicPage(uri,source)
+            when(type){
+                "video" -> startVideoPage(uri)
+                "music" -> startMusicPage(uri)
                 else -> {
+                    showCustomToast("失败",3)
                     finishAndRemoveTask()
                     return
                 }
@@ -97,8 +161,8 @@ class ExternalInvokeManager : AppCompatActivity(){
             }
 
             when(mediaType){
-                "video" -> startVideoPage(uri,source)
-                "music" -> startMusicPage(uri,source)
+                "video" -> startVideoPage(uri)
+                "music" -> startMusicPage(uri)
                 else -> {
                     showCustomToast("无法验证媒体类型",3)
                     finish()
@@ -128,22 +192,21 @@ class ExternalInvokeManager : AppCompatActivity(){
     }
     //启动视频页面
     @OptIn(UnstableApi::class)
-    private fun startVideoPage(uri: Uri, source: Int) {
+    private fun startVideoPage(uri: Uri) {
         val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(this)
 
         when(playPageType){
-            0 -> startVideoOroPage(uri,source)
-            1 -> startVideoNeoPage(uri,source)
+            0 -> startVideoOroPage(uri)
+            1 -> startVideoNeoPage(uri)
         }
 
     }
     //启动视频页面neo
     @OptIn(UnstableApi::class)
-    private fun startVideoNeoPage(uri: Uri, source: Int) {
+    private fun startVideoNeoPage(uri: Uri) {
         //构建intent
         val intent = Intent(this, PlayerActivityNeo::class.java).apply {
             putExtra("uri", uri)
-            putExtra("IntentSource", source)
             action = "ACTION_NEW_INTENT"
         }.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
@@ -153,21 +216,27 @@ class ExternalInvokeManager : AppCompatActivity(){
     }
     //启动视频页面oro
     @OptIn(UnstableApi::class)
-    private fun startVideoOroPage(uri: Uri, source: Int) {
+    private fun startVideoOroPage(uri: Uri) {
         //构建intent
         val intent = Intent(this, PlayerActivityOro::class.java).apply { putExtra("uri", uri) }
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-            .putExtra("IntentSource", source)
 
         //启动
         startActivity(intent)
     }
     //启动音乐页面
-    private fun startMusicPage(uri: Uri, source: Int) {
+    private fun startMusicPage(uri: Uri) {
 
     }
 
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "ExternalInvokeManager: $msg")
+        }
+    }
 
-//class END
+
+
 }

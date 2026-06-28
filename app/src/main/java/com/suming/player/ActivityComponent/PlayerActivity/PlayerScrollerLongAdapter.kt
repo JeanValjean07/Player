@@ -60,23 +60,6 @@ class PlayerScrollerLongAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThumbViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_player_scroller_item, parent, false)
 
-        //媒体文件更新,需要更换数据源
-        if (MediaInfo_FileName != PlayerScrollerVM.last_MediaInfo_FileName){
-            PlayerScrollerVM.last_MediaInfo_FileName = MediaInfo_FileName
-
-            val newList = List(picNumber) {
-                PlayerScrollerViewModel.scrollerItem(
-                    currentThumbType = false,
-                    thumbGeneratingRunning = false
-                )
-            }
-            thumbItems.clear()
-            thumbItems.addAll(newList)
-            recyclerView?.post {
-                notifyDataSetChanged()
-            }
-
-        }
 
         return ThumbViewHolder(view)
     }

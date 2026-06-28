@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 @Suppress("unused")
-object PlayerInFoCenter {
+object PlayerInfoCenter {
 
     //日志控制
     private fun consoleLog(msg: String, mark: Boolean = false) {
@@ -70,49 +70,42 @@ object PlayerInFoCenter {
     //检查媒体,媒体不同时,先读取新的信息
     const val uriString_for_check_null = ""
     private var current_uriString = ""
-    fun checkMediaInfoPack(context: Context,uriString: String = current_uriString): Boolean{
+    fun compareUriAndUpdate(context: Context,uriString: String): Boolean{
         if (uriString != current_uriString){
             //更新一次信息
-            val (success, _) = MediaInfoRetriever.retrieveMediaInfo(context,uriString.toUri())
-
-            if(!success) {
+            val (success, MediaInfoPack) = MediaInfoRetriever.retrieveMediaInfo(context,uriString.toUri())
+            if (success) {
+                setMediaInfoPack(MediaInfoPack)
+                return true
+            }else{
                 consoleLog("获取媒体信息失败")
                 return false
             }
         }
         return true
     }
-    //获取视频宽高比(aspect ratio 宽/高)
-    fun getMediaAspectRatio(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,Float> {
-        val success = checkMediaInfoPack(context,uriStringForCheck)
-        if(!success){
-            return Pair(false,1f)
-        }
-
+    //获取视频宽高比(返回默认保底值1)
+    fun getMediaAspectRatio(): Float {
         //获取宽高
-        val MediaInfo_Video_Width = MediaInfoPackage!!.MediaInfo_Video_Width
-        val MediaInfo_Video_Height = MediaInfoPackage!!.MediaInfo_Video_Height
+        val MediaInfo_Video_Width = MediaInfoPackage?.MediaInfo_Video_Width?:1
+        val MediaInfo_Video_Height = MediaInfoPackage?.MediaInfo_Video_Height?:1
 
         //计算视频宽高比
         val aspectRatio = MediaInfo_Video_Width.toFloat() / MediaInfo_Video_Height.toFloat()
 
-        return Pair(false,aspectRatio)
+        return aspectRatio
     }
     //获取当前媒体信息完整包
     fun getMediaInfoPack(): MediaInfo? {
 
         return MediaInfoPackage
     }
-    //只返回首页微型播放器需要的信息迷你包(uriNumOnly,fileName,artist)
-    fun getMediaInfoMiniPack(): Triple<String, String, String>? {
-        if (MediaInfoPackage == null) {
-            return null
-        }
-
+    //只返回首页微型播放器需要的信息迷你包(uriNumOnly,fileName,artist)(默认值为空)
+    fun getMediaInfoMiniPack(): Triple<String, String, String> {
         //从MediaInfo中提取三项信息(uriNumOnly,fileName,artist)
-        val MediaInfo_uriNumOnly = MediaInfoPackage!!.MediaInfo_MediaUniqueID
-        val MediaInfo_FileName = MediaInfoPackage!!.MediaInfo_FileName
-        val MediaInfo_MediaArtist = MediaInfoPackage!!.MediaInfo_MediaArtist
+        val MediaInfo_uriNumOnly = MediaInfoPackage?.MediaInfo_MediaUniqueID?:""
+        val MediaInfo_FileName = MediaInfoPackage?.MediaInfo_FileName?:""
+        val MediaInfo_MediaArtist = MediaInfoPackage?.MediaInfo_MediaArtist?:""
 
 
         return Triple(MediaInfo_uriNumOnly, MediaInfo_FileName, MediaInfo_MediaArtist)
@@ -126,107 +119,65 @@ object PlayerInFoCenter {
         return progress
     }
     //获取当前媒体的唯一ID
-    fun getMediaUniqueID(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
-        val success = checkMediaInfoPack(context,uriStringForCheck)
-        if (!success){
-            return Pair(false,"哎呀,骇亖我力")
-        }
+    fun getMediaUniqueID(): String {
+        val MediaInfo_MediaUniqueID = MediaInfoPackage?.MediaInfo_MediaUniqueID?:""
 
-        val MediaInfo_MediaUniqueID = MediaInfoPackage!!.MediaInfo_MediaUniqueID
-
-        return Pair(false, MediaInfo_MediaUniqueID)
+        return MediaInfo_MediaUniqueID
     }
     //获取当前媒体的uriNumOnly
-    fun getMediaUriNumOnly(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean, Long> {
-        val success = checkMediaInfoPack(context,uriStringForCheck)
-        if (!success){
-            return Pair(false,114514L)
-        }
+    fun getMediaUriNumOnly(): Long {
+        val MediaInfo_MediaUriNumOnly = MediaInfoPackage?.MediaInfo_MediaUriNumOnly?:0L
 
-        val MediaInfo_MediaUriNumOnly = MediaInfoPackage!!.MediaInfo_MediaUriNumOnly
-
-        return Pair(false, MediaInfo_MediaUriNumOnly)
+        return MediaInfo_MediaUriNumOnly
     }
     //获取当前媒体的标准链接
-    fun getMediaUriStandard(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean, String> {
-        val success = checkMediaInfoPack(context,uriStringForCheck)
-        if (!success){
-            return Pair(false,"哎呀,骇亖我力")
-        }
+    fun getMediaUriStandard(): String {
+        val MediaInfo_MediaUriStandard = MediaInfoPackage?.MediaInfo_MediaUriStandard?:""
 
-        val MediaInfo_MediaUriStandard = MediaInfoPackage!!.MediaInfo_MediaUriStandard
-
-        return Pair(false, MediaInfo_MediaUriStandard)
+        return MediaInfo_MediaUriStandard
     }
     //获取当前媒体的uriString
-    fun getMediaUriString(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
-        val success = checkMediaInfoPack(context,uriStringForCheck)
-        if (!success){
-            return Pair(false,"哎呀,骇亖我力")
-        }
-        if (MediaInfoPackage == null){
-            return Pair(false,"哎呀,骇亖我力")
-        }
+    fun getMediaUriString(): String {
+        val MediaInfo_MediaUriString = MediaInfoPackage?.MediaInfo_MediaUriString?:""
 
-        val MediaInfo_MediaUriString = MediaInfoPackage!!.MediaInfo_MediaUriString
-
-        return Pair(false, MediaInfo_MediaUriString)
+        return MediaInfo_MediaUriString
     }
     //获取媒体是视频还是音乐
-    fun getMediaInfoType(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
-        val success = checkMediaInfoPack(context,uriStringForCheck)
-        if (!success){
-            return Pair(false,"哎呀,骇亖我力")
-        }
-
-        val MediaInfo_MediaType = MediaInfoPackage!!.MediaInfo_MediaType
-
+    fun getMediaInfoType(): String {
+        //尝试获取类型
+        val MediaInfo_MediaType = MediaInfoPackage?.MediaInfo_MediaType ?: ""
+        //检查类型是否合法
         if (MediaInfo_MediaType != MediaTypeCenter.mediaType_Video && MediaInfo_MediaType != MediaTypeCenter.mediaType_Music){
-            return Pair(false,"哎呀,骇亖我力")
+            return "哎呀,骇亖我力"
         }
 
-        return Pair(false, MediaInfo_MediaType)
+        return MediaInfo_MediaType
     }
     //获取当前媒体的文件名
-    fun getMediaFileName(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
-        val success = checkMediaInfoPack(context,uriStringForCheck)
-        if (!success){
-            return Pair(false,"哎呀,骇亖我力")
-        }
+    fun getMediaFileName(): String {
+        val MediaInfo_MediaFileName = MediaInfoPackage?.MediaInfo_FileName?:""
 
-        val MediaInfo_MediaFileName = MediaInfoPackage!!.MediaInfo_FileName
-
-        return Pair(false, MediaInfo_MediaFileName)
+        return MediaInfo_MediaFileName
     }
     //获取当前媒体的艺术家
-    fun getMediaArtist(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean,String> {
-        val success = checkMediaInfoPack(context,uriStringForCheck)
-        if (!success){
-            return Pair(false,"哎呀,骇亖我力")
-        }
+    fun getMediaArtist(): String {
+        val MediaInfo_MediaArtist = MediaInfoPackage?.MediaInfo_MediaArtist?:""
 
-        val MediaInfo_MediaArtist = MediaInfoPackage!!.MediaInfo_MediaArtist
-
-        return Pair(false, MediaInfo_MediaArtist)
+        return MediaInfo_MediaArtist
     }
     //获取当前媒体的总时长
-    fun getMediaDuration(context: Context,uriStringForCheck: String = current_uriString): Pair<Boolean, Long> {
-        val success = checkMediaInfoPack(context,uriStringForCheck)
-        if (!success){
-            return Pair(false,-114514L)
-        }
-
-        val MediaInfo_MediaDuration = MediaInfoPackage!!.MediaInfo_Duration
-
-        return Pair(false, MediaInfo_MediaDuration)
-    }
     fun getMediaDuration(): Long {
+        val MediaInfo_MediaDuration = MediaInfoPackage?.MediaInfo_Duration?:0L
 
-        return MediaInfoPackage?.MediaInfo_Duration ?: -114514L
+        return MediaInfo_MediaDuration
     }
     //获取数据库ID
     fun getItemDataBaseID(): String {
         return MediaInfoPackage?.MediaInfo_DataBaseID ?: ""
+    }
+    //获取绝对路径
+    fun getMediaAbsolutePath(): String {
+        return MediaInfoPackage?.MediaInfo_AbsolutePath ?: ""
     }
 
     //判断传入的链接是否为正在播放的项(数据缓存)

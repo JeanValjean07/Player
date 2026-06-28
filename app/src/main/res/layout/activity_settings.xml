@@ -638,7 +638,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="已废弃"
+                            android:text="尝试使用高刷新率，不保证一定有效"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:后台播放时关闭视频轨道  -->
@@ -921,7 +921,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="截取关键帧相比截取精确帧，性能消耗大幅降低。当视频关键帧数量不足时，将强制截取精确帧。"
+                            android:text="此选项已废弃，强制使用关键帧。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：进度条停止时使用关键帧  -->

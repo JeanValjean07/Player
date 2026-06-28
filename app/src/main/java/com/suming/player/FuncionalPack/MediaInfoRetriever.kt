@@ -13,14 +13,14 @@ import java.io.File
 object MediaInfoRetriever {
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "MediaInfoRetriever: $msg")
         }
     }
 
+    //解码器
     private var retriever: MediaMetadataRetriever? = null
-
 
     //初始化解码器
     fun initRetriever() {
@@ -37,14 +37,13 @@ object MediaInfoRetriever {
         retriever?.release()
         retriever = null
     }
-    //链接缓存+清除方法
+    //链接缓存清除(含关闭解码器)
     private var current_uriString = ""
     fun clearRetrieverUriCache(){
+        releaseRetriever()
         current_uriString = ""
     }
-
-
-
+    //为解码器设置链接
     fun setMediaUri(context: Context, uri: Uri): Boolean {
         if (retriever == null) {
             initRetriever()
@@ -65,6 +64,8 @@ object MediaInfoRetriever {
 
     }
 
+
+
     //解码一个媒体
     fun retrieveMediaInfo(context: Context, MediaInfo_MediaUri: Uri): Pair<Boolean,MediaInfo> {
         consoleLog("retrieveMediaInfo - 需要解码 MediaInfo_MediaUri: $MediaInfo_MediaUri")
@@ -77,7 +78,7 @@ object MediaInfoRetriever {
             consoleLog("retrieveMediaInfo -成功开始解码 MediaInfo_MediaUri: $MediaInfo_MediaUri")
             success = setMediaUri(context, MediaInfo_MediaUri)
         }else{
-            consoleLog("retrieveMediaInfo -链接未变,无需解码 MediaInfo_MediaUri: $MediaInfo_MediaUri")
+            success = true
         }
 
         //开始解码信息
@@ -188,7 +189,31 @@ object MediaInfoRetriever {
         return true
     }
 
-    
+    //快速检查链接是否有效并返回媒体类型
+    fun getUriStringMediaType(context: Context,uriString: String): Pair<Boolean,String>{
+        val (success, MediaInfoPack) = retrieveMediaInfo(context,uriString.toUri())
+        if (!success){
+            consoleLog("解码失败")
+            return Pair(false,"")
+        }
+        //获取媒体类型
+        val MediaInfo_MediaType = MediaInfoPack.MediaInfo_MediaType
+        //过滤获取的信息
+        if (MediaInfo_MediaType.contains("video")){
+            consoleLog("获取到媒体类型 video")
+            return Pair(true,MediaTypeCenter.mediaType_Video)
+        }else if(MediaInfo_MediaType.contains("audio")){
+            consoleLog("获取到媒体类型 music")
+            return Pair(true,MediaTypeCenter.mediaType_Music)
+        }else{
+            consoleLog("获取到非法媒体类型")
+            return Pair(false,"")
+        }
+    }
+
+
+
+
     //工具函数 - 根据uri获得绝对路径
     private fun getFilePath(context: Context, uri: Uri): String? {
         val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
@@ -223,12 +248,6 @@ object MediaInfoRetriever {
 
         return "${type}_${uriNumOnly}"
     }
-
-
-
-
-
-
 
 
 }
