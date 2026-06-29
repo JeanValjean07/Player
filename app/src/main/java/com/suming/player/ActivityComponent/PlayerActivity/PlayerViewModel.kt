@@ -9,39 +9,6 @@ import androidx.media3.common.util.UnstableApi
 //@Suppress("unused")
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
-    //媒体信息
-    var MediaInfo_MediaType = ""
-    var MediaInfo_MediaTitle = ""
-    var MediaInfo_MediaArtist = ""
-    var MediaInfo_MediaDuration = 0L
-    var MediaInfo_FileName = ""
-    var MediaInfo_AbsolutePath = ""
-    var MediaInfo_MediaUri = Uri.EMPTY!!
-    var MediaInfo_MediaUriString = ""
-    fun saveInfoToViewModel(type: String, title: String, artist: String, duration: Long, filename: String, path: String, uri: Uri, uriString: String){
-        MediaInfo_MediaType = type
-        MediaInfo_MediaTitle = title
-        MediaInfo_MediaArtist = artist
-        MediaInfo_MediaDuration = duration
-        MediaInfo_FileName = filename
-        MediaInfo_AbsolutePath = path
-        MediaInfo_MediaUri = uri
-        MediaInfo_MediaUriString = uriString
-    }
-    fun saveMediaUri(uri: Uri){
-        MediaInfo_MediaUri = uri
-    }
-    fun getMediaUri(): Pair<Boolean, Uri>{
-        return if (MediaInfo_MediaUri == Uri.EMPTY){
-            Pair(false, Uri.EMPTY)
-        }else{
-            Pair(true,MediaInfo_MediaUri)
-        }
-    }
-
-
-
-
 
     //屏幕旋转状态
     var FromManualPortrait: Boolean = true
@@ -71,7 +38,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     //音量相关
     var NOTICED_VolumeIsZero: Boolean = false
-    var NOTICED_HeadSetInsert: Boolean = false
+
     //亮度相关
     var BrightnessChanged: Boolean = false
     var BrightnessValue: Float = 0f
@@ -110,14 +77,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
 
+    var PREFS_EnablePlayAreaMove: Boolean = false
 
-
-
-    var state_FromSysStart: Boolean = false
-
-
-
-    var PREFS_ExitWhenEnd: Boolean = false
 
 
     var statusBarHeight = 0
@@ -128,32 +89,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PREFS_LinkScroll: Boolean = true
 
 
-    var PREFS_SealOEL: Boolean = false
-    var PREFS_GenerateThumbSYNC : Boolean = false
-    var PREFS_UseLongScroller : Boolean = false
-    var PREFS_UseLongSeekGap : Boolean = false
-    var PREFS_UseHighRefreshRate : Boolean = false
-    var PREFS_UseCompatScroller : Boolean = false
-    var PREFS_CloseFragmentGesture : Boolean = false
-    var PREFS_UseOnlySyncFrame : Boolean = false
-    var PREFS_TimeUpdateGap: Long = 20L
-    var PREFS_SavePositionWhenExit: Boolean = false
-    var PREFS_SwitchPortraitWhenExit: Boolean = true
-
-    var PREFS_UseDataBaseForScrollerSetting: Boolean = false
-
-    var PREFS_SeekHandlerGap: Long = 0
-    var PREFS_KeepPlayingWhenExit: Boolean = false
-
-
-
 
     //全新设置变量体系(仅保存需高频次访问的变量)
     var PREFS_UseOnlySyncFrameWhenSeek: Boolean = true
     var PREFS_UseSyncFrameWhenScrollerStop = true
-    var PREFS_EnablePlayAreaMoveAnim = false
-    var VALUE_Gap_TimerUpdate = 40L
-    var VALUE_Gap_SeekHandlerGap = 0L
+
+
+
     var VALUE_Int_statusBarHeight: Int = 0
 
 
@@ -161,9 +103,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     //标记播放器类型：传统Oro 或 新晋Neo
     var state_player_type = ""
-
-
-    var YaxisDestination = 800f
 
 
 

@@ -21,6 +21,8 @@ data class MediaInfo(
     //
     var MediaInfo_Video_Width : Int,          //视频宽度
     var MediaInfo_Video_Height : Int,         //视频高度
+    //
+    var MediaInfo_RealFps: Float = 0f  //实际帧率
 
 
 )

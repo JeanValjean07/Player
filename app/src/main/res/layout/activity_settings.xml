@@ -5,12 +5,12 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/Background"
+    android:background="@color/MainColorPack_SurfaceBackground"
     android:fitsSystemWindows="false"
     tools:context=".SettingsActivity"
     tools:ignore="HardcodedText,TooDeepLayout,UnusedAttribute,TooManyViews" >
 
-    <!-- 标题区域(含渐变区) -->
+    <!-- 标题区域 -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -1000,7 +1000,7 @@
                             android:text="若开启，滚动进度条时，可显示帧数减少，但寻帧速度加快。若关闭，可显示更多帧数，但寻帧速度变慢。若没有精确定位视频中的任意帧的需求，请开启此开关。若有精确定位需求，专业视频剪辑软件是您更好的选择。"
                             android:textSize="12sp" />
                     </LinearLayout>
-                    <!--  选单：时间戳更新间隔  -->
+                    <!--  选单：时间戳被动更新间隔  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"

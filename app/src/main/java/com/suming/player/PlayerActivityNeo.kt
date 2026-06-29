@@ -83,7 +83,7 @@ import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentEqualizer
-import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentVideoInfo
+import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentMediaInfo
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerFragmentMoreButton
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerScrollerAdapter
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerScrollerViewModel
@@ -205,7 +205,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var IDLE_Timer: CountDownTimer? = null
     private val IDLE_MS = 5_000L
     private var state_EnterAnimationCompleted = false
-    private var fps = 0f
     //更新时间戳参数
     private var lastMillis = 0L
     //倍速播放
@@ -325,14 +324,11 @@ class PlayerActivityNeo: AppCompatActivity(){
             //进度条停止滚动时尾帧使用关键帧
             playerViewModel.PREFS_UseSyncFrameWhenScrollerStop = SettingsRequestCenter.get_PREFS_UseSyncFrameWhenScrollerStop(this@PlayerActivityNeo)
             //播放区域移动动画
-            playerViewModel.PREFS_EnablePlayAreaMoveAnim = SettingsRequestCenter.get_PREFS_EnablePlayAreaMoveAnim(this@PlayerActivityNeo)
+            playerViewModel.PREFS_EnablePlayAreaMove = SettingsRequestCenter.get_PREFS_EnablePlayAreaMoveAnim(this@PlayerActivityNeo)
             //寻帧时一律使用关键帧
             playerViewModel.PREFS_UseOnlySyncFrameWhenSeek = SettingsRequestCenter.get_PREFS_UseOnlySyncFrameWhenSeek(this@PlayerActivityNeo)
 
-            //时间戳更新间隔
-            playerViewModel.VALUE_Gap_TimerUpdate = SettingsRequestCenter.get_VALUE_Gap_TimerUpdate(this@PlayerActivityNeo)
-            //视频寻帧间隔
-            playerViewModel.VALUE_Gap_SeekHandlerGap = SettingsRequestCenter.get_VALUE_Gap_SeekHandlerGap(this@PlayerActivityNeo)
+
             //状态栏高度
             playerViewModel.VALUE_Int_statusBarHeight = SettingsRequestCenter.get_VALUE_Int_statusBarHeight(this@PlayerActivityNeo)
 
@@ -340,6 +336,14 @@ class PlayerActivityNeo: AppCompatActivity(){
             playerViewModel.PREFS_AlwaysSeek = SettingsRequestCenter.get_PREFS_EnableAlwaysSeek(this@PlayerActivityNeo)
             playerViewModel.PREFS_LinkScroll = SettingsRequestCenter.get_PREFS_EnableLinkScroll(this@PlayerActivityNeo)
             playerViewModel.PREFS_TapJump = SettingsRequestCenter.get_PREFS_EnableTapJump(this@PlayerActivityNeo)
+
+
+            //视频寻帧间隔
+            seekHandlerGap = SettingsRequestCenter.get_value_seekHandlerGap(this@PlayerActivityNeo)
+            //进度条更新间隔
+            syncScrollerRunnableGap = SettingsRequestCenter.get_value_syncScrollerRunnableGap(context)
+            //时间戳更新间隔
+            timerWindowUpdateGap = SettingsRequestCenter.get_value_timerWindowUpdateGap(context)
 
         }
 
@@ -526,7 +530,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                         return
                     }
                 }
-
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     //进度条随视频滚动,用户没有操作
                     if (scrollerState_Stay) {
@@ -553,15 +556,13 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //用户操作 -时间戳跟随进度条变动
                     onScroll_currentMillis = System.currentTimeMillis()
-                    if (onScroll_currentMillis - lastMillis > playerViewModel.VALUE_Gap_TimerUpdate) {
+                    if (onScroll_currentMillis - lastMillis > timerWindowUpdateGap) {
                         lastMillis = onScroll_currentMillis
                         if (playerViewModel.PREFS_LinkScroll) {
 
                             //计算对应时间戳
-                            onScroll_scrollPercent = recyclerView.computeHorizontalScrollOffset()
-                                .toFloat() / scroller.computeHorizontalScrollRange()
-                            onScroll_seekToMs =
-                                (onScroll_scrollPercent * playerViewModel.MediaInfo_MediaDuration).toLong()
+                            onScroll_scrollPercent = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
+                            onScroll_seekToMs = (onScroll_scrollPercent * PlayerInfoCenter.getMediaDuration()).toLong()
 
                             //刷新时间显示
                             controller_timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
@@ -624,13 +625,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             //更多选项
             val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
-
-                val (ongoing, uri) = PlayerSingleton.getState_currentMediaItem_Uri()
-                consoleLog(" 11111 ${ongoing}  ${uri}")
-
-                val uri1 = PlayerInfoCenter.getMediaUriString()
-                consoleLog(" 222222   ${uri1}")
-                return@setOnClickListener
                 //防止快速点击
                 if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                     return@setOnClickListener
@@ -1075,12 +1069,13 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //截取全部帧
                     FragmentConnector.fragment_more_button_extract_frame -> {
-                        val videoPath = getFilePath(this@PlayerActivityNeo, playerViewModel.MediaInfo_MediaUri)
-                        if (videoPath == null){
-                            showCustomToast("视频绝对路径获取失败", 3)
+                        val absolutePath = PlayerInfoCenter.getMediaAbsolutePath()
+                        val fileName = PlayerInfoCenter.getMediaFileName()
+                        if (absolutePath == "" && fileName == ""){
+                            showCustomToast("失败", 3)
                             return@setFragmentResultListener
                         }
-                        ExtractFrame(videoPath, playerViewModel.MediaInfo_FileName)
+                        ExtractFrame(absolutePath, fileName)
                     }
                     //开启/关闭方向监听器
                     FragmentConnector.fragment_more_button_switch_ori_listener -> {
@@ -1104,41 +1099,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //打开媒体信息面板
                     FragmentConnector.fragment_more_button_open_video_info -> {
-                        //读取数据
-                        val retriever = MediaMetadataRetriever()
-                        retriever.setDataSource(playerViewModel.MediaInfo_AbsolutePath)
-                        val videoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
-                        val videoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
-                        val videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                        val videoFps = fps
-                        val captureFps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)
-                        val videoMimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
-                        val videoBitrate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
-
-                        val videoFileName = playerViewModel.MediaInfo_FileName
-                        val videoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                        val videoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                        val videoDate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)
-
-                        //将数据传递给Fragment
-                        val videoInfoFragment = PlayerFragmentVideoInfo.Companion.newInstance(
-                            videoWidth?.toInt() ?: 0,
-                            videoHeight?.toInt() ?: 0,
-                            videoDuration?.toLong() ?: 0,
-                            videoFps,
-                            captureFps?.toFloat() ?: 0f,
-                            videoMimeType ?: "",
-                            videoBitrate?.toLong() ?: 0,
-                            videoFileName,
-                            videoTitle ?: "",
-                            videoArtist ?: "",
-                            videoDate ?: ""
-                        )
-                        videoInfoFragment.show(supportFragmentManager, "PlayerVideoInfoFragment")
+                        startMediaIndoFragment()
                     }
                     //使用系统分享面板
                     FragmentConnector.fragment_more_button_sys_share_video -> {
-                        shareVideo(this@PlayerActivityNeo, playerViewModel.MediaInfo_MediaUri)
+                        val uriString = PlayerInfoCenter.getMediaUriStandard()
+                        shareVideo(this@PlayerActivityNeo, uriString.toUri())
                     }
                     //更新视频封面
                     FragmentConnector.fragment_more_button_update_cover_frame -> {
@@ -1195,15 +1161,15 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
             //媒体信息
-            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_VIDEO_INFO", this@PlayerActivityNeo) { _, bundle ->
-                val ReceiveKey = bundle.getString("KEY")
-                when(ReceiveKey){
-                    "Dismiss" -> {
-                        //开启被控组件
-                        startScrollerSync()
-                        startVideoTimeSync()
-                        //把播放区域移回去
-                        MovePlayArea_down()
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_media_info, this@PlayerActivityNeo) { _, bundle ->
+                val receive_key = bundle.getString(FragmentConnector.receive_key)
+                when(receive_key){
+                    //开启/退出事件
+                    FragmentConnector.fragment_event_close -> {
+                        onFragmentClose()
+                    }
+                    FragmentConnector.fragment_event_open -> {
+                        onFragmentOpen()
                     }
                 }
             }
@@ -1345,12 +1311,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         playerReadyFrom_FirstEntry = false
 
 
-        //刷新视频进度线
-        updateTimeCard()
+
         //刷新进度条
         updateScrollerAdapter()
         //更新时间戳
-        updateTimeCard()
+        updateTimerWindow()
         //刷新控制按钮
         updateButtonState()
 
@@ -1375,10 +1340,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             when (state) {
                 Player.STATE_READY -> {
                     STATE_PlayerReady = true
-                    playerReady()
+                    playState_playerReady()
                 }
                 Player.STATE_ENDED -> {
-                    playerEnd()
+                    playState_playEnd()
                 }
                 Player.STATE_IDLE -> {
                     stopVideoTimeSync()
@@ -1399,7 +1364,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         override fun onTracksChanged(tracks: Tracks) {
             for (trackGroup in tracks.groups) {
                 val format = trackGroup.getTrackFormat(0)
-                fps = format.frameRate
+                val fps = format.frameRate
+                PlayerInfoCenter.setMediaFps(fps)
                 break
             }
         }
@@ -1452,9 +1418,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         bindPlayerView()
 
 
-        //刷新：视频总长度
-        updateTimeCard()
-        //刷新：进度条更新
+        //刷新视频总长度
+        updateTimerWindow()
+        //刷新进度条
         updateScrollerAdapter()
         //刷新按钮
         updateButtonState()
@@ -1942,6 +1908,10 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun startEqualizerFragment(){
         PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_equalizer)
     }
+    //启动媒体信息面板
+    private fun startMediaIndoFragment(){
+        PlayerFragmentMediaInfo.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_media_info)
+    }
     //绑定播放器视图
     private fun bindPlayerView(){
         playerView.player = null
@@ -1961,19 +1931,32 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //响应Fragment开启/关闭事件
+    private var fragment_count = 0
     private fun onFragmentOpen(){
-        //关闭被控组件
-        stopScrollerSync()
-        stopVideoTimeSync()
-        //播放区域移移动
-        MovePlayAreaJob()
+        //增加计数
+        fragment_count += 1
+        consoleLog("计数增加。当前Fragment计数：$fragment_count")
+        //仅在数量为0时才执行
+        if (fragment_count > 0){
+            //关闭被控组件
+            stopScrollerSync()
+            stopVideoTimeSync()
+            //播放区域移移动
+            //MovePlayAreaJob()
+            MovePlayArea_up()
+        }
     }
     private fun onFragmentClose(){
-        //开启被控组件
-        startScrollerSync()
-        startVideoTimeSync()
-        //播放区域移移动
-        MovePlayArea_down()
+        //减少计数
+        fragment_count -= 1
+        consoleLog("计数减少。当前Fragment计数：$fragment_count")
+        if (fragment_count <= 0){
+            //开启被控组件
+            startScrollerSync()
+            startVideoTimeSync()
+            //播放区域移移动
+            MovePlayArea_down()
+        }
     }
     //请求使用高刷新率
     private fun requestHighRefreshRate(){
@@ -2096,7 +2079,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //视频区域抬高
     private fun MovePlayArea_down(){
         if (isLandscape) return
-        if (playerViewModel.PREFS_EnablePlayAreaMoveAnim) {
+        if (playerViewModel.PREFS_EnablePlayAreaMove) {
             //取消原区域上移任务
             MovePlayAreaJob?.cancel()
 
@@ -2110,7 +2093,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun MovePlayArea_up() {
-        if (playerViewModel.PREFS_EnablePlayAreaMoveAnim){
+        if (playerViewModel.PREFS_EnablePlayAreaMove){
                 playerView.animate()
                     .translationY(-(ValueManager.get_Value_PlayAreaMoveDistance(context)))
                     .setInterpolator(DecelerateInterpolator(3f))
@@ -2468,8 +2451,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
 
     }
-
-    private fun playerReady(){
+    //专注界面控制,不参与控制逻辑
+    private fun playState_playerReady(){
         isSeekReady = true
         if (playerReadyFrom_FirstEntry) {
             playerReadyFrom_FirstEntry = false
@@ -2517,17 +2500,16 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
 
     }
-    //playEnd不应该控制播放,而是只专注于用户端界面的控制,播放控制转移到单例中
-    private fun playerEnd(){
+    private fun playState_playEnd(){
         val loopMode = PlayerListManager.getLoopMode(this)
         when (loopMode) {
-            "ONE" -> {
+            PlayerListManager.LOOP_MODE_ONE -> {
                 notice("单集循环", 3000)
             }
-            "ALL" -> {
+            PlayerListManager.LOOP_MODE_ALL -> {
 
             }
-            "OFF" -> {
+            PlayerListManager.LOOP_MODE_OFF -> {
                 playerViewModel.playEnd = true
                 notice("视频结束", 1000)
                 //停止被控控件
@@ -2537,12 +2519,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 setControllerVisible()
                 Handler(Looper.getMainLooper()).postDelayed({ stopScrollerSync() }, 100)
                 IDLE_Timer?.cancel()
-                //自动退出
-                if (playerViewModel.state_FromSysStart){
-                    if (SettingsRequestCenter.get_PREFS_AutoExitWhenEnd(this@PlayerActivityNeo)){
-                        EnsureExit_close_all_stuff()
-                    }
-                }
 
             }
         }
@@ -2604,11 +2580,12 @@ class PlayerActivityNeo: AppCompatActivity(){
     private lateinit var noticeCapsule : CardView //通知胶囊卡片
     private lateinit var playerView: PlayerView //播放区域
     //刷新视频总长度
-    private fun updateTimeCard(){
+    private fun updateTimerWindow(){
         //设置时间戳-总时长显示位
-        controller_timer_total.text = FormatTime_onlyNum(playerViewModel.MediaInfo_MediaDuration)
-        //开始时间戳更新(TODO:需升级为仅在视频正播放时开启)
-        startVideoTimeSync()
+        val mediaDuration = PlayerInfoCenter.getMediaDuration()
+        controller_timer_total.text = FormatTime_onlyNum(mediaDuration)
+        //开始时间戳更新
+        if (player.isPlaying) startVideoTimeSync()
     }
     //更新进度条
 
@@ -3003,7 +2980,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
 
-    //Runnable:根据视频时间更新进度条位置
+    //Runnable-1:根据视频时间更新进度条位置
     private val syncScrollTaskHandler = Handler(Looper.getMainLooper())
     private val syncScrollTask = object : Runnable {
         @SuppressLint("ServiceCast")
@@ -3069,7 +3046,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun stopVideoTimeSync() {
         videoTimeSyncHandler.removeCallbacks(videoTimeSync)
     }
-    //Runnable:视频倍速滚动
+    private var timerWindowUpdateGap = 0L //时间戳刷新间隔
+    //Runnable-2:视频倍速滚动
     var lastSeekExecuted = false
     private val videoSmartScrollHandler = Handler(Looper.getMainLooper())
     private var videoSmartScroll = object : Runnable{
@@ -3189,7 +3167,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             //决定继续运行或是结束
             if (scrollerState_Pressed || scrollerState_Moving) {
-                videoSeekHandler.postDelayed(this, playerViewModel.VALUE_Gap_SeekHandlerGap)
+                videoSeekHandler.postDelayed(this, seekHandlerGap)
             }else{
                 global_SeekToMs = VideoSeekHandler_seekToMs
                 startLastSeek()
@@ -3209,6 +3187,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         videoSeekHandlerRunning = false
         videoSeekHandler.removeCallbacks(videoSeek)
     }
+    private var seekHandlerGap = 0L
     //Runnable:lastSeek
     private val lastSeekHandler = Handler(Looper.getMainLooper())
     private var lastSeek = object : Runnable{

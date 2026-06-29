@@ -1,4 +1,4 @@
-package com.suming.player.ActivityComponent.IndepFragment
+package com.suming.player.FuncPack_ListManager
 
 import android.os.Build
 import android.os.Bundle
@@ -21,10 +21,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.FuncPack_ListManager.MusicListAdapter
-import com.suming.player.FuncPack_ListManager.MusicListPagingSource
-import com.suming.player.FuncPack_ListManager.PlayerListManager
-import com.suming.player.FuncPack_ListManager.PlayerListViewModel
 import com.suming.player.R
 import kotlinx.coroutines.launch
 

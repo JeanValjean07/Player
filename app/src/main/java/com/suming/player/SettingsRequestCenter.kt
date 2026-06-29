@@ -420,6 +420,12 @@ object SettingsRequestCenter {
     //PREFS in PREFS_PlayVideoPage -------------------------------------------------------------
     private lateinit var PREFS_PlayVideoPage: SharedPreferences
     private var state_PREFS_PlayVideoPage_initialized = false
+    const val PREFS_PlayVideoPage_Name = "PREFS_PlayVideoPage"
+    private fun initPlayVideoPageSetting(context: Context){
+        if (state_PREFS_PlayVideoPage_initialized) return
+        PREFS_PlayVideoPage = context.getSharedPreferences( PREFS_PlayVideoPage_Name, 0)
+        state_PREFS_PlayVideoPage_initialized = true
+    }
     //后台播放
     private var PREFS_BackgroundPlay = -1
     fun set_PREFS_BackgroundPlay(backgroundPlay: Boolean){
@@ -856,52 +862,87 @@ object SettingsRequestCenter {
         return PREFS_UseOnlySyncFrameWhenSeek == 1
     }
 
-    //数值设置
-    //时间戳刷新间隔
-    private var VALUE_Gap_TimerUpdate = -1L
-    fun set_VALUE_Gap_TimerUpdate(gap: Long){
-        VALUE_Gap_TimerUpdate = gap
-        PREFS_PlayVideoPage.edit { putLong("VALUE_Gap_TimerUpdate", gap) }
-    }
-    fun get_VALUE_Gap_TimerUpdate(context: Context): Long {
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayVideoPage_initialized) {
-            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
-            state_PREFS_PlayVideoPage_initialized = true
-        }
-        //确保配置项已被读取过
-        if (VALUE_Gap_TimerUpdate == -1L) {
-            VALUE_Gap_TimerUpdate = PREFS_PlayVideoPage.getLong("VALUE_Gap_TimerUpdate", -1L)
-            if (VALUE_Gap_TimerUpdate == -1L) {
-                VALUE_Gap_TimerUpdate = 33L
-                PREFS_PlayVideoPage.edit { putLong("VALUE_Gap_TimerUpdate", 33L) }
-            }
-        }
-        return VALUE_Gap_TimerUpdate
-    }
     //连续寻帧间隔
-    private var VALUE_Gap_SeekHandlerGap = -1L
-    fun set_VALUE_Gap_SeekHandlerGap(gap: Long){
-        VALUE_Gap_SeekHandlerGap = gap
-        PREFS_PlayVideoPage.edit { putLong("VALUE_Gap_SeekHandlerGap", gap) }
+    private var seekHandlerGap = -1L
+    const val seekHandlerGapName = "seekHandlerGap"
+    fun set_value_seekHandlerGap(context: Context, gap: Long){
+        initPlayVideoPageSetting(context)
+
+        //刷新缓存并写入本地
+        seekHandlerGap = gap
+        PREFS_PlayVideoPage.edit { putLong(seekHandlerGapName, gap) }
     }
-    fun get_VALUE_Gap_SeekHandlerGap(context: Context): Long {
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayVideoPage_initialized) {
-            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
-            state_PREFS_PlayVideoPage_initialized = true
-        }
-        //确保配置项已被读取过
-        if (VALUE_Gap_SeekHandlerGap == -1L) {
-            VALUE_Gap_SeekHandlerGap = PREFS_PlayVideoPage.getLong("VALUE_Gap_SeekHandlerGap", -1L)
-            if (VALUE_Gap_SeekHandlerGap == -1L) {
-                VALUE_Gap_SeekHandlerGap = 0L
-                PREFS_PlayVideoPage.edit { putLong("VALUE_Gap_SeekHandlerGap", 0L) }
+    fun get_value_seekHandlerGap(context: Context): Long {
+        initPlayVideoPageSetting(context)
+
+        //仅在无缓存时读盘
+        if (seekHandlerGap == -1L) {
+            seekHandlerGap = PREFS_PlayVideoPage.getLong(seekHandlerGapName, -1L)
+            if (seekHandlerGap == -1L) {
+                seekHandlerGap = 0L
+                PREFS_PlayVideoPage.edit { putLong(seekHandlerGapName, 0L) }
             }
         }
 
-        return VALUE_Gap_SeekHandlerGap
+        return seekHandlerGap
     }
+    //时间戳刷新间隔(主动刷新)
+    private var timerWindowUpdateGap = -1L
+    const val timerWindowUpdateGapName = "timerWindowUpdateGap"
+    fun set_value_timerWindowUpdateGap(context: Context, gap: Long){
+        initPlayVideoPageSetting(context)
+
+        //刷新缓存并写入本地
+        timerWindowUpdateGap = gap
+        PREFS_PlayVideoPage.edit { putLong(timerWindowUpdateGapName, gap) }
+    }
+    fun get_value_timerWindowUpdateGap(context: Context): Long {
+        initPlayVideoPageSetting(context)
+
+        //仅在无缓存时读盘
+        if (timerWindowUpdateGap == -1L) {
+            timerWindowUpdateGap = PREFS_PlayVideoPage.getLong(timerWindowUpdateGapName, -1L)
+            if (timerWindowUpdateGap == -1L) {
+                timerWindowUpdateGap = 33L
+                PREFS_PlayVideoPage.edit { putLong(timerWindowUpdateGapName, 33L) }
+            }
+        }
+
+        return timerWindowUpdateGap
+    }
+    //进度条刷新间隔(主动刷新)
+    private var syncScrollerRunnableGap = -1L
+    const val syncScrollerRunnableGapName = "syncScrollerRunnableGap"
+    fun get_value_syncScrollerRunnableGap(context: Context):Long{
+        initPlayVideoPageSetting(context)
+
+        //仅在无缓存时读盘
+        if (syncScrollerRunnableGap == -1L) {
+            syncScrollerRunnableGap = PREFS_PlayVideoPage.getLong(syncScrollerRunnableGapName, -1L)
+            //设置默认值
+            if (syncScrollerRunnableGap == -1L) {
+                syncScrollerRunnableGap = 100
+            }
+        }
+
+        return syncScrollerRunnableGap
+    }
+    fun set_value_syncScrollerRunnableGap(context: Context, targetValue: Long){
+        initPlayVideoPageSetting(context)
+
+        //检查数值合法性
+        if (targetValue !in 0L..1000L) return
+
+        //刷新缓存并写入本地
+        syncScrollerRunnableGap = targetValue
+        PREFS_PlayVideoPage.edit { putLong(syncScrollerRunnableGapName, targetValue) }
+
+    }
+
+
+
+
+
     //状态栏高度
     private var VALUE_Int_statusBarHeight = -1
     fun set_VALUE_Int_statusBarHeight(height: Int){
@@ -939,8 +980,6 @@ object SettingsRequestCenter {
 
         return VALUE_Int_statusBarHeight != -1
     }
-
-
 
 
 

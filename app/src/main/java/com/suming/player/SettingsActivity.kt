@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -365,6 +366,13 @@ class SettingsActivity: AppCompatActivity() {
                 popup.show()
 
             }
+            //进度条刷新间隔
+            val ButtonCardScrollerUpdateGap = findViewById<CardView>(R.id.ButtonCard_scrollerUpdateGap)
+            updateScrollerUpdateGapText()
+            ButtonCardScrollerUpdateGap.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                chooseScrollerUpdateGap(ButtonCardScrollerUpdateGap)
+            }
             //振动模式
             val ButtonCardVibrateMode = findViewById<CardView>(R.id.ButtonCardVibrateMode)
             updateVibrateModeText()
@@ -461,7 +469,7 @@ class SettingsActivity: AppCompatActivity() {
     //寻帧间隔
     private fun chooseSeekHandlerGap(gap: Long) {
         ToolVibrate().vibrate(this)
-        SettingsRequestCenter.set_VALUE_Gap_SeekHandlerGap(gap)
+        SettingsRequestCenter.set_value_seekHandlerGap(this,gap)
         updateSeekHandlerGapText()
     }
     private fun setSeekHandlerGapByInput(){
@@ -497,7 +505,7 @@ class SettingsActivity: AppCompatActivity() {
             }
             else {
                 //设置寻帧间隔
-                SettingsRequestCenter.set_VALUE_Gap_SeekHandlerGap(gapInput)
+                SettingsRequestCenter.set_value_seekHandlerGap(this,gapInput)
                 //界面刷新
                 updateSeekHandlerGapText()
 
@@ -515,7 +523,7 @@ class SettingsActivity: AppCompatActivity() {
     }
     private fun updateSeekHandlerGapText(){
         val ButtonTextSeekHandlerGap = findViewById<TextView>(R.id.ButtonTextSeekHandlerGap)
-        val seekHandlerGap = SettingsRequestCenter.get_VALUE_Gap_SeekHandlerGap(this)
+        val seekHandlerGap = SettingsRequestCenter.get_value_seekHandlerGap(this)
         when(seekHandlerGap){
             0L -> ButtonTextSeekHandlerGap.text = "无间隔"
             16L -> ButtonTextSeekHandlerGap.text = "60 Hz"
@@ -527,7 +535,7 @@ class SettingsActivity: AppCompatActivity() {
     //时间戳刷新间隔
     private fun chooseTimeUpdateGap(gap: Long) {
         ToolVibrate().vibrate(this)
-        SettingsRequestCenter.set_VALUE_Gap_TimerUpdate(gap)
+        SettingsRequestCenter.set_value_timerWindowUpdateGap(this,gap)
         updateTimerUpdateGapText()
     }
     private fun setTimerUpdateGapByInput() {
@@ -562,8 +570,8 @@ class SettingsActivity: AppCompatActivity() {
                 dialog.dismiss()
                 return@setOnClickListener
             }
-            else{
-                SettingsRequestCenter.set_VALUE_Gap_TimerUpdate(gapInput)
+            else {
+                SettingsRequestCenter.set_value_timerWindowUpdateGap(this,gapInput)
                 //界面刷新
                 updateTimerUpdateGapText()
                 dialog.dismiss()
@@ -579,13 +587,116 @@ class SettingsActivity: AppCompatActivity() {
     }
     private fun updateTimerUpdateGapText(){
         val ButtonTextTimerUpdateGap = findViewById<TextView>(R.id.ButtonTextTimerUpdateGap)
-        val timerUpdateGap = SettingsRequestCenter.get_VALUE_Gap_TimerUpdate(this)
-        when(timerUpdateGap){
+        when(val timerUpdateGap = SettingsRequestCenter.get_value_timerWindowUpdateGap(this)){
             8L -> ButtonTextTimerUpdateGap.text = "120 Hz"
             16L -> ButtonTextTimerUpdateGap.text = "60 Hz"
             33L -> ButtonTextTimerUpdateGap.text = "30 Hz"
             66L -> ButtonTextTimerUpdateGap.text = "15 Hz"
             else -> ButtonTextTimerUpdateGap.text = "$timerUpdateGap 毫秒"
+        }
+    }
+    //进度条刷新间隔
+    private fun chooseScrollerUpdateGap(anchor: CardView){
+        //使用弹出菜单选择
+        val popup = PopupMenu(this@SettingsActivity, anchor)
+        popup.menuInflater.inflate(
+            R.menu.popup_menu_scroller_update_gap,
+            popup.menu
+        )
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.menu_item_120hz -> {
+                    ToolVibrate().vibrate(this)
+                    chooseScrollerUpdateGapCore(0L); true
+                }
+                R.id.menu_item_90hz -> {
+                    ToolVibrate().vibrate(this)
+                    chooseScrollerUpdateGapCore(12L); true
+                }
+                R.id.menu_item_60hz -> {
+                    ToolVibrate().vibrate(this)
+                    chooseScrollerUpdateGapCore(16L); true
+                }
+                R.id.menu_item_30hz -> {
+                    ToolVibrate().vibrate(this)
+                    chooseScrollerUpdateGapCore(33L); true
+                }
+                R.id.menu_item_15hz -> {
+                    ToolVibrate().vibrate(this)
+                    chooseScrollerUpdateGapCore(66L); true
+                }
+                R.id.menu_item_Input -> {
+                    ToolVibrate().vibrate(this)
+                    setScrollerUpdateGapByInput(); true
+                }
+                else -> true
+            }
+        }
+        popup.show()
+
+    }
+    private fun chooseScrollerUpdateGapCore(gap: Long) {
+        SettingsRequestCenter.set_value_syncScrollerRunnableGap(this,gap)
+        updateScrollerUpdateGapText()
+    }
+    private fun setScrollerUpdateGapByInput() {
+        ToolVibrate().vibrate(this)
+        //创建对话框
+        val dialog = Dialog(this).apply {
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_input_value, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+        title.text = "自定义进度条更新间隔"
+        Description.text = "仅控制进度条自主滚动时的更新间隔"
+        EditText.hint = "以毫秒为单位"
+        Button.text = "确定"
+
+        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val gapInput = EditText.text.toString().toLongOrNull()
+            if (gapInput == null || gapInput == 0L) {
+                showCustomToast("未输入内容", 3)
+                dialog.dismiss()
+                return@setOnClickListener
+
+            }
+            else if (gapInput > 1000) {
+                showCustomToast("时间更新间隔不能大于1秒", 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            else{
+                SettingsRequestCenter.set_value_syncScrollerRunnableGap(this,gapInput)
+                //界面刷新
+                updateScrollerUpdateGapText()
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+        //自动弹出键盘程序
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(50)
+            EditText.requestFocus()
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+    private fun updateScrollerUpdateGapText(){
+        val ButtonTextScrollerUpdateGap = findViewById<TextView>(R.id.ButtonText_scrollerUpdateGap)
+        val scrollerUpdateGap = SettingsRequestCenter.get_value_syncScrollerRunnableGap(this)
+        consoleLog("updateScrollerUpdateGapText: $scrollerUpdateGap")
+        when(scrollerUpdateGap){
+            0L -> ButtonTextScrollerUpdateGap.text = "120 Hz"
+            12L -> ButtonTextScrollerUpdateGap.text = "90 Hz"
+            16L -> ButtonTextScrollerUpdateGap.text = "60 Hz"
+            33L -> ButtonTextScrollerUpdateGap.text = "30 Hz"
+            66L -> ButtonTextScrollerUpdateGap.text = "15 Hz"
+            else -> ButtonTextScrollerUpdateGap.text = "$scrollerUpdateGap 毫秒"
         }
     }
     //振动模式
@@ -705,6 +816,13 @@ class SettingsActivity: AppCompatActivity() {
             }
         }
         return true
+    }
+
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "SettingsRequestCenter: $msg")
+        }
     }
 
 }

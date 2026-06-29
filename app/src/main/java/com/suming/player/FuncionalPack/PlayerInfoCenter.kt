@@ -55,14 +55,17 @@ object PlayerInfoCenter {
 
     //接收信息解码器传入的媒体信息
     fun setMediaInfoPack(MediaInfoPack: MediaInfo) {
-        this.MediaInfoPackage = MediaInfoPack
+        MediaInfoPackage = MediaInfoPack
         consoleLog("setMediaInfoPack 设置媒体信息: ${MediaInfoPack.MediaInfo_MediaUriString}")
         current_uriString = MediaInfoPack.MediaInfo_MediaUriString
         //更新内部可观察标签
         updateObservableUriString(MediaInfoPack.MediaInfo_MediaUriString)
     }
 
-
+    //设置真实帧率值
+    fun setMediaFps(fps:Float){
+        MediaInfoPackage?.MediaInfo_RealFps = fps
+    }
 
 
 

@@ -4,8 +4,10 @@ object FragmentConnector {
 
 
     //Fragment标签合集
-    const val fragment_tag_more_button = "fragment_tag_more_button"   //
+    const val fragment_tag_more_button = "fragment_tag_more_button"   //更多选项面板
     const val fragment_tag_equalizer = "fragment_tag_equalizer"  //均衡器面板
+    const val fragment_tag_media_info = "fragment_tag_media_info"  //媒体信息面板
+
 
     //所有Fragment公用一个
     const val request_key = "request_key"
@@ -42,11 +44,13 @@ object FragmentConnector {
 
 
     //均衡器面板
-    const val fragment_request_key_equalizer = "fragment_request_key_equalizer"  //独立key
+    const val fragment_request_key_equalizer = "fragment_request_key_equalizer"
     //均衡器面板具体事件
 
 
 
+    //媒体信息面板
+    const val fragment_request_key_media_info = "fragment_request_key_media_info"
 
 
 
