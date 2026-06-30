@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
@@ -36,6 +37,8 @@ import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.FragmentConnector
+import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -55,7 +58,7 @@ class FragmentPlayList: DialogFragment() {
     }
 
     //连接到ViewModel
-    private val viewModel: PlayerListViewModel by activityViewModels()
+    private val listViewModel: PlayerListViewModel by activityViewModels()
 
 
 
@@ -132,6 +135,19 @@ class FragmentPlayList: DialogFragment() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        //发布开启事件
+        returnFragment(FragmentConnector.fragment_event_open)
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        //移除ViewPager监听
+        stopViewPagerListener()
+        //发布关闭事件
+        returnFragment(FragmentConnector.fragment_event_close)
+    }
+
     private fun init(view: View){
         //初始化全局元素
         ButtonCard_Area = view.findViewById(R.id.TabScrollView)
@@ -139,43 +155,10 @@ class FragmentPlayList: DialogFragment() {
         ButtonCard_videoList = view.findViewById(R.id.ButtonCardVideo)
         ButtonCard_musicList = view.findViewById(R.id.ButtonCardMusic)
 
-        lifecycleScope.launch(Dispatchers.Main) {
-            //设置卡片高度
-            setCardHeight(view)
+        display(view)
 
-
-
-            //执行其他
-            delay(500)
-            //监听返回手势
-            dialog?.setOnKeyListener { _, keyCode, event ->
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                    Dismiss(false)
-                    return@setOnKeyListener true
-                }
-                return@setOnKeyListener false
-            }
-        }
     }
-    private fun setCardHeight(view: View){
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            //读取屏幕信息
-            val screenHeightPx = resources.displayMetrics.heightPixels
-            val targetHeightPx = (screenHeightPx * 0.7).toInt()
-            val density = resources.displayMetrics.density
-            val screenHeightDp = (screenHeightPx / density).toInt()
-            //操作主卡片视图
-            val mainCard = view.findViewById<CardView>(R.id.main_card)
-            mainCard.post {
-                if (screenHeightDp < 450){
-                    mainCard.layoutParams.height = screenHeightPx
-                }else{
-                    mainCard.layoutParams.height = targetHeightPx
-                }
-                mainCard.requestLayout()
-            }
-        }
-    }
+
 
 
 
@@ -185,28 +168,22 @@ class FragmentPlayList: DialogFragment() {
     private fun register(view: View){
         lifecycleScope.launch(Dispatchers.Main) {
             //按钮：退出
-            val buttonExit = view.findViewById<ImageButton>(R.id.buttonExit)
+            val buttonExit = view.findViewById<CircleButton>(R.id.buttonExit)
             buttonExit.setOnClickListener {
-                Dismiss()
+                dismiss()
             }
             //按钮：点击空白区域退出
             val topArea = view.findViewById<View>(R.id.out_area)
             topArea.setOnClickListener {
-                Dismiss()
+                dismiss()
+            }
+            //更多按钮
+            val ButtonMoreOpt = view.findViewById<CircleButton>(R.id.ButtonMore)
+            ButtonMoreOpt.setOnClickListener {
+                showMoreOptMenu(ButtonMoreOpt)
             }
 
-            //按钮：上一曲
-            val ButtonPreviousMedia = view.findViewById<ImageButton>(R.id.ButtonPreviousMedia)
-            ButtonPreviousMedia.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
-                //PlayerSingleton.switchToPreviousMediaItem(requireContext())
-            }
-            //按钮：下一曲
-            val ButtonNextMedia = view.findViewById<ImageButton>(R.id.ButtonNextMedia)
-            ButtonNextMedia.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
-                //PlayerSingleton.switchToNextMediaItem(requireContext())
-            }
+
             //循环模式
             updateLoopModeText()
             val ButtonCardLoopMode = view.findViewById<CardView>(R.id.ButtonCardLoopMode)
@@ -229,19 +206,6 @@ class FragmentPlayList: DialogFragment() {
                     }
                 }
                 popup.show()
-            }
-
-            //按钮：停止播放
-            val ButtonStopPlaying = view.findViewById<ImageButton>(R.id.ButtonStopPlaying)
-            ButtonStopPlaying.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
-                //关闭播放器
-                //PlayerSingleton.stopPlayBundle(true,requireContext())
-                //发回命令信息
-                val result = bundleOf("KEY" to "stopPlaying")
-                setFragmentResult("FROM_FRAGMENT_PLAY_LIST", result)
-                //退出
-                Dismiss(false)
             }
 
 
@@ -351,14 +315,41 @@ class FragmentPlayList: DialogFragment() {
         ViewPager.post {
             if (viewPagerAdapter.itemCount > 0){
                 val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
-                //使用上一次的页面
-                if (acquiescePage == -1){
+                //使用上一次的页签
+                if (acquiescePage == PlayerListManager.list_page_last){
                     val lastPageSign = PlayerListManager.get_state_LastPageSign(requireContext())
-                    ViewPager.setCurrentItem(lastPageSign, false)
+                    when(lastPageSign){
+                        PlayerListManager.list_page_custom -> {
+                            ViewPager.setCurrentItem(0, false)
+                        }
+                        PlayerListManager.list_page_video -> {
+                            ViewPager.setCurrentItem(1, false)
+                        }
+                        PlayerListManager.list_page_music -> {
+                            ViewPager.setCurrentItem(2, false)
+                        }
+                        else -> {
+                            ViewPager.setCurrentItem(0, false)
+                        }
+                    }
+
                 }
-                //使用设置的固定默认页面
-                else if (acquiescePage in 0..2){
-                    ViewPager.setCurrentItem(acquiescePage, false)
+                //使用设置的固定默认页签
+                else {
+                    when(acquiescePage){
+                        PlayerListManager.list_page_custom -> {
+                            ViewPager.setCurrentItem(0, false)
+                        }
+                        PlayerListManager.list_page_video -> {
+                            ViewPager.setCurrentItem(1, false)
+                        }
+                        PlayerListManager.list_page_music -> {
+                            ViewPager.setCurrentItem(2, false)
+                        }
+                        else -> {
+                            ViewPager.setCurrentItem(0, false)
+                        }
+                    }
                 }
             }
         }
@@ -458,7 +449,38 @@ class FragmentPlayList: DialogFragment() {
         }
     }
 
+    //显示更多操作菜单
+    private fun showMoreOptMenu(anchor: CircleButton){
+        //使用弹出菜单选择
+        val popup = PopupMenu(requireContext(), anchor)
+        popup.menuInflater.inflate(
+            R.menu.popup_menu_list_more_opt,
+            popup.menu
+        )
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.opt_next_media -> {
+                    ToolVibrate().vibrate(requireContext())
 
+                    true
+                }
+                R.id.opt_previous_media -> {
+                    ToolVibrate().vibrate(requireContext())
+
+                    true
+                }
+                R.id.opt_clear -> {
+                    ToolVibrate().vibrate(requireContext())
+                    //停止播放
+                    PlayerSingleton.clearMediaItem()
+                    true
+                }
+                else -> true
+            }
+        }
+        popup.show()
+
+    }
 
     //页签焦点
     private fun scrolledToPage(position: Int){
@@ -555,13 +577,13 @@ class FragmentPlayList: DialogFragment() {
     private fun updateIcon_currentPlayList(){
         val currentPlayList = PlayerListManager.getCurrentList(requireContext())
         when (currentPlayList) {
-            0 -> {
+            PlayerListManager.list_page_custom -> {
                 ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_play_list_custom_list)
             }
-            1 -> {
+            PlayerListManager.list_page_video -> {
                 ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_main_fragment_video_icon)
             }
-            2 -> {
+            PlayerListManager.list_page_music -> {
                 ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_main_fragment_music_icon)
             }
         }
@@ -600,8 +622,14 @@ class FragmentPlayList: DialogFragment() {
             state_saveLastPageSign_First = false
             return
         }
+        val target = when(position){
+            0 -> PlayerListManager.list_page_custom
+            1 -> PlayerListManager.list_page_video
+            2 -> PlayerListManager.list_page_music
+            else -> PlayerListManager.list_page_custom
+        }
         //向列表管理器设置
-        PlayerListManager.set_state_LastPageSign(requireContext(),position)
+        PlayerListManager.set_state_LastPageSign(requireContext(),target)
 
     }
 
@@ -628,19 +656,89 @@ class FragmentPlayList: DialogFragment() {
 
 
 
+    //发布事件
+    private fun returnFragment(event: String){
+        val result = bundleOf(FragmentConnector.receive_key to event)
+        setFragmentResult(FragmentConnector.fragment_request_key_play_list, result)
+    }
+    private fun returnFragment(event: String,extra: String){
+        val result = bundleOf(FragmentConnector.receive_key to event,FragmentConnector.extra_key to extra)
+        setFragmentResult(FragmentConnector.fragment_request_key_play_list, result)
+    }
 
 
+    //设置面板高度
+    private fun display(view: View){
+        //获取当前屏幕方向
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //操作主卡片视图
+        val mainCard = view.findViewById<CardView>(R.id.main_card)
+        //读取屏幕信息
+        val screenHeightPx = resources.displayMetrics.heightPixels
+        val screenWidthPx = resources.displayMetrics.widthPixels
+        val density = resources.displayMetrics.density
+
+        if (isLandscape){
+            //计算目标宽度
+            val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 50){
+                    mainCard.layoutParams.width = screenWidthPx
+                }else{
+                    mainCard.layoutParams.width = targetScreenWidthPx
+                }
+                //把高度改为match parent
+                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+
+                val statusBarHeight = getStatusBarHeightFromView(mainCard)
+                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
+
+                mainCard.requestLayout()
+            }
+
+        }else{
+            //计算目标高度
+            val targetHeightPx = (screenHeightPx * 0.7).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 450){
+                    mainCard.layoutParams.height = screenHeightPx
+                }else{
+                    mainCard.layoutParams.height = targetHeightPx
+                }
+                mainCard.requestLayout()
+            }
+        }
+    }
+    fun getStatusBarHeightFromView(view: View): Int {
+        val rect = Rect()
+        view.getWindowVisibleDisplayFrame(rect)
+        return rect.top
+    }
 
     //循环模式
     private fun chooseLoopMode(loopMode: String){
         ToolVibrate().vibrate(requireContext())
-        //设置循环模式
-        PlayerListManager.setLoopMode(when (loopMode) {
-            "ONE" -> "ONE"
-            "ALL" -> "ALL"
-            "OFF" -> "OFF"
-            else -> "OFF"
-        }, requireContext())
+
+        when (loopMode) {
+            PlayerListManager.LOOP_MODE_ONE -> {
+                PlayerListManager.setLoopMode(loopMode, requireContext())
+                //设为单集循环时,有必要可自动开始
+                PlayerSingleton.checkPlayEndAndRePlay()
+            }
+            PlayerListManager.LOOP_MODE_OFF -> {
+                PlayerListManager.setLoopMode(loopMode, requireContext())
+            }
+            PlayerListManager.LOOP_MODE_ALL -> {
+                PlayerListManager.setLoopMode(loopMode, requireContext())
+            }
+        }
+
+
+
 
         //刷新显示文本
         updateLoopModeText()
@@ -658,14 +756,11 @@ class FragmentPlayList: DialogFragment() {
     }
 
     //自定义退出逻辑
-    private fun Dismiss(flag_need_vibrate: Boolean = true){
-        if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
-
-        stopViewPagerListener()
-
-        val result = bundleOf("KEY" to "Dismiss")
-        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-        dismiss()
+    private var lockPage = false
+    private fun customDismiss(){
+        if (!lockPage) {
+            dismiss()
+        }
     }
 
 //Fragment END

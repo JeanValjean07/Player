@@ -314,6 +314,12 @@ class PlayerFragmentMediaInfo: DialogFragment() {
 
          */
 
+        //按钮：点击空白区域退出
+        val topArea = view.findViewById<View>(R.id.out_area)
+        topArea.setOnClickListener {
+            dismiss()
+        }
+
     }
 
     private fun mainBusiness(){
@@ -431,7 +437,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
         }
     }
     private lateinit var ComposeRoot: ComposeView
-    private val forceUpdate = mutableStateOf(0)
+    private val forceUpdate = mutableIntStateOf(0)
     @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     @Composable
@@ -443,7 +449,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
                 .onGloballyPositioned { coordinates ->
                     onHeightMeasured(coordinates.size.height)
                 },
-            color = androidx.compose.ui.graphics.Color.Transparent,
+            color = Color.Transparent,
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -469,14 +475,14 @@ class PlayerFragmentMediaInfo: DialogFragment() {
                             size = 40.dp,
                             border = BorderStroke(
                                 width = 0.5.dp,
-                                color = androidx.compose.ui.graphics.Color.Gray.copy(alpha = 0.1f)
+                                color = Color.Gray.copy(alpha = 0.1f)
                             ),
                             modifier = Modifier.padding(start = 10.dp)
                         ) {
                             Icon(
                                 Icons.Filled.Close,
                                 contentDescription = "关闭",
-                                modifier = Modifier.background(androidx.compose.ui.graphics.Color.Transparent),
+                                modifier = Modifier.background(Color.Transparent),
                                 tint = ColorPack.secondary
                             )
                         }
@@ -584,7 +590,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
                 .verticalScroll(rememberScrollState())
                 .padding(top = topBarHeight),
         ) {
-            if (forceUpdate.value > 0){
+            if (forceUpdate.intValue > 0){
                 Info()
             }
         }
@@ -609,44 +615,46 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             Column(
                 modifier = Modifier.padding(horizontal = 15.dp, vertical = 15.dp).fillMaxWidth()
             ) {
-                Text(text = "视频分辨率：$videoWidth x $videoHeight")
-                Text(text = "\n")
-                Text(text = "视频时长：${videoDuration.toLong() / 1000} 秒丨${FormatTime_withChar(videoDuration.toLong())}")
-                Text(text = "\n")
-                //采集帧率
-                if (Fps_capture_MediaMetadataRetriever.toFloat() != 0f){
-                    Text(text =  "采集帧率：$Fps_capture_MediaMetadataRetriever FPS" )
+
+                    Text(text = "视频分辨率：$videoWidth x $videoHeight", color = ColorPack.secondary)
                     Text(text = "\n")
-                }
-                //视频实际帧率
-                Text(text =  "实际帧率：$realFpsForShow FPS" )
-                Text(text = "\n")
-                Text(text = "视频编码：$videoMimeType")
-                Text(text = "\n")
-                Text(text = "视频码率：${videoBitrate.toLong() / 1000} kbps")
-                Text(text = "\n")
-                Text(text = "视频文件名：$videoFileName")
-                Text(text = "\n")
-                //视频标题
-                if (videoTitle.isBlank()) {
-                    Text(text = "视频标题：未写入此条元数据")
-                } else {
-                    Text(text = "视频标题：$videoTitle")
-                }
-                Text(text = "\n")
-                //视频艺术家
-                if (videoArtist.isBlank()) {
-                    Text(text = "视频艺术家：未写入此条元数据")
-                } else {
-                    Text(text = "视频艺术家：$videoArtist")
-                }
-                Text(text = "\n")
-                //视频日期
-                if (videoDate == "19040101T000000.000Z") {
-                    Text(text = "视频日期：未写入此条元数据")
-                } else {
-                    Text(text = "视频日期：$videoDate")
-                }
+                    Text(text = "视频时长：${videoDuration.toLong() / 1000} 秒丨${FormatTime_withChar(videoDuration.toLong())}", color = ColorPack.secondary)
+                    Text(text = "\n")
+                    //采集帧率
+                    if (Fps_capture_MediaMetadataRetriever != 0f){
+                        Text(text =  "采集帧率：$Fps_capture_MediaMetadataRetriever FPS", color = ColorPack.secondary )
+                        Text(text = "\n")
+                    }
+                    //视频实际帧率
+                    Text(text =  "实际帧率：$realFpsForShow FPS" , color = ColorPack.secondary)
+                    Text(text = "\n")
+                    Text(text = "视频编码：$videoMimeType", color = ColorPack.secondary)
+                    Text(text = "\n")
+                    Text(text = "视频码率：${videoBitrate.toLong() / 1000} kbps", color = ColorPack.secondary)
+                    Text(text = "\n")
+                    Text(text = "视频文件名：$videoFileName", color = ColorPack.secondary)
+                    Text(text = "\n")
+                    //视频标题
+                    if (videoTitle.isBlank()) {
+                        Text(text = "视频标题：未写入此条元数据", color = ColorPack.secondary)
+                    } else {
+                        Text(text = "视频标题：$videoTitle", color = ColorPack.secondary)
+                    }
+                    Text(text = "\n")
+                    //视频艺术家
+                    if (videoArtist.isBlank()) {
+                        Text(text = "视频艺术家：未写入此条元数据", color = ColorPack.secondary)
+                    } else {
+                        Text(text = "视频艺术家：$videoArtist", color = ColorPack.secondary)
+                    }
+                    Text(text = "\n")
+                    //视频日期
+                    if (videoDate == "19040101T000000.000Z") {
+                        Text(text = "视频日期：未写入此条元数据", color = ColorPack.secondary)
+                    } else {
+                        Text(text = "视频日期：$videoDate",color = ColorPack.secondary)
+                    }
+
             }
         }
 

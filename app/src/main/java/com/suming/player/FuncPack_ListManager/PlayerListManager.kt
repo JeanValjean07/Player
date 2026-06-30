@@ -1,6 +1,7 @@
 package com.suming.player.FuncPack_ListManager
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
@@ -20,13 +21,132 @@ import java.io.File
 @Suppress("unused")
 object PlayerListManager {
 
+    private lateinit var context: Application
+    fun setContext(context: Context){
+        //检查是不是applicationContext
+        if (context is Application) {
+            this.context = context
+        }
+    }
+
+
     //列表管理器设置
-    private lateinit var PREFS_List: SharedPreferences
-    private var state_PREFS_List_Initialized = false
-    //当前列表
+    private var Paradox_List: SharedPreferences? = null
+    const val Paradox_List_Name = "Paradox_List_Name"
+    private fun initListSetting(){
+        if (Paradox_List != null) return
+        Paradox_List = context.getSharedPreferences(Paradox_List_Name, MODE_PRIVATE)
+    }
+    //循环模式
+    private var PREFS_LoopMode = ""
+    const val PREFS_LoopMode_Key = "PREFS_LoopMode"
+    const val LOOP_MODE_OFF = "OFF"
+    const val LOOP_MODE_ONE = "ONE"
+    const val LOOP_MODE_ALL = "ALL"
+    @SuppressLint("StaticFieldLeak")
+    fun setLoopMode(mode: String, context: Context) {
+        initListSetting()
+
+        //刷新缓存并落盘
+        PREFS_LoopMode  = mode
+        Paradox_List?.edit{ putString(PREFS_LoopMode_Key, PREFS_LoopMode ).apply() }
+    }
+    fun getLoopMode(context: Context): String{
+        initListSetting()
+
+
+        PREFS_LoopMode  = Paradox_List?.getString(PREFS_LoopMode_Key, "OFF") ?: "OFF"
+        if (PREFS_LoopMode != "OFF" && PREFS_LoopMode != "ONE" && PREFS_LoopMode != "ALL"){ PREFS_LoopMode = "OFF" }
+
+        return PREFS_LoopMode
+    }
+
+
+    //页签字段
+    const val list_page_null = ""
+    const val list_page_last = "list_page_last"
+    const val list_page_custom = "list_page_custom"
+    const val list_page_video = "list_page_video"
+    const val list_page_music = "list_page_music"
+    //默认页签(列表管理器的,不是首页的)
+    private var PREFS_AcquiescePage = list_page_null
+    const val PREFS_AcquiescePage_Key = "PREFS_AcquiescePage"
+    fun get_PREFS_AcquiescePage(context: Context): String{
+        initListSetting()
+
+        //仅在无缓存时读取
+        if (PREFS_AcquiescePage == list_page_null){
+            PREFS_AcquiescePage = Paradox_List?.getString(PREFS_AcquiescePage_Key, list_page_null) ?: list_page_null
+            //检查并置入默认值
+            if (PREFS_AcquiescePage == list_page_null){
+                //设置custom页签为默认值
+                Paradox_List?.edit { putString(PREFS_AcquiescePage_Key, list_page_custom) }
+                PREFS_AcquiescePage = list_page_custom
+            }
+        }
+
+
+        return PREFS_AcquiescePage
+    }
+    fun set_PREFS_AcquiescePage(context: Context, page: String): Boolean{
+        initListSetting()
+
+        //过滤无效值
+        if (page != list_page_video && page != list_page_music && page != list_page_custom){
+            return false
+        }
+
+        //刷新缓存并落盘
+        PREFS_AcquiescePage = page
+        Paradox_List?.edit { putString(PREFS_AcquiescePage_Key, page) }
+
+        return true
+    }
+    //上一次的页面(列表管理器的,不是首页的)
+    private var state_LastPageSign = list_page_null
+    const val state_LastPageSign_Key = "state_LastPageSign"
+    fun get_state_LastPageSign(context: Context): String{
+        initListSetting()
+
+        //仅在无缓存时读取
+        if (state_LastPageSign == list_page_null){
+            state_LastPageSign = Paradox_List?.getString(state_LastPageSign_Key, list_page_null) ?: list_page_null
+            //检查并置入默认值
+            if (state_LastPageSign == list_page_null){
+                //设置custom页签为默认值
+                Paradox_List?.edit { putString(state_LastPageSign_Key, list_page_custom) }
+                state_LastPageSign = list_page_custom
+            }
+        }
+
+        return state_LastPageSign
+    }
+    fun set_state_LastPageSign(context: Context, page: String): Boolean{
+        initListSetting()
+
+        //过滤无效值
+        if (page != list_page_video && page != list_page_music && page != list_page_custom){
+            return false
+        }
+
+        //刷新缓存并落盘
+        state_LastPageSign = page
+        Paradox_List?.edit { putString(state_LastPageSign_Key, page) }
+
+        return true
+    }
+
+
+
+
+
+
+
+
+
+
+    //当前列表索引
     private var currentList = -1
-
-
     //自定义列表实例
     var customList = mutableListOf<MiniMediaItemForList>()
     //实时视频列表
@@ -97,20 +217,21 @@ object PlayerListManager {
 
     //设置当前播放列表 返回值:是否设置成功
     fun setPlayList(targetList: String): Boolean{
+        initListSetting()
         when(targetList){
             "custom" -> {
                 currentList = 0
-                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                Paradox_List?.edit { putInt("PREFS_currentList", currentList) }
                 return true
             }
             "video" -> {
                 currentList = 1
-                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                Paradox_List?.edit { putInt("PREFS_currentList", currentList) }
                 return true
             }
             "music" -> {
                 currentList = 2
-                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                Paradox_List?.edit { putInt("PREFS_currentList", currentList) }
                 return true
             }
             else -> {
@@ -120,20 +241,21 @@ object PlayerListManager {
 
     }
     fun setPlayList(targetList: Int): Boolean{
+        initListSetting()
         when(targetList){
             0 -> {
                 currentList = 0
-                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                Paradox_List?.edit { putInt("PREFS_currentList", currentList) }
                 return true
             }
             1 -> {
                 currentList = 1
-                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                Paradox_List?.edit { putInt("PREFS_currentList", currentList) }
                 return true
             }
             2 -> {
                 currentList = 2
-                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                Paradox_List?.edit { putInt("PREFS_currentList", currentList) }
                 return true
             }
             else -> {
@@ -142,25 +264,28 @@ object PlayerListManager {
         }
 
     }
-    fun getCurrentList(context: Context): Int{
-        //确保已初始化设置清单
-        if (!state_PREFS_List_Initialized){
-            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
-            state_PREFS_List_Initialized = true
-        }
+    const val PREFS_currentList_Name = "PREFS_currentList"
+    fun getCurrentList(context: Context): String{
+        initListSetting()
+
         //确保数值有效
-        if (PREFS_List.contains("PREFS_currentList")){
-            currentList = PREFS_List.getInt("PREFS_currentList", 0)
+        if (Paradox_List?.contains(PREFS_currentList_Name) == true){
+            currentList = Paradox_List?.getInt(PREFS_currentList_Name, 0)?:0
             if (currentList !in 0..2) {
                 currentList = 0
-                PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+                Paradox_List?.edit { putInt(PREFS_currentList_Name, currentList) }
             }
         }else{
-            PREFS_List.edit { putInt("PREFS_currentList", currentList) }
+            Paradox_List?.edit { putInt(PREFS_currentList_Name, currentList) }
             currentList = 0
         }
 
-        return currentList
+        return when(currentList){
+            0 -> "custom"
+            1 -> "video"
+            2 -> "music"
+            else -> "custom"
+        }
     }
 
     //向实时视频列表和音乐列表传入内容
@@ -174,67 +299,9 @@ object PlayerListManager {
     }
 
 
-    //启动播放列表管理器
-    fun startPlayListManage(context: Context){
-        //设置上下文
-        setContext(context)
-        //读取设置
-        loadSettings(context)
 
 
-        state_PlayListManage_started = true
-    }
-    lateinit var singletonContext: Context
-    private var state_PlayListManage_started = false
-    private fun setContext(context: Context){
-        singletonContext = context
-    }
-    private fun loadSettings(context: Context){
-        PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
-        state_PREFS_List_Initialized = true
 
-        if (PREFS_List.contains("PREFS_LoopMode")){
-            PREFS_LoopMode = PREFS_List.getString("PREFS_LoopMode", "OFF") ?: "error"
-            if (PREFS_LoopMode != "OFF" && PREFS_LoopMode != "ONE" && PREFS_LoopMode != "ALL"){
-                PREFS_LoopMode = "OFF"
-                PREFS_List.edit{ putString("PREFS_LoopMode", "OFF").apply() }
-            }
-        }else{
-            PREFS_LoopMode = "OFF"
-            PREFS_List.edit{ putString("PREFS_LoopMode", "OFF").apply() }
-        }
-
-    }
-
-
-    //循环模式
-    var PREFS_LoopMode = ""
-    const val LOOP_MODE_OFF = "OFF"
-    const val LOOP_MODE_ONE = "ONE"
-    const val LOOP_MODE_ALL = "ALL"
-    @SuppressLint("StaticFieldLeak")
-    fun setLoopMode(mode: String, context: Context) {
-        //确保已初始化设置清单
-        if (!state_PREFS_List_Initialized){
-            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
-            state_PREFS_List_Initialized = true
-        }
-
-        PREFS_LoopMode  = mode
-        PREFS_List.edit{ putString("PREFS_LoopMode", PREFS_LoopMode ).apply() }
-    }
-    fun getLoopMode(context: Context): String{
-        //确保已初始化设置清单
-        if (!state_PREFS_List_Initialized){
-            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
-            state_PREFS_List_Initialized = true
-        }
-        //过滤无效值
-        PREFS_LoopMode  = PREFS_List.getString("PREFS_LoopMode", "OFF") ?: "error"
-        if (PREFS_LoopMode != "OFF" && PREFS_LoopMode != "ONE" && PREFS_LoopMode != "ALL"){ PREFS_LoopMode = "OFF" }
-
-        return PREFS_LoopMode
-    }
 
 
     //媒体信息读取
@@ -317,71 +384,6 @@ object PlayerListManager {
 
 
     }
-
-
-
-    //默认页签
-    private var PREFS_AcquiescePage = -2
-    fun get_PREFS_AcquiescePage(context: Context): Int{
-        //确保已初始化设置清单
-        if (!state_PREFS_List_Initialized){
-            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
-            state_PREFS_List_Initialized = true
-        }
-        //过滤无效值
-        PREFS_AcquiescePage = PREFS_List.getInt("PREFS_AcquiescePage", -2)
-        if (PREFS_AcquiescePage == -2){
-            PREFS_List.edit{ putInt("PREFS_AcquiescePage", 0) }
-            PREFS_AcquiescePage = 0
-        }
-
-        return PREFS_AcquiescePage
-    }
-    fun set_PREFS_AcquiescePage(context: Context, page: Int): Boolean{
-        //确保已初始化设置清单
-        if (!state_PREFS_List_Initialized){
-            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
-            state_PREFS_List_Initialized = true
-        }
-        //过滤无效值
-        PREFS_AcquiescePage = page
-        PREFS_List.edit{ putInt("PREFS_AcquiescePage", page) }
-
-        return true
-    }
-    //上一次的页面
-    private var state_LastPageSign = -1
-    fun get_state_LastPageSign(context: Context): Int{
-        //确保已初始化设置清单
-        if (!state_PREFS_List_Initialized){
-            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
-            state_PREFS_List_Initialized = true
-        }
-        //过滤无效值
-        state_LastPageSign = PREFS_List.getInt("state_LastPageSign", -1)
-
-        if (state_LastPageSign == -1){
-            PREFS_List.edit{ putInt("state_LastPageSign", 0) }
-            state_LastPageSign = 0
-        }
-
-        return state_LastPageSign
-    }
-    fun set_state_LastPageSign(context: Context, page: Int): Boolean{
-        //确保已初始化设置清单
-        if (!state_PREFS_List_Initialized){
-            PREFS_List = context.getSharedPreferences("PREFS_List", MODE_PRIVATE)
-            state_PREFS_List_Initialized = true
-        }
-        //过滤无效值
-        state_LastPageSign = page
-        PREFS_List.edit{ putInt("state_LastPageSign", page) }
-
-        return true
-    }
-
-
-
 
 
 

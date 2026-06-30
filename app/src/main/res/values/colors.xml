@@ -108,6 +108,12 @@
     <color name="SecondaryColorPack_BrushColorMiddle">#CCFFFFFF</color>
     <color name="SecondaryColorPack_ContentCardBackground">#FFFFFFFF</color>
     <color name="SecondaryColorPack_CardButtonBackground">#FFFFFFFF</color>
+    <color name="SecondaryColorPack_LineColor">#FFFAFAFA</color>
+
+
+    <!-- 文字 -->
+    <color name="ColorPack_PrimaryTextColor">#FFFFFFFF</color>
+    <color name="ColorPack_SecondaryTextColor">#FFFAFAFA</color>
 
 
     <!-- 工具颜色 -->

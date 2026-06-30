@@ -40,7 +40,7 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
         }
     }
     //当前页签(固定值)
-    private val flag_currentPage = 1
+    private val flag_currentPage = PlayerListManager.list_page_video
     //共享ViewModel
     private val viewModel: PlayerListViewModel by activityViewModels()
     //协程
@@ -280,7 +280,7 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
         //判断是否已经是默认列表
         val currentAcquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
         if (currentAcquiescePage == flag_currentPage){
-            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), -1)
+            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), PlayerListManager.list_page_video)
             if (success) {
                 requireContext().showCustomToast("已取消默认页签,默认使用上次页签",2)
                 updateCurrentListStateText()

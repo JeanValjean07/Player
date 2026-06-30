@@ -187,13 +187,6 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_DisableFragmentGesture(isChecked)
             }
-            //自动退出播放页时结束播放
-            val switch_AutoExitWhenEnd = findViewById<SwitchCompat>(R.id.AutoExitWhenEnd)
-            switch_AutoExitWhenEnd.isChecked = SettingsRequestCenter.get_PREFS_AutoExitWhenEnd(this@SettingsActivity)
-            switch_AutoExitWhenEnd.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(this@SettingsActivity)
-                SettingsRequestCenter.set_PREFS_AutoExitWhenEnd(isChecked)
-            }
             //退出播放页时确保竖屏
             val switch_EnsurePortraitWhenExit = findViewById<SwitchCompat>(R.id.EnsurePortraitWhenExit)
             switch_EnsurePortraitWhenExit.isChecked = SettingsRequestCenter.get_PREFS_EnsurePortraitWhenExit(this@SettingsActivity)

@@ -13,6 +13,7 @@ import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Path
 import android.hardware.display.DisplayManager
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
@@ -69,6 +70,7 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.animation.PathInterpolatorCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -1065,7 +1067,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //打开播放列表
                     FragmentConnector.fragment_more_button_start_play_list -> {
-                        FragmentPlayList.newInstance().show(supportFragmentManager, "PlayerListFragment")
+                        startPlayListFragment()
                     }
                     //截取全部帧
                     FragmentConnector.fragment_more_button_extract_frame -> {
@@ -1142,21 +1144,15 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
             //播放列表
-            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_PLAY_LIST", this@PlayerActivityNeo) { _, bundle ->
-                val ReceiveKey = bundle.getString("KEY")
-                when(ReceiveKey){
-                    //切换逻辑由播放器单例接管
-                    //停止播放并退出
-                    "stopPlaying" -> {
-                        finish()
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_play_list, context) { _, bundle ->
+                val receive_key = bundle.getString(FragmentConnector.receive_key)
+                when(receive_key){
+                    //开启/退出事件
+                    FragmentConnector.fragment_event_close -> {
+                        onFragmentClose()
                     }
-                    //退出逻辑
-                    "Dismiss" -> {
-                        //开启被控组件
-                        startScrollerSync()
-                        startVideoTimeSync()
-                        //把播放区域移回去
-                        MovePlayArea_down()
+                    FragmentConnector.fragment_event_open -> {
+                        onFragmentOpen()
                     }
                 }
             }
@@ -1912,6 +1908,10 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun startMediaIndoFragment(){
         PlayerFragmentMediaInfo.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_media_info)
     }
+    //启动播放列表面板
+    private fun startPlayListFragment(){
+        FragmentPlayList.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+    }
     //绑定播放器视图
     private fun bindPlayerView(){
         playerView.player = null
@@ -2079,7 +2079,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //视频区域抬高
     private fun MovePlayArea_down(){
         if (isLandscape) return
-        if (playerViewModel.PREFS_EnablePlayAreaMove) {
+        if (playerViewModel.PREFS_EnablePlayAreaMove){
             //取消原区域上移任务
             MovePlayAreaJob?.cancel()
 
@@ -2093,12 +2093,23 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun MovePlayArea_up() {
+        if (isLandscape) return
         if (playerViewModel.PREFS_EnablePlayAreaMove){
-                playerView.animate()
-                    .translationY(-(ValueManager.get_Value_PlayAreaMoveDistance(context)))
-                    .setInterpolator(DecelerateInterpolator(3f))
-                    .setDuration(700)
-                    .start()
+
+            val interpolator = PathInterpolatorCompat.create(
+                0.4f, 0.0f,
+                0.2f, 1.0f
+            )
+
+            val path = Path().apply { cubicTo(0.2f, 0.0f, 0.8f, 1.0f, 1.0f, 1.0f) }
+            val interpolatorFromPath = PathInterpolatorCompat.create(path)
+
+            playerView.animate()
+                .translationY(-(ValueManager.get_Value_PlayAreaMoveDistance(context)))
+                .setInterpolator(interpolator)
+                .setDuration(300)
+                .start()
+
 
         }
     }
@@ -2588,7 +2599,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (player.isPlaying) startVideoTimeSync()
     }
     //更新进度条
-
     private fun foldScrollerArea(){
         val player_scroller_center_line = findViewById<View>(R.id.player_scroller_center_line)
         val controller_scroller_container = findViewById<ConstraintLayout>(R.id.controller_scroller_container)

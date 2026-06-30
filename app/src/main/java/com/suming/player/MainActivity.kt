@@ -62,6 +62,7 @@ import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForVideo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
+import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaTypeCenter
 import com.suming.player.FuncionalPack.PlayerInfoCenter
@@ -647,7 +648,7 @@ class MainActivity: AppCompatActivity() {
             }
             lock_clickMillisLock = System.currentTimeMillis()
             //启动播放列表
-            FragmentPlayList.Companion.newInstance().show(supportFragmentManager, "PlayerListFragment")
+            startPlayListFragment()
         }
 
     }
@@ -1005,6 +1006,11 @@ class MainActivity: AppCompatActivity() {
     }
 
 
+
+    //启动播放列表面板
+    private fun startPlayListFragment(){
+        FragmentPlayList.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+    }
 
 
     //启动播放器

@@ -211,7 +211,7 @@ class MainFragmentVideo(
     //是否已经是当前播放列表
     private fun setCurrentListState(){
         //判断是否是当前播放列表
-        if (PlayerListManager.getCurrentList(requireContext()) == currentPageFlag){
+        if (PlayerListManager.getCurrentList(requireContext()) == PlayerListManager.list_page_video){
             ButtonSetAsCurrentListText.text = "已设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
         }

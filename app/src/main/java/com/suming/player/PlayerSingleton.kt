@@ -192,6 +192,16 @@ object PlayerSingleton {
         PlayerInfoCenter.clearCurrentMediaInfo()
         //关闭本侧的媒体会话
         stopMediaSession(context)
+        //关闭服务
+        stopServices(context)
+
+    }
+
+    //
+    fun clearMediaItem(){
+        clearMediaItem_standardExo()
+        //重置媒体状态
+        PlayerInfoCenter.clearCurrentMediaInfo()
 
     }
 
@@ -534,6 +544,11 @@ object PlayerSingleton {
         _player?.seekTo(0)
         continuePlay(true,context)
     }
+    fun checkPlayEndAndRePlay(){
+        if (playState_playEnd){
+            continuePlay(true,context)
+        }
+    } //列表管理器专用:切换模式时,自动开始播放
     //播完暂停-暂停视频
     fun justStop(){
         playState_playEnd = true

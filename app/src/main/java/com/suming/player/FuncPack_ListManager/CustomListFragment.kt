@@ -40,7 +40,7 @@ class CustomListFragment():Fragment(R.layout.fragment_play_list_custom_page){
         }
     }
     //当前页签(固定值)
-    private val flag_currentPage = 0
+    private val flag_currentPage = PlayerListManager.list_page_custom
     //共享ViewModel
     private val viewModel: PlayerListViewModel by activityViewModels()
     //协程
@@ -262,10 +262,10 @@ class CustomListFragment():Fragment(R.layout.fragment_play_list_custom_page){
 
     //设为默认显示列表
     private fun setAs_acquiescePage(){
-        //判断是否已经是默认列表
+        //判断是否已经是默认页签
         val currentAcquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
         if (currentAcquiescePage == flag_currentPage){
-            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), -1)
+            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), PlayerListManager.list_page_custom)
             if (success) {
                 requireContext().showCustomToast("已取消默认页签,默认使用上次页签",2)
                 updateCurrentListStateText()
@@ -296,7 +296,7 @@ class CustomListFragment():Fragment(R.layout.fragment_play_list_custom_page){
     }
     //刷新当前播放列表状态提示词
     private fun updateCurrentListStateText(){
-        //判断是否是当前播放列表
+        //判断是否是当前播放页签
         if (PlayerListManager.getCurrentList(requireContext()) == flag_currentPage){
             ButtonSetAsCurrentListText.text = "已设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)

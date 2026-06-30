@@ -291,7 +291,7 @@ object SettingsRequestCenter {
     const val sort_orientation_DESC = "sort_orientation_DESC" //降序
     const val sort_orientation_ASC = "sort_orientation_ASC"   //升序
     //升序和降序-视频
-    private var PREFS_video_sortOrientation = sort_orientation_ASC
+    private var PREFS_video_sortOrientation = sort_orientation_DESC
     const val sort_orientation_video = "sort_orientation_video"
     fun set_PREFS_video_sortOrientation(context: Context, orientation: String){
         PREFS_video_sortOrientation = orientation
@@ -301,7 +301,7 @@ object SettingsRequestCenter {
         return PREFS_video_sortOrientation
     }
     //升序和降序-音频
-    private var PREFS_audio_sortOrientation = sort_orientation_ASC
+    private var PREFS_audio_sortOrientation = sort_orientation_DESC
     const val sort_orientation_audio = "sort_orientation_audio"
     fun set_PREFS_audio_sortOrientation(context: Context, orientation: String){
         PREFS_audio_sortOrientation = orientation

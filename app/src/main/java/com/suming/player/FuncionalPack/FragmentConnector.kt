@@ -7,6 +7,7 @@ object FragmentConnector {
     const val fragment_tag_more_button = "fragment_tag_more_button"   //更多选项面板
     const val fragment_tag_equalizer = "fragment_tag_equalizer"  //均衡器面板
     const val fragment_tag_media_info = "fragment_tag_media_info"  //媒体信息面板
+    const val fragment_tag_play_list = "fragment_tag_play_list"  //播放列表面板
 
 
     //所有Fragment公用一个
@@ -41,6 +42,8 @@ object FragmentConnector {
     const val fragment_more_button_exit_right_now = "fragment_more_button_exit_right_now"  //立即退出(来源于设置0秒后自动退出)
 
 
+    //播放列表面板
+    const val fragment_request_key_play_list = "fragment_request_key_play_list"
 
 
     //均衡器面板

@@ -13,346 +13,327 @@
         android:layout_width="match_parent"
         android:layout_height="500dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:cardCornerRadius="8dp"
-        app:cardBackgroundColor="@color/THEME_1_Background_BackArea"
+        app:cardCornerRadius="10dp"
+        app:cardBackgroundColor="@color/SecondaryColorPack_SurfaceBackground"
         app:cardElevation="10dp"
         android:clickable="true">
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/playListArea"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="0dp">
+            android:layout_height="match_parent">
 
-            <com.google.android.material.appbar.AppBarLayout
-                android:id="@+id/AppBar"
+            <!-- 标题 -->
+            <LinearLayout
+                android:id="@+id/AppBarContainer"
                 android:layout_width="match_parent"
-                android:layout_height="80dp"
-                android:background="@android:color/transparent"
+                android:layout_height="85dp"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:outlineSpotShadowColor="@color/HeadText"
-                app:liftOnScrollColor="@color/HeadBackground"
-                android:outlineAmbientShadowColor="@color/HeadText"
-                tools:targetApi="28">
+                android:orientation="vertical">
+                <!-- 顶部Bar -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="80dp"
-                    android:orientation="vertical">
-                    <!-- 顶部Bar -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="45dp"
-                        android:orientation="horizontal">
-                        <!-- 关闭按钮 -->
-                        <ImageButton
-                            android:id="@+id/buttonExit"
-                            android:layout_width="45dp"
-                            android:layout_height="45dp"
-                            android:backgroundTint="@android:color/transparent"
-                            android:contentDescription="关闭播放列表页面"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_general_close"
-                            />
-                        <!-- 标题:播放列表 -->
-                        <TextView
-                            android:layout_width="wrap_content"
+                    android:layout_height="50dp"
+                    android:orientation="horizontal">
+                    <!-- 关闭按钮 -->
+                    <com.suming.player.ViewWidget.CircleButton
+                        android:id="@+id/buttonExit"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginStart="5dp"
+                        android:src="@drawable/ic_general_close"
+                        android:layout_gravity="center"
+                        app:buttonSize="50dp"
+                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
+                        app:shadowOffset="4dp"
+                        app:circlePadding="100dp"
+                        app:iconPadding="120dp"
+                        app:shadowRadius="8dp"
+                        app:shadowColor="#33000000"
+                        />
+                    <!-- 标题:播放列表 -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="播放列表"
+                        android:textSize="20sp"
+                        android:textColor="@color/HeadText"
+                        />
+                    <!-- 占位 -->
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"/>
+                    <!-- 循环模式 -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/ButtonCardLoopMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:layout_marginEnd="10dp"
+                        android:layout_gravity="center"
+                        android:backgroundTint="@color/SecondaryColorPack_CardButtonBackground"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:cardElevation="2dp"
+                        app:cardCornerRadius="10dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="播放列表"
-                            android:textSize="20sp"
-                            android:textColor="@color/HeadText"
-                            />
-                        <!-- 按钮：停止播放 -->
-                        <ImageButton
-                            android:id="@+id/ButtonStopPlaying"
-                            android:layout_width="40dp"
-                            android:layout_height="45dp"
-                            android:contentDescription="停止播放并移除底部播放卡片"
-                            android:padding="14dp"
-                            android:backgroundTint="@android:color/transparent"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_play_list_delete"
-                            />
-                        <!-- 占位 -->
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="0dp"
-                            android:layout_weight="1"/>
-                        <!-- 按钮：上一曲 -->
-                        <ImageButton
-                            android:id="@+id/ButtonPreviousMedia"
-                            android:layout_width="30dp"
-                            android:layout_height="45dp"
-                            android:contentDescription="立即切换上一曲"
-                            android:padding="16dp"
-                            android:backgroundTint="@android:color/transparent"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_play_list_previous"
-                            />
-                        <!-- 按钮：下一曲 -->
-                        <ImageButton
-                            android:id="@+id/ButtonNextMedia"
-                            android:layout_width="30dp"
-                            android:layout_height="45dp"
-                            android:contentDescription="立即切换下一曲"
-                            android:padding="16dp"
+                            android:layout_marginStart="10dp"
                             android:layout_marginEnd="10dp"
-                            android:backgroundTint="@android:color/transparent"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_play_list_next"
-                            />
-                        <!-- 循环模式 -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/ButtonCardLoopMode"
-                            android:layout_width="wrap_content"
-                            android:layout_height="20dp"
-                            android:layout_marginEnd="10dp"
-                            android:layout_gravity="center"
-                            android:backgroundTint="@color/THEME_1_Background_ButtonCard"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:cardElevation="1dp"
-                            app:cardCornerRadius="5dp">
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:orientation="horizontal"
-                                tools:ignore="TooDeepLayout">
-                                <TextView
-                                    android:id="@+id/ButtonTextLoopMode"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="match_parent"
-                                    android:layout_marginStart="5dp"
-                                    android:gravity="center"
-                                    android:text="当前模式"
-                                    android:textColor="@color/HeadText"
-                                    android:textSize="11sp" />
-                                <ImageView
-                                    android:layout_width="20dp"
-                                    android:layout_height="20dp"
-                                    android:layout_gravity="center"
-                                    android:padding="2dp"
-                                    android:backgroundTint="@android:color/transparent"
-                                    android:scaleType="centerCrop"
-                                    android:src="@drawable/ic_setting_arrow_down"
-                                    tools:ignore="ContentDescription" />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-                    </LinearLayout>
-                    <!-- 横滑滚动页签 + 当前列表 -->
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="35dp">
-                        <!-- 横滑滚动页签 -->
-                        <HorizontalScrollView
-                            android:id="@+id/TabScrollView"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:background="@color/Background3"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toStartOf="@+id/VerticalDivideLine"
-                            android:scrollbars="none"
+                            android:orientation="horizontal"
                             tools:ignore="TooDeepLayout">
-                            <LinearLayout
+                            <TextView
+                                android:id="@+id/ButtonTextLoopMode"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:orientation="horizontal">
-                                <!-- 自定义 -->
-                                <androidx.cardview.widget.CardView
-                                    android:id="@+id/ButtonCardCustomList"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_gravity="center"
-                                    android:backgroundTint="@color/ButtonCard_OFF"
-                                    app:cardElevation="2dp"
-                                    app:cardCornerRadius="5dp">
-                                    <LinearLayout
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:orientation="horizontal">
-                                        <ImageView
-                                            android:layout_width="25dp"
-                                            android:layout_height="25dp"
-                                            android:layout_gravity="center"
-                                            android:padding="6dp"
-                                            android:backgroundTint="@android:color/transparent"
-                                            android:scaleType="centerCrop"
-                                            android:src="@drawable/ic_play_list_custom_list"
-                                            tools:ignore="ContentDescription" />
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_gravity="center"
-                                            android:layout_marginEnd="10dp"
-                                            android:layout_marginTop="5dp"
-                                            android:layout_marginBottom="5dp"
-                                            android:text="自定义列表"
-                                            android:textColor="@color/HeadText"
-                                            android:textSize="11sp" />
-                                    </LinearLayout>
-                                </androidx.cardview.widget.CardView>
-                                <!-- 视频丨实时 -->
-                                <androidx.cardview.widget.CardView
-                                    android:id="@+id/ButtonCardVideo"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_gravity="center"
-                                    android:backgroundTint="@color/ButtonCard_OFF"
-                                    app:cardElevation="2dp"
-                                    app:cardCornerRadius="5dp">
-                                    <LinearLayout
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:orientation="horizontal">
-                                        <ImageView
-                                            android:layout_width="25dp"
-                                            android:layout_height="25dp"
-                                            android:layout_gravity="center"
-                                            android:padding="7dp"
-                                            android:backgroundTint="@android:color/transparent"
-                                            android:scaleType="centerCrop"
-                                            android:src="@drawable/ic_main_fragment_video_icon"
-                                            tools:ignore="ContentDescription" />
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_gravity="center"
-                                            android:layout_marginEnd="10dp"
-                                            android:layout_marginTop="5dp"
-                                            android:layout_marginBottom="5dp"
-                                            android:text="视频丨实时"
-                                            android:textColor="@color/HeadText"
-                                            android:textSize="11sp"
-                                            />
-                                    </LinearLayout>
-                                </androidx.cardview.widget.CardView>
-                                <!-- 音乐丨实时 -->
-                                <androidx.cardview.widget.CardView
-                                    android:id="@+id/ButtonCardMusic"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_gravity="center"
-                                    android:backgroundTint="@color/ButtonCard_OFF"
-                                    app:cardElevation="2dp"
-                                    app:cardCornerRadius="5dp">
-                                    <LinearLayout
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:orientation="horizontal">
-                                        <ImageView
-                                            android:layout_width="25dp"
-                                            android:layout_height="25dp"
-                                            android:layout_gravity="center"
-                                            android:padding="7dp"
-                                            android:backgroundTint="@android:color/transparent"
-                                            android:scaleType="centerCrop"
-                                            android:src="@drawable/ic_main_fragment_music_icon"
-                                            tools:ignore="ContentDescription" />
-                                        <TextView
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="wrap_content"
-                                            android:layout_gravity="center"
-                                            android:layout_marginEnd="10dp"
-                                            android:layout_marginTop="5dp"
-                                            android:layout_marginBottom="5dp"
-                                            android:text="音乐丨实时"
-                                            android:textColor="@color/HeadText"
-                                            android:textSize="11sp" />
-                                    </LinearLayout>
-                                </androidx.cardview.widget.CardView>
-                                <!-- 末尾占位 -->
-                                <View
-                                    android:layout_width="10dp"
-                                    android:layout_height="match_parent"/>
-                            </LinearLayout>
-                        </HorizontalScrollView>
-                        <!-- 中纵分隔线 -->
-                        <View
-                            android:id="@+id/VerticalDivideLine"
-                            android:layout_width="0.2dp"
-                            android:layout_height="match_parent"
-                            android:background="@color/player_scroller_top_line"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            android:layout_marginEnd="10dp"
-                            app:layout_constraintEnd_toStartOf="@+id/ButtonCurrentList"
-                            />
-                        <!-- 当前列表 -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/ButtonCurrentList"
+                                android:layout_marginStart="5dp"
+                                android:gravity="center"
+                                android:text="加载中"
+                                android:textColor="@color/HeadText"
+                                android:textSize="11sp" />
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:padding="2dp"
+                                android:backgroundTint="@android:color/transparent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_setting_arrow_down"
+                                tools:ignore="ContentDescription" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                    <!-- 按钮：停止播放 -->
+                    <com.suming.player.ViewWidget.CircleButton
+                        android:id="@+id/ButtonMore"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginEnd="5dp"
+                        android:src="@drawable/ic_general_more_opt"
+                        android:layout_gravity="center"
+                        app:buttonSize="50dp"
+                        android:contentDescription="停止播放并移除底部播放卡片"
+                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
+                        app:shadowOffset="4dp"
+                        app:circlePadding="100dp"
+                        app:iconPadding="150dp"
+                        app:shadowRadius="8dp"
+                        app:shadowColor="#33000000"
+                        />
+                </LinearLayout>
+                <!-- 横滑滚动页签 + 当前列表 -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="35dp">
+                    <!-- 横滑滚动页签 -->
+                    <HorizontalScrollView
+                        android:id="@+id/TabScrollView"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:background="@android:color/transparent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/VerticalDivideLine"
+                        android:scrollbars="none"
+                        tools:ignore="TooDeepLayout">
+                        <LinearLayout
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="10dp"
-                            android:backgroundTint="@color/ButtonCard_OFF"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:cardElevation="2dp"
-                            app:cardCornerRadius="5dp">
-                            <LinearLayout
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal">
+                            <!-- 自定义 -->
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardCustomList"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-                                <TextView
+                                android:layout_marginStart="10dp"
+                                android:layout_gravity="center"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:cardElevation="2dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginTop="5dp"
-                                    android:layout_marginBottom="5dp"
-                                    android:text="当前列表:"
-                                    android:textColor="@color/HeadText"
-                                    android:textSize="11sp" />
-                                <ImageView
-                                    android:id="@+id/ButtonCurrentListIcon"
-                                    android:layout_width="25dp"
-                                    android:layout_height="25dp"
-                                    android:layout_gravity="center"
-                                    android:padding="6dp"
-                                    android:backgroundTint="@android:color/transparent"
-                                    android:scaleType="centerCrop"
-                                    android:src="@drawable/ic_play_list_custom_list"
-                                    tools:ignore="ContentDescription" />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-                        <!-- 顶横分隔线 -->
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="0.2dp"
-                            android:background="@color/player_scroller_top_line"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            />
-                        <!-- 底横分隔线 -->
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="0.2dp"
-                            android:background="@color/player_scroller_top_line"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            />
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-                </LinearLayout>
-            </com.google.android.material.appbar.AppBarLayout>
+                                    android:orientation="horizontal">
+                                    <ImageView
+                                        android:layout_width="25dp"
+                                        android:layout_height="25dp"
+                                        android:layout_gravity="center"
+                                        android:padding="6dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_play_list_custom_list"
+                                        tools:ignore="ContentDescription" />
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:layout_marginEnd="10dp"
+                                        android:layout_marginTop="5dp"
+                                        android:layout_marginBottom="5dp"
+                                        android:text="自定义列表"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                            <!-- 视频丨实时 -->
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardVideo"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:layout_gravity="center"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:cardElevation="2dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal">
+                                    <ImageView
+                                        android:layout_width="25dp"
+                                        android:layout_height="25dp"
+                                        android:layout_gravity="center"
+                                        android:padding="7dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_main_fragment_video_icon"
+                                        tools:ignore="ContentDescription" />
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:layout_marginEnd="10dp"
+                                        android:layout_marginTop="5dp"
+                                        android:layout_marginBottom="5dp"
+                                        android:text="视频丨实时"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp"
+                                        />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                            <!-- 音乐丨实时 -->
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardMusic"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:layout_gravity="center"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                app:cardElevation="2dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal">
+                                    <ImageView
+                                        android:layout_width="25dp"
+                                        android:layout_height="25dp"
+                                        android:layout_gravity="center"
+                                        android:padding="7dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_main_fragment_music_icon"
+                                        tools:ignore="ContentDescription" />
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_gravity="center"
+                                        android:layout_marginEnd="10dp"
+                                        android:layout_marginTop="5dp"
+                                        android:layout_marginBottom="5dp"
+                                        android:text="音乐丨实时"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                            <!-- 末尾占位 -->
+                            <View
+                                android:layout_width="10dp"
+                                android:layout_height="match_parent"/>
+                        </LinearLayout>
+                    </HorizontalScrollView>
+                    <!-- 中纵分隔线 -->
+                    <View
+                        android:id="@+id/VerticalDivideLine"
+                        android:layout_width="0.2dp"
+                        android:layout_height="match_parent"
+                        android:background="@color/SecondaryColorPack_LineColor"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:layout_marginEnd="10dp"
+                        app:layout_constraintEnd_toStartOf="@+id/ButtonCurrentList"
+                        />
+                    <!-- 当前列表 -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/ButtonCurrentList"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:backgroundTint="@color/ButtonCard_OFF"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:cardElevation="2dp"
+                        app:cardCornerRadius="5dp">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="5dp"
+                                android:layout_marginBottom="5dp"
+                                android:text="当前列表:"
+                                android:textColor="@color/HeadText"
+                                android:textSize="11sp" />
+                            <ImageView
+                                android:id="@+id/ButtonCurrentListIcon"
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:layout_gravity="center"
+                                android:padding="6dp"
+                                android:backgroundTint="@android:color/transparent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_play_list_custom_list"
+                                tools:ignore="ContentDescription" />
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                    <!-- 顶横分隔线 -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.2dp"
+                        android:background="@color/SecondaryColorPack_LineColor"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        />
+                    <!-- 底横分隔线 -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.2dp"
+                        android:background="@color/SecondaryColorPack_LineColor"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </LinearLayout>
 
+
+            <!-- viewpager2 -->
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/ViewPager"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:minHeight="500dp"
-                android:background="@color/Background3"
-                app:layout_constraintTop_toBottomOf="@+id/AppBar"
+                android:background="@android:color/transparent"
+                app:layout_constraintTop_toBottomOf="@+id/AppBarContainer"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
