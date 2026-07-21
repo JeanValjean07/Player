@@ -28,6 +28,7 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.ActivityComponent.SettingsActivity.SettingsFragmentDeleteCover
@@ -63,6 +64,9 @@ class SettingsActivity: AppCompatActivity() {
         registerController()
 
         registerSettings()
+
+
+        setupScrollContentListener()
 
 
     }
@@ -103,6 +107,7 @@ class SettingsActivity: AppCompatActivity() {
             //超链接：开放源代码许可
             val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
             openSourceLicense.paint.isUnderlineText = true
+            openSourceLicense.invalidate()
             openSourceLicense.setOnClickListener {
                 ToolVibrate().vibrate(this@SettingsActivity)
 
@@ -128,6 +133,7 @@ class SettingsActivity: AppCompatActivity() {
             //超链接：设备信息
             val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
             DeviceInfoPage.paint.isUnderlineText = true
+            DeviceInfoPage.invalidate()
             DeviceInfoPage.setOnClickListener {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 startActivity(Intent(this@SettingsActivity, DeviceInfoActivity::class.java))
@@ -722,12 +728,79 @@ class SettingsActivity: AppCompatActivity() {
 
     }
 
+    //顶栏效果
+    private var isTopBarTitleVisible = true
+    private fun topBarEffect_Out_Title(){
+        if (!isTopBarTitleVisible) return
+        isTopBarTitleVisible = false
+
+        AppBarTitle.animate()
+            .alpha(0f)
+            .setDuration(animDuration)
+            .withEndAction { AppBarTitle.visibility = View.GONE }
+            .start()
+
+    }
+    private fun topBarEffect_In_Title(){
+        if (isTopBarTitleVisible) return
+        isTopBarTitleVisible = true
+
+        AppBarTitle.visibility = View.VISIBLE
+        AppBarTitle.alpha = 0f
+        AppBarTitle.animate()
+            .alpha(1f)
+            .setDuration(animDuration)
+            .start()
+    }
+    private var isTopBarBrushVisible = true
+    private fun topBarEffect_Out_Brush(){
+        if (!isTopBarBrushVisible) return
+        isTopBarBrushVisible = false
+
+        AppBarGradientMask.alpha = 1f
+        AppBarGradientMask.animate()
+            .alpha(0f)
+            .setDuration(animDuration)
+            .withEndAction { AppBarGradientMask.visibility = View.GONE }
+            .start()
+    }
+    private fun topBarEffect_In_Brush(){
+        if (isTopBarBrushVisible) return
+        isTopBarBrushVisible = true
+
+        AppBarGradientMask.visibility = View.VISIBLE
+        AppBarGradientMask.alpha = 0f
+        AppBarGradientMask.animate()
+            .alpha(1f)
+            .setDuration(animDuration)
+            .start()
+    }
+    private var animDuration: Long = 250
+    //滚动区域监听
+    private var scrollArea: NestedScrollView? = null
+    private fun setupScrollContentListener(){
+        if (scrollArea == null){
+            scrollArea = findViewById(R.id.ScrollArea)
+        }
+        scrollArea?.setOnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
+            //未在顶部时隐藏顶部栏文字区
+            if (scrollY == 0){
+                topBarEffect_In_Title()
+                topBarEffect_Out_Brush()
+            }
+            else{
+                topBarEffect_Out_Title()
+                topBarEffect_In_Brush()
+            }
+        }
+    }
 
     //界面配置
     private var statusBarHeight = 0
     private lateinit var AppBarGradientMask: View
     private lateinit var AppBarCore: LinearLayout
     private lateinit var AppBarSpacer: Space
+    private lateinit var AppBarTitle: TextView
     private fun display(){
         enableEdgeToEdge()
         setContentView(R.layout.activity_settings)
@@ -735,6 +808,7 @@ class SettingsActivity: AppCompatActivity() {
         AppBarGradientMask = findViewById(R.id.AppBarGradientMask)
         AppBarCore = findViewById(R.id.AppBarCore)
         AppBarSpacer = findViewById(R.id.AppBarSpacer)
+        AppBarTitle = findViewById(R.id.AppBarTitle)
         //获取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
 

@@ -29,8 +29,8 @@
         android:supportsRtl="true"
         android:hardwareAccelerated="true"
         android:theme="@style/Theme.SpeedSpy"
-        android:enableOnBackInvokedCallback="false"
         tools:replace="android:allowBackup"
+        android:enableOnBackInvokedCallback="true"
         tools:ignore="ForegroundServicePermission"
         tools:targetApi="33">
 
@@ -39,10 +39,10 @@
         <!-- 主页 -->
         <activity android:name=".MainActivity"
             android:theme="@style/THEME_BASIC"
-            android:screenOrientation="portrait"
             android:hardwareAccelerated="true"
             android:label="播放器"
             android:exported="true"
+            android:enableOnBackInvokedCallback="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -59,6 +59,7 @@
             android:configChanges="orientation|screenSize|screenLayout"
             android:launchMode="singleTask"
             android:exported="true"
+            android:enableOnBackInvokedCallback="false"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <meta-data
                 android:name="android.notch_support"
@@ -71,6 +72,7 @@
             android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|screenLayout"
             android:launchMode="singleTask"
+            android:enableOnBackInvokedCallback="false"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <meta-data
@@ -84,6 +86,7 @@
             android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|screenLayout"
             android:launchMode="singleTask"
+            android:enableOnBackInvokedCallback="false"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <intent-filter>
@@ -107,6 +110,7 @@
             android:theme="@style/THEME_FULL_SCREEN"
             android:screenOrientation="portrait"
             android:label="设置"
+            android:enableOnBackInvokedCallback="true"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
         <!-- 指南和帮助 -->
@@ -114,6 +118,7 @@
             android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
             android:label="指南和帮助"
+            android:enableOnBackInvokedCallback="true"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
         <!-- 设备信息 -->
@@ -121,6 +126,7 @@
             android:theme="@style/THEME_BASIC"
             android:screenOrientation="portrait"
             android:label="设备信息"
+            android:enableOnBackInvokedCallback="true"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
 

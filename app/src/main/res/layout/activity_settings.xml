@@ -12,6 +12,7 @@
 
     <!-- 标题区域 -->
     <FrameLayout
+        android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
@@ -22,30 +23,31 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:alpha="100"
-            android:background="@drawable/vec_brush_area_v1_color"
-            />
+            android:background="@drawable/vec_brush_area_v1_color" />
         <!-- 顶部栏核心内容 -->
         <LinearLayout
             android:id="@+id/AppBarCore"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:orientation="horizontal">
+
             <com.suming.player.ViewWidget.CircleButton
                 android:id="@+id/buttonExit"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:src="@drawable/ic_general_back"
                 android:layout_gravity="center"
                 android:layout_marginStart="5dp"
+                android:src="@drawable/ic_general_back"
                 app:buttonSize="50dp"
-                app:mainColor="@color/MainColorPack_CardButtonBackground"
-                app:shadowOffset="4dp"
                 app:circlePadding="100dp"
                 app:iconPadding="120dp"
-                app:shadowRadius="8dp"
+                app:mainColor="@color/MainColorPack_CardButtonBackground"
                 app:shadowColor="#33000000"
-                />
+                app:shadowOffset="4dp"
+                app:shadowRadius="8dp" />
+
             <TextView
+                android:id="@+id/AppBarTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="start|center"
@@ -60,7 +62,7 @@
 
     <!-- 内容区域 -->
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/NestedScrollView"
+        android:id="@+id/ScrollArea"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="false">

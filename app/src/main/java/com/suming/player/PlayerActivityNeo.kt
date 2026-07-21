@@ -1318,7 +1318,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //关闭遮罩
     private fun closeCover( anim: Boolean = false, animDuration: Long = 250 ){
-        //输入1带淡出,输入0直接消失
         val cover = findViewById<LinearLayout>(R.id.cover)
         if(anim){
             cover.animate().alpha(0f).setDuration(animDuration).withEndAction { cover.visibility = View.GONE }
@@ -3290,3 +3289,4 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
 }
+
