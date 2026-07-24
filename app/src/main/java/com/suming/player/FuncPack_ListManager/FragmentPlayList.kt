@@ -38,6 +38,7 @@ import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.FragmentConnector
+import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -473,6 +474,18 @@ class FragmentPlayList: DialogFragment() {
                     ToolVibrate().vibrate(requireContext())
                     //停止播放
                     PlayerSingleton.clearMediaItem()
+                    dismiss()
+                    true
+                }
+                R.id.opt_clear_record -> {
+                    ToolVibrate().vibrate(requireContext())
+                    //停止播放
+                    PlayerSingleton.clearMediaItem()
+                    //清除播放记录
+                    val MediaRecordManager = MediaRecordManager(requireContext())
+                    MediaRecordManager.clear_MediaInfo()
+                    //关闭
+                    dismiss()
                     true
                 }
                 else -> true

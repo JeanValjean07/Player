@@ -44,6 +44,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.Visibility
 import com.suming.player.ActivityComponent.MainActivity.FragmentMusicStoreSetting
 import com.suming.player.ActivityComponent.MainActivity.FragmentVideoStoreSetting
 import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterMusic
@@ -221,23 +222,34 @@ class MainActivity: AppCompatActivity() {
     //注册界面控件
     private fun register(){
         lifecycleScope.launch (Dispatchers.Main) {
-            delay(500)
+            delay(1000)
 
             //按钮：指南
             val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
             ButtonGuidance.setOnClickListener {
                 ToolVibrate().vibrate(this@MainActivity)
+                ListRecyclerView_Video.stopScroll()
+                ListRecyclerView_Music.stopScroll()
                 //
                 val intent = Intent(this@MainActivity, GuidanceActivity::class.java)
                 startActivity(intent)
             }
+            ButtonGuidance.visibility = View.VISIBLE
+            ButtonGuidance.alpha = 0f
+            ButtonGuidance.animate().alpha(1f).setDuration(300).start()
             //按钮：设置
             val ButtonSettings= findViewById<Button>(R.id.buttonSetting)
             ButtonSettings.setOnClickListener {
                 ToolVibrate().vibrate(this@MainActivity)
+                ListRecyclerView_Video.stopScroll()
+                ListRecyclerView_Music.stopScroll()
+
                 val intent = Intent(this@MainActivity, SettingsActivity::class.java)
                 startActivity(intent)
             }
+            ButtonSettings.visibility = View.VISIBLE
+            ButtonSettings.alpha = 0f
+            ButtonSettings.animate().alpha(1f).setDuration(300).start()
             //提示卡点击时关闭
             val NoticeCard = findViewById<CardView>(R.id.noticeCard)
             NoticeCard.setOnClickListener {
@@ -248,6 +260,8 @@ class MainActivity: AppCompatActivity() {
             val ButtonMediaStoreSetting = findViewById<ImageButton>(R.id.ButtonMediaStoreSetting)
             ButtonMediaStoreSetting.setOnClickListener {
                 ToolVibrate().vibrate(this@MainActivity)
+                ListRecyclerView_Video.stopScroll()
+                ListRecyclerView_Music.stopScroll()
                 //
                 when(mainViewModel.state_current_tab){
                     SettingsRequestCenter.tab_mark_video -> {
@@ -560,7 +574,6 @@ class MainActivity: AppCompatActivity() {
         return MediaInfo_MediaUriString.toUri()
     }
     //启动MiniView观察者
-    private var state_miniView_showing = false
     private var miniViewObserverRunning = false
     private fun startMiniViewObserver() {
         if (miniViewObserverRunning) return
@@ -591,20 +604,18 @@ class MainActivity: AppCompatActivity() {
         //从PlayerStateMediaInfo获取所有信息
         val MediaInfoPack = PlayerInfoCenter.getMediaInfoPack()
         if (MediaInfoPack == null) {
-            miniView_RetractAnim()
+            miniView_clear()
             return
         }
         val uriNumOnly = MediaInfoPack.MediaInfo_MediaUriNumOnly   //用于获取缩略图
         val type = MediaInfoPack.MediaInfo_MediaType
         val fileName = MediaInfoPack.MediaInfo_FileName       //显示文件名
         val artist = MediaInfoPack.MediaInfo_MediaArtist   //显示艺术家
-        //确保MiniView已显示
-        if (!state_miniView_showing) {
-            miniView_ExpandAnim()
-        }
+
         //
         PlayingCard_TextMediaName.text = fileName
         PlayingCard_TextMediaArtist.text = artist
+        PlayingCard_ButtonPlay.visibility = View.VISIBLE
         //
         updateMiniViewArtwork(type, uriNumOnly)
 
@@ -621,6 +632,9 @@ class MainActivity: AppCompatActivity() {
         //点击事件设定
         PlayingCard_InfoContainer.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
+            //停止列表防卡顿
+            ListRecyclerView_Video.stopScroll()
+            ListRecyclerView_Music.stopScroll()
             //启动播放页
             val uriString = PlayerInfoCenter.getMediaUriString()
             if (uriString != ""){
@@ -628,7 +642,11 @@ class MainActivity: AppCompatActivity() {
                 consoleLog("PlayingCard_InfoContainer 点击事件 触发播放页: $uri")
                 startPlayerFromMiniView(uri)
             }else{
-                showCustomToast("失败")
+                if (state_MiniViewArtwork_type == mini_view_type_null){
+                    showCustomToast("选择一项媒体以开始播放")
+                }else{
+                    showCustomToast("失败")
+                }
             }
         }
         PlayingCard_ButtonPlay.setOnClickListener {
@@ -647,6 +665,9 @@ class MainActivity: AppCompatActivity() {
                 return@setOnClickListener
             }
             lock_clickMillisLock = System.currentTimeMillis()
+            //停止列表防卡顿
+            ListRecyclerView_Video.stopScroll()
+            ListRecyclerView_Music.stopScroll()
             //启动播放列表
             startPlayListFragment()
         }
@@ -657,7 +678,6 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_ButtonPlay.setImageResource(if (isPlaying) R.drawable.ic_main_controller_pause else R.drawable.ic_main_controller_play)
     }
     private fun updateMiniViewArtwork(type: String,uriNumOnly: Long){
-        if (!state_miniView_showing) return
         val useImage = SettingsRequestCenter.get_PREFS_DisableMainPageSmallPlayer(this)
         if (useImage){
             updateMiniViewArtwork_Image(uriNumOnly.toString(), type)
@@ -667,7 +687,6 @@ class MainActivity: AppCompatActivity() {
                 MediaTypeCenter.mediaType_Video -> updateMiniViewArtwork_Video()
             }
         }
-
     }
     private fun updateMiniViewArtwork_Image(uriNumOnly: String, type: String){
         //变换卡片大小
@@ -818,27 +837,27 @@ class MainActivity: AppCompatActivity() {
     val mini_view_type_video = "mini_view_type_video"
     private var state_MiniViewArtwork_type = mini_view_type_null
     private var state_MiniViewArtwork_ImageUri = ""
-    private fun miniView_ExpandAnim(){
-        if (state_miniView_showing) return
-        state_miniView_showing = true
-
-        PlayingCard.visibility = View.VISIBLE
-        PlayingCard.translationY = 300f
-        PlayingCard.animate()
-            .translationY(0f)
-            .setInterpolator(DecelerateInterpolator(2f))
-            .setDuration(500)
-            .start()
-    }
-    private fun miniView_RetractAnim(){
-        if (!state_miniView_showing) return
-        state_miniView_showing = false
-
-
+    private fun miniView_clear(){
+        //收起卡片(已取消)
+        /*
         PlayingCard.animate().translationY(300f)
             .withEndAction{ PlayingCard.visibility = View.GONE }
             .setInterpolator(DecelerateInterpolator(2f))
             .setDuration(800).start()
+
+         */
+
+        //
+        PlayingCard_TextMediaName.text = "未在播放"
+        PlayingCard_TextMediaArtist.text = "选择一项媒体以开始播放"
+        PlayingCard_ButtonPlay.visibility = View.GONE
+
+        PlayingCard_Artwork.removeAllViews()
+        state_MiniViewArtwork_type = mini_view_type_null
+        PlayingCard_Artwork_Video = null
+        PlayingCard_Artwork_Image = null
+
+
     }
     //MiniView视图合集
     private lateinit var PlayingCard: CardView
@@ -1037,12 +1056,8 @@ class MainActivity: AppCompatActivity() {
                 )
 
                 //启动活动
-                if (state_miniView_showing){
-                    startActivity(intent, options.toBundle())
+                startActivity(intent, options.toBundle())
 
-                }else{
-                    startActivity(intent)
-                }
 
             }
             1 -> {
@@ -1060,12 +1075,8 @@ class MainActivity: AppCompatActivity() {
                 )
 
                 //启动活动
-                if (state_miniView_showing){
-                    startActivity(intent, options.toBundle())
+                startActivity(intent, options.toBundle())
 
-                }else{
-                    startActivity(intent)
-                }
             }
         }
 

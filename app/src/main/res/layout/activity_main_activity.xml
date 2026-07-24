@@ -71,6 +71,7 @@
                     android:padding="0dp"
                     android:contentDescription="指南"
                     android:tooltipText="指南"
+                    android:visibility="gone"
                     android:text="指南" />
                 <!-- 设置按钮 -->
                 <Button
@@ -83,6 +84,7 @@
                     android:padding="0dp"
                     android:contentDescription="设置"
                     android:tooltipText="设置"
+                    android:visibility="gone"
                     android:textColor="@color/TextButtonText"
                     android:text="设置" />
             </LinearLayout>
@@ -294,7 +296,7 @@
         android:clickable="true"
         app:cardElevation="10dp"
         app:cardCornerRadius="0dp"
-        android:visibility="gone">
+        android:visibility="visible">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -342,7 +344,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
-                        android:text="未知媒体标题"
+                        android:text="正在加载媒体标题"
                         android:textSize="13sp"
                         android:textColor="@color/HeadText"
                         android:layout_marginStart="10dp"
@@ -353,7 +355,7 @@
                         android:layout_height="wrap_content"
                         android:textSize="10sp"
                         android:textColor="@color/HeadText"
-                        android:text="未知艺术家"
+                        android:text="正在加载媒体艺术家"
                         android:layout_marginStart="10dp"
                         tools:ignore="SmallSp" />
                 </LinearLayout>
