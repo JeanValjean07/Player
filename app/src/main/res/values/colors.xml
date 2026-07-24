@@ -56,6 +56,9 @@
     <color name="ButtonCard_ON">#B39DDB</color>
     <color name="ButtonCard_OFF">#FFFFFF</color>
 
+    <color name="RED">#FF5252</color>
+    <color name="GREEN">#8BC34A</color>
+
 
     <!-- 已启用全新分类体系 -->
     <!-- 单击纯文字按钮 -->

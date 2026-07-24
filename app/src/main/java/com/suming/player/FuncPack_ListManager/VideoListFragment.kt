@@ -44,7 +44,7 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
     //共享ViewModel
     private val viewModel: PlayerListViewModel by activityViewModels()
     //协程
-    private var coroutine_component = CoroutineScope(Dispatchers.IO)
+    private var coroutine_component = CoroutineScope(Dispatchers.Main)
 
 
 

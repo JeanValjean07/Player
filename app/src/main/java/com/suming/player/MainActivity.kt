@@ -6,6 +6,8 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +16,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import android.widget.Button
 import android.widget.FrameLayout
@@ -29,6 +32,8 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -91,7 +96,7 @@ class MainActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //界面设置
-        display()
+        initDisplay()
         //初始化
         init()
 
@@ -157,19 +162,107 @@ class MainActivity: AppCompatActivity() {
             })
         }
     }
-    private fun display(){
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+
+
+
+    //显示重组
+    private lateinit var level_root: ConstraintLayout
+    private lateinit var level_topBar : CardView
+    private lateinit var level_list : LinearLayout
+    private lateinit var level_miniView : CardView
+    private var isLandscape : Boolean = false
+    private fun initDisplay(){
         enableEdgeToEdge()
         setContentView(R.layout.activity_main_activity)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            if (!SettingsRequestCenter.isStatusBarHeightExist(this)){
-                val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-                SettingsRequestCenter.set_VALUE_Int_statusBarHeight(statusBarHeight)
-            }
             insets
         }
+        //初始化视图
+        level_root = findViewById(R.id.activity_root_constraint)
+        level_topBar = findViewById(R.id.level_topBar)
+        level_list = findViewById(R.id.level_list)
+        level_miniView = findViewById(R.id.level_miniView)
+        //获取横竖屏模式
+        isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //重组主要视图
+        composeLevel()
+    }
+    private fun composeLevel(){
+        //重组主要视图
+        //重组miniView(竖屏时不修改,横排时修改为悬浮并限制长度)
+        if (isLandscape){
+
+            //限制控件宽度(不可用,必须用constraintSe)
+            /*
+            val params = level_miniView.layoutParams as? ConstraintLayout.LayoutParams
+            params?.let {
+                it.width = 0
+                it.matchConstraintMaxWidth = 300.dpToPx()
+                level_miniView.layoutParams = it
+            }
+
+             */
+
+            //修改约束布局参数
+            val constraintSet = ConstraintSet()
+            constraintSet.clone(level_root)
+
+            //清除全部约束
+            constraintSet.clear(level_miniView.id)
+
+            constraintSet.connect(
+                level_miniView.id,
+                ConstraintSet.BOTTOM,
+                level_root.id,
+                ConstraintSet.BOTTOM,
+                20.dpToPx()
+            )
+
+
+            constraintSet.connect(
+                level_miniView.id,
+                ConstraintSet.RIGHT,
+                level_root.id,
+                ConstraintSet.RIGHT,
+                20.dpToPx()
+            )
+
+            constraintSet.constrainWidth(level_miniView.id, 300.dpToPx())
+            constraintSet.constrainHeight(level_miniView.id,  ConstraintSet.WRAP_CONTENT)
+
+
+            constraintSet.applyTo(level_root)
+
+            level_miniView.radius = 20f
+
+
+            //设置顶部View
+            val topLine = findViewById<View>(R.id.miniView_topLine)
+            topLine.visibility = View.GONE
+
+            //取消底部边距(设置高度为0)
+            val miniView_bottomSafeArea = findViewById<View>(R.id.miniView_bottomSafeArea)
+            val params = miniView_bottomSafeArea.layoutParams
+            params.height = 0
+            miniView_bottomSafeArea.layoutParams = params
+
+
+            miniView_bottomSafeArea.requestLayout()
+
+
+
+        }else{
+            //竖屏模式
+
+        }
+
+
+    }
+    fun Int.dpToPx(): Int {
+        return (this * Resources.getSystem().displayMetrics.density).toInt()
     }
 
 
@@ -622,7 +715,7 @@ class MainActivity: AppCompatActivity() {
     }
     private fun initMiniView(){
         //视图初始化
-        PlayingCard = findViewById(R.id.PlayingCard)
+        PlayingCard = findViewById(R.id.level_miniView)
         PlayingCard_Artwork = findViewById(R.id.PlayingCard_Artwork)
         PlayingCard_InfoContainer = findViewById(R.id.PlayingCard_InfoContainer)
         PlayingCard_TextMediaName = findViewById(R.id.PlayingCard_MediaName)
