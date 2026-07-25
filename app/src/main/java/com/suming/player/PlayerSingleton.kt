@@ -59,7 +59,7 @@ object PlayerSingleton {
     fun getApplicationContext(): Context = context.applicationContext
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "PlayerSingleton: $msg")
         }
@@ -297,7 +297,9 @@ object PlayerSingleton {
         val DataBaseID = MediaInfoPackLocal?.MediaInfo_DataBaseID ?: ""
         MediaDataBaseMaster.fetchMediaItemPack(itemID = DataBaseID, context = context)
 
-
+        //启动监听器(仅在播放时申请焦点)
+        val focus = _player?.isPlaying ?: false
+        PlayerListener.startListener(focus = focus)
 
         //请求音频焦点
         PlayerListener.requestAudioFocus(context, force_request = false)
@@ -435,6 +437,8 @@ object PlayerSingleton {
     }
     //是否正在播放
     fun getState_isNowPlaying(): Boolean {
+        if (_player == null) consoleLog("wtf? getState_isNowPlaying() _player  null")
+
         return _player?.isPlaying ?: false
     }
     //获取当前媒体项完整数据包
@@ -452,7 +456,7 @@ object PlayerSingleton {
     private var playState_playEnd = false
     private var playState_wasPlaying = false
     //继续/开始播放
-    fun continuePlay(requestFocus: Boolean = true, context: Context) {
+    fun continuePlay(requestFocus: Boolean = true) {
         //播放结束时自动回到起始并重播
         if (playState_playEnd){
             playState_playEnd = false
@@ -499,6 +503,9 @@ object PlayerSingleton {
     fun setState_wasPlaying(wasPlaying: Boolean){
         playState_wasPlaying = wasPlaying
     }
+    fun getState_wasPlaying(): Boolean = playState_wasPlaying
+
+    //重置播放结束状态
     fun cancelState_PlayEnd(){
         playState_playEnd = false
     }
@@ -542,11 +549,11 @@ object PlayerSingleton {
     //循环播放-寻到视频起始并播放
     fun repeatMedia(){
         _player?.seekTo(0)
-        continuePlay(true,context)
+        continuePlay(true)
     }
     fun checkPlayEndAndRePlay(){
         if (playState_playEnd){
-            continuePlay(true,context)
+            continuePlay(true)
         }
     } //列表管理器专用:切换模式时,自动开始播放
     //播完暂停-暂停视频
@@ -707,7 +714,7 @@ object PlayerSingleton {
         }else{
             //关闭后台播放功能：开始继续播放
             if(playState_wasPlaying){
-                continuePlay(true, context)
+                continuePlay(true)
             }
         }
     }
@@ -767,7 +774,7 @@ object PlayerSingleton {
             //关闭倒计时(含清除状态)
             timer_DisableAutoShut()
             //关闭监听器
-            PlayerListener.stopListener(context)
+            PlayerListener.stopListener()
             //关闭播放器
             stopPlayer_standardExo()
         }

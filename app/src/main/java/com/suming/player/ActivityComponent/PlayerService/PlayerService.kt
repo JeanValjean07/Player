@@ -23,6 +23,7 @@ import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import com.suming.player.ActivityComponent.PlayerActivity.ToolPlayerWrapper
 import com.suming.player.FuncionalPack.BroadcastActions
+import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.MusicPlayer
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.CoroutineScope
@@ -43,7 +44,7 @@ class PlayerService: MediaSessionService() {
     private var mediaSession: MediaSession? = null
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "PlayerService: $msg")
         }
@@ -94,23 +95,33 @@ class PlayerService: MediaSessionService() {
                     playerCommands: Player.Commands ) {
                     super.onPlayerInteractionFinished(session, controllerInfo, playerCommands)
                     consoleLog("触发 onPlayerInteractionFinished")
-                    //遍历所有可能的命令
+                    //播放/暂停
                     if (playerCommands.contains(Player.COMMAND_PLAY_PAUSE)) {
                         consoleLog("播放/暂停")
+                        //播放或暂停
+                        pauseOrContinue()
+
                     }
+                    //下一曲
                     if (playerCommands.contains(Player.COMMAND_SEEK_TO_NEXT)) {
                         consoleLog("下一曲")
                     }
+                    //上一曲
                     if (playerCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS)) {
                         consoleLog("上一曲")
                     }
+                    //停止播放(划掉音频播控卡片)
                     if (playerCommands.contains(Player.COMMAND_STOP)) {
                         consoleLog("停止")
+                        //关掉播放引擎和监听器
                         stopPlayEngine()
+                        PlayerListener.stopListener()
                     }
+                    //拖动进度
                     if (playerCommands.contains(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)) {
                         consoleLog("定位默认")
                     }
+                    //以下未触发过,不知道是什么
                     if (playerCommands.contains(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)) {
                         consoleLog("当前媒体定位")
                     }
@@ -181,6 +192,42 @@ class PlayerService: MediaSessionService() {
         PlayerSingleton.stopPlayEngine()
         //关闭本地的媒体会话和服务
         stopLocalAll()
+    }
+    //关掉监听器
+    private fun stopPlayerListener() {
+        PlayerListener.stopListener()
+    }
+    //播放或暂停
+    private fun pauseOrContinue() {
+        //先检查目前是不是在播放(读取到的是父类修改后的状态,原本的播放状态应取反)
+        val isPlaying = !PlayerSingleton.getState_isNowPlaying()
+        consoleLog("pauseOrContinue() 操作之前是否在播放 isPlaying: $isPlaying")
+
+        if (isPlaying){
+            //执行了暂停操作
+            if (PlayerListener.isFocus){
+                //在有焦点的状态下暂停,意味着再次获得焦点时不期望自动播放
+                PlayerListener.state_needContinue_whenFocusGain = false
+            }else{
+                //在无焦点的状态下暂停,意味着再次失去焦点时期望自动暂停
+                PlayerListener.state_needPause_whenFocusLoss = true
+
+            }
+
+
+        }else{
+            //执行了继续播放操作
+            if (PlayerListener.isFocus){
+                //在有焦点的状态下继续播放
+                PlayerListener.state_needContinue_whenFocusGain = true
+            }else{
+                //在无焦点的状态下继续播放,意味着再次失去焦点时不期望自动暂停
+                PlayerListener.state_needPause_whenFocusLoss = false
+
+            }
+
+
+        }
     }
 
 

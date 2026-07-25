@@ -1,17 +1,32 @@
 package com.suming.player.FuncionalPack
 
+import android.app.Application
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.PlayerSingleton
 
 @Suppress("unused")
 object PlayerListener {
+
+    //应用引用
+    private lateinit var context: Application
+    fun setContext(context: Context){
+        //检查是不是applicationContext
+        if (context is Application) {
+            consoleLog("PlayerListener.setContext")
+            this.context = context
+        }else{
+            consoleLog("PlayerListener.setContext error")
+        }
+    }
+    fun getApplicationContext(): Context = context.applicationContext
 
     //音频管理器
     private var audioManager: AudioManager? = null
@@ -118,19 +133,40 @@ object PlayerListener {
     private fun MakeSureFocusServiceOnline(context: Context){
         if (focusRequest == null) initFocusRequest(context)
     }
+    var isFocus = false
+    var state_needContinue_whenFocusGain = true     //获得焦点时是否继续
+    var state_needPause_whenFocusLoss = true   //丢焦点时是否自动暂停
+
+    @OptIn(UnstableApi::class)
     private fun HandleFocusChange(focusChange: Int){
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
+                consoleLog("stopFocusChange - AUDIOFOCUS_LOSS")
+                isFocus = false
 
+                //暂停播放
+                if (state_needPause_whenFocusLoss){
+                    PlayerSingleton.pausePlay()
+                }
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-
+                consoleLog("stopFocusChange - AUDIOFOCUS_LOSS_TRANSIENT")
+                isFocus = false
+                //暂停播放
+                if (state_needPause_whenFocusLoss){
+                    PlayerSingleton.pausePlay()
+                }
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-
+                consoleLog("stopFocusChange - AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
-
+                consoleLog("stopFocusChange - AUDIOFOCUS_GAIN")
+                isFocus = true
+                //检查是否需要继续播放
+                if (state_needContinue_whenFocusGain){
+                    PlayerSingleton.continuePlay(true)
+                }
             }
         }
     }
@@ -164,18 +200,37 @@ object PlayerListener {
 
 
     //开启/关闭所有可常驻的监听器
-    fun startListener(context: Context){
+    fun startListener(focus: Boolean = false){
+        if (state_listeners_Registered) return
+        state_listeners_Registered = true
+
+        consoleLog("startListener")
+
         //开启音频设备监听
         startAudioDeviceCallback(context)
+        //仅在播放时申请焦点
+        if (focus) requestAudioFocus(context, force_request = false)
 
     }
-    fun stopListener(context: Context){
+    fun stopListener(){
+        if (!state_listeners_Registered) return
+
         //关闭音频设备监听
         stopAudioDeviceCallback(context)
         //关闭音频焦点监听
         giveupAudioFocus(context)
-    }
 
+        state_listeners_Registered = false
+    }
+    private var state_listeners_Registered = false
+
+
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "PlayerListener: $msg")
+        }
+    }
 
 
 }

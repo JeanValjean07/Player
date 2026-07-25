@@ -650,7 +650,7 @@ class FragmentPlayList: DialogFragment() {
     //播放点击事件
     private fun onPlayClick(uriString: String) {
         if (uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
-            PlayerSingleton.continuePlay(true,requireContext())
+            PlayerSingleton.continuePlay(true)
             requireContext().showCustomToast("已在播放该媒体",3)
         }else{
             PlayerSingleton.setMediaItem(uriString.toUri(), true,requireContext())

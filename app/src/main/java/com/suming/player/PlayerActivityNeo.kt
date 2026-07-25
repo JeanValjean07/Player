@@ -2542,7 +2542,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     @Suppress("SameParameterValue")
     private fun continuePlay(need_requestFocus: Boolean = true){
-        PlayerSingleton.continuePlay(need_requestFocus,this)
+        PlayerSingleton.continuePlay(need_requestFocus)
 
         //界面控件操作
         startScrollerSync()

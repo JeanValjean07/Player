@@ -801,7 +801,7 @@ class MainActivity: AppCompatActivity() {
             if (PlayerSingleton.getState_isNowPlaying()){
                 PlayerSingleton.pausePlay()
             }else{
-                PlayerSingleton.continuePlay(true,this)
+                PlayerSingleton.continuePlay(true)
             }
         }
         PlayingCard_ButtonList.setOnClickListener {
@@ -1047,7 +1047,7 @@ class MainActivity: AppCompatActivity() {
         val currentUri = PlayerInfoCenter.getMediaUriString()
         if (newUri == currentUri){
             showCustomToast("已在播放该媒体",3)
-            PlayerSingleton.continuePlay(true,this)
+            PlayerSingleton.continuePlay(true)
             return
         }
         //设置新播放项
