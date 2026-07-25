@@ -113,6 +113,11 @@
     <color name="ColorPack_PrimaryTextColor">#FF000000</color>
     <color name="ColorPack_SecondaryTextColor">#FF212121</color>
 
+    <!-- 主题重点色 -->
+    <color name="ThemeColor_Purple_Heavy">#FF4527A0</color>
+    <color name="ThemeColor_Purple_Light">#FF7C4DFF</color>
+
+
 
     <!-- 工具颜色 -->
     <color name="White">#FFFFFFFF</color>

@@ -44,7 +44,7 @@ class CustomListFragment():Fragment(R.layout.fragment_play_list_custom_page){
     //共享ViewModel
     private val viewModel: PlayerListViewModel by activityViewModels()
     //协程
-    private var coroutine_component = CoroutineScope(Dispatchers.IO)
+    private var coroutine_component = CoroutineScope(Dispatchers.Main)
 
 
     //加载中卡片
@@ -70,6 +70,8 @@ class CustomListFragment():Fragment(R.layout.fragment_play_list_custom_page){
             LoadingState = view.findViewById(R.id.LoadingState)
             LoadingStateText = view.findViewById(R.id.LoadingStateText)
             TextItemCount = view.findViewById(R.id.TextItemCount)
+            ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
+            ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
         }
         initComponent()
 

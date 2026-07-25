@@ -680,7 +680,7 @@ class FragmentPlayList: DialogFragment() {
     }
 
 
-    //设置面板高度
+    //设置面板几何
     private fun display(view: View){
         //获取当前屏幕方向
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE

@@ -93,6 +93,9 @@
     <color name="THEME_1_Background_ButtonCircle_ON">#E1BEE7</color>
     <color name="CircleButton_Background">#FFFFFFFF</color>
 
+
+
+
     <!-- 一级页面颜色配置 -->
     <color name="MainColorPack_SurfaceBackground">#FFFFFFFF</color>
     <color name="MainColorPack_BrushColorTop">#EEFFFFFF</color>
@@ -104,7 +107,6 @@
     <color name="MainColorPack_CardButtonIconTint_state_ON">#FF7C4DFF</color>
     <color name="MainColorPack_CardButtonIconTint_state_OFF">#FF111111</color>
     <color name="MainColorPack_CardButtonBackground_noState_themeColor">#FFB39DDB</color>
-
     <!-- 二级页面颜色配置 -->
     <color name="SecondaryColorPack_SurfaceBackground">#FFFFFFFF</color>
     <color name="SecondaryColorPack_BrushColorTop">#EEFFFFFF</color>
@@ -113,11 +115,13 @@
     <color name="SecondaryColorPack_CardButtonBackground">#FFFFFFFF</color>
     <color name="SecondaryColorPack_LineColor">#FFFAFAFA</color>
 
-
     <!-- 文字 -->
     <color name="ColorPack_PrimaryTextColor">#FFFFFFFF</color>
     <color name="ColorPack_SecondaryTextColor">#FFFAFAFA</color>
 
+    <!-- 主题重点色 -->
+    <color name="ThemeColor_Purple_Heavy">#FFE1BEE7</color>
+    <color name="ThemeColor_Purple_Light">#FFF3E5F5</color>
 
     <!-- 工具颜色 -->
     <color name="White">#FFFFFFFF</color>

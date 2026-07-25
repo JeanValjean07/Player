@@ -137,14 +137,6 @@ class MainActivity: AppCompatActivity() {
     }
 
     private fun init(){
-        //获取主要列表视图
-        ListRecyclerView_Video = findViewById(R.id.recyclerview_video_list)
-        ListRecyclerView_Music = findViewById(R.id.recyclerview_music_list)
-        AppBarNoticeText = findViewById(R.id.AppBarNoticeText)
-        AppBarTitle = findViewById(R.id.AppBarTitle)
-        ButtonCardMusic = findViewById(R.id.ButtonCardMusic)
-        ButtonCardVideo = findViewById(R.id.ButtonCardVideo)
-        ButtonCardGallery = findViewById(R.id.ButtonCardGallery)
 
 
         //获取MiniView视图
@@ -172,26 +164,42 @@ class MainActivity: AppCompatActivity() {
     private lateinit var level_list : LinearLayout
     private lateinit var level_miniView : CardView
     private var isLandscape : Boolean = false
+    private var statusBarHeight : Int = 50
     private fun initDisplay(){
         enableEdgeToEdge()
         setContentView(R.layout.activity_main_activity)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
         //初始化视图
         level_root = findViewById(R.id.activity_root_constraint)
         level_topBar = findViewById(R.id.level_topBar)
         level_list = findViewById(R.id.level_list)
         level_miniView = findViewById(R.id.level_miniView)
+        //获取主要列表视图
+        ListRecyclerView_Video = findViewById(R.id.recyclerview_video_list)
+        ListRecyclerView_Music = findViewById(R.id.recyclerview_music_list)
+        AppBarNoticeText = findViewById(R.id.AppBarNoticeText)
+        AppBarTitle = findViewById(R.id.AppBarTitle)
+        ButtonCardMusic = findViewById(R.id.ButtonCardMusic)
+        ButtonCardVideo = findViewById(R.id.ButtonCardVideo)
+        ButtonCardGallery = findViewById(R.id.ButtonCardGallery)
+
         //获取横竖屏模式
         isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        //重组主要视图
-        composeLevel()
+        //获取状态栏高度
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            statusBarHeight = systemBars.top
+
+            //重组主要视图
+            composeLevel()
+
+            insets
+        }
+
     }
     private fun composeLevel(){
-        //重组主要视图
+
+
         //重组miniView(竖屏时不修改,横排时修改为悬浮并限制长度)
         if (isLandscape){
 
@@ -206,13 +214,10 @@ class MainActivity: AppCompatActivity() {
 
              */
 
-            //修改约束布局参数
+            //修改miniView
             val constraintSet = ConstraintSet()
             constraintSet.clone(level_root)
-
-            //清除全部约束
             constraintSet.clear(level_miniView.id)
-
             constraintSet.connect(
                 level_miniView.id,
                 ConstraintSet.BOTTOM,
@@ -220,26 +225,18 @@ class MainActivity: AppCompatActivity() {
                 ConstraintSet.BOTTOM,
                 20.dpToPx()
             )
-
-
             constraintSet.connect(
                 level_miniView.id,
                 ConstraintSet.RIGHT,
                 level_root.id,
                 ConstraintSet.RIGHT,
-                20.dpToPx()
+                statusBarHeight + 10
             )
-
             constraintSet.constrainWidth(level_miniView.id, 300.dpToPx())
             constraintSet.constrainHeight(level_miniView.id,  ConstraintSet.WRAP_CONTENT)
-
-
             constraintSet.applyTo(level_root)
-
             level_miniView.radius = 20f
-
-
-            //设置顶部View
+            //设置顶部分隔线
             val topLine = findViewById<View>(R.id.miniView_topLine)
             topLine.visibility = View.GONE
 
@@ -248,14 +245,73 @@ class MainActivity: AppCompatActivity() {
             val params = miniView_bottomSafeArea.layoutParams
             params.height = 0
             miniView_bottomSafeArea.layoutParams = params
-
-
             miniView_bottomSafeArea.requestLayout()
 
+            //设置顶部栏
+            constraintSet.clone(level_root)
+            constraintSet.clear(level_topBar.id)
+            constraintSet.connect(
+                level_topBar.id,
+                ConstraintSet.TOP,
+                level_root.id,
+                ConstraintSet.TOP,
+                statusBarHeight + 10
+            )
+            constraintSet.connect(
+                level_topBar.id,
+                ConstraintSet.LEFT,
+                level_root.id,
+                ConstraintSet.LEFT,
+                statusBarHeight + 10
+            )
+            constraintSet.constrainWidth(level_topBar.id, 300.dpToPx())
+            constraintSet.constrainHeight(level_topBar.id,  ConstraintSet.WRAP_CONTENT)
+            constraintSet.applyTo(level_root)
+            level_topBar.radius = 20f
+
+            //取消顶部边距
+            val topBar_topSafeArea = findViewById<View>(R.id.topBar_topSafeArea)
+            val params_topBar = topBar_topSafeArea.layoutParams
+            params_topBar.height = 0
+            topBar_topSafeArea.layoutParams = params_topBar
+            topBar_topSafeArea.requestLayout()
+
+
+            //设置列表内边距
+            ListRecyclerView_Video.setPadding(statusBarHeight, 300, statusBarHeight, 300)
+            ListRecyclerView_Music.setPadding(statusBarHeight, 300, statusBarHeight, 300)
+            ListRecyclerView_Video.requestLayout()
+            ListRecyclerView_Music.requestLayout()
 
 
         }else{
             //竖屏模式
+
+
+
+            //设置顶部边距
+            val topBar_topSafeArea = findViewById<View>(R.id.topBar_topSafeArea)
+            val params_topSafeArea = topBar_topSafeArea.layoutParams
+            params_topSafeArea.height = statusBarHeight + 10
+            topBar_topSafeArea.layoutParams = params_topSafeArea
+            topBar_topSafeArea.requestLayout()
+
+            //获取顶部卡片总高度
+            var topBar_totalHeight = level_topBar.height
+            level_topBar.post {
+                topBar_totalHeight = level_topBar.height
+
+                val targetTopPadding = topBar_totalHeight + 10
+                consoleLog("targetTopPadding:$targetTopPadding,  statusBarHeight:$statusBarHeight  ")
+
+                //设置列表内边距
+                ListRecyclerView_Video.setPadding(0, targetTopPadding, 0, 300)
+                ListRecyclerView_Music.setPadding(0, targetTopPadding, 0, 300)
+                ListRecyclerView_Video.requestLayout()
+                ListRecyclerView_Music.requestLayout()
+
+            }
+
 
         }
 
@@ -573,8 +629,7 @@ class MainActivity: AppCompatActivity() {
                 startMiniViewPlay(uri.toUri())
             }
         )
-        //增加sidePadding
-        ListRecyclerView_Video.setPadding(0, 0, 0, 300)
+
         //设置adapter
         ListRecyclerView_Video.adapter = main_video_list_adapter
         //分页加载
@@ -626,8 +681,6 @@ class MainActivity: AppCompatActivity() {
 
             },
         )
-        //增加sidePadding
-        ListRecyclerView_Music.setPadding(0, 0, 0, 300)
         //设置adapter
         ListRecyclerView_Music.adapter = main_music_list_adapter
         //分页加载
@@ -1329,7 +1382,7 @@ class MainActivity: AppCompatActivity() {
     }
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "MainActivity: $msg")
         }

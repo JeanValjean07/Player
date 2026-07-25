@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:background="@android:color/transparent"
-    tools:ignore="HardcodedText,UnusedAttribute">
+    tools:ignore="HardcodedText,UnusedAttribute,ContentDescription,TooManyViews" >
     <androidx.cardview.widget.CardView
         android:id="@+id/main_card"
         android:layout_width="match_parent"
@@ -677,7 +677,7 @@
                                             android:backgroundTint="@android:color/transparent"
                                             android:scaleType="centerCrop"
                                             android:src="@drawable/ic_setting_arrow_down"
-                                            tools:ignore="ContentDescription" />
+                                            />
                                     </LinearLayout>
                                 </androidx.cardview.widget.CardView>
                             </LinearLayout>

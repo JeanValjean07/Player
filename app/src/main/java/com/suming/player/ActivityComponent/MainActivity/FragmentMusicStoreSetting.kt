@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
@@ -72,10 +73,15 @@ class FragmentMusicStoreSetting: DialogFragment() {
             //横屏时隐藏状态栏
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 ViewCompat.setOnApplyWindowInsetsListener(dialog?.window?.decorView ?: return) { view, insets -> WindowInsetsCompat.CONSUMED }
+
+                /*
                 dialog?.window?.decorView?.post { dialog?.window?.insetsController?.let { controller ->
                     controller.hide(WindowInsets.Type.statusBars())
                     controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 } }
+
+                 */
+
                 //三星专用:显示到挖空区域
                 dialog?.window?.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             } else {
@@ -127,10 +133,10 @@ class FragmentMusicStoreSetting: DialogFragment() {
     }
 
     private fun init(view: View){
-        lifecycleScope.launch(Dispatchers.Main) {
-            //设置卡片高度
-            setCardHeight(view)
+        //设置卡片高度
+        display(view)
 
+        lifecycleScope.launch(Dispatchers.Main) {
 
             //执行其他
             delay(500)
@@ -144,17 +150,44 @@ class FragmentMusicStoreSetting: DialogFragment() {
             }
         }
     }
-    private fun setCardHeight(view: View){
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            //读取屏幕信息
-            val screenHeightPx = resources.displayMetrics.heightPixels
-            val targetHeightPx = (screenHeightPx * 0.7).toInt()
-            val density = resources.displayMetrics.density
-            val screenHeightDp = (screenHeightPx / density).toInt()
-            //操作主卡片视图
-            val mainCard = view.findViewById<CardView>(R.id.main_card)
+    //设置面板几何
+    private fun display(view: View){
+        //获取当前屏幕方向
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //操作主卡片视图
+        val mainCard = view.findViewById<CardView>(R.id.main_card)
+        //读取屏幕信息
+        val screenHeightPx = resources.displayMetrics.heightPixels
+        val screenWidthPx = resources.displayMetrics.widthPixels
+        val density = resources.displayMetrics.density
+
+        if (isLandscape){
+            //计算目标宽度
+            val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
             mainCard.post {
-                if (screenHeightDp < 450){
+                if (targetScreenHeightDp < 50){
+                    mainCard.layoutParams.width = screenWidthPx
+                }else{
+                    mainCard.layoutParams.width = targetScreenWidthPx
+                }
+                //把高度改为match parent
+                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+
+                val statusBarHeight = getStatusBarHeightFromView(mainCard)
+                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
+
+                mainCard.requestLayout()
+            }
+
+        }else{
+            //计算目标高度
+            val targetHeightPx = (screenHeightPx * 0.7).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 450){
                     mainCard.layoutParams.height = screenHeightPx
                 }else{
                     mainCard.layoutParams.height = targetHeightPx
@@ -163,7 +196,11 @@ class FragmentMusicStoreSetting: DialogFragment() {
             }
         }
     }
-
+    fun getStatusBarHeightFromView(view: View): Int {
+        val rect = Rect()
+        view.getWindowVisibleDisplayFrame(rect)
+        return rect.top
+    }
 
 
     //Main Thread Functions
