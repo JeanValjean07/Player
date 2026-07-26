@@ -16,7 +16,6 @@ import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import android.widget.Button
 import android.widget.FrameLayout
@@ -38,8 +37,8 @@ import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.iterator
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -49,7 +48,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.Visibility
 import com.suming.player.ActivityComponent.MainActivity.FragmentMusicStoreSetting
 import com.suming.player.ActivityComponent.MainActivity.FragmentVideoStoreSetting
 import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterMusic
@@ -75,6 +73,9 @@ import com.suming.player.FuncionalPack.PlayerInfoCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.getValue
@@ -115,6 +116,9 @@ class MainActivity: AppCompatActivity() {
         showMediaList(savedInstanceState)
 
         setupEventObserver()
+
+
+        startListUnderTopObserver()
 
     }
     //onResume时更新一些设置变量
@@ -181,6 +185,7 @@ class MainActivity: AppCompatActivity() {
         ButtonCardMusic = findViewById(R.id.ButtonCardMusic)
         ButtonCardVideo = findViewById(R.id.ButtonCardVideo)
         ButtonCardGallery = findViewById(R.id.ButtonCardGallery)
+        topBar_bottomLine = findViewById(R.id.topBar_bottomLine)
 
         //获取横竖屏模式
         isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -321,6 +326,35 @@ class MainActivity: AppCompatActivity() {
         return (this * Resources.getSystem().displayMetrics.density).toInt()
     }
 
+
+
+    //频繁变更视图
+    private lateinit var topBar_bottomLine : View
+
+    //顶部分隔线显示控制(In代表显示,Out代表隐藏)
+    private var isTopBar_bottomLine_In = false
+    private fun topBar_bottomLine_In(){
+        if (isTopBar_bottomLine_In) return
+        isTopBar_bottomLine_In = true
+
+        topBar_bottomLine.visibility = View.VISIBLE
+        topBar_bottomLine.alpha = 0f
+        topBar_bottomLine.animate()
+            .alpha(1f)
+            .setDuration(200)
+            .start()
+
+    }
+    private fun topBar_bottomLine_Out(){
+        if (!isTopBar_bottomLine_In) return
+        isTopBar_bottomLine_In = false
+
+        topBar_bottomLine.animate()
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction { topBar_bottomLine.visibility = View.GONE }
+            .start()
+    }
 
 
 
@@ -531,7 +565,7 @@ class MainActivity: AppCompatActivity() {
             //页面标识防重复
             if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_video && state_VideoRecyclerView_started){
                 withContext(Dispatchers.Main){
-                    listGoTop()
+                    setListToTop()
                 }
                 return@launch
             }
@@ -539,10 +573,10 @@ class MainActivity: AppCompatActivity() {
             //记录状态
             SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_video)
 
+            //前台切换
             withContext(Dispatchers.Main){
                 //界面切换
-                setVideoElement()
-                resetElement("video")
+                setList(SettingsRequestCenter.tab_mark_video)
                 //加载事务
                 showVideoListCore()
             }
@@ -555,7 +589,7 @@ class MainActivity: AppCompatActivity() {
             //页面标识防重复
             if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_music && state_MusicRecyclerView_started){
                 withContext(Dispatchers.Main){
-                    listGoTop()
+                    setListToTop()
                 }
                 return@launch
             }
@@ -563,10 +597,10 @@ class MainActivity: AppCompatActivity() {
             //记录状态
             SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_music)
 
+            //前台切换
             withContext(Dispatchers.Main){
                 //界面切换
-                setMusicElement()
-                resetElement("music")
+                setList(SettingsRequestCenter.tab_mark_music)
                 //加载事务
                 showMusicListCore()
             }
@@ -1076,39 +1110,60 @@ class MainActivity: AppCompatActivity() {
 
 
     //页签切换变更页面信息
-    private fun setMusicElement(){
-        mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_music
-        AppBarTitle.text = "音乐"
-        ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
+    private fun setList(target: String){
+        var titleText = "列表"
+        var targetButtonView : CardView? = null
+        val targetListView = when(target) {
+            SettingsRequestCenter.tab_mark_music -> {
+                titleText = "音乐"
+                targetButtonView = ButtonCardMusic
 
-        ListRecyclerView_Video.visibility = View.GONE
-        ListRecyclerView_Music.visibility = View.VISIBLE
+                ListRecyclerView_Music
+            }
+            SettingsRequestCenter.tab_mark_video -> {
+                titleText = "视频"
+                targetButtonView = ButtonCardVideo
 
+                ListRecyclerView_Video
+            }
+            else -> {
+                showCustomToast("页面打开失败",3)
+                finish()
+                return
+            }
+        }
+
+        //修改标题
+        AppBarTitle.text = titleText
+
+        //修改按钮背景颜色
+        if (targetButtonView != null){
+            if (targetButtonView == ButtonCardMusic){
+                ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
+                ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
+            }
+            if (targetButtonView == ButtonCardVideo){
+                ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
+                ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
+            }
+        }
+
+
+        //遍历level_list内所有列表
+        for (item in level_list){
+            if (item == targetListView){
+                item.visibility = View.VISIBLE
+            }else{
+                item.visibility = View.GONE
+            }
+
+        }
+
+        monitorListPosition(target)
 
     }
-    private fun setVideoElement(){
-        mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_video
-        AppBarTitle.text = "视频"
-        ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
-
-        ListRecyclerView_Video.visibility = View.VISIBLE
-        ListRecyclerView_Music.visibility = View.GONE
-
-    }
-    private fun resetElement(avoid: String){
-        if (avoid == "music"){
-            ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
-            ButtonCardGallery.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
-        }
-        else if (avoid == "video"){
-            ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
-            ButtonCardGallery.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
-        }
-        else{
-            showCustomToast("界面重置函数接收到预期外的参数",3)
-        }
-    }
-    private fun listGoTop(){
+    //页面回到顶部
+    private fun setListToTop(){
         when (mainViewModel.state_current_tab) {
             SettingsRequestCenter.tab_mark_music -> {
                 if (!state_MusicRecyclerView_started) return
@@ -1125,6 +1180,69 @@ class MainActivity: AppCompatActivity() {
                 ListRecyclerView_Video.smoothScrollToPosition(0)
             }
         }
+    }
+    //列表位置监控
+    private val scrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+            val isAtTop = !recyclerView.canScrollVertically(-1)
+            isListUnderTop.value = isAtTop
+        }
+    }
+    private val isListUnderTop = MutableStateFlow(false)
+    val isListUnderTopFlow: StateFlow<Boolean> = isListUnderTop.asStateFlow()
+    private fun startListUnderTopObserver(){
+        lifecycleScope.launch {
+            //观察媒体变更
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                isListUnderTopFlow.collect{
+                    if (it){
+                        consoleLog("列表是否在顶部: $it")
+                        topBar_bottomLine_Out()
+                    }else{
+                        consoleLog("列表是否在顶部: $it")
+                        topBar_bottomLine_In()
+                    }
+                }
+            }
+        }
+
+    }
+
+    private fun monitorListPosition(target: String){
+
+        val targetListView = when(target) {
+            SettingsRequestCenter.tab_mark_music -> {
+                ListRecyclerView_Music
+            }
+            SettingsRequestCenter.tab_mark_video -> {
+                ListRecyclerView_Video
+            }
+            else -> {
+                showCustomToast("页面打开失败",3)
+                finish()
+                return
+            }
+        }
+
+        //遍历level_list内所有recyclerView
+        for (item in level_list){
+            if (item == targetListView){
+                //添加列表滚动监听器
+                if (item is RecyclerView){
+                    item.addOnScrollListener(scrollListener)
+                    //额外检查一次是否在顶部(否则切换后未滚动前不会刷新)
+                    isListUnderTop.value = !item.canScrollVertically(-1)
+                }
+            }else{
+                //移除列表滚动监听器
+                if (item is RecyclerView){
+                    item.removeOnScrollListener(scrollListener)
+                }
+            }
+
+        }
+
     }
     //界面控件元素
     private lateinit var AppBarTitle: TextView

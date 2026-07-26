@@ -43,8 +43,6 @@ class CustomListFragment():Fragment(R.layout.fragment_play_list_custom_page){
     private val flag_currentPage = PlayerListManager.list_page_custom
     //共享ViewModel
     private val viewModel: PlayerListViewModel by activityViewModels()
-    //协程
-    private var coroutine_component = CoroutineScope(Dispatchers.Main)
 
 
     //加载中卡片
@@ -81,7 +79,7 @@ class CustomListFragment():Fragment(R.layout.fragment_play_list_custom_page){
 
 
         //组件注册
-        coroutine_component.launch {
+        lifecycleScope.launch(Dispatchers.Main) {
             //页面设置按钮
             val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
             pageSettingButton.setOnClickListener {

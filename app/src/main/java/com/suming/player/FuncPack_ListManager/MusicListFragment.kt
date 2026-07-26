@@ -43,9 +43,6 @@ class MusicListFragment():Fragment(R.layout.fragment_play_list_live_page){
     private val flag_currentPage = PlayerListManager.list_page_music
     //共享ViewModel
     private val viewModel: PlayerListViewModel by activityViewModels()
-    //协程
-    private var coroutine_component = CoroutineScope(Dispatchers.IO)
-
 
 
     //当前播放列表
@@ -66,7 +63,7 @@ class MusicListFragment():Fragment(R.layout.fragment_play_list_live_page){
 
 
         //组件注册
-        coroutine_component.launch {
+        lifecycleScope.launch(Dispatchers.Main){
             //页面设置按钮
             val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
             pageSettingButton.setOnClickListener {

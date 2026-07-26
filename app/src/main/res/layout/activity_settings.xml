@@ -128,6 +128,7 @@
             </androidx.cardview.widget.CardView>
             <!-- 卡片：项目Github仓库页 -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/contentCard_githubRelease"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
@@ -165,6 +166,7 @@
 
             <!--  卡片：通用  -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/contentCard_general"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
@@ -330,6 +332,7 @@
 
             <!--  卡片：播放页样式和对应设置  -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/contentCard_playPage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"

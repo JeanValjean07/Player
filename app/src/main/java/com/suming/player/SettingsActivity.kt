@@ -139,6 +139,8 @@ class SettingsActivity: AppCompatActivity() {
                 startActivity(Intent(this@SettingsActivity, DeviceInfoActivity::class.java))
             }
 
+
+
         }
     }
 
@@ -432,9 +434,6 @@ class SettingsActivity: AppCompatActivity() {
 
         }
     }
-
-
-
 
 
 
