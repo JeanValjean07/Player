@@ -6,6 +6,7 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import androidx.core.net.toUri
 import java.io.File
 
@@ -62,10 +63,12 @@ object MediaUriManager {
 
         //提取文件路径
         val filePath = getFilePath(context, mediaUri)
+        consoleLog("filePath: $filePath")
         if (filePath == null) return Uri.EMPTY
 
         //查询数据库获取媒体uri
         val mediaUri = getMediaUriByFilePath(filePath, context)
+        consoleLog("mediaUri: $mediaUri")
         if (mediaUri == Uri.EMPTY) return Uri.EMPTY
 
 
@@ -93,10 +96,11 @@ object MediaUriManager {
             if (cursor != null && cursor.moveToFirst()) {
                 val idColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
                 val id = cursor.getLong(idColumnIndex)
-
+                consoleLog("id: $id")
                 //构建标准uri
                 ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
             }else{
+                consoleLog("未查询到媒体ID")
                 Uri.EMPTY
             }
         }finally{
@@ -127,5 +131,12 @@ object MediaUriManager {
         return absolutePath?.takeIf { File(it).exists() }
     }
 
+
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "MediaUriManager: $msg")
+        }
+    }
 
 }

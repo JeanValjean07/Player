@@ -224,8 +224,10 @@ object MediaInfoRetriever {
     private fun calculateUniqueID(context: Context,mediaUri: Uri):Pair<String,String>{
         //计算媒体唯一识别ID
         val MediaInfo_MediaStoreID = MediaUriManager.getMediaIDByMediaUri(mediaUri,context)
+        consoleLog("MediaInfo_MediaStoreID: $MediaInfo_MediaStoreID")
         //获取标准链接
         val MediaInfo_MediaUriStandard = MediaUriManager.getStandardMediaUri(mediaUri,context)
+        consoleLog("MediaInfo_MediaUriStandard: $MediaInfo_MediaUriStandard")
 
         return Pair(MediaInfo_MediaStoreID,MediaInfo_MediaUriStandard.toString())
     }

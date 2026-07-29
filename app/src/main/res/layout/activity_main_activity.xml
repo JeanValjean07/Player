@@ -8,243 +8,8 @@
     android:background="@color/MainColorPack_SurfaceBackground"
     android:fitsSystemWindows="false"
     tools:context=".MainActivity"
-    tools:ignore="HardcodedText,UnusedAttribute">
+    tools:ignore="HardcodedText,UnusedAttribute,TooDeepLayout">
 
-    <!-- 标题栏 -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/level_topBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:cardElevation="1dp"
-        android:backgroundTint="@color/MainColorPack_SurfaceBackground">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:orientation="vertical">
-            <!-- 顶部安全区view -->
-            <View
-                android:id="@+id/topBar_topSafeArea"
-                android:layout_width="match_parent"
-                android:layout_height="30dp"
-                android:background="@android:color/transparent"
-                />
-            <!-- 顶部标题+按钮 -->
-            <LinearLayout
-                android:id="@+id/AppBarTitleLayout"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:orientation="horizontal">
-                <!-- 标题 -->
-                <TextView
-                    android:id="@+id/AppBarTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="45dp"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:layout_marginStart="12dp"
-                    android:text="列表"
-                    android:textColor="@color/HeadText"
-                    android:textSize="24sp" />
-                <!-- 提示文本区域 -->
-                <TextView
-                    android:id="@+id/AppBarNoticeText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:layout_marginStart="7dp"
-                    android:text="提示文本"
-                    android:textColor="@color/HeadText"
-                    android:textSize="12sp"
-                    android:visibility="gone"
-                    />
-                <!-- 占位 -->
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"/>
-                <!-- 指南按钮 -->
-                <Button
-                    android:id="@+id/buttonGuidance"
-                    android:layout_width="50dp"
-                    android:layout_height="45dp"
-                    android:layout_gravity="center"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:textColor="@color/TextButtonText"
-                    android:padding="0dp"
-                    android:contentDescription="指南"
-                    android:tooltipText="指南"
-                    android:visibility="gone"
-                    android:text="指南" />
-                <!-- 设置按钮 -->
-                <Button
-                    android:id="@+id/buttonSetting"
-                    android:layout_width="50dp"
-                    android:layout_height="45dp"
-                    android:layout_gravity="center"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:layout_marginEnd="8dp"
-                    android:padding="0dp"
-                    android:contentDescription="设置"
-                    android:tooltipText="设置"
-                    android:visibility="gone"
-                    android:textColor="@color/TextButtonText"
-                    android:text="设置" />
-            </LinearLayout>
-            <!-- 横滑滚动选项 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:orientation="horizontal">
-                <HorizontalScrollView
-                    android:layout_width="0dp"
-                    android:layout_height="40dp"
-                    android:layout_weight="1"
-                    android:scrollbars="none">
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="40dp"
-                        android:gravity="center"
-                        android:orientation="horizontal">
-                        <!-- 视频 -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/ButtonCardVideo"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:backgroundTint="@color/ButtonCard_OFF"
-                            app:cardElevation="2dp"
-                            app:cardCornerRadius="5dp">
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="25dp"
-                                    android:layout_height="25dp"
-                                    android:layout_gravity="center"
-                                    android:padding="7dp"
-                                    android:backgroundTint="@android:color/transparent"
-                                    android:scaleType="centerCrop"
-                                    android:src="@drawable/ic_main_fragment_video_icon"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center"
-                                    android:layout_marginEnd="10dp"
-                                    android:layout_marginTop="5dp"
-                                    android:layout_marginBottom="5dp"
-                                    android:text="视频"
-                                    android:textColor="@color/HeadText"
-                                    android:textSize="11sp"
-                                    />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-                        <!-- 音乐 -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/ButtonCardMusic"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:backgroundTint="@color/ButtonCard_OFF"
-                            app:cardElevation="2dp"
-                            app:cardCornerRadius="5dp">
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="25dp"
-                                    android:layout_height="25dp"
-                                    android:layout_gravity="center"
-                                    android:padding="7dp"
-                                    android:backgroundTint="@android:color/transparent"
-                                    android:scaleType="centerCrop"
-                                    android:src="@drawable/ic_main_fragment_music_icon"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center"
-                                    android:layout_marginTop="5dp"
-                                    android:layout_marginEnd="10dp"
-                                    android:layout_marginBottom="5dp"
-                                    android:text="音乐"
-                                    android:textColor="@color/HeadText"
-                                    android:textSize="11sp" />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-                        <!-- 陈列架 -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/ButtonCardGallery"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:backgroundTint="@color/ButtonCard_OFF"
-                            app:cardElevation="2dp"
-                            app:cardCornerRadius="5dp">
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal">
-                                <ImageView
-                                    android:layout_width="25dp"
-                                    android:layout_height="25dp"
-                                    android:layout_gravity="center"
-                                    android:padding="7dp"
-                                    android:backgroundTint="@android:color/transparent"
-                                    android:scaleType="centerCrop"
-                                    android:src="@drawable/ic_main_fragment_note_for_gallery"
-                                    tools:ignore="ContentDescription" />
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center"
-                                    android:layout_marginTop="5dp"
-                                    android:layout_marginEnd="10dp"
-                                    android:layout_marginBottom="5dp"
-                                    android:text="陈列架"
-                                    android:textColor="@color/HeadText"
-                                    android:textSize="11sp" />
-                            </LinearLayout>
-                        </androidx.cardview.widget.CardView>
-                        <!-- 末尾占位 -->
-                        <View
-                            android:layout_width="10dp"
-                            android:layout_height="match_parent"/>
-                    </LinearLayout>
-                </HorizontalScrollView>
-                <!-- 设置按钮 -->
-                <ImageButton
-                    android:id="@+id/ButtonMediaStoreSetting"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:padding="11dp"
-                    android:layout_marginBottom="7dp"
-                    android:src="@drawable/ic_main_activity_settings"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="自定义页签-设置"
-                    android:tooltipText="自定义页签-设置" />
-            </LinearLayout>
-            <!-- 底部分隔线 -->
-            <View
-                android:id="@+id/topBar_bottomLine"
-                android:layout_width="match_parent"
-                android:layout_height="0.3dp"
-                android:background="@color/strokeLine"
-                android:visibility="gone"
-                />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
 
 
     <!-- 列表容器 -->
@@ -308,117 +73,386 @@
     </androidx.cardview.widget.CardView>
 
 
-    <!-- 正在播放卡片 -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/level_miniView"
+
+
+
+    <LinearLayout
+        android:id="@+id/level_controllers"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:backgroundTint="@color/MainColorPack_SurfaceBackground"
-        android:clickable="true"
-        app:cardElevation="10dp"
-        app:cardCornerRadius="0dp">
+        android:orientation="horizontal">
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
             android:orientation="vertical">
-            <!-- 顶部分隔线 -->
-            <View
-                android:id="@+id/miniView_topLine"
+            <!-- 标题栏 -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/level_topBar"
                 android:layout_width="match_parent"
-                android:layout_height="0.3dp"
-                android:background="@color/strokeLine"
+                android:layout_height="wrap_content"
                 app:layout_constraintTop_toTopOf="parent"
-                />
-            <!-- 主要区域 -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="50dp">
-                <!-- 封面区 -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/PlayingCard_Artwork"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="10dp"
-                    android:backgroundTint="@color/Background4"
-                    app:cardElevation="0dp"
-                    app:cardCornerRadius="5dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toStartOf="parent">
-                </androidx.cardview.widget.CardView>
-                <!-- 标题和艺术家 -->
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:cardElevation="1dp"
+                android:backgroundTint="@color/MainColorPack_SurfaceBackground">
                 <LinearLayout
-                    android:id="@+id/PlayingCard_InfoContainer"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:layout_marginEnd="10dp"
-                    app:layout_constraintStart_toEndOf="@+id/PlayingCard_Artwork"
-                    app:layout_constraintEnd_toStartOf="@+id/PlayingCard_ButtonPlay"
+                    android:background="@android:color/transparent"
                     android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/PlayingCard_MediaName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:maxLines="1"
-                        android:text="正在加载媒体标题"
-                        android:textSize="13sp"
-                        android:textColor="@color/HeadText"
-                        android:layout_marginStart="10dp"
+                    <!-- 顶部安全区view -->
+                    <View
+                        android:id="@+id/topBar_topSafeArea"
+                        android:layout_width="match_parent"
+                        android:layout_height="30dp"
+                        android:background="@android:color/transparent"
                         />
-                    <TextView
-                        android:id="@+id/PlayingCard_MediaArtist"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="10sp"
-                        android:textColor="@color/HeadText"
-                        android:text="正在加载媒体艺术家"
-                        android:layout_marginStart="10dp"
-                        tools:ignore="SmallSp" />
+                    <!-- 顶部标题+按钮 -->
+                    <LinearLayout
+                        android:id="@+id/AppBarTitleLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        android:orientation="horizontal">
+                        <!-- 标题 -->
+                        <TextView
+                            android:id="@+id/AppBarTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="45dp"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:layout_marginStart="12dp"
+                            android:text="列表"
+                            android:textColor="@color/HeadText"
+                            android:textSize="24sp" />
+                        <!-- 提示文本区域 -->
+                        <TextView
+                            android:id="@+id/AppBarNoticeText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:layout_marginStart="7dp"
+                            android:text="提示文本"
+                            android:textColor="@color/HeadText"
+                            android:textSize="12sp"
+                            android:visibility="gone"
+                            />
+                        <!-- 占位 -->
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"/>
+                        <!-- 指南按钮 -->
+                        <Button
+                            android:id="@+id/buttonGuidance"
+                            android:layout_width="50dp"
+                            android:layout_height="45dp"
+                            android:layout_gravity="center"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:textColor="@color/TextButtonText"
+                            android:padding="0dp"
+                            android:contentDescription="指南"
+                            android:tooltipText="指南"
+                            android:visibility="gone"
+                            android:text="指南" />
+                        <!-- 设置按钮 -->
+                        <Button
+                            android:id="@+id/buttonSetting"
+                            android:layout_width="50dp"
+                            android:layout_height="45dp"
+                            android:layout_gravity="center"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:layout_marginEnd="8dp"
+                            android:padding="0dp"
+                            android:contentDescription="设置"
+                            android:tooltipText="设置"
+                            android:visibility="gone"
+                            android:textColor="@color/TextButtonText"
+                            android:text="设置" />
+                    </LinearLayout>
+                    <!-- 横滑滚动选项 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:orientation="horizontal">
+                        <HorizontalScrollView
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:scrollbars="none">
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="40dp"
+                                android:gravity="center"
+                                android:orientation="horizontal">
+                                <!-- 视频 -->
+                                <androidx.cardview.widget.CardView
+                                    android:id="@+id/ButtonCardVideo"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="10dp"
+                                    android:backgroundTint="@color/ButtonCard_OFF"
+                                    app:cardElevation="2dp"
+                                    app:cardCornerRadius="5dp">
+                                    <LinearLayout
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="horizontal">
+                                        <ImageView
+                                            android:layout_width="25dp"
+                                            android:layout_height="25dp"
+                                            android:layout_gravity="center"
+                                            android:padding="7dp"
+                                            android:backgroundTint="@android:color/transparent"
+                                            android:scaleType="centerCrop"
+                                            android:src="@drawable/ic_main_fragment_video_icon"
+                                            tools:ignore="ContentDescription" />
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_gravity="center"
+                                            android:layout_marginEnd="10dp"
+                                            android:layout_marginTop="5dp"
+                                            android:layout_marginBottom="5dp"
+                                            android:text="视频"
+                                            android:textColor="@color/HeadText"
+                                            android:textSize="11sp"
+                                            />
+                                    </LinearLayout>
+                                </androidx.cardview.widget.CardView>
+                                <!-- 音乐 -->
+                                <androidx.cardview.widget.CardView
+                                    android:id="@+id/ButtonCardMusic"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="10dp"
+                                    android:backgroundTint="@color/ButtonCard_OFF"
+                                    app:cardElevation="2dp"
+                                    app:cardCornerRadius="5dp">
+                                    <LinearLayout
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="horizontal">
+                                        <ImageView
+                                            android:layout_width="25dp"
+                                            android:layout_height="25dp"
+                                            android:layout_gravity="center"
+                                            android:padding="7dp"
+                                            android:backgroundTint="@android:color/transparent"
+                                            android:scaleType="centerCrop"
+                                            android:src="@drawable/ic_main_fragment_music_icon"
+                                            tools:ignore="ContentDescription" />
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_gravity="center"
+                                            android:layout_marginTop="5dp"
+                                            android:layout_marginEnd="10dp"
+                                            android:layout_marginBottom="5dp"
+                                            android:text="音乐"
+                                            android:textColor="@color/HeadText"
+                                            android:textSize="11sp" />
+                                    </LinearLayout>
+                                </androidx.cardview.widget.CardView>
+                                <!-- 陈列架 -->
+                                <androidx.cardview.widget.CardView
+                                    android:id="@+id/ButtonCardGallery"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="10dp"
+                                    android:backgroundTint="@color/ButtonCard_OFF"
+                                    app:cardElevation="2dp"
+                                    app:cardCornerRadius="5dp">
+                                    <LinearLayout
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="horizontal">
+                                        <ImageView
+                                            android:layout_width="25dp"
+                                            android:layout_height="25dp"
+                                            android:layout_gravity="center"
+                                            android:padding="7dp"
+                                            android:backgroundTint="@android:color/transparent"
+                                            android:scaleType="centerCrop"
+                                            android:src="@drawable/ic_main_fragment_note_for_gallery"
+                                            tools:ignore="ContentDescription" />
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:layout_gravity="center"
+                                            android:layout_marginTop="5dp"
+                                            android:layout_marginEnd="10dp"
+                                            android:layout_marginBottom="5dp"
+                                            android:text="陈列架"
+                                            android:textColor="@color/HeadText"
+                                            android:textSize="11sp" />
+                                    </LinearLayout>
+                                </androidx.cardview.widget.CardView>
+                                <!-- 末尾占位 -->
+                                <View
+                                    android:layout_width="10dp"
+                                    android:layout_height="match_parent"/>
+                            </LinearLayout>
+                        </HorizontalScrollView>
+                        <!-- 设置按钮 -->
+                        <ImageButton
+                            android:id="@+id/ButtonMediaStoreSetting"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:padding="11dp"
+                            android:layout_marginBottom="7dp"
+                            android:src="@drawable/ic_main_activity_settings"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:scaleType="centerCrop"
+                            android:contentDescription="自定义页签-设置"
+                            android:tooltipText="自定义页签-设置" />
+                    </LinearLayout>
+                    <!-- 底部分隔线 -->
+                    <View
+                        android:id="@+id/topBar_bottomLine"
+                        android:layout_width="match_parent"
+                        android:layout_height="0.3dp"
+                        android:background="@color/strokeLine"
+                        android:visibility="gone"
+                        />
                 </LinearLayout>
-                <!-- 控制按钮 -->
-                <ImageButton
-                    android:id="@+id/PlayingCard_ButtonPlay"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="playOrPause"
-                    android:padding="13dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_main_controller_play"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/PlayingCard_ButtonList"
-                    app:layout_constraintDimensionRatio="H,1:1"/>
-                <ImageButton
-                    android:id="@+id/PlayingCard_ButtonList"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:contentDescription="playOrPause"
-                    android:padding="13dp"
-                    android:src="@drawable/ic_main_controller_list"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:scaleType="centerCrop"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintDimensionRatio="H,1:1"
-                    />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-            <!-- 底部安全区view -->
+            </androidx.cardview.widget.CardView>
+            <!-- 占位 -->
             <View
-                android:id="@+id/miniView_bottomSafeArea"
-                android:layout_width="match_parent"
-                android:layout_height="20dp"
-                android:elevation="20dp"
-                android:background="@android:color/transparent"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 />
+            <!-- 正在播放卡片 -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/level_miniView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:backgroundTint="@color/MainColorPack_SurfaceBackground"
+                android:clickable="true"
+                app:cardElevation="10dp"
+                app:cardCornerRadius="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:orientation="vertical">
+                    <!-- 顶部分隔线 -->
+                    <View
+                        android:id="@+id/miniView_topLine"
+                        android:layout_width="match_parent"
+                        android:layout_height="0.3dp"
+                        android:background="@color/strokeLine"
+                        app:layout_constraintTop_toTopOf="parent"
+                        />
+                    <!-- 主要区域 -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <!-- 封面区 -->
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/PlayingCard_Artwork"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="10dp"
+                            android:backgroundTint="@color/Background4"
+                            app:cardElevation="0dp"
+                            app:cardCornerRadius="5dp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintStart_toStartOf="parent">
+                        </androidx.cardview.widget.CardView>
+                        <!-- 标题和艺术家 -->
+                        <LinearLayout
+                            android:id="@+id/PlayingCard_InfoContainer"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            android:layout_marginEnd="10dp"
+                            app:layout_constraintStart_toEndOf="@+id/PlayingCard_Artwork"
+                            app:layout_constraintEnd_toStartOf="@+id/PlayingCard_ButtonPlay"
+                            android:orientation="vertical">
+                            <TextView
+                                android:id="@+id/PlayingCard_MediaName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:maxLines="1"
+                                android:text="正在加载媒体标题"
+                                android:textSize="13sp"
+                                android:textColor="@color/HeadText"
+                                android:layout_marginStart="10dp"
+                                />
+                            <TextView
+                                android:id="@+id/PlayingCard_MediaArtist"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="10sp"
+                                android:textColor="@color/HeadText"
+                                android:text="正在加载媒体艺术家"
+                                android:layout_marginStart="10dp"
+                                tools:ignore="SmallSp" />
+                        </LinearLayout>
+                        <!-- 控制按钮 -->
+                        <ImageButton
+                            android:id="@+id/PlayingCard_ButtonPlay"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="playOrPause"
+                            android:padding="13dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_main_controller_play"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintEnd_toStartOf="@+id/PlayingCard_ButtonList"
+                            app:layout_constraintDimensionRatio="H,1:1"/>
+                        <ImageButton
+                            android:id="@+id/PlayingCard_ButtonList"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:contentDescription="playOrPause"
+                            android:padding="13dp"
+                            android:src="@drawable/ic_main_controller_list"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:scaleType="centerCrop"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintDimensionRatio="H,1:1"
+                            />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                    <!-- 底部安全区view -->
+                    <View
+                        android:id="@+id/miniView_bottomSafeArea"
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp"
+                        android:elevation="20dp"
+                        android:background="@android:color/transparent"
+                        />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+
+        <View
+            android:id="@+id/level_controller_rightLine"
+            android:layout_width="0.3dp"
+            android:layout_height="match_parent"
+            android:background="@color/strokeLine"
+            android:visibility="gone"
+            />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
