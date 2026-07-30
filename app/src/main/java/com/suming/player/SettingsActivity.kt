@@ -35,6 +35,7 @@ import com.suming.player.ActivityComponent.SettingsActivity.SettingsFragmentDele
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.ReleaseInfo
+import com.suming.player.FuncionalPack.DisplayInfo
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -916,7 +917,6 @@ class SettingsActivity: AppCompatActivity() {
 
 
     //界面配置
-    private var statusBarHeight = 0
     private lateinit var AppBarGradientMask: View
     private lateinit var AppBarCore: LinearLayout
     private lateinit var AppBarSpacer: Space
@@ -930,13 +930,16 @@ class SettingsActivity: AppCompatActivity() {
         AppBarSpacer = findViewById(R.id.AppBarSpacer)
         AppBarTitle = findViewById(R.id.AppBarTitle)
         //获取状态栏高度
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
+        if (DisplayInfo.statusBarHeight != 0){
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
 
-            statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            onStatusBarHeightGet(statusBarHeight)
+                DisplayInfo.statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+                onStatusBarHeightGet(DisplayInfo.statusBarHeight)
 
-            insets
+                insets
+            }
         }
+
     }
     private fun onStatusBarHeightGet(statusBarHeight: Int){
         AppBarGradientMask.layoutParams.height = statusBarHeight + dpToPx(60f).toInt()
