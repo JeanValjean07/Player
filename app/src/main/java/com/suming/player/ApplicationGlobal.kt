@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.FuncPack_ListManager.PlayerListManager
+import com.suming.player.FuncionalPack.PermissionHelper
 import com.suming.player.FuncionalPack.PlayerListener
 
 class ApplicationGlobal : Application() {
@@ -18,6 +19,7 @@ class ApplicationGlobal : Application() {
         PlayerSingleton.setContext(this)
         PlayerListManager.setContext(this)
         PlayerListener.setContext(this)
+        PermissionHelper.setContext(this)
 
     }
 

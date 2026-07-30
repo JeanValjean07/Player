@@ -1,6 +1,6 @@
 package com.suming.player.FuncionalPack
 
-object DisplayInfo {
+object DeviceInfo {
 
 
     var statusBarHeight : Int = 0
@@ -9,6 +9,10 @@ object DisplayInfo {
 
 
     var isPad = false
+
+
+
+    var AndroidVersion : Int = 0
 
 
 

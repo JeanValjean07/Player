@@ -66,7 +66,7 @@ import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForVideo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
-import com.suming.player.FuncionalPack.DisplayInfo
+import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
@@ -197,13 +197,13 @@ class MainActivity: AppCompatActivity() {
     }
     private fun getScreenInfo(){
         //获取屏幕宽高
-        DisplayInfo.screenWidth = resources.displayMetrics.widthPixels
-        DisplayInfo.screenHeight = resources.displayMetrics.heightPixels
+        DeviceInfo.screenWidth = resources.displayMetrics.widthPixels
+        DeviceInfo.screenHeight = resources.displayMetrics.heightPixels
         //获取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
-            DisplayInfo.statusBarHeight = systemBars.top
+            DeviceInfo.statusBarHeight = systemBars.top
 
             //重组主要视图
             compose()
@@ -315,7 +315,7 @@ class MainActivity: AppCompatActivity() {
                 ConstraintSet.BOTTOM,
                 0
             )
-            constraintSet.constrainWidth(level_controllers.id, (DisplayInfo.screenWidth * 0.3f).toInt())
+            constraintSet.constrainWidth(level_controllers.id, (DeviceInfo.screenWidth * 0.3f).toInt())
             constraintSet.applyTo(level_root)
 
             val constraintSetList = ConstraintSet()
@@ -329,7 +329,7 @@ class MainActivity: AppCompatActivity() {
                 0
             )
 
-            constraintSetList.constrainWidth(level_list.id, (DisplayInfo.screenWidth * 0.7f).toInt())
+            constraintSetList.constrainWidth(level_list.id, (DeviceInfo.screenWidth * 0.7f).toInt())
             constraintSetList.applyTo(level_root)
 
             val level_controller_rightLine = findViewById<View>(R.id.level_controller_rightLine)
@@ -339,8 +339,8 @@ class MainActivity: AppCompatActivity() {
 
 
             //设置列表内边距
-            ListRecyclerView_Video.setPadding(DisplayInfo.statusBarHeight, 300, DisplayInfo.statusBarHeight, 300)
-            ListRecyclerView_Music.setPadding(DisplayInfo.statusBarHeight, 300, DisplayInfo.statusBarHeight, 300)
+            ListRecyclerView_Video.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 300)
+            ListRecyclerView_Music.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 300)
             ListRecyclerView_Video.requestLayout()
             ListRecyclerView_Music.requestLayout()
 
@@ -355,7 +355,7 @@ class MainActivity: AppCompatActivity() {
             //设置顶部边距
             val topBar_topSafeArea = findViewById<View>(R.id.topBar_topSafeArea)
             val params_topSafeArea = topBar_topSafeArea.layoutParams
-            params_topSafeArea.height = DisplayInfo.statusBarHeight + 10
+            params_topSafeArea.height = DeviceInfo.statusBarHeight + 10
             topBar_topSafeArea.layoutParams = params_topSafeArea
             topBar_topSafeArea.requestLayout()
 
@@ -365,7 +365,7 @@ class MainActivity: AppCompatActivity() {
                 topBar_totalHeight = level_topBar.height
 
                 val targetTopPadding = topBar_totalHeight + 10
-                consoleLog("targetTopPadding:$targetTopPadding,  statusBarHeight:${DisplayInfo.statusBarHeight}  ")
+                consoleLog("targetTopPadding:$targetTopPadding,  statusBarHeight:${DeviceInfo.statusBarHeight}  ")
 
                 //设置列表内边距
                 ListRecyclerView_Video.setPadding(0, targetTopPadding, 0, 300)

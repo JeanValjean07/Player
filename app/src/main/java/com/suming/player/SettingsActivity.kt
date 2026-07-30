@@ -35,14 +35,13 @@ import com.suming.player.ActivityComponent.SettingsActivity.SettingsFragmentDele
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.ReleaseInfo
-import com.suming.player.FuncionalPack.DisplayInfo
+import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
@@ -930,11 +929,11 @@ class SettingsActivity: AppCompatActivity() {
         AppBarSpacer = findViewById(R.id.AppBarSpacer)
         AppBarTitle = findViewById(R.id.AppBarTitle)
         //获取状态栏高度
-        if (DisplayInfo.statusBarHeight != 0){
+        if (DeviceInfo.statusBarHeight != 0){
             ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
 
-                DisplayInfo.statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-                onStatusBarHeightGet(DisplayInfo.statusBarHeight)
+                DeviceInfo.statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+                onStatusBarHeightGet(DeviceInfo.statusBarHeight)
 
                 insets
             }
