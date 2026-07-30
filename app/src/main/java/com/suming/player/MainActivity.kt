@@ -69,7 +69,7 @@ import com.suming.player.FuncionalPack.ConnectCenter
 import com.suming.player.FuncionalPack.DisplayInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaInfoRetriever
-import com.suming.player.FuncionalPack.MediaTypeCenter
+import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -747,7 +747,7 @@ class MainActivity: AppCompatActivity() {
                 consoleLog("showMusicList数据库音乐数据为空")
                 //从系统读取音乐
                 withContext(Dispatchers.Main){
-                    startLocalMediaReader(MediaTypeCenter.mediaType_Music)
+                    startLocalMediaReader(MediaType.Audio)
                 }
             }
         }
@@ -920,8 +920,8 @@ class MainActivity: AppCompatActivity() {
             updateMiniViewArtwork_Image(uriNumOnly.toString(), type)
         }else{
             when(type){
-                MediaTypeCenter.mediaType_Music -> updateMiniViewArtwork_Image(uriNumOnly.toString(), type)
-                MediaTypeCenter.mediaType_Video -> updateMiniViewArtwork_Video()
+                MediaType.Audio -> updateMiniViewArtwork_Image(uriNumOnly.toString(), type)
+                MediaType.Video -> updateMiniViewArtwork_Video()
             }
         }
     }
@@ -1448,10 +1448,10 @@ class MainActivity: AppCompatActivity() {
         val MediaInfo_MediaType = PlayerInfoCenter.getMediaInfoType()
         consoleLog("PlayingCard_InfoContainer 点击事件 媒体类型: $MediaInfo_MediaType")
         when (MediaInfo_MediaType) {
-            MediaTypeCenter.mediaType_Video -> {
+            MediaType.Video -> {
                 startVideoPlayer(uri)
             }
-            MediaTypeCenter.mediaType_Music -> {
+            MediaType.Audio -> {
                 showCustomToast("暂不支持打开音乐播放页面",3)
                 //startMusicPlayer(uri)
             }

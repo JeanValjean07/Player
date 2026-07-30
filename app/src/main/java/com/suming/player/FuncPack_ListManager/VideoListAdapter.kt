@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
+import com.suming.player.FuncionalPack.MediaType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -118,7 +119,7 @@ class VideoListAdapter(
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch(Dispatchers.IO){
             //从ArtworkFrameManager要图片
-            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, ArtworkFrameManager.artwork_type_video, item.uriNumOnly)
+            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, item.uriNumOnly)
             //检查图片是否有效
             if (Frame != null){
                 consoleLog("RecyclerAdapterVideo: 加载图片成功, 位置：${item.uriNumOnly},名称：${item.filename}")

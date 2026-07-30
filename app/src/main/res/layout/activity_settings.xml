@@ -141,26 +141,61 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="0"
-                        android:padding="16dp"
-                        android:text="Github Release丨手动检查更新"
-                        android:textSize="13sp" />
-                    <View
+                    android:orientation="vertical">
+                    <!-- 标题：Github仓库 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
-                    <TextView
-                        android:id="@+id/buttonGoGithubRelease"
-                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="0"
-                        android:padding="16dp"
-                        android:text="前往"
-                        android:textSize="11sp" />
+                        android:layout_marginStart="15dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="3dp"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0"
+                            android:text="Github 仓库"
+                            android:textSize="13sp" />
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_weight="1" />
+
+                    </LinearLayout>
+                    <!-- 按钮区 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:orientation="vertical">
+                        <TextView
+                            android:id="@+id/Button_GoTo_GithubRepo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="5dp"
+                            android:text="前往仓库"
+                            android:textSize="11sp" />
+                        <TextView
+                            android:id="@+id/Button_GoTo_GithubRelease"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="5dp"
+                            android:text="前往Release页面（手动查看是否有新版本）"
+                            android:textSize="11sp" />
+                        <TextView
+                            android:id="@+id/ButtonAutoUpdate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="5dp"
+                            android:text="自动检查更新（测试中）"
+                            android:textSize="11sp" />
+
+
+                    </LinearLayout>
+                    <!-- 结果区 -->
+
+
+
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 

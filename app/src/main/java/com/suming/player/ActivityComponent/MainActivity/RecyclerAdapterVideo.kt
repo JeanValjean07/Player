@@ -32,6 +32,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
 import com.suming.player.FuncionalPack.ArtworkCapturer
+import com.suming.player.FuncionalPack.MediaType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -184,7 +185,7 @@ class RecyclerAdapterVideo(
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch(Dispatchers.IO){
             //从ArtworkFrameManager要图片
-            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, ArtworkFrameManager.artwork_type_video, item.uriNumOnly)
+            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, item.uriNumOnly)
             //检查图片是否有效
             if (Frame != null){
                 consoleLog("RecyclerAdapterVideo: 加载图片成功, 位置：${item.uriNumOnly},名称：${item.filename}")
@@ -238,7 +239,7 @@ class RecyclerAdapterVideo(
             }
 
             //保存图片(让ArtworkFrameManager承担保存任务)
-            ArtworkFrameManager.save_Artwork_Frame_Bitmap(context, ArtworkFrameManager.artwork_type_video, item.uriNumOnly, Bitmap)
+            ArtworkFrameManager.save_Artwork_Frame_Bitmap(context, MediaType.Video, item.uriNumOnly, Bitmap)
 
         }
     }
@@ -256,7 +257,7 @@ class RecyclerAdapterVideo(
     //📐外部控制函数 更新指定位置的封面
     fun updateCoverForVideo(uriNumOnly: Long)  {
         //拿新图
-        val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, ArtworkFrameManager.artwork_type_video, uriNumOnly)
+        val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, uriNumOnly)
         //检查是否取图成功
         if (Bitmap == null){
             consoleLog("刷新新视频封面失败: uriNumOnly=${uriNumOnly}")

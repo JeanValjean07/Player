@@ -103,6 +103,7 @@ import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.FrameExtractor
 import com.suming.player.FuncionalPack.FrameListener
 import com.suming.player.FuncionalPack.MediaInfoRetriever
+import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
@@ -2201,7 +2202,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //保存图片
             ArtworkFrameManager.save_Artwork_Frame_Bitmap(
                 this@PlayerActivityNeo,
-                ArtworkFrameManager.artwork_type_video,
+                MediaType.Video,
                 uriNumOnly,
                 bitmap
             )
@@ -2247,7 +2248,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //保存图片
         ArtworkFrameManager.save_Artwork_Frame_Bitmap(
             this@PlayerActivityNeo,
-            ArtworkFrameManager.artwork_type_video,
+            MediaType.Video,
             uriNumOnly,
             bitmap
         )

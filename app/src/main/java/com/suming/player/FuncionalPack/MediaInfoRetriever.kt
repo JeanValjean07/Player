@@ -103,9 +103,9 @@ object MediaInfoRetriever {
 
             //过滤获取的信息
             if (MediaInfo_MediaType.contains("video")){
-                MediaInfo_MediaType = MediaTypeCenter.mediaType_Video
+                MediaInfo_MediaType = MediaType.Video
             }else if(MediaInfo_MediaType.contains("audio")){
-                MediaInfo_MediaType = MediaTypeCenter.mediaType_Music
+                MediaInfo_MediaType = MediaType.Audio
             }
             if (MediaInfo_MediaTitle == ""){ MediaInfo_MediaTitle = "未知媒体标题" }
             if (MediaInfo_MediaArtist == "" || MediaInfo_MediaArtist == "<unknown>"){ MediaInfo_MediaArtist = "未知艺术家" }
@@ -187,10 +187,10 @@ object MediaInfoRetriever {
         //过滤获取的信息
         if (MediaInfo_MediaType.contains("video")){
             consoleLog("获取到媒体类型 video")
-            return Pair(true,MediaTypeCenter.mediaType_Video)
+            return Pair(true,MediaType.Video)
         }else if(MediaInfo_MediaType.contains("audio")){
-            consoleLog("获取到媒体类型 music")
-            return Pair(true,MediaTypeCenter.mediaType_Music)
+            consoleLog("获取到媒体类型 audio")
+            return Pair(true,MediaType.Audio)
         }else{
             consoleLog("获取到非法媒体类型")
             return Pair(false,"")

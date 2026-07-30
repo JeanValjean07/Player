@@ -13,9 +13,10 @@ import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.MediaInfoRetriever
+import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 
-class ExternalInvokeManager : AppCompatActivity(){
+class PortalActivity : AppCompatActivity(){
 
 
     @OptIn(UnstableApi::class)
@@ -110,15 +111,31 @@ class ExternalInvokeManager : AppCompatActivity(){
         //检查正在播放的媒体
         val (ongoing , uri) = PlayerSingleton.getState_currentMediaItem_Uri()
         val uriString = uri.toString()
-        if (ongoing){
-            if (uriString != ""){
-                startVideoPage(uri)
-            }else{
-                fail("页面启动失败")
+
+        val mediaType = PlayerInfoCenter.getMediaInfoType()
+
+        when(mediaType){
+            MediaType.Video -> {
+                if (ongoing){
+                    if (uriString != ""){
+                        startVideoPage(uri)
+                    }else{
+                        fail("页面启动失败")
+                    }
+                }else{
+                    fail("当前未播放任何媒体")
+                }
             }
-        }else{
-            fail("当前未播放任何媒体")
+            MediaType.Audio -> {
+                fail("暂不支持音乐页面")
+            }
+            else -> {
+                consoleLog("无法验证媒体类型")
+                fail()
+            }
         }
+
+
     }
 
 
@@ -233,7 +250,7 @@ class ExternalInvokeManager : AppCompatActivity(){
     //日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "ExternalInvokeManager: $msg")
+            Log.d("SuMing", "PortalActivity: $msg")
         }
     }
 

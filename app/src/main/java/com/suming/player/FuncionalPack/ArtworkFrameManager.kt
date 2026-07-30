@@ -18,15 +18,12 @@ object ArtworkFrameManager {
 
 
     //缩略图保存路径结构
-    private const val artwork_path_video = "Artwork/cover/video"
-    private const val artwork_path_audio = "Artwork/cover/audio"
-    //媒体类型标识
-    const val artwork_type_video = "video"
-    const val artwork_type_audio = "audio"
-    const val artwork_type_music = "music"
+    private const val artwork_path_video = "AlbumFrame/VideoCover/"
+    private const val artwork_path_audio = "AlbumFrame/AudioAlbumCover/"
 
 
-    //缓存文件路径实例
+
+    //缓存文件路径
     private var artwork_File_path_video: File? = null
     private var artwork_File_path_audio: File? = null
     private fun initFile(context: Context){
@@ -36,12 +33,8 @@ object ArtworkFrameManager {
 
     //获取Artwork图片(自动获取)
     fun get_Artwork_Frame_Bitmap(context: Context,type: String, artwork_name_uriNumOnly: Long): Bitmap? {
-        var type = type
-        if(type == artwork_type_music){
-            type = artwork_type_audio
-        }
         when(type){
-            artwork_type_video -> {
+            MediaType.Video -> {
                 //拿到保存路径
                 if (artwork_File_path_video == null){
                     initFile(context)
@@ -61,7 +54,7 @@ object ArtworkFrameManager {
                     return null
                 }
             }
-            artwork_type_audio -> {
+            MediaType.Audio -> {
                 //音频文件的原保存路径
                 val ArtworkPath_cover_audio = get_Artwork_Path_music(context)
                 //根据文件名去找图
@@ -90,7 +83,7 @@ object ArtworkFrameManager {
     fun get_Artwork_Frame_Uri(context: Context,type: String, artwork_name_uriNumOnly: Long): Uri? {
         consoleLog("ArtworkFrameManager: 获取缩略图uri: type=$type, uriNumOnly=${artwork_name_uriNumOnly}")
         when(type){
-            artwork_type_video -> {
+            MediaType.Video -> {
                 //拿到保存路径
                 if (artwork_File_path_video == null){
                     initFile(context)
@@ -108,7 +101,7 @@ object ArtworkFrameManager {
                 }
                 return null
             }
-            artwork_type_audio -> {
+            MediaType.Audio -> {
                 //拿到保存路径
                 if (artwork_File_path_audio == null){
                     initFile(context)
@@ -119,22 +112,6 @@ object ArtworkFrameManager {
                 if(artwork_Frame_File.exists()){
                     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", artwork_Frame_File)
                 }
-                return null
-            }
-            artwork_type_music -> {
-                consoleLog("ArtworkFrameManager:artwork_type_music, uriNumOnly=${artwork_name_uriNumOnly}")
-                //拿到保存路径
-                if (artwork_File_path_audio == null){
-                    initFile(context)
-                }
-                //根据文件名去找图
-                val artwork_Frame_File = File(artwork_File_path_audio, "${artwork_name_uriNumOnly}.webp")
-                //拿到文件uri
-                if(artwork_Frame_File.exists()){
-                    consoleLog("ArtworkFrameManager: 文件存在")
-                    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", artwork_Frame_File)
-                }
-                consoleLog("ArtworkFrameManager: 文件不存在")
                 return null
             }
             else -> {
@@ -171,33 +148,24 @@ object ArtworkFrameManager {
         return ArtworkPath_cover_audio
     }
 
+
     //保存Bitmap
     fun save_Artwork_Frame_Bitmap(context: Context ,type: String, artwork_name_uriNumOnly: Long, artwork_Frame_Bitmap: Bitmap){
-        var type = type
-        if(type == artwork_type_music){
-            type = artwork_type_audio
-        }
         when(type){
-            artwork_type_video -> {
+            MediaType.Video -> {
                 if (artwork_File_path_video == null){
                     initFile(context)
                 }
 
-                val cover_item_file = File(artwork_File_path_video, "${artwork_name_uriNumOnly}.webp")
-                cover_item_file.outputStream().use {
-                    artwork_Frame_Bitmap.compress(Bitmap.CompressFormat.WEBP, 20, it)
-                }
+                saveFile_Bitmap(artwork_File_path_video!!, "${artwork_name_uriNumOnly}.webp", artwork_Frame_Bitmap)
 
             }
-            artwork_type_audio -> {
+            MediaType.Audio -> {
                 if (artwork_File_path_audio == null){
                     initFile(context)
                 }
 
-                val cover_item_file = File(artwork_File_path_audio, "${artwork_name_uriNumOnly}.webp")
-                cover_item_file.outputStream().use {
-                    artwork_Frame_Bitmap.compress(Bitmap.CompressFormat.WEBP, 20, it)
-                }
+                saveFile_Bitmap(artwork_File_path_audio!!, "${artwork_name_uriNumOnly}.webp", artwork_Frame_Bitmap)
             }
             else -> {
                 //传入了非目标类型,记录日志
@@ -206,6 +174,13 @@ object ArtworkFrameManager {
         }
     }
 
+
+    fun saveFile_Bitmap(parent_path: File, file_name: String, bitmap: Bitmap){
+        val file = File(parent_path, file_name)
+        file.outputStream().use {
+            bitmap.compress(Bitmap.CompressFormat.WEBP, 20, it)
+        }
+    }
 
 
 

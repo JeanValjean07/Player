@@ -8,6 +8,9 @@ object DisplayInfo {
     var screenHeight : Int = 0
 
 
+    var isPad = false
+
+
 
 
 

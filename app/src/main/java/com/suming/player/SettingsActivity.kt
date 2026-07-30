@@ -34,12 +34,16 @@ import androidx.media3.common.util.UnstableApi
 import com.suming.player.ActivityComponent.SettingsActivity.SettingsFragmentDeleteCover
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.ReleaseInfo
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.cert.CertificateFactory
@@ -52,8 +56,6 @@ import java.security.cert.X509Certificate
 class SettingsActivity: AppCompatActivity() {
 
 
-
-
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,12 +63,11 @@ class SettingsActivity: AppCompatActivity() {
         init()
 
 
-        registerController()
+        register()
 
         registerSettings()
 
 
-        setupScrollContentListener()
 
 
     }
@@ -77,17 +78,21 @@ class SettingsActivity: AppCompatActivity() {
 
     }
 
+    private var AppVersion: String? = null
 
-    private fun registerController(){
+    private fun register(){
         lifecycleScope.launch(Dispatchers.Main) {
             //显示版本
             lifecycleScope.launch(Dispatchers.IO) {
-                val version = packageManager.getPackageInfo(packageName, 0).versionName
                 delay(500)
+                if (AppVersion == null){
+                    AppVersion = packageManager.getPackageInfo(packageName, 0).versionName
+                }
                 withContext(Dispatchers.Main) {
                     val versionText = findViewById<TextView>(R.id.version)
-                    versionText.text = "版本: $version"
+                    versionText.text = "版本: $AppVersion"
                 }
+                //consoleLog("当前版本: $AppVersion")
             }
 
             //按钮：返回
@@ -96,13 +101,29 @@ class SettingsActivity: AppCompatActivity() {
                 finish()
             }
             //按钮：前往项目Github仓库页
-            val ButtonGoGithub = findViewById<TextView>(R.id.buttonGoGithubRelease)
-            ButtonGoGithub.setOnClickListener {
+            val ButtonGoGithubRepo = findViewById<TextView>(R.id.Button_GoTo_GithubRepo)
+            ButtonGoGithubRepo.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+
+                val url = "https://github.com/JeanValjean07/Player/"
+                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                startActivity(intent)
+            }
+            //按钮：前往项目Github发布页
+            val ButtonGoGithubRelease = findViewById<TextView>(R.id.Button_GoTo_GithubRelease)
+            ButtonGoGithubRelease.setOnClickListener {
                 ToolVibrate().vibrate(this@SettingsActivity)
 
                 val url = "https://github.com/JeanValjean07/Player/releases"
                 val intent = Intent(Intent.ACTION_VIEW, url.toUri())
                 startActivity(intent)
+            }
+            //按钮：自动检查更新
+            val ButtonCheckUpdate = findViewById<TextView>(R.id.ButtonAutoUpdate)
+            ButtonCheckUpdate.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                //检查更新
+                checkNewVersion()
             }
             //超链接：开放源代码许可
             val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
@@ -139,7 +160,8 @@ class SettingsActivity: AppCompatActivity() {
                 startActivity(Intent(this@SettingsActivity, DeviceInfoActivity::class.java))
             }
 
-
+            //开启显示监听
+            setupScrollContentListener()
 
         }
     }
@@ -437,6 +459,104 @@ class SettingsActivity: AppCompatActivity() {
 
 
 
+
+    //检查更新(依托github release api)
+    private fun checkNewVersion(){
+        //读取当前版本(用于比对)
+        if (AppVersion == null){
+            AppVersion = packageManager.getPackageInfo(packageName, 0).versionName
+            if (AppVersion == null){
+                showCustomToast("无法检查当前App版本")
+                //consoleLog("无法检查当前版本")
+            }
+        }
+
+        //检查最新版本
+        lifecycleScope.launch(Dispatchers.IO) {
+            val latestRelease = FindLatestRelease()
+            if (latestRelease != null) {
+                consoleLog("检查更新：当前最新版本为: ${latestRelease.version}, 下载链接: ${latestRelease.downloadUrl}")
+                withContext(Dispatchers.Main) {
+                    showCustomToast("检查更新成功: 最新发布版本为 ${latestRelease.version}, 下载链接: ${latestRelease.downloadUrl}")
+                }
+            }else{
+                consoleLog("检查更新：失败")
+                withContext(Dispatchers.Main) {
+                    showCustomToast("检查更新失败")
+                }
+            }
+        }
+
+    }
+
+
+    //检查更新
+    suspend fun FindLatestRelease(): ReleaseInfo? {
+        return withContext(Dispatchers.IO) {
+            try {
+
+                //github release api
+                val url = "https://api.github.com/repos/${NetworkClient.githubRepository}/releases/latest"
+
+                val request = Request.Builder()
+                    .url(url)
+                    .header("Accept", "application/vnd.github.v3+json")
+                    .build()
+
+                val response = NetworkClient.request(request)
+
+                //失败
+                if (!response.isSuccessful) {
+                    withContext(Dispatchers.Main) {
+                        showCustomToast("检查更新失败: ${response.code}")
+                    }
+                    consoleLog("检查更新：请求失败: ${response.code}")
+                    return@withContext null
+                }
+
+                //解析
+                val jsonString = response.body?.string() ?: return@withContext null
+                val json = JSONObject(jsonString)
+                val tagName = json.getString("tag_name")
+                val version = tagName.removePrefix("v")
+                //consoleLog("检查更新：当前最新版本为: $version  tagName: $tagName")
+                val assets = json.getJSONArray("assets")
+                if (assets.length() == 0) {
+                    //withContext(Dispatchers.Main) { showCustomToast("检查更新失败: 仓库居然是空的") }
+                    //consoleLog("检查更新：错误：该仓库的release什么都没有")
+                    return@withContext null
+                }
+                val firstAsset = assets.getJSONObject(0)
+                var downloadUrl = firstAsset.getString("browser_download_url")
+                //找到第一个apk
+                for (i in 0 until assets.length()) {
+                    val asset = assets.getJSONObject(i)
+                    val name = asset.getString("name")
+
+                    //检查后缀
+                    if (name.endsWith(".apk", ignoreCase = true)) {
+                    downloadUrl = asset.getString("browser_download_url")
+                        //consoleLog("检查更新：找到一个apk: $name")
+                        break
+                    }
+                }
+
+                //withContext(Dispatchers.Main) { showCustomToast("检查更新成功: 最新发布版本为 $version") }
+                //consoleLog("检查更新：最新版本下载地址为: $downloadUrl")
+
+                ReleaseInfo(version, downloadUrl)
+
+            } catch (e: Exception) {
+                //withContext(Dispatchers.Main) { showCustomToast("检查更新失败: ${e.message}") }
+                //consoleLog("从 github api 检查更新 - 网络请求出错: ${e.message}")
+                null
+            }
+        }
+    }
+
+
+
+
     //播放页样式
     private fun choosePlayPageType(playPageType: Int){
         when(playPageType){
@@ -687,7 +807,7 @@ class SettingsActivity: AppCompatActivity() {
     private fun updateScrollerUpdateGapText(){
         val ButtonTextScrollerUpdateGap = findViewById<TextView>(R.id.ButtonText_scrollerUpdateGap)
         val scrollerUpdateGap = SettingsRequestCenter.get_value_syncScrollerRunnableGap(this)
-        consoleLog("updateScrollerUpdateGapText: $scrollerUpdateGap")
+        //consoleLog("updateScrollerUpdateGapText: $scrollerUpdateGap")
         when(scrollerUpdateGap){
             0L -> ButtonTextScrollerUpdateGap.text = "120 Hz"
             12L -> ButtonTextScrollerUpdateGap.text = "90 Hz"
@@ -794,6 +914,7 @@ class SettingsActivity: AppCompatActivity() {
         }
     }
 
+
     //界面配置
     private var statusBarHeight = 0
     private lateinit var AppBarGradientMask: View
@@ -887,7 +1008,7 @@ class SettingsActivity: AppCompatActivity() {
     //日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "SettingsRequestCenter: $msg")
+            Log.d("SuMing", "SettingsActivity: $msg")
         }
     }
 

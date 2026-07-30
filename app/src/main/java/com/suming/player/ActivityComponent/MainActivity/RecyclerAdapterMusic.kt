@@ -29,6 +29,7 @@ import com.suming.player.DataPack.MediaModel.MediaItemForMusic
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
+import com.suming.player.FuncionalPack.MediaType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -126,7 +127,7 @@ class RecyclerAdapterMusic(
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch {
 
-            val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, ArtworkFrameManager.artwork_type_audio, item.uriNumOnly)
+            val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Audio, item.uriNumOnly)
             if (Bitmap != null){
                 //推到ImageView
                 withContext(Dispatchers.Main) {
@@ -182,7 +183,7 @@ class RecyclerAdapterMusic(
             //保存图片(让ArtworkFrameManager承担保存任务)
             ArtworkFrameManager.save_Artwork_Frame_Bitmap(
                 context,
-                ArtworkFrameManager.artwork_type_audio,
+                MediaType.Audio,
                 item.uriNumOnly,
                 Bitmap
             )

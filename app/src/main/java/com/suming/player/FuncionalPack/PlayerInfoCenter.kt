@@ -150,7 +150,7 @@ object PlayerInfoCenter {
         //尝试获取类型
         val MediaInfo_MediaType = MediaInfoPackage?.MediaInfo_MediaType ?: ""
         //检查类型是否合法
-        if (MediaInfo_MediaType != MediaTypeCenter.mediaType_Video && MediaInfo_MediaType != MediaTypeCenter.mediaType_Music){
+        if (MediaInfo_MediaType != MediaType.Video && MediaInfo_MediaType != MediaType.Audio){
             return "哎呀,骇亖我力"
         }
 

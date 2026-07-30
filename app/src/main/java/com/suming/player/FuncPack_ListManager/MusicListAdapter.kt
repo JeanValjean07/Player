@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
 import com.suming.player.FuncionalPack.ArtworkFrameManager
+import com.suming.player.FuncionalPack.MediaType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -99,7 +100,7 @@ class MusicListAdapter(
 
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch {
-            val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, ArtworkFrameManager.artwork_type_audio, item.uriNumOnly)
+            val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Audio, item.uriNumOnly)
             if (Bitmap != null){
                 //推到ImageView
                 withContext(Dispatchers.Main) {

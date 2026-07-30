@@ -19,6 +19,7 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.REORDER_TASKS"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="PackageVisibilityPolicy,QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
 
     <application
@@ -87,7 +88,7 @@
                 android:value="true"/>
         </activity>
         <!-- 播放页Picker -->
-        <activity android:name=".ExternalInvokeManager"
+        <activity android:name=".PortalActivity"
             android:theme="@style/THEME_Player"
             android:label="播放器"
             android:screenOrientation="unspecified"

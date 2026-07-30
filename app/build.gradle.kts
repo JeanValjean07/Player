@@ -89,6 +89,10 @@ dependencies {
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
 
+    //OkHttp
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
