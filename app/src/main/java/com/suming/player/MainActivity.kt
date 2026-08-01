@@ -115,7 +115,7 @@ class MainActivity: AppCompatActivity() {
         registerFragment()
 
         //主业务
-        mainBusiness()
+        mainBusiness(savedInstanceState)
 
         //显示列表
         //showMediaList(savedInstanceState)
@@ -564,7 +564,7 @@ class MainActivity: AppCompatActivity() {
         }
     }
     //主业务
-    private fun mainBusiness(){
+    private fun mainBusiness(savedInstanceState: Bundle?){
         lifecycleScope.launch (Dispatchers.IO) {
             //检查隐私与权限
             val (needStart, isStoragePermissionValid) = checkNeedStartPrivacyPermissionActivity()
@@ -577,38 +577,37 @@ class MainActivity: AppCompatActivity() {
             }else{
                 //已获得储存权限,显示主界面
                 if (isStoragePermissionValid){
+                    //检查MiniView观察者是否已启动
+                    withContext(Dispatchers.Main) {
+                        //启动MiniView观察者
+                        startMiniViewObserver()
+                    }
+                    //MiniView的显示交给观察自动进行,此处只负责媒体的设置
+                    //检查是否有媒体正在播放
+                    val isAnyMediaOngoing = withContext(Dispatchers.Main){ isAnyMediaOngoing().first }
+                    if (!isAnyMediaOngoing){
+                        //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
+                        val MediaInfo_Uri = getLastRecordMedia()
+                        if (MediaInfo_Uri != null) {
+                            withContext(Dispatchers.Main) {
+                                if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)){
+                                    setMediaItem(MediaInfo_Uri, false)
+                                }
+                            }
+                        }
+                    }
+
+
+                    //显示列表
+                    withContext(Dispatchers.Main){
+                        showMediaList(savedInstanceState)
+                    }
 
 
                 }else{
                     showOpenFileButton()
                 }
 
-
-            }
-
-
-
-            return@launch
-
-            delay(700)
-            //检查MiniView观察者是否已启动
-            withContext(Dispatchers.Main) {
-                //启动MiniView观察者
-                startMiniViewObserver()
-            }
-            //MiniView的显示交给观察自动进行,此处只负责媒体的设置
-            //检查是否有媒体正在播放
-            val isAnyMediaOngoing = withContext(Dispatchers.Main){ isAnyMediaOngoing().first }
-            if (!isAnyMediaOngoing){
-                //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
-                val MediaInfo_Uri = getLastRecordMedia()
-                if (MediaInfo_Uri != null) {
-                    withContext(Dispatchers.Main) {
-                        if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)){
-                            setMediaItem(MediaInfo_Uri, false)
-                        }
-                    }
-                }
             }
         }
     }
@@ -651,6 +650,9 @@ class MainActivity: AppCompatActivity() {
                 ActivityResultConnector.ARAPI_Privacy_continue_without_storage_permission -> {
                     showOpenFileButton()
                 }
+                ActivityResultConnector.ARAPI_Privacy_continue_with_success_permit -> {
+                    showMediaList()
+                }
             }
 
 
@@ -667,7 +669,7 @@ class MainActivity: AppCompatActivity() {
 
     //显示页面
     @RequiresApi(Build.VERSION_CODES.R)
-    private fun showMediaList(savedInstanceState: Bundle?){
+    private fun showMediaList(savedInstanceState: Bundle? = null){
         lifecycleScope.launch(Dispatchers.IO){
             //检查权限
             val isPermissionGranted = checkPermissionAndVersion()

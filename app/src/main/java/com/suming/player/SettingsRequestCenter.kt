@@ -739,8 +739,8 @@ object SettingsRequestCenter {
                     PREFS_PlayPageType = 1
                     PREFS_PlayVideoPage.edit { putInt("PREFS_PlayPageType", 1) }
                 }else{
-                    PREFS_PlayPageType = 0
-                    PREFS_PlayVideoPage.edit { putInt("PREFS_PlayPageType", 0) }
+                    PREFS_PlayPageType = 1
+                    PREFS_PlayVideoPage.edit { putInt("PREFS_PlayPageType", 1) }
                 }
             }
         }

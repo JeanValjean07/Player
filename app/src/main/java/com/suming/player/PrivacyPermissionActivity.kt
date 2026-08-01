@@ -61,7 +61,6 @@ class PrivacyPermissionActivity: AppCompatActivity() {
         //检查权限状态
         checkPermissionState()
     }
-
     @Suppress("DEPRECATION")
     override fun finish() {
         super.finish()
@@ -200,6 +199,7 @@ class PrivacyPermissionActivity: AppCompatActivity() {
 
         //权限均有效时主动退出
         if (isPrivacyAgreed && isStoragePermissionValid){
+            successfullyGetPermission()
             showCustomToast("权限与隐私检查已通过,本页面将自动退出")
             finish()
         }else{
@@ -305,6 +305,12 @@ class PrivacyPermissionActivity: AppCompatActivity() {
             putExtra(ActivityResultConnector.ARAPI_Privacy, dataString)
         }
         setResult(RESULT_OK, resultIntent)
+    }
+
+    //检查通过
+    private fun successfullyGetPermission(){
+
+        sendActivityResult(ActivityResultConnector.ARAPI_Privacy_continue_with_success_permit)
     }
 
 
