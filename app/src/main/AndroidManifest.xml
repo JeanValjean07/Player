@@ -48,7 +48,7 @@
         android:hardwareAccelerated="true"
         android:theme="@style/Theme.SpeedSpy"
         tools:replace="android:allowBackup"
-        android:enableOnBackInvokedCallback="true"
+        android:enableOnBackInvokedCallback="false"
         tools:ignore="ForegroundServicePermission"
         tools:targetApi="33">
 
@@ -60,12 +60,26 @@
             android:hardwareAccelerated="true"
             android:label="播放器"
             android:exported="true"
-            android:enableOnBackInvokedCallback="true"
+            android:enableOnBackInvokedCallback="false"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data
+                android:name="android.notch_support"
+                android:value="true"/>
+        </activity>
+
+        <!-- 隐私权限面板 -->
+        <activity android:name=".PrivacyPermissionActivity"
+            android:theme="@style/THEME_BASIC"
+            android:hardwareAccelerated="true"
+            android:label="隐私和权限"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:enableOnBackInvokedCallback="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <meta-data
                 android:name="android.notch_support"
                 android:value="true"/>
@@ -80,7 +94,7 @@
             android:configChanges="orientation|screenSize|screenLayout"
             android:launchMode="singleTask"
             android:exported="true"
-            android:enableOnBackInvokedCallback="false"
+            android:enableOnBackInvokedCallback="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <meta-data
                 android:name="android.notch_support"

@@ -1,0 +1,94 @@
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/dialog_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:maxWidth="300dp"
+    android:orientation="vertical"
+    android:padding="24dp"
+    app:cardCornerRadius="20dp"
+    tools:ignore="HardcodedText">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:orientation="vertical">
+        <!-- 对话框标题 -->
+        <TextView
+            android:id="@+id/dialog_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="隐私政策"
+            android:textSize="16sp"
+            android:textColor="@color/Text_Level_1"
+            android:textStyle="bold"
+            android:gravity="start"
+            />
+        <!-- 二级描述 -->
+        <TextView
+            android:id="@+id/dialog_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="您是否同意本服务隐私政策"
+            android:textColor="@color/Text_Level_2"
+            android:gravity="start"
+            android:textSize="14sp"
+            android:layout_marginTop="10dp"
+            tools:ignore="SmallSp" />
+        <!-- 占位 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="50dp"/>
+
+        <!-- 按钮区域：确认 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <!-- 按钮：不同意并退出 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dialog_button_cancel"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:shape="rectangle"
+                app:cornerRadius="10dp"
+                android:layout_gravity="center"
+                android:backgroundTint="@color/Button_Background_NotRecommend"
+                android:text="不同意并退出"
+                android:textColor="@color/Button_Text_NotRecommend"
+                android:textSize="12sp"
+                android:paddingTop="0dp"
+                android:paddingBottom="0dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:layout_weight="1"
+                />
+            <!-- 占位 -->
+            <View
+                android:layout_width="20dp"
+                android:layout_height="0dp"
+                />
+            <!-- 按钮：同意并继续 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dialog_button_ensure"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:shape="rectangle"
+                app:cornerRadius="10dp"
+                android:layout_gravity="center"
+                android:backgroundTint="@color/Button_Background_Recommend"
+                android:text="同意并继续"
+                android:textColor="@color/Button_Text_Recommend"
+                android:textSize="12sp"
+                android:paddingTop="0dp"
+                android:paddingBottom="0dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:layout_weight="1"
+                />
+        </LinearLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

@@ -134,7 +134,7 @@ class PlayerFragmentEqualizer: DialogFragment() {
 
 
 
-    } //onViewCreated END
+    }
 
 
     //Functions

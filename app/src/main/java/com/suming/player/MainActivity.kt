@@ -71,6 +71,7 @@ import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
+import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -80,6 +81,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.getValue
+import kotlin.jvm.java
 
 //@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
@@ -91,9 +93,12 @@ class MainActivity: AppCompatActivity() {
     //防止快速点击
     private var lock_clickMillisLock = 0L
 
+    //启用隐私权限检查
+    private val isPrivacyPermissionEnabled = true
+
 
     @RequiresApi(Build.VERSION_CODES.R)
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility", "NewApi")
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -120,6 +125,11 @@ class MainActivity: AppCompatActivity() {
 
 
         startListUnderTopObserver()
+
+
+        //检查隐私权限是否同意
+        checkPrivacyPermission(savedInstanceState)
+
 
     }
     //onResume时更新一些设置变量
@@ -161,6 +171,28 @@ class MainActivity: AppCompatActivity() {
     }
 
 
+
+    //检查隐私权限是否同意
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun checkPrivacyPermission(savedInstanceState: Bundle?){
+        if (!isPrivacyPermissionEnabled) return
+        if (savedInstanceState != null) return
+
+        //检查隐私政策是否同意
+        val PrivacyPermissionHelper = PrivacyPermissionHelper()
+        val isPrivacyAgreed = PrivacyPermissionHelper.checkPrivacyAgreed(this)
+        if(!isPrivacyAgreed){
+            //隐私政策未同意，显示隐私政策页面
+            startPrivacyPermissionActivity()
+        }
+
+        //检查储存权限有效性
+        val isStoragePermissionGranted = PrivacyPermissionHelper.checkPermissionValidity(this)
+        if(!isStoragePermissionGranted){
+            //储存权限未同意，显示储存权限页面
+            startPrivacyPermissionActivity()
+        }
+    }
 
 
     //显示重组
@@ -534,6 +566,7 @@ class MainActivity: AppCompatActivity() {
     //主业务(检查上次停留的媒体)
     private fun mainBusiness(){
         lifecycleScope.launch (Dispatchers.IO) {
+            //检查隐私与权限
             delay(700)
             //检查MiniView观察者是否已启动
             withContext(Dispatchers.Main) {
@@ -1350,6 +1383,12 @@ class MainActivity: AppCompatActivity() {
     //启动播放列表面板
     private fun startPlayListFragment(){
         FragmentPlayList.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+    }
+
+    //启动隐私权限面板
+    private fun startPrivacyPermissionActivity(){
+        val intent = Intent(this, PrivacyPermissionActivity::class.java)
+        startActivity(intent)
     }
 
 
