@@ -7,6 +7,8 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -36,6 +38,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.ReleaseInfo
 import com.suming.player.FuncionalPack.DeviceInfo
+import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +51,7 @@ import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import kotlin.system.exitProcess
 
 @Suppress("unused")
 @OptIn(UnstableApi::class)
@@ -159,6 +163,27 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 startActivity(Intent(this@SettingsActivity, DeviceInfoActivity::class.java))
             }
+            //撤回隐私政策同意
+            val RevokePrivacyAgreement = findViewById<TextView>(R.id.RevokePrivacyAgreement)
+            RevokePrivacyAgreement.paint.isUnderlineText = true
+            RevokePrivacyAgreement.invalidate()
+            RevokePrivacyAgreement.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+
+                //撤回隐私政策同意
+                val PrivacyPermissionHelper = PrivacyPermissionHelper()
+                PrivacyPermissionHelper.setPrivacyAgreed(this@SettingsActivity,false)
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    //退出
+                    finishAffinity()
+                    //结束进程
+                    exitProcess(0)
+                }, 500)
+
+            }
+
+
 
             //开启显示监听
             setupScrollContentListener()

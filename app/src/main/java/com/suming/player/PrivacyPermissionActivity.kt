@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -14,25 +15,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.ViewWidget.CircleButton
-import kotlin.system.exitProcess
-import android.os.Process
 import android.provider.Settings
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.DeviceInfo
 
 @SuppressLint("NewApi")
 class PrivacyPermissionActivity: AppCompatActivity() {
 
-    //权限请求码
-    private val REQUEST_CODE_PERMISSIONS = 1001
+
     //隐私政策权限类
     val PrivacyPermissionHelper = PrivacyPermissionHelper()
 
@@ -46,11 +44,6 @@ class PrivacyPermissionActivity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_privacy_permission)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
         //初始化
         init()
 
@@ -69,13 +62,24 @@ class PrivacyPermissionActivity: AppCompatActivity() {
         checkPermissionState()
     }
 
+    @Suppress("DEPRECATION")
+    override fun finish() {
+        super.finish()
+        //使用收起动画
+        overridePendingTransition(
+                    R.anim.slide_just_appear,
+                    R.anim.slide_out_vertical
+                )
+
+    }
+
     //初始化
     private fun init() {
         level_permissions = findViewById(R.id.level_permissions)
         level_privacy = findViewById(R.id.level_privacy)
         //获取状态栏高度
         if (DeviceInfo.statusBarHeight == 0){
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { v, insets ->
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
                 DeviceInfo.statusBarHeight = systemBars.top
@@ -85,9 +89,28 @@ class PrivacyPermissionActivity: AppCompatActivity() {
 
                 insets
             }
+        }else{
+            display()
         }
     }
     private fun display(){
+        val topBar_topSafeArea = findViewById<View>(R.id.topBar_topSafeArea)
+        topBar_topSafeArea.layoutParams.height = DeviceInfo.statusBarHeight + 10
+
+        val topBar = findViewById<LinearLayout>(R.id.topBar)
+        topBar.post {
+            consoleLog("topBar height: ${topBar.height}")
+
+            val topBar_totalHeight = topBar.height
+
+            val scrollArea_topSafeArea = findViewById<View>(R.id.scrollArea_topSafeArea)
+            scrollArea_topSafeArea.layoutParams.height = topBar_totalHeight + 10
+            scrollArea_topSafeArea.requestLayout()
+        }
+
+
+
+
 
     }
     //注册操作
@@ -118,6 +141,21 @@ class PrivacyPermissionActivity: AppCompatActivity() {
         button_permission_basic_storage.setOnClickListener {
             requestBasicStoragePermission()
         }
+
+        //在不授予权限的情况下继续
+        val button_continue_without_permission = findViewById<CardView>(R.id.button_continue_without_permission)
+        button_continue_without_permission.setOnClickListener {
+            sendActivityResult(ActivityResultConnector.ARAPI_Privacy_continue_without_storage_permission)
+            finish()
+        }
+        //继续且不再提示
+        val button_continue_and_never_alert = findViewById<CardView>(R.id.button_continue_and_never_alert)
+        button_continue_and_never_alert.setOnClickListener {
+            PrivacyPermissionHelper.SET_PREFS_IgnoreStorageNeverAlert(this, true)
+            sendActivityResult(ActivityResultConnector.ARAPI_Privacy_continue_without_storage_permission)
+            finish()
+        }
+
 
         //监听返回手势(DialogFragment)
         /*
@@ -162,6 +200,7 @@ class PrivacyPermissionActivity: AppCompatActivity() {
 
         //权限均有效时主动退出
         if (isPrivacyAgreed && isStoragePermissionValid){
+            showCustomToast("权限与隐私检查已通过,本页面将自动退出")
             finish()
         }else{
             showTargetPage()
@@ -201,8 +240,8 @@ class PrivacyPermissionActivity: AppCompatActivity() {
 
 
     }
-    val permission_prompt_text_tiramisu = "在安卓13及以上版本，需要同时开启视频和音频的访问权限。开启“所有文件访问权限”可获得最高自由度。也可选择不开启任何权限，在此页面选择文件播放，这会使本页面成为App默认主页。"
-    val permission_prompt_text_snow_cone = "在安卓12及以下版本，需要开启储存权限。开启“所有文件访问权限”可获得最高自由度。也可选择不开启任何权限，在此页面选择文件播放，这会使本页面成为App默认主页。"
+    val permission_prompt_text_tiramisu = "在安卓13及以上版本，需要同时开启视频和音频的访问权限。开启“所有文件访问权限”可获得最高自由度。也可选择不开启任何权限，选择文件播放。"
+    val permission_prompt_text_snow_cone = "在安卓12及以下版本，需要开启储存权限。开启“所有文件访问权限”可获得最高自由度。也可选择不开启任何权限，选择文件播放。"
 
     //要求所有文件访问权限
     private fun requestAllFilePermission(){
@@ -260,7 +299,13 @@ class PrivacyPermissionActivity: AppCompatActivity() {
         }
     }
 
-
+    //ActivityResultAPI
+    private fun sendActivityResult( dataString: String?) {
+        val resultIntent = Intent().apply {
+            putExtra(ActivityResultConnector.ARAPI_Privacy, dataString)
+        }
+        setResult(RESULT_OK, resultIntent)
+    }
 
 
     //退出决策程序
@@ -286,7 +331,7 @@ class PrivacyPermissionActivity: AppCompatActivity() {
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "FragmentPrivacyPermission: $msg")
+            Log.d("SuMing", "PrivacyPermissionActivity: $msg")
         }
     }
 

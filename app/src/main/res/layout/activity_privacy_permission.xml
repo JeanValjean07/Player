@@ -5,56 +5,9 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
+    android:fitsSystemWindows="false"
     android:background="@color/MainColorPack_SurfaceBackground"
     tools:ignore="HardcodedText,UnusedAttribute,ContentDescription,TooDeepLayout">
-
-    <!-- 标题 -->
-    <FrameLayout
-        android:id="@+id/AppBarContainer"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="@android:color/transparent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:translationZ="5dp">
-        <!-- 标题：更多选项 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="start"
-            android:background="@android:color/transparent"
-            android:clickable="false"
-            android:orientation="horizontal">
-            <!-- 按钮：退出 -->
-            <com.suming.player.ViewWidget.CircleButton
-                android:id="@+id/ButtonExit"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="5dp"
-                android:src="@drawable/ic_general_close"
-                android:layout_gravity="center"
-                app:buttonSize="50dp"
-                app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
-                app:shadowOffset="4dp"
-                app:circlePadding="100dp"
-                app:iconPadding="120dp"
-                app:shadowRadius="8dp"
-                app:shadowColor="#33000000"
-                />
-            <!-- 标题文本：权限和隐私政策 -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="权限和隐私政策"
-                android:textColor="@color/HeadText"
-                android:textSize="20sp" />
-
-        </LinearLayout>
-
-    </FrameLayout>
 
 
     <!-- 内容区域 -->
@@ -73,8 +26,9 @@
             android:orientation="vertical">
             <!-- 顶部占位 -->
             <Space
+                android:id="@+id/scrollArea_topSafeArea"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="100dp"
                 />
 
 
@@ -151,6 +105,7 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
+                <!-- 权限操作 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -160,7 +115,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         />
-                    <!-- 提示: 未授予读取权限 -->
+                    <!-- 未授予储存权限 -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -245,51 +200,19 @@
                         android:layout_height="50dp"
                         />
 
-                    <!-- 提示: 您也可在不授权情况下手动选择要播放的媒体文件 -->
+                    <!-- 在不授予权限的情况下继续 -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="您也可在不授权情况下手动选择要播放的媒体文件"
-                        android:layout_marginTop="10dp"
+                        android:text="无权限时,也可选择单个文件并播放"
+                        android:layout_marginTop="20dp"
                         android:layout_marginBottom="5dp"
                         android:textColor="@color/HeadText"
                         android:textSize="12sp"
                         />
-                    <!-- SAF(文件) -->
+                    <!-- 在不授予权限的情况下继续 -->
                     <androidx.cardview.widget.CardView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="@color/ButtonCard_OFF"
-                        app:cardElevation="2dp"
-                        app:cardCornerRadius="5dp">
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-                            <ImageView
-                                android:layout_width="25dp"
-                                android:layout_height="25dp"
-                                android:layout_gravity="center"
-                                android:padding="7dp"
-                                android:backgroundTint="@android:color/transparent"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/ic_main_fragment_video_icon"
-                                tools:ignore="ContentDescription" />
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center"
-                                android:layout_marginEnd="10dp"
-                                android:layout_marginTop="5dp"
-                                android:layout_marginBottom="5dp"
-                                android:text="使用SAF选择器 (原生“文件”App)"
-                                android:textColor="@color/HeadText"
-                                android:textSize="11sp"
-                                />
-                        </LinearLayout>
-                    </androidx.cardview.widget.CardView>
-                    <!-- 相册选择器(相册) -->
-                    <androidx.cardview.widget.CardView
+                        android:id="@+id/button_continue_without_permission"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/ButtonCard_OFF"
@@ -316,19 +239,19 @@
                                 android:layout_marginEnd="10dp"
                                 android:layout_marginTop="5dp"
                                 android:layout_marginBottom="5dp"
-                                android:text="使用相册选择器 (仅能选择视频)"
+                                android:text="在不授予权限的情况下继续"
                                 android:textColor="@color/HeadText"
                                 android:textSize="11sp"
                                 />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
-                    <!-- 媒体选择工具 -->
+                    <!-- 继续且不再提示 -->
                     <androidx.cardview.widget.CardView
+                        android:id="@+id/button_continue_and_never_alert"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:backgroundTint="@color/ButtonCard_OFF"
                         android:layout_marginTop="5dp"
-                        android:layout_marginBottom="20dp"
                         app:cardElevation="2dp"
                         app:cardCornerRadius="5dp">
                         <LinearLayout
@@ -351,9 +274,10 @@
                                 android:layout_marginEnd="10dp"
                                 android:layout_marginTop="5dp"
                                 android:layout_marginBottom="5dp"
-                                android:text="使用媒体选择工具 (无法获取全量元数据)"
+                                android:text="继续且不再提示"
                                 android:textColor="@color/HeadText"
-                                android:textSize="11sp" />
+                                android:textSize="11sp"
+                                />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
 
@@ -362,9 +286,6 @@
                         android:layout_height="500dp"
                         />
                 </LinearLayout>
-
-
-
 
             </LinearLayout>
 
@@ -513,6 +434,61 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-
+    <!-- 页面标题 权限和隐私政策 -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:background="@color/MainColorPack_SurfaceBackground"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:clickable="true"
+        android:orientation="vertical"
+        android:elevation="0dp">
+        <!-- 顶部安全区 -->
+        <View
+            android:id="@+id/topBar_topSafeArea"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            />
+        <!-- 顶栏核心 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal">
+            <!-- 按钮：退出 -->
+            <com.suming.player.ViewWidget.CircleButton
+                android:id="@+id/ButtonExit"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="5dp"
+                android:src="@drawable/ic_general_close"
+                android:layout_gravity="center"
+                app:buttonSize="50dp"
+                app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
+                app:shadowOffset="4dp"
+                app:circlePadding="100dp"
+                app:iconPadding="120dp"
+                app:shadowRadius="8dp"
+                app:shadowColor="#33000000"
+                />
+            <!-- 标题文本：权限和隐私政策 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="权限和隐私政策"
+                android:textColor="@color/HeadText"
+                android:textSize="20sp" />
+        </LinearLayout>
+        <!-- 底部分隔线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.5dp"
+            android:background="@color/strokeLine"
+            />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

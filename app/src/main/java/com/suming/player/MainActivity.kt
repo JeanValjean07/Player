@@ -1,18 +1,17 @@
 package com.suming.player
 
-import android.Manifest
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.Settings
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -25,6 +24,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
@@ -50,25 +50,26 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.ActivityComponent.MainActivity.FragmentMusicStoreSetting
 import com.suming.player.ActivityComponent.MainActivity.FragmentVideoStoreSetting
+import com.suming.player.ActivityComponent.MainActivity.MainViewModel
 import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterMusic
 import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterVideo
-import com.suming.player.ActivityComponent.MainActivity.MainViewModel
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
 import com.suming.player.DataPack.DataBaseMusicStore.MusicStoreRepo
 import com.suming.player.DataPack.DataBaseStateConnector
-import com.suming.player.FuncPack_ListManager.FragmentPlayList
-import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForVideo
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForVideo
+import com.suming.player.FuncPack_ListManager.FragmentPlayList
+import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaInfoRetriever
+import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
@@ -80,10 +81,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.getValue
-import kotlin.jvm.java
 
-//@Suppress("unused")
+@Suppress("NewApi", "unused")
 @RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
@@ -119,7 +118,7 @@ class MainActivity: AppCompatActivity() {
         mainBusiness()
 
         //显示列表
-        showMediaList(savedInstanceState)
+        //showMediaList(savedInstanceState)
 
         setupEventObserver()
 
@@ -127,8 +126,7 @@ class MainActivity: AppCompatActivity() {
         startListUnderTopObserver()
 
 
-        //检查隐私权限是否同意
-        checkPrivacyPermission(savedInstanceState)
+
 
 
     }
@@ -159,6 +157,7 @@ class MainActivity: AppCompatActivity() {
 
 
         //手势监听
+        /*
         lifecycleScope.launch (Dispatchers.Main) {
             delay(500)
             //监听返回手势
@@ -168,6 +167,8 @@ class MainActivity: AppCompatActivity() {
                 }
             })
         }
+
+         */
     }
 
 
@@ -196,6 +197,7 @@ class MainActivity: AppCompatActivity() {
     private lateinit var level_root: ConstraintLayout
     private lateinit var level_topBar : CardView
     private lateinit var level_list : LinearLayout
+    private lateinit var level_openFile : LinearLayout
     private lateinit var level_controllers : LinearLayout
     private lateinit var level_miniView : CardView
     private var isLandscape : Boolean = false
@@ -206,6 +208,7 @@ class MainActivity: AppCompatActivity() {
         level_root = findViewById(R.id.activity_root_constraint)
         level_topBar = findViewById(R.id.level_topBar)
         level_list = findViewById(R.id.level_list)
+        level_openFile = findViewById(R.id.level_openFile)
         level_controllers = findViewById(R.id.level_controllers)
         level_miniView = findViewById(R.id.level_miniView)
         //获取主要列表视图
@@ -560,10 +563,33 @@ class MainActivity: AppCompatActivity() {
             }
         }
     }
-    //主业务(检查上次停留的媒体)
+    //主业务
     private fun mainBusiness(){
         lifecycleScope.launch (Dispatchers.IO) {
             //检查隐私与权限
+            val (needStart, isStoragePermissionValid) = checkNeedStartPrivacyPermissionActivity()
+            //需要显示权限与隐私页面
+            if (needStart){
+                Handler(Looper.getMainLooper()).postDelayed({
+                    //启动隐私权限面板
+                    startPrivacyPermissionActivity()
+                }, 1000)
+            }else{
+                //已获得储存权限,显示主界面
+                if (isStoragePermissionValid){
+
+
+                }else{
+                    showOpenFileButton()
+                }
+
+
+            }
+
+
+
+            return@launch
+
             delay(700)
             //检查MiniView观察者是否已启动
             withContext(Dispatchers.Main) {
@@ -586,6 +612,58 @@ class MainActivity: AppCompatActivity() {
             }
         }
     }
+
+    //检查是否需要启动隐私权限面板(返回：是否需要启动,是否已获得储存权限)
+    private fun checkNeedStartPrivacyPermissionActivity(): Pair<Boolean, Boolean>{
+        val PrivacyPermissionHelper = PrivacyPermissionHelper()
+        val isPrivacyAgreed = PrivacyPermissionHelper.checkPrivacyAgreed(this@MainActivity)
+        val isStoragePermissionValid = PrivacyPermissionHelper.checkPermissionValidity(this@MainActivity)
+
+        if (!isPrivacyAgreed){
+            return Pair(true, isStoragePermissionValid)
+        }else{
+            val isIgnoreStorageNeverAlert = PrivacyPermissionHelper.GET_PREFS_IgnoreStorageNeverAlert(this@MainActivity)
+
+            //仅在未忽略储存权限且储存权限未通过时才需要弹出请求页面
+            return Pair(!isStoragePermissionValid && !isIgnoreStorageNeverAlert, isStoragePermissionValid)
+        }
+    }
+    //启动隐私权限面板(使用DetailedLauncher)
+    private fun startPrivacyPermissionActivity(){
+        val intent = Intent(this, PrivacyPermissionActivity::class.java)
+        //构建可选参数
+        val options = ActivityOptionsCompat.makeCustomAnimation(
+            this,
+            R.anim.slide_in_vertical,
+            R.anim.slide_dont_move
+        )
+        //启动活动
+        privacyPermissionLauncher.launch(intent,  options)
+    }
+    //ActivityResult接收器
+    private val privacyPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            //提取数据
+            val dataString = result.data?.getStringExtra(ActivityResultConnector.ARAPI_Privacy)
+            when(dataString){
+                ActivityResultConnector.ARAPI_Privacy_continue_without_storage_permission -> {
+                    showOpenFileButton()
+                }
+            }
+
+
+
+
+        }
+    }
+    //显示打开文件并隐藏列表
+    private fun showOpenFileButton(){
+        level_list.visibility = View.GONE
+        level_openFile.visibility = View.VISIBLE
+    }
+
 
     //显示页面
     @RequiresApi(Build.VERSION_CODES.R)
@@ -1378,11 +1456,7 @@ class MainActivity: AppCompatActivity() {
         FragmentPlayList.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
     }
 
-    //启动隐私权限面板
-    private fun startPrivacyPermissionActivity(){
-        val intent = Intent(this, PrivacyPermissionActivity::class.java)
-        startActivity(intent)
-    }
+
 
 
     //启动播放器

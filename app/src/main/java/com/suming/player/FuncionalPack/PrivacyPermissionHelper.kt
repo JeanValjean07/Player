@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import kotlin.collections.mutableListOf
 import androidx.core.content.edit
 
-
+@Suppress("NewApi")
 class PrivacyPermissionHelper {
 
     //日志
@@ -31,6 +31,12 @@ class PrivacyPermissionHelper {
         }
     }
 
+    //检查总权限
+    fun checkAllState(context: Context): Boolean{
+
+
+        return checkPrivacyAgreed(context) || checkPermissionValidity(context)
+    }
 
     //检查隐私政策是否已同意
     fun checkPrivacyAgreed(context: Context): Boolean{
@@ -60,6 +66,22 @@ class PrivacyPermissionHelper {
         //任意一个有效就有效
         return isBasicPermissionGranted || isManagerPermissionGranted
 
+    }
+
+    //忽略储存权限且不再提示
+    private var PREFS_IgnoreStorageNeverAlert = false
+    val NAME_PREFS_IgnoreStorageNeverAlert = "PREFS_IgnoreStorageNeverAlert"
+    fun GET_PREFS_IgnoreStorageNeverAlert(context: Context): Boolean{
+        initSharedPreferences(context)
+
+        PREFS_IgnoreStorageNeverAlert = Pandora_PrivacyPermission!!.getBoolean(NAME_PREFS_IgnoreStorageNeverAlert, false)
+        return PREFS_IgnoreStorageNeverAlert
+    }
+    fun SET_PREFS_IgnoreStorageNeverAlert(context: Context, ignore: Boolean){
+        initSharedPreferences(context)
+
+        PREFS_IgnoreStorageNeverAlert = ignore
+        Pandora_PrivacyPermission!!.edit { putBoolean(NAME_PREFS_IgnoreStorageNeverAlert, ignore) }
     }
 
 

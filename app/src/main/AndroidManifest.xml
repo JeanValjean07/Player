@@ -60,7 +60,7 @@
             android:hardwareAccelerated="true"
             android:label="播放器"
             android:exported="true"
-            android:enableOnBackInvokedCallback="false"
+            android:enableOnBackInvokedCallback="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
