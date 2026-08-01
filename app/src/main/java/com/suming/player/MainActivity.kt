@@ -181,17 +181,14 @@ class MainActivity: AppCompatActivity() {
         //检查隐私政策是否同意
         val PrivacyPermissionHelper = PrivacyPermissionHelper()
         val isPrivacyAgreed = PrivacyPermissionHelper.checkPrivacyAgreed(this)
-        if(!isPrivacyAgreed){
+        val isStoragePermissionValid = PrivacyPermissionHelper.checkPermissionValidity(this)
+
+        //决定是否需要弹出隐私政策页面或储存权限页面
+        if(!isPrivacyAgreed || !isStoragePermissionValid){
             //隐私政策未同意，显示隐私政策页面
             startPrivacyPermissionActivity()
         }
 
-        //检查储存权限有效性
-        val isStoragePermissionGranted = PrivacyPermissionHelper.checkPermissionValidity(this)
-        if(!isStoragePermissionGranted){
-            //储存权限未同意，显示储存权限页面
-            startPrivacyPermissionActivity()
-        }
     }
 
 
@@ -595,7 +592,7 @@ class MainActivity: AppCompatActivity() {
     private fun showMediaList(savedInstanceState: Bundle?){
         lifecycleScope.launch(Dispatchers.IO){
             //检查权限
-            val (isPermissionGranted, _) = checkPermissionAndVersion()
+            val isPermissionGranted = checkPermissionAndVersion()
             if (isPermissionGranted){
                 //显示列表
                 var targetList = ""
@@ -633,10 +630,6 @@ class MainActivity: AppCompatActivity() {
                             }
                         }
                     }
-                }
-            }else{
-                withContext(Dispatchers.Main){
-                    startSettingPage()
                 }
             }
         }
@@ -1528,35 +1521,12 @@ class MainActivity: AppCompatActivity() {
         }
     }
     //检查权限
-    private fun checkPermissionAndVersion(): Pair<Boolean, Boolean>{
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            Pair(Environment.isExternalStorageManager(), true)
-        }else{
-            val requiredPermission = Manifest.permission.READ_EXTERNAL_STORAGE
-            Pair(ContextCompat.checkSelfPermission(this, requiredPermission) == PackageManager.PERMISSION_GRANTED, false)
-        }
-    }
-    private fun startSettingPage(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+    @SuppressLint( "NewApi")
+    private fun checkPermissionAndVersion(): Boolean {
+        val PrivacyPermissionHelper = PrivacyPermissionHelper()
+        val isStoragePermissionValid = PrivacyPermissionHelper.checkPermissionValidity(this)
 
-            showCustomToast("请先开启管理所有文件权限",3)
-
-            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-            startActivity(intent)
-        }else{
-
-            showCustomToast("请先开启媒体访问文件权限",3)
-
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { data = "package:$packageName".toUri() }
-            startActivity(intent)
-        }
-    }
-    //检查权限并直接跳转
-    private fun checkPermissionAndStartSettingPage() {
-        val (isPermissionGranted, _) = checkPermissionAndVersion()
-        if (!isPermissionGranted){
-            startSettingPage()
-        }
+        return isStoragePermissionValid
     }
     //事件观察
     private var eventObserver_started = false

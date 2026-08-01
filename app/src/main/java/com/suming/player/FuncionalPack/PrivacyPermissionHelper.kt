@@ -22,8 +22,7 @@ class PrivacyPermissionHelper {
             Log.d("SuMing", "PermissionHelper: $msg")
         }
     }
-
-    //设置清单
+    //清单文件
     private var Pandora_PrivacyPermission: SharedPreferences? = null
     val Pandora_PrivacyPermission_Name = "Pandora_PrivacyPermission"
     private fun initSharedPreferences(context: Context){
@@ -33,15 +32,16 @@ class PrivacyPermissionHelper {
     }
 
 
-    //外部发起检查隐私政策是否同意
+    //检查隐私政策是否已同意
     fun checkPrivacyAgreed(context: Context): Boolean{
         initSharedPreferences(context)
 
         //检查隐私政策是否同意
-        isPrivacyAgreed = Pandora_PrivacyPermission!!.getBoolean(Pandora_PrivacyPermission_Name, false)
+        val isPrivacyAgreed = Pandora_PrivacyPermission!!.getBoolean(Pandora_PrivacyPermission_Name, false)
 
         return isPrivacyAgreed
     }
+    //修改隐私政策同意状态
     fun setPrivacyAgreed(context: Context, agreed: Boolean){
         initSharedPreferences(context)
 
@@ -53,7 +53,8 @@ class PrivacyPermissionHelper {
     //检查储存权限有效性
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun checkPermissionValidity(context: Context): Boolean{
-        val isBasicPermissionGranted = checkBasicStoragePermission(context)
+        //检查基础储存权限和所有文件访问权限
+        val isBasicPermissionGranted = isBasicStorageGranted(context)
         val isManagerPermissionGranted = isAllFilesAccessGranted()
 
         //任意一个有效就有效
@@ -62,28 +63,23 @@ class PrivacyPermissionHelper {
     }
 
 
-    //检查隐私政策是否同意
-    var isPrivacyAgreed: Boolean = false
-    //检查权限是否授予
-    var isStoragePermissionGranted: Boolean = false
-
-
     //检查基本储存权限(返回true代表检查通过,返回false代表需要弹出请求页面)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun checkBasicStoragePermission(context: Context): Boolean{
+    fun isBasicStorageGranted(context: Context): Boolean{
+        if (DeviceInfo.AndroidVersion == 0){
+            DeviceInfo.AndroidVersion = Build.VERSION.SDK_INT
+        }
         return when{
-            //安卓13及以上需检查
-            DeviceInfo.AndroidVersion >= 13 -> {
-                isVideoAndAudioAccessGranted(context)
+            DeviceInfo.AndroidVersion >= 33 -> {
 
+                isVideoAndAudioAccessGranted(context)
             }
-            DeviceInfo.AndroidVersion in 11..12 -> {
-                false
-            }
-            DeviceInfo.AndroidVersion in 8..10 -> {
-                false
+            DeviceInfo.AndroidVersion in 26..32 -> {
+
+                isTraditionalBasicStorageGranted(context)
             }
             else -> {
+                consoleLog("安卓版本else${DeviceInfo.AndroidVersion}不支持基本储存权限检查")
                 false
             }
         }
@@ -112,6 +108,7 @@ class PrivacyPermissionHelper {
                 list.contains(Manifest.permission.READ_MEDIA_AUDIO)
     }
 
+
     //单独检查视频权限(安卓13及以上才有)
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun isVideoAccessGranted(context: Context): Boolean {
@@ -132,7 +129,7 @@ class PrivacyPermissionHelper {
 
 
     //检查读取储存权限(安卓12及以下使用)
-    fun isBasicStorageGranted(context: Context): Boolean {
+    fun isTraditionalBasicStorageGranted(context: Context): Boolean {
 
         return ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     }
