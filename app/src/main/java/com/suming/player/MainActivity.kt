@@ -82,7 +82,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Suppress("NewApi", "unused")
+@Suppress("NewApi")
 @RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
@@ -91,9 +91,6 @@ class MainActivity: AppCompatActivity() {
 
     //防止快速点击
     private var lock_clickMillisLock = 0L
-
-    //启用隐私权限检查
-    private val isPrivacyPermissionEnabled = true
 
 
     @RequiresApi(Build.VERSION_CODES.R)
@@ -123,7 +120,7 @@ class MainActivity: AppCompatActivity() {
         setupEventObserver()
 
 
-        startListUnderTopObserver()
+
 
 
 
@@ -171,26 +168,6 @@ class MainActivity: AppCompatActivity() {
          */
     }
 
-
-
-    //检查隐私权限是否同意
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun checkPrivacyPermission(savedInstanceState: Bundle?){
-        if (!isPrivacyPermissionEnabled) return
-        if (savedInstanceState != null) return
-
-        //检查隐私政策是否同意
-        val PrivacyPermissionHelper = PrivacyPermissionHelper()
-        val isPrivacyAgreed = PrivacyPermissionHelper.checkPrivacyAgreed(this)
-        val isStoragePermissionValid = PrivacyPermissionHelper.checkPermissionValidity(this)
-
-        //决定是否需要弹出隐私政策页面或储存权限页面
-        if(!isPrivacyAgreed || !isStoragePermissionValid){
-            //隐私政策未同意，显示隐私政策页面
-            startPrivacyPermissionActivity()
-        }
-
-    }
 
 
     //显示重组
@@ -416,7 +393,6 @@ class MainActivity: AppCompatActivity() {
     }
 
 
-
     //频繁变更视图
     private lateinit var topBar_bottomLine : View
 
@@ -570,38 +546,41 @@ class MainActivity: AppCompatActivity() {
             val (needStart, isStoragePermissionValid) = checkNeedStartPrivacyPermissionActivity()
             //需要显示权限与隐私页面
             if (needStart){
-                Handler(Looper.getMainLooper()).postDelayed({
-                    //启动隐私权限面板
-                    startPrivacyPermissionActivity()
-                }, 1000)
+                //Handler(Looper.getMainLooper()).postDelayed({   }, 1000)
+                //启动隐私权限面板
+                startPrivacyPermissionActivity()
             }else{
                 //已获得储存权限,显示主界面
                 if (isStoragePermissionValid){
-                    //检查MiniView观察者是否已启动
+                    //显示列表
+                    withContext(Dispatchers.Main){
+                        showMediaList(savedInstanceState)
+
+
+                    }
+
+                    delay(1000)
+
+                    startListUnderTopObserver()
+                    //
                     withContext(Dispatchers.Main) {
                         //启动MiniView观察者
                         startMiniViewObserver()
-                    }
-                    //MiniView的显示交给观察自动进行,此处只负责媒体的设置
-                    //检查是否有媒体正在播放
-                    val isAnyMediaOngoing = withContext(Dispatchers.Main){ isAnyMediaOngoing().first }
-                    if (!isAnyMediaOngoing){
-                        //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
-                        val MediaInfo_Uri = getLastRecordMedia()
-                        if (MediaInfo_Uri != null) {
-                            withContext(Dispatchers.Main) {
-                                if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)){
-                                    setMediaItem(MediaInfo_Uri, false)
+
+                        val isAnyMediaOngoing = withContext(Dispatchers.Main){ isAnyMediaOngoing().first }
+                        if (!isAnyMediaOngoing){
+                            //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
+                            val MediaInfo_Uri = getLastRecordMedia()
+                            if (MediaInfo_Uri != null) {
+                                withContext(Dispatchers.Main) {
+                                    if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)){
+                                        setMediaItem(MediaInfo_Uri, false)
+                                    }
                                 }
                             }
                         }
                     }
 
-
-                    //显示列表
-                    withContext(Dispatchers.Main){
-                        showMediaList(savedInstanceState)
-                    }
 
 
                 }else{
