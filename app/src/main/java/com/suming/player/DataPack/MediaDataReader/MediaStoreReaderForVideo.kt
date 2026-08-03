@@ -3,6 +3,7 @@ package com.suming.player.DataPack.MediaDataReader
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import com.suming.player.AddonTools.ToolEventBus
@@ -10,6 +11,7 @@ import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreSetting
 import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,7 +25,7 @@ class MediaStoreReaderForVideo(
     //设置项
     private var PREFS_EnableFileExistCheck: Boolean = false
 
-
+    //初始化设置项
     private fun init(){
         PREFS_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
     }
@@ -32,31 +34,35 @@ class MediaStoreReaderForVideo(
 
 
     suspend fun readAllVideos(): List<MediaItemForVideo> {
-        init()
 
-
-        //初始化列表
-        val list = mutableListOf<MediaItemForVideo>()
-        //排序方式
-        val sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
-        //查询投影
-        val projection = arrayOf(
-            MediaStore.Video.Media._ID,
-            MediaStore.Video.Media.DISPLAY_NAME, //文件名
-            MediaStore.Video.Media.TITLE, //标题
-            MediaStore.Video.Media.ARTIST, //艺术家
-            MediaStore.Video.Media.DURATION,
-            //视频专属
-            MediaStore.Video.Media.RESOLUTION,
-            //其他
-            MediaStore.Video.Media.DATA,
-            MediaStore.Video.Media.SIZE,
-            MediaStore.Video.Media.DATE_ADDED,
-            MediaStore.Video.Media.MIME_TYPE,
-        )
-
-        //在IO线程执行查询
         return withContext(Dispatchers.IO) {
+            //初始化设置项
+            init()
+
+            //初始化列表
+            val list = mutableListOf<MediaItemForVideo>()
+            //排序方式
+            val sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
+            //查询投影
+            val projection = arrayOf(
+                MediaStore.Video.Media._ID,
+                MediaStore.Video.Media.DISPLAY_NAME, //文件名
+                MediaStore.Video.Media.TITLE, //标题
+                MediaStore.Video.Media.ARTIST, //艺术家
+                MediaStore.Video.Media.DURATION,
+                //视频专属
+                MediaStore.Video.Media.RESOLUTION,
+                //其他
+                MediaStore.Video.Media.DATA,
+                MediaStore.Video.Media.SIZE,
+                MediaStore.Video.Media.DATE_ADDED,
+                MediaStore.Video.Media.MIME_TYPE,
+            )
+
+
+
+
+            //查询视频文件
             contentResolver.query(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                 projection, null, null, sortOrder
@@ -89,27 +95,34 @@ class MediaStoreReaderForVideo(
                     val size = cursor.getLong(sizeCol)
                     val dateAdded = cursor.getLong(dateCol)
                     val mimeType = cursor.getString(mimeTypeCol).orEmpty()
+                    val mediaType = if(mimeType.contains("video")) MediaType.Video else MediaType.Undefined
                     val format = if (mimeType.contains('/')) mimeType.substringAfterLast('/') else mimeType
 
+                    consoleLog("读取到视频文件: id: $id, uriString: $uriString, filename: $filename, title: $title, artist: $artist, dur: $dur, " +
+                            "res: $res, " +
+                            "path: $path, size: $size, dateAdded: $dateAdded, mimeType: $mimeType, format: $format")
 
-                    //检查文件有效性
-                    val shouldSkip = when {
-                        //检查文件是否存在
-                        PREFS_EnableFileExistCheck && !isFileExist(path) -> {
-                            Log.v("SuMing", "检查到媒体文件不存在：文件媒体ID: $id")
-                            true
+                    //检查文件是否应该添加
+                    val save = when {
+                        //检查是否属于视频
+                        mediaType == MediaType.Video -> {
+                            //检查文件是否存在
+                            val fileExists = if (PREFS_EnableFileExistCheck) {
+                                isFileExist(path)
+                            }else{
+                                true
+                            }
+                            //检查文件是否有内容
+                            val hasContent = dur > 0 && size > 0
+
+                            fileExists && hasContent
                         }
-                        //检查文件是否有内容
-                        dur <= 0 || size <= 0 -> {
-                            Log.v("SuMing", "检查到媒体文件没有有效时长或大小：文件媒体ID: $id")
-                            true
-                        }
-                        //直接添加
+                        //不是视频时丢弃
                         else -> false
                     }
 
                     //汇总需要添加的条目
-                    if (!shouldSkip) {
+                    if (save) {
                         list += MediaItemForVideo(
                             id = id,
                             uriString = uriString,
@@ -124,11 +137,11 @@ class MediaStoreReaderForVideo(
                             path = path,
                             sizeBytes = size,
                             dateAdded = dateAdded,
+                            mediaType = mediaType,
                             format = format,
                         )
                     }
                 }
-                //return
                 list
             } ?: emptyList()
         }
@@ -141,9 +154,7 @@ class MediaStoreReaderForVideo(
         val mediaStoreRepo = MediaStoreRepo.get(context)
 
         val mediaStoreSettings = videos.map { video ->
-            //查询是否已存在该记录：暂不使用
-            //val existingSetting = mediaStoreRepo.getVideo(video.id.toString())
-            //用例：info_is_hidden = existingSetting?.info_is_hidden ?: false,
+
 
             MediaStoreSetting(
                 //基本：唯一标识：视频的媒体库id,同时也是uriNumOnly的值
@@ -160,7 +171,8 @@ class MediaStoreReaderForVideo(
                 info_path = video.path,
                 info_file_size = video.sizeBytes,
                 info_date_added = video.dateAdded,
-                info_format = video.format
+                info_media_type = video.mediaType,
+                info_format = video.format,
             )
         }
 
@@ -211,6 +223,47 @@ class MediaStoreReaderForVideo(
         //发布完成通知
         DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_success)
 
+    }
+
+    //备注：注意：媒体库方法无法读取被.nomedia标记的文件夹中的内容
+    //备注：媒体库典型返回值
+    //来自公共文件夹的媒体
+    /*
+    //DCIM/Camera
+    读取到视频文件: id: 5703, uriString: content://media/external/video/media/5703, filename: 20260801_160535.mp4, title: 20260801_160535, artist: <unknown>,
+    dur: 10586, res: 3840×2160, path: /storage/emulated/0/DCIM/Camera/20260801_160535.mp4, size: 64536810, dateAdded: 1785571533, mimeType: video/mp4, format: mp4
+    //Picture/自建
+    3769, uriString: content://media/external/video/media/3769, filename: 2023白路赛波加查单飞80公里.mp4, title: 2023白路赛波加查单飞80公里, artist: <unknown>,
+    dur: 207867, res: 1280×720, path: /storage/emulated/0/Pictures/音乐视频/2023白路赛波加查单飞80公里.mp4, size: 87550559, dateAdded: 1777839330, mimeType: video/mp4, format: mp4
+    //Movies
+    id: 5720, uriString: content://media/external/video/media/5720, filename: Ava & Nikki.mp4, title: Ava & Nikki, artist: <unknown>, dur: 480480,
+    res: 1280×720, path: /storage/emulated/0/Movies/Ava & Nikki.mp4, size: 110965035, dateAdded: 1785662054, mimeType: video/mp4, format: mp4
+    //Download
+    id: 5721, uriString: content://media/external/video/media/5721, filename: Ava & Nikki.mp4, title: Ava & Nikki, artist: <unknown>, dur: 480480,
+    res: 1280×720, path: /storage/emulated/0/Download/Ava & Nikki.mp4, size: 110965035, dateAdded: 1785662097, mimeType: video/mp4, format: mp4
+    //根目录自建文件夹
+    id: 5722, uriString: content://media/external/video/media/5722, filename: Ava & Nikki.mp4, title: Ava & Nikki, artist: <unknown>, dur: 480480,
+    res: 1280×720, path: /storage/emulated/0/A2文件夹/Ava & Nikki.mp4, size: 110965035, dateAdded: 1785662735, mimeType: video/mp4, format: mp4
+    //App建立的文件夹
+    id: 5723, uriString: content://media/external/video/media/5723, filename: Ava & Nikki.mp4, title: Ava & Nikki, artist: <unknown>, dur: 480480,
+    res: 1280×720, path: /storage/emulated/0/tencent/Ava & Nikki.mp4, size: 110965035, dateAdded: 1785662799, mimeType: video/mp4, format: mp4
+     */
+    //来自非公共文件夹的媒体
+    /*
+    //Android/media
+    id: 5724, uriString: content://media/external/video/media/5724, filename: Ava & Nikki.mp4, title: Ava & Nikki, artist: <unknown>, dur: 480480,
+    res: 1280×720, path: /storage/emulated/0/Android/media/Ava & Nikki.mp4, size: 110965035, dateAdded: 1785662867, mimeType: video/mp4, format: mp4
+    //Android/data
+    !!!无法读取
+
+
+     */
+
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "MediaStoreReaderForVideo: $msg")
+        }
     }
 
 

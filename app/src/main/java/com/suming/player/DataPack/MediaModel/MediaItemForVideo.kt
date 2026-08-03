@@ -17,6 +17,7 @@ data class MediaItemForVideo (
     val path: String = "",
     val sizeBytes: Long,
     val dateAdded: Long = 0,
+    val mediaType: String = "",
     val format: String = "",
 ): Parcelable{
 
@@ -42,6 +43,7 @@ data class MediaItemForVideo (
                 path = parcel.readString()!!,
                 sizeBytes = parcel.readLong(),
                 dateAdded = parcel.readLong(),
+                mediaType = parcel.readString()!!,
                 format = parcel.readString()!!,
             )
         }
@@ -65,6 +67,7 @@ data class MediaItemForVideo (
         dest.writeString(path)
         dest.writeLong(sizeBytes)
         dest.writeLong(dateAdded)
+        dest.writeString(mediaType)
         dest.writeString(format)
     }
 

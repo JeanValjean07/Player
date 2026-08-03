@@ -19,6 +19,7 @@ data class MediaStoreSetting(
     val info_path: String = "",
     val info_file_size: Long = 0L,
     val info_date_added : Long = 0L,
+    val info_media_type: String = "",
     val info_format: String = "",
 ) {
     override fun equals(other: Any?): Boolean {
@@ -36,6 +37,7 @@ data class MediaStoreSetting(
                 info_path == other.info_path &&
                 info_file_size == other.info_file_size &&
                 info_date_added == other.info_date_added &&
+                info_media_type == other.info_media_type &&
                 info_format == other.info_format
 
     }

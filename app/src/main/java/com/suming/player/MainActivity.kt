@@ -62,6 +62,7 @@ import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForVideo
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForVideo
+import com.suming.player.DataPack.MediaRecordPack
 import com.suming.player.FuncPack_ListManager.FragmentPlayList
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
@@ -81,6 +82,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @Suppress("NewApi")
 @RequiresApi(Build.VERSION_CODES.Q)
@@ -179,6 +181,9 @@ class MainActivity: AppCompatActivity() {
     private lateinit var level_miniView : CardView
     private var isLandscape : Boolean = false
     private fun initDisplay(){
+        window.attributes = window.attributes.apply {
+            windowAnimations = 0
+        }
         enableEdgeToEdge()
         setContentView(R.layout.activity_main_activity)
         //初始化视图
@@ -570,11 +575,11 @@ class MainActivity: AppCompatActivity() {
                         val isAnyMediaOngoing = withContext(Dispatchers.Main){ isAnyMediaOngoing().first }
                         if (!isAnyMediaOngoing){
                             //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
-                            val MediaInfo_Uri = getLastRecordMedia()
-                            if (MediaInfo_Uri != null) {
+                            val MediaInfo_MediaRecordPack = getLastMediaRecord()
+                            if (MediaInfo_MediaRecordPack != null) {
                                 withContext(Dispatchers.Main) {
                                     if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)){
-                                        setMediaItem(MediaInfo_Uri, false)
+                                        //setMediaItem(MediaInfo_MediaRecordPack.uriStandard.to, false)
                                     }
                                 }
                             }
@@ -883,17 +888,21 @@ class MainActivity: AppCompatActivity() {
 
 
     //获取上次播放记录
-    private fun getLastRecordMedia(): Uri?{
+    private fun getLastMediaRecord(): MediaRecordPack?{
         //获取上次播放记录
-        val MediaInfo_MediaUriString = MediaRecordManager(this@MainActivity).takeOneRecordUri()
+        val MediaRecordManager = MediaRecordManager()
+        val MediaInfo_MediaRecordPack = MediaRecordManager.readRecord(this@MainActivity)
 
-        //检查上次播放记录是否有效
-        if (MediaInfo_MediaUriString.isEmpty()) return null
-        if (!MediaInfoRetriever.isUriStringValid(this,MediaInfo_MediaUriString)) return null
+        //检查必要字段是否为空
+        if (MediaInfo_MediaRecordPack.fileFullPath.isEmpty()) return null
+        //提取记录中的完整文件路径,检查该文件是否还存在
+        val file = File(MediaInfo_MediaRecordPack.fileFullPath)
+        if (!file.exists()) return null
+        //检查是否可解码该文件
+        if (!MediaInfoRetriever.isUriStringValid(this,MediaInfo_MediaRecordPack.uriStandard)) return null
 
         //播放记录有效
-
-        return MediaInfo_MediaUriString.toUri()
+        return MediaInfo_MediaRecordPack
     }
     //启动MiniView观察者
     private var miniViewObserverRunning = false
@@ -1620,7 +1629,7 @@ class MainActivity: AppCompatActivity() {
 
     }
 
-    //日志控制
+    //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "MainActivity: $msg")

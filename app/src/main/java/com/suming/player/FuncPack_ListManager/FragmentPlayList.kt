@@ -482,8 +482,8 @@ class FragmentPlayList: DialogFragment() {
                     //停止播放
                     PlayerSingleton.clearMediaItem()
                     //清除播放记录
-                    val MediaRecordManager = MediaRecordManager(requireContext())
-                    MediaRecordManager.clear_MediaInfo()
+                    val MediaRecordManager = MediaRecordManager()
+                    MediaRecordManager.clear_MediaInfo(requireContext())
                     //关闭
                     dismiss()
                     true

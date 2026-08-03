@@ -340,7 +340,7 @@ object PlayerSingleton {
     //记下到播放记录
     private fun writeToRecord(context: Context,uriStandard: String){
         //把记录保存到记录管理器
-        MediaRecordManager(context).writeOneRecord(uriStandard)
+        //MediaRecordManager().writeRecord(uriStandard)
     }
     //获取艺术图链接
     private fun getArtworkFrameUri(context: Context, uri: Uri): Uri?{

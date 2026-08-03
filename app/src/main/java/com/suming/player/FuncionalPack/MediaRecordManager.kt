@@ -4,44 +4,59 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
 import androidx.core.content.edit
+import com.suming.player.DataPack.MediaRecordPack
 
 @Suppress("unused")
-class MediaRecordManager(context: Context) {
+class MediaRecordManager {
 
-    //记录单
-    private var INFO_MediaRecord: SharedPreferences = context.getSharedPreferences("INFO_MediaRecord",
-        Context.MODE_PRIVATE
-    )
-
-    //默认空字段
-    val string_null = ""
-    //表单标识
-    val info_item_uri_standard = "info_item_uri_standard"
-    val info_item_file_name = "info_item_file_name"
-    val info_item_artist = "info_item_artist"
-
-
-    //写入一条播放记录
-    fun writeOneRecord(uriStandard: String, filename: String = string_null, artist: String = string_null){
-        INFO_MediaRecord.edit {
-            putString(info_item_uri_standard, uriStandard)
-            putString(info_item_file_name, filename)
-            putString(info_item_artist, artist)
+    //SharedPreferences
+    private val SPF_NAME_MediaRecord = "SPF_MediaRecord"
+    private var SPF_MediaRecord: SharedPreferences ?= null
+    private fun INIT_SPF(context: Context){
+        if (SPF_MediaRecord == null) {
+            SPF_MediaRecord = context.getSharedPreferences(SPF_NAME_MediaRecord, Context.MODE_PRIVATE)
         }
     }
 
-    //获取一条记录
-    fun takeOneRecord(): Triple<String,String, String>{
-        val MediaInfo_UriStandard =  INFO_MediaRecord.getString(info_item_uri_standard ,"") ?: ""
-        val MediaInfo_FileName = INFO_MediaRecord.getString(info_item_file_name, "") ?: ""
-        val MediaInfo_MediaArtist = INFO_MediaRecord.getString(info_item_artist, "") ?: ""
+    //记录所需字段
+    val string_null = ""
+    //表单标识
+    val item_file_full_path = "item_file_full_path"
+    val item_uri_standard = "item_uri_standard"
+    val item_file_name = "item_file_name"
+    val item_artist = "item_artist"
 
 
-        return Triple(MediaInfo_UriStandard,MediaInfo_FileName, MediaInfo_MediaArtist)
+    //写入记录
+    fun writeRecord(context: Context, mediaRecordPack: MediaRecordPack){
+        INIT_SPF(context)
+
+        SPF_MediaRecord?.edit {
+            putString(item_file_full_path, mediaRecordPack.fileFullPath)
+            putString(item_uri_standard, mediaRecordPack.uriStandard)
+            putString(item_file_name, mediaRecordPack.fileName)
+            putString(item_artist, mediaRecordPack.mediaArtist)
+        }
     }
-    //获取一条记录(仅获取uri)
-    fun takeOneRecordUri(): String {
-        val MediaInfo_UriStandard =  INFO_MediaRecord.getString(info_item_uri_standard ,"") ?: ""
+    //读取记录
+    fun readRecord(context: Context): MediaRecordPack{
+        INIT_SPF(context)
+
+        val MediaInfo_FileFullPath =  SPF_MediaRecord?.getString(item_file_full_path ,string_null) ?: string_null
+        val MediaInfo_UriStandard =  SPF_MediaRecord?.getString(item_uri_standard ,string_null) ?: string_null
+        val MediaInfo_FileName = SPF_MediaRecord?.getString(item_file_name, string_null) ?: string_null
+        val MediaInfo_MediaArtist = SPF_MediaRecord?.getString(item_artist, string_null) ?: string_null
+
+
+        return MediaRecordPack(MediaInfo_FileFullPath,MediaInfo_UriStandard,MediaInfo_FileName, MediaInfo_MediaArtist)
+    }
+
+
+    //读取记录(仅获取uri)
+    fun takeOneRecordUri(context: Context): String {
+        INIT_SPF(context)
+
+        val MediaInfo_UriStandard =  SPF_MediaRecord?.getString(item_uri_standard ,string_null) ?: ""
 
 
         return MediaInfo_UriStandard
@@ -49,25 +64,26 @@ class MediaRecordManager(context: Context) {
 
 
 
-
-
     //置空保存的媒体项
-    fun clear_MediaInfo(){
-        INFO_MediaRecord.edit {
-            putString(info_item_uri_standard, "")
-            putString(info_item_file_name, "")
-            putString(info_item_artist, "")
+    fun clear_MediaInfo(context: Context){
+        INIT_SPF(context)
+
+        SPF_MediaRecord?.edit {
+            putString(item_uri_standard, "")
+            putString(item_file_name, "")
+            putString(item_artist, "")
+        }
+    }
+    //删除保存的媒体项
+    fun delete_MediaInfo(context: Context){
+        INIT_SPF(context)
+
+        SPF_MediaRecord?.edit {
+            remove(item_uri_standard)
+            remove(item_file_name)
+            remove(item_artist)
         }
     }
 
-    //删除保存的媒体项(目前没有场景用到)
-    fun delete_MediaInfo(){
-        INFO_MediaRecord.edit {
-            remove("MediaInfo_MediaUniqueID")
-            remove("MediaInfo_FileName")
-            remove("MediaInfo_MediaArtist")
-        }
-    }
 
-//object class END
 }
