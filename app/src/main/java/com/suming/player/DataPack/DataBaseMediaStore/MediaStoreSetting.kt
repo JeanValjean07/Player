@@ -6,45 +6,40 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "MediaStore")
 data class MediaStoreSetting(
     @PrimaryKey
-    //使用媒体库分配的唯一ID作为主键
-    val MARK_MediaUniqueID: String,
-    //其他字段
-    val info_uri_string: String = "",
-    val info_uri_numOnly: Long = 0L,
-    val info_filename: String = "",
-    val info_title: String = "",
-    val info_artist: String = "",
-    val info_duration : Long = 0L,
-    val info_resolution: String = "",
-    val info_path: String = "",
-    val info_file_size: Long = 0L,
-    val info_date_added : Long = 0L,
-    val info_media_type: String = "",
-    val info_format: String = "",
+    val file_path: String = "",  //改用file_path作为主键
+    val file_name: String = "",
+    val file_size: Long,
+    val media_api_id: Long = 0,   //ID不适用与主键,因为ID数字无法体现是视频还是音频
+    val media_api_dateAdded: Long = 0,
+    val content_uriString: String,
+    val custom_media_Type: String = "",
+    val media_title: String = "",
+    val media_artist: String = "",
+    val media_durationMs: Long,
+    val media_video_resolution: String = "",
+    val media_format: String = "",
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as  MediaStoreSetting
-        return MARK_MediaUniqueID == other.MARK_MediaUniqueID &&
-                info_uri_string == other.info_uri_string &&
-                info_uri_numOnly == other.info_uri_numOnly &&
-                info_filename == other.info_filename &&
-                info_title == other.info_title &&
-                info_artist == other.info_artist &&
-                info_duration == other.info_duration &&
-                info_resolution == other.info_resolution &&
-                info_path == other.info_path &&
-                info_file_size == other.info_file_size &&
-                info_date_added == other.info_date_added &&
-                info_media_type == other.info_media_type &&
-                info_format == other.info_format
-
+        return file_path == other.file_path &&
+                file_name == other.file_name &&
+                file_size == other.file_size &&
+                media_api_id == other.media_api_id &&
+                media_api_dateAdded == other.media_api_dateAdded &&
+                content_uriString == other.content_uriString &&
+                custom_media_Type == other.custom_media_Type &&
+                media_title == other.media_title &&
+                media_artist == other.media_artist &&
+                media_durationMs == other.media_durationMs &&
+                media_video_resolution == other.media_video_resolution &&
+                media_format == other.media_format
     }
 
     //修改数据库结构时记得同步修改预置数据类
 
     override fun hashCode(): Int {
-        return MARK_MediaUniqueID.hashCode()
+        return file_path.hashCode()
     }
 }

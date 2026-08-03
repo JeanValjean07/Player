@@ -3,10 +3,8 @@ package com.suming.player.DataPack.MediaDataReader
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
-import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
-import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreSetting
 import com.suming.player.DataPack.DataBaseStateConnector
@@ -67,40 +65,49 @@ class MediaStoreReaderForVideo(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                 projection, null, null, sortOrder
             )?.use { cursor ->
-                val idCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
-                val filenameCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
-                val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.TITLE)
-                val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.ARTIST)
-                val durCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
-                //视频专属
-                val resCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.RESOLUTION)
-                //其他
-                val pathCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
-                val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
-                val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
-                val mimeTypeCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
+                val col_media_api_id = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+                val col_file_name = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
+                val col_media_title = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.TITLE)
+                val col_media_artist = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.ARTIST)
+                val col_media_duration = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION)
+                val col_media_resolution = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.RESOLUTION)
+                val col_media_path = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+                val col_media_size = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+                val col_media_date_added = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED)
+                val col_media_mime_type = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
+
 
                 //读取媒体文件
                 while (cursor.moveToNext()) {
-                    val id = cursor.getLong(idCol)
-                    val uriString = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id).toString()
-                    val filename = cursor.getString(filenameCol).orEmpty()
-                    val title = cursor.getString(titleCol).orEmpty()
-                    val artist = cursor.getString(artistCol).orEmpty()
-                    val dur = cursor.getLong(durCol)
-                    //视频专属
-                    val res = cursor.getString(resCol).orEmpty()
-                    //其他
-                    val path = cursor.getString(pathCol).orEmpty() //文件路径：可参与存在检查
-                    val size = cursor.getLong(sizeCol)
-                    val dateAdded = cursor.getLong(dateCol)
-                    val mimeType = cursor.getString(mimeTypeCol).orEmpty()
-                    val mediaType = if(mimeType.contains("video")) MediaType.Video else MediaType.Undefined
-                    val format = if (mimeType.contains('/')) mimeType.substringAfterLast('/') else mimeType
+                    val media_api_id = cursor.getLong(col_media_api_id)
+                    val content_uriString = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, media_api_id).toString()
+                    val file_name = cursor.getString(col_file_name).orEmpty()
+                    val media_title = cursor.getString(col_media_title).orEmpty()
+                    val media_artist = cursor.getString(col_media_artist).orEmpty()
+                    val media_durationMs = cursor.getLong(col_media_duration)
+                    val media_video_resolution = cursor.getString(col_media_resolution).orEmpty()
+                    val file_path = cursor.getString(col_media_path).orEmpty()
+                    val file_size = cursor.getLong(col_media_size)
+                    val media_api_dateAdded = cursor.getLong(col_media_date_added)
+                    val media_mimeType = cursor.getString(col_media_mime_type).orEmpty()
+                    val mediaType = if(media_mimeType.contains("video")) MediaType.Video else MediaType.Undefined
+                    val media_format = if (media_mimeType.contains('/')) media_mimeType.substringAfterLast('/') else media_mimeType
 
-                    consoleLog("读取到视频文件: id: $id, uriString: $uriString, filename: $filename, title: $title, artist: $artist, dur: $dur, " +
-                            "res: $res, " +
-                            "path: $path, size: $size, dateAdded: $dateAdded, mimeType: $mimeType, format: $format")
+                    consoleLog("读取到视频文件: " +
+                            "media_api_id: $media_api_id, " +
+                            "content_uriString: $content_uriString, " +
+                            "file_name: $file_name, " +
+                            "media_title: $media_title, " +
+                            "media_artist: $media_artist, " +
+                            "media_durationMs: $media_durationMs, " +
+                            "media_video_resolution: $media_video_resolution, " +
+                            "file_path: $file_path, " +
+                            "file_size: $file_size, " +
+                            "media_api_dateAdded: $media_api_dateAdded, " +
+                            "media_mimeType: $media_mimeType, " +
+                            "mediaType: $mediaType, " +
+                            "media_format: $media_format"
+                    )
 
                     //检查文件是否应该添加
                     val save = when {
@@ -108,12 +115,12 @@ class MediaStoreReaderForVideo(
                         mediaType == MediaType.Video -> {
                             //检查文件是否存在
                             val fileExists = if (PREFS_EnableFileExistCheck) {
-                                isFileExist(path)
+                                isFileExist(file_path)
                             }else{
                                 true
                             }
                             //检查文件是否有内容
-                            val hasContent = dur > 0 && size > 0
+                            val hasContent = media_durationMs > 0 && file_size > 0
 
                             fileExists && hasContent
                         }
@@ -124,21 +131,18 @@ class MediaStoreReaderForVideo(
                     //汇总需要添加的条目
                     if (save) {
                         list += MediaItemForVideo(
-                            id = id,
-                            uriString = uriString,
-                            uriNumOnly = id,
-                            filename = filename,
-                            title = title,
-                            artist = artist,
-                            durationMs = dur,
-                            //视频专属
-                            res = res,
-                            //其他
-                            path = path,
-                            sizeBytes = size,
-                            dateAdded = dateAdded,
-                            mediaType = mediaType,
-                            format = format,
+                            file_path = file_path,
+                            file_name = file_name,
+                            file_size = file_size,
+                            media_api_id = media_api_id,
+                            media_api_dateAdded = media_api_dateAdded,
+                            content_uriString = content_uriString,
+                            custom_media_Type = mediaType,
+                            media_title = media_title,
+                            media_artist = media_artist,
+                            media_durationMs = media_durationMs,
+                            media_video_resolution = media_video_resolution,
+                            media_format = media_format,
                         )
                     }
                 }
@@ -157,22 +161,18 @@ class MediaStoreReaderForVideo(
 
 
             MediaStoreSetting(
-                //基本：唯一标识：视频的媒体库id,同时也是uriNumOnly的值
-                MARK_MediaUniqueID = video.id.toString(),
-                info_uri_string = video.uriString,
-                info_uri_numOnly = video.uriNumOnly,
-                info_filename = video.filename,
-                info_title = video.title,
-                info_artist = video.artist,
-                info_duration = video.durationMs,
-                //视频专属
-                info_resolution = video.res,
-                //其他
-                info_path = video.path,
-                info_file_size = video.sizeBytes,
-                info_date_added = video.dateAdded,
-                info_media_type = video.mediaType,
-                info_format = video.format,
+                file_path = video.file_path,
+                file_name = video.file_name,
+                file_size = video.file_size,
+                media_api_id = video.media_api_id,
+                media_api_dateAdded = video.media_api_dateAdded,
+                content_uriString = video.content_uriString,
+                custom_media_Type = video.custom_media_Type,
+                media_title = video.media_title,
+                media_artist = video.media_artist,
+                media_durationMs = video.media_durationMs,
+                media_video_resolution = video.media_video_resolution,
+                media_format = video.media_format,
             )
         }
 
@@ -180,7 +180,7 @@ class MediaStoreReaderForVideo(
 
             mediaStoreRepo.saveAllVideos(mediaStoreSettings)
 
-            cleanupDeletedVideos(videos.map { it.id.toString() }, mediaStoreRepo)
+            cleanupDeletedVideos(videos.map { it.file_path }, mediaStoreRepo)
 
         }
     }
@@ -209,7 +209,7 @@ class MediaStoreReaderForVideo(
         val allVideos = mediaStoreRepo.getAllVideos()
         //找出数据库中存在但不在当前读取列表中的视频ID
         val deletedVideoIds = allVideos
-            .map { it.MARK_MediaUniqueID }
+            .map { it.file_path }
             .filterNot { currentVideoIds.contains(it) }
         //批量删除
         if (deletedVideoIds.isNotEmpty()) {
@@ -230,8 +230,10 @@ class MediaStoreReaderForVideo(
     //来自公共文件夹的媒体
     /*
     //DCIM/Camera
-    读取到视频文件: id: 5703, uriString: content://media/external/video/media/5703, filename: 20260801_160535.mp4, title: 20260801_160535, artist: <unknown>,
-    dur: 10586, res: 3840×2160, path: /storage/emulated/0/DCIM/Camera/20260801_160535.mp4, size: 64536810, dateAdded: 1785571533, mimeType: video/mp4, format: mp4
+    media_api_id: 3773, content_uriString: content://media/external/video/media/3773, file_name: shots.mp4, media_title: shots, media_artist: <unknown>,
+    media_durationMs: 241139, media_video_resolution: 1280×720, file_path: /storage/emulated/0/Pictures/音乐视频/shots.mp4, file_size: 54937066,
+    media_api_dateAdded: 1777839330, media_mimeType: video/mp4, mediaType: MediaType_Video, media_format: mp4
+
     //Picture/自建
     3769, uriString: content://media/external/video/media/3769, filename: 2023白路赛波加查单飞80公里.mp4, title: 2023白路赛波加查单飞80公里, artist: <unknown>,
     dur: 207867, res: 1280×720, path: /storage/emulated/0/Pictures/音乐视频/2023白路赛波加查单飞80公里.mp4, size: 87550559, dateAdded: 1777839330, mimeType: video/mp4, format: mp4

@@ -202,7 +202,7 @@ object PlayerListManager {
                 customList.any { it.uriNumOnly == uriNumOnly }
             }
             1 -> {
-                liveVideoList.any { it.uriNumOnly == uriNumOnly }
+                liveVideoList.any { it.media_api_id == uriNumOnly }
             }
             2 -> {
                 liveMusicList.any { it.uriNumOnly == uriNumOnly }
@@ -426,7 +426,7 @@ object PlayerListManager {
                         //视频专属
                         res = setting.info_resolution,
                         //其他
-                        path = setting.info_path,
+                        path = setting.info_file_path,
                         sizeBytes = setting.info_file_size,
                         dateAdded = setting.info_date_added,
                         format = setting.info_format,
@@ -471,7 +471,7 @@ object PlayerListManager {
                         //视频专属
                         res = setting.info_resolution,
                         //其他
-                        path = setting.info_path,
+                        path = setting.info_file_path,
                         sizeBytes = setting.info_file_size,
                         dateAdded = setting.info_date_added,
                         format = setting.info_format,

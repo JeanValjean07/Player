@@ -3,11 +3,6 @@ package com.suming.player.ActivityComponent.MainActivity
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.RectF
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.util.Log
@@ -20,8 +15,6 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.get
 import androidx.core.net.toUri
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -39,36 +32,32 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 //@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
 class RecyclerAdapterVideo(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
-    private val onDurationClick: (MediaItemForVideo) -> Unit,
-    private val onOptionClick: (MediaItemForVideo) -> Unit,
-    private val onFormatClick: (MediaItemForVideo, String) -> Unit,
-    private val onSmallCardPlay: (String, String) -> Unit,
+    private val onClick_Duration: (MediaItemForVideo) -> Unit,
+    private val onClick_tvFormat: (MediaItemForVideo) -> Unit,
+    private val onClick_Options: (MediaItemForVideo, ViewHolder) -> Unit,
 ): PagingDataAdapter<MediaItemForVideo, RecyclerAdapterVideo.ViewHolder>(diffCallback) {
     companion object {
         //比较器
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
             override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
-                return oldItem.uriNumOnly == newItem.uriNumOnly
+                return oldItem.file_path == newItem.file_path
             }
-
             override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
                 return oldItem == newItem
             }
         }
     }
 
-
     //viewHolder 1 - 普通视频项卡片
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         //基本视图
-        val TouchPad: View = itemView.findViewById(R.id.TouchPad)
+        val touchLayer: View = itemView.findViewById(R.id.TouchPad)
         val tvName: TextView = itemView.findViewById(R.id.tvName)
         val tvDuration: TextView = itemView.findViewById(R.id.tvDuration)
         val tvFormat: TextView = itemView.findViewById(R.id.tvFormat)
@@ -85,10 +74,11 @@ class RecyclerAdapterVideo(
     private val coroutine_loadArtwork_in = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
 
-
+    //init(未使用)
+    /*
     init {
-         consoleLog("init: 114514")
     }
+     */
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_list_item_video, parent, false)
@@ -123,72 +113,65 @@ class RecyclerAdapterVideo(
         consoleLog("bindBasicVideoCard: $position")
         val item = getItem(position) ?: return
         //填充基本信息
-        holder.tvName.text = item.filename.substringBeforeLast(".")
-        holder.tvDuration.text = FormatTime_numOnly(item.durationMs)
-        holder.tvFormat.text = item.format.ifEmpty { "未知" }
+        holder.tvName.text = item.file_name.substringBeforeLast(".")
+        holder.tvDuration.text = FormatTime_numOnly(item.media_durationMs)
+        holder.tvFormat.text = item.media_format.ifEmpty { "未知" }
         //加载艺术图
         holder.tvFrameLoadingJob?.cancel()
         holder.tvFrameLoadingJob = coroutine_loadArtwork.launch {
             loadArtworkFrame(item, holder)
         }
         //点击事件设定
-        holder.TouchPad.setOnClickListener {
+        holder.touchLayer.setOnClickListener {
             ToolVibrate().vibrate(context)
-            //
-            onItemClick(item.uriString.toUri())
+
+            onClickFunc_touchLayer(item)
         }
         holder.tvDuration.setOnClickListener {
             ToolVibrate().vibrate(context)
-            //
-            onDurationClick(item)
+
+            onClickFunc_tvDuration(item)
         }
         holder.tvOption.setOnClickListener {
             ToolVibrate().vibrate(context)
             //显示菜单
-            val popup = PopupMenu(holder.itemView.context, holder.tvOption)
-            popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
-            val popup_update_cover = popup.menu.findItem(R.id.MenuAction_Repic)
-            val popup_hide_item = popup.menu.findItem(R.id.MenuAction_Hide)
-            val popup_onSmallCardPlay = popup.menu.findItem(R.id.MenuAction_onSmallCardPlay)
-            popup.show()
-            //注册点击
-            popup_update_cover.setOnMenuItemClickListener {
-                ToolVibrate().vibrate(context)
-                context.showCustomToast("进入视频后,可在更多选项面板更新封面", 3)
-                true
-            }
-            popup_hide_item.setOnMenuItemClickListener {
-                ToolVibrate().vibrate(context)
-                context.showCustomToast("已停止对隐藏视频功能的支持", 3)
-                true
-            }
-            popup_onSmallCardPlay.setOnMenuItemClickListener {
-                ToolVibrate().vibrate(context)
-                onSmallCardPlay(item.uriString, item.filename)
-                true
-            }
+            onClickFunc_tvOption(item,holder)
         }
         holder.tvFormat.setOnClickListener {
             ToolVibrate().vibrate(context)
             //
-            onFormatClick(item, item.format)
+            onClickFunc_tvFormat(item)
         }
+    }
+
+    //点击事件
+    private fun onClickFunc_touchLayer(item: MediaItemForVideo){
+        onItemClick(item.content_uriString.toUri())
+    }
+    private fun onClickFunc_tvDuration(item: MediaItemForVideo){
+        onClick_Duration(item)
+    }
+    private fun onClickFunc_tvOption(item: MediaItemForVideo,holder: ViewHolder){
+        onClick_Options(item,holder)
+    }
+    private fun onClickFunc_tvFormat(item: MediaItemForVideo){
+        onClick_tvFormat(item)
     }
 
 
     //Long Thread Functions
     private fun loadArtworkFrame(item: MediaItemForVideo, holder: ViewHolder)  {
         //记录holder的tag
-        val imageTag = item.uriNumOnly.toString()
+        val imageTag = item.file_name
         holder.tvFrame.tag = imageTag
 
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch(Dispatchers.IO){
             //从ArtworkFrameManager要图片
-            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, item.uriNumOnly)
+            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, item.media_api_id)
             //检查图片是否有效
             if (Frame != null){
-                consoleLog("RecyclerAdapterVideo: 加载图片成功, 位置：${item.uriNumOnly},名称：${item.filename}")
+                consoleLog("RecyclerAdapterVideo: 加载图片成功, 位置：${item.file_name},名称：${item.file_name}")
                 //推送到图片ImageView
                 if (holder.tvFrame.tag == imageTag) {
                     withContext(Dispatchers.Main){
@@ -199,7 +182,7 @@ class RecyclerAdapterVideo(
             }
             //不存在该位置图片时立即截取
             else{
-                consoleLog("RecyclerAdapterVideo: 加载图片失败, 开始截取图片, 位置：${item.uriNumOnly},名称：${item.filename}")
+                consoleLog("RecyclerAdapterVideo: 加载图片失败, 开始截取图片, 位置：${item.file_name},名称：${item.file_name}")
                 //截取图片
                 capArtworkFrame(item, holder)
             }
@@ -217,8 +200,8 @@ class RecyclerAdapterVideo(
             //截取图片(让ArtworkCapturer承担截图任务)
             val Bitmap = ArtworkCapturer.captureFrameInVideo(
                 context = context,
-                uri = item.uriString.toUri(),
-                videoDurationUs = item.durationMs * 1_000L,
+                uri = item.content_uriString.toUri(),
+                videoDurationUs = item.media_durationMs * 1_000L,
                 timeUs = 0L,
                 option = ArtworkCapturer.OPTION_CLOSEST_SYNC,
                 needCheckDark = true,
@@ -227,10 +210,10 @@ class RecyclerAdapterVideo(
 
             //检查是否取图成功
             if (Bitmap == null){
-                consoleLog("截取视频封面失败: uriNumOnly=${item.uriNumOnly}")
+                consoleLog("截取视频封面失败: file_name=${item.file_name}")
                 return@launch
             }else{
-                consoleLog("截取视频封面成功: uriNumOnly=${item.uriNumOnly}")
+                consoleLog("截取视频封面成功: file_name=${item.file_name}")
             }
 
             //推送到ImageView
@@ -239,7 +222,7 @@ class RecyclerAdapterVideo(
             }
 
             //保存图片(让ArtworkFrameManager承担保存任务)
-            ArtworkFrameManager.save_Artwork_Frame_Bitmap(context, MediaType.Video, item.uriNumOnly, Bitmap)
+            ArtworkFrameManager.save_Artwork_Frame_Bitmap(context, MediaType.Video, item.media_api_id, Bitmap)
 
         }
     }
@@ -253,20 +236,20 @@ class RecyclerAdapterVideo(
         }
     }
 
-
-    //📐外部控制函数 更新指定位置的封面
-    fun updateCoverForVideo(uriNumOnly: Long)  {
+    //外部控制函数
+    //更新指定位置的封面
+    fun updateCoverForVideo(file_path: String, media_api_id: Long)  {
         //拿新图
-        val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, uriNumOnly)
+        val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, media_api_id)
         //检查是否取图成功
         if (Bitmap == null){
-            consoleLog("刷新新视频封面失败: uriNumOnly=${uriNumOnly}")
+            consoleLog("刷新新视频封面失败: file_path=${file_path}")
             return
         }
 
         //遍历列表并换图
         snapshot().forEachIndexed { index, mediaItem ->
-            if (mediaItem?.uriNumOnly == uriNumOnly) {
+            if (mediaItem?.file_name == file_path) {
                 notifyItemChanged(index)
             }
         }
@@ -291,7 +274,7 @@ class RecyclerAdapterVideo(
 
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "RecyclerAdapterVideo: $msg")
         }

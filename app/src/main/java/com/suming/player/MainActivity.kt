@@ -791,34 +791,46 @@ class MainActivity: AppCompatActivity() {
             onItemClick = { uri ->
                 startVideoPlayer(uri)
             },
-            onDurationClick = { item ->
+            onClick_Duration = { item ->
                 ToolVibrate().vibrate(this@MainActivity)
-                notice("视频时长:${FormatTime_withChar(item.durationMs)}", 2000)
+                notice("视频时长:${FormatTime_withChar(item.media_durationMs)}", 2000)
             },
-            onFormatClick = { item, format ->
+            onClick_tvFormat = { item ->
                 ToolVibrate().vibrate(this@MainActivity)
-                notice("视频格式:${item.format}", 3000)
+                notice("视频格式:${item.media_format}", 3000)
             },
-            onOptionClick = { item ->
-                ToolVibrate().vibrate(this@MainActivity)
-                val popup = PopupMenu(this, ListRecyclerView_Video)
+            onClick_Options = { item, holder ->
+                val popup = PopupMenu(holder.itemView.context, holder.tvOption)
                 popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
-                popup.setOnMenuItemClickListener { /*handle*/; true }
+                val popup_update_cover = popup.menu.findItem(R.id.MenuAction_Repic)
+                val popup_hide_item = popup.menu.findItem(R.id.MenuAction_Hide)
+                val popup_onSmallCardPlay = popup.menu.findItem(R.id.MenuAction_onSmallCardPlay)
                 popup.show()
+                //注册点击事件
+                popup_update_cover.setOnMenuItemClickListener {
+                    ToolVibrate().vibrate(this@MainActivity)
+                    showCustomToast("进入视频后,可在更多选项面板更新封面", 3)
+                    true
+                }
+                popup_hide_item.setOnMenuItemClickListener {
+                    ToolVibrate().vibrate(this@MainActivity)
+                    showCustomToast("功能开发中", 3)
+                    true
+                }
+                popup_onSmallCardPlay.setOnMenuItemClickListener {
+                    ToolVibrate().vibrate(this@MainActivity)
+                    startMiniViewPlay(item.content_uriString.toUri())
+                    true
+                }
             },
-            onSmallCardPlay = { uri, title ->
-                startMiniViewPlay(uri.toUri())
-            }
         )
-
         //设置adapter
         ListRecyclerView_Video.adapter = main_video_list_adapter
-        //分页加载
-        val pager = Pager(PagingConfig(pageSize = 20)) {
-            MediaDataBaseReaderForVideo(context = this@MainActivity)
-        }
-        //分页加载数据
-        lifecycleScope.launch {
+        //加载视频数据
+        lifecycleScope.launch(Dispatchers.IO) {
+            val pager = Pager(PagingConfig(pageSize = 20)) {
+                MediaDataBaseReaderForVideo(context = this@MainActivity)
+            }
             pager.flow.collect { pagingData ->
                 main_video_list_adapter.submitData(pagingData)
             }
@@ -1622,7 +1634,7 @@ class MainActivity: AppCompatActivity() {
                 //更新封面帧
                 if (state.contains(ConnectCenter.connector_event_cover_frame_update)){
                     val uriNumOnly = ConnectCenter.getCoverFrameUpdateEvent_targetUriNumOnly()
-                    main_video_list_adapter.updateCoverForVideo(uriNumOnly)
+                    //main_video_list_adapter.updateCoverForVideo(uriNumOnly)
                 }
             }
         }

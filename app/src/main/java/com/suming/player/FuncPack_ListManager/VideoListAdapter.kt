@@ -33,7 +33,7 @@ class VideoListAdapter(
         //比较器
         val Differ = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
             override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
-                return oldItem.uriNumOnly == newItem.uriNumOnly
+                return oldItem.media_api_id == newItem.media_api_id
             }
             override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
                 return oldItem == newItem
@@ -80,7 +80,7 @@ class VideoListAdapter(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: viewHolder, position: Int){
         val item = getItem(position) ?: return
-        holder.itemName.text = item.filename.substringBeforeLast(".")
+        holder.itemName.text = item.file_name.substringBeforeLast(".")
         holder.itemArtist.text = "未知艺术家"
         //取图任务
         holder.itemFrameJob?.cancel()
@@ -88,8 +88,8 @@ class VideoListAdapter(
             loadArtworkFrame(item, holder)
         }
         //点击事件设定
-        holder.ButtonAddToList.setOnClickListener { onAddToListClick(item.uriString) }
-        holder.ButtonPlay.setOnClickListener { onPlayClick(item.uriString) }
+        holder.ButtonAddToList.setOnClickListener { onAddToListClick(item.content_uriString) }
+        holder.ButtonPlay.setOnClickListener { onPlayClick(item.content_uriString) }
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 
@@ -113,16 +113,16 @@ class VideoListAdapter(
     //Long Thread Functions
     private fun loadArtworkFrame(item: MediaItemForVideo, holder: viewHolder)  {
         //记录holder的tag
-        val imageTag = item.uriNumOnly.toString()
+        val imageTag = item.media_api_id.toString()
         holder.itemFrame.tag = imageTag
 
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch(Dispatchers.IO){
             //从ArtworkFrameManager要图片
-            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, item.uriNumOnly)
+            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, item.media_api_id)
             //检查图片是否有效
             if (Frame != null){
-                consoleLog("RecyclerAdapterVideo: 加载图片成功, 位置：${item.uriNumOnly},名称：${item.filename}")
+                consoleLog("RecyclerAdapterVideo: 加载图片成功, 位置：${item.media_api_id},名称：${item.file_name}")
                 //推送到图片ImageView
                 if (holder.itemFrame.tag == imageTag) {
                     withContext(Dispatchers.Main){

@@ -38,20 +38,18 @@ class VideoListPagingSource(
             val mediaItems = mediaStoreSettings
                 .map { setting ->
                     MediaItemForVideo(
-                        id = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
-                        uriString = setting.info_uri_string,
-                        uriNumOnly = setting.MARK_MediaUniqueID.toLongOrNull() ?: 0,
-                        filename = setting.info_filename,
-                        title = setting.info_title,
-                        artist = setting.info_artist,
-                        durationMs = setting.info_duration,
-                        //视频专属
-                        res = setting.info_resolution,
-                        //其他
-                        path = setting.info_path,
-                        sizeBytes = setting.info_file_size,
-                        dateAdded = setting.info_date_added,
-                        format = setting.info_format,
+                        file_path = setting.file_path,
+                        file_name = setting.file_name,
+                        file_size = setting.file_size,
+                        media_api_id = setting.media_api_id,
+                        media_api_dateAdded = setting.media_api_dateAdded,
+                        content_uriString = setting.content_uriString,
+                        custom_media_Type = setting.custom_media_Type,
+                        media_title = setting.media_title,
+                        media_artist = setting.media_artist,
+                        media_durationMs = setting.media_durationMs,
+                        media_video_resolution = setting.media_video_resolution,
+                        media_format = setting.media_format,
                     )
                 }
 

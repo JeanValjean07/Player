@@ -1,50 +1,39 @@
 package com.suming.player.DataPack.MediaModel
 
-import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
-import androidx.appcompat.widget.DialogTitle
 
 data class MediaItemForVideo (
-    val id: Long = 0,
-    val uriString: String,
-    val uriNumOnly: Long = 0,
-    val filename: String = "",
-    val title: String = "",
-    val artist: String = "",
-    val durationMs: Long,
-    val res: String = "",
-    val path: String = "",
-    val sizeBytes: Long,
-    val dateAdded: Long = 0,
-    val mediaType: String = "",
-    val format: String = "",
+    val file_path: String = "",  //改用file_path作为主键
+    val file_name: String = "",
+    val file_size: Long,
+    val media_api_id: Long = 0,   //ID不适用与主键,因为ID数字无法体现是视频还是音频
+    val media_api_dateAdded: Long = 0,
+    val content_uriString: String,
+    val custom_media_Type: String = "",
+    val media_title: String = "",
+    val media_artist: String = "",
+    val media_durationMs: Long,
+    val media_video_resolution: String = "",
+    val media_format: String = "",
 ): Parcelable{
-
     companion object CREATOR : Parcelable.Creator<MediaItemForVideo> {
-
-        //空对象模板
-        val EMPTY = MediaItemForVideo(0, "", 0L, "", "", "", 0L, "0", "", 0L)
 
         @Suppress("DEPRECATION")
         override fun createFromParcel(parcel: Parcel): MediaItemForVideo {
             return MediaItemForVideo(
-                //基础
-                id = parcel.readLong(),
-                uriString = parcel.readString()!!,
-                uriNumOnly = parcel.readLong(),
-                filename = parcel.readString()!!,
-                title = parcel.readString()!!,
-                artist = parcel.readString()!!,
-                durationMs = parcel.readLong(),
-                //基础：视频专属
-                res = parcel.readString()!!,
-                //其他
-                path = parcel.readString()!!,
-                sizeBytes = parcel.readLong(),
-                dateAdded = parcel.readLong(),
-                mediaType = parcel.readString()!!,
-                format = parcel.readString()!!,
+                file_path = parcel.readString()!!,
+                file_name = parcel.readString()!!,
+                file_size = parcel.readLong(),
+                media_api_id = parcel.readLong(),
+                media_api_dateAdded = parcel.readLong(),
+                content_uriString = parcel.readString()!!,
+                custom_media_Type = parcel.readString()!!,
+                media_title = parcel.readString()!!,
+                media_artist = parcel.readString()!!,
+                media_durationMs = parcel.readLong(),
+                media_video_resolution = parcel.readString()!!,
+                media_format = parcel.readString()!!,
             )
         }
 
@@ -53,23 +42,22 @@ data class MediaItemForVideo (
         }
     }
 
-    override fun describeContents(): Int = 0
-
     override fun writeToParcel(dest: Parcel, flags: Int) {
-        dest.writeLong(id)
-        dest.writeString(uriString)
-        dest.writeLong(uriNumOnly)
-        dest.writeString(filename)
-        dest.writeString(title)
-        dest.writeString(artist)
-        dest.writeLong(durationMs)
-        dest.writeString(res)
-        dest.writeString(path)
-        dest.writeLong(sizeBytes)
-        dest.writeLong(dateAdded)
-        dest.writeString(mediaType)
-        dest.writeString(format)
+        dest.writeString(file_path)
+        dest.writeString(file_name)
+        dest.writeLong(file_size)
+        dest.writeLong(media_api_id)
+        dest.writeLong(media_api_dateAdded)
+        dest.writeString(content_uriString)
+        dest.writeString(custom_media_Type)
+        dest.writeString(media_title)
+        dest.writeString(media_artist)
+        dest.writeLong(media_durationMs)
+        dest.writeString(media_video_resolution)
+        dest.writeString(media_format)
     }
+
+    override fun describeContents(): Int = 0
 
 }
 
