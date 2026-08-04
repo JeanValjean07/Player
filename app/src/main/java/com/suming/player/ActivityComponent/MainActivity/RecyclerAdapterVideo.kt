@@ -227,18 +227,18 @@ class RecyclerAdapterVideo(
 
     //外部控制函数
     //更新指定位置的封面
-    fun updateCoverForVideo(file_path: String, media_api_id: Long)  {
+    fun updateCoverForItem(targetFilePath: String, mediaId: Long)  {
         //拿新图
-        val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, media_api_id)
+        val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, mediaId)
         //检查是否取图成功
         if (Bitmap == null){
-            consoleLog("刷新新视频封面失败: file_path=${file_path}")
+            consoleLog("刷新新视频封面失败: targetFilePath: ${targetFilePath}, mediaId: $mediaId")
             return
         }
 
         //遍历列表并换图
         snapshot().forEachIndexed { index, mediaItem ->
-            if (mediaItem?.file_name == file_path) {
+            if (mediaItem?.file_path == targetFilePath) {
                 notifyItemChanged(index)
             }
         }

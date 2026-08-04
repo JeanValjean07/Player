@@ -2197,21 +2197,24 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //更新封面
-    private fun updateCoverFrame_captureCurrentFrame(uriNumOnly: Long){
+    private fun updateCoverFrame_captureCurrentFrame(media_api_id: Long){
         fun handleSuccess(bitmap: Bitmap) {
             //保存图片
             ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(
                 this@PlayerActivityNeo,
                 MediaType.Video,
-                uriNumOnly,
+                media_api_id,
                 bitmap
             )
 
             //恢复播放状态
             if (playerViewModel.wasPlaying){ player.play() }
 
+            //获取当前文件路径
+            val file_path = PlayerInfoCenter.getMediaAbsolutePath()
+
             //发布完成消息
-            updateCoverFrame_publishMessage(uriNumOnly)
+            updateCoverFrame_publishMessage(file_path, media_api_id)
 
             showCustomToast("截取封面完成", 3)
 
@@ -2237,7 +2240,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             )
         }
     }
-    private fun updateCoverFrame_useDefaultCover(uriNumOnly: Long){
+    private fun updateCoverFrame_useDefaultCover(media_api_id: Long){
         //获取默认封面
         val bitmap = ArtworkCapturer.getDefaultVideoCoverFrame(this@PlayerActivityNeo)
         if (bitmap == null) {
@@ -2249,18 +2252,21 @@ class PlayerActivityNeo: AppCompatActivity(){
         ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(
             this@PlayerActivityNeo,
             MediaType.Video,
-            uriNumOnly,
+            media_api_id,
             bitmap
         )
 
+        //获取当前文件路径
+        val file_path = PlayerInfoCenter.getMediaAbsolutePath()
+
         //发布完成消息
-        updateCoverFrame_publishMessage(uriNumOnly)
+        updateCoverFrame_publishMessage(file_path, media_api_id)
 
 
         showCustomToast("已完成", 3)
     }
-    private fun updateCoverFrame_publishMessage(uriNumOnly: Long){
-        ConnectCenter.setCoverFrameUpdateEvent_targetUriNumOnly(uriNumOnly)
+    private fun updateCoverFrame_publishMessage(file_path:String, media_api_id: Long){
+        ConnectCenter.setCoverFrameUpdateEvent_targetFileInfo(file_path, media_api_id)
         ConnectCenter.setState_connector(ConnectCenter.connector_event_cover_frame_update)
     }
     //分享视频by uri

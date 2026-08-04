@@ -43,14 +43,11 @@ import kotlinx.coroutines.withContext
 
 @UnstableApi
 @Suppress("unused")
-@RequiresApi(Build.VERSION_CODES.Q)
+@SuppressLint("NewApi")
 class FragmentMusicStoreSetting: DialogFragment() {
     companion object {
         fun newInstance(): FragmentMusicStoreSetting = FragmentMusicStoreSetting().apply { arguments = bundleOf() }
     }
-
-    //自动关闭标志位
-    private var lockPage = false
 
 
     //常规设置项
@@ -66,36 +63,25 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
 
 
-    @Suppress("DEPRECATION")
     override fun onStart() {
         super.onStart()
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-
-            //横屏时隐藏状态栏
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                ViewCompat.setOnApplyWindowInsetsListener(dialog?.window?.decorView ?: return) { view, insets -> WindowInsetsCompat.CONSUMED }
-
-                /*
-                dialog?.window?.decorView?.post { dialog?.window?.insetsController?.let { controller ->
-                    controller.hide(WindowInsets.Type.statusBars())
-                    controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                } }
-
-                 */
-
+                ViewCompat.setOnApplyWindowInsetsListener(dialog?.window?.decorView ?: return) { _, _ -> WindowInsetsCompat.CONSUMED }
                 //三星专用:显示到挖空区域
                 dialog?.window?.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             } else {
+                @Suppress("DEPRECATION")
                 dialog?.window?.decorView?.systemUiVisibility = (
                         View.SYSTEM_UI_FLAG_FULLSCREEN
                                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                                 or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         )
             }
-
             dialog?.window?.setWindowAnimations(R.style.DialogSlideInOutHorizontal)
             dialog?.window?.setDimAmount(0.1f)
             dialog?.window?.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            @Suppress("DEPRECATION")
             dialog?.window?.statusBarColor = Color.TRANSPARENT
             dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
 
@@ -103,12 +89,13 @@ class FragmentMusicStoreSetting: DialogFragment() {
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
             dialog?.window?.setWindowAnimations(R.style.DialogSlideInOut)
             dialog?.window?.setDimAmount(0.1f)
+            @Suppress("DEPRECATION")
             dialog?.window?.statusBarColor = Color.TRANSPARENT
             dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-
             if(context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
                 val decorView: View = dialog?.window?.decorView ?: return
-                decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)
+                @Suppress("DEPRECATION")
+                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
             }
         }
     }
@@ -121,8 +108,6 @@ class FragmentMusicStoreSetting: DialogFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_main_frag_music_mss, container, false)
-
-    @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //初始化
@@ -134,74 +119,16 @@ class FragmentMusicStoreSetting: DialogFragment() {
     }
 
     private fun init(view: View){
+        //初始化常用视图
+        SortMethodText = view.findViewById(R.id.current_sort)
+        SortOrientationText = view.findViewById(R.id.current_sort_orientation)
+
         //设置卡片高度
         display(view)
 
-        lifecycleScope.launch(Dispatchers.Main) {
-
-            //执行其他
-            delay(500)
-            //监听返回手势
-            dialog?.setOnKeyListener { _, keyCode, event ->
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                    Dismiss(false)
-                    return@setOnKeyListener true
-                }
-                return@setOnKeyListener false
-            }
-        }
     }
-    //设置面板几何
-    private fun display(view: View){
-        //获取当前屏幕方向
-        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        //操作主卡片视图
-        val mainCard = view.findViewById<CardView>(R.id.main_card)
-        //读取屏幕信息
-        val screenHeightPx = resources.displayMetrics.heightPixels
-        val screenWidthPx = resources.displayMetrics.widthPixels
-        val density = resources.displayMetrics.density
 
-        if (isLandscape){
-            //计算目标宽度
-            val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
-            val targetScreenHeightDp = (screenHeightPx / density).toInt()
 
-            mainCard.post {
-                if (targetScreenHeightDp < 50){
-                    mainCard.layoutParams.width = screenWidthPx
-                }else{
-                    mainCard.layoutParams.width = targetScreenWidthPx
-                }
-                //把高度改为match parent
-                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-
-                val statusBarHeight = getStatusBarHeightFromView(mainCard)
-                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
-
-                mainCard.requestLayout()
-            }
-
-        }else{
-            //计算目标高度
-            val targetHeightPx = (screenHeightPx * 0.7).toInt()
-            val targetScreenHeightDp = (screenHeightPx / density).toInt()
-
-            mainCard.post {
-                if (targetScreenHeightDp < 450){
-                    mainCard.layoutParams.height = screenHeightPx
-                }else{
-                    mainCard.layoutParams.height = targetHeightPx
-                }
-                mainCard.requestLayout()
-            }
-        }
-    }
-    fun getStatusBarHeightFromView(view: View): Int {
-        val rect = Rect()
-        view.getWindowVisibleDisplayFrame(rect)
-        return rect.top
-    }
 
 
     //Main Thread Functions
@@ -418,7 +345,52 @@ class FragmentMusicStoreSetting: DialogFragment() {
             }
         }
     }
+    //设置面板细节
+    private fun display(view: View){
+        //获取当前屏幕方向
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //操作主卡片视图
+        val mainCard = view.findViewById<CardView>(R.id.main_card)
+        //读取屏幕信息
+        val screenHeightPx = resources.displayMetrics.heightPixels
+        val screenWidthPx = resources.displayMetrics.widthPixels
+        val density = resources.displayMetrics.density
 
+        if (isLandscape){
+            //计算目标宽度
+            val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 50){
+                    mainCard.layoutParams.width = screenWidthPx
+                }else{
+                    mainCard.layoutParams.width = targetScreenWidthPx
+                }
+                //把高度改为match parent
+                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+
+                val statusBarHeight = getStatusBarHeightFromView(mainCard)
+                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
+
+                mainCard.requestLayout()
+            }
+
+        }else{
+            //计算目标高度
+            val targetHeightPx = (screenHeightPx * 0.7).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 450){
+                    mainCard.layoutParams.height = screenHeightPx
+                }else{
+                    mainCard.layoutParams.height = targetHeightPx
+                }
+                mainCard.requestLayout()
+            }
+        }
+    }
 
 
 
@@ -438,19 +410,14 @@ class FragmentMusicStoreSetting: DialogFragment() {
         )
         val targetHeight = view.measuredHeight
 
-        // 如果目标高度为0，则无需动画
         if (targetHeight <= 0) return
-        // 如果当前高度已经是目标高度，则无需动画
         if (view.layoutParams.height == targetHeight) return
 
-        // 初始高度设为0 (为了动画能从0开始)
         view.layoutParams.height = 0
         view.visibility = View.VISIBLE
 
-
         val animator = ValueAnimator.ofInt(0, targetHeight)
 
-        // 3. 设置动画更新监听器
         animator.addUpdateListener { animation ->
             val animatedValue = animation.animatedValue as Int
             view.layoutParams.height = animatedValue
@@ -460,114 +427,116 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
         animator.start()
     }
-    //文本显示
+    //排序方式与方向-显示
+    private lateinit var SortMethodText : TextView
     private fun setAndShowSortOrder(type: String){
-        val current_sort_type = view?.findViewById<TextView>(R.id.current_sort)
+
+        //
         when(type){
             "info_title" -> {
-                current_sort_type?.text = "已选择：文件名"
+                SortMethodText.text = "已选择：文件名"
                 PREFS_music_sortOrder = "info_title"
             }
             "info_duration" -> {
-                current_sort_type?.text = "已选择：时长"
+                SortMethodText.text = "已选择：时长"
                 PREFS_music_sortOrder = "info_duration"
             }
             "info_date_added" -> {
-                current_sort_type?.text = "已选择：添加日期"
+                SortMethodText.text = "已选择：添加日期"
                 PREFS_music_sortOrder = "info_date_added"
             }
             "info_file_size" -> {
-                current_sort_type?.text = "已选择：文件大小"
+                SortMethodText.text = "已选择：文件大小"
                 PREFS_music_sortOrder = "info_file_size"
             }
             "info_mime_type" -> {
-                current_sort_type?.text = "已选择：文件格式"
+                SortMethodText.text = "已选择：文件格式"
                 PREFS_music_sortOrder = "info_mime_type"
             }
             "" -> {
                 if (PREFS_MediaStore.contains("PREFS_music_sortOrder")){
                     if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_title"){
-                        current_sort_type?.text = "文件名"
+                        SortMethodText.text = "文件名"
                         PREFS_music_sortOrder = "info_title"
                     }
                     else if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_duration"){
-                        current_sort_type?.text = "时长"
+                        SortMethodText.text = "时长"
                         PREFS_music_sortOrder = "info_duration"
                     }
                     else if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_date_added"){
-                        current_sort_type?.text = "添加日期"
+                        SortMethodText.text = "添加日期"
                         PREFS_music_sortOrder = "info_date_added"
                     }
                     else if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_file_size"){
-                        current_sort_type?.text = "文件大小"
+                        SortMethodText.text = "文件大小"
                         PREFS_music_sortOrder = "info_file_size"
                     }
                     else if (PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") == "info_mime_type"){
-                        current_sort_type?.text = "文件格式"
+                        SortMethodText.text = "文件格式"
                         PREFS_music_sortOrder = "info_mime_type"
                     }
                     else {
                         PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_title") }
-                        current_sort_type?.text = "文件名"
+                        SortMethodText.text = "文件名"
                         PREFS_music_sortOrder = "info_title"
                     }
                 }
                 else{
                     PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_title") }
-                    current_sort_type?.text = "文件名"
+                    SortMethodText.text = "文件名"
                     PREFS_music_sortOrder = "info_title"
                 }
             }
         }
     }
+    private lateinit var SortOrientationText : TextView
     private fun setAndShowOrientationType(type_DESC_or_ASC: String){
-        val current_sort_orientation = view?.findViewById<TextView>(R.id.current_sort_orientation)
+        //
         when(type_DESC_or_ASC){
             "DESC" -> {
-                current_sort_orientation?.text = "已修改为降序"
+                SortOrientationText.text = "已修改为降序"
                 PREFS_music_sortOrientation = "DESC"
             }
             "ASC" -> {
-                current_sort_orientation?.text = "已修改为升序"
+                SortOrientationText.text = "已修改为升序"
                 PREFS_music_sortOrientation = "ASC"
             }
             "" -> {
                 if (PREFS_MediaStore.contains("PREFS_music_sortOrientation")){
                     if (PREFS_MediaStore.getString("PREFS_music_sortOrientation", "DESC") == "DESC"){
-                        current_sort_orientation?.text = "降序"
+                        SortOrientationText.text = "降序"
                         PREFS_music_sortOrientation = "DESC"
                     }
                     else if (PREFS_MediaStore.getString("PREFS_music_sortOrientation", "DESC") == "ASC"){
-                        current_sort_orientation?.text = "升序"
+                        SortOrientationText.text = "升序"
                         PREFS_music_sortOrientation = "ASC"
                     }
                     else {
                         PREFS_MediaStore.edit { putString("PREFS_music_sortOrientation", "DESC") }
-                        current_sort_orientation?.text = "降序"
+                        SortOrientationText.text = "降序"
                         PREFS_music_sortOrientation = "DESC"
                     }
                 }
                 else{
                     PREFS_MediaStore.edit { putString("PREFS_music_sortOrientation", "DESC") }
-                    current_sort_orientation?.text = "降序"
+                    SortOrientationText.text = "降序"
                     PREFS_music_sortOrientation = "DESC"
                 }
             }
         }
     }
     //自定义退出逻辑
+    private var lockPage = false
     private fun customDismiss(){
         if (!lockPage) {
-            Dismiss()
+            dismiss()
         }
     }
-    private fun Dismiss(flag_need_vibrate: Boolean = true){
-        if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
-
-        val result = bundleOf("KEY" to "Dismiss")
-        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-        dismiss()
-
+    //获取状态栏高度
+    private fun getStatusBarHeightFromView(view: View): Int {
+        val rect = Rect()
+        view.getWindowVisibleDisplayFrame(rect)
+        return rect.top
     }
 
 }

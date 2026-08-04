@@ -840,21 +840,21 @@ class MainActivity: AppCompatActivity() {
         )
         //设置adapter
         ListRecyclerView_Music.adapter = main_music_list_adapter
-        //分页加载
-        val pager = Pager(
-            PagingConfig(
-                pageSize = 25,
-                prefetchDistance = 40,
-                enablePlaceholders = false,
-                initialLoadSize = 200,
-                maxSize = PagingConfig.MAX_SIZE_UNBOUNDED,
-                jumpThreshold = Int.MIN_VALUE
-            )
-        ) {
-            MediaDataBaseReaderForMusic(context = this@MainActivity)
-        }
         //分页加载数据
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {
+            //分页加载
+            val pager = Pager(
+                PagingConfig(
+                    pageSize = 25,
+                    prefetchDistance = 40,
+                    enablePlaceholders = false,
+                    initialLoadSize = 200,
+                    maxSize = PagingConfig.MAX_SIZE_UNBOUNDED,
+                    jumpThreshold = Int.MIN_VALUE
+                )
+            ) {
+                MediaDataBaseReaderForMusic(context = this@MainActivity)
+            }
             pager.flow.collect { pagingData ->
                 main_music_list_adapter.submitData(pagingData)
             }
@@ -1215,7 +1215,6 @@ class MainActivity: AppCompatActivity() {
 
     }
 
-
     //从读取本地视频和音乐数据
     private suspend fun startLocalMediaReader(mediaType: String){
         withContext(Dispatchers.Main) { setLoadingText("正在读取本地媒体", false, 0) }
@@ -1234,7 +1233,6 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
-
 
     //页签切换
     private fun setList(target: String){
@@ -1379,7 +1377,6 @@ class MainActivity: AppCompatActivity() {
     }
 
 
-
     //页面回到顶部
     private fun setListToTop(){
         when (mainViewModel.state_current_tab) {
@@ -1418,32 +1415,49 @@ class MainActivity: AppCompatActivity() {
         }
     }
 
-    //提示内容合集
-    private var setLoadingTextJob: Job? = null
-    private fun setLoadingText(text: String,delay_then_close: Boolean, delay_value_ms: Long){
-        AppBarNoticeText.text = text
-        AppBarNoticeText.visibility = View.VISIBLE
-        //延迟关闭
-        setLoadingTextJob?.cancel()
-        if (delay_then_close){
-            setLoadingTextJob = lifecycleScope.launch(Dispatchers.Main) {
-                delay(delay_value_ms)
-                removeLoadingText()
+
+    //通用事件观察
+    private var eventObserver_started = false
+    private fun setupEventObserver() {
+        if (eventObserver_started){ return }
+        eventObserver_started = true
+        //启动列表加载状态观察
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                DataBaseStateConnector.state_queryDisk.collect { state ->
+                    if (state.isEmpty()) return@collect
+                    //consoleLog("观察到媒体库加载状态变更: new state: $state")
+                    //读取完成
+                    if (state.contains(DataBaseStateConnector.state_queryDisk_success)) {
+                        //刷新列表
+                        setLoadingText("读取完成",true,2000)
+
+                        //刷新列表
+                        refreshList()
+                    }
+                }
             }
         }
+        //杂项观察
+        lifecycleScope.launch {
+            //观察杂项连接器变更
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                ConnectCenter.state_connector.collect { state ->
+                    if (state.isEmpty()) return@collect
+                    //consoleLog("观察到杂项连接器变更: new state: $state")
+                    //更新封面帧
+                    if (state.contains(ConnectCenter.connector_event_cover_frame_update)){
+                        val (targetFilePath, targetMediaId) = ConnectCenter.getCoverFrameUpdateEvent_targetFileInfo()
+
+                        main_video_list_adapter.updateCoverForItem(targetFilePath, targetMediaId)
+
+                        ConnectCenter.clear_connector()
+                    }
+                }
+            }
+        }
+
     }
-    private fun removeLoadingText(){
-        AppBarNoticeText.text = ""
-        AppBarNoticeText.visibility = View.GONE
-    }
-
-
-    //启动播放列表面板
-    private fun startPlayListFragment(){
-        FragmentPlayList.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
-    }
-
-
 
     //启动播放器
     private fun startVideoPlayer(uri: Uri){
@@ -1552,7 +1566,31 @@ class MainActivity: AppCompatActivity() {
             }
         }
     }
-    //显示通知
+
+    //启动播放列表Fragment面板
+    private fun startPlayListFragment(){
+        FragmentPlayList.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+    }
+
+    //显示加载提示
+    private var setLoadingTextJob: Job? = null
+    private fun setLoadingText(text: String,delay_then_close: Boolean, delay_value_ms: Long){
+        AppBarNoticeText.text = text
+        AppBarNoticeText.visibility = View.VISIBLE
+        //延迟关闭
+        setLoadingTextJob?.cancel()
+        if (delay_then_close){
+            setLoadingTextJob = lifecycleScope.launch(Dispatchers.Main) {
+                delay(delay_value_ms)
+                removeLoadingText()
+            }
+        }
+    }
+    private fun removeLoadingText(){
+        AppBarNoticeText.text = ""
+        AppBarNoticeText.visibility = View.GONE
+    }
+    //显示短胶囊通知
     private var showNoticeJob: Job? = null
     private fun showNoticeJob(text: String, duration: Long) {
         showNoticeJob?.cancel()
@@ -1568,6 +1606,7 @@ class MainActivity: AppCompatActivity() {
     private fun notice(text: String, duration: Long) {
         showNoticeJob(text, duration)
     }
+    //格式化时间
     @SuppressLint("DefaultLocale")
     private fun FormatTime_withChar(milliseconds: Long): String {
         val totalSeconds = milliseconds / 1000
@@ -1588,46 +1627,6 @@ class MainActivity: AppCompatActivity() {
 
         return isStoragePermissionValid
     }
-    //事件观察
-    private var eventObserver_started = false
-    private fun setupEventObserver() {
-        if (eventObserver_started){ return }
-        eventObserver_started = true
-        //启动列表加载状态观察
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                DataBaseStateConnector.state_queryDisk.collect { state ->
-                    if (state.isEmpty()) return@collect
-                    //consoleLog("观察到媒体库加载状态变更: new state: $state")
-                    //读取完成
-                    if (state.contains(DataBaseStateConnector.state_queryDisk_success)) {
-                        //刷新列表
-                        setLoadingText("读取完成",true,2000)
-
-                        //刷新列表
-                        refreshList()
-                    }
-                }
-            }
-        }
-        //启动杂项观察
-        lifecycleScope.launch {
-            //观察杂项连接器变更
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                ConnectCenter.state_connector.collect { state ->
-                    if (state.isEmpty()) return@collect
-                    //consoleLog("观察到杂项连接器变更: new state: $state")
-                    //更新封面帧
-                    if (state.contains(ConnectCenter.connector_event_cover_frame_update)){
-                        val uriNumOnly = ConnectCenter.getCoverFrameUpdateEvent_targetUriNumOnly()
-                        //main_video_list_adapter.updateCoverForVideo(uriNumOnly)
-                    }
-                }
-            }
-        }
-
-    }
-
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {

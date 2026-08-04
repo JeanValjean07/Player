@@ -12,8 +12,6 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.PopupMenu
@@ -27,7 +25,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
@@ -35,12 +32,9 @@ import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.SettingsRequestCenter
 import com.suming.player.ViewWidget.CircleButton
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @UnstableApi
-@RequiresApi(Build.VERSION_CODES.Q)
+@SuppressLint("NewApi")
 class FragmentVideoStoreSetting: DialogFragment() {
     companion object {
         fun newInstance():
@@ -48,40 +42,28 @@ class FragmentVideoStoreSetting: DialogFragment() {
             bundleOf()
         }
     }
-    //自动关闭标志位
-    private var lockPage = false
 
 
 
     override fun onStart() {
         super.onStart()
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-
-            //横屏时隐藏状态栏
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                ViewCompat.setOnApplyWindowInsetsListener(dialog?.window?.decorView ?: return) { view, insets -> WindowInsetsCompat.CONSUMED }
-
-                /*
-                dialog?.window?.decorView?.post { dialog?.window?.insetsController?.let { controller ->
-                    controller.hide(WindowInsets.Type.statusBars())
-                    controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                } }
-
-                 */
-
+                ViewCompat.setOnApplyWindowInsetsListener(dialog?.window?.decorView ?: return) { _, _ -> WindowInsetsCompat.CONSUMED }
                 //三星专用:显示到挖空区域
                 dialog?.window?.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             } else {
+                @Suppress("DEPRECATION")
                 dialog?.window?.decorView?.systemUiVisibility = (
                         View.SYSTEM_UI_FLAG_FULLSCREEN
                                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                                 or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         )
             }
-
             dialog?.window?.setWindowAnimations(R.style.DialogSlideInOutHorizontal)
             dialog?.window?.setDimAmount(0.1f)
             dialog?.window?.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            @Suppress("DEPRECATION")
             dialog?.window?.statusBarColor = Color.TRANSPARENT
             dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
 
@@ -89,12 +71,13 @@ class FragmentVideoStoreSetting: DialogFragment() {
         else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
             dialog?.window?.setWindowAnimations(R.style.DialogSlideInOut)
             dialog?.window?.setDimAmount(0.1f)
+            @Suppress("DEPRECATION")
             dialog?.window?.statusBarColor = Color.TRANSPARENT
             dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-
             if(context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
                 val decorView: View = dialog?.window?.decorView ?: return
-                decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)
+                @Suppress("DEPRECATION")
+                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
             }
         }
     }
@@ -107,94 +90,29 @@ class FragmentVideoStoreSetting: DialogFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
     ): View = inflater.inflate(R.layout.activity_main_frag_video_mss, container, false)
-
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //初始化
         init(view)
 
+        //注册控件
         register(view)
-
 
     }
 
     private fun init(view: View){
-        //
+        //初始化常用视图
         SortMethodText = view.findViewById(R.id.current_sort)
         SortOrientationText = view.findViewById(R.id.current_sort_orientation)
-        //
-        //设置卡片高度
+        //设置显示重组
         display(view)
-        //
-        lifecycleScope.launch(Dispatchers.Main) {
-
-            //执行其他
-            delay(500)
-            //监听返回手势
-            dialog?.setOnKeyListener { _, keyCode, event ->
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                    Dismiss(false)
-                    return@setOnKeyListener true
-                }
-                return@setOnKeyListener false
-            }
-        }
     }
-    //设置面板几何
-    private fun display(view: View){
-        //获取当前屏幕方向
-        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        //操作主卡片视图
-        val mainCard = view.findViewById<CardView>(R.id.main_card)
-        //读取屏幕信息
-        val screenHeightPx = resources.displayMetrics.heightPixels
-        val screenWidthPx = resources.displayMetrics.widthPixels
-        val density = resources.displayMetrics.density
 
-        if (isLandscape){
-            //计算目标宽度
-            val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
-            val targetScreenHeightDp = (screenHeightPx / density).toInt()
-
-            mainCard.post {
-                if (targetScreenHeightDp < 50){
-                    mainCard.layoutParams.width = screenWidthPx
-                }else{
-                    mainCard.layoutParams.width = targetScreenWidthPx
-                }
-                //把高度改为match parent
-                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-
-                val statusBarHeight = getStatusBarHeightFromView(mainCard)
-                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
-
-                mainCard.requestLayout()
-            }
-
-        }else{
-            //计算目标高度
-            val targetHeightPx = (screenHeightPx * 0.7).toInt()
-            val targetScreenHeightDp = (screenHeightPx / density).toInt()
-
-            mainCard.post {
-                if (targetScreenHeightDp < 450){
-                    mainCard.layoutParams.height = screenHeightPx
-                }else{
-                    mainCard.layoutParams.height = targetHeightPx
-                }
-                mainCard.requestLayout()
-            }
-        }
-    }
-    fun getStatusBarHeightFromView(view: View): Int {
-        val rect = Rect()
-        view.getWindowVisibleDisplayFrame(rect)
-        return rect.top
-    }
 
 
 
     //Main Thread Functions
+    //控件注册
     private fun register(view: View){
         //开关实例初始化
         val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
@@ -382,6 +300,52 @@ class FragmentVideoStoreSetting: DialogFragment() {
 
 
     }
+    //设置面板显示细节
+    private fun display(view: View){
+        //获取当前屏幕方向
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //操作主卡片视图
+        val mainCard = view.findViewById<CardView>(R.id.main_card)
+        //读取屏幕信息
+        val screenHeightPx = resources.displayMetrics.heightPixels
+        val screenWidthPx = resources.displayMetrics.widthPixels
+        val density = resources.displayMetrics.density
+
+        if (isLandscape){
+            //计算目标宽度
+            val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 50){
+                    mainCard.layoutParams.width = screenWidthPx
+                }else{
+                    mainCard.layoutParams.width = targetScreenWidthPx
+                }
+                //把高度改为match parent
+                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+
+                val statusBarHeight = getStatusBarHeightFromView(mainCard)
+                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
+
+                mainCard.requestLayout()
+            }
+
+        }else{
+            //计算目标高度
+            val targetHeightPx = (screenHeightPx * 0.7).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 450){
+                    mainCard.layoutParams.height = screenHeightPx
+                }else{
+                    mainCard.layoutParams.height = targetHeightPx
+                }
+                mainCard.requestLayout()
+            }
+        }
+    }
 
 
     //Functions
@@ -402,19 +366,16 @@ class FragmentVideoStoreSetting: DialogFragment() {
         )
         val targetHeight = view.measuredHeight
 
-        // 如果目标高度为0，则无需动画
+
         if (targetHeight <= 0) return
-        // 如果当前高度已经是目标高度，则无需动画
         if (view.layoutParams.height == targetHeight) return
 
-        // 初始高度设为0 (为了动画能从0开始)
+
         view.layoutParams.height = 0
         view.visibility = View.VISIBLE
 
-
         val animator = ValueAnimator.ofInt(0, targetHeight)
 
-        // 3. 设置动画更新监听器
         animator.addUpdateListener { animation ->
             val animatedValue = animation.animatedValue as Int
             view.layoutParams.height = animatedValue
@@ -428,13 +389,13 @@ class FragmentVideoStoreSetting: DialogFragment() {
     //文本显示
     private lateinit var SortMethodText : TextView
     private fun updateSortMethodText(sortMethod: String = ""){
-        var targetSortMethod = ""
-        if (sortMethod == "") {
-            targetSortMethod = SettingsRequestCenter.get_PREFS_video_sortMethod(requireContext())
+        //读取当前排序方法
+        val targetSortMethod = if (sortMethod == "") {
+            SettingsRequestCenter.get_PREFS_video_sortMethod(requireContext())
         }else{
-            targetSortMethod = sortMethod
+            sortMethod
         }
-
+        //上屏显示排序方法
         when(targetSortMethod){
             SettingsRequestCenter.sort_method_filename -> {
                 SortMethodText.text = "文件名"
@@ -458,14 +419,13 @@ class FragmentVideoStoreSetting: DialogFragment() {
     }
     private lateinit var SortOrientationText : TextView
     private fun updateSortOrientationText(sortOrientation: String = ""){
-        var targetSortOrientation = ""
-        if (sortOrientation == "") {
-            //未传入目标时，自己读取
-            targetSortOrientation = SettingsRequestCenter.get_PREFS_video_sortOrientation(requireContext())
+        //读取当前排序方向
+        val targetSortOrientation = if (sortOrientation == "") {
+            SettingsRequestCenter.get_PREFS_video_sortOrientation(requireContext())
         }else{
-            targetSortOrientation = sortOrientation
+            sortOrientation
         }
-
+        //上屏显示排序方向
         when(targetSortOrientation){
             SettingsRequestCenter.sort_orientation_DESC -> {
                 SortOrientationText.text = "降序"
@@ -474,30 +434,39 @@ class FragmentVideoStoreSetting: DialogFragment() {
                 SortOrientationText.text = "升序"
             }
             else -> {
-                SortOrientationText.text = "读取时发生错误"
+                SortOrientationText.text = "未知"
             }
         }
-
+    }
+    //获取状态栏高度
+    private fun getStatusBarHeightFromView(view: View): Int {
+        val rect = Rect()
+        view.getWindowVisibleDisplayFrame(rect)
+        return rect.top
     }
     //自定义退出逻辑
+    private var lockPage = false
     private fun customDismiss(){
         if (!lockPage) {
-            Dismiss()
+            dismiss()
         }
     }
-    private fun Dismiss(flag_need_vibrate: Boolean = true){
-        if (flag_need_vibrate){ ToolVibrate().vibrate(requireContext()) }
-
-        val result = bundleOf("KEY" to "Dismiss")
-        setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-        dismiss()
-
-    }
-
-    //日志控制
+    //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "MainActivity: $msg")
+            Log.d("SuMing", "FragmentVideoStoreSetting-视频库设置面板: $msg")
+        }
+    }
+
+    //存档函数
+    //监听返回手势(dialog fragment)
+    private fun setupBackInvokeCallBackListener(){
+        dialog?.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                dismiss()
+                return@setOnKeyListener true
+            }
+            return@setOnKeyListener false
         }
     }
 
