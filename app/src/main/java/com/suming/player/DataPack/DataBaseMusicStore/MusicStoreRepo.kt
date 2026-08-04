@@ -2,6 +2,7 @@ package com.suming.player.DataPack.DataBaseMusicStore
 
 import android.content.Context
 import androidx.sqlite.db.SimpleSQLiteQuery
+import com.suming.player.SettingsRequestCenter
 
 class MusicStoreRepo(context: Context) {
 
@@ -40,16 +41,16 @@ class MusicStoreRepo(context: Context) {
         val offset = page * pageSize
 
         return when (sortOrder) {
-            "info_title ASC" -> dao.getAllMusicsPagedByTitleAsc(pageSize, offset)
-            "info_title DESC" -> dao.getAllMusicsPagedByTitleDesc(pageSize, offset)
-            "info_date_added ASC" -> dao.getAllMusicsPagedByDateAddedAsc(pageSize, offset)
-            "info_date_added DESC" -> dao.getAllMusicsPagedByDateAddedDesc(pageSize, offset)
-            "info_duration ASC" -> dao.getAllMusicsPagedByDurationAsc(pageSize, offset)
-            "info_duration DESC" -> dao.getAllMusicsPagedByDurationDesc(pageSize, offset)
-            "info_file_size ASC" -> dao.getAllMusicsPagedByFileSizeAsc(pageSize, offset)
-            "info_file_size DESC" -> dao.getAllMusicsPagedByFileSizeDesc(pageSize, offset)
-            "info_mime_type ASC" -> dao.getAllMusicsPagedByMimeTypeAsc(pageSize, offset)
-            "info_mime_type DESC" -> dao.getAllMusicsPagedByMimeTypeDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_filename} ${SettingsRequestCenter.sort_orientation_ASC}" -> dao.getAllMusicsPagedByTitleAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_filename} ${SettingsRequestCenter.sort_orientation_DESC}" -> dao.getAllMusicsPagedByTitleDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_date_added} ${SettingsRequestCenter.sort_orientation_ASC}" -> dao.getAllMusicsPagedByDateAddedAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_date_added} ${SettingsRequestCenter.sort_orientation_DESC}" -> dao.getAllMusicsPagedByDateAddedDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_duration} ${SettingsRequestCenter.sort_orientation_ASC}" -> dao.getAllMusicsPagedByDurationAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_duration} ${SettingsRequestCenter.sort_orientation_DESC}" -> dao.getAllMusicsPagedByDurationDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_file_size} ${SettingsRequestCenter.sort_orientation_ASC}" -> dao.getAllMusicsPagedByFileSizeAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_file_size} ${SettingsRequestCenter.sort_orientation_DESC}" -> dao.getAllMusicsPagedByFileSizeDesc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_mime_type} ${SettingsRequestCenter.sort_orientation_ASC}" -> dao.getAllMusicsPagedByMimeTypeAsc(pageSize, offset)
+            "${SettingsRequestCenter.sort_method_mime_type} ${SettingsRequestCenter.sort_orientation_DESC}" -> dao.getAllMusicsPagedByMimeTypeDesc(pageSize, offset)
             else -> dao.getAllMusicsPagedByTitleDesc(pageSize, offset)
         }
     }

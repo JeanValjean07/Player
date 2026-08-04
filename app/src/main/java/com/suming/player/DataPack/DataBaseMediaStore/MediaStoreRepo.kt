@@ -46,9 +46,8 @@ class MediaStoreRepo(context: Context) {
             "${SettingsRequestCenter.sort_method_file_size} ${SettingsRequestCenter.sort_orientation_DESC}"  -> dao.getAllVideosPagedByFileSizeDesc(pageSize, offset)
             "${SettingsRequestCenter.sort_method_mime_type} ${SettingsRequestCenter.sort_orientation_ASC}"  -> dao.getAllVideosPagedByMimeTypeAsc(pageSize, offset)
             "${SettingsRequestCenter.sort_method_mime_type} ${SettingsRequestCenter.sort_orientation_DESC}"  -> dao.getAllVideosPagedByMimeTypeDesc(pageSize, offset)
-            else -> {
-                dao.getAllVideosPagedByTitleDesc(pageSize, offset)
-            }
+            else -> dao.getAllVideosPagedByTitleDesc(pageSize, offset)
+
         }
     }
 
