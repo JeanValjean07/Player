@@ -74,8 +74,7 @@ class MediaStoreRepo(context: Context) {
     }
 
 
-    suspend fun getAllVideosSorted( sortOrder: String,
-        sortOrientation: String ): List<MediaStoreSetting> {
+    suspend fun getAllVideosSorted( sortOrder: String, sortOrientation: String ): List<MediaStoreSetting> {
         //白名单防注入
         val safeField = when (sortOrder) {
             "info_title", "info_date_added", "info_file_size", "info_duration", "info_mime_type" -> sortOrder
