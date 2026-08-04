@@ -202,7 +202,7 @@ class RecyclerAdapterVideo(
                 consoleLog("截取视频封面失败: file_name=${item.file_name}")
                 return@launch
             }else{
-                consoleLog("截取视频封面成功: file_name=${item.file_name}")
+                //consoleLog("截取视频封面成功: file_name=${item.file_name}")
             }
 
             //推送到ImageView

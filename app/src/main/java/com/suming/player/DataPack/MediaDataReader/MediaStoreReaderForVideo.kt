@@ -93,6 +93,7 @@ class MediaStoreReaderForVideo(
                     val mediaType = if(media_mimeType.contains("video")) MediaType.Video else MediaType.Undefined
                     val media_format = if (media_mimeType.contains('/')) media_mimeType.substringAfterLast('/') else media_mimeType
 
+                    /*
                     consoleLog("读取到视频文件: " +
                             "media_api_id: $media_api_id, " +
                             "content_uriString: $content_uriString, " +
@@ -108,6 +109,8 @@ class MediaStoreReaderForVideo(
                             "mediaType: $mediaType, " +
                             "media_format: $media_format"
                     )
+
+                     */
 
                     //检查文件是否应该添加
                     val save = when {

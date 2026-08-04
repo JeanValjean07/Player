@@ -71,7 +71,7 @@ object ArtworkCapturer {
                     //检查黑屏
                     if (needCheckDark && isDarkFrame(bitmap)) {
                         val randomTime = (videoDurationUs * (0.2f + 0.6f * Random.nextFloat())).toLong()
-                        consoleLog("ArtworkCapturerForVideo: 重新截取一次,本次随机得到的时间为(从微秒转为秒为): ${randomTime / 1_000_000}")
+                        //consoleLog("ArtworkCapturerForVideo: 重新截取一次,本次随机得到的时间为(从微秒转为秒为): ${randomTime / 1_000_000}")
                         bitmap = retriever_video.getFrameAtTime(randomTime, option)
                     }
                     if (bitmap == null) {

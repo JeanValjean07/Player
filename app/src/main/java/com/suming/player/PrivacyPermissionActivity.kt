@@ -98,7 +98,6 @@ class PrivacyPermissionActivity: AppCompatActivity() {
 
         val topBar = findViewById<LinearLayout>(R.id.topBar)
         topBar.post {
-            consoleLog("topBar height: ${topBar.height}")
 
             val topBar_totalHeight = topBar.height
 
@@ -195,12 +194,12 @@ class PrivacyPermissionActivity: AppCompatActivity() {
         //检查储存权限有效性
         isStoragePermissionValid = PrivacyPermissionHelper.checkPermissionValidity(this)
 
-        consoleLog("隐私政策已同意: $isPrivacyAgreed  储存权限有效: $isStoragePermissionValid")
+        //consoleLog("隐私政策已同意: $isPrivacyAgreed  储存权限有效: $isStoragePermissionValid")
 
         //权限均有效时主动退出
         if (isPrivacyAgreed && isStoragePermissionValid){
             successfullyGetPermission()
-            showCustomToast("权限与隐私检查已通过,本页面将自动退出")
+            //showCustomToast("权限与隐私检查已通过,本页面将自动退出")
             finish()
         }else{
             showTargetPage()

@@ -688,16 +688,17 @@ class MainActivity: AppCompatActivity() {
                 return@launch
             }
             mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_video
-            //记录状态
-            SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_video)
 
-            //前台切换
+            //发起切换
             withContext(Dispatchers.Main){
                 //界面切换
                 setList(SettingsRequestCenter.tab_mark_video)
                 //加载事务
                 showVideoListCore()
             }
+
+            //记录状态
+            SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_video)
 
         }
     }
@@ -712,17 +713,18 @@ class MainActivity: AppCompatActivity() {
                 return@launch
             }
             mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_music
-            //记录状态
-            SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_music)
 
-            //前台切换
+            //发起切换
             withContext(Dispatchers.Main){
-                consoleLog("showMusicList114514")
                 //界面切换
                 setList(SettingsRequestCenter.tab_mark_music)
                 //加载事务
                 showMusicListCore()
             }
+
+            //记录状态
+            SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_music)
+
         }
     }
 
@@ -730,14 +732,13 @@ class MainActivity: AppCompatActivity() {
     private fun showVideoListCore(){
         //启动视频列表
         startVideoRecyclerView()
-
         //检查是否需要读取系统视频
         lifecycleScope.launch(Dispatchers.IO) {
             //获取强制每次读取标识
             val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
             //检查本地数据库是否已有视频数据
             if (MediaStoreRepo(this@MainActivity).isEmpty() || queryNew){
-                consoleLog("showVideoListCore: 本地数据库视频数据为空 触发读取媒体库视频")
+                //consoleLog("showVideoListCore: 本地数据库视频数据为空 触发读取媒体库视频")
                 //从系统读取视频
                 startLocalMediaReader(MediaType.Video)
             }
@@ -811,7 +812,7 @@ class MainActivity: AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
             if (MusicStoreRepo(this@MainActivity).isEmpty() || queryNew){
-                consoleLog("showMusicList数据库音乐数据为空")
+                //consoleLog("showMusicList数据库音乐数据为空,触发读取媒体库音乐")
                 //从系统读取音乐
                 startLocalMediaReader(MediaType.Audio)
             }
@@ -1597,7 +1598,7 @@ class MainActivity: AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 DataBaseStateConnector.state_queryDisk.collect { state ->
                     if (state.isEmpty()) return@collect
-                    consoleLog("观察到媒体库加载状态变更: new state: $state")
+                    //consoleLog("观察到媒体库加载状态变更: new state: $state")
                     //读取完成
                     if (state.contains(DataBaseStateConnector.state_queryDisk_success)) {
                         //刷新列表
