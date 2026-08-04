@@ -8,11 +8,13 @@ object FragmentConnector {
     const val fragment_tag_equalizer = "fragment_tag_equalizer"  //均衡器面板
     const val fragment_tag_media_info = "fragment_tag_media_info"  //媒体信息面板
     const val fragment_tag_play_list = "fragment_tag_play_list"  //播放列表面板
-    const val fragment_tag_privacy_permission = "fragment_tag_privacy_permission"  //隐私权限面板
-    var fragment_tag_privacy_permission_online = false
+    const val fragment_tag_video_store_setting = "fragment_tag_video_store_setting"  //视频库设置面板
+    const val fragment_tag_music_store_setting = "fragment_tag_music_store_setting"  //音乐库设置面板
 
 
-    //所有Fragment公用一个
+
+
+    //所有Fragment公用一个receive_key
     const val request_key = "request_key"
     const val receive_key = "receive_key"
     //额外参数key
@@ -56,6 +58,14 @@ object FragmentConnector {
 
     //媒体信息面板
     const val fragment_request_key_media_info = "fragment_request_key_media_info"
+
+
+    //媒体库面板request_key
+    const val fragment_request_key_video_store_setting = "fragment_request_key_video_store_setting"  //独立key
+    const val fragment_request_key_music_store_setting = "fragment_request_key_music_store_setting"  //独立key
+    //媒体库面板事件(视频库和音乐库公用事件)
+    const val fragment_media_store_setting_require_recyclerview_refresh = "fragment_media_store_setting_require_recyclerview_refresh"  //请求列表刷新
+    const val fragment_media_store_setting_require_mediastore_api_refresh = "fragment_media_store_setting_require_mediastore_api_refresh"  //请求媒体库API刷新(重读媒体文件)
 
 
 

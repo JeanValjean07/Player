@@ -34,6 +34,7 @@ import androidx.media3.common.util.UnstableApi
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -272,8 +273,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
                 val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
                 ButtonReLoadFromMediaStore.setOnClickListener {
                     ToolVibrate().vibrate(requireContext())
-                    val result = bundleOf("KEY" to "QueryFromMediaStoreMusic")
-                    setFragmentResult("FROM_FRAGMENT_MUSIC_MediaStore", result)
+                    setFragmentResult(FragmentConnector.fragment_media_store_setting_require_mediastore_api_refresh)
                     customDismiss()
                 }
                 //默认页签
@@ -361,8 +361,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
                         expand(SortOrderArea)
                     }
                     else if(ButtonChangeSortOrder.text == "保存并刷新"){
-                        val result = bundleOf("KEY" to "RenovateAdapter")
-                        setFragmentResult("FROM_FRAGMENT_MUSIC_MediaStore", result)
+                        setFragmentResult(FragmentConnector.fragment_media_store_setting_require_recyclerview_refresh)
                         customDismiss()
                     }
                 }
@@ -425,6 +424,11 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
 
     //Functions
+    //发送Fragment返回值
+    private fun setFragmentResult(event: String){
+        val result = bundleOf(FragmentConnector.receive_key to event)
+        setFragmentResult(FragmentConnector.fragment_request_key_music_store_setting, result)
+    }
     //展开动画
     private fun expand(view: LinearLayout) {
         //设置初始高度为0

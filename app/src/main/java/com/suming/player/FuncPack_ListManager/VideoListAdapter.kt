@@ -119,7 +119,7 @@ class VideoListAdapter(
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch(Dispatchers.IO){
             //从ArtworkFrameManager要图片
-            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, item.media_api_id)
+            val Frame = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_id)
             //检查图片是否有效
             if (Frame != null){
                 consoleLog("RecyclerAdapterVideo: 加载图片成功, 位置：${item.media_api_id},名称：${item.file_name}")

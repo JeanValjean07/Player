@@ -2,7 +2,6 @@ package com.suming.player
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.res.Configuration
@@ -10,8 +9,6 @@ import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -22,7 +19,6 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -129,12 +125,9 @@ class MainActivity: AppCompatActivity() {
 
 
     }
-    //onResume时更新一些设置变量
+
     override fun onResume() {
         super.onResume()
-
-        //更新MiniView
-        showMiniViewLongProcess()
 
     }
 
@@ -149,13 +142,10 @@ class MainActivity: AppCompatActivity() {
     }
 
     private fun init(){
-
-
         //获取MiniView视图
         initMiniView()
 
-
-        //手势监听
+        //手势监听(Activity)
         /*
         lifecycleScope.launch (Dispatchers.Main) {
             delay(500)
@@ -379,7 +369,8 @@ class MainActivity: AppCompatActivity() {
                 topBar_totalHeight = level_topBar.height
 
                 val targetTopPadding = topBar_totalHeight + 10
-                consoleLog("targetTopPadding:$targetTopPadding,  statusBarHeight:${DeviceInfo.statusBarHeight}  ")
+
+                //consoleLog(" 界面重组 compose: targetTopPadding:$targetTopPadding,  statusBarHeight:${DeviceInfo.statusBarHeight}  ")
 
                 //设置列表内边距
                 ListRecyclerView_Video.setPadding(0, targetTopPadding, 0, 300)
@@ -393,68 +384,42 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
-    fun Int.dpToPx(): Int {
+    private fun Int.dpToPx(): Int {
         return (this * Resources.getSystem().displayMetrics.density).toInt()
     }
 
 
-    //频繁变更视图
-    private lateinit var topBar_bottomLine : View
-
-    //顶部分隔线显示控制(In代表显示,Out代表隐藏)
-    private var isTopBar_bottomLine_In = false
-    private fun topBar_bottomLine_In(){
-        if (isTopBar_bottomLine_In) return
-        isTopBar_bottomLine_In = true
-
-        topBar_bottomLine.visibility = View.VISIBLE
-        topBar_bottomLine.alpha = 0f
-        topBar_bottomLine.animate()
-            .alpha(1f)
-            .setDuration(200)
-            .start()
-
-    }
-    private fun topBar_bottomLine_Out(){
-        if (!isTopBar_bottomLine_In) return
-        isTopBar_bottomLine_In = false
-
-        topBar_bottomLine.animate()
-            .alpha(0f)
-            .setDuration(200)
-            .withEndAction { topBar_bottomLine.visibility = View.GONE }
-            .start()
-    }
 
 
-
-
-    //Main Thread Functions
     //注册Fragment监听器
     private fun registerFragment(){
         lifecycleScope.launch (Dispatchers.Main) {
             delay(500)
             //视频媒体库设置返回值
-            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_VIDEO_MediaStore", this@MainActivity) { _, bundle ->
-                val ReceiveKey = bundle.getString("KEY")
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_video_store_setting, this@MainActivity) { _, bundle ->
+                val ReceiveKey = bundle.getString(FragmentConnector.receive_key)
                 when(ReceiveKey){
-                    "RenovateAdapter" -> {
+                    FragmentConnector.fragment_media_store_setting_require_recyclerview_refresh -> {
                         main_video_list_adapter.refresh()
                     }
-                    "QueryFromMediaStoreVideo" -> {
-                        startLocalMediaReader("video")
+                    FragmentConnector.fragment_media_store_setting_require_mediastore_api_refresh -> {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            startLocalMediaReader(MediaType.Video)
+                        }
                     }
                 }
             }
             //音乐媒体库设置返回值
-            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_MUSIC_MediaStore", this@MainActivity) { _, bundle ->
-                val ReceiveKey = bundle.getString("KEY")
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_music_store_setting, this@MainActivity) { _, bundle ->
+                val ReceiveKey = bundle.getString(FragmentConnector.receive_key)
                 when(ReceiveKey){
-                    "RenovateAdapter" -> {
+                    FragmentConnector.fragment_media_store_setting_require_recyclerview_refresh -> {
                         main_music_list_adapter.refresh()
                     }
-                    "QueryFromMediaStoreMusic" -> {
-                        startLocalMediaReader("music")
+                    FragmentConnector.fragment_media_store_setting_require_mediastore_api_refresh -> {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            startLocalMediaReader(MediaType.Audio)
+                        }
                     }
                 }
             }
@@ -471,6 +436,12 @@ class MainActivity: AppCompatActivity() {
                 }
             }
         }
+    }
+    private fun startFragment_MSS(){
+        FragmentMusicStoreSetting.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_music_store_setting)
+    }
+    private fun startFragment_VSS(){
+        FragmentVideoStoreSetting.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_video_store_setting)
     }
     //注册界面控件
     private fun register(){
@@ -518,10 +489,10 @@ class MainActivity: AppCompatActivity() {
                 //
                 when(mainViewModel.state_current_tab){
                     SettingsRequestCenter.tab_mark_video -> {
-                        FragmentVideoStoreSetting.newInstance().show(supportFragmentManager, "MainFragVideoStoreSetting")
+                        startFragment_VSS()
                     }
                     SettingsRequestCenter.tab_mark_music -> {
-                        FragmentMusicStoreSetting.newInstance().show(supportFragmentManager, "MainFragMusicStoreSetting")
+                        startFragment_MSS()
                     }
                 }
             }
@@ -746,6 +717,7 @@ class MainActivity: AppCompatActivity() {
 
             //前台切换
             withContext(Dispatchers.Main){
+                consoleLog("showMusicList114514")
                 //界面切换
                 setList(SettingsRequestCenter.tab_mark_music)
                 //加载事务
@@ -755,24 +727,19 @@ class MainActivity: AppCompatActivity() {
     }
 
     //视频列表核心
-    @SuppressLint("NewApi")
     private fun showVideoListCore(){
-        consoleLog("showVideoListCore")
         //启动视频列表
         startVideoRecyclerView()
-        val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this)
-        //检查本地数据库是否已有音乐数据
-        lifecycleScope.launch(Dispatchers.IO) {
-            if (MediaStoreRepo(this@MainActivity).isEmpty() || queryNew){
-                consoleLog("showVideoListCore : 本地数据库视频数据为空")
-                //从系统读取视频
-                withContext(Dispatchers.Main){
-                    startLocalMediaReader("video")
-                }
-            }else{
-                consoleLog("showVideoListCore : 本地数据库视频数据不为空")
-                //直接从本地数据库读取
 
+        //检查是否需要读取系统视频
+        lifecycleScope.launch(Dispatchers.IO) {
+            //获取强制每次读取标识
+            val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
+            //检查本地数据库是否已有视频数据
+            if (MediaStoreRepo(this@MainActivity).isEmpty() || queryNew){
+                consoleLog("showVideoListCore: 本地数据库视频数据为空 触发读取媒体库视频")
+                //从系统读取视频
+                startLocalMediaReader(MediaType.Video)
             }
         }
 
@@ -837,20 +804,16 @@ class MainActivity: AppCompatActivity() {
         }
     }
     //音乐列表核心
-    @SuppressLint("NewApi")
     private fun showMusicListCore(){
-        consoleLog("showMusicListCore")
         //启动音乐列表
         startMusicRecyclerView()
-        val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this)
         //检查本地数据库是否已有音乐数据
         lifecycleScope.launch(Dispatchers.IO) {
+            val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
             if (MusicStoreRepo(this@MainActivity).isEmpty() || queryNew){
                 consoleLog("showMusicList数据库音乐数据为空")
                 //从系统读取音乐
-                withContext(Dispatchers.Main){
-                    startLocalMediaReader(MediaType.Audio)
-                }
+                startLocalMediaReader(MediaType.Audio)
             }
         }
     }
@@ -921,13 +884,13 @@ class MainActivity: AppCompatActivity() {
     private fun startMiniViewObserver() {
         if (miniViewObserverRunning) return
         miniViewObserverRunning = true
-        consoleLog("startMiniViewObserver 启动MiniView观察者 ")
+
         //启动MiniView观察者
         lifecycleScope.launch {
-            //观察媒体变更
+            //观察正在播放的媒体项变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.uriString.collect { uriString ->
-                    consoleLog("MiniView观察者 观察到媒体变更: $uriString")
+                    //consoleLog("MiniView观察者 当前媒体: $uriString")
                     showMiniViewLongProcess()
                 }
             }
@@ -936,7 +899,8 @@ class MainActivity: AppCompatActivity() {
             //观察播放状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.isPlaying.collect { newState ->
-                    consoleLog("MiniView观察者 观察到播放状态变更: newState = $newState")
+                    //consoleLog("MiniView观察者 当前播放状态: $newState")
+                    //刷新操作按钮
                     updateMiniViewPauseButton(newState)
                 }
             }
@@ -1017,7 +981,7 @@ class MainActivity: AppCompatActivity() {
 
     }
     private fun updateMiniViewPauseButton(isPlaying: Boolean){
-        //获取当前播放状态
+        //更新操作按钮图标
         PlayingCard_ButtonPlay.setImageResource(if (isPlaying) R.drawable.ic_main_controller_pause else R.drawable.ic_main_controller_play)
     }
     private fun updateMiniViewArtwork(type: String,uriNumOnly: Long){
@@ -1082,7 +1046,7 @@ class MainActivity: AppCompatActivity() {
         if (state_MiniViewArtwork_ImageUri == uriNumOnly) return
 
         //获取图片
-        val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(this, type, uriNumOnly.toLong())
+        val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(this, type, uriNumOnly.toLong())
 
         //置入图片
         if (Bitmap == null){
@@ -1226,7 +1190,6 @@ class MainActivity: AppCompatActivity() {
             Pair(false,"")
         }
     }
-
     //设置新的媒体项
     private fun setMediaItem(MediaInfo_MediaUri: Uri, playWhenReady: Boolean){
         //确保播放器已经启动
@@ -1236,7 +1199,6 @@ class MainActivity: AppCompatActivity() {
         //确认设置新媒体项
         PlayerSingleton.setMediaItem(MediaInfo_MediaUri, playWhenReady, this)
     }
-
     //从选单发起后台播放
     private fun startMiniViewPlay(uri: Uri){
         //比对上次播放媒体信息与当前播放媒体信息
@@ -1252,27 +1214,28 @@ class MainActivity: AppCompatActivity() {
 
     }
 
-    //从读取本地视频和音乐(列表自动感知刷新)
-    private fun startLocalMediaReader(flag_video_or_music: String){
-        setLoadingText("正在读取本地媒体", false, 0)
+
+    //从读取本地视频和音乐数据
+    private suspend fun startLocalMediaReader(mediaType: String){
+        withContext(Dispatchers.Main) { setLoadingText("正在读取本地媒体", false, 0) }
+        //通知状态变更
         DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
         //发起加载
-        lifecycleScope.launch(Dispatchers.IO) {
-            when(flag_video_or_music){
-                "video" -> {
-                    val mediaReader = MediaStoreReaderForVideo(this@MainActivity, contentResolver)
-                    mediaReader.readAndSaveAllVideos()
-                }
-                "music" -> {
-                    val musicReader = MediaStoreReaderForMusic(this@MainActivity, contentResolver)
-                    musicReader.readAndSaveAllMusics()
-                }
+        when(mediaType){
+            MediaType.Video -> {
+                val mediaReader = MediaStoreReaderForVideo(this@MainActivity, contentResolver)
+                mediaReader.readAndSaveAllVideos()
+            }
+            MediaType.Audio -> {
+                val musicReader = MediaStoreReaderForMusic(this@MainActivity, contentResolver)
+                musicReader.readAndSaveAllMusics()
             }
         }
+
     }
 
 
-    //页签切换变更页面信息
+    //页签切换
     private fun setList(target: String){
         var titleText = "列表"
         var targetButtonView : CardView? = null
@@ -1300,7 +1263,7 @@ class MainActivity: AppCompatActivity() {
         AppBarTitle.text = titleText
 
         //修改按钮背景颜色
-        if (targetButtonView != null){
+        //if (targetButtonView != null){
             if (targetButtonView == ButtonCardMusic){
                 ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
                 ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
@@ -1309,7 +1272,7 @@ class MainActivity: AppCompatActivity() {
                 ButtonCardVideo.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_ON))
                 ButtonCardMusic.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.ButtonCard_OFF))
             }
-        }
+        //}
 
 
         //遍历level_list内所有列表
@@ -1322,9 +1285,100 @@ class MainActivity: AppCompatActivity() {
 
         }
 
-        monitorListPosition(target)
+        //设置列表位置监控
+        setScrollListenerForList(target)
 
     }
+    //页签视图
+    private lateinit var AppBarTitle: TextView
+    private lateinit var AppBarNoticeText: TextView
+    private lateinit var ButtonCardMusic: CardView
+    private lateinit var ButtonCardVideo: CardView
+    private lateinit var ButtonCardGallery: CardView
+
+    //列表位置监控
+    private val scrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+            val isAtTop = !recyclerView.canScrollVertically(-1)
+            isListUnderTop.value = isAtTop
+        }
+    }
+    private val isListUnderTop = MutableStateFlow(false)
+    val isListUnderTopFlow: StateFlow<Boolean> = isListUnderTop.asStateFlow()
+    private fun startListUnderTopObserver(){
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                isListUnderTopFlow.collect{
+                    if (it){
+                        topBar_bottomLine_Out()
+                    }else{
+                        topBar_bottomLine_In()
+                    }
+                }
+            }
+        }
+    }
+    //为列表应用位置监控
+    private fun setScrollListenerForList(target: String){
+        val targetListView = when(target) {
+            SettingsRequestCenter.tab_mark_music -> {
+                ListRecyclerView_Music
+            }
+            SettingsRequestCenter.tab_mark_video -> {
+                ListRecyclerView_Video
+            }
+            else -> {
+                showCustomToast("页面打开失败",3)
+                finish()
+                return
+            }
+        }
+        //遍历level_list内所有recyclerView
+        for (item in level_list){
+            if (item == targetListView){
+                //添加列表滚动监听器
+                if (item is RecyclerView){
+                    item.addOnScrollListener(scrollListener)
+                    //额外检查一次是否在顶部(否则切换后未滚动前不会刷新)
+                    isListUnderTop.value = !item.canScrollVertically(-1)
+                }
+            }else{
+                //移除列表滚动监听器
+                if (item is RecyclerView){
+                    item.removeOnScrollListener(scrollListener)
+                }
+            }
+        }
+    }
+    //顶部分隔线显示控制(In代表显示,Out代表隐藏)
+    private lateinit var topBar_bottomLine : View
+    private var isTopBar_bottomLine_In = false
+    private fun topBar_bottomLine_In(){
+        if (isTopBar_bottomLine_In) return
+        isTopBar_bottomLine_In = true
+
+        topBar_bottomLine.visibility = View.VISIBLE
+        topBar_bottomLine.alpha = 0f
+        topBar_bottomLine.animate()
+            .alpha(1f)
+            .setDuration(200)
+            .start()
+
+    }
+    private fun topBar_bottomLine_Out(){
+        if (!isTopBar_bottomLine_In) return
+        isTopBar_bottomLine_In = false
+
+        topBar_bottomLine.animate()
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction { topBar_bottomLine.visibility = View.GONE }
+            .start()
+    }
+
+
+
     //页面回到顶部
     private fun setListToTop(){
         when (mainViewModel.state_current_tab) {
@@ -1344,75 +1398,6 @@ class MainActivity: AppCompatActivity() {
             }
         }
     }
-    //列表位置监控
-    private val scrollListener = object : RecyclerView.OnScrollListener() {
-        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-            super.onScrolled(recyclerView, dx, dy)
-            val isAtTop = !recyclerView.canScrollVertically(-1)
-            isListUnderTop.value = isAtTop
-        }
-    }
-    private val isListUnderTop = MutableStateFlow(false)
-    val isListUnderTopFlow: StateFlow<Boolean> = isListUnderTop.asStateFlow()
-    private fun startListUnderTopObserver(){
-        lifecycleScope.launch {
-            //观察媒体变更
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                isListUnderTopFlow.collect{
-                    if (it){
-                        consoleLog("列表是否在顶部: $it")
-                        topBar_bottomLine_Out()
-                    }else{
-                        consoleLog("列表是否在顶部: $it")
-                        topBar_bottomLine_In()
-                    }
-                }
-            }
-        }
-
-    }
-
-    private fun monitorListPosition(target: String){
-
-        val targetListView = when(target) {
-            SettingsRequestCenter.tab_mark_music -> {
-                ListRecyclerView_Music
-            }
-            SettingsRequestCenter.tab_mark_video -> {
-                ListRecyclerView_Video
-            }
-            else -> {
-                showCustomToast("页面打开失败",3)
-                finish()
-                return
-            }
-        }
-
-        //遍历level_list内所有recyclerView
-        for (item in level_list){
-            if (item == targetListView){
-                //添加列表滚动监听器
-                if (item is RecyclerView){
-                    item.addOnScrollListener(scrollListener)
-                    //额外检查一次是否在顶部(否则切换后未滚动前不会刷新)
-                    isListUnderTop.value = !item.canScrollVertically(-1)
-                }
-            }else{
-                //移除列表滚动监听器
-                if (item is RecyclerView){
-                    item.removeOnScrollListener(scrollListener)
-                }
-            }
-
-        }
-
-    }
-    //界面控件元素
-    private lateinit var AppBarTitle: TextView
-    private lateinit var AppBarNoticeText: TextView
-    private lateinit var ButtonCardMusic: CardView
-    private lateinit var ButtonCardVideo: CardView
-    private lateinit var ButtonCardGallery: CardView
 
     //刷新列表
     private fun refreshList(){
@@ -1452,12 +1437,10 @@ class MainActivity: AppCompatActivity() {
     }
 
 
-
     //启动播放列表面板
     private fun startPlayListFragment(){
         FragmentPlayList.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
     }
-
 
 
 
@@ -1609,12 +1592,12 @@ class MainActivity: AppCompatActivity() {
     private fun setupEventObserver() {
         if (eventObserver_started){ return }
         eventObserver_started = true
-        //启动观察列表状态
+        //启动列表加载状态观察
         lifecycleScope.launch {
-            //观察加载状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 DataBaseStateConnector.state_queryDisk.collect { state ->
-                    consoleLog("观察到加载状态变更: $state")
+                    if (state.isEmpty()) return@collect
+                    consoleLog("观察到媒体库加载状态变更: new state: $state")
                     //读取完成
                     if (state.contains(DataBaseStateConnector.state_queryDisk_success)) {
                         //刷新列表
@@ -1629,12 +1612,15 @@ class MainActivity: AppCompatActivity() {
         //启动杂项观察
         lifecycleScope.launch {
             //观察杂项连接器变更
-            ConnectCenter.state_connector.collect { state ->
-                consoleLog("观察到杂项连接器变更: $state")
-                //更新封面帧
-                if (state.contains(ConnectCenter.connector_event_cover_frame_update)){
-                    val uriNumOnly = ConnectCenter.getCoverFrameUpdateEvent_targetUriNumOnly()
-                    //main_video_list_adapter.updateCoverForVideo(uriNumOnly)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                ConnectCenter.state_connector.collect { state ->
+                    if (state.isEmpty()) return@collect
+                    //consoleLog("观察到杂项连接器变更: new state: $state")
+                    //更新封面帧
+                    if (state.contains(ConnectCenter.connector_event_cover_frame_update)){
+                        val uriNumOnly = ConnectCenter.getCoverFrameUpdateEvent_targetUriNumOnly()
+                        //main_video_list_adapter.updateCoverForVideo(uriNumOnly)
+                    }
                 }
             }
         }

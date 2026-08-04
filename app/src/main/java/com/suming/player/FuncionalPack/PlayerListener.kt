@@ -20,7 +20,7 @@ object PlayerListener {
     fun setContext(context: Context){
         //检查是不是applicationContext
         if (context is Application) {
-            consoleLog("PlayerListener.setContext")
+            //consoleLog("PlayerListener.setContext")
             this.context = context
         }else{
             consoleLog("PlayerListener.setContext error")

@@ -13,7 +13,6 @@ import android.view.animation.AlphaAnimation
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
-import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.net.toUri
 import androidx.paging.PagingDataAdapter
@@ -22,8 +21,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.AddonTools.ToolVibrate
-import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.FuncionalPack.Animations
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.MediaType
 import kotlinx.coroutines.CoroutineScope
@@ -91,9 +90,12 @@ class RecyclerAdapterVideo(
     }
 
     override fun onViewAttachedToWindow(holder: ViewHolder) {
+        /*
         super.onViewAttachedToWindow(holder)
         val position = holder.bindingAdapterPosition
         val item = getItem(position) ?: return
+
+         */
 
     }
 
@@ -110,7 +112,6 @@ class RecyclerAdapterVideo(
     //Functions
     //绑定基本视频卡片
     private fun bindBasicVideoCard(holder: ViewHolder, position: Int){
-        consoleLog("bindBasicVideoCard: $position")
         val item = getItem(position) ?: return
         //填充基本信息
         holder.tvName.text = item.file_name.substringBeforeLast(".")
@@ -164,35 +165,23 @@ class RecyclerAdapterVideo(
         //记录holder的tag
         val imageTag = item.file_name
         holder.tvFrame.tag = imageTag
-
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch(Dispatchers.IO){
             //从ArtworkFrameManager要图片
-            val Frame = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, item.media_api_id)
+            val Frame = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_id)
             //检查图片是否有效
             if (Frame != null){
-                consoleLog("RecyclerAdapterVideo: 加载图片成功, 位置：${item.file_name},名称：${item.file_name}")
                 //推送到图片ImageView
                 if (holder.tvFrame.tag == imageTag) {
-                    withContext(Dispatchers.Main){
-                        submitToImageView(holder,Frame)
-                    }
+                    withContext(Dispatchers.Main){ submitToImageView(holder,Frame) }
                 }else{ Frame.recycle() }
 
-            }
-            //不存在该位置图片时立即截取
-            else{
-                consoleLog("RecyclerAdapterVideo: 加载图片失败, 开始截取图片, 位置：${item.file_name},名称：${item.file_name}")
+            }else{
                 //截取图片
                 capArtworkFrame(item, holder)
             }
         }
-
     }
-
-    //加载动画
-    private var FadeInAnimation: AlphaAnimation = AlphaAnimation(0.0f, 1.0f).apply { duration = 250 }
-
 
     //截取缩略图
     private fun capArtworkFrame(item: MediaItemForVideo, holder: ViewHolder){
@@ -217,12 +206,10 @@ class RecyclerAdapterVideo(
             }
 
             //推送到ImageView
-            withContext(Dispatchers.Main) {
-                submitToImageView(holder,Bitmap)
-            }
+            withContext(Dispatchers.Main) { submitToImageView(holder,Bitmap) }
 
-            //保存图片(让ArtworkFrameManager承担保存任务)
-            ArtworkFrameManager.save_Artwork_Frame_Bitmap(context, MediaType.Video, item.media_api_id, Bitmap)
+            //保存图片
+            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_id, Bitmap)
 
         }
     }
@@ -231,16 +218,18 @@ class RecyclerAdapterVideo(
     private fun submitToImageView(holder: ViewHolder, Bitmap : Bitmap){
         holder.tvFrame.setImageBitmap(Bitmap)
         if (!holder.isAnimShowed){
-            holder.tvFrame.startAnimation(FadeInAnimation)
+            holder.tvFrame.startAnimation(Animations.FadeIn)
             holder.isAnimShowed = true
         }
     }
+
+
 
     //外部控制函数
     //更新指定位置的封面
     fun updateCoverForVideo(file_path: String, media_api_id: Long)  {
         //拿新图
-        val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Video, media_api_id)
+        val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, media_api_id)
         //检查是否取图成功
         if (Bitmap == null){
             consoleLog("刷新新视频封面失败: file_path=${file_path}")
@@ -255,6 +244,11 @@ class RecyclerAdapterVideo(
         }
     }
 
+
+
+
+
+    //工具函数
     //格式化时间
     @SuppressLint("DefaultLocale")
     private fun FormatTime_numOnly(milliseconds: Long): String {
@@ -271,9 +265,7 @@ class RecyclerAdapterVideo(
             String.format("%02d:%02d:%02d",  hours, minutes, seconds)
         }
     }
-
-
-    //日志控制
+    //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "RecyclerAdapterVideo: $msg")

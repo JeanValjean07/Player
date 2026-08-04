@@ -5,15 +5,14 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.FuncPack_ListManager.PlayerListManager
-import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.PlayerListener
 
-class ApplicationGlobal : Application() {
+class Application : Application() {
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        consoleLog("ApplicationGlobal.onCreate")
+        consoleLog("Application.onCreate")
 
         //启动必要项
         PlayerSingleton.setContext(this)

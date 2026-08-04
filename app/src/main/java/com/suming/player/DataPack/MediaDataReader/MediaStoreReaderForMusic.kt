@@ -95,16 +95,16 @@ class MediaStoreReaderForMusic(
                     val mimeType = cursor.getString(mimeTypeCol).orEmpty()
                     val format = if (mimeType.contains('/')) mimeType.substringAfterLast('/') else mimeType
 
+                    consoleLog("MediaStoreReaderForMusic: 读取到音乐文件, ID: $id, 文件名: $filename, 标题: $title, 艺术家: $artist, 时长: $dur, 大小: $size, 专辑ID: $albumId, 专辑: $album, 路径: $path")
+
                     //检查文件有效性
                     val shouldSkip = when {
                         //检查文件是否存在
                         PREFS_EnableFileExistCheck && !isFileExist(path) -> {
-                            Log.v("SuMing", "检查到媒体文件不存在：文件媒体ID: $id")
                             true
                         }
                         //检查文件是否有内容
                         dur <= 0 || size <= 0 -> {
-                            Log.v("SuMing", "检查到媒体文件没有有效时长或大小：文件媒体ID: $id")
                             true
                         }
                         //直接添加
@@ -132,7 +132,6 @@ class MediaStoreReaderForMusic(
                         )
                     }
                 }
-                //return
                 list
             } ?: emptyList()
         }
@@ -210,6 +209,13 @@ class MediaStoreReaderForMusic(
 
         //发布完成通知
         DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_success)
+    }
+
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "MediaStoreReaderForMusic: $msg")
+        }
     }
 
 }

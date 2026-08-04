@@ -34,6 +34,7 @@
       <w>libavutil</w>
       <w>libswresample</w>
       <w>libswscale</w>
+      <w>mediastore</w>
       <w>mudeo</w>
       <w>neos</w>
       <w>nomedia</w>

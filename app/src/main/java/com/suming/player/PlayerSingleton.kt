@@ -34,7 +34,6 @@ import com.suming.player.FuncPack_ListManager.PlayerListManager
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import com.suming.player.FuncionalPack.MediaInfoRetriever
-import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
@@ -50,7 +49,7 @@ object PlayerSingleton {
     fun setContext(context: Context){
         //检查是不是applicationContext
         if (context is Application) {
-            consoleLog("PlayerSingleton.setContext")
+            //consoleLog("PlayerSingleton.setContext")
             this.context = context
         }else{
             consoleLog("PlayerSingleton.setContext error")
@@ -358,7 +357,7 @@ object PlayerSingleton {
             return null
         }else{
             //从ArtworkFrameManager获取即可
-            cover_img_uri = ArtworkFrameManager.get_Artwork_Frame_Uri(context, mediaType, uriNumOnly)
+            cover_img_uri = ArtworkFrameManager.GET_ArtworkFrame_Uri(context, mediaType, uriNumOnly)
 
         }
 

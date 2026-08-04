@@ -32,6 +32,7 @@ import androidx.media3.common.util.UnstableApi
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.SettingsRequestCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
@@ -238,8 +239,9 @@ class FragmentVideoStoreSetting: DialogFragment() {
         val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
         ButtonReLoadFromMediaStore.setOnClickListener {
             ToolVibrate().vibrate(requireContext())
-            val result = bundleOf("KEY" to "QueryFromMediaStoreVideo")
-            setFragmentResult("FROM_FRAGMENT_VIDEO_MediaStore", result)
+
+            setFragmentResult(FragmentConnector.fragment_media_store_setting_require_mediastore_api_refresh)
+
             customDismiss()
         }
         //默认页签
@@ -320,9 +322,9 @@ class FragmentVideoStoreSetting: DialogFragment() {
             ToolVibrate().vibrate(requireContext())
             //
             if (state_expanded){
-                //报告并退出
-                val result = bundleOf("KEY" to "RenovateAdapter")
-                setFragmentResult("FROM_FRAGMENT_VIDEO_MediaStore", result)
+
+                setFragmentResult(FragmentConnector.fragment_media_store_setting_require_recyclerview_refresh)
+
                 customDismiss()
             }else{
                 //展开面板并替换显示文本
@@ -379,11 +381,15 @@ class FragmentVideoStoreSetting: DialogFragment() {
         }
 
 
-
     }
 
 
     //Functions
+    //发送Fragment返回值
+    private fun setFragmentResult(event: String){
+        val result = bundleOf(FragmentConnector.receive_key to event)
+        setFragmentResult(FragmentConnector.fragment_request_key_video_store_setting, result)
+    }
     //展开动画
     private fun expand(view: LinearLayout) {
         if (state_expanded) return

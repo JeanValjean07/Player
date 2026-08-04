@@ -3,11 +3,6 @@ package com.suming.player.ActivityComponent.MainActivity
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.RectF
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,17 +11,13 @@ import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.DrawableRes
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.cardview.widget.CardView
-import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaType
@@ -36,7 +27,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 //@Suppress("unused")
 class RecyclerAdapterMusic(
@@ -127,7 +117,7 @@ class RecyclerAdapterMusic(
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch {
 
-            val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Audio, item.uriNumOnly)
+            val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Audio, item.uriNumOnly)
             if (Bitmap != null){
                 //推到ImageView
                 withContext(Dispatchers.Main) {
@@ -176,17 +166,10 @@ class RecyclerAdapterMusic(
             }
 
             //推送到ImageView
-            withContext(Dispatchers.Main) {
-                submitToImageView(holder,Bitmap)
-            }
+            withContext(Dispatchers.Main) { submitToImageView(holder,Bitmap) }
 
-            //保存图片(让ArtworkFrameManager承担保存任务)
-            ArtworkFrameManager.save_Artwork_Frame_Bitmap(
-                context,
-                MediaType.Audio,
-                item.uriNumOnly,
-                Bitmap
-            )
+            //保存图片
+            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Audio, item.uriNumOnly, Bitmap)
 
         }
     }

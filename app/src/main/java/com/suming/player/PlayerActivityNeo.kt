@@ -2200,7 +2200,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun updateCoverFrame_captureCurrentFrame(uriNumOnly: Long){
         fun handleSuccess(bitmap: Bitmap) {
             //保存图片
-            ArtworkFrameManager.save_Artwork_Frame_Bitmap(
+            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(
                 this@PlayerActivityNeo,
                 MediaType.Video,
                 uriNumOnly,
@@ -2246,7 +2246,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
 
         //保存图片
-        ArtworkFrameManager.save_Artwork_Frame_Bitmap(
+        ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(
             this@PlayerActivityNeo,
             MediaType.Video,
             uriNumOnly,

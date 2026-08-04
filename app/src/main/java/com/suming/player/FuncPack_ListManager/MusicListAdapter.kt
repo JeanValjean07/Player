@@ -100,7 +100,7 @@ class MusicListAdapter(
 
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch {
-            val Bitmap = ArtworkFrameManager.get_Artwork_Frame_Bitmap(context, MediaType.Audio, item.uriNumOnly)
+            val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Audio, item.uriNumOnly)
             if (Bitmap != null){
                 //推到ImageView
                 withContext(Dispatchers.Main) {
