@@ -11,7 +11,6 @@ import com.suming.player.SettingsRequestCenter
 class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<Int, MediaItemForVideo>() {
 
 
-
     override fun getRefreshKey(state: PagingState<Int, MediaItemForVideo>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
@@ -26,19 +25,16 @@ class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<I
             //读取数据库
             val mediaStoreRepo = MediaStoreRepo.get(context)
             val totalCount = mediaStoreRepo.getTotalCount()
-            //排序字段
+            //排序字段合成
             val sortOrder = SettingsRequestCenter.get_PREFS_video_sortMethod(context)
             val sortOrientation = SettingsRequestCenter.get_PREFS_video_sortOrientation(context)
-            consoleLog("sortOrder: $sortOrder, sortOrientation: $sortOrientation")
-
             val sortMethod = "$sortOrder $sortOrientation"
 
             //按页获取数据
             val mediaStoreSettings = mediaStoreRepo.getVideosPagedByOrder(page, limit, sortMethod)
 
             //合成MediaItem
-            val mediaItems = mediaStoreSettings
-                .map { setting ->
+            val mediaItems = mediaStoreSettings.map { setting ->
                     MediaItemForVideo(
                         file_path = setting.file_path,
                         file_name = setting.file_name,
@@ -64,17 +60,17 @@ class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<I
                 prevKey = if (page == 0) null else page - 1,
                 nextKey = nextKey
             )
-        }
-        catch (e: Exception) {
+
+        }catch(e: Exception){
             return LoadResult.Error(e)
         }
     }
 
 
-    //日志控制
+    //日志
     private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
-            Log.d("SuMing", "MediaDataBaseReaderForVideo: $msg")
+            Log.d("SuMing", "MediaDataBaseReaderForVideo-视频读取器-来自数据库缓存: $msg")
         }
     }
 

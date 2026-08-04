@@ -3,17 +3,17 @@ package com.suming.player.DataPack.MediaDataReader
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMusicStore.MusicStoreRepo
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.SettingsRequestCenter
 
 class MediaDataBaseReaderForMusic(
     private val context: Context,
 ) : PagingSource<Int, MediaItemForMusic>() {
-    //设置和设置项
-    private lateinit var PREFS_MediaStore: SharedPreferences
 
 
     override fun getRefreshKey(state: PagingState<Int, MediaItemForMusic>): Int? {
@@ -30,31 +30,16 @@ class MediaDataBaseReaderForMusic(
             //读取数据库
             val musicStoreRepo = MusicStoreRepo.get(context)
             val totalCount = musicStoreRepo.getTotalMusicCount()
-            //排序字段
-            var sortOrder: String
-            var sortOrientation: String
-            //读取媒体库设置
-            PREFS_MediaStore = context.getSharedPreferences("PREFS_MediaStore", MODE_PRIVATE)
-            if (PREFS_MediaStore.contains("PREFS_music_sortOrder")){
-                sortOrder = PREFS_MediaStore.getString("PREFS_music_sortOrder", "info_title") ?: "info_title"
-            }else{
-                sortOrder = "info_title"
-                PREFS_MediaStore.edit { putString("PREFS_music_sortOrder", "info_title").apply() }
-            }
-            if (PREFS_MediaStore.contains("PREFS_music_sortOrientation")){
-                sortOrientation = PREFS_MediaStore.getString("PREFS_music_sortOrientation", "DESC") ?: "DESC"
-            }else{
-                sortOrientation = "DESC"
-                PREFS_MediaStore.edit { putString("PREFS_music_sortOrientation", "DESC").apply() }
-            }
+            //排序字段合成
+            val sortOrder = SettingsRequestCenter.get_PREFS_audio_sortMethod(context)
+            val sortOrientation = SettingsRequestCenter.get_PREFS_audio_sortOrientation(context)
             val sortMethod = "$sortOrder $sortOrientation"
 
             //按页获取数据
             val musicStoreSettings = musicStoreRepo.getMusicsPagedByOrder(page, limit, sortMethod)
 
             //合成MediaItem
-            val musicItems = musicStoreSettings
-                .map { setting ->
+            val musicItems = musicStoreSettings.map { setting ->
                     MediaItemForMusic(
                         id = setting.MARK_ID.toLongOrNull() ?: 0,
                         uriString = setting.info_uri_string,
@@ -86,6 +71,13 @@ class MediaDataBaseReaderForMusic(
         }
         catch (e: Exception) {
             return LoadResult.Error(e)
+        }
+    }
+
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "MediaDataBaseReaderForMusic-音频读取器-来自数据库缓存: $msg")
         }
     }
 
