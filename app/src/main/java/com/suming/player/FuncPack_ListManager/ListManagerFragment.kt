@@ -122,12 +122,17 @@ class ListManagerFragment: DialogFragment() {
         returnFragmentResult(FragmentConnector.fragment_event_open)
     }
 
+    override fun onPause() {
+        super.onPause()
+        //发布关闭事件
+        returnFragmentResult(FragmentConnector.fragment_event_close)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         //移除ViewPager监听
         stopViewPagerListener()
-        //发布关闭事件
-        returnFragmentResult(FragmentConnector.fragment_event_close)
+
     }
 
     private fun init(view: View){

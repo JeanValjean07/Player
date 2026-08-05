@@ -129,8 +129,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //发布开启事件
         returnFragment(FragmentConnector.fragment_event_open)
     }
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onPause() {
+        super.onPause()
         //发布关闭事件
         returnFragment(FragmentConnector.fragment_event_close)
     }
