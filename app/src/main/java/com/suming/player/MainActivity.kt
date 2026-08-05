@@ -673,7 +673,7 @@ class MainActivity: AppCompatActivity() {
     //读取上一次的页面
     private fun readLastPageThenShow(): String{
         val State_LastStayTab = SettingsRequestCenter.get_State_LastStayTab(this@MainActivity)
-        consoleLog("showMediaList : State_LastStayTab = $State_LastStayTab")
+        //consoleLog("showMediaList : State_LastStayTab = $State_LastStayTab")
 
         return State_LastStayTab
     }
