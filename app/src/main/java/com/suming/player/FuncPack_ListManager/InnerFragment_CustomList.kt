@@ -39,84 +39,56 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
         }
     }
     //当前页签(固定值)
-    private val flag_currentPage = ListManagerHelper.list_page_custom
-    //共享ViewModel
-    private val viewModel: PlayerListViewModel by activityViewModels()
+    private val flag_currentPage = ListManagerHelper.ListMark_Custom
 
-
-    //加载中卡片
-    private lateinit var LoadingState: LinearLayout
-    private lateinit var LoadingStateText: TextView
-    private lateinit var TextItemCount: TextView
-    //当前播放列表
-    private lateinit var ButtonSetAsCurrentListText: TextView
-    private lateinit var ButtonSetAsCurrentListIcon: ImageView
-    //recyclerView
-    private lateinit var recyclerView: RecyclerView
-    private var recyclerView_custom_list_adapter: Recycler_Adaptor_CustomList? = null
-    private var state_adapter_load_complete = false
 
 
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        //初始化必要组件
-        fun initComponent(){
-            //加载中卡片
-            LoadingState = view.findViewById(R.id.LoadingState)
-            LoadingStateText = view.findViewById(R.id.LoadingStateText)
-            TextItemCount = view.findViewById(R.id.TextItemCount)
-            ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
-            ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
-        }
-        initComponent()
+        //初始化
+        init(view)
 
 
-        //开启Fragment通信
+        //注册控件
+        register(view)
+
+
+        //注册Fragment通信
         registerFragmentResultListener()
 
 
-        //组件注册
+        //启动recyclerView
+        startRecyclerView(view)
+
+
+
+    }
+
+    private fun init(view:View){
+        //加载中卡片
+        LoadingState = view.findViewById(R.id.LoadingState)
+        LoadingStateText = view.findViewById(R.id.LoadingStateText)
+        TextItemCount = view.findViewById(R.id.TextItemCount)
+        ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
+        ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
+
+    }
+
+
+
+    //注册控件
+    private fun register(view:View){
         lifecycleScope.launch(Dispatchers.Main) {
             //页面设置按钮
             val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
             pageSettingButton.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                //弹出页面选项菜单
-                val popup = PopupMenu(requireContext(), pageSettingButton)
-                popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
-                val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
-                val acquiescePage = ListManagerHelper.get_PREFS_AcquiescePage(requireContext())
-                if (flag_currentPage == acquiescePage){
-                    menuItem_default_page.title = "取消设为默认显示页签"
-                }else{
-                    menuItem_default_page.title = "设为默认显示页签"
-                }
-                popup.setOnMenuItemClickListener { item ->
-                    when (item.itemId) {
-                        //设为当前播放列表
-                        R.id.setting_set_as_current_list -> {
-                            ToolVibrate().vibrate(requireContext())
 
-                            setAs_currentPlayList()
-
-                            true
-                        }
-                        //设置为默认显示列表
-                        R.id.setting_set_as_default_show_list -> {
-                            ToolVibrate().vibrate(requireContext())
-                            //设为默认显示列表
-                            setAs_acquiescePage()
-
-                            true
-                        }
-
-                        else -> true
-                    }
-                }
-                popup.show()
+                startPageSettingMenu(pageSettingButton)
             }
+
             //按钮：设为当前播放列表/已是当前播放列表
             val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
             ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
@@ -124,15 +96,17 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
             updateCurrentListStateText()
             ButtonSetAsCurrentList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                setAs_currentPlayList()
+
+                setAs_currentPlayingList()
             }
+
             //横滑选项按钮
             //按钮：全部删除
             val ButtonDeleteAllListItem = view.findViewById<View>(R.id.ButtonDeleteAllListItem)
             ButtonDeleteAllListItem.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //清空自定义列表
-                ListManagerHelper.clearCustomList()
+                //TODO
                 //刷新适配器
                 recyclerView_custom_list_adapter?.refresh()
             }
@@ -162,9 +136,12 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
 
             }
         }
-
-
-
+    }
+    //启动recyclerView
+    private lateinit var recyclerView: RecyclerView
+    private var recyclerView_custom_list_adapter: Recycler_Adaptor_CustomList? = null
+    private var state_adapter_load_complete = false
+    private fun startRecyclerView(view: View){
         //初始化recyclerView
         recyclerView = view.findViewById(R.id.recyclerView)
         //设置管理器
@@ -201,17 +178,12 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
                 }
             }
         }
-
-
-    //onViewCreated END
     }
-
     //Fragment通信
     //注册接收父Fragment返回值
     private fun registerFragmentResultListener(){
-        parentFragmentManager.setFragmentResultListener("FRAGMENT_TOCHILD_CUSTOM", this){ _, bundle ->
+        parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_custom, this){ _, bundle ->
             val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
-            //Log.d("SuMing", "registerFragmentResultListener custom: token = $token")
             when(token){
                 //页面获得焦点,执行必要的刷新操作
                 "FRAGMENT_PASSIN_FOCUS" -> {
@@ -242,6 +214,42 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
         recyclerView_custom_list_adapter?.refresh()
     }
 
+    //页签设置选单
+    private fun startPageSettingMenu(anchor: View){
+        val popup = PopupMenu(requireContext(), anchor)
+        popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
+        val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
+        val acquiescePage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
+        if (flag_currentPage == acquiescePage){
+            menuItem_default_page.title = "取消设为默认显示页签"
+        }else{
+            menuItem_default_page.title = "设为默认显示页签"
+        }
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                //设为当前播放列表
+                R.id.setting_set_as_current_list -> {
+                    ToolVibrate().vibrate(requireContext())
+
+                    setAs_currentPlayingList()
+
+                    true
+                }
+                //设置默认显示列表
+                R.id.setting_set_as_default_show_list -> {
+                    ToolVibrate().vibrate(requireContext())
+
+                    setAs_AcquiesceShowingPage()
+
+                    true
+                }
+
+                else -> true
+            }
+        }
+        popup.show()
+    }
+
 
     //播放项
     private fun onPlayClick(uri: Uri){
@@ -260,17 +268,17 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
 
 
     //设为默认显示列表
-    private fun setAs_acquiescePage(){
+    private fun setAs_AcquiesceShowingPage(){
         //判断是否已经是默认页签
-        val currentAcquiescePage = ListManagerHelper.get_PREFS_AcquiescePage(requireContext())
+        val currentAcquiescePage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
         if (currentAcquiescePage == flag_currentPage){
-            val success = ListManagerHelper.set_PREFS_AcquiescePage(requireContext(), ListManagerHelper.list_page_custom)
+            val success = ListManagerHelper.SET_PRFR_AcquiesceShowingPage(flag_currentPage)
             if (success) {
                 requireContext().showCustomToast("已取消默认页签,默认使用上次页签",2)
                 updateCurrentListStateText()
             }
         }else{
-            val success = ListManagerHelper.set_PREFS_AcquiescePage(requireContext(), flag_currentPage)
+            val success = ListManagerHelper.SET_PRFR_AcquiesceShowingPage(flag_currentPage)
             if (success) {
                 requireContext().showCustomToast("设置成功",2)
                 updateCurrentListStateText()
@@ -278,8 +286,8 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
         }
     }
     //设置为当前播放列表
-    private fun setAs_currentPlayList(){
-        val success = ListManagerHelper.setPlayList("custom")
+    private fun setAs_currentPlayingList(){
+        val success = ListManagerHelper.SET_STE_CurrentPlayingListMark(flag_currentPage)
         //更新当前播放列表状态提示词
         updateCurrentListStateText()
         //更新当前播放列表图标
@@ -294,9 +302,11 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
         }
     }
     //刷新当前播放列表状态提示词
+    private lateinit var ButtonSetAsCurrentListText: TextView
+    private lateinit var ButtonSetAsCurrentListIcon: ImageView
     private fun updateCurrentListStateText(){
         //判断是否是当前播放页签
-        if (ListManagerHelper.getCurrentList(requireContext()) == flag_currentPage){
+        if (ListManagerHelper.GET_STE_CurrentPlayingListMark() == flag_currentPage){
             ButtonSetAsCurrentListText.text = "已设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
         }else{
@@ -305,6 +315,9 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
         }
     }
     //加载状态提示
+    private lateinit var LoadingState: LinearLayout
+    private lateinit var LoadingStateText: TextView
+    private lateinit var TextItemCount: TextView
     private fun showLoadingNotice() {
         LoadingStateText.text = "加载中"
         LoadingState.visibility = View.VISIBLE
