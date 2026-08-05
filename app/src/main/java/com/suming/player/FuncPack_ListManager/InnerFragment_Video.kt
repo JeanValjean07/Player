@@ -3,6 +3,7 @@ package com.suming.player.FuncPack_ListManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -47,6 +48,8 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        //初始化组件
+        init(view)
 
         //组件注册
         register(view)
@@ -57,6 +60,19 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         //启动RecyclerView
         startRecyclerView(view)
 
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        //刷新必要内容
+        onFragmentFocused()
+    }
+
+    private fun init(view:View){
+        ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
+        ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
 
     }
 
@@ -168,21 +184,16 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //Fragment通信
     //注册接收父Fragment返回值
     private fun registerFragmentResultListener(){
-        parentFragmentManager.setFragmentResultListener("FRAGMENT_TOCHILD_VIDEO", this){ _, bundle ->
-            val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
-            when(token){
-                //页面获得焦点,执行必要的刷新操作
-                "FRAGMENT_PASSIN_FOCUS" -> {
-                    onFragmentFocused()
-
-                }
+        parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_video, this){ _, bundle ->
+            val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            when(key){
                 //回滚到顶部
-                "FRAGMENT_PASSIN_SCROLLTOP" -> {
+                ListManagerHelper.event_detail_general_goto_list_top -> {
                     recyclerView.smoothScrollToPosition(0)
                 }
-                //当前播放列表更新
-                "FRAGMENT_PASSIN_CURRENT_LIST_UPDATE" -> {
-                    updateCurrentListStateText()
+                //更新页签状态
+                ListManagerHelper.event_detail_general_update_list_state -> {
+                    onFragmentFocused()
                 }
             }
         }
@@ -254,16 +265,20 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         //判断是否已经是默认列表
         val currentAcquiescePage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
         if (currentAcquiescePage == flag_currentPage){
-            val success = ListManagerHelper.SET_PRFR_AcquiesceShowingPage(ListManagerHelper.ListMark_Video)
+            val success = ListManagerHelper.SET_PRFR_AcquiesceShowingPage(ListManagerHelper.ListMark_UseLast)
             if (success) {
                 requireContext().showCustomToast("已取消默认页签,默认使用上次页签",2)
                 updateCurrentListStateText()
+            }else{
+                requireContext().showCustomToast("设置失败",2)
             }
         }else{
             val success = ListManagerHelper.SET_PRFR_AcquiesceShowingPage(flag_currentPage)
             if (success) {
                 requireContext().showCustomToast("设置成功",2)
                 updateCurrentListStateText()
+            }else{
+                requireContext().showCustomToast("设置失败",2)
             }
         }
     }
@@ -322,6 +337,13 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     private fun showItemCount(count: Int,view: View) {
         val TextItemCount = view.findViewById<TextView>(R.id.TextItemCount)
         TextItemCount.text = count.toString()
+    }
+
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "InnerFragment_Video: $msg")
+        }
     }
 
 

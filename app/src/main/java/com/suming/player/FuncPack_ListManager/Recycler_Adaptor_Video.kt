@@ -69,7 +69,7 @@ class Recycler_Adaptor_Video(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): viewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.fragment_play_list_live_item, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.fragment_play_list_video_item, parent, false)
 
         return when (viewType) {
             item_NORMAL -> viewHolder(view)

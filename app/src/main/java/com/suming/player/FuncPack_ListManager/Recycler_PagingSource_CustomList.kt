@@ -1,6 +1,7 @@
 package com.suming.player.FuncPack_ListManager
 
 import android.content.Context
+import android.net.Uri
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
@@ -26,19 +27,19 @@ class Recycler_PagingSource_CustomList(
 
 
             //按页获取数据
-            val MiniMediaItems = ListManagerHelper.customList
-            val totalCount = ListManagerHelper.customList.size
+            val MiniMediaItems = ListManagerHelper.ListContent_CustomList
+            val totalCount = ListManagerHelper.ListContent_CustomList.size
 
             //合成MediaItem
             val mediaItems = MiniMediaItems
                 .map { item ->
                     MiniMediaItemForList(
-                        id = item.id,
-                        uri = item.uri,
-                        uriNumOnly = item.uriNumOnly,
-                        filename = item.filename,
-                        title = item.title,
-                        artist = item.artist,
+                        id = 114514,
+                        uri = Uri.EMPTY,
+                        uriNumOnly = 114514,
+                        filename = "item.filename",
+                        title = "item.title",
+                        artist = "item.artist",
                         type = item.type,
                     )
                 }

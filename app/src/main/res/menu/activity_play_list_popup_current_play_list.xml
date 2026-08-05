@@ -10,14 +10,20 @@
         />
 
     <item
+        android:id="@+id/list_history"
+        android:icon="@drawable/ic_play_list_refresh"
+        android:title="历史播放列表"
+        />
+
+    <item
         android:id="@+id/list_video_live"
         android:icon="@drawable/ic_play_list_refresh"
-        android:title="实时视频列表"
+        android:title="视频"
         />
 
     <item
         android:id="@+id/list_music_live"
         android:icon="@drawable/ic_play_list_refresh"
-        android:title="实时音乐列表"
+        android:title="音乐"
         />
 </menu>

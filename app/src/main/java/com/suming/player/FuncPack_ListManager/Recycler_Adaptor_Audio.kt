@@ -58,7 +58,7 @@ class Recycler_Adaptor_Audio(
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): viewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.fragment_play_list_live_item, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.fragment_play_list_audio_item, parent, false)
         return viewHolder(view)
     }
 

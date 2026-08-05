@@ -26,7 +26,7 @@ object ListManagerHelper {
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "PlayerSingleton: $msg")
+            Log.d("SuMing", "ListManagerHelper: $msg")
         }
     }
 
@@ -106,7 +106,7 @@ object ListManagerHelper {
         initListSetting()
 
         //过滤无效值
-        if (page != ListMark_UseLast && page != ListMark_Custom && page != ListMark_History){
+        if (page != ListMark_Custom && page != ListMark_UseLast && page != ListMark_Video && page != ListMark_Audio && page != ListMark_History){
             return false
         }
 
@@ -124,9 +124,11 @@ object ListManagerHelper {
 
         //仅在无缓存时读取
         if (state_LastShowingListMark == ListMark_Null){
-            state_LastShowingListMark = Paradox_List?.getString(state_LastShowingListMark_KeyName, ListMark_UseLast) ?: ListMark_UseLast
+
+            state_LastShowingListMark = Paradox_List?.getString(state_LastShowingListMark_KeyName, ListMark_Null) ?: ListMark_Null
             //检查并置入默认值
             if (state_LastShowingListMark == ListMark_Null){
+
                 //设置custom页签为默认值
                 Paradox_List?.edit { putString(state_LastShowingListMark_KeyName, ListMark_Custom) }
                 state_LastShowingListMark = ListMark_Custom
@@ -139,7 +141,7 @@ object ListManagerHelper {
         initListSetting()
 
         //过滤无效值
-        if (page != ListMark_UseLast && page != ListMark_Custom && page != ListMark_History){
+        if (page != ListMark_Custom && page != ListMark_UseLast && page != ListMark_Video && page != ListMark_Audio && page != ListMark_History){
             return false
         }
 
@@ -245,6 +247,7 @@ object ListManagerHelper {
     //通用通信事件(几个页面用同一个字段) event_detail_general_
     const val event_detail_general_update_currentPlayingList_icon = "event_detail_general_update_currentPlayingList_icon"
     const val event_detail_general_goto_list_top = "event_detail_general_goto_list_top"
+    const val event_detail_general_update_list_state = "event_detail_general_update_list_state"
     //特殊通信事件(每个页面用不同的字段) event_detail_
 
 

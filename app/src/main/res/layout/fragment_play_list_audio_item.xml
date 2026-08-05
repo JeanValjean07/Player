@@ -35,8 +35,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:contentDescription="视频预览图"
+                app:layout_constraintDimensionRatio="1:1"
                 android:scaleType="centerCrop"
-                app:layout_constraintDimensionRatio="1:1" />
+                 />
         </androidx.cardview.widget.CardView>
         <!-- 视频文本信息 -->
         <LinearLayout

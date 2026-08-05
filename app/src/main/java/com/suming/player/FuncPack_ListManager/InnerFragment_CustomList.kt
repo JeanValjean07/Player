@@ -3,6 +3,7 @@ package com.suming.player.FuncPack_ListManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -30,7 +31,7 @@ import kotlinx.coroutines.launch
 @UnstableApi
 //@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_page){
+class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page){
     companion object {
         fun newInstance(): InnerFragment_CustomList {
             return InnerFragment_CustomList().apply{
@@ -64,6 +65,13 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
 
 
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        //刷新必要内容
+        onFragmentFocused()
     }
 
     private fun init(view:View){
@@ -183,28 +191,23 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
     //注册接收父Fragment返回值
     private fun registerFragmentResultListener(){
         parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_custom, this){ _, bundle ->
-            val token = bundle.getString("TOKEN") ?: return@setFragmentResultListener
-            when(token){
-                //页面获得焦点,执行必要的刷新操作
-                "FRAGMENT_PASSIN_FOCUS" -> {
-                    onFragmentFocused()
-                }
+            val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            when(key){
                 //回滚到顶部
-                "FRAGMENT_PASSIN_SCROLLTOP" -> {
+                ListManagerHelper.event_detail_general_goto_list_top -> {
                     recyclerView.smoothScrollToPosition(0)
                 }
-                //当前播放列表更新
-                "FRAGMENT_PASSIN_CURRENT_LIST_UPDATE" -> {
-                    updateCurrentListStateText()
+                //更新页签状态
+                ListManagerHelper.event_detail_general_update_list_state -> {
+                    onFragmentFocused()
                 }
-
             }
         }
     }
     //发送Fragment结果
     private fun sendFragmentResult(key: String){
-        parentFragmentManager.setFragmentResult("FRAGMENT_BACKPARENT_CUSTOM",
-            bundleOf("TOKEN" to key)
+        parentFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_custom,
+            bundleOf(ListManagerHelper.event_key_general to key)
         )
     }
 
@@ -272,16 +275,20 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
         //判断是否已经是默认页签
         val currentAcquiescePage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
         if (currentAcquiescePage == flag_currentPage){
-            val success = ListManagerHelper.SET_PRFR_AcquiesceShowingPage(flag_currentPage)
+            val success = ListManagerHelper.SET_PRFR_AcquiesceShowingPage(ListManagerHelper.ListMark_UseLast)
             if (success) {
                 requireContext().showCustomToast("已取消默认页签,默认使用上次页签",2)
                 updateCurrentListStateText()
+            }else{
+                requireContext().showCustomToast("设置失败",2)
             }
         }else{
             val success = ListManagerHelper.SET_PRFR_AcquiesceShowingPage(flag_currentPage)
             if (success) {
                 requireContext().showCustomToast("设置成功",2)
                 updateCurrentListStateText()
+            }else{
+                requireContext().showCustomToast("设置失败",2)
             }
         }
     }
@@ -346,6 +353,13 @@ class InnerFragment_CustomList():Fragment(R.layout.fragment_play_list_custom_pag
     }
     private fun showItemCount(count: Int) {
         TextItemCount.text = count.toString()
+    }
+
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "InnerFragment_CustomList: $msg")
+        }
     }
 
 }

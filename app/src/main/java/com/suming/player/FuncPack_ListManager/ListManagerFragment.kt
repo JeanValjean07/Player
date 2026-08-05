@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -132,7 +133,8 @@ class ListManagerFragment: DialogFragment() {
     private fun init(view: View){
         //初始化全局元素
         ButtonCard_Area = view.findViewById(R.id.TabScrollView)
-        ButtonCard_customList = view.findViewById(R.id.ButtonCardCustomList)
+        ButtonCard_customList = view.findViewById(R.id.ButtonCard_CustomList)
+        ButtonCard_historyList = view.findViewById(R.id.ButtonCard_HistoryList)
         ButtonCard_videoList = view.findViewById(R.id.ButtonCardVideo)
         ButtonCard_musicList = view.findViewById(R.id.ButtonCardMusic)
 
@@ -189,17 +191,144 @@ class ListManagerFragment: DialogFragment() {
                 ToolVibrate().vibrate(requireContext())
                 switchToCustomPageByButton()
             }
+            ButtonCard_historyList.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                switchToHistoryPageByButton()
+            }
             ButtonCard_videoList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 switchToVideoPageByButton()
             }
             ButtonCard_musicList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                switchToMusicPageByButton()
+                switchToAudioPageByButton()
             }
 
         }
     }
+
+    //启动ViewPager
+    private fun registerViewPager(view: View){
+        //启动viewPager
+        ViewPager = view.findViewById(R.id.ViewPager)
+        viewPagerAdapter = ViewPagerAdapter(this)
+        ViewPager.adapter = viewPagerAdapter
+        //开启页面监听器
+        startViewPagerListener()
+        //设置ViewPager缓存页面数量
+        ViewPager.offscreenPageLimit = 3
+        //默认显示列表
+        ViewPager.post {
+            if (viewPagerAdapter.itemCount > 0){
+                val acquiesceShowPage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
+                //使用上一次停留的页签
+                if (acquiesceShowPage == ListManagerHelper.ListMark_UseLast){
+                    val LastShowingListMark = ListManagerHelper.GET_STE_LastShowingListMark()
+                    when(LastShowingListMark){
+                        ListManagerHelper.ListMark_Custom -> {
+                            ViewPager.setCurrentItem(0, false)
+                        }
+                        ListManagerHelper.ListMark_History -> {
+                            ViewPager.setCurrentItem(1, false)
+                        }
+                        ListManagerHelper.ListMark_Video -> {
+                            ViewPager.setCurrentItem(2, false)
+                        }
+                        ListManagerHelper.ListMark_Audio -> {
+                            ViewPager.setCurrentItem(3, false)
+                        }
+                        else -> {
+                            ViewPager.setCurrentItem(0, false)
+                        }
+                    }
+                }else{
+                    //使用固定默认页签
+                    when(acquiesceShowPage){
+                        ListManagerHelper.ListMark_Custom -> {
+                            ViewPager.setCurrentItem(0, false)
+                        }
+                        ListManagerHelper.ListMark_History -> {
+                            ViewPager.setCurrentItem(1, false)
+                        }
+                        ListManagerHelper.ListMark_Video -> {
+                            ViewPager.setCurrentItem(2, false)
+                        }
+                        ListManagerHelper.ListMark_Audio -> {
+                            ViewPager.setCurrentItem(3, false)
+                        }
+                        else -> {
+                            ViewPager.setCurrentItem(0, false)
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+
+    //viewPager
+    private lateinit var ViewPager: ViewPager2
+    private lateinit var viewPagerAdapter: ViewPagerAdapter
+    private class ViewPagerAdapter(innerFragment: Fragment):FragmentStateAdapter(innerFragment){
+        //getItemCount
+        override fun getItemCount(): Int = 4
+        //createFragment
+        override fun createFragment(position: Int): Fragment =
+            when (position) {
+                0 -> InnerFragment_CustomList()
+
+                1 -> InnerFragment_HistoryList()
+
+                2 -> InnerFragment_Video()
+
+                3 -> InnerFragment_Audio()
+
+                else -> ListFragment()
+            }
+
+    }
+    //viewPager页面切换监听器
+    private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
+        override fun onPageSelected(position: Int) {
+            //记录当前显示页签
+            saveListMark(position)
+            //滚动到当前显示页签
+            scrolledToPage(position)
+        }
+        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+
+        }
+        override fun onPageScrollStateChanged(state: Int) {
+
+        }
+    }
+    private var state_viewPagerListener_started = false
+    private fun startViewPagerListener(){
+        if (state_viewPagerListener_started){ return }
+        ViewPager.registerOnPageChangeCallback(ViewPagerListener)
+        state_viewPagerListener_started = true
+    }
+    private fun stopViewPagerListener(){
+        if (!state_viewPagerListener_started){ return }
+        ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
+        state_viewPagerListener_started = false
+    }
+    //viewPager页签对应
+    private val viewPagerPageMarkMapNum = mapOf(
+        0 to ListManagerHelper.ListMark_Custom,
+        1 to ListManagerHelper.ListMark_History,
+        2 to ListManagerHelper.ListMark_Video,
+        3 to ListManagerHelper.ListMark_Audio,
+    )
+    private val viewPagerPageMarkMapString = mapOf(
+        ListManagerHelper.ListMark_Custom to 0,
+        ListManagerHelper.ListMark_History to 1,
+        ListManagerHelper.ListMark_Video to 2,
+        ListManagerHelper.ListMark_Audio to 3,
+    )
+
+
     //注册子Fragment通信
     private fun registerChildFragment(){
         //自定义列表
@@ -251,173 +380,46 @@ class ListManagerFragment: DialogFragment() {
         }
 
     }
-    //启动ViewPager
-    private fun registerViewPager(view: View){
-        //启动viewPager
-        ViewPager = view.findViewById(R.id.ViewPager)
-        viewPagerAdapter = ViewPagerAdapter(this)
-        ViewPager.adapter = viewPagerAdapter
-        //开启页面监听器
-        startViewPagerListener()
-        //设置ViewPager缓存页面数量
-        ViewPager.offscreenPageLimit = 3
-        //默认显示列表
-        ViewPager.post {
-            if (viewPagerAdapter.itemCount > 0){
-                val acquiesceShowPage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
-                //使用上一次停留的页签
-                if (acquiesceShowPage == ListManagerHelper.ListMark_UseLast){
-                    val LastShowingListMark = ListManagerHelper.GET_STE_LastShowingListMark()
-                    when(LastShowingListMark){
-                        ListManagerHelper.ListMark_Custom -> {
-                            ViewPager.setCurrentItem(0, false)
-                        }
-                        ListManagerHelper.ListMark_History -> {
-                            ViewPager.setCurrentItem(1, false)
-                        }
-                        ListManagerHelper.ListMark_Video -> {
-                            ViewPager.setCurrentItem(2, false)
-                        }
-                        ListManagerHelper.ListMark_Audio -> {
-                            ViewPager.setCurrentItem(3, false)
-                        }
-                        else -> {
-                            ViewPager.setCurrentItem(0, false)
-                        }
-                    }
-
-                }else{
-                    //使用固定默认页签
-                    when(acquiesceShowPage){
-                        ListManagerHelper.ListMark_Custom -> {
-                            ViewPager.setCurrentItem(0, false)
-                        }
-                        ListManagerHelper.ListMark_History -> {
-                            ViewPager.setCurrentItem(1, false)
-                        }
-                        ListManagerHelper.ListMark_Video -> {
-                            ViewPager.setCurrentItem(2, false)
-                        }
-                        ListManagerHelper.ListMark_Audio -> {
-                            ViewPager.setCurrentItem(3, false)
-                        }
-                        else -> {
-                            ViewPager.setCurrentItem(0, false)
-                        }
-                    }
-                }
-            }
-        }
-
-
-    }
-
-
-    //viewPager
-    private lateinit var ViewPager: ViewPager2
-    private lateinit var viewPagerAdapter: ViewPagerAdapter
-    private class ViewPagerAdapter(innerFragment: Fragment):FragmentStateAdapter(innerFragment){
-        //getItemCount
-        override fun getItemCount(): Int = 4
-        //createFragment
-        override fun createFragment(position: Int): Fragment =
-            when (position) {
-                0 -> InnerFragment_CustomList()
-
-                1 -> InnerFragment_Video() //HistoryListFragment()
-
-                2 -> InnerFragment_Video()
-
-                3 -> InnerFragment_Audio()
-
-                else -> ListFragment()
-            }
-
-    }
-    //viewPager页面切换监听器
-    private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
-        override fun onPageSelected(position: Int) {
-            //记录当前显示页签
-            saveListMark(position)
-            //滚动到当前显示页签
-            scrolledToPage(position)
-        }
-        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
-
-        }
-        override fun onPageScrollStateChanged(state: Int) {
-
-        }
-    }
-    private var state_viewPagerListener_started = false
-    private fun startViewPagerListener(){
-        if (state_viewPagerListener_started){ return }
-        ViewPager.registerOnPageChangeCallback(ViewPagerListener)
-        state_viewPagerListener_started = true
-    }
-    private fun stopViewPagerListener(){
-        if (!state_viewPagerListener_started){ return }
-        ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
-        state_viewPagerListener_started = false
-    }
-    //viewPager页签对应
-    private val viewPagerPageMarkMapNum = mapOf(
-        0 to ListManagerHelper.ListMark_Custom,
-        1 to ListManagerHelper.ListMark_History,
-        2 to ListManagerHelper.ListMark_Video,
-        3 to ListManagerHelper.ListMark_Audio,
-    )
-    private val viewPagerPageMarkMapString = mapOf(
-        ListManagerHelper.ListMark_Custom to 0,
-        ListManagerHelper.ListMark_History to 1,
-        ListManagerHelper.ListMark_Video to 2,
-        ListManagerHelper.ListMark_Audio to 3,
-    )
-
-
-
     //向子Fragment传递事件
-    private fun sendChildFragmentEvent(target: Any, data: String) {
-        var position = 0
+    private fun sendChildFragmentEvent(targetList: Any, data: String) {
         //合成position
-        if (target is String){
-            position = when(target){
-                "custom" -> 0
-                "video" -> 1
-                "music" -> 2
-                else -> {
-                    requireContext().showCustomToast("标签未命中任何有效目标(String)")
-                    return
-                }
-            }
-        }else if (target is Int){
-            if (target in 0..2){
-                position = target
-            }else{
-                requireContext().showCustomToast("标签未命中任何有效目标(Int)")
-                return
-            }
-        }
+        val position = if (targetList is String){
+            viewPagerPageMarkMapString[targetList] ?: return
+        }else targetList as? Int ?: return
 
         //发布消息
-        when (position) {
+        when(position){
             0 -> {
-                childFragmentManager.setFragmentResult("FRAGMENT_TOCHILD_CUSTOM", bundleOf(
-                    "TOKEN" to data
+                //自定义列表
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_custom, bundleOf(
+                    ListManagerHelper.event_key_general to data
                 ))
             }
             1 -> {
-                childFragmentManager.setFragmentResult("FRAGMENT_TOCHILD_VIDEO", bundleOf(
-                    "TOKEN" to data
+                //历史列表
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_history, bundleOf(
+                    ListManagerHelper.event_key_general to data
                 ))
             }
             2 -> {
-                childFragmentManager.setFragmentResult("FRAGMENT_TOCHILD_MUSIC", bundleOf(
-                    "TOKEN" to data
+                //视频列表
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_video, bundleOf(
+                    ListManagerHelper.event_key_general to data
                 ))
+            }
+            3 -> {
+                //音乐列表
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_audio, bundleOf(
+                    ListManagerHelper.event_key_general to data
+                ))
+            }
+            else -> {
+                requireContext().showCustomToast("标签未命中任何有效目标(String)")
+                return
             }
         }
     }
+
 
     //显示更多操作菜单
     private fun showMoreOptMenu(anchor: CircleButton){
@@ -468,25 +470,31 @@ class ListManagerFragment: DialogFragment() {
     private fun scrolledToPage(position: Int){
         when(position){
             0 -> onFocusPage_Custom()
-            1 -> onFocusPage_Video()
-            2 -> onFocusPage_Music()
+            1 -> onFocusPage_History()
+            2 -> onFocusPage_Video()
+            3 -> onFocusPage_Audio()
         }
     }
     private fun onFocusPage_Custom(){
         updateCardPosition(0)
         updateCardColor(0)
     }
-    private fun onFocusPage_Video(){
+    private fun onFocusPage_History(){
         updateCardPosition(1)
         updateCardColor(1)
     }
-    private fun onFocusPage_Music(){
+    private fun onFocusPage_Video(){
         updateCardPosition(2)
         updateCardColor(2)
+    }
+    private fun onFocusPage_Audio(){
+        updateCardPosition(3)
+        updateCardColor(3)
     }
     //页签点击切换
     private lateinit var ButtonCard_Area: HorizontalScrollView
     private lateinit var ButtonCard_customList: CardView
+    private lateinit var ButtonCard_historyList: CardView
     private lateinit var ButtonCard_videoList: CardView
     private lateinit var ButtonCard_musicList: CardView
     private fun switchToCustomPageByButton(){
@@ -498,7 +506,7 @@ class ListManagerFragment: DialogFragment() {
         //切换到自定义页签
         ViewPager.currentItem = 0
     }
-    private fun switchToVideoPageByButton(){
+    private fun switchToHistoryPageByButton(){
         //已在此页时回到顶部
         if (ViewPager.currentItem == 1) {
             sendChildFragmentEvent(1, ListManagerHelper.event_detail_general_goto_list_top)
@@ -507,30 +515,48 @@ class ListManagerFragment: DialogFragment() {
         //切换到视频页签
         ViewPager.currentItem = 1
     }
-    private fun switchToMusicPageByButton(){
+    private fun switchToVideoPageByButton(){
         //已在此页时回到顶部
         if (ViewPager.currentItem == 2) {
             sendChildFragmentEvent(2, ListManagerHelper.event_detail_general_goto_list_top)
             return
         }
-        //切换到音乐页签
+        //切换到视频页签
         ViewPager.currentItem = 2
+    }
+    private fun switchToAudioPageByButton(){
+        //已在此页时回到顶部
+        if (ViewPager.currentItem == 3) {
+            sendChildFragmentEvent(3, ListManagerHelper.event_detail_general_goto_list_top)
+            return
+        }
+        //切换到音乐页签
+        ViewPager.currentItem = 3
     }
     //页签样式/位置更新
     private fun updateCardColor(position: Int){
         when(position){
             0 -> {
                 ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
                 ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
                 ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
             }
             1 -> {
                 ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
                 ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
             }
             2 -> {
                 ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+            }
+            3 -> {
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
                 ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
                 ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
             }
@@ -542,10 +568,14 @@ class ListManagerFragment: DialogFragment() {
                 ButtonCard_Area.smoothScrollTo(0, 0)
             }
             1 -> {
-                val left = ButtonCard_videoList.left
+                val left = ButtonCard_historyList.left
                 ButtonCard_Area.smoothScrollTo(left, 0)
             }
             2 -> {
+                val left = ButtonCard_videoList.left
+                ButtonCard_Area.smoothScrollTo(left, 0)
+            }
+            3 -> {
                 val left = ButtonCard_musicList.left
                 ButtonCard_Area.smoothScrollTo(left, 0)
             }
@@ -579,7 +609,7 @@ class ListManagerFragment: DialogFragment() {
 
         //通知子Fragment更新
         val currentPage = ViewPager.currentItem
-        sendChildFragmentEvent(currentPage, "FRAGMENT_PASSIN_CURRENT_LIST_UPDATE")
+        sendChildFragmentEvent(currentPage, ListManagerHelper.event_detail_general_update_list_state)
         //更新当前播放列表指示图标
         updateIcon_currentPlayingList()
         //更新当前播放列表图标
@@ -600,6 +630,14 @@ class ListManagerFragment: DialogFragment() {
                     ToolVibrate().vibrate(requireContext())
 
                     setCurrentPlayingList(ListManagerHelper.ListMark_Custom)
+
+                    true
+                }
+                //选择历史播放列表
+                R.id.list_history -> {
+                    ToolVibrate().vibrate(requireContext())
+
+                    setCurrentPlayingList(ListManagerHelper.ListMark_History)
 
                     true
                 }
@@ -628,8 +666,16 @@ class ListManagerFragment: DialogFragment() {
 
 
     //保存本次切换至的页签
+    private var saveListMark_avoidFirst = false
     private fun saveListMark(targetListNum: Int){
+        if (!saveListMark_avoidFirst) {
+            saveListMark_avoidFirst = true
+            return
+        }
+
+        //consoleLog("targetListNum: $targetListNum")
         val targetListString = viewPagerPageMarkMapNum[targetListNum] ?: return
+        //consoleLog("targetListString: $targetListString")
 
         ListManagerHelper.TURNTO_List(targetListString)
     }
@@ -663,23 +709,7 @@ class ListManagerFragment: DialogFragment() {
         val result = bundleOf(FragmentConnector.receive_key to event,FragmentConnector.extra_key to extra)
         setFragmentResult(FragmentConnector.fragment_request_key_play_list, result)
     }
-    //发送事件到子Fragment
-    private fun sendChildFragmentEvent(pageNum: Int, event: String){
-        val result = bundleOf(ListManagerHelper.event_key_general to event)
-        //根据页签发送事件
-        when(pageNum){
-            1 -> {
-                setFragmentResult(ListManagerHelper.fragment_request_key_audio,  result)
-            }
-            2 -> {
-                setFragmentResult(ListManagerHelper.fragment_request_key_history,  result)
-            }
-            3 -> {
-                setFragmentResult(ListManagerHelper.fragment_request_key_video,  result)
-            }
-        }
 
-    }
 
     //循环模式
     private fun startLoopModeMenu(anchor: View){
@@ -806,6 +836,13 @@ class ListManagerFragment: DialogFragment() {
     private fun customDismiss(){
         if (!lockPage) {
             dismiss()
+        }
+    }
+
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "ListManagerFragment: $msg")
         }
     }
 

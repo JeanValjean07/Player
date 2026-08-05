@@ -6,12 +6,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
-import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -31,34 +31,38 @@ import kotlinx.coroutines.launch
 @UnstableApi
 //@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
+class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page){
     companion object {
-        fun newInstance(): InnerFragment_Audio {
-            return InnerFragment_Audio().apply{
+        fun newInstance(): InnerFragment_CustomList {
+            return InnerFragment_CustomList().apply{
                 arguments = bundleOf()
             }
         }
     }
     //当前页签(固定值)
-    private val flag_currentPage = ListManagerHelper.ListMark_Audio
+    private val flag_currentPage = ListManagerHelper.ListMark_History
 
 
 
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
-        //初始化组件
+        super.onViewCreated(view, savedInstanceState)
+        //初始化
         init(view)
 
-        //组件注册
+
+        //注册控件
         register(view)
 
-        //开启Fragment通信
+
+        //注册Fragment通信
         registerFragmentResultListener()
 
-        //启动RecyclerView
-        startRecyclerView(view)
+
+        //启动recyclerView
+        //startRecyclerView(view)
+
 
 
     }
@@ -71,6 +75,10 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     }
 
     private fun init(view:View){
+        //加载中卡片
+        LoadingState = view.findViewById(R.id.LoadingState)
+        LoadingStateText = view.findViewById(R.id.LoadingStateText)
+        TextItemCount = view.findViewById(R.id.TextItemCount)
         ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
         ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
 
@@ -78,11 +86,9 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
 
 
 
-    //组件注册
-    private fun register(view: View){
-        //组件注册
-        lifecycleScope.launch(Dispatchers.Main){
-
+    //注册控件
+    private fun register(view:View){
+        lifecycleScope.launch(Dispatchers.Main) {
             //页面设置按钮
             val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
             pageSettingButton.setOnClickListener {
@@ -91,7 +97,6 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
                 startPageSettingMenu(pageSettingButton)
             }
 
-
             //按钮：设为当前播放列表/已是当前播放列表
             val ButtonSetAsCurrentList = view.findViewById<View>(R.id.ButtonSetAsCurrentList)
             ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
@@ -99,50 +104,92 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             updateCurrentListStateText()
             ButtonSetAsCurrentList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+
                 setAs_currentPlayingList()
             }
 
-
-            //按钮：总项数(分页下显示不全)
+            //横滑选项按钮
+            //按钮：全部删除
+            val ButtonDeleteAllListItem = view.findViewById<View>(R.id.ButtonDeleteAllListItem)
+            ButtonDeleteAllListItem.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //清空自定义列表
+                //TODO
+                //刷新适配器
+                recyclerView_history_list_adapter?.refresh()
+            }
+            //按钮：总项数
             val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
             ButtonItemCount.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //未加载完成前拒绝访问
                 if (!state_adapter_load_complete) return@setOnClickListener
                 //显示列表中项数
-                val itemCount = recyclerView_music_adapter.itemCount
+                val itemCount = recyclerView_history_list_adapter?.itemCount
                 if (itemCount == 0) {
-                    requireContext().showCustomToast("目前还没有音乐",2)
-                }
-                else{
-                    requireContext().showCustomToast("包含${itemCount}条音乐",2)
+                    requireContext().showCustomToast("目前还没有媒体，可在其他列表中添加",2)
+                } else {
+                    requireContext().showCustomToast("包含${itemCount}个媒体",2)
                 }
 
 
             }
-            //强制刷新
-            val ButtonForceRefresh = view.findViewById<CardView>(R.id.ButtonForceRefresh)
-            ButtonForceRefresh.setOnClickListener {
+            //按钮：立即刷新
+            val ButtonUpdate = view.findViewById<CardView>(R.id.ButtonUpdate)
+            ButtonUpdate.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
-                recyclerView.smoothScrollToPosition(0)
-                recyclerView_music_adapter.refresh()
-            }
+                recyclerView_history_list_adapter?.refresh()
 
+            }
         }
     }
-
-
-
-
-
-
-
-
+    //启动recyclerView
+    private lateinit var recyclerView: RecyclerView
+    private var recyclerView_history_list_adapter: Recycler_Adaptor_CustomList? = null
+    private var state_adapter_load_complete = false
+    private fun startRecyclerView(view: View){
+        //初始化recyclerView
+        recyclerView = view.findViewById(R.id.recyclerView)
+        //设置管理器
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        //合成适配器
+        recyclerView_history_list_adapter = Recycler_Adaptor_CustomList(
+            requireContext(),
+            onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) },
+            onPlayClick = { uri -> onPlayClick(uri) },
+        )
+        //设置适配器
+        recyclerView.adapter = recyclerView_history_list_adapter
+        //分页加载
+        val pager = Pager(PagingConfig(pageSize = 20)) {
+            Recycler_PagingSource_CustomList(requireContext())
+        }
+        //分页加载数据
+        lifecycleScope.launch(Dispatchers.IO) {
+            pager.flow.collect { pagingData ->
+                recyclerView_history_list_adapter?.submitData(pagingData)
+            }
+        }
+        //添加加载状态监听器
+        recyclerView_history_list_adapter?.addLoadStateListener { loadState ->
+            when (loadState.refresh) {
+                is LoadState.Loading -> {
+                    showLoadingNotice()
+                }
+                is LoadState.NotLoading -> {
+                    LoadingComplete()
+                }
+                is LoadState.Error -> {
+                    showErrorNotice()
+                }
+            }
+        }
+    }
     //Fragment通信
     //注册接收父Fragment返回值
     private fun registerFragmentResultListener(){
-        parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_audio, this){ _, bundle ->
+        parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_history, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
             when(key){
                 //回滚到顶部
@@ -153,65 +200,22 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
                 ListManagerHelper.event_detail_general_update_list_state -> {
                     onFragmentFocused()
                 }
-
             }
         }
     }
     //发送Fragment结果
-    private fun sendFragmentResult(event: String){
-        parentFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_audio,
-            bundleOf(ListManagerHelper.event_key_general to event)
+    private fun sendFragmentResult(key: String){
+        parentFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_history,
+            bundleOf(ListManagerHelper.event_key_general to key)
         )
-    }
-    //启动recyclerView
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerView_music_adapter: Recycler_Adaptor_Audio
-    private var state_adapter_load_complete = false
-    private fun startRecyclerView(view: View){
-        //初始化recyclerView
-        recyclerView = view.findViewById(R.id.recyclerView)
-        //设置管理器
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        //初始化adapter + 设置点击事件
-        recyclerView_music_adapter = Recycler_Adaptor_Audio(
-            requireContext(),
-            onAddToListClick = { uriString -> onAddToListClick(uriString.toUri()) },
-            onPlayClick = { uriString -> onPlayClick(uriString.toUri()) },
-        )
-        //添加页脚
-        val adapterWithFooter = recyclerView_music_adapter.withLoadStateFooter(footer = ListBottomSloganAdapter {
-            recyclerView_music_adapter.retry()
-        })
-        //设置adapter
-        recyclerView.adapter = adapterWithFooter
-        //开始分页加载
-        lifecycleScope.launch(Dispatchers.IO) {
-            val pager = Pager(PagingConfig(pageSize = 20)) { Recycler_PagingSource_Audio(requireContext()) }
-            pager.flow.collect { pagingData ->
-                recyclerView_music_adapter.submitData(pagingData)
-            }
-        }
-        //添加加载状态监听器
-        recyclerView_music_adapter.addLoadStateListener { loadState ->
-            when (loadState.refresh) {
-                is LoadState.Loading -> {
-                    showLoadingNotice()
-                }
-                is LoadState.NotLoading -> {
-                    LoadingComplete(view)
-                }
-                is LoadState.Error -> {
-                    showErrorNotice()
-                }
-            }
-        }
     }
 
     //页面获得焦点
-    private fun onFragmentFocused() {
+    private fun onFragmentFocused(){
         updateCurrentListStateText()
-        //recyclerView_music_adapter.refresh()
+        recyclerView_history_list_adapter?.refresh()
     }
+
     //页签设置选单
     private fun startPageSettingMenu(anchor: View){
         val popup = PopupMenu(requireContext(), anchor)
@@ -249,24 +253,25 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     }
 
 
-    //添加到自定义
-    private fun onAddToListClick(uri: Uri){
-        ToolVibrate().vibrate(requireContext())
-
-
-
-    }
     //播放项
     private fun onPlayClick(uri: Uri){
         ToolVibrate().vibrate(requireContext())
 
 
     }
+    //删除项
+    private fun onDeleteClick(uriNumOnly: Long){
+        ToolVibrate().vibrate(requireContext())
+
+
+
+        recyclerView_history_list_adapter?.refresh()
+    }
 
 
     //设为默认显示列表
     private fun setAs_AcquiesceShowingPage(){
-        //判断是否已经是默认列表
+        //判断是否已经是默认页签
         val currentAcquiescePage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
         if (currentAcquiescePage == flag_currentPage){
             val success = ListManagerHelper.SET_PRFR_AcquiesceShowingPage(ListManagerHelper.ListMark_UseLast)
@@ -289,74 +294,71 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     //设置为当前播放列表
     private fun setAs_currentPlayingList(){
         val success = ListManagerHelper.SET_STE_CurrentPlayingListMark(flag_currentPage)
-
-        //更新当前播放列表文字
+        //更新当前播放列表状态提示词
         updateCurrentListStateText()
-
         //更新当前播放列表图标
         if (success){
             requireContext().showCustomToast("设置成功",2)
-
-            sendFragmentResult(ListManagerHelper.event_detail_general_update_currentPlayingList_icon)
-
+            parentFragmentManager.setFragmentResult(
+                "FRAGMENT_CUSTOM_LIST_FRAGMENT",
+                bundleOf("TOKEN" to "FRAGMENT_RETURN_UPDATE_LIST_ICON")
+            )
         }else{
             requireContext().showCustomToast("设置失败",2)
         }
     }
-
-    //显示是否已设为当前播放列表
+    //刷新当前播放列表状态提示词
     private lateinit var ButtonSetAsCurrentListText: TextView
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     private fun updateCurrentListStateText(){
-        //判断是否是当前播放列表
+        //判断是否是当前播放页签
         if (ListManagerHelper.GET_STE_CurrentPlayingListMark() == flag_currentPage){
             ButtonSetAsCurrentListText.text = "已设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
-        }
-        else{
+        }else{
             ButtonSetAsCurrentListText.text = "设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_add)
         }
     }
-
-
-
-
-
-    //加载状态提示(需要重做)
+    //加载状态提示
+    private lateinit var LoadingState: LinearLayout
+    private lateinit var LoadingStateText: TextView
+    private lateinit var TextItemCount: TextView
     private fun showLoadingNotice() {
-
+        LoadingStateText.text = "加载中"
+        LoadingState.visibility = View.VISIBLE
     }
     private fun showErrorNotice() {
-
+        LoadingStateText.text = "加载出现异常"
+        LoadingState.visibility = View.VISIBLE
     }
-    private fun LoadingComplete(view: View) {
+    private fun LoadingComplete() {
         //刷新状态
         state_adapter_load_complete = true
         //更新总项数文字
-        val itemCount = recyclerView_music_adapter.itemCount
-        showItemCount(itemCount,view)
+        val itemCount = recyclerView_history_list_adapter?.itemCount ?: 0
+        showItemCount(itemCount)
         if (itemCount == 0) {
             showEmptyNotice()
-        }else{
-
+        }
+        else{
+            LoadingStateText.text = "加载完成"
+            LoadingState.visibility = View.GONE
         }
     }
     private fun showEmptyNotice() {
-
+        LoadingStateText.text = "列表为空"
+        LoadingState.visibility = View.VISIBLE
     }
-    private fun showItemCount(count: Int,view: View) {
-        val TextItemCount = view.findViewById<TextView>(R.id.TextItemCount)
+    private fun showItemCount(count: Int) {
         TextItemCount.text = count.toString()
     }
 
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "InnerFragment_Audio: $msg")
+            Log.d("SuMing", "InnerFragment_HistoryList: $msg")
         }
     }
-
-
 
 }
