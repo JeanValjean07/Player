@@ -37,7 +37,7 @@ import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.google.android.material.button.MaterialButton
-import com.suming.player.FuncPack_ListManager.PlayerListManager
+import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import com.suming.player.SettingsRequestCenter
@@ -610,7 +610,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private fun chooseLoopMode(loopMode: String){
         ToolVibrate().vibrate(requireContext())
         //设置循环模式
-        PlayerListManager.setLoopMode(when (loopMode) {
+        ListManagerHelper.setLoopMode(when (loopMode) {
             "ONE" -> "ONE"
             "ALL" -> "ALL"
             "OFF" -> "OFF"
@@ -622,7 +622,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
     }
     private fun updateLoopModeText(){
         val ButtonTextLoopMode = view?.findViewById<TextView>(R.id.ButtonTextLoopMode)
-        ButtonTextLoopMode?.text = when (PlayerListManager.getLoopMode(requireContext())) {
+        ButtonTextLoopMode?.text = when (ListManagerHelper.getLoopMode(requireContext())) {
             "ONE" -> "单集循环"
             "ALL" -> "列表循环"
             "OFF" -> "播完暂停"

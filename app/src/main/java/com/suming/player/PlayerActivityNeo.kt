@@ -94,8 +94,8 @@ import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
-import com.suming.player.FuncPack_ListManager.FragmentPlayList
-import com.suming.player.FuncPack_ListManager.PlayerListManager
+import com.suming.player.FuncPack_ListManager.ListManagerFragment
+import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
@@ -1910,7 +1910,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //启动播放列表面板
     private fun startPlayListFragment(){
-        FragmentPlayList.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+        ListManagerFragment.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
     }
     //绑定播放器视图
     private fun bindPlayerView(){
@@ -2518,15 +2518,15 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     private fun playState_playEnd(){
-        val loopMode = PlayerListManager.getLoopMode(this)
+        val loopMode = ListManagerHelper.getLoopMode(this)
         when (loopMode) {
-            PlayerListManager.LOOP_MODE_ONE -> {
+            ListManagerHelper.LOOP_MODE_ONE -> {
                 notice("单集循环", 3000)
             }
-            PlayerListManager.LOOP_MODE_ALL -> {
+            ListManagerHelper.LOOP_MODE_ALL -> {
 
             }
-            PlayerListManager.LOOP_MODE_OFF -> {
+            ListManagerHelper.LOOP_MODE_OFF -> {
                 playerViewModel.playEnd = true
                 notice("视频结束", 1000)
                 //停止被控控件

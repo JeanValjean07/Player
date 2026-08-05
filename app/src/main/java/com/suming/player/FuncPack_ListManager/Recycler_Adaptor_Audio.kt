@@ -23,11 +23,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Suppress("unused")
-class MusicListAdapter(
+class Recycler_Adaptor_Audio(
     private val context: Context,
     private val onAddToListClick: (String) -> Unit,
     private val onPlayClick: (String) -> Unit
-): PagingDataAdapter<MediaItemForMusic, MusicListAdapter.viewHolder>(diffCallback) {
+): PagingDataAdapter<MediaItemForMusic, Recycler_Adaptor_Audio.viewHolder>(diffCallback) {
     companion object {
         //比较器
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemForMusic>() {

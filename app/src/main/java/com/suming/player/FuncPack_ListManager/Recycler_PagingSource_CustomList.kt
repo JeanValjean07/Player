@@ -8,7 +8,7 @@ import com.suming.player.DataPack.MediaModel.MiniMediaItemForList
 
 @UnstableApi
 @Suppress("unused")
-class CustomListPagingSource(
+class Recycler_PagingSource_CustomList(
     private val context: Context,
 ) : PagingSource<Int, MiniMediaItemForList>() {
 
@@ -26,8 +26,8 @@ class CustomListPagingSource(
 
 
             //按页获取数据
-            val MiniMediaItems = PlayerListManager.customList
-            val totalCount = PlayerListManager.customList.size
+            val MiniMediaItems = ListManagerHelper.customList
+            val totalCount = ListManagerHelper.customList.size
 
             //合成MediaItem
             val mediaItems = MiniMediaItems
@@ -57,3 +57,4 @@ class CustomListPagingSource(
     }
 
 }
+

@@ -23,11 +23,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 @Suppress("unused")
-class CustomListAdapter(
+class Recycler_Adaptor_CustomList(
     private val context: Context,
     private val onDeleteClick: (Long) -> Unit,
     private val onPlayClick: (Uri) -> Unit
-):PagingDataAdapter<MiniMediaItemForList, CustomListAdapter.viewHolder>(DiffUtil)  {
+):PagingDataAdapter<MiniMediaItemForList, Recycler_Adaptor_CustomList.viewHolder>(DiffUtil)  {
     companion object {
         //比较器
         val DiffUtil = object : DiffUtil.ItemCallback<MiniMediaItemForList>() {

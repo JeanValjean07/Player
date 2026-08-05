@@ -130,13 +130,13 @@ object MediaDataBaseMaster {
             val currentPosition = PlayerSingleton.getState_currentPosition()
             val duration = PlayerInfoCenter.getMediaDuration()
             val itemDataBaseID = PlayerInfoCenter.getItemDataBaseID()
-            val context = PlayerSingleton.getApplicationContext()
+            //val context = PlayerSingleton.getApplicationContext()
 
             if (duration <= 0) return
             if (itemDataBaseID == "" || itemDataBaseID != currentItemDataBaseID) return
 
             if (currentPosition in 0..duration){
-                saveProgress(currentItemDataBaseID, currentPosition, duration,context)
+                //saveProgress(currentItemDataBaseID, currentPosition, duration,context)
             }
 
 

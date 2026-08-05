@@ -59,7 +59,7 @@ import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForVideo
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForMusic
 import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForVideo
 import com.suming.player.DataPack.MediaRecordPack
-import com.suming.player.FuncPack_ListManager.FragmentPlayList
+import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
@@ -1569,7 +1569,7 @@ class MainActivity: AppCompatActivity() {
 
     //启动播放列表Fragment面板
     private fun startPlayListFragment(){
-        FragmentPlayList.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+        ListManagerFragment.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
     }
 
     //显示加载提示

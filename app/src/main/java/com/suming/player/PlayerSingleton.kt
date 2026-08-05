@@ -30,7 +30,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
 import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
 import com.suming.player.DataPack.MediaInfo
-import com.suming.player.FuncPack_ListManager.PlayerListManager
+import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import com.suming.player.FuncionalPack.MediaInfoRetriever
@@ -42,9 +42,9 @@ import java.util.Date
 import java.util.Locale
 
 @UnstableApi
-@Suppress("unused")
+//@Suppress("unused")
 object PlayerSingleton {
-    //应用引用
+    //context
     private lateinit var context: Application
     fun setContext(context: Context){
         //检查是不是applicationContext
@@ -55,14 +55,14 @@ object PlayerSingleton {
             consoleLog("PlayerSingleton.setContext error")
         }
     }
-    fun getApplicationContext(): Context = context.applicationContext
-
-    //日志控制
+    //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "PlayerSingleton: $msg")
         }
     }
+
+
 
     //播放器内部实例
     private var _player: ExoPlayer? = null
@@ -536,11 +536,11 @@ object PlayerSingleton {
             pausePlay()
         }
         //检查循环模式
-        val loopMode = PlayerListManager.getLoopMode(context)
+        val loopMode = ListManagerHelper.getLoopMode(context)
         when(loopMode){
-            PlayerListManager.LOOP_MODE_OFF -> justStop()
-            PlayerListManager.LOOP_MODE_ONE -> repeatMedia()
-            PlayerListManager.LOOP_MODE_ALL -> requireNextMedia()
+            ListManagerHelper.LOOP_MODE_OFF -> justStop()
+            ListManagerHelper.LOOP_MODE_ONE -> repeatMedia()
+            ListManagerHelper.LOOP_MODE_ALL -> requireNextMedia()
             else -> justStop()
         }
     }

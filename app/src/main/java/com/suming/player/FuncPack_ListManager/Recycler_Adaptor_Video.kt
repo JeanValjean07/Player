@@ -24,11 +24,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Suppress("unused")
-class VideoListAdapter(
+class Recycler_Adaptor_Video(
     private val context: Context,
     private val onAddToListClick: (String) -> Unit,
     private val onPlayClick: (String) -> Unit
-):PagingDataAdapter<MediaItemForVideo, VideoListAdapter.viewHolder>(Differ) {
+):PagingDataAdapter<MediaItemForVideo, Recycler_Adaptor_Video.viewHolder>(Differ) {
     companion object {
         //比较器
         val Differ = object : DiffUtil.ItemCallback<MediaItemForVideo>() {

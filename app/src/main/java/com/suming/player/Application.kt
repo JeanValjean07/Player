@@ -4,7 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import com.suming.player.FuncPack_ListManager.PlayerListManager
+import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.PlayerListener
 
 class Application : Application() {
@@ -16,7 +16,7 @@ class Application : Application() {
 
         //启动必要项
         PlayerSingleton.setContext(this)
-        PlayerListManager.setContext(this)
+        ListManagerHelper.setContext(this)
         PlayerListener.setContext(this)
 
 

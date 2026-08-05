@@ -24,23 +24,22 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @UnstableApi
 @Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
+class InnerFragment_Video():Fragment(R.layout.fragment_play_list_live_page){
     companion object {
-        fun newInstance(): VideoListFragment {
-            return VideoListFragment().apply{
+        fun newInstance(): InnerFragment_Video {
+            return InnerFragment_Video().apply{
                 arguments = bundleOf()
             }
         }
     }
     //当前页签(固定值)
-    private val flag_currentPage = PlayerListManager.list_page_video
+    private val flag_currentPage = ListManagerHelper.list_page_video
     //共享ViewModel
     private val viewModel: PlayerListViewModel by activityViewModels()
 
@@ -51,7 +50,7 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     //RecyclerView
     private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerView_video_adapter: VideoListAdapter
+    private lateinit var recyclerView_video_adapter: Recycler_Adaptor_Video
     private var state_adapter_load_complete = false
 
 
@@ -73,7 +72,7 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
                 val popup = PopupMenu(requireContext(), pageSettingButton)
                 popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
                 val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
-                val acquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
+                val acquiescePage = ListManagerHelper.get_PREFS_AcquiescePage(requireContext())
                 if (flag_currentPage == acquiescePage){
                     menuItem_default_page.title = "取消设为默认显示页签"
                 }else{
@@ -170,7 +169,7 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
         //设置管理器
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         //初始化adapter + 设置点击事件
-        recyclerView_video_adapter = VideoListAdapter(
+        recyclerView_video_adapter = Recycler_Adaptor_Video(
                 requireContext(),
                 onAddToListClick = { uriString -> onAddToListClick(uriString.toUri()) },
                 onPlayClick = { uriString -> onPlayClick(uriString.toUri()) },
@@ -184,7 +183,7 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
 
         //开始分页加载
         val pager = Pager(PagingConfig(pageSize = 20)) {
-            VideoListPagingSource(requireContext())
+            Recycler_PagingSource_Video(requireContext())
         }
         lifecycleScope.launch {
             pager.flow.collect { pagingData ->
@@ -276,15 +275,15 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
     //设为默认显示列表
     private fun setAs_acquiescePage(){
         //判断是否已经是默认列表
-        val currentAcquiescePage = PlayerListManager.get_PREFS_AcquiescePage(requireContext())
+        val currentAcquiescePage = ListManagerHelper.get_PREFS_AcquiescePage(requireContext())
         if (currentAcquiescePage == flag_currentPage){
-            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), PlayerListManager.list_page_video)
+            val success = ListManagerHelper.set_PREFS_AcquiescePage(requireContext(), ListManagerHelper.list_page_video)
             if (success) {
                 requireContext().showCustomToast("已取消默认页签,默认使用上次页签",2)
                 updateCurrentListStateText()
             }
         }else{
-            val success = PlayerListManager.set_PREFS_AcquiescePage(requireContext(), flag_currentPage)
+            val success = ListManagerHelper.set_PREFS_AcquiescePage(requireContext(), flag_currentPage)
             if (success) {
                 requireContext().showCustomToast("设置成功",2)
                 updateCurrentListStateText()
@@ -293,7 +292,7 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
     }
     //设置为当前播放列表
     private fun setAs_currentPlayList(){
-        val success = PlayerListManager.setPlayList("video")
+        val success = ListManagerHelper.setPlayList("video")
         //更新当前播放列表
         updateCurrentListStateText()
         //更新当前播放列表图标
@@ -309,7 +308,7 @@ class VideoListFragment():Fragment(R.layout.fragment_play_list_live_page){
     //刷新当前播放列表状态提示词
     private fun updateCurrentListStateText(){
         //判断是否是当前播放列表
-        if (PlayerListManager.getCurrentList(requireContext()) == flag_currentPage){
+        if (ListManagerHelper.getCurrentList(requireContext()) == flag_currentPage){
             ButtonSetAsCurrentListText.text = "已设为当前播放列表"
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
         }else{
