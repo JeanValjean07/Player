@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 @UnstableApi
 //@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class InnerFragment_Audio():Fragment(R.layout.fragment_play_list_live_page){
+class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     companion object {
         fun newInstance(): InnerFragment_Audio {
             return InnerFragment_Audio().apply{
@@ -43,15 +43,6 @@ class InnerFragment_Audio():Fragment(R.layout.fragment_play_list_live_page){
 
 
 
-    //当前播放列表
-    private lateinit var ButtonSetAsCurrentListText: TextView
-    private lateinit var ButtonSetAsCurrentListIcon: ImageView
-    //RecyclerView
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var recyclerView_music_adapter: Recycler_Adaptor_Audio
-    private var state_adapter_load_complete = false
-
-
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -62,49 +53,8 @@ class InnerFragment_Audio():Fragment(R.layout.fragment_play_list_live_page){
         //开启Fragment通信
         registerFragmentResultListener()
 
-
-
-        //初始化recyclerView
-        recyclerView = view.findViewById(R.id.recyclerView)
-        //设置管理器
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        //初始化adapter + 设置点击事件
-        recyclerView_music_adapter = Recycler_Adaptor_Audio(
-            requireContext(),
-            onAddToListClick = { uriString -> onAddToListClick(uriString.toUri()) },
-            onPlayClick = { uriString -> onPlayClick(uriString.toUri()) },
-        )
-        //添加页脚
-        val adapterWithFooter = recyclerView_music_adapter.withLoadStateFooter(footer = ListBottomSloganAdapter {
-            recyclerView_music_adapter.retry()
-        })
-        //设置adapter
-        recyclerView.adapter = adapterWithFooter
-
-        //开始分页加载
-        val pager = Pager(PagingConfig(pageSize = 20)) {
-            Recycler_PagingSource_Audio(requireContext())
-        }
-        lifecycleScope.launch {
-            pager.flow.collect { pagingData ->
-                recyclerView_music_adapter.submitData(pagingData)
-            }
-        }
-
-        //添加加载状态监听器
-        recyclerView_music_adapter.addLoadStateListener { loadState ->
-            when (loadState.refresh) {
-                is LoadState.Loading -> {
-                    showLoadingNotice()
-                }
-                is LoadState.NotLoading -> {
-                    LoadingComplete(view)
-                }
-                is LoadState.Error -> {
-                    showErrorNotice()
-                }
-            }
-        }
+        //启动RecyclerView
+        startRecyclerView(view)
 
 
     }
@@ -112,6 +62,7 @@ class InnerFragment_Audio():Fragment(R.layout.fragment_play_list_live_page){
     override fun onResume() {
         super.onResume()
 
+        //刷新必要内容
         onFragmentFocused()
     }
 
@@ -202,8 +153,47 @@ class InnerFragment_Audio():Fragment(R.layout.fragment_play_list_live_page){
         )
     }
     //启动recyclerView
-    private fun startRecyclerView(){
-
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var recyclerView_music_adapter: Recycler_Adaptor_Audio
+    private var state_adapter_load_complete = false
+    private fun startRecyclerView(view: View){
+        //初始化recyclerView
+        recyclerView = view.findViewById(R.id.recyclerView)
+        //设置管理器
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        //初始化adapter + 设置点击事件
+        recyclerView_music_adapter = Recycler_Adaptor_Audio(
+            requireContext(),
+            onAddToListClick = { uriString -> onAddToListClick(uriString.toUri()) },
+            onPlayClick = { uriString -> onPlayClick(uriString.toUri()) },
+        )
+        //添加页脚
+        val adapterWithFooter = recyclerView_music_adapter.withLoadStateFooter(footer = ListBottomSloganAdapter {
+            recyclerView_music_adapter.retry()
+        })
+        //设置adapter
+        recyclerView.adapter = adapterWithFooter
+        //开始分页加载
+        lifecycleScope.launch(Dispatchers.IO) {
+            val pager = Pager(PagingConfig(pageSize = 20)) { Recycler_PagingSource_Audio(requireContext()) }
+            pager.flow.collect { pagingData ->
+                recyclerView_music_adapter.submitData(pagingData)
+            }
+        }
+        //添加加载状态监听器
+        recyclerView_music_adapter.addLoadStateListener { loadState ->
+            when (loadState.refresh) {
+                is LoadState.Loading -> {
+                    showLoadingNotice()
+                }
+                is LoadState.NotLoading -> {
+                    LoadingComplete(view)
+                }
+                is LoadState.Error -> {
+                    showErrorNotice()
+                }
+            }
+        }
     }
 
     //页面获得焦点
@@ -300,6 +290,8 @@ class InnerFragment_Audio():Fragment(R.layout.fragment_play_list_live_page){
     }
 
     //显示是否已设为当前播放列表
+    private lateinit var ButtonSetAsCurrentListText: TextView
+    private lateinit var ButtonSetAsCurrentListIcon: ImageView
     private fun updateCurrentListStateText(){
         //判断是否是当前播放列表
         if (ListManagerHelper.GET_STE_CurrentPlayingListMark() == flag_currentPage){
