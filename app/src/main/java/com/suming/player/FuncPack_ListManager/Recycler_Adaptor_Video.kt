@@ -9,14 +9,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaType
+import com.suming.player.FuncionalPack.PlayerInfoCenter
+import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,7 +33,7 @@ import kotlinx.coroutines.withContext
 class Recycler_Adaptor_Video(
     private val context: Context,
     private val onAddToListClick: (MediaItemForVideo) -> Unit,
-    private val onPlayClick: (MediaItemForVideo) -> Unit
+    private val onPlayClick: (MediaItemForVideo, Int) -> Unit
 ):PagingDataAdapter<MediaItemForVideo, Recycler_Adaptor_Video.viewHolder>(Differ) {
     companion object {
         //比较器
@@ -49,12 +54,35 @@ class Recycler_Adaptor_Video(
 
 
     class viewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
-        var itemFrameJob: Job? = null
+        val item_root_card: CardView = itemView.findViewById(R.id.item_root_card)
+
         val itemName: TextView = itemView.findViewById(R.id.tvName)
         val itemArtist: TextView = itemView.findViewById(R.id.tvArtist)
         val ButtonAddToList: ImageView = itemView.findViewById(R.id.ButtonAddToList)
         val ButtonPlay: ImageView = itemView.findViewById(R.id.ButtonPlay)
+
+        val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
+        var itemFrameJob: Job? = null
+
+        var isItemOn: Boolean = false   //是否为当前媒体
+        var isItemPlaying: Boolean = false  //是否正在播放
+
+        //是否正在播放
+        fun setItemPlayingCard(isItemOn: Boolean){
+            //写入状态
+            itemName.isSelected = isItemOn
+            //修改背景颜色
+            item_root_card.backgroundTintList = if (isItemOn){
+                ContextCompat.getColorStateList(itemView.context, R.color.SecondaryColorPack_ContentCardBackground_Theme)
+            }else{
+                ContextCompat.getColorStateList(itemView.context, R.color.SecondaryColorPack_ContentCardBackground)
+            }
+
+        }
+        fun setItemPlayingButton(isPlaying: Boolean){
+            ButtonPlay.setImageResource(if (isPlaying) R.drawable.ic_controller_neo_pause else R.drawable.ic_controller_neo_play)
+        }
+
     }
     //协程
     private val coroutine_loadArtwork = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -80,6 +108,13 @@ class Recycler_Adaptor_Video(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: viewHolder, position: Int) {
         val item = getItem(position) ?: return
+        //检查是不是当前媒体
+        if (item.content_uriString == PlayerInfoCenter.getMediaUriString()){
+            holder.setItemPlayingCard(true)
+        }else{
+            holder.setItemPlayingCard(false)
+        }
+
         holder.itemName.text = item.file_name.substringBeforeLast(".")
         holder.itemArtist.text = "未知艺术家"
         //取图任务
@@ -96,7 +131,7 @@ class Recycler_Adaptor_Video(
         holder.ButtonPlay.setOnClickListener {
             ToolVibrate().vibrate(context)
 
-            onPlayClick(item)
+            onPlayClick(item, position)
         }
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
@@ -147,6 +182,18 @@ class Recycler_Adaptor_Video(
     //推送到ImageView
     private fun submitToImageView(holder: viewHolder, Bitmap : Bitmap){
         holder.itemFrame.setImageBitmap(Bitmap)
+    }
+
+
+    //外部控制
+    fun refreshVisibleItems(layoutManager: LinearLayoutManager) {
+        val firstVisible = layoutManager.findFirstVisibleItemPosition()
+        val lastVisible = layoutManager.findLastVisibleItemPosition()
+
+        //刷新所有可见项
+        if (firstVisible >= 0 && lastVisible >= 0) {
+            notifyItemRangeChanged(firstVisible, lastVisible - firstVisible + 1)
+        }
     }
 
 

@@ -150,18 +150,22 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //启动recyclerView
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_video_adapter: Recycler_Adaptor_Video
+    private lateinit var layoutManager: LinearLayoutManager
     private var state_adapter_load_complete = false
     private fun startRecyclerView(view: View){
         //初始化recyclerView
         recyclerView = view.findViewById(R.id.recyclerView)
         //设置管理器
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.layoutManager = layoutManager
         //初始化adapter + 设置点击事件
         recyclerView_video_adapter = Recycler_Adaptor_Video(
             requireContext(),
             onAddToListClick = { item -> onAddToListClick(item) },
-            onPlayClick = { item -> onPlayClick(item) },
+            onPlayClick = { item, position -> onPlayClick(item, position) },
         )
+        //关闭动画
+        recyclerView.itemAnimator = null
         //添加页脚
         val adapterWithFooter = recyclerView_video_adapter.withLoadStateFooter(footer = ListBottomSloganAdapter {
             recyclerView_video_adapter.retry()
@@ -267,7 +271,8 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
     }
     //播放视频
-    private fun onPlayClick(item: MediaItemForVideo){
+    private var cache_lastPosition: Int = -1
+    private fun onPlayClick(item: MediaItemForVideo, position: Int){
 
         if (item.content_uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
             PlayerSingleton.continuePlay(true)
@@ -279,6 +284,13 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
             PlayerSingleton.setMediaItem(item.content_uriString.toUri(),true)
         }
+
+        //是否正在播放
+
+
+        //刷新播放列表显示
+        recyclerView_video_adapter.refreshVisibleItems(layoutManager)
+
 
     }
 

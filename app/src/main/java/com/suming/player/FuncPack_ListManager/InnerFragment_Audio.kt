@@ -12,6 +12,7 @@ import androidx.cardview.widget.CardView
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -266,8 +267,6 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
 
     //添加到自定义
     private fun onAddToListClick(item: MediaItemForMusic){
-        ToolVibrate().vibrate(requireContext())
-
 
 
     }
@@ -284,6 +283,9 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
 
             PlayerSingleton.setMediaItem(item.uriString.toUri(),true)
         }
+
+        //
+
 
     }
 

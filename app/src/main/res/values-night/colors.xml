@@ -106,6 +106,7 @@
     <color name="SecondaryColorPack_BrushColorTop">#EE151515</color>
     <color name="SecondaryColorPack_BrushColorMiddle">#CC151515</color>
     <color name="SecondaryColorPack_ContentCardBackground">#FF212121</color>
+    <color name="SecondaryColorPack_ContentCardBackground_Theme">#FF4527A0</color>
     <color name="SecondaryColorPack_CardButtonBackground">#FF212121</color>
     <color name="SecondaryColorPack_LineColor">#FF424242</color>
 
