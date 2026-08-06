@@ -263,6 +263,10 @@ object ListManagerHelper {
 
 
 
+    //显示字段
+    const val string_already_set_playing_list = "已设为当前播放列表"
+    const val string_set_as_playing_list = "设为当前播放列表"
+
 
 
 

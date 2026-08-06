@@ -310,13 +310,17 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
     private lateinit var ButtonSetAsCurrentListText: TextView
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     private fun updateCurrentListStateText(){
-        //判断是否是当前播放页签
+        //判断是否是当前播放列表
         if (ListManagerHelper.GET_STE_CurrentPlayingListMark() == flag_currentPage){
-            ButtonSetAsCurrentListText.text = "已设为当前播放列表"
-            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
+            if (ButtonSetAsCurrentListText.text != ListManagerHelper.string_already_set_playing_list){
+                ButtonSetAsCurrentListText.text = ListManagerHelper.string_already_set_playing_list
+                ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
+            }
         }else{
-            ButtonSetAsCurrentListText.text = "设为当前播放列表"
-            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_general_add)
+            if (ButtonSetAsCurrentListText.text != ListManagerHelper.string_set_as_playing_list){
+                ButtonSetAsCurrentListText.text = ListManagerHelper.string_set_as_playing_list
+                ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_general_add)
+            }
         }
     }
     //加载状态提示

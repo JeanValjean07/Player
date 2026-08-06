@@ -273,6 +273,10 @@ class ListManagerFragment: DialogFragment() {
                 }
             }
         }
+        //设置viewPager高度
+
+
+
 
     }
 
@@ -830,6 +834,8 @@ class ListManagerFragment: DialogFragment() {
             return rect.top
         }
 
+
+
         //获取当前屏幕方向
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         //操作主卡片视图
@@ -838,6 +844,8 @@ class ListManagerFragment: DialogFragment() {
         val screenHeightPx = resources.displayMetrics.heightPixels
         val screenWidthPx = resources.displayMetrics.widthPixels
         val density = resources.displayMetrics.density
+
+
         //执行设置
         if (isLandscape){
             //计算目标宽度
@@ -854,9 +862,16 @@ class ListManagerFragment: DialogFragment() {
                 mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
 
                 val statusBarHeight = getStatusBarHeightFromView(mainCard)
+
                 mainCard.setContentPadding(0, statusBarHeight, 0, 0)
 
                 mainCard.requestLayout()
+
+                main_card_height = mainCard.height
+
+                if (appbar_container_height != 0){
+                    setViewPagerHeight(main_card_height - appbar_container_height)
+                }
             }
 
         }else{
@@ -865,13 +880,46 @@ class ListManagerFragment: DialogFragment() {
             val targetScreenHeightDp = (screenHeightPx / density).toInt()
 
             mainCard.post {
+                consoleLog("mainCard.post")
                 if (targetScreenHeightDp < 450){
                     mainCard.layoutParams.height = screenHeightPx
                 }else{
                     mainCard.layoutParams.height = targetHeightPx
                 }
                 mainCard.requestLayout()
+
+                main_card_height = mainCard.height
+
+                if (appbar_container_height != 0){
+                    setViewPagerHeight(main_card_height - appbar_container_height)
+                }
             }
+
+
+        }
+
+        //获取顶部栏高度
+        val AppBarContainer = view.findViewById<View>(R.id.AppBarContainer)
+        AppBarContainer.post{
+            consoleLog("AppBarContainer.post")
+            appbar_container_height = AppBarContainer.height
+            if (main_card_height != 0){
+                setViewPagerHeight(main_card_height - appbar_container_height)
+            }
+
+        }
+
+
+    }
+    //设置viewpager高度
+    private var main_card_height = 0
+    private var appbar_container_height = 0
+    private fun setViewPagerHeight(targetViewPagerHeight: Int) {
+        return
+        consoleLog("setViewPagerHeight111 ${targetViewPagerHeight}")
+        ViewPager.post {
+            consoleLog("setViewPagerHeight post:222 ${targetViewPagerHeight}")
+            setViewPagerHeight(targetViewPagerHeight)
         }
 
     }

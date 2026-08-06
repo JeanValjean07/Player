@@ -1,5 +1,6 @@
 package com.suming.player.FuncPack_ListManager
 
+import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -221,6 +222,8 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     private fun startRecyclerView(view: View){
         //初始化recyclerView
         recyclerView = view.findViewById(R.id.recyclerView)
+        //设置内部间距
+        recyclerView.setPadding(0, 0, 0, 200)
         //设置管理器
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         //初始化adapter + 设置点击事件
@@ -230,11 +233,14 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             onPlayClick = { item -> onPlayClick(item) },
         )
         //添加页脚
+        /*
         val adapterWithFooter = recyclerView_music_adapter.withLoadStateFooter(footer = ListBottomSloganAdapter {
             recyclerView_music_adapter.retry()
         })
+
+         */
         //设置adapter
-        recyclerView.adapter = adapterWithFooter
+        recyclerView.adapter = recyclerView_music_adapter
         //开始分页加载
         lifecycleScope.launch(Dispatchers.IO) {
             val pager = Pager(PagingConfig(pageSize = 20)) { MediaDataBaseReaderForMusic(requireContext()) }
@@ -372,12 +378,15 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     private fun updateCurrentListStateText(){
         //判断是否是当前播放列表
         if (ListManagerHelper.GET_STE_CurrentPlayingListMark() == flag_currentPage){
-            ButtonSetAsCurrentListText.text = "已设为当前播放列表"
-            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
-        }
-        else{
-            ButtonSetAsCurrentListText.text = "设为当前播放列表"
-            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_general_add)
+            if (ButtonSetAsCurrentListText.text != ListManagerHelper.string_already_set_playing_list){
+                ButtonSetAsCurrentListText.text = ListManagerHelper.string_already_set_playing_list
+                ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
+            }
+        }else{
+            if (ButtonSetAsCurrentListText.text != ListManagerHelper.string_set_as_playing_list){
+                ButtonSetAsCurrentListText.text = ListManagerHelper.string_set_as_playing_list
+                ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_general_add)
+            }
         }
     }
 
@@ -463,6 +472,11 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     private fun showItemCount(count: Int,view: View) {
         val TextItemCount = view.findViewById<TextView>(R.id.TextItemCount)
         TextItemCount.text = count.toString()
+    }
+
+    //dp转换为px
+    private fun Int.dpToPx(): Int {
+        return (this * Resources.getSystem().displayMetrics.density).toInt()
     }
 
     //日志
