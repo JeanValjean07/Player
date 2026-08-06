@@ -107,7 +107,7 @@
     <color name="SecondaryColorPack_BrushColorMiddle">#CC151515</color>
     <color name="SecondaryColorPack_ContentCardBackground">#FF212121</color>
     <color name="SecondaryColorPack_CardButtonBackground">#FF212121</color>
-    <color name="SecondaryColorPack_LineColor">#FF212121</color>
+    <color name="SecondaryColorPack_LineColor">#FF424242</color>
 
     <!-- 文字 -->
     <color name="ColorPack_PrimaryTextColor">#FF000000</color>

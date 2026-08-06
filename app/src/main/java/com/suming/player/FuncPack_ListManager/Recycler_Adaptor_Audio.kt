@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
 import com.suming.player.FuncionalPack.ArtworkFrameManager
@@ -22,11 +23,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Suppress("unused")
+@Suppress("NewApi,unused")
 class Recycler_Adaptor_Audio(
     private val context: Context,
-    private val onAddToListClick: (String) -> Unit,
-    private val onPlayClick: (String) -> Unit
+    private val onAddToListClick: (MediaItemForMusic) -> Unit,
+    private val onPlayClick: (MediaItemForMusic) -> Unit
 ): PagingDataAdapter<MediaItemForMusic, Recycler_Adaptor_Audio.viewHolder>(diffCallback) {
     companion object {
         //比较器
@@ -72,8 +73,16 @@ class Recycler_Adaptor_Audio(
             loadArtworkFrame(item, holder)
         }
         //点击事件设定
-        holder.ButtonAddToList.setOnClickListener { onAddToListClick(item.uriString) }
-        holder.ButtonPlay.setOnClickListener { onPlayClick(item.uriString) }
+        holder.ButtonAddToList.setOnClickListener {
+            ToolVibrate().vibrate(context)
+
+            onAddToListClick(item)
+        }
+        holder.ButtonPlay.setOnClickListener {
+            ToolVibrate().vibrate(context)
+
+            onPlayClick(item)
+        }
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 

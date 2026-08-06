@@ -11,16 +11,15 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/tool_bar"
         android:layout_width="match_parent"
-        android:layout_height="35dp"
+        android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:background="@android:color/transparent"
-        android:translationZ="10dp">
+        android:background="@android:color/transparent">
             <!-- 横滑滚动选项 -->
             <HorizontalScrollView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_height="35dp"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -153,7 +152,7 @@
             <View
                 android:id="@+id/VerticalDivideLine"
                 android:layout_width="0.2dp"
-                android:layout_height="match_parent"
+                android:layout_height="35dp"
                 android:background="@color/SecondaryColorPack_LineColor"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -176,12 +175,14 @@
 
             <!-- 底横分隔线 -->
             <View
+                android:id="@+id/topBar_bottomLine"
                 android:layout_width="match_parent"
-                android:layout_height="0.2dp"
+                android:layout_height="0.6dp"
                 android:background="@color/SecondaryColorPack_LineColor"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                android:visibility="gone"
                 />
         </androidx.constraintlayout.widget.ConstraintLayout>
 

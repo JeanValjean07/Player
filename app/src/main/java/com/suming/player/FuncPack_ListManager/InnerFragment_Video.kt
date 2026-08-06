@@ -1,36 +1,41 @@
 package com.suming.player.FuncPack_ListManager
 
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.OptIn
-import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.LoadState
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForVideo
+import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.PlayerSingleton
+import com.suming.player.R
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @UnstableApi
-@Suppress("unused")
-@RequiresApi(Build.VERSION_CODES.Q)
+@Suppress("NewApi")
 class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     companion object {
         fun newInstance(): InnerFragment_Video {
@@ -73,6 +78,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     private fun init(view:View){
         ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
         ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
+        topBar_bottomLine = view.findViewById(R.id.topBar_bottomLine)
 
     }
 
@@ -80,6 +86,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
     //组件注册
     private fun register(view: View){
+        //组件注册
         lifecycleScope.launch(Dispatchers.Main){
             //页面设置按钮
             val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
@@ -126,6 +133,13 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             }
 
         }
+        //延时注册
+        lifecycleScope.launch(Dispatchers.Main){
+            delay(1000)
+            //启用分隔线监听器
+            applyScrollListener()
+            startListUnderTopObserver()
+        }
     }
     //发送Fragment结果
     private fun sendFragmentResult(event: String){
@@ -145,8 +159,8 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         //初始化adapter + 设置点击事件
         recyclerView_video_adapter = Recycler_Adaptor_Video(
             requireContext(),
-            onAddToListClick = { uriString -> onAddToListClick(uriString.toUri()) },
-            onPlayClick = { uriString -> onPlayClick(uriString.toUri()) },
+            onAddToListClick = { item -> onAddToListClick(item) },
+            onPlayClick = { item -> onPlayClick(item) },
         )
         //添加页脚
         val adapterWithFooter = recyclerView_video_adapter.withLoadStateFooter(footer = ListBottomSloganAdapter {
@@ -157,7 +171,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         //开始分页加载
         lifecycleScope.launch(Dispatchers.IO) {
             val pager = Pager(PagingConfig(pageSize = 20)) {
-                Recycler_PagingSource_Video(requireContext())
+                MediaDataBaseReaderForVideo(requireContext())
             }
             pager.flow.collect { pagingData ->
                 recyclerView_video_adapter.submitData(pagingData)
@@ -246,16 +260,25 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
 
     //添加到自定义
-    private fun onAddToListClick(uri: Uri){
-        ToolVibrate().vibrate(requireContext())
+    private fun onAddToListClick(item: MediaItemForVideo){
+        consoleLog("添加到自定义列表: ${item.file_name}")
 
 
 
     }
-    //播放项
-    private fun onPlayClick(uri: Uri){
-        ToolVibrate().vibrate(requireContext())
+    //播放视频
+    private fun onPlayClick(item: MediaItemForVideo){
 
+        if (item.content_uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
+            PlayerSingleton.continuePlay(true)
+            requireContext().showCustomToast("已在播放该媒体",3)
+        }else{
+            //确保播放器已经启动
+            PlayerSingleton.getInitPlayer()
+            PlayerSingleton.addPlayerStateListener()
+
+            PlayerSingleton.setMediaItem(item.content_uriString.toUri(),true)
+        }
 
     }
 
@@ -296,6 +319,60 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         }else{
             requireContext().showCustomToast("设置失败",2)
         }
+    }
+
+
+    //列表位置监控
+    private val scrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+            val isAtTop = !recyclerView.canScrollVertically(-1)
+            isListUnderTop.value = isAtTop
+        }
+    }
+    private val isListUnderTop = MutableStateFlow(false)
+    val isListUnderTopFlow: StateFlow<Boolean> = isListUnderTop.asStateFlow()
+    private fun startListUnderTopObserver(){
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                isListUnderTopFlow.collect{
+                    if (it){
+                        topBar_bottomLine_Out()
+                    }else{
+                        topBar_bottomLine_In()
+                    }
+                }
+            }
+        }
+    }
+    //为列表应用位置监控
+    private fun applyScrollListener(){
+        recyclerView.addOnScrollListener(scrollListener)
+    }
+    //顶部分隔线显示控制(In代表显示,Out代表隐藏)
+    private lateinit var topBar_bottomLine : View
+    private var isTopBar_bottomLine_In = false
+    private fun topBar_bottomLine_In(){
+        if (isTopBar_bottomLine_In) return
+        isTopBar_bottomLine_In = true
+
+        topBar_bottomLine.visibility = View.VISIBLE
+        topBar_bottomLine.alpha = 0f
+        topBar_bottomLine.animate()
+            .alpha(1f)
+            .setDuration(200)
+            .start()
+
+    }
+    private fun topBar_bottomLine_Out(){
+        if (!isTopBar_bottomLine_In) return
+        isTopBar_bottomLine_In = false
+
+        topBar_bottomLine.animate()
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction { topBar_bottomLine.visibility = View.GONE }
+            .start()
     }
 
 

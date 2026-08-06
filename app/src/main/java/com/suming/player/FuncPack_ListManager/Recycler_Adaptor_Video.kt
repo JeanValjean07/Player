@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
@@ -23,11 +24,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Suppress("unused")
+@Suppress("unused","NewApi")
 class Recycler_Adaptor_Video(
     private val context: Context,
-    private val onAddToListClick: (String) -> Unit,
-    private val onPlayClick: (String) -> Unit
+    private val onAddToListClick: (MediaItemForVideo) -> Unit,
+    private val onPlayClick: (MediaItemForVideo) -> Unit
 ):PagingDataAdapter<MediaItemForVideo, Recycler_Adaptor_Video.viewHolder>(Differ) {
     companion object {
         //比较器
@@ -76,9 +77,8 @@ class Recycler_Adaptor_Video(
             else -> viewHolder(view)
         }
     }
-
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
-    override fun onBindViewHolder(holder: viewHolder, position: Int){
+    override fun onBindViewHolder(holder: viewHolder, position: Int) {
         val item = getItem(position) ?: return
         holder.itemName.text = item.file_name.substringBeforeLast(".")
         holder.itemArtist.text = "未知艺术家"
@@ -88,8 +88,16 @@ class Recycler_Adaptor_Video(
             loadArtworkFrame(item, holder)
         }
         //点击事件设定
-        holder.ButtonAddToList.setOnClickListener { onAddToListClick(item.content_uriString) }
-        holder.ButtonPlay.setOnClickListener { onPlayClick(item.content_uriString) }
+        holder.ButtonAddToList.setOnClickListener {
+            ToolVibrate().vibrate(context)
+
+            onAddToListClick(item)
+        }
+        holder.ButtonPlay.setOnClickListener {
+            ToolVibrate().vibrate(context)
+
+            onPlayClick(item)
+        }
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 
@@ -135,7 +143,6 @@ class Recycler_Adaptor_Video(
         }
 
     }
-
 
     //推送到ImageView
     private fun submitToImageView(holder: viewHolder, Bitmap : Bitmap){

@@ -68,7 +68,7 @@ object PlayerSingleton {
     private var _player: ExoPlayer? = null
 
     //初始化播放器
-    private fun buildPlayer(context: Context): ExoPlayer {
+    private fun buildPlayer(): ExoPlayer {
         val trackSelector = getTrackSelector(context)
         val rendererFactory = getRendererFactory(context)
         //创建播放器
@@ -87,8 +87,8 @@ object PlayerSingleton {
         return ExoPlayer
     }
     //获取播放器,未启动时将播放器初始化
-    fun getInitPlayer(context: Context): ExoPlayer = _player ?: synchronized(this) {
-        _player ?: buildPlayer(context).also { _player = it }
+    fun getInitPlayer(): ExoPlayer = _player ?: synchronized(this) {
+        _player ?: buildPlayer().also { _player = it }
     }.also {
         stateLock_isPlayerInitialized = true
         initializationCallbacks.forEach { callback -> callback.invoke() }
@@ -152,7 +152,7 @@ object PlayerSingleton {
             PlayerInfoCenter.updateObservableIsPlaying(isPlaying)
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            onMediaItemChanged(mediaItem,context)
+            onMediaItemChanged(mediaItem)
         }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
@@ -230,13 +230,13 @@ object PlayerSingleton {
 
     //Long Process Functions
     //设置/变更媒体(设置新媒体项)
-    private fun setMediaItemCore(uri: Uri, playWhenReady: Boolean, context: Context): Boolean {
+    private fun setMediaItemCore(uri: Uri, playWhenReady: Boolean): Boolean {
         //先判断是否是正在播放的媒体
         if (isthisUriOngoing(uri)) return false
 
         //保存上个媒体的需要保存的东西
         if (MediaInfoPackLocal != null){
-            saveLastMediaInfo(context,MediaInfoPackLocal!!)
+            saveLastMediaInfo(MediaInfoPackLocal!!)
         }
 
 
@@ -276,14 +276,14 @@ object PlayerSingleton {
         return true
     }
     //设置新媒体项的外部接口(以后可以加些过滤)(返回是否设置成功)
-    fun setMediaItem(uri: Uri, playWhenReady: Boolean, context: Context): Boolean {
+    fun setMediaItem(uri: Uri, playWhenReady: Boolean): Boolean {
         //设置新媒体项
-        val success = setMediaItemCore(uri, playWhenReady, context)
+        val success = setMediaItemCore(uri, playWhenReady)
 
         return success
     }
     //完成媒体项变更的后续操作
-    private fun onMediaItemChanged(mediaItem: MediaItem?, context: Context){
+    private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null) return
 
         //启动服务和媒体会话
@@ -309,7 +309,7 @@ object PlayerSingleton {
     }
 
     //保存上个媒体的需保存内容
-    private fun saveLastMediaInfo(context:Context ,oldInfoPack: MediaInfo){
+    private fun saveLastMediaInfo(oldInfoPack: MediaInfo){
         //获取当前媒体ID数据
         val DataBaseID = oldInfoPack.MediaInfo_DataBaseID
         val mediaDuration = oldInfoPack.MediaInfo_Duration

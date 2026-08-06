@@ -64,7 +64,7 @@ class PlayerService: MediaSessionService() {
 
 
         //获取播放器
-        val player = PlayerSingleton.getInitPlayer(application)
+        val player = PlayerSingleton.getInitPlayer()
 
         //指定通知,包含设置自定义控制按钮和播控中心小图标
         setMediaNotificationProvider(CustomNotificationSession(this))

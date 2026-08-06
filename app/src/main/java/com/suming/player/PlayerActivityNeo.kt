@@ -301,7 +301,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //context
     val context = this@PlayerActivityNeo
     //获取播放器引用
-    private val player get() = PlayerSingleton.getInitPlayer(application)
+    private val player get() = PlayerSingleton.getInitPlayer()
     //连接到viewModel
     private val playerViewModel: PlayerViewModel by viewModels()
 
@@ -1394,7 +1394,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         startExoPlayer()
 
         //确认设置新媒体项
-        val successSetItem = PlayerSingleton.setMediaItem(uri, true, this)
+        val successSetItem = PlayerSingleton.setMediaItem(uri, true)
 
         //成功时绑定一次播放器视图,作为保险
         if (successSetItem) bindPlayerView()

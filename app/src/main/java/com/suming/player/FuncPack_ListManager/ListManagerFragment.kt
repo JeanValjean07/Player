@@ -693,7 +693,7 @@ class ListManagerFragment: DialogFragment() {
             PlayerSingleton.continuePlay(true)
             requireContext().showCustomToast("已在播放该媒体",3)
         }else{
-            PlayerSingleton.setMediaItem(uriString.toUri(), true,requireContext())
+            PlayerSingleton.setMediaItem(uriString.toUri(), true)
         }
     }
     //删除点击事件
@@ -704,6 +704,8 @@ class ListManagerFragment: DialogFragment() {
     private fun onAddToListClick(uriString: String) {
 
     }
+
+
 
     //发布事件回Activity
     private fun returnFragmentResult(event: String){

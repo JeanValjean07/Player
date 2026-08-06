@@ -81,7 +81,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 @Suppress("NewApi")
-@RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
     //连接ViewModel
@@ -91,8 +90,8 @@ class MainActivity: AppCompatActivity() {
     private var lock_clickMillisLock = 0L
 
 
-    @RequiresApi(Build.VERSION_CODES.R)
-    @SuppressLint("ClickableViewAccessibility", "NewApi")
+
+    @SuppressLint("ClickableViewAccessibility" )
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -204,7 +203,7 @@ class MainActivity: AppCompatActivity() {
         DeviceInfo.screenWidth = resources.displayMetrics.widthPixels
         DeviceInfo.screenHeight = resources.displayMetrics.heightPixels
         //获取状态栏高度
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
             DeviceInfo.statusBarHeight = systemBars.top
@@ -1194,11 +1193,11 @@ class MainActivity: AppCompatActivity() {
     //设置新的媒体项
     private fun setMediaItem(MediaInfo_MediaUri: Uri, playWhenReady: Boolean){
         //确保播放器已经启动
-        PlayerSingleton.getInitPlayer(application)
+        PlayerSingleton.getInitPlayer()
         PlayerSingleton.addPlayerStateListener()
 
         //确认设置新媒体项
-        PlayerSingleton.setMediaItem(MediaInfo_MediaUri, playWhenReady, this)
+        PlayerSingleton.setMediaItem(MediaInfo_MediaUri, playWhenReady)
     }
     //从选单发起后台播放
     private fun startMiniViewPlay(uri: Uri){
