@@ -542,28 +542,28 @@ class ListManagerFragment: DialogFragment() {
     private fun updateCardColor(position: Int){
         when(position){
             0 -> {
-                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
-                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_ON))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
             }
             1 -> {
-                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
-                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_ON))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
             }
             2 -> {
-                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
-                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_ON))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
             }
             3 -> {
-                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_OFF))
-                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.ButtonCard_ON))
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_ON))
             }
         }
     }

@@ -87,7 +87,7 @@
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:padding="8dp"
-            android:src="@drawable/ic_play_list_add_to_list"
+            android:src="@drawable/ic_frag_list_item_add"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="删除"
             app:layout_constraintTop_toTopOf="parent"

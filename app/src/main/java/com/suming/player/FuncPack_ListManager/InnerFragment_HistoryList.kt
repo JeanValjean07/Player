@@ -14,7 +14,6 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.LoadState
@@ -317,7 +316,7 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
         }else{
             ButtonSetAsCurrentListText.text = "设为当前播放列表"
-            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_add)
+            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_general_add)
         }
     }
     //加载状态提示

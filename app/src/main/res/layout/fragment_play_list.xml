@@ -42,7 +42,7 @@
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:layout_marginStart="5dp"
-                        android:src="@drawable/ic_general_close"
+                        android:src="@drawable/ic_frag_list_delete_item"
                         android:layout_gravity="center"
                         app:buttonSize="50dp"
                         app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
@@ -70,7 +70,7 @@
                     <androidx.cardview.widget.CardView
                         android:id="@+id/ButtonCardLoopMode"
                         android:layout_width="wrap_content"
-                        android:layout_height="30dp"
+                        android:layout_height="25dp"
                         android:layout_marginEnd="10dp"
                         android:layout_gravity="center"
                         android:backgroundTint="@color/SecondaryColorPack_CardButtonBackground"
@@ -151,7 +151,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="10dp"
                                 android:layout_gravity="center"
-                                android:backgroundTint="@color/ButtonCard_OFF"
+                                android:backgroundTint="@color/SecondaryColorPack_CardButtonBackground_state_OFF"
                                 app:cardElevation="2dp"
                                 app:cardCornerRadius="5dp">
                                 <LinearLayout
@@ -186,7 +186,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="10dp"
                                 android:layout_gravity="center"
-                                android:backgroundTint="@color/ButtonCard_OFF"
+                                android:backgroundTint="@color/SecondaryColorPack_CardButtonBackground_state_OFF"
                                 app:cardElevation="2dp"
                                 app:cardCornerRadius="5dp">
                                 <LinearLayout
@@ -221,7 +221,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="10dp"
                                 android:layout_gravity="center"
-                                android:backgroundTint="@color/ButtonCard_OFF"
+                                android:backgroundTint="@color/SecondaryColorPack_CardButtonBackground_state_OFF"
                                 app:cardElevation="2dp"
                                 app:cardCornerRadius="5dp">
                                 <LinearLayout
@@ -257,7 +257,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="10dp"
                                 android:layout_gravity="center"
-                                android:backgroundTint="@color/ButtonCard_OFF"
+                                android:backgroundTint="@color/SecondaryColorPack_CardButtonBackground_state_OFF"
                                 app:cardElevation="2dp"
                                 app:cardCornerRadius="5dp">
                                 <LinearLayout
@@ -308,7 +308,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="10dp"
-                        android:backgroundTint="@color/ButtonCard_OFF"
+                        android:backgroundTint="@color/SecondaryColorPack_CardButtonBackground"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -325,7 +325,7 @@
                                 android:layout_marginStart="10dp"
                                 android:layout_marginTop="5dp"
                                 android:layout_marginBottom="5dp"
-                                android:text="当前列表:"
+                                android:text="当前播放:"
                                 android:textColor="@color/HeadText"
                                 android:textSize="11sp" />
                             <ImageView

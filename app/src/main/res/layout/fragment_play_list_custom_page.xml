@@ -105,7 +105,7 @@
                                 android:padding="6dp"
                                 android:backgroundTint="@android:color/transparent"
                                 android:scaleType="centerCrop"
-                                android:src="@drawable/ic_play_list_add"
+                                android:src="@drawable/ic_general_add"
                                 tools:ignore="ContentDescription" />
                             <TextView
                                 android:id="@+id/ButtonSetAsCurrentListText"

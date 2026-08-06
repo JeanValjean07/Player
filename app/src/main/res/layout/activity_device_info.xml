@@ -39,7 +39,7 @@
                     android:contentDescription="退出"
                     android:padding="11dp"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/ic_general_exit"/>
+                    android:src="@drawable/ic_general_exit_type_old"/>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"

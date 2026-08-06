@@ -54,7 +54,7 @@
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:layout_marginStart="5dp"
-                        android:src="@drawable/ic_general_close"
+                        android:src="@drawable/ic_frag_list_delete_item"
                         android:layout_gravity="center"
                         app:buttonSize="50dp"
                         app:mainColor="@color/SecondaryColorPack_CardButtonBackground"

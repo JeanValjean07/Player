@@ -1,6 +1,5 @@
 package com.suming.player.FuncPack_ListManager
 
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -399,7 +398,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
         }else{
             ButtonSetAsCurrentListText.text = "设为当前播放列表"
-            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_add)
+            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_general_add)
         }
     }
     //加载状态提示(需要重做)

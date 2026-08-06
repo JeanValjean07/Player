@@ -43,7 +43,7 @@
                 android:padding="6dp"
                 android:elevation="10dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_general_exit_stroke"
+                android:src="@drawable/ic_general_exit_type_old_with_stroke"
                 android:layout_marginStart="8dp"
                 android:layout_weight="0"/>
             <!-- 占位 -->

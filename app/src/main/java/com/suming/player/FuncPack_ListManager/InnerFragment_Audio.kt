@@ -1,6 +1,5 @@
 package com.suming.player.FuncPack_ListManager
 
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,7 +11,6 @@ import androidx.cardview.widget.CardView
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -26,7 +24,6 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForMusic
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import kotlinx.coroutines.Dispatchers
@@ -341,7 +338,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
         }
         else{
             ButtonSetAsCurrentListText.text = "设为当前播放列表"
-            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_add)
+            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_general_add)
         }
     }
 

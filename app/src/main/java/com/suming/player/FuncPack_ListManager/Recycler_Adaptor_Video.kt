@@ -80,7 +80,7 @@ class Recycler_Adaptor_Video(
 
         }
         fun setItemPlayingButton(isPlaying: Boolean){
-            ButtonPlay.setImageResource(if (isPlaying) R.drawable.ic_controller_neo_pause else R.drawable.ic_controller_neo_play)
+            ButtonPlay.setImageResource(if (isPlaying) R.drawable.ic_frag_list_item_pause else R.drawable.ic_frag_list_item_play)
         }
 
     }
