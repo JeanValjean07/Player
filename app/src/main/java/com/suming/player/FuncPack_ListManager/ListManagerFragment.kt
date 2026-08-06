@@ -26,7 +26,9 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.ListFragment
 import androidx.fragment.app.setFragmentResult
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
@@ -36,6 +38,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaRecordManager
+import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -109,6 +112,8 @@ class ListManagerFragment: DialogFragment() {
         register(view)
         //注册子Fragment通信
         registerChildFragment()
+        //注册当前播放项观察者
+        startMediaItemObserver()
 
         //启动ViewPager
         registerViewPager(view)
@@ -386,7 +391,7 @@ class ListManagerFragment: DialogFragment() {
 
     }
     //向子Fragment传递事件
-    private fun sendChildFragmentEvent(targetList: Any, data: String) {
+    private fun sendChildFragmentEvent(targetList: Any, data: String, extra: String = "") {
         //合成position
         val position = if (targetList is String){
             viewPagerPageMarkMapString[targetList] ?: return
@@ -397,30 +402,62 @@ class ListManagerFragment: DialogFragment() {
             0 -> {
                 //自定义列表
                 childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_custom, bundleOf(
-                    ListManagerHelper.event_key_general to data
+                    ListManagerHelper.event_key_general to data, ListManagerHelper.event_key_extra to extra
                 ))
             }
             1 -> {
                 //历史列表
                 childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_history, bundleOf(
-                    ListManagerHelper.event_key_general to data
+                    ListManagerHelper.event_key_general to data, ListManagerHelper.event_key_extra to extra
                 ))
             }
             2 -> {
                 //视频列表
                 childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_video, bundleOf(
-                    ListManagerHelper.event_key_general to data
+                    ListManagerHelper.event_key_general to data, ListManagerHelper.event_key_extra to extra
                 ))
             }
             3 -> {
                 //音乐列表
                 childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_audio, bundleOf(
-                    ListManagerHelper.event_key_general to data
+                    ListManagerHelper.event_key_general to data, ListManagerHelper.event_key_extra to extra
                 ))
             }
             else -> {
-                requireContext().showCustomToast("标签未命中任何有效目标(String)")
                 return
+            }
+        }
+    }
+
+    //观察当前播放项
+    private var MediaItemObserverRunning = false
+    private fun startMediaItemObserver() {
+        if (MediaItemObserverRunning) return
+        MediaItemObserverRunning = true
+
+        //启动MediaItem观察者
+        lifecycleScope.launch {
+            //观察正在播放的媒体项变更
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                PlayerInfoCenter.observableMediaItem.collect { _ ->
+
+                    //传入当前页签
+                    val currentViewPagerPage = ViewPager.currentItem
+
+                    sendChildFragmentEvent(currentViewPagerPage, ListManagerHelper.event_detail_general_media_item_update)
+
+                }
+            }
+        }
+        //观察播放状态变更
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                PlayerInfoCenter.isPlaying.collect { newState ->
+                    //传入当前页签
+                    val currentViewPagerPage = ViewPager.currentItem
+                    sendChildFragmentEvent(currentViewPagerPage, ListManagerHelper.event_detail_general_media_state_update)
+
+                }
             }
         }
     }

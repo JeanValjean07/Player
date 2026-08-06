@@ -22,7 +22,32 @@ object PlayerInfoCenter {
         }
     }
 
-    //承担播放状态和媒体信息
+
+
+    const val Undefined = ""
+
+
+
+
+    //专供观察数据类
+    data class ObservableMediaItem(
+        var MediaInfo_MediaUriString: String = Undefined,
+        var MediaInfo_MediaType: String = MediaType.Undefined,
+    )
+    //可观察数据类实例
+    private val _observableMediaItem = MutableStateFlow(ObservableMediaItem())
+    val observableMediaItem: StateFlow<ObservableMediaItem> = _observableMediaItem.asStateFlow()
+    //更新可观察数据类实例
+    fun updateObservableMediaItem(newObservableMediaItem: ObservableMediaItem){
+        _observableMediaItem.value = newObservableMediaItem
+    }
+
+    //可观察播放/暂停状态
+    private val _isPlaying = MutableStateFlow(false)
+    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+
+
+
 
 
     //是否已设置媒体
@@ -37,9 +62,7 @@ object PlayerInfoCenter {
     private val _uriString = MutableStateFlow("")
     val uriString: StateFlow<String> = _uriString.asStateFlow()
 
-    //播放状态(播放,暂停)也可观察
-    private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+
 
 
     //更新当前媒体链接(必须在其他信息完成替换后才触发观察事件变更)
@@ -60,6 +83,11 @@ object PlayerInfoCenter {
         current_uriString = MediaInfoPack.MediaInfo_MediaUriString
         //更新内部可观察标签
         updateObservableUriString(MediaInfoPack.MediaInfo_MediaUriString)
+        //更新可观察数据类
+        updateObservableMediaItem(ObservableMediaItem(
+            MediaInfo_MediaUriString = MediaInfoPack.MediaInfo_MediaUriString,
+            MediaInfo_MediaType = MediaInfoPack.MediaInfo_MediaType,
+        ))
     }
 
     //设置真实帧率值

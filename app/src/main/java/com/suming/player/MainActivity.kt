@@ -161,233 +161,6 @@ class MainActivity: AppCompatActivity() {
 
 
 
-    //显示重组
-    private lateinit var level_root: ConstraintLayout
-    private lateinit var level_topBar : CardView
-    private lateinit var level_list : LinearLayout
-    private lateinit var level_openFile : LinearLayout
-    private lateinit var level_controllers : LinearLayout
-    private lateinit var level_miniView : CardView
-    private var isLandscape : Boolean = false
-    private fun initDisplay(){
-        window.attributes = window.attributes.apply {
-            windowAnimations = 0
-        }
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main_activity)
-        //初始化视图
-        level_root = findViewById(R.id.activity_root_constraint)
-        level_topBar = findViewById(R.id.level_topBar)
-        level_list = findViewById(R.id.level_list)
-        level_openFile = findViewById(R.id.level_openFile)
-        level_controllers = findViewById(R.id.level_controllers)
-        level_miniView = findViewById(R.id.level_miniView)
-        //获取主要列表视图
-        ListRecyclerView_Video = findViewById(R.id.recyclerview_video_list)
-        ListRecyclerView_Music = findViewById(R.id.recyclerview_music_list)
-        AppBarNoticeText = findViewById(R.id.AppBarNoticeText)
-        AppBarTitle = findViewById(R.id.AppBarTitle)
-        ButtonCardMusic = findViewById(R.id.ButtonCardMusic)
-        ButtonCardVideo = findViewById(R.id.ButtonCardVideo)
-        ButtonCardGallery = findViewById(R.id.ButtonCardGallery)
-        topBar_bottomLine = findViewById(R.id.topBar_bottomLine)
-
-        //获取横竖屏模式
-        isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        //获取屏幕信息
-        getScreenInfo()
-
-    }
-    private fun getScreenInfo(){
-        //获取屏幕宽高
-        DeviceInfo.screenWidth = resources.displayMetrics.widthPixels
-        DeviceInfo.screenHeight = resources.displayMetrics.heightPixels
-        //获取状态栏高度
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { _, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-
-            DeviceInfo.statusBarHeight = systemBars.top
-
-            //重组主要视图
-            compose()
-
-            insets
-        }
-    }
-    private fun compose(){
-        //重组miniView(竖屏时不修改,横排时修改为悬浮并限制长度)
-        if (isLandscape){
-
-            //限制控件宽度(不可用,必须用constraintSe)
-            /*
-            val params = level_miniView.layoutParams as? ConstraintLayout.LayoutParams
-            params?.let {
-                it.width = 0
-                it.matchConstraintMaxWidth = 300.dpToPx()
-                level_miniView.layoutParams = it
-            }
-
-             */
-
-            /*
-            //修改miniView
-            val constraintSet = ConstraintSet()
-            constraintSet.clone(level_root)
-            constraintSet.clear(level_miniView.id)
-            constraintSet.connect(
-                level_miniView.id,
-                ConstraintSet.BOTTOM,
-                level_root.id,
-                ConstraintSet.BOTTOM,
-                20.dpToPx()
-            )
-            constraintSet.connect(
-                level_miniView.id,
-                ConstraintSet.RIGHT,
-                level_root.id,
-                ConstraintSet.RIGHT,
-                DisplayInfo.statusBarHeight + 10
-            )
-            constraintSet.constrainWidth(level_miniView.id, 300.dpToPx())
-            constraintSet.constrainHeight(level_miniView.id,  ConstraintSet.WRAP_CONTENT)
-            constraintSet.applyTo(level_root)
-            level_miniView.radius = 20f
-            //设置顶部分隔线
-            val topLine = findViewById<View>(R.id.miniView_topLine)
-            topLine.visibility = View.GONE
-
-            //取消底部边距(设置高度为0)
-            val miniView_bottomSafeArea = findViewById<View>(R.id.miniView_bottomSafeArea)
-            val params = miniView_bottomSafeArea.layoutParams
-            params.height = 0
-            miniView_bottomSafeArea.layoutParams = params
-            miniView_bottomSafeArea.requestLayout()
-
-            //设置顶部栏
-            constraintSet.clone(level_root)
-            constraintSet.clear(level_topBar.id)
-            constraintSet.connect(
-                level_topBar.id,
-                ConstraintSet.TOP,
-                level_root.id,
-                ConstraintSet.TOP,
-                DisplayInfo.statusBarHeight + 10
-            )
-            constraintSet.connect(
-                level_topBar.id,
-                ConstraintSet.LEFT,
-                level_root.id,
-                ConstraintSet.LEFT,
-                DisplayInfo.statusBarHeight + 10
-            )
-            constraintSet.constrainWidth(level_topBar.id, 300.dpToPx())
-            constraintSet.constrainHeight(level_topBar.id,  ConstraintSet.WRAP_CONTENT)
-            constraintSet.applyTo(level_root)
-            level_topBar.radius = 20f
-
-            //取消顶部边距
-            val topBar_topSafeArea = findViewById<View>(R.id.topBar_topSafeArea)
-            val params_topBar = topBar_topSafeArea.layoutParams
-            params_topBar.height = 0
-            topBar_topSafeArea.layoutParams = params_topBar
-            topBar_topSafeArea.requestLayout()
-
-             */
-
-            val constraintSet = ConstraintSet()
-            constraintSet.clone(level_root)
-            constraintSet.clear(level_controllers.id)
-            constraintSet.connect(
-                level_controllers.id,
-                ConstraintSet.TOP,
-                level_root.id,
-                ConstraintSet.TOP,
-                0
-            )
-            constraintSet.connect(
-                level_controllers.id,
-                ConstraintSet.LEFT,
-                level_root.id,
-                ConstraintSet.LEFT,
-                0
-            )
-            constraintSet.connect(
-                level_controllers.id,
-                ConstraintSet.BOTTOM,
-                level_root.id,
-                ConstraintSet.BOTTOM,
-                0
-            )
-            constraintSet.constrainWidth(level_controllers.id, (DeviceInfo.screenWidth * 0.3f).toInt())
-            constraintSet.applyTo(level_root)
-
-            val constraintSetList = ConstraintSet()
-            constraintSetList.clone(level_root)
-            constraintSetList.clear(level_list.id)
-            constraintSetList.connect(
-                level_list.id,
-                ConstraintSet.LEFT,
-                level_controllers.id,
-                ConstraintSet.RIGHT,
-                0
-            )
-
-            constraintSetList.constrainWidth(level_list.id, (DeviceInfo.screenWidth * 0.7f).toInt())
-            constraintSetList.applyTo(level_root)
-
-            val level_controller_rightLine = findViewById<View>(R.id.level_controller_rightLine)
-            level_controller_rightLine.visibility = View.VISIBLE
-
-
-
-
-            //设置列表内边距
-            ListRecyclerView_Video.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 300)
-            ListRecyclerView_Music.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 300)
-            ListRecyclerView_Video.requestLayout()
-            ListRecyclerView_Music.requestLayout()
-
-
-
-
-        }else{
-            //竖屏模式
-
-
-
-            //设置顶部边距
-            val topBar_topSafeArea = findViewById<View>(R.id.topBar_topSafeArea)
-            val params_topSafeArea = topBar_topSafeArea.layoutParams
-            params_topSafeArea.height = DeviceInfo.statusBarHeight + 10
-            topBar_topSafeArea.layoutParams = params_topSafeArea
-            topBar_topSafeArea.requestLayout()
-
-            //获取顶部卡片总高度
-            var topBar_totalHeight = level_topBar.height
-            level_topBar.post {
-                topBar_totalHeight = level_topBar.height
-
-                val targetTopPadding = topBar_totalHeight + 10
-
-                //consoleLog(" 界面重组 compose: targetTopPadding:$targetTopPadding,  statusBarHeight:${DeviceInfo.statusBarHeight}  ")
-
-                //设置列表内边距
-                ListRecyclerView_Video.setPadding(0, targetTopPadding, 0, 300)
-                ListRecyclerView_Music.setPadding(0, targetTopPadding, 0, 300)
-                ListRecyclerView_Video.requestLayout()
-                ListRecyclerView_Music.requestLayout()
-
-            }
-
-
-        }
-
-    }
-    private fun Int.dpToPx(): Int {
-        return (this * Resources.getSystem().displayMetrics.density).toInt()
-    }
-
-
 
 
     //注册Fragment监听器
@@ -1569,6 +1342,232 @@ class MainActivity: AppCompatActivity() {
     //启动播放列表Fragment面板
     private fun startPlayListFragment(){
         ListManagerFragment.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+    }
+
+    //显示重组
+    private lateinit var level_root: ConstraintLayout
+    private lateinit var level_topBar : CardView
+    private lateinit var level_list : LinearLayout
+    private lateinit var level_openFile : LinearLayout
+    private lateinit var level_controllers : LinearLayout
+    private lateinit var level_miniView : CardView
+    private var isLandscape : Boolean = false
+    private fun initDisplay(){
+        window.attributes = window.attributes.apply {
+            windowAnimations = 0
+        }
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main_activity)
+        //初始化视图
+        level_root = findViewById(R.id.activity_root_constraint)
+        level_topBar = findViewById(R.id.level_topBar)
+        level_list = findViewById(R.id.level_list)
+        level_openFile = findViewById(R.id.level_openFile)
+        level_controllers = findViewById(R.id.level_controllers)
+        level_miniView = findViewById(R.id.level_miniView)
+        //获取主要列表视图
+        ListRecyclerView_Video = findViewById(R.id.recyclerview_video_list)
+        ListRecyclerView_Music = findViewById(R.id.recyclerview_music_list)
+        AppBarNoticeText = findViewById(R.id.AppBarNoticeText)
+        AppBarTitle = findViewById(R.id.AppBarTitle)
+        ButtonCardMusic = findViewById(R.id.ButtonCardMusic)
+        ButtonCardVideo = findViewById(R.id.ButtonCardVideo)
+        ButtonCardGallery = findViewById(R.id.ButtonCardGallery)
+        topBar_bottomLine = findViewById(R.id.topBar_bottomLine)
+
+        //获取横竖屏模式
+        isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //获取屏幕信息
+        getScreenInfo()
+
+    }
+    private fun getScreenInfo(){
+        //获取屏幕宽高
+        DeviceInfo.screenWidth = resources.displayMetrics.widthPixels
+        DeviceInfo.screenHeight = resources.displayMetrics.heightPixels
+        //获取状态栏高度
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            DeviceInfo.statusBarHeight = systemBars.top
+
+            //重组主要视图
+            compose()
+
+            insets
+        }
+    }
+    private fun compose(){
+        //重组miniView(竖屏时不修改,横排时修改为悬浮并限制长度)
+        if (isLandscape){
+
+            //限制控件宽度(不可用,必须用constraintSe)
+            /*
+            val params = level_miniView.layoutParams as? ConstraintLayout.LayoutParams
+            params?.let {
+                it.width = 0
+                it.matchConstraintMaxWidth = 300.dpToPx()
+                level_miniView.layoutParams = it
+            }
+
+             */
+
+            /*
+            //修改miniView
+            val constraintSet = ConstraintSet()
+            constraintSet.clone(level_root)
+            constraintSet.clear(level_miniView.id)
+            constraintSet.connect(
+                level_miniView.id,
+                ConstraintSet.BOTTOM,
+                level_root.id,
+                ConstraintSet.BOTTOM,
+                20.dpToPx()
+            )
+            constraintSet.connect(
+                level_miniView.id,
+                ConstraintSet.RIGHT,
+                level_root.id,
+                ConstraintSet.RIGHT,
+                DisplayInfo.statusBarHeight + 10
+            )
+            constraintSet.constrainWidth(level_miniView.id, 300.dpToPx())
+            constraintSet.constrainHeight(level_miniView.id,  ConstraintSet.WRAP_CONTENT)
+            constraintSet.applyTo(level_root)
+            level_miniView.radius = 20f
+            //设置顶部分隔线
+            val topLine = findViewById<View>(R.id.miniView_topLine)
+            topLine.visibility = View.GONE
+
+            //取消底部边距(设置高度为0)
+            val miniView_bottomSafeArea = findViewById<View>(R.id.miniView_bottomSafeArea)
+            val params = miniView_bottomSafeArea.layoutParams
+            params.height = 0
+            miniView_bottomSafeArea.layoutParams = params
+            miniView_bottomSafeArea.requestLayout()
+
+            //设置顶部栏
+            constraintSet.clone(level_root)
+            constraintSet.clear(level_topBar.id)
+            constraintSet.connect(
+                level_topBar.id,
+                ConstraintSet.TOP,
+                level_root.id,
+                ConstraintSet.TOP,
+                DisplayInfo.statusBarHeight + 10
+            )
+            constraintSet.connect(
+                level_topBar.id,
+                ConstraintSet.LEFT,
+                level_root.id,
+                ConstraintSet.LEFT,
+                DisplayInfo.statusBarHeight + 10
+            )
+            constraintSet.constrainWidth(level_topBar.id, 300.dpToPx())
+            constraintSet.constrainHeight(level_topBar.id,  ConstraintSet.WRAP_CONTENT)
+            constraintSet.applyTo(level_root)
+            level_topBar.radius = 20f
+
+            //取消顶部边距
+            val topBar_topSafeArea = findViewById<View>(R.id.topBar_topSafeArea)
+            val params_topBar = topBar_topSafeArea.layoutParams
+            params_topBar.height = 0
+            topBar_topSafeArea.layoutParams = params_topBar
+            topBar_topSafeArea.requestLayout()
+
+             */
+
+            val constraintSet = ConstraintSet()
+            constraintSet.clone(level_root)
+            constraintSet.clear(level_controllers.id)
+            constraintSet.connect(
+                level_controllers.id,
+                ConstraintSet.TOP,
+                level_root.id,
+                ConstraintSet.TOP,
+                0
+            )
+            constraintSet.connect(
+                level_controllers.id,
+                ConstraintSet.LEFT,
+                level_root.id,
+                ConstraintSet.LEFT,
+                0
+            )
+            constraintSet.connect(
+                level_controllers.id,
+                ConstraintSet.BOTTOM,
+                level_root.id,
+                ConstraintSet.BOTTOM,
+                0
+            )
+            constraintSet.constrainWidth(level_controllers.id, (DeviceInfo.screenWidth * 0.3f).toInt())
+            constraintSet.applyTo(level_root)
+
+            val constraintSetList = ConstraintSet()
+            constraintSetList.clone(level_root)
+            constraintSetList.clear(level_list.id)
+            constraintSetList.connect(
+                level_list.id,
+                ConstraintSet.LEFT,
+                level_controllers.id,
+                ConstraintSet.RIGHT,
+                0
+            )
+
+            constraintSetList.constrainWidth(level_list.id, (DeviceInfo.screenWidth * 0.7f).toInt())
+            constraintSetList.applyTo(level_root)
+
+            val level_controller_rightLine = findViewById<View>(R.id.level_controller_rightLine)
+            level_controller_rightLine.visibility = View.VISIBLE
+
+
+
+
+            //设置列表内边距
+            ListRecyclerView_Video.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 300)
+            ListRecyclerView_Music.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 300)
+            ListRecyclerView_Video.requestLayout()
+            ListRecyclerView_Music.requestLayout()
+
+
+
+
+        }else{
+            //竖屏模式
+
+
+
+            //设置顶部边距
+            val topBar_topSafeArea = findViewById<View>(R.id.topBar_topSafeArea)
+            val params_topSafeArea = topBar_topSafeArea.layoutParams
+            params_topSafeArea.height = DeviceInfo.statusBarHeight + 10
+            topBar_topSafeArea.layoutParams = params_topSafeArea
+            topBar_topSafeArea.requestLayout()
+
+            //获取顶部卡片总高度
+            var topBar_totalHeight = level_topBar.height
+            level_topBar.post {
+                topBar_totalHeight = level_topBar.height
+
+                val targetTopPadding = topBar_totalHeight + 10
+
+                //consoleLog(" 界面重组 compose: targetTopPadding:$targetTopPadding,  statusBarHeight:${DeviceInfo.statusBarHeight}  ")
+
+                //设置列表内边距
+                ListRecyclerView_Video.setPadding(0, targetTopPadding, 0, 300)
+                ListRecyclerView_Music.setPadding(0, targetTopPadding, 0, 300)
+                ListRecyclerView_Video.requestLayout()
+                ListRecyclerView_Music.requestLayout()
+
+            }
+
+
+        }
+
+    }
+    private fun Int.dpToPx(): Int {
+        return (this * Resources.getSystem().displayMetrics.density).toInt()
     }
 
     //显示加载提示

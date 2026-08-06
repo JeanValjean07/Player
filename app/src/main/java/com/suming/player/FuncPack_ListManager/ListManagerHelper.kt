@@ -239,6 +239,7 @@ object ListManagerHelper {
 
     //列表Fragment间通信字段
     const val event_key_general = "event_key_general"
+    const val event_key_extra = "event_key_extra"
     const val fragment_request_key_custom = "fragment_request_key_custom"
     const val fragment_request_key_history = "fragment_request_key_history"
     const val fragment_request_key_video = "fragment_request_key_video"
@@ -248,10 +249,15 @@ object ListManagerHelper {
     const val event_detail_general_update_currentPlayingList_icon = "event_detail_general_update_currentPlayingList_icon"
     const val event_detail_general_goto_list_top = "event_detail_general_goto_list_top"
     const val event_detail_general_update_list_state = "event_detail_general_update_list_state"
+    const val event_detail_general_media_item_update = "event_detail_general_media_item_update"
+    const val event_detail_general_media_state_update = "event_detail_general_media_state_update"
     //特殊通信事件(每个页面用不同的字段) event_detail_
 
 
 
+    //Adaptor Payload字段 payload_event_
+    const val payload_event_item_update = "payload_event_item_update"
+    const val payload_event_item_state_update = "payload_event_item_state_update"
 
 
 

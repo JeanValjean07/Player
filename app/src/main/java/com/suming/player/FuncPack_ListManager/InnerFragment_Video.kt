@@ -24,6 +24,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForVideo
 import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +46,6 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     }
     //当前页签(固定值)
     private val flag_currentPage = ListManagerHelper.ListMark_Video
-
 
 
 
@@ -163,8 +163,6 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             onAddToListClick = { item -> onAddToListClick(item) },
             onPlayClick = { item, position -> onPlayClick(item, position) },
         )
-        //关闭动画
-        recyclerView.itemAnimator = null
         //添加页脚
         val adapterWithFooter = recyclerView_video_adapter.withLoadStateFooter(footer = ListBottomSloganAdapter {
             recyclerView_video_adapter.retry()
@@ -203,6 +201,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     private fun registerFragmentResultListener(){
         parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_video, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: ""
             when(key){
                 //回滚到顶部
                 ListManagerHelper.event_detail_general_goto_list_top -> {
@@ -212,9 +211,39 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
                 ListManagerHelper.event_detail_general_update_list_state -> {
                     onFragmentFocused()
                 }
+
+                //播放项变更
+                ListManagerHelper.event_detail_general_media_item_update -> {
+                    onMediaItemUpdate()
+                }
+                //播放状态变更
+                ListManagerHelper.event_detail_general_media_state_update -> {
+                    onMediaStateUpdate()
+                }
             }
         }
     }
+
+
+    //播放项变更
+    private fun onMediaItemUpdate(){
+        //获取当前播放项
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+
+        //使用payload更新当前播放项指示器
+        recyclerView_video_adapter.updateCurrentMediaItem(currentItemUri, ListManagerHelper.payload_event_item_update)
+
+    }
+    //播放状态变更
+    private fun onMediaStateUpdate(){
+        //获取当前播放项
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+
+        //使用payload更新当前播放项指示器
+        recyclerView_video_adapter.updateCurrentIsPlayingState(currentItemUri, PlayerInfoCenter.isPlaying.value, ListManagerHelper.payload_event_item_state_update)
+
+    }
+
 
 
 
@@ -270,26 +299,28 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
     }
     //播放视频
-    private var cache_lastPosition: Int = -1
     private fun onPlayClick(item: MediaItemForVideo, position: Int){
 
         if (item.content_uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
-            PlayerSingleton.continuePlay(true)
-            requireContext().showCustomToast("已在播放该媒体",3)
+            if (PlayerInfoCenter.isPlaying.value){
+                PlayerSingleton.pausePlay()
+            }else{
+                PlayerSingleton.continuePlay(true)
+            }
         }else{
             //确保播放器已经启动
             PlayerSingleton.getInitPlayer()
             PlayerSingleton.addPlayerStateListener()
-
+            //设置播放项
             PlayerSingleton.setMediaItem(item.content_uriString.toUri(),true)
         }
 
         //是否正在播放
 
 
-        //刷新播放列表显示
-        recyclerView_video_adapter.refreshVisibleItems(layoutManager)
 
+        //全局刷新播放列表显示
+        //recyclerView_video_adapter.refreshVisibleItems(layoutManager)
 
     }
 

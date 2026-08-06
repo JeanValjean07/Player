@@ -82,7 +82,7 @@
                 android:layout_marginBottom="1dp"
                 tools:ignore="SmallSp" />
         </LinearLayout>
-        <!-- 操作按钮 -->
+        <!-- 操作按钮-添加到播放列表 -->
         <ImageView
             android:id="@+id/ButtonAddToList"
             android:layout_width="35dp"
@@ -94,12 +94,13 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/ButtonPlay" />
+        <!-- 操作按钮-立即播放或暂停 -->
         <ImageView
             android:id="@+id/ButtonPlay"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:padding="10dp"
-            android:src="@drawable/ic_play_list_play"
+            android:src="@drawable/ic_frag_list_item_play"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_marginEnd="7dp"
             android:contentDescription="立即播放"

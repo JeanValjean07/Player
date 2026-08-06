@@ -24,6 +24,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForMusic
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import kotlinx.coroutines.Dispatchers
@@ -147,6 +148,24 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
 
 
 
+    //播放项变更
+    private fun onMediaItemUpdate(){
+        //获取当前播放项
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+
+        //使用payload更新当前播放项指示器
+        recyclerView_music_adapter.updateCurrentMediaItem(currentItemUri, ListManagerHelper.payload_event_item_update)
+
+    }
+    //播放状态变更
+    private fun onMediaStateUpdate(){
+        //获取当前播放项
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+
+        //使用payload更新当前播放项指示器
+        recyclerView_music_adapter.updateCurrentIsPlayingState(currentItemUri, PlayerInfoCenter.isPlaying.value, ListManagerHelper.payload_event_item_state_update)
+
+    }
 
 
 
@@ -157,6 +176,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     private fun registerFragmentResultListener(){
         parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_audio, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: ""
             when(key){
                 //回滚到顶部
                 ListManagerHelper.event_detail_general_goto_list_top -> {
@@ -167,6 +187,14 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
                     onFragmentFocused()
                 }
 
+                //播放项变更
+                ListManagerHelper.event_detail_general_media_item_update -> {
+                    onMediaItemUpdate()
+                }
+                //播放状态变更
+                ListManagerHelper.event_detail_general_media_state_update -> {
+                    onMediaStateUpdate()
+                }
             }
         }
     }

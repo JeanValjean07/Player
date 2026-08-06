@@ -29,7 +29,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Suppress("unused","NewApi")
+@Suppress("NewApi")
 class Recycler_Adaptor_Video(
     private val context: Context,
     private val onAddToListClick: (MediaItemForVideo) -> Unit,
@@ -43,6 +43,10 @@ class Recycler_Adaptor_Video(
             }
             override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
                 return oldItem == newItem
+            }
+            override fun getChangePayload(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Any? {
+
+                return null
             }
         }
         //viewType
@@ -60,12 +64,9 @@ class Recycler_Adaptor_Video(
         val itemArtist: TextView = itemView.findViewById(R.id.tvArtist)
         val ButtonAddToList: ImageView = itemView.findViewById(R.id.ButtonAddToList)
         val ButtonPlay: ImageView = itemView.findViewById(R.id.ButtonPlay)
-
         val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
-        var itemFrameJob: Job? = null
 
-        var isItemOn: Boolean = false   //是否为当前媒体
-        var isItemPlaying: Boolean = false  //是否正在播放
+        var itemFrameJob: Job? = null
 
         //是否正在播放
         fun setItemPlayingCard(isItemOn: Boolean){
@@ -77,6 +78,11 @@ class Recycler_Adaptor_Video(
             }else{
                 ContextCompat.getColorStateList(itemView.context, R.color.SecondaryColorPack_ContentCardBackground)
             }
+            //把按钮一并至于暂停状态
+            if (!isItemOn){
+                setItemPlayingButton(false)
+            }
+
 
         }
         fun setItemPlayingButton(isPlaying: Boolean){
@@ -108,9 +114,13 @@ class Recycler_Adaptor_Video(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: viewHolder, position: Int) {
         val item = getItem(position) ?: return
+
         //检查是不是当前媒体
         if (item.content_uriString == PlayerInfoCenter.getMediaUriString()){
             holder.setItemPlayingCard(true)
+            currentItemUri = item.content_uriString
+            //检查并设置播放状态
+            holder.setItemPlayingButton(PlayerInfoCenter.isPlaying.value)
         }else{
             holder.setItemPlayingCard(false)
         }
@@ -134,6 +144,26 @@ class Recycler_Adaptor_Video(
             onPlayClick(item, position)
         }
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
+    }
+
+    override fun onBindViewHolder(holder: viewHolder, position: Int, payloads: List<Any>){
+        if (payloads.isNotEmpty()) {
+            val item = getItem(position)
+            when (payloads.firstOrNull()) {
+                ListManagerHelper.payload_event_item_update -> {
+                    if (item?.content_uriString == PlayerInfoCenter.getMediaUriString()){
+                        holder.setItemPlayingCard(true)
+                    }else{
+                        holder.setItemPlayingCard(false)
+                    }
+                }
+                ListManagerHelper.payload_event_item_state_update -> {
+                    holder.setItemPlayingButton(PlayerInfoCenter.isPlaying.value)
+                }
+            }
+        }else{
+            super.onBindViewHolder(holder, position, payloads)
+        }
     }
 
     override fun onViewAttachedToWindow(holder: viewHolder) {
@@ -165,7 +195,6 @@ class Recycler_Adaptor_Video(
             val Frame = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_id)
             //检查图片是否有效
             if (Frame != null){
-                consoleLog("RecyclerAdapterVideo: 加载图片成功, 位置：${item.media_api_id},名称：${item.file_name}")
                 //推送到图片ImageView
                 if (holder.itemFrame.tag == imageTag) {
                     withContext(Dispatchers.Main){
@@ -186,6 +215,7 @@ class Recycler_Adaptor_Video(
 
 
     //外部控制
+    //重置可见项
     fun refreshVisibleItems(layoutManager: LinearLayoutManager) {
         val firstVisible = layoutManager.findFirstVisibleItemPosition()
         val lastVisible = layoutManager.findLastVisibleItemPosition()
@@ -195,10 +225,36 @@ class Recycler_Adaptor_Video(
             notifyItemRangeChanged(firstVisible, lastVisible - firstVisible + 1)
         }
     }
+    //切换当前播放项指示器
+    private var currentItemUri = ""
+    fun updateCurrentMediaItem(targetItemUri: String, payloads: Any){
+        if (targetItemUri == currentItemUri) return
+
+        val cache = currentItemUri
+
+        currentItemUri = targetItemUri
+
+        snapshot().forEachIndexed { index, item ->
+            if (item?.content_uriString == targetItemUri || item?.content_uriString == cache) {
+
+                notifyItemChanged(index, payloads)
+            }
+        }
+
+    }
+    //切换当前播放状态
+    fun updateCurrentIsPlayingState(targetItemUri: String,newIsPlaying: Boolean, payloads: Any){
+        snapshot().forEachIndexed { index, item ->
+            if (item?.content_uriString == targetItemUri) {
+
+                notifyItemChanged(index, payloads)
+            }
+        }
+    }
 
 
-    //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "RecyclerAdapterVideo: $msg")
         }
