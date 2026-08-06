@@ -258,6 +258,7 @@ object ListManagerHelper {
     //Adaptor Payload字段 payload_event_
     const val payload_event_item_update = "payload_event_item_update"
     const val payload_event_item_state_update = "payload_event_item_state_update"
+    const val payload_event_item_clear_playing_mark = "payload_event_item_clear_playing_mark"
 
 
 

@@ -160,6 +160,10 @@ class Recycler_Adaptor_Video(
                 ListManagerHelper.payload_event_item_state_update -> {
                     holder.setItemPlayingButton(PlayerInfoCenter.isPlaying.value)
                 }
+                ListManagerHelper.payload_event_item_clear_playing_mark -> {
+                    holder.setItemPlayingCard(false)
+                    holder.setItemPlayingButton(false)
+                }
             }
         }else{
             super.onBindViewHolder(holder, position, payloads)
@@ -250,6 +254,16 @@ class Recycler_Adaptor_Video(
                 notifyItemChanged(index, payloads)
             }
         }
+    }
+    //清理播放标记
+    fun clearPlayingItem(payloads: Any){
+        consoleLog("清理播放标记 clearPlayingItem")
+        snapshot().forEachIndexed { index, item ->
+            if (item?.content_uriString == currentItemUri){
+                notifyItemChanged(index, payloads)
+            }
+        }
+        currentItemUri = ""
     }
 
 

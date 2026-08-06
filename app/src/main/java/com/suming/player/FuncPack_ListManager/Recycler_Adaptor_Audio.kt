@@ -3,6 +3,7 @@ package com.suming.player.FuncPack_ListManager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -94,6 +95,17 @@ class Recycler_Adaptor_Audio(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: viewHolder, position: Int)  {
         val item = getItem(position) ?: return
+
+        //检查是不是当前媒体
+        if (item.uriString == PlayerInfoCenter.getMediaUriString()){
+            holder.setItemPlayingCard(true)
+            currentItemUri = item.uriString
+            //检查并设置播放状态
+            holder.setItemPlayingButton(PlayerInfoCenter.isPlaying.value)
+        }else{
+            holder.setItemPlayingCard(false)
+        }
+
         holder.itemName.text = item.filename.substringBeforeLast(".")
         holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
         holder.itemFrameJob?.cancel()
@@ -127,6 +139,10 @@ class Recycler_Adaptor_Audio(
                 }
                 ListManagerHelper.payload_event_item_state_update -> {
                     holder.setItemPlayingButton(PlayerInfoCenter.isPlaying.value)
+                }
+                ListManagerHelper.payload_event_item_clear_playing_mark -> {
+                    holder.setItemPlayingCard(false)
+                    holder.setItemPlayingButton(false)
                 }
             }
         }else{
@@ -213,8 +229,24 @@ class Recycler_Adaptor_Audio(
             }
         }
     }
+    //清理播放标记
+    fun clearPlayingItem(payloads: Any){
+        consoleLog("清理播放标记 clearPlayingItem")
+        snapshot().forEachIndexed { index, item ->
+            if (item?.uriString == currentItemUri){
+                notifyItemChanged(index, payloads)
+            }
+        }
+        currentItemUri = ""
+    }
 
 
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "RecyclerAdapterAudio: $msg")
+        }
+    }
 
 
 }

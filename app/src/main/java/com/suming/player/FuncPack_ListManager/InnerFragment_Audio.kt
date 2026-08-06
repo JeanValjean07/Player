@@ -24,6 +24,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForMusic
 import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
@@ -168,7 +169,16 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     }
 
 
-
+    //检查
+    private fun checkNowOngoingItem(){
+        val currentMediaType = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaType
+        consoleLog("currentMediaType: $currentMediaType")
+        if (currentMediaType != MediaType.Audio){
+            consoleLog("当前播放项不是音频,清理播放标记")
+            //清理播放标记
+            recyclerView_music_adapter.clearPlayingItem(ListManagerHelper.payload_event_item_clear_playing_mark)
+        }
+    }
 
 
     //Fragment通信
@@ -252,6 +262,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     private fun onFragmentFocused() {
         updateCurrentListStateText()
         //recyclerView_music_adapter.refresh()
+        checkNowOngoingItem()
     }
     //页签设置选单
     private fun startPageSettingMenu(anchor: View){
