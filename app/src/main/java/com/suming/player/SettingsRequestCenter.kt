@@ -162,9 +162,9 @@ object SettingsRequestCenter {
             PREFS_AcquiesceTab = Pandora_MainPage!!.getString(PREFS_AcquiesceTab_Name, tab_mark_null) ?: tab_mark_null
             //如果配置单内无该项,写入默认值
             if (PREFS_AcquiesceTab == tab_mark_null) {
-                //默认设为关闭
-                PREFS_AcquiesceTab = tab_mark_video
-                Pandora_MainPage!!.edit { putString(PREFS_AcquiesceTab_Name,tab_mark_video ) }
+                //默认设为跟随上次停留的页签
+                PREFS_AcquiesceTab = tab_mark_last
+                Pandora_MainPage!!.edit { putString(PREFS_AcquiesceTab_Name,tab_mark_last ) }
             }
         }
         //返回结果

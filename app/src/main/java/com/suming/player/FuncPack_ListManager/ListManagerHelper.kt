@@ -93,9 +93,9 @@ object ListManagerHelper {
             PRFR_AcquiesceShowingPage = Paradox_List?.getString(PRFR_KEYNAME_AcquiesceShowingPage_Key, ListMark_Null) ?: ListMark_Null
             //检查并置入默认值
             if (PRFR_AcquiesceShowingPage == ListMark_Null){
-                //设置custom页签为默认值
-                Paradox_List?.edit { putString(PRFR_KEYNAME_AcquiesceShowingPage_Key, ListMark_Custom) }
-                PRFR_AcquiesceShowingPage = ListMark_Custom
+                //设置useLast页签为默认值
+                Paradox_List?.edit { putString(PRFR_KEYNAME_AcquiesceShowingPage_Key, ListMark_UseLast) }
+                PRFR_AcquiesceShowingPage = ListMark_UseLast
             }
         }
 
@@ -129,9 +129,9 @@ object ListManagerHelper {
             //检查并置入默认值
             if (state_LastShowingListMark == ListMark_Null){
 
-                //设置custom页签为默认值
-                Paradox_List?.edit { putString(state_LastShowingListMark_KeyName, ListMark_Custom) }
-                state_LastShowingListMark = ListMark_Custom
+                //设置useLast页签为默认值
+                Paradox_List?.edit { putString(state_LastShowingListMark_KeyName, ListMark_UseLast) }
+                state_LastShowingListMark = ListMark_UseLast
             }
         }
 
