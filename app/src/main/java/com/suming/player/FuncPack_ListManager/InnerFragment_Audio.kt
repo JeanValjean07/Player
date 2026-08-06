@@ -403,12 +403,16 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     private val isListUnderTop = MutableStateFlow(false)
     val isListUnderTopFlow: StateFlow<Boolean> = isListUnderTop.asStateFlow()
     private fun startListUnderTopObserver(){
+        //手动检查一次
+        isListUnderTop.value = !recyclerView.canScrollVertically(-1)
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 isListUnderTopFlow.collect{
                     if (it){
+                        //consoleLog("列表位置监控:列表已到顶部")
                         topBar_bottomLine_Out()
                     }else{
+                        //consoleLog("列表位置监控:列表未到顶部")
                         topBar_bottomLine_In()
                     }
                 }
