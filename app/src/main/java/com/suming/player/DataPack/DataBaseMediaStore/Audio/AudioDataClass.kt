@@ -20,6 +20,8 @@ data class AudioDataClass(
     val media_format: String = "",
     //-----------------------------------
     val media_audio_bitrate: String = "", //音频比特率
+    val media_audio_album: String = "", //专辑名称
+    val media_audio_albumId: Long = 0, //专辑ID
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -37,7 +39,9 @@ data class AudioDataClass(
                 media_artist == other.media_artist &&
                 media_durationMs == other.media_durationMs &&
                 media_format == other.media_format &&
-                media_audio_bitrate == other.media_audio_bitrate
+                media_audio_bitrate == other.media_audio_bitrate &&
+                media_audio_album == other.media_audio_album &&
+                media_audio_albumId == other.media_audio_albumId
 
     }
 

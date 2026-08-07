@@ -18,6 +18,8 @@ data class MediaItemFullForAudio (
     val media_format: String = "",
     //-----------------------------------
     val media_audio_bitrate: String = "", //音频比特率
+    val media_audio_album: String = "", //专辑
+    val media_audio_albumId: Long = 0, //专辑ID
 
 ): Parcelable{
     companion object CREATOR : Parcelable.Creator<MediaItemFullForAudio> {
@@ -38,6 +40,8 @@ data class MediaItemFullForAudio (
                 media_format = parcel.readString()!!,
                 //-----------------------------------
                 media_audio_bitrate = parcel.readString()!!,
+                media_audio_album = parcel.readString()!!,
+                media_audio_albumId = parcel.readLong(),
 
             )
         }
@@ -65,6 +69,8 @@ data class MediaItemFullForAudio (
         dest.writeString(media_format)
         //-----------------------------------
         dest.writeString(media_audio_bitrate)
+        dest.writeString(media_audio_album)
+        dest.writeLong(media_audio_albumId)
     }
 
 }

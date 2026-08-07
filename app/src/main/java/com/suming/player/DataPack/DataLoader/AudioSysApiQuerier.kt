@@ -9,6 +9,8 @@ import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioDataClass
 import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
+import com.suming.player.FuncionalPack.MediaInfoRetriever
+import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -59,73 +61,93 @@ class AudioSysApiQuerier(
                 projection, null, null, sortOrder
             )?.use { cursor ->
                 //获取列索引
-                val idCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-                val filenameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
-                val titleCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE) //标题
-                val artistCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST) //艺术家
-                val durCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
+                val col_media_api_id = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                val col_file_name = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+                val col_media_title = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE) //标题
+                val col_media_artist = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST) //艺术家
+                val col_media_duration = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
                 //音频专属
                 val albumIdCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID) //专辑ID
                 val albumCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM) //专辑
                 //其他
-                val pathCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA) //文件路径
-                val sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
-                val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
-                val mimeTypeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
+                val col_media_path = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA) //文件路径
+                val col_media_size = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+                val col_media_date_added = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
+                val col_media_mime_type = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
 
 
                 //读取
                 while (cursor.moveToNext()) {
-                    val id = cursor.getLong(idCol)
-                    val uriString = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id).toString()
-                    val filename = cursor.getString(filenameCol).orEmpty()
-                    val title = cursor.getString(titleCol).orEmpty() //标题
-                    val artist = cursor.getString(artistCol).orEmpty() //艺术家
-                    val dur = cursor.getLong(durCol)
-                    //音频专属
-                    val albumId = cursor.getLong(albumIdCol) //专辑ID
-                    val album = cursor.getString(albumCol).orEmpty() //专辑
-                    //其他
-                    val path = cursor.getString(pathCol).orEmpty() //文件路径
-                    val size = cursor.getLong(sizeCol)
-                    val dateAdded = cursor.getLong(dateCol)
-                    val mimeType = cursor.getString(mimeTypeCol).orEmpty()
-                    val format = if (mimeType.contains('/')) mimeType.substringAfterLast('/') else mimeType
+                    val media_api_NUM_ID = cursor.getLong(col_media_api_id)
+                    val content_uriString = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, media_api_NUM_ID).toString()
+                    val file_name = cursor.getString(col_file_name).orEmpty()
+                    val media_title = cursor.getString(col_media_title).orEmpty()
+                    val media_artist = cursor.getString(col_media_artist).orEmpty()
+                    val media_durationMs = cursor.getLong(col_media_duration)
+                    val albumId = cursor.getLong(albumIdCol)
+                    val albumName = cursor.getString(albumCol).orEmpty()
+                    val file_path = cursor.getString(col_media_path).orEmpty()
+                    val file_size = cursor.getLong(col_media_size)
+                    val media_api_dateAdded = cursor.getLong(col_media_date_added)
+                    val media_mimeType = cursor.getString(col_media_mime_type).orEmpty()
+                    val mediaType = if(media_mimeType.contains("video")) MediaType.Audio else MediaType.Undefined
+                    val media_format = if (media_mimeType.contains('/')) media_mimeType.substringAfterLast('/') else media_mimeType
+                    val media_api_SPECIFIC_ID = MediaInfoRetriever.calculate_SPECIFIC_ID(mediaType, media_api_NUM_ID.toString())
 
-                    consoleLog("MediaStoreReaderForMusic: 读取到音乐文件, ID: $id, 文件名: $filename, 标题: $title, 艺术家: $artist, 时长: $dur, 大小: $size, 专辑ID: $albumId, 专辑: $album, 路径: $path")
+                    consoleLog("MediaStoreReaderForMusic: 读取到音频文件, " +
+                            "media_api_SPECIFIC_ID: $media_api_SPECIFIC_ID, " +
+                            "media_api_NUM_ID: $media_api_NUM_ID, " +
+                            "content_uriString: $content_uriString, " +
+                            "file_name: $file_name, " +
+                            "media_title: $media_title, " +
+                            "media_artist: $media_artist, " +
+                            "media_durationMs: $media_durationMs, " +
+                            "file_path: $file_path, " +
+                            "file_size: $file_size, " +
+                            "media_api_dateAdded: $media_api_dateAdded, " +
+                            "media_mimeType: $media_mimeType, " +
+                            "mediaType: $mediaType, " +
+                            "media_format: $media_format, "+
+                            "albumId: $albumId, "+
+                            "albumName: $albumName, "
+                    )
 
-                    //检查文件有效性
-                    val shouldSkip = when {
-                        //检查文件是否存在
-                        PREFS_EnableFileExistCheck && !isFileExist(path) -> {
-                            true
+                    //检查文件是否应该添加
+                    val save = when {
+                        //检查是否属于音频
+                        mediaType == MediaType.Audio -> {
+                            //检查文件是否存在
+                            val fileExists = if (PREFS_EnableFileExistCheck) {
+                                isFileExist(file_path)
+                            }else{
+                                true
+                            }
+                            //检查文件是否有内容
+                            val hasContent = media_durationMs > 0 && file_size > 0
+
+                            fileExists && hasContent
                         }
-                        //检查文件是否有内容
-                        dur <= 0 || size <= 0 -> {
-                            true
-                        }
-                        //直接添加
+                        //不是视频时丢弃
                         else -> false
                     }
-
-                    //汇总需要添加的条目
-                    if (!shouldSkip) {
+                    if (save) {
                         list += MediaItemFullForAudio(
-                            id = id,
-                            uriString = uriString,
-                            uriNumOnly = id,
-                            filename = filename,
-                            title = title,
-                            artist = artist,
-                            durationMs = dur,
-                            //音频专属
-                            albumId = albumId,
-                            album = album,
-                            //其他
-                            path = path,
-                            sizeBytes = size,
-                            dateAdded = dateAdded,
-                            format = format,
+                            media_api_SPECIFIC_ID = media_api_SPECIFIC_ID,
+                            media_api_NUM_ID = media_api_NUM_ID,
+                            media_api_dateAdded = media_api_dateAdded,
+                            media_SPECIFIC_MediaType = mediaType,
+                            content_uriString = content_uriString,
+                            file_path = file_path,
+                            file_name = file_name,
+                            file_size = file_size,
+                            media_title = media_title,
+                            media_artist = media_artist,
+                            media_durationMs = media_durationMs,
+                            media_format = media_format,
+                            //-----------------------------------
+                            media_audio_bitrate = "",
+                            media_audio_album = albumName,
+                            media_audio_albumId = albumId,
                         )
                     }
                 }
@@ -139,37 +161,34 @@ class AudioSysApiQuerier(
     //Functions
     //保存到数据库
     suspend fun saveMusicsToDatabase(musics: List<MediaItemFullForAudio>) {
-
-        val musicStoreRepo = AudioRepo.get(context)
-
-        val musicStoreSettings = musics.map { music ->
-
-            AudioDataClass(
-                //基本：唯一标识：音频的媒体库id,同时也是uriNumOnly的值
-                MARK_ID = music.id.toString(),
-                info_uri_string = music.uriString,
-                info_uri_numOnly = music.uriNumOnly,
-                info_filename = music.filename,
-                info_title = music.title,
-                info_artist = music.artist,
-                info_duration = music.durationMs,
-                //音频专属
-                info_album_id = music.albumId,
-                info_album = music.album,
-                //其他
-                info_path = music.path,
-                info_file_size = music.sizeBytes,
-                info_date_added = music.dateAdded,
-                info_format = music.format
-            )
-
-        }
-
         withContext(Dispatchers.IO) {
 
-            musicStoreRepo.saveAllMusics(musicStoreSettings)
+            val musicStoreRepo = AudioRepo.get(context)
 
-            cleanupDeletedMusics(musics.map { it.id.toString() }, musicStoreRepo)
+            val musicStoreSettings = musics.map { music ->
+                AudioDataClass(
+                    media_api_SPECIFIC_ID = music.media_api_SPECIFIC_ID,
+                    media_api_NUM_ID = music.media_api_NUM_ID,
+                    media_api_dateAdded = music.media_api_dateAdded,
+                    media_SPECIFIC_MediaType = music.media_SPECIFIC_MediaType,
+                    content_uriString = music.content_uriString,
+                    file_path = music.file_path,
+                    file_name = music.file_name,
+                    file_size = music.file_size,
+                    media_title = music.media_title,
+                    media_artist = music.media_artist,
+                    media_durationMs = music.media_durationMs,
+                    media_format = music.media_format,
+                    //-----------------------------------
+                    media_audio_bitrate = "",
+                    media_audio_album = music.media_audio_album,
+                    media_audio_albumId = music.media_audio_albumId,
+                )
+            }
+
+            musicStoreRepo.saveAllAudios(musicStoreSettings)
+
+            cleanupDeletedMusics(musics.map { it.media_api_NUM_ID }, musicStoreRepo)
 
         }
     }
@@ -188,17 +207,17 @@ class AudioSysApiQuerier(
             false
         }
     }
-    //去除数据库中已无对应视频的条目
-    private suspend fun cleanupDeletedMusics(currentMusicIds: List<String>, musicStoreRepo: AudioRepo) {
+    //去除数据库中已无对应音频的条目
+    private suspend fun cleanupDeletedMusics(currentMusicIds: List<Long>, musicStoreRepo: AudioRepo) {
         val allMusics = musicStoreRepo.getAllMusics()
         //找出数据库中存在但不在当前读取列表中的音乐ID
         val deletedMusicIds = allMusics
-            .map { it.MARK_ID }
+            .map { it.media_api_NUM_ID }
             .filterNot { currentMusicIds.contains(it) }
         //批量删除
         if (deletedMusicIds.isNotEmpty()) {
-            deletedMusicIds.forEach { musicId ->
-                musicStoreRepo.getMusic(musicId)?.let { music ->
+            deletedMusicIds.forEach { media_api_NUM_ID ->
+                musicStoreRepo.getMusicItem(media_api_NUM_ID)?.let { music ->
                     musicStoreRepo.deleteMusic(music)
                 }
             }

@@ -29,7 +29,7 @@ class AudioRepo(context: Context) {
     suspend fun saveAllAudios(videos: List<AudioDataClass>) = dao.insertOrUpdateAll(videos)
 
     //获取单个音频信息
-    suspend fun getMusic(uriNumOnly: String): AudioDataClass? = dao[uriNumOnly]
+    suspend fun getMusicItem(media_api_NUM_ID: Long): AudioDataClass? = dao[media_api_NUM_ID]
     //获取所有音频信息
     suspend fun getAllMusics(): List<AudioDataClass> = dao.getAllMusics()
 

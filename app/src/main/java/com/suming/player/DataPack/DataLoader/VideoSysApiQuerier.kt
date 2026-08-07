@@ -109,7 +109,6 @@ class VideoSysApiQuerier(
                             "media_mimeType: $media_mimeType, " +
                             "mediaType: $mediaType, " +
                             "media_format: $media_format, "
-
                     )
 
 

@@ -17,9 +17,9 @@ interface AudioDao {
     suspend fun insertOrUpdateAll(items: List<AudioDataClass>)
 
 
-    //根据 SPECIFIC_ID 查找单个音频项
-    @Query("SELECT * FROM tableAudioList WHERE media_api_SPECIFIC_ID = :path LIMIT 1")
-    suspend operator fun get(path: String): AudioDataClass?
+    //根据 NUM_ID 查找单个音频项
+    @Query("SELECT * FROM tableAudioList WHERE media_api_NUM_ID = :NUM_ID LIMIT 1")
+    suspend operator fun get(NUM_ID: Long): AudioDataClass?
 
     //获取所有音频项
     @Query("SELECT * FROM tableAudioList")
