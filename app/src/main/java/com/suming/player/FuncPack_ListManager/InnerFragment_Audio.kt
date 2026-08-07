@@ -12,6 +12,7 @@ import androidx.cardview.widget.CardView
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -37,7 +38,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @UnstableApi
-@Suppress("NewApi")
+@Suppress("NewApi","unused") //"unused",
 class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     companion object {
         fun newInstance(): InnerFragment_Audio {
@@ -173,9 +174,9 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     //检查
     private fun checkNowOngoingItem(){
         val currentMediaType = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaType
-        consoleLog("currentMediaType: $currentMediaType")
+        //consoleLog("currentMediaType: $currentMediaType")
         if (currentMediaType != MediaType.Audio){
-            consoleLog("当前播放项不是音频,清理播放标记")
+            //consoleLog("当前播放项不是音频,清理播放标记")
             //清理播放标记
             recyclerView_music_adapter.clearPlayingItem(ListManagerHelper.payload_event_item_clear_playing_mark)
         }
@@ -187,7 +188,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     private fun registerFragmentResultListener(){
         parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_audio, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
-            val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: ""
+            //val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: ""
             when(key){
                 //回滚到顶部
                 ListManagerHelper.event_detail_general_goto_list_top -> {
@@ -209,9 +210,10 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             }
         }
     }
-    //发送Fragment结果
+    //发送Fragment结果给父Fragment
     private fun sendFragmentResult(event: String){
-        parentFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_audio,
+        parentFragmentManager.setFragmentResult(
+            ListManagerHelper.fragment_request_key_audio_reverse,
             bundleOf(ListManagerHelper.event_key_general to event)
         )
     }
@@ -314,10 +316,12 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     }
     //播放视频
     private fun onPlayClick(item: MediaItemForMusic){
-
         if (item.uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
-            PlayerSingleton.continuePlay(true)
-            requireContext().showCustomToast("已在播放该媒体",3)
+            if (PlayerInfoCenter.isPlaying.value){
+                PlayerSingleton.pausePlay()
+            }else{
+                PlayerSingleton.continuePlay(true)
+            }
         }else{
             //确保播放器已经启动
             PlayerSingleton.getInitPlayer()
@@ -325,9 +329,6 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
 
             PlayerSingleton.setMediaItem(item.uriString.toUri(),true)
         }
-
-        //
-
 
     }
 

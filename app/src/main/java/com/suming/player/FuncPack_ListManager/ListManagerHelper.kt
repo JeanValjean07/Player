@@ -241,9 +241,14 @@ object ListManagerHelper {
     const val event_key_general = "event_key_general"
     const val event_key_extra = "event_key_extra"
     const val fragment_request_key_custom = "fragment_request_key_custom"
+    const val fragment_request_key_custom_reverse = "fragment_request_key_custom_reverse"
     const val fragment_request_key_history = "fragment_request_key_history"
+    const val fragment_request_key_history_reverse = "fragment_request_key_history_reverse"
     const val fragment_request_key_video = "fragment_request_key_video"
+    const val fragment_request_key_video_reverse = "fragment_request_key_video_reverse"
     const val fragment_request_key_audio = "fragment_request_key_audio"
+    const val fragment_request_key_audio_reverse = "fragment_request_key_audio_reverse"
+
     //通信事件
     //通用通信事件(几个页面用同一个字段) event_detail_general_
     const val event_detail_general_update_currentPlayingList_icon = "event_detail_general_update_currentPlayingList_icon"
@@ -263,9 +268,11 @@ object ListManagerHelper {
 
 
 
+
     //显示字段
     const val string_already_set_playing_list = "已设为当前播放列表"
     const val string_set_as_playing_list = "设为当前播放列表"
+
 
 
 

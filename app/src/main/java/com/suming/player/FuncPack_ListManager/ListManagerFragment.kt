@@ -44,7 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @UnstableApi
-@SuppressLint("ComposableNaming","NewApi")
+@SuppressLint("ComposableNaming","NewApi","unused") //"unused",
 //@Suppress("unused")
 class ListManagerFragment: DialogFragment() {
     companion object {
@@ -110,13 +110,18 @@ class ListManagerFragment: DialogFragment() {
 
         //注册界面控件
         register(view)
-        //注册子Fragment通信
-        registerChildFragment()
+
         //注册当前播放项观察者
         startMediaItemObserver()
 
         //启动ViewPager
         registerViewPager(view)
+
+
+        updateIcon_currentPlayingList()
+
+        //注册子Fragment通信
+        registerChildFragment()
 
 
     }
@@ -130,13 +135,16 @@ class ListManagerFragment: DialogFragment() {
     override fun onPause() {
         super.onPause()
         //发布关闭事件
-        returnFragmentResult(FragmentConnector.fragment_event_close)
+        //returnFragmentResult(FragmentConnector.fragment_event_close)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         //移除ViewPager监听
         stopViewPagerListener()
+
+        //发布消息
+        onFragmentClose()
 
     }
 
@@ -147,6 +155,8 @@ class ListManagerFragment: DialogFragment() {
         ButtonCard_historyList = view.findViewById(R.id.ButtonCard_HistoryList)
         ButtonCard_videoList = view.findViewById(R.id.ButtonCardVideo)
         ButtonCard_musicList = view.findViewById(R.id.ButtonCardMusic)
+
+        ButtonIcon_currentPlayList = view.findViewById(R.id.ButtonCurrentListIcon)
 
         //执行显示重建
         display(view)
@@ -186,9 +196,9 @@ class ListManagerFragment: DialogFragment() {
 
                 startLoopModeMenu(ButtonCardLoopMode)
             }
+
             //选单-当前播放列表
             val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
-            ButtonIcon_currentPlayList = view.findViewById(R.id.ButtonCurrentListIcon)
             ButtonCurrentList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
@@ -273,13 +283,16 @@ class ListManagerFragment: DialogFragment() {
                 }
             }
         }
-        //设置viewPager高度
 
 
 
 
     }
 
+
+    private fun onFragmentClose(){
+        returnFragmentResult(FragmentConnector.fragment_event_close)
+    }
 
     //viewPager
     private lateinit var ViewPager: ViewPager2
@@ -343,10 +356,10 @@ class ListManagerFragment: DialogFragment() {
     )
 
 
-    //注册子Fragment通信
+    //注册子Fragment返回消息监听
     private fun registerChildFragment(){
         //自定义列表
-        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_custom, this){ _, bundle ->
+        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_custom_reverse, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
             when(key){
                 //刷新当前播放列表指示图标
@@ -357,7 +370,7 @@ class ListManagerFragment: DialogFragment() {
             }
         }
         //历史列表
-        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_history, this){ _, bundle ->
+        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_history_reverse, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
             when(key){
                 //刷新当前播放列表指示图标
@@ -369,7 +382,7 @@ class ListManagerFragment: DialogFragment() {
             }
         }
         //视频列表
-        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_video, this){ _, bundle ->
+        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_video_reverse, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
             when(key){
                 //刷新当前播放列表指示图标
@@ -381,7 +394,7 @@ class ListManagerFragment: DialogFragment() {
             }
         }
         //音乐列表
-        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_audio, this){ _, bundle ->
+        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_audio_reverse, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
             when(key){
                 //刷新当前播放列表指示图标
@@ -456,7 +469,7 @@ class ListManagerFragment: DialogFragment() {
         //观察播放状态变更
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInfoCenter.isPlaying.collect { newState ->
+                PlayerInfoCenter.isPlaying.collect { _ ->
                     //传入当前页签
                     val currentViewPagerPage = ViewPager.currentItem
                     sendChildFragmentEvent(currentViewPagerPage, ListManagerHelper.event_detail_general_media_state_update)
@@ -866,12 +879,6 @@ class ListManagerFragment: DialogFragment() {
                 mainCard.setContentPadding(0, statusBarHeight, 0, 0)
 
                 mainCard.requestLayout()
-
-                main_card_height = mainCard.height
-
-                if (appbar_container_height != 0){
-                    setViewPagerHeight(main_card_height - appbar_container_height)
-                }
             }
 
         }else{
@@ -880,7 +887,7 @@ class ListManagerFragment: DialogFragment() {
             val targetScreenHeightDp = (screenHeightPx / density).toInt()
 
             mainCard.post {
-                consoleLog("mainCard.post")
+
                 if (targetScreenHeightDp < 450){
                     mainCard.layoutParams.height = screenHeightPx
                 }else{
@@ -888,40 +895,10 @@ class ListManagerFragment: DialogFragment() {
                 }
                 mainCard.requestLayout()
 
-                main_card_height = mainCard.height
-
-                if (appbar_container_height != 0){
-                    setViewPagerHeight(main_card_height - appbar_container_height)
-                }
             }
 
 
         }
-
-        //获取顶部栏高度
-        val AppBarContainer = view.findViewById<View>(R.id.AppBarContainer)
-        AppBarContainer.post{
-            consoleLog("AppBarContainer.post")
-            appbar_container_height = AppBarContainer.height
-            if (main_card_height != 0){
-                setViewPagerHeight(main_card_height - appbar_container_height)
-            }
-
-        }
-
-
-    }
-    //设置viewpager高度
-    private var main_card_height = 0
-    private var appbar_container_height = 0
-    private fun setViewPagerHeight(targetViewPagerHeight: Int) {
-        return
-        consoleLog("setViewPagerHeight111 ${targetViewPagerHeight}")
-        ViewPager.post {
-            consoleLog("setViewPagerHeight post:222 ${targetViewPagerHeight}")
-            setViewPagerHeight(targetViewPagerHeight)
-        }
-
     }
     //自定义退出逻辑
     private var lockPage = false

@@ -195,14 +195,12 @@ class MainActivity: AppCompatActivity() {
                     }
                 }
             }
-            //播放列表返回值 FROM_FRAGMENT_PLAY_LIST
-            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_PLAY_LIST", this@MainActivity) { _, bundle ->
-                val ReceiveKey = bundle.getString("KEY")
+            //播放列表返回值
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_play_list, this@MainActivity) { _, bundle ->
+                val ReceiveKey = bundle.getString(FragmentConnector.receive_key)
                 when(ReceiveKey){
-                    //切换逻辑由播放器单例接管
-                    //退出逻辑
-                    "Dismiss" -> {
-
+                    FragmentConnector.fragment_event_close -> {
+                        consoleLog("播放列表Fragment关闭")
                     }
 
                 }

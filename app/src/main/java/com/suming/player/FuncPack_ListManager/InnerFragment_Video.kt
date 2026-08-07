@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @UnstableApi
-@Suppress("NewApi")
+@Suppress("NewApi","unused") //"unused",
 class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     companion object {
         fun newInstance(): InnerFragment_Video {
@@ -142,12 +142,6 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             startListUnderTopObserver()
         }
     }
-    //发送Fragment结果
-    private fun sendFragmentResult(event: String){
-        parentFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_video,
-            bundleOf(ListManagerHelper.event_key_general to event)
-        )
-    }
     //启动recyclerView
     private lateinit var recyclerView: RecyclerView
     private lateinit var recyclerView_video_adapter: Recycler_Adaptor_Video
@@ -230,6 +224,13 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             }
         }
     }
+    //发送Fragment结果
+    private fun sendFragmentResult(event: String){
+        parentFragmentManager.setFragmentResult(
+            ListManagerHelper.fragment_request_key_video_reverse,
+            bundleOf(ListManagerHelper.event_key_general to event)
+        )
+    }
 
 
     //播放项变更
@@ -301,9 +302,9 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //检查
     private fun checkNowOngoingItem(){
         val currentMediaType = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaType
-        consoleLog("currentMediaType: $currentMediaType")
+        //consoleLog("currentMediaType: $currentMediaType")
         if (currentMediaType != MediaType.Video){
-            consoleLog("当前播放项不是视频,清理播放标记")
+            //consoleLog("当前播放项不是视频,清理播放标记")
             //清理播放标记
             recyclerView_video_adapter.clearPlayingItem(ListManagerHelper.payload_event_item_clear_playing_mark)
         }
@@ -333,13 +334,6 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             //设置播放项
             PlayerSingleton.setMediaItem(item.content_uriString.toUri(),true)
         }
-
-        //是否正在播放
-
-
-
-        //全局刷新播放列表显示
-        //recyclerView_video_adapter.refreshVisibleItems(layoutManager)
 
     }
 
@@ -374,9 +368,8 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         //更新当前播放列表图标
         if (success){
             requireContext().showCustomToast("设置成功",2)
-            parentFragmentManager.setFragmentResult("FRAGMENT_VIDEO_LIST_FRAGMENT",
-                bundleOf("TOKEN" to "FRAGMENT_RETURN_UPDATE_LIST_ICON")
-            )
+
+            sendFragmentResult(ListManagerHelper.event_detail_general_update_currentPlayingList_icon)
         }else{
             requireContext().showCustomToast("设置失败",2)
         }
@@ -391,9 +384,12 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             isListUnderTop.value = isAtTop
         }
     }
-    private val isListUnderTop = MutableStateFlow(false)
+    private val isListUnderTop = MutableStateFlow(true)
     val isListUnderTopFlow: StateFlow<Boolean> = isListUnderTop.asStateFlow()
     private fun startListUnderTopObserver(){
+        //手动检查一次
+        isListUnderTop.value = !recyclerView.canScrollVertically(-1)
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 isListUnderTopFlow.collect{
@@ -494,5 +490,4 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     }
 
 
-//Fragment END
 }

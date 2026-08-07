@@ -231,7 +231,7 @@ class Recycler_Adaptor_Audio(
     }
     //清理播放标记
     fun clearPlayingItem(payloads: Any){
-        consoleLog("清理播放标记 clearPlayingItem")
+        //consoleLog("清理播放标记 clearPlayingItem")
         snapshot().forEachIndexed { index, item ->
             if (item?.uriString == currentItemUri){
                 notifyItemChanged(index, payloads)
