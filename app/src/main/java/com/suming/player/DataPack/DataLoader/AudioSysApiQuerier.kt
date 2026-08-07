@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class MediaStoreReaderForMusic(
+class AudioSysApiQuerier(
     private val context: Context,
     private val contentResolver: ContentResolver,
 ) {
@@ -37,16 +37,16 @@ class MediaStoreReaderForMusic(
         val sortOrder = "${MediaStore.Audio.Media.DISPLAY_NAME} DESC"
         //查询投影
         val projection = arrayOf(
-            MediaStore.Audio.Media._ID, //ID
-            MediaStore.Audio.Media.DISPLAY_NAME, //文件名
-            MediaStore.Audio.Media.TITLE, //标题：注意和文件名区分
+            MediaStore.Audio.Media._ID,
+            MediaStore.Audio.Media.DISPLAY_NAME,
+            MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
             MediaStore.Audio.Media.DURATION,
             //音频专属
-            MediaStore.Audio.Media.ALBUM_ID, //专辑ID
-            MediaStore.Audio.Media.ALBUM, //专辑名称
+            MediaStore.Audio.Media.ALBUM_ID,
+            MediaStore.Audio.Media.ALBUM,
             //其他
-            MediaStore.Audio.Media.DATA, //文件路径
+            MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.SIZE,
             MediaStore.Audio.Media.DATE_ADDED,
             MediaStore.Audio.Media.MIME_TYPE,

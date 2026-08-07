@@ -23,7 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.DataPack.DataLoader.MediaDataBaseReaderForVideo
+import com.suming.player.DataPack.DataLoader.VideoDataBaseLoader
 import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
@@ -173,7 +173,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         //开始分页加载
         lifecycleScope.launch(Dispatchers.IO) {
             val pager = Pager(PagingConfig(pageSize = 20)) {
-                MediaDataBaseReaderForVideo(requireContext())
+                VideoDataBaseLoader(requireContext())
             }
             pager.flow.collect { pagingData ->
                 recyclerView_video_adapter.submitData(pagingData)

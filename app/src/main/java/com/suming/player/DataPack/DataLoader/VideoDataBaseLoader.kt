@@ -8,7 +8,7 @@ import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
 import com.suming.player.SettingsRequestCenter
 
-class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<Int, MediaItemFullForVideo>() {
+class VideoDataBaseLoader(private val context: Context) : PagingSource<Int, MediaItemFullForVideo>() {
 
 
     override fun getRefreshKey(state: PagingState<Int, MediaItemFullForVideo>): Int? {
@@ -36,18 +36,19 @@ class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<I
             //合成MediaItem
             val mediaItems = mediaStoreSettings.map { setting ->
                     MediaItemFullForVideo(
+                        media_api_SPECIFIC_ID = setting.media_api_SPECIFIC_ID,
+                        media_api_NUM_ID = setting.media_api_NUM_ID,
+                        media_api_dateAdded = setting.media_api_dateAdded,
+                        content_uriString = setting.content_uriString,
                         file_path = setting.file_path,
                         file_name = setting.file_name,
                         file_size = setting.file_size,
-                        media_api_id = setting.media_api_id,
-                        media_api_dateAdded = setting.media_api_dateAdded,
-                        content_uriString = setting.content_uriString,
-                        custom_media_Type = setting.custom_media_Type,
                         media_title = setting.media_title,
                         media_artist = setting.media_artist,
                         media_durationMs = setting.media_durationMs,
                         media_video_resolution = setting.media_video_resolution,
                         media_format = setting.media_format,
+                        media_video_bitrate = setting.media_video_bitrate,
                     )
                 }
 
@@ -70,7 +71,7 @@ class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<I
     //日志
     private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
-            Log.d("SuMing", "MediaDataBaseReaderForVideo-视频读取器-来自数据库缓存: $msg")
+            Log.d("SuMing", "VideoDataBaseLoader: $msg")
         }
     }
 

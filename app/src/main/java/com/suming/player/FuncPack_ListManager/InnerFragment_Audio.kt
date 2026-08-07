@@ -23,7 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.DataPack.DataLoader.MediaDataBaseReaderForMusic
+import com.suming.player.DataPack.DataLoader.AudioDataBaseLoader
 import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
@@ -244,7 +244,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
         recyclerView.adapter = recyclerView_music_adapter
         //开始分页加载
         lifecycleScope.launch(Dispatchers.IO) {
-            val pager = Pager(PagingConfig(pageSize = 20)) { MediaDataBaseReaderForMusic(requireContext()) }
+            val pager = Pager(PagingConfig(pageSize = 20)) { AudioDataBaseLoader(requireContext()) }
             pager.flow.collect { pagingData ->
                 recyclerView_music_adapter.submitData(pagingData)
             }

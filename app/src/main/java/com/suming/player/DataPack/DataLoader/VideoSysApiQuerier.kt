@@ -15,7 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class MediaStoreReaderForVideo(
+class VideoSysApiQuerier(
     private val context: Context,
     private val contentResolver: ContentResolver,
 ) {

@@ -8,7 +8,7 @@ import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
 import com.suming.player.SettingsRequestCenter
 
-class MediaDataBaseReaderForMusic(
+class AudioDataBaseLoader(
     private val context: Context,
 ) : PagingSource<Int, MediaItemFullForAudio>() {
 
@@ -38,21 +38,20 @@ class MediaDataBaseReaderForMusic(
             //合成MediaItem
             val musicItems = musicStoreSettings.map { setting ->
                     MediaItemFullForAudio(
-                        id = setting.MARK_ID.toLongOrNull() ?: 0,
-                        uriString = setting.info_uri_string,
-                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
-                        filename = setting.info_filename,
-                        title = setting.info_title,
-                        artist = setting.info_artist,
-                        durationMs = setting.info_duration,
-                        //音频专属
-                        albumId = setting.info_album_id,
-                        album = setting.info_album,
-                        //其他
-                        path = setting.info_path,
-                        sizeBytes = setting.info_file_size,
-                        dateAdded = setting.info_date_added,
-                        format = setting.info_format,
+                        media_api_SPECIFIC_ID = setting.media_api_SPECIFIC_ID,
+                        media_api_NUM_ID = setting.media_api_NUM_ID,
+                        media_api_dateAdded = setting.media_api_dateAdded,
+                        media_SPECIFIC_MediaType = setting.media_SPECIFIC_MediaType,
+                        content_uriString = setting.content_uriString,
+                        file_path = setting.file_path,
+                        file_name = setting.file_name,
+                        file_size = setting.file_size,
+                        media_title = setting.media_title,
+                        media_artist = setting.media_artist,
+                        media_durationMs = setting.media_durationMs,
+                        media_format = setting.media_format,
+
+                        media_audio_bitrate = setting.media_audio_bitrate,
                     )
                 }
 
@@ -74,7 +73,7 @@ class MediaDataBaseReaderForMusic(
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "MediaDataBaseReaderForMusic-音频读取器-来自数据库缓存: $msg")
+            Log.d("SuMing", "AudioDataBaseLoader: $msg")
         }
     }
 

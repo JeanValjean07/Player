@@ -54,10 +54,10 @@ import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseStateConnector
-import com.suming.player.DataPack.DataLoader.MediaDataBaseReaderForMusic
-import com.suming.player.DataPack.DataLoader.MediaDataBaseReaderForVideo
-import com.suming.player.DataPack.DataLoader.MediaStoreReaderForMusic
-import com.suming.player.DataPack.DataLoader.MediaStoreReaderForVideo
+import com.suming.player.DataPack.DataLoader.AudioDataBaseLoader
+import com.suming.player.DataPack.DataLoader.VideoDataBaseLoader
+import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
+import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
 import com.suming.player.DataPack.MediaRecordPack
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncionalPack.ActivityResultConnector
@@ -567,7 +567,7 @@ class MainActivity: AppCompatActivity() {
         //加载视频数据
         lifecycleScope.launch(Dispatchers.IO) {
             val pager = Pager(PagingConfig(pageSize = 20)) {
-                MediaDataBaseReaderForVideo(context = this@MainActivity)
+                VideoDataBaseLoader(context = this@MainActivity)
             }
             pager.flow.collect { pagingData ->
                 main_video_list_adapter.submitData(pagingData)
@@ -623,7 +623,7 @@ class MainActivity: AppCompatActivity() {
                     jumpThreshold = Int.MIN_VALUE
                 )
             ) {
-                MediaDataBaseReaderForMusic(context = this@MainActivity)
+                AudioDataBaseLoader(context = this@MainActivity)
             }
             pager.flow.collect { pagingData ->
                 main_music_list_adapter.submitData(pagingData)
@@ -993,11 +993,11 @@ class MainActivity: AppCompatActivity() {
         //发起加载
         when(mediaType){
             MediaType.Video -> {
-                val mediaReader = MediaStoreReaderForVideo(this@MainActivity, contentResolver)
+                val mediaReader = VideoSysApiQuerier(this@MainActivity, contentResolver)
                 mediaReader.readAndSaveAllVideos()
             }
             MediaType.Audio -> {
-                val musicReader = MediaStoreReaderForMusic(this@MainActivity, contentResolver)
+                val musicReader = AudioSysApiQuerier(this@MainActivity, contentResolver)
                 musicReader.readAndSaveAllMusics()
             }
         }
