@@ -9,9 +9,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.net.toUri
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.DataPack.DataClassForPlay.MediaItemForList
 import com.suming.player.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,14 +28,14 @@ class Recycler_Adaptor_CustomList(
     private val context: Context,
     private val onDeleteClick: (Long) -> Unit,
     private val onPlayClick: (Uri) -> Unit
-):PagingDataAdapter<MiniMediaItemForList, Recycler_Adaptor_CustomList.viewHolder>(DiffUtil)  {
+):PagingDataAdapter<MediaItemForList, Recycler_Adaptor_CustomList.viewHolder>(DiffUtil)  {
     companion object {
         //比较器
-        val DiffUtil = object : DiffUtil.ItemCallback<MiniMediaItemForList>() {
-            override fun areItemsTheSame(oldItem: MiniMediaItemForList, newItem: MiniMediaItemForList): Boolean {
-                return oldItem.uriNumOnly == newItem.uriNumOnly
+        val DiffUtil = object : DiffUtil.ItemCallback<MediaItemForList>() {
+            override fun areItemsTheSame(oldItem: MediaItemForList, newItem: MediaItemForList): Boolean {
+                return oldItem.media_api_NUM_ID == newItem.media_api_NUM_ID
             }
-            override fun areContentsTheSame(oldItem: MiniMediaItemForList, newItem: MiniMediaItemForList): Boolean {
+            override fun areContentsTheSame(oldItem: MediaItemForList, newItem: MediaItemForList): Boolean {
                 return oldItem == newItem
             }
         }
@@ -68,13 +70,13 @@ class Recycler_Adaptor_CustomList(
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded")
     override fun onBindViewHolder(holder: viewHolder, position: Int)  {
         val item = getItem(position) ?: return
-        holder.itemName.text = item.filename.substringBeforeLast(".")
-        holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
+        holder.itemName.text = item.file_name.substringBeforeLast(".")
+        holder.itemArtist.text = if (item.media_artist == "<unknown>" || item.media_artist == "") { "未知艺术家" } else { item.media_artist }
         holder.itemFrameJob?.cancel()
         holder.itemFrameJob = coroutineScope_LoadFrame.launch { setHolderFrame(item, holder) }
         //点击事件设定
-        holder.ButtonDelete.setOnClickListener { onDeleteClick(item.uriNumOnly) }
-        holder.ButtonPlay.setOnClickListener { onPlayClick(item.uri) }
+        holder.ButtonDelete.setOnClickListener { onDeleteClick(item.media_api_NUM_ID) }
+        holder.ButtonPlay.setOnClickListener { onPlayClick(item.content_uriStandard.toUri()) }
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 
@@ -95,16 +97,15 @@ class Recycler_Adaptor_CustomList(
 
 
     //检查缩略图
-    private suspend fun setHolderFrame(item: MiniMediaItemForList, holder: viewHolder) {
+    private suspend fun setHolderFrame(item: MediaItemForList, holder: viewHolder) {
         //设置文件
         var covers_path = File(context.filesDir, "miniature/music_cover")
-        if (item.type == "video"){
+        if (item.media_SPECIFIC_MediaType == "video"){
             covers_path = File(context.filesDir, "miniature/video_cover")
-        }
-        else if (item.type == "music"){
+        }else if(item.media_SPECIFIC_MediaType == "music"){
             covers_path = File(context.filesDir, "miniature/music_cover")
         }
-        val cover_item_file = File(covers_path, "${item.uriNumOnly}.webp")
+        val cover_item_file = File(covers_path, "${item.media_api_NUM_ID}.webp")
         //检查是否存在
         if (cover_item_file.exists()){
             val frame = BitmapFactory.decodeFile(cover_item_file.absolutePath)

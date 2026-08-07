@@ -153,7 +153,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     //播放项变更
     private fun onMediaItemUpdate(){
         //获取当前播放项
-        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.content_uriString
 
         //使用payload更新当前播放项指示器
         recyclerView_music_adapter.updateCurrentMediaItem(currentItemUri, ListManagerHelper.payload_event_item_update)
@@ -162,17 +162,17 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     //播放状态变更
     private fun onMediaStateUpdate(){
         //获取当前播放项
-        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.content_uriString
 
         //使用payload更新当前播放项指示器
-        recyclerView_music_adapter.updateCurrentIsPlayingState(currentItemUri, PlayerInfoCenter.isPlaying.value, ListManagerHelper.payload_event_item_state_update)
+        recyclerView_music_adapter.updateCurrentIsPlayingState(currentItemUri, PlayerInfoCenter.observableIsPlaying.value, ListManagerHelper.payload_event_item_state_update)
 
     }
 
 
     //检查
     private fun checkNowOngoingItem(){
-        val currentMediaType = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaType
+        val currentMediaType = PlayerInfoCenter.observableMediaItem.value.media_SPECIFIC_MediaType
         //consoleLog("currentMediaType: $currentMediaType")
         if (currentMediaType != MediaType.Audio){
             //consoleLog("当前播放项不是音频,清理播放标记")
@@ -315,8 +315,8 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     }
     //播放视频
     private fun onPlayClick(item: MediaItemFullForAudio){
-        if (item.uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
-            if (PlayerInfoCenter.isPlaying.value){
+        if (item.content_uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
+            if (PlayerInfoCenter.observableIsPlaying.value){
                 PlayerSingleton.pausePlay()
             }else{
                 PlayerSingleton.continuePlay(true)
@@ -326,7 +326,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             PlayerSingleton.getInitPlayer()
             PlayerSingleton.addPlayerStateListener()
 
-            PlayerSingleton.setMediaItem(item.uriString.toUri(),true)
+            PlayerSingleton.setMediaItem(item.content_uriString.toUri(),true)
         }
 
     }

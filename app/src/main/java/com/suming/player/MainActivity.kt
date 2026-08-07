@@ -80,7 +80,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
-@Suppress("NewApi")
+@Suppress("NewApi","unused",) //"unused",
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
     //连接ViewModel
@@ -660,7 +660,7 @@ class MainActivity: AppCompatActivity() {
         lifecycleScope.launch {
             //观察正在播放的媒体项变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInfoCenter.uriString.collect { uriString ->
+                PlayerInfoCenter.observableMediaItem.collect { uriString ->
                     //consoleLog("MiniView观察者 当前媒体: $uriString")
                     showMiniViewLongProcess()
                 }
@@ -669,8 +669,9 @@ class MainActivity: AppCompatActivity() {
         lifecycleScope.launch {
             //观察播放状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInfoCenter.isPlaying.collect { newState ->
+                PlayerInfoCenter.observableIsPlaying.collect { newState ->
                     //consoleLog("MiniView观察者 当前播放状态: $newState")
+
                     //刷新操作按钮
                     updateMiniViewPauseButton(newState)
                 }
@@ -680,22 +681,21 @@ class MainActivity: AppCompatActivity() {
     //显示MiniView LongProcess-把任务全部执行完,禁止扔到其他函数作用域
     private fun showMiniViewLongProcess(){
         //从PlayerStateMediaInfo获取所有信息
-        val MediaInfoPack = PlayerInfoCenter.getMediaInfoPack()
-        if (MediaInfoPack == null) {
+        val (SPECIFIC_ID,FileName,MediaArtist) = PlayerInfoCenter.GET_Media_MiniView_Pack()
+        if (SPECIFIC_ID.isEmpty()){
             miniView_clear()
             return
         }
-        val uriNumOnly = MediaInfoPack.MediaInfo_MediaUriNumOnly   //用于获取缩略图
-        val type = MediaInfoPack.MediaInfo_MediaType
-        val fileName = MediaInfoPack.MediaInfo_FileName       //显示文件名
-        val artist = MediaInfoPack.MediaInfo_MediaArtist   //显示艺术家
+        //分离部分信息
+        val mediaType = SPECIFIC_ID.substringBefore("_")
+        val NUM_ID = SPECIFIC_ID.substringAfter("_").toLong()
 
-        //
-        PlayingCard_TextMediaName.text = fileName
-        PlayingCard_TextMediaArtist.text = artist
+        //文字上屏
+        PlayingCard_TextMediaName.text = FileName
+        PlayingCard_TextMediaArtist.text = MediaArtist
         PlayingCard_ButtonPlay.visibility = View.VISIBLE
-        //
-        updateMiniViewArtwork(type, uriNumOnly)
+        //更新艺术图或视频
+        updateMiniViewArtwork(mediaType, NUM_ID)
 
     }
     private fun initMiniView(){
@@ -714,10 +714,10 @@ class MainActivity: AppCompatActivity() {
             ListRecyclerView_Video.stopScroll()
             ListRecyclerView_Music.stopScroll()
             //启动播放页
-            val uriString = PlayerInfoCenter.getMediaUriString()
+            val uriString = PlayerInfoCenter.GET_Media_UriString()
             if (uriString != ""){
                 val uri = uriString.toUri()
-                consoleLog("PlayingCard_InfoContainer 点击事件 触发播放页: $uri")
+
                 startPlayerFromMiniView(uri)
             }else{
                 if (state_MiniViewArtwork_type == mini_view_type_null){
@@ -755,13 +755,13 @@ class MainActivity: AppCompatActivity() {
         //更新操作按钮图标
         PlayingCard_ButtonPlay.setImageResource(if (isPlaying) R.drawable.ic_main_controller_pause else R.drawable.ic_main_controller_play)
     }
-    private fun updateMiniViewArtwork(type: String,uriNumOnly: Long){
+    private fun updateMiniViewArtwork(type: String,NUM_ID: Long){
         val useImage = SettingsRequestCenter.get_PREFS_DisableMainPageSmallPlayer(this)
         if (useImage){
-            updateMiniViewArtwork_Image(uriNumOnly.toString(), type)
+            updateMiniViewArtwork_Image(NUM_ID.toString(), type)
         }else{
             when(type){
-                MediaType.Audio -> updateMiniViewArtwork_Image(uriNumOnly.toString(), type)
+                MediaType.Audio -> updateMiniViewArtwork_Image(NUM_ID.toString(), type)
                 MediaType.Video -> updateMiniViewArtwork_Video()
             }
         }
@@ -855,7 +855,7 @@ class MainActivity: AppCompatActivity() {
 
 
                 //获取视频宽高比,计算目标高度px
-                val aspectRatio = PlayerInfoCenter.getMediaAspectRatio()
+                val aspectRatio = PlayerInfoCenter.GET_Media_AspectRatio()
                 //计算目标宽度
                 var targetWidth = (cardHeight * aspectRatio).toInt()
                 //数值过滤：卡片宽度不得小于高度,不得大于两倍高度
@@ -974,7 +974,7 @@ class MainActivity: AppCompatActivity() {
     private fun startMiniViewPlay(uri: Uri){
         //比对上次播放媒体信息与当前播放媒体信息
         val newUri = uri.toString()
-        val currentUri = PlayerInfoCenter.getMediaUriString()
+        val currentUri = PlayerInfoCenter.GET_Media_UriString()
         if (newUri == currentUri){
             showCustomToast("已在播放该媒体",3)
             PlayerSingleton.continuePlay(true)
@@ -1321,8 +1321,8 @@ class MainActivity: AppCompatActivity() {
          */
     }
     private fun startPlayerFromMiniView(uri: Uri){
-        val MediaInfo_MediaType = PlayerInfoCenter.getMediaInfoType()
-        consoleLog("PlayingCard_InfoContainer 点击事件 媒体类型: $MediaInfo_MediaType")
+        val MediaInfo_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+
         when (MediaInfo_MediaType) {
             MediaType.Video -> {
                 startVideoPlayer(uri)
@@ -1335,6 +1335,7 @@ class MainActivity: AppCompatActivity() {
                 showCustomToast("严重错误 未知媒体类型",3)
             }
         }
+
     }
 
     //启动播放列表Fragment面板

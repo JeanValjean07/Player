@@ -96,7 +96,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
 
 
     //信息变量
-    private var absolutePath = ""
+    private var file_path = ""
     private var videoWidth = ""
     private var videoHeight = ""
     private var videoDuration = ""
@@ -325,18 +325,18 @@ class PlayerFragmentMediaInfo: DialogFragment() {
     private fun mainBusiness(){
         lifecycleScope.launch(Dispatchers.IO){
             //读取信息
-            val MediaInfoPack = PlayerInfoCenter.getMediaInfoPack()
+            val MediaInfoPack = PlayerInfoCenter.GET_LAST_MediaInfoPack()
             if (MediaInfoPack == null){
                 requireContext().showCustomToast("信息读取失败")
                 dismiss()
                 return@launch
             }
 
-            absolutePath = MediaInfoPack.MediaInfo_AbsolutePath
-            Fps_real_float_ExoEngin = MediaInfoPack.MediaInfo_RealFps
+            file_path = MediaInfoPack.file_path
+            Fps_real_float_ExoEngin = MediaInfoPack.video_actualFPS
             val retriever = MediaMetadataRetriever()
             try{
-                retriever.setDataSource(absolutePath)
+                retriever.setDataSource(file_path)
             }catch (e: Exception){
                 requireContext().showCustomToast("信息解码失败($e)")
                 consoleLog("MediaMetadataRetriever() 发生错误：$e")
@@ -350,7 +350,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             videoDuration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?:""
             videoMimeType = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)?:""
             videoBitrate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)?:""
-            videoFileName = (File(absolutePath)).name ?: ""
+            videoFileName = (File(file_path)).name ?: ""
             videoTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)?:""
             videoArtist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)?:""
             videoDate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)?:""
@@ -366,7 +366,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
 
             val extractor = MediaExtractor()
             try {
-                extractor.setDataSource(absolutePath)
+                extractor.setDataSource(file_path)
                 //遍历所有轨道
                 for (i in 0 until extractor.trackCount) {
                     val format = extractor.getTrackFormat(i)

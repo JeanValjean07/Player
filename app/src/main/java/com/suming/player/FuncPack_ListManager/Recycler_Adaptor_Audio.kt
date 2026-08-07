@@ -38,7 +38,7 @@ class Recycler_Adaptor_Audio(
         //比较器
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemFullForAudio>() {
             override fun areItemsTheSame(oldItem: MediaItemFullForAudio, newItem: MediaItemFullForAudio): Boolean {
-                return oldItem.uriNumOnly == newItem.uriNumOnly
+                return oldItem.media_api_NUM_ID == newItem.media_api_NUM_ID
             }
             override fun areContentsTheSame(oldItem: MediaItemFullForAudio, newItem: MediaItemFullForAudio): Boolean {
                 return oldItem == newItem
@@ -97,17 +97,17 @@ class Recycler_Adaptor_Audio(
         val item = getItem(position) ?: return
 
         //检查是不是当前媒体
-        if (item.uriString == PlayerInfoCenter.getMediaUriString()){
+        if (item.content_uriString == PlayerInfoCenter.GET_Media_UriString()){
             holder.setItemPlayingCard(true)
-            currentItemUri = item.uriString
+            currentItemUri = item.content_uriString
             //检查并设置播放状态
-            holder.setItemPlayingButton(PlayerInfoCenter.isPlaying.value)
+            holder.setItemPlayingButton(PlayerInfoCenter.observableIsPlaying.value)
         }else{
             holder.setItemPlayingCard(false)
         }
 
-        holder.itemName.text = item.filename.substringBeforeLast(".")
-        holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
+        holder.itemName.text = item.file_name.substringBeforeLast(".")
+        holder.itemArtist.text = if (item.media_artist == "<unknown>" || item.media_artist == "") { "未知艺术家" } else { item.media_artist }
         holder.itemFrameJob?.cancel()
         holder.itemFrameJob = coroutine_loadArtwork.launch {
             loadArtworkFrame(item, holder)
@@ -131,14 +131,14 @@ class Recycler_Adaptor_Audio(
             val item = getItem(position)
             when (payloads.firstOrNull()) {
                 ListManagerHelper.payload_event_item_update -> {
-                    if (item?.uriString == PlayerInfoCenter.getMediaUriString()){
+                    if (item?.content_uriString == PlayerInfoCenter.GET_Media_UriString()){
                         holder.setItemPlayingCard(true)
                     }else{
                         holder.setItemPlayingCard(false)
                     }
                 }
                 ListManagerHelper.payload_event_item_state_update -> {
-                    holder.setItemPlayingButton(PlayerInfoCenter.isPlaying.value)
+                    holder.setItemPlayingButton(PlayerInfoCenter.observableIsPlaying.value)
                 }
                 ListManagerHelper.payload_event_item_clear_playing_mark -> {
                     holder.setItemPlayingCard(false)
@@ -168,12 +168,12 @@ class Recycler_Adaptor_Audio(
     //Long Thread Functions
     private fun loadArtworkFrame(item: MediaItemFullForAudio, holder: viewHolder)   {
         //记录holder的tag
-        val imageTag = item.uriNumOnly.hashCode().toString()
+        val imageTag = item.media_api_NUM_ID.toString()
         holder.itemFrame.tag = imageTag
 
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch {
-            val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Audio, item.uriNumOnly)
+            val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Audio, item.media_api_NUM_ID)
             if (Bitmap != null){
                 //推到ImageView
                 withContext(Dispatchers.Main) {
@@ -213,7 +213,7 @@ class Recycler_Adaptor_Audio(
         currentItemUri = targetItemUri
 
         snapshot().forEachIndexed { index, item ->
-            if (item?.uriString == targetItemUri || item?.uriString == cache) {
+            if (item?.content_uriString == targetItemUri || item?.content_uriString == cache) {
 
                 notifyItemChanged(index, payloads)
             }
@@ -223,7 +223,7 @@ class Recycler_Adaptor_Audio(
     //切换当前播放状态
     fun updateCurrentIsPlayingState(targetItemUri: String,newIsPlaying: Boolean, payloads: Any){
         snapshot().forEachIndexed { index, item ->
-            if (item?.uriString == targetItemUri) {
+            if (item?.content_uriString == targetItemUri) {
 
                 notifyItemChanged(index, payloads)
             }
@@ -233,7 +233,7 @@ class Recycler_Adaptor_Audio(
     fun clearPlayingItem(payloads: Any){
         //consoleLog("清理播放标记 clearPlayingItem")
         snapshot().forEachIndexed { index, item ->
-            if (item?.uriString == currentItemUri){
+            if (item?.content_uriString == currentItemUri){
                 notifyItemChanged(index, payloads)
             }
         }

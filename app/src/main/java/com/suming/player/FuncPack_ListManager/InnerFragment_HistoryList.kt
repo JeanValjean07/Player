@@ -160,12 +160,12 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
         )
         //设置适配器
         recyclerView.adapter = recyclerView_history_list_adapter
-        //分页加载
-        val pager = Pager(PagingConfig(pageSize = 20)) {
-            Recycler_PagingSource_CustomList(requireContext())
-        }
         //分页加载数据
+        /*
         lifecycleScope.launch(Dispatchers.IO) {
+            val pager = Pager(PagingConfig(pageSize = 20)) {
+                Recycler_PagingSource_CustomList(requireContext())
+            }
             pager.flow.collect { pagingData ->
                 recyclerView_history_list_adapter?.submitData(pagingData)
             }
@@ -184,6 +184,8 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
                 }
             }
         }
+
+         */
     }
     //Fragment通信
     //注册接收父Fragment返回值

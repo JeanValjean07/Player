@@ -35,6 +35,9 @@ object PlayerInfoCenter {
     //可观察数据类
     private var _observableMediaItem = MutableStateFlow(MediaItemForPlay())
     val observableMediaItem: StateFlow<MediaItemForPlay> = _observableMediaItem.asStateFlow()
+    //可观察是否正在播放
+    private var _observableIsPlaying = MutableStateFlow(false)
+    val observableIsPlaying: StateFlow<Boolean> = _observableIsPlaying.asStateFlow()
 
 
 

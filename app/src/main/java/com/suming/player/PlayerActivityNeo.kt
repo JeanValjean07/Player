@@ -127,8 +127,7 @@ import kotlin.math.hypot
 import kotlin.math.pow
 
 @UnstableApi
-@RequiresApi(Build.VERSION_CODES.Q)
-//@Suppress("unused")
+@Suppress("NewApi") //"unused",
 class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -565,7 +564,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                             //计算对应时间戳
                             onScroll_scrollPercent = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
-                            onScroll_seekToMs = (onScroll_scrollPercent * PlayerInfoCenter.getMediaDuration()).toLong()
+                            onScroll_seekToMs = (onScroll_scrollPercent * PlayerInfoCenter.GET_Media_Duration()).toLong()
 
                             //刷新时间显示
                             controller_timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
@@ -1072,13 +1071,13 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //截取全部帧
                     FragmentConnector.fragment_more_button_extract_frame -> {
-                        val absolutePath = PlayerInfoCenter.getMediaAbsolutePath()
-                        val fileName = PlayerInfoCenter.getMediaFileName()
-                        if (absolutePath == "" && fileName == ""){
+                        val file_path = PlayerInfoCenter.GET_Media_FilePath()
+                        val fileName = PlayerInfoCenter.GET_Media_FileName()
+                        if (file_path == "" && fileName == ""){
                             showCustomToast("失败", 3)
                             return@setFragmentResultListener
                         }
-                        ExtractFrame(absolutePath, fileName)
+                        ExtractFrame(file_path, fileName)
                     }
                     //开启/关闭方向监听器
                     FragmentConnector.fragment_more_button_switch_ori_listener -> {
@@ -1106,7 +1105,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //使用系统分享面板
                     FragmentConnector.fragment_more_button_sys_share_video -> {
-                        val uriString = PlayerInfoCenter.getMediaUriStandard()
+                        val uriString = PlayerInfoCenter.GET_Media_UriStandard()
                         shareVideo(this@PlayerActivityNeo, uriString.toUri())
                     }
                     //更新视频封面
@@ -1114,10 +1113,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                         val Method = bundle.getString(FragmentConnector.extra_key)
                         when(Method){
                             FragmentConnector.update_cover_frame_use_current_frame -> {
-                                updateCoverFrame_captureCurrentFrame(PlayerInfoCenter.getMediaUriNumOnly())
+                                updateCoverFrame_captureCurrentFrame(PlayerInfoCenter.GET_Media_NUM_ID())
                             }
                             FragmentConnector.update_cover_frame_use_default_frame -> {
-                                updateCoverFrame_useDefaultCover(PlayerInfoCenter.getMediaUriNumOnly())
+                                updateCoverFrame_useDefaultCover(PlayerInfoCenter.GET_Media_NUM_ID())
                             }
                             FragmentConnector.update_cover_frame_pick_local_frame -> {
                                 showCustomToast("暂不支持此功能", 3)
@@ -1188,7 +1187,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //获取原始链接并转换为标准格式链接
         val intentUri = getOriginalIntentUri(intent)
-        val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUri, this@PlayerActivityNeo)
+        val intentUriString = intentUri.toString()
+        val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUriString, this@PlayerActivityNeo)
         val ongoingUriStandard = PlayerSingleton.getState_currentMediaItem_Uri().second
         consoleLog("intentUriStandard: $intentUriStandard, ongoingUriStandard: $ongoingUriStandard")
         //既无正在播放的媒体,也未传入链接,主动要求输入链接
@@ -1196,14 +1196,14 @@ class PlayerActivityNeo: AppCompatActivity(){
             queryManualInputUri()
         }else{
             //未传入链接,但有正在播放的媒体,则绑定当前播放项
-            if(intentUriStandard == Uri.EMPTY && ongoingUriStandard != Uri.EMPTY){
+            if(intentUriStandard == "" && ongoingUriStandard != Uri.EMPTY){
                 consoleLog("未传入链接,但有正在播放的媒体,则绑定当前播放项")
                 connectCurrentMedia()
             }else{
                 //检查是否是同一项
-                if(intentUriStandard != ongoingUriStandard){
+                if(intentUriStandard != ongoingUriStandard.toString()){
                     consoleLog("传入链接,但与当前播放项不同,播放新项")
-                    startPlayNewMedia(intentUriStandard)
+                    startPlayNewMedia(intentUriString.toUri())
                 }else{
                     consoleLog("传入链接,但与当前播放项相同,直接绑定")
                     connectCurrentMedia()
@@ -1361,7 +1361,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             for (trackGroup in tracks.groups) {
                 val format = trackGroup.getTrackFormat(0)
                 val fps = format.frameRate
-                PlayerInfoCenter.setMediaFps(fps)
+                PlayerInfoCenter.SET_Media_ActualFPS(fps)
                 break
             }
         }
@@ -1405,7 +1405,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (mediaItem == null){ return }
         //是音乐时主动退出页面
 
-        if (PlayerInfoCenter.getMediaInfoType() == "music"){
+        if (PlayerInfoCenter.GET_Media_SPECIFIC_TYPE() != MediaType.Video){
             EnsureExit_but_keep_playing()
             return
         }
@@ -2211,7 +2211,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             if (playerViewModel.wasPlaying){ player.play() }
 
             //获取当前文件路径
-            val file_path = PlayerInfoCenter.getMediaAbsolutePath()
+            val file_path = PlayerInfoCenter.GET_Media_FilePath()
 
             //发布完成消息
             updateCoverFrame_publishMessage(file_path, media_api_id)
@@ -2257,7 +2257,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         )
 
         //获取当前文件路径
-        val file_path = PlayerInfoCenter.getMediaAbsolutePath()
+        val file_path = PlayerInfoCenter.GET_Media_FilePath()
 
         //发布完成消息
         updateCoverFrame_publishMessage(file_path, media_api_id)
@@ -2599,7 +2599,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //刷新视频总长度
     private fun updateTimerWindow(){
         //设置时间戳-总时长显示位
-        val mediaDuration = PlayerInfoCenter.getMediaDuration()
+        val mediaDuration = PlayerInfoCenter.GET_Media_Duration()
         controller_timer_total.text = FormatTime_onlyNum(mediaDuration)
         //开始时间戳更新
         if (player.isPlaying) startVideoTimeSync()
@@ -2628,9 +2628,9 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             //计算进度条参数(委托给scrollerHelper)
             //先从信息中心拿到各种必要信息
-            val uriNumOnly = PlayerInfoCenter.getMediaUriNumOnly()
-            val mediaDuration = PlayerInfoCenter.getMediaDuration()
-            val absolutePath = PlayerInfoCenter.getMediaAbsolutePath()
+            val uriNumOnly = PlayerInfoCenter.GET_Media_NUM_ID()
+            val mediaDuration = PlayerInfoCenter.GET_Media_Duration()
+            val absolutePath = PlayerInfoCenter.GET_Media_FilePath()
             if (uriNumOnly == 0L || mediaDuration == 0L || absolutePath == "" ){
                 consoleLog("updateScrollerAdapter 进度条：获取信息无效，无法显示进度条")
                 withContext(Dispatchers.Main) {

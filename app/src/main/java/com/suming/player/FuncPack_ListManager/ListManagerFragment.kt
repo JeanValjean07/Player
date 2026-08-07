@@ -486,7 +486,7 @@ class ListManagerFragment: DialogFragment() {
         //观察播放状态变更
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInfoCenter.isPlaying.collect { _ ->
+                PlayerInfoCenter.observableIsPlaying.collect { _ ->
                     //传入当前页签
                     val currentViewPagerPage = ViewPager.currentItem
                     sendChildFragmentEvent(currentViewPagerPage, ListManagerHelper.event_detail_general_media_state_update)

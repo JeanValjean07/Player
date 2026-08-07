@@ -89,10 +89,10 @@ class PortalActivity : AppCompatActivity(){
     }
     //以新链接为目标
     private fun processOutSource(targetUriString: String,source: Int){
-        consoleLog("以新链接为目标 processOutSource")
+        //consoleLog("以新链接为目标 processOutSource")
         if (targetUriString != ""){
             //检查链接有效性和媒体类型
-            val (success, mediaType) = MediaInfoRetriever.getUriStringMediaType(this,targetUriString)
+            val (success, mediaType) = MediaInfoRetriever.getUriValidAndMediaType(this,targetUriString)
             if (success){
                 startPageByMediaType(targetUriString.toUri(), source,mediaType)
             }else{
@@ -107,13 +107,14 @@ class PortalActivity : AppCompatActivity(){
     //以正在播放项为目标
     @OptIn(UnstableApi::class)
     private fun processPending(){
-        consoleLog("以正在播放项为目标 processPending")
+        //consoleLog("以正在播放项为目标 processPending")
+
         //检查正在播放的媒体
         val (ongoing , uri) = PlayerSingleton.getState_currentMediaItem_Uri()
         val uriString = uri.toString()
-
-        val mediaType = PlayerInfoCenter.getMediaInfoType()
-
+        //获取必要信息
+        val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+        //
         when(mediaType){
             MediaType.Video -> {
                 if (ongoing){
@@ -134,7 +135,6 @@ class PortalActivity : AppCompatActivity(){
                 fail()
             }
         }
-
 
     }
 

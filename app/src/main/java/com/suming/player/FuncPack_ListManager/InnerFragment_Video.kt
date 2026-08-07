@@ -236,7 +236,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //播放项变更
     private fun onMediaItemUpdate(){
         //获取当前播放项
-        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.content_uriString
         consoleLog("onMediaItemUpdate()当前播放项: $currentItemUri")
 
         //使用payload更新当前播放项指示器
@@ -246,11 +246,11 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //播放状态变更
     private fun onMediaStateUpdate(){
         //获取当前播放项
-        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.content_uriString
         consoleLog("onMediaStateUpdate()当前播放项: $currentItemUri")
 
         //使用payload更新当前播放项指示器
-        recyclerView_video_adapter.updateCurrentIsPlayingState(currentItemUri, PlayerInfoCenter.isPlaying.value, ListManagerHelper.payload_event_item_state_update)
+        recyclerView_video_adapter.updateCurrentIsPlayingState(currentItemUri, PlayerInfoCenter.observableIsPlaying.value, ListManagerHelper.payload_event_item_state_update)
 
     }
 
@@ -303,7 +303,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
     //检查
     private fun checkNowOngoingItem(){
-        val currentMediaType = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaType
+        val currentMediaType = PlayerInfoCenter.observableMediaItem.value.media_SPECIFIC_MediaType
         //consoleLog("currentMediaType: $currentMediaType")
         if (currentMediaType != MediaType.Video){
             //consoleLog("当前播放项不是视频,清理播放标记")
@@ -324,7 +324,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     private fun onPlayClick(item: MediaItemFullForVideo, position: Int){
 
         if (item.content_uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
-            if (PlayerInfoCenter.isPlaying.value){
+            if (PlayerInfoCenter.observableIsPlaying.value){
                 PlayerSingleton.pausePlay()
             }else{
                 PlayerSingleton.continuePlay(true)

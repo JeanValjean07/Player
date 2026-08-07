@@ -10,43 +10,48 @@ import android.util.Log
 import androidx.core.net.toUri
 import java.io.File
 
+@Suppress() //"unused",
 object MediaUriManager {
 
-    //根据媒体储存唯一ID合成uri
-    fun getMediaUriByMediaID(mediaStoreID: String, mediaType: String): Uri {
-        var type = mediaType
-        if (type == "music") {
-            type = "audio"
+
+    const val Uri_Part_Video = "video"
+    const val Uri_Part_Audio = "audio"
+
+
+    //合成媒体Uri
+    fun GET_MediaUriBy(mediaType: String, NUM_ID: Long): Pair<Boolean, String> {
+        val type = if (mediaType == MediaType.Video) Uri_Part_Video else if (mediaType == MediaType.Audio) Uri_Part_Audio else {
+            return Pair(false, "")
         }
 
         //合成媒体链接
-        val uri = "content://media/external/$type/media/$mediaStoreID".toUri()
+        try{
+            val uri = "content://media/external/$type/media/$NUM_ID".toUri()
 
-        return uri
-    }
-    //根据媒体储存唯一ID合成uri字符串
-    fun getMediaUriStringByMediaID(mediaStoreID: String, mediaType: String): String {
-        var type = mediaType
-        if (type == "music") {
-            type = "audio"
+            return Pair(true, uri.toString())
+        }catch(e: Exception){
+            consoleLog("GET_MediaUriBy-合成媒体Uri失败: $e")
+
+            return Pair(false, "")
         }
+    }
+    fun GET_MediaUriBy(SPECIFIC_ID: String): Pair<Boolean, String> {
 
+        val mediaType = SPECIFIC_ID.substringBefore("_")
+        val NUM_ID = SPECIFIC_ID.substringAfter("_")
 
         //合成媒体链接
-        val uri = "content://media/external/$type/media/$mediaStoreID"
+        try{
+            val uri = "content://media/external/$mediaType/media/$NUM_ID".toUri()
 
-        return uri
+            return Pair(true, uri.toString())
+        }catch(e: Exception){
+            consoleLog("GET_MediaUriBy-合成媒体Uri失败: $e")
+
+            return Pair(false, "")
+        }
     }
 
-    //根据媒体uri获取媒体ID(若无法获取就直接置空)
-    fun getMediaIDByMediaUri(mediaUri: Uri, context: Context): String {
-        //获得标准链接(自带是否标准检测)
-        val standardMediaUri = getStandardMediaUri(mediaUri, context)
-        //直接提取标准链接末尾ID
-        val mediaID = standardMediaUri.lastPathSegment
-
-        return mediaID ?: ""
-    }
 
     //检查uri是否是标准格式
     fun isMediaUriStandard(mediaUriString: String): Boolean {
@@ -85,7 +90,7 @@ object MediaUriManager {
         var cursor: Cursor? = null
 
 
-        return try {
+        return try{
             cursor = contentResolver.query(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                 projection,

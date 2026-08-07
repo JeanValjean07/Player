@@ -38,7 +38,7 @@ class Recycler_Adaptor_Video(
         //比较器
         val Differ = object : DiffUtil.ItemCallback<MediaItemFullForVideo>() {
             override fun areItemsTheSame(oldItem: MediaItemFullForVideo, newItem: MediaItemFullForVideo): Boolean {
-                return oldItem.media_api_id == newItem.media_api_id
+                return oldItem.media_api_NUM_ID == newItem.media_api_NUM_ID
             }
             override fun areContentsTheSame(oldItem: MediaItemFullForVideo, newItem: MediaItemFullForVideo): Boolean {
                 return oldItem == newItem
@@ -115,11 +115,11 @@ class Recycler_Adaptor_Video(
         val item = getItem(position) ?: return
 
         //检查是不是当前媒体
-        if (item.content_uriString == PlayerInfoCenter.getMediaUriString()){
+        if (item.content_uriString == PlayerInfoCenter.GET_Media_UriString()){
             holder.setItemPlayingCard(true)
             currentItemUri = item.content_uriString
             //检查并设置播放状态
-            holder.setItemPlayingButton(PlayerInfoCenter.isPlaying.value)
+            holder.setItemPlayingButton(PlayerInfoCenter.observableIsPlaying.value)
         }else{
             holder.setItemPlayingCard(false)
         }
@@ -152,14 +152,14 @@ class Recycler_Adaptor_Video(
             when (payloads.firstOrNull()) {
 
                 ListManagerHelper.payload_event_item_update -> {
-                    if (item?.content_uriString == PlayerInfoCenter.getMediaUriString()){
+                    if (item?.content_uriString == PlayerInfoCenter.GET_Media_UriString()){
                         holder.setItemPlayingCard(true)
                     }else{
                         holder.setItemPlayingCard(false)
                     }
                 }
                 ListManagerHelper.payload_event_item_state_update -> {
-                    holder.setItemPlayingButton(PlayerInfoCenter.isPlaying.value)
+                    holder.setItemPlayingButton(PlayerInfoCenter.observableIsPlaying.value)
                 }
                 ListManagerHelper.payload_event_item_clear_playing_mark -> {
                     holder.setItemPlayingCard(false)
@@ -191,13 +191,13 @@ class Recycler_Adaptor_Video(
     //Long Thread Functions
     private fun loadArtworkFrame(item: MediaItemFullForVideo, holder: viewHolder)  {
         //记录holder的tag
-        val imageTag = item.media_api_id.toString()
+        val imageTag = item.media_api_NUM_ID.toString()
         holder.itemFrame.tag = imageTag
 
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch(Dispatchers.IO){
             //从ArtworkFrameManager要图片
-            val Frame = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_id)
+            val Frame = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_NUM_ID)
             //检查图片是否有效
             if (Frame != null){
                 //推送到图片ImageView
@@ -271,11 +271,6 @@ class Recycler_Adaptor_Video(
         currentItemUri = ""
     }
 
-    fun refreshList(){
-        //自主检查当前媒体和播放状态
-        val currentMediaItem = PlayerInfoCenter.getMediaUriString()
-
-    }
 
 
     //日志

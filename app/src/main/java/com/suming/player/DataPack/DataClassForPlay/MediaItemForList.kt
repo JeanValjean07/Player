@@ -1,6 +1,6 @@
 package com.suming.player.DataPack.DataClassForPlay
 
-data class MediaItemForPlay (
+data class MediaItemForList(
     val media_api_SPECIFIC_ID: String = "",
     val media_api_NUM_ID: Long = 0,
     val media_api_dateAdded: Long = 0,
@@ -19,6 +19,4 @@ data class MediaItemForPlay (
     val video_videoHeight: Long = 0L,
     val video_videoWidth: Long = 0L,
     var video_actualFPS: Float = 0f,
-
-
-    )
+)
