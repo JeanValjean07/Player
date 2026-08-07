@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
+import com.suming.player.FuncionalPack.Animations
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaType
@@ -35,10 +36,10 @@ class RecyclerAdapterMusic(
     private val onOptionsClick: (MediaItemFullForAudio, View) -> Unit,
 ): PagingDataAdapter<MediaItemFullForAudio, RecyclerAdapterMusic.ViewHolder>(DiffUtil) {
     companion object {
-        //条目比较器
+        //比较器
         val DiffUtil = object : DiffUtil.ItemCallback<MediaItemFullForAudio>() {
             override fun areItemsTheSame(oldItem: MediaItemFullForAudio, newItem: MediaItemFullForAudio): Boolean  {
-                return oldItem.uriNumOnly == newItem.uriNumOnly
+                return oldItem.media_SPECIFIC_MediaType == newItem.media_SPECIFIC_MediaType
             }
             override fun areContentsTheSame(oldItem: MediaItemFullForAudio, newItem: MediaItemFullForAudio): Boolean {
                 return oldItem == newItem
@@ -90,8 +91,8 @@ class RecyclerAdapterMusic(
     private fun bindBasicMusicCard(holder: ViewHolder, position: Int){
         consoleLog("bindBasicMusicCard: $position")
         val item = getItem(position) ?: return
-        holder.itemName.text = item.filename.substringBeforeLast(".")
-        holder.itemArtist.text = if (item.artist == "<unknown>" || item.artist == "") { "未知艺术家" } else { item.artist }
+        holder.itemName.text = item.file_name.substringBeforeLast(".")
+        holder.itemArtist.text = if (item.media_artist == "<unknown>" || item.media_artist == "") { "未知艺术家" } else { item.media_artist }
         //加载专辑封面任务
         holder.itemFrameJob?.cancel()
         holder.itemFrameJob = coroutine_loadArtwork.launch { loadArtworkFrame(item, holder) }
@@ -100,7 +101,7 @@ class RecyclerAdapterMusic(
             holder.itemName.isSelected = true
         }
         holder.itemHandle.setOnClickListener {
-            onItemClick(item.uriString.toUri())
+            onItemClick(item.content_uriString.toUri())
         }
         holder.ButtonOptions.setOnClickListener {
             onOptionsClick(item, it)
@@ -111,13 +112,12 @@ class RecyclerAdapterMusic(
     //Long Thread Functions
     private fun loadArtworkFrame(item: MediaItemFullForAudio, holder: ViewHolder)   {
         //记录holder的tag
-        val imageTag = item.uriNumOnly.hashCode().toString()
+        val imageTag = item.media_api_NUM_ID.hashCode().toString()
         holder.itemFrame.tag = imageTag
 
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch {
-
-            val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Audio, item.uriNumOnly)
+            val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Audio, item.media_api_NUM_ID)
             if (Bitmap != null){
                 //推到ImageView
                 withContext(Dispatchers.Main) {
@@ -137,7 +137,7 @@ class RecyclerAdapterMusic(
     private fun submitToImageView(holder: ViewHolder,Bitmap : Bitmap){
         holder.itemFrame.setImageBitmap(Bitmap)
         if (!holder.isAnimShowed){
-            holder.itemFrame.startAnimation(FadeInAnimation)
+            holder.itemFrame.startAnimation(Animations.FadeIn)
             holder.isAnimShowed = true
         }
     }
@@ -148,20 +148,16 @@ class RecyclerAdapterMusic(
             //获取专辑封面(让ArtworkCapturer承担截图任务)
             var Bitmap = ArtworkCapturer.captureAlbumInMusic(
                 context = context,
-                uri = item.uriString.toUri(),
+                uri = item.content_uriString.toUri(),
                 needCompress = true,
             )
 
             //检查是否取图成功
             if (Bitmap == null){
-                consoleLog("获取专辑封面失败: 开始获取默认图 uriNumOnly=${item.uriNumOnly}")
                 Bitmap = ArtworkCapturer.getDefaultAlbumFrame(context)
-            }else{
-                consoleLog("获取专辑封面成功: uriNumOnly=${item.uriNumOnly}")
             }
 
             if (Bitmap == null){
-                consoleLog("默认专辑封面获取失败")
                 return@launch
             }
 
@@ -169,14 +165,12 @@ class RecyclerAdapterMusic(
             withContext(Dispatchers.Main) { submitToImageView(holder,Bitmap) }
 
             //保存图片
-            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Audio, item.uriNumOnly, Bitmap)
+            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Audio, item.media_api_NUM_ID, Bitmap)
 
         }
     }
 
 
-    //加载动画
-    private var FadeInAnimation: AlphaAnimation = AlphaAnimation(0.0f, 1.0f).apply { duration = 250 }
 
     //日志控制
     private fun consoleLog(msg: String, mark: Boolean = false) {

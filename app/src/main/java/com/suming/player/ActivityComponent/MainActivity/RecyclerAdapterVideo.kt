@@ -44,7 +44,7 @@ class RecyclerAdapterVideo(
         //比较器
         val diffCallback = object : DiffUtil.ItemCallback<MediaItemFullForVideo>() {
             override fun areItemsTheSame(oldItem: MediaItemFullForVideo, newItem: MediaItemFullForVideo): Boolean {
-                return oldItem.file_path == newItem.file_path
+                return oldItem.media_api_SPECIFIC_ID == newItem.media_api_SPECIFIC_ID
             }
             override fun areContentsTheSame(oldItem: MediaItemFullForVideo, newItem: MediaItemFullForVideo): Boolean {
                 return oldItem == newItem
@@ -162,12 +162,12 @@ class RecyclerAdapterVideo(
     //Long Thread Functions
     private fun loadArtworkFrame(item: MediaItemFullForVideo, holder: ViewHolder)  {
         //记录holder的tag
-        val imageTag = item.file_name
+        val imageTag = item.media_api_NUM_ID
         holder.tvFrame.tag = imageTag
         //取出目标缩略图文件
         coroutine_loadArtwork_in.launch(Dispatchers.IO){
             //从ArtworkFrameManager要图片
-            val Frame = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_id)
+            val Frame = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_NUM_ID)
             //检查图片是否有效
             if (Frame != null){
                 //推送到图片ImageView
@@ -208,7 +208,7 @@ class RecyclerAdapterVideo(
             withContext(Dispatchers.Main) { submitToImageView(holder,Bitmap) }
 
             //保存图片
-            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_id, Bitmap)
+            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_NUM_ID, Bitmap)
 
         }
     }
