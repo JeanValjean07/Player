@@ -8,7 +8,7 @@ import android.util.Log
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioDataClass
 import com.suming.player.DataPack.DataBaseStateConnector
-import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.SettingsRequestCenter

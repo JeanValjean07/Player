@@ -19,7 +19,9 @@ object MediaInfoRetriever {
         }
     }
 
-    //解码器
+    val MediaItem = PlayerInfoCenter.MediaItemForPlay
+
+        //解码器
     private var retriever: MediaMetadataRetriever? = null
 
     //初始化解码器
@@ -67,7 +69,7 @@ object MediaInfoRetriever {
 
 
     //解码一个媒体
-    fun retrieveMediaInfo(context: Context, MediaInfo_MediaUri: Uri): Pair<Boolean,MediaInfo> {
+    fun retrieveMediaInfo(context: Context, MediaInfo_MediaUri: Uri): Pair<Boolean,PlayerInfoCenter.MediaItemForPlay> {
         consoleLog("retrieveMediaInfo - 需要解码 MediaInfo_MediaUri: $MediaInfo_MediaUri")
         //解码器初始化
         if(retriever == null) initRetriever()

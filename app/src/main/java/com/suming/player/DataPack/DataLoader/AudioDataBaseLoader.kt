@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
-import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.SettingsRequestCenter
 
 class AudioDataBaseLoader(

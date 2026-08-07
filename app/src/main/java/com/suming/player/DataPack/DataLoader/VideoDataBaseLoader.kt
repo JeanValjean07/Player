@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
-import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 import com.suming.player.SettingsRequestCenter
 
 class VideoDataBaseLoader(private val context: Context) : PagingSource<Int, MediaItemFullForVideo>() {

@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
+import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
 import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,91 +30,62 @@ object PlayerInfoCenter {
     private const val Undefined_String = ""
 
 
-    //完整数据类
-    data class MediaInfo(
-        var MediaInfo_MediaUniqueID: String,
-        var MediaInfo_DataBaseID : String,
-        var MediaInfo_MediaUri: Uri,
-        var MediaInfo_MediaUriString : String,
-        var MediaInfo_MediaUriStandard : String,
-        var MediaInfo_MediaUriNumOnly : Long,
-        //
-        var MediaInfo_MediaType : String,
-        var MediaInfo_AbsolutePath : String,
-        var MediaInfo_FileName : String,
-        var MediaInfo_MediaTitle : String,
-        var MediaInfo_MediaArtist : String,
-        //
-        var MediaInfo_Duration : Long,
-        //
-        var MediaInfo_Video_Width : Int,
-        var MediaInfo_Video_Height : Int,
-        //
-        var MediaInfo_RealFps: Float = 0f
-
-
-    )
-
 
 
 
     //当前播放媒体信息
-    var MediaInfoPackage: MediaInfo? = null
-
-    //使用uri作为唯一可观察的标签,供外部观察媒体切换事件
-    private val _uriString = MutableStateFlow("")
-    val uriString: StateFlow<String> = _uriString.asStateFlow()
+    var CURRENT_MediaItemPackage: MediaItemForPlay? = null
+    var LAST_MediaItemPackage: MediaItemForPlay? = null
 
 
+    //可观察数据类
+    private val _observableMediaItem = MutableStateFlow(MediaItemForPlay(
+        MediaInfo_MediaUniqueID = "",
+        MediaInfo_DataBaseID = "",
+        MediaInfo_MediaUri = Uri.EMPTY,
+        MediaInfo_MediaUriString = "",
+        MediaInfo_MediaUriStandard = "",
+        MediaInfo_MediaUriNumOnly = 0,
+        MediaInfo_MediaType = "",
+        MediaInfo_AbsolutePath = "",
+        MediaInfo_FileName = "",
+        MediaInfo_MediaTitle = "",
+        MediaInfo_MediaArtist = "",
+        MediaInfo_Duration = 0,
+        MediaInfo_Video_Width = 0,
+        MediaInfo_Video_Height = 0,
+        MediaInfo_RealFps = 0f
+    ))
+    val observableMediaItem: StateFlow<MediaItemForPlay> = _observableMediaItem.asStateFlow()
 
 
 
 
 
     //接收信息解码器传入的媒体信息
-    fun setMediaInfoPack(MediaInfoPack: MediaInfo) {
-        MediaInfoPackage = MediaInfoPack
-        consoleLog("setMediaInfoPack 设置媒体信息: ${MediaInfoPack.MediaInfo_MediaUriString}")
-        current_uriString = MediaInfoPack.MediaInfo_MediaUriString
-        //更新内部可观察标签
-        updateObservableUriString(MediaInfoPack.MediaInfo_MediaUriString)
+    fun setMediaInfoPack(MediaInfoPack: MediaItemForPlay) {
+        //缓存旧数据
+        LAST_MediaItemPackage = CURRENT_MediaItemPackage
+        //缓存新数据
+        CURRENT_MediaItemPackage = MediaInfoPack
         //更新可观察数据类
-        updateObservableMediaItem(ObservableMediaItem(
-            MediaInfo_MediaUriString = MediaInfoPack.MediaInfo_MediaUriString,
-            MediaInfo_MediaType = MediaInfoPack.MediaInfo_MediaType,
-        ))
+        _observableMediaItem.value = MediaInfoPack
+
     }
 
-    //设置真实帧率值
+    //设置真实帧率值(不触发更新)
     fun setMediaFps(fps:Float){
-        MediaInfoPackage?.MediaInfo_RealFps = fps
+        CURRENT_MediaItemPackage?.MediaInfo_RealFps = fps
     }
 
 
 
-    //外部获取信息
-    //检查媒体,媒体不同时,先读取新的信息
-    const val uriString_for_check_null = ""
-    private var current_uriString = ""
-    fun compareUriAndUpdate(context: Context,uriString: String): Boolean{
-        if (uriString != current_uriString){
-            //更新一次信息
-            val (success, MediaInfoPack) = MediaInfoRetriever.retrieveMediaInfo(context,uriString.toUri())
-            if (success) {
-                setMediaInfoPack(MediaInfoPack)
-                return true
-            }else{
-                consoleLog("获取媒体信息失败")
-                return false
-            }
-        }
-        return true
-    }
+    //获取信息
     //获取视频宽高比(返回默认保底值1)
     fun getMediaAspectRatio(): Float {
         //获取宽高
-        val MediaInfo_Video_Width = MediaInfoPackage?.MediaInfo_Video_Width?:1
-        val MediaInfo_Video_Height = MediaInfoPackage?.MediaInfo_Video_Height?:1
+        val MediaInfo_Video_Width = CURRENT_MediaItemPackage?.MediaInfo_Video_Width?:1
+        val MediaInfo_Video_Height = CURRENT_MediaItemPackage?.MediaInfo_Video_Height?:1
 
         //计算视频宽高比
         val aspectRatio = MediaInfo_Video_Width.toFloat() / MediaInfo_Video_Height.toFloat()
@@ -121,31 +93,28 @@ object PlayerInfoCenter {
         return aspectRatio
     }
     //获取当前媒体信息完整包
-    fun getMediaInfoPack(): MediaInfo? {
+    fun getMediaInfoPack(): MediaItemForPlay? {
 
-        return MediaInfoPackage
+        return CURRENT_MediaItemPackage
     }
-    //只返回首页微型播放器需要的信息迷你包(uriNumOnly,fileName,artist)(默认值为空)
-    fun getMediaInfoMiniPack(): Triple<String, String, String> {
+    //获取上一个媒体信息完整包
+    fun getLastMediaInfoPack(): MediaItemForPlay? {
+
+        return LAST_MediaItemPackage
+    }
+    //只返回首页微型播放器需要的信息迷你包
+    fun getMediaInfoForMiniView(): Triple<String, String, String> {
         //从MediaInfo中提取三项信息(uriNumOnly,fileName,artist)
-        val MediaInfo_uriNumOnly = MediaInfoPackage?.MediaInfo_MediaUniqueID?:""
-        val MediaInfo_FileName = MediaInfoPackage?.MediaInfo_FileName?:""
-        val MediaInfo_MediaArtist = MediaInfoPackage?.MediaInfo_MediaArtist?:""
+        val MediaInfo_uriNumOnly = CURRENT_MediaItemPackage?.MediaInfo_MediaUniqueID?:""
+        val MediaInfo_FileName = CURRENT_MediaItemPackage?.MediaInfo_FileName?:""
+        val MediaInfo_MediaArtist = CURRENT_MediaItemPackage?.MediaInfo_MediaArtist?:""
 
 
         return Triple(MediaInfo_uriNumOnly, MediaInfo_FileName, MediaInfo_MediaArtist)
     }
-    //获取当前媒体的播放进度
-    @OptIn(UnstableApi::class)
-    fun getEnginCurrentProgress(): Long {
-        consoleLog("视频进度应向播放器引擎读取")
-        val progress = PlayerSingleton.getEnginCurrentProgress()
-
-        return progress
-    }
-    //获取当前媒体的唯一ID
+    //获取当前媒体的 SPECIFIC_ID
     fun getMediaUniqueID(): String {
-        val MediaInfo_MediaUniqueID = MediaInfoPackage?.MediaInfo_MediaUniqueID?:""
+        val MediaInfo_MediaUniqueID = CURRENT_MediaItemPackage?.MediaInfo_MediaUniqueID?:""
 
         return MediaInfo_MediaUniqueID
     }
@@ -282,6 +251,11 @@ object PlayerInfoCenter {
         //可观察播放/暂停状态
         private val _isPlaying = MutableStateFlow(false)
         val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+
+
+//使用uri作为唯一可观察的标签,供外部观察媒体切换事件
+    private val _uriString = MutableStateFlow("")
+    val uriString: StateFlow<String> = _uriString.asStateFlow()
 
 
 

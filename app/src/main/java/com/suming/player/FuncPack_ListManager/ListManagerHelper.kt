@@ -8,8 +8,8 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
-import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
-import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 
 @Suppress("unused")
 object ListManagerHelper {

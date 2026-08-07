@@ -20,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.AddonTools.ToolVibrate
-import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 import com.suming.player.FuncionalPack.Animations
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.MediaType

@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
-import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter

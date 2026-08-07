@@ -5,7 +5,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
-import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 
 @UnstableApi
 @Suppress("unused")

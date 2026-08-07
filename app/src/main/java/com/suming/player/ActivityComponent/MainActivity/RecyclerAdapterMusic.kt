@@ -8,7 +8,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AlphaAnimation
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
@@ -17,7 +16,7 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
-import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.Animations
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager

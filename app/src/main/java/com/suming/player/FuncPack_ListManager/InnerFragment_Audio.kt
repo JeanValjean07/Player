@@ -24,7 +24,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataLoader.AudioDataBaseLoader
-import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.PlayerSingleton

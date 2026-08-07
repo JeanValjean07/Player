@@ -5,7 +5,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
-import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 
 @UnstableApi
 @Suppress("unused")

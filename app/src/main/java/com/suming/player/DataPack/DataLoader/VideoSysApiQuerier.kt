@@ -8,7 +8,7 @@ import android.util.Log
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoDataClass
 import com.suming.player.DataPack.DataBaseStateConnector
-import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.SettingsRequestCenter

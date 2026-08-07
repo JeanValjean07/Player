@@ -1,4 +1,4 @@
-package com.suming.player.DataPack.DataClass
+package com.suming.player.DataPack.DataClassForStorage
 
 import android.os.Parcel
 import android.os.Parcelable
