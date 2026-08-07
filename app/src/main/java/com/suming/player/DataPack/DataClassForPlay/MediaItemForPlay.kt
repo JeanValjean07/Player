@@ -3,26 +3,24 @@ package com.suming.player.DataPack.DataClassForPlay
 import android.net.Uri
 
 data class MediaItemForPlay (
+    val media_api_SPECIFIC_ID: String = "",
+    val media_api_NUM_ID: Long = 0,
+    val media_api_dateAdded: Long = 0,
+    val media_SPECIFIC_MediaType: String = "",
+    val content_uriString: String = "",
+    val content_uriStandard: String = "",
+    val file_path: String = "",
+    val file_name: String = "",
+    val file_size: Long = 0L,
+    val media_title: String = "",
+    val media_artist: String = "",
+    val media_durationMs: Long = 0L,
+    val media_format: String = "",
 
-    var MediaInfo_MediaUniqueID: String,
-    var MediaInfo_DataBaseID : String,
-    var MediaInfo_MediaUri: Uri,
-    var MediaInfo_MediaUriString : String,
-    var MediaInfo_MediaUriStandard : String,
-    var MediaInfo_MediaUriNumOnly : Long,
-
-    var MediaInfo_MediaType : String,
-    var MediaInfo_AbsolutePath : String,
-    var MediaInfo_FileName : String,
-    var MediaInfo_MediaTitle : String,
-    var MediaInfo_MediaArtist : String,
-
-    var MediaInfo_Duration : Long,
-
-    var MediaInfo_Video_Width : Int,
-    var MediaInfo_Video_Height : Int,
-
-    var MediaInfo_RealFps: Float = 0f
+    //类型专属
+    val video_videoHeight: Long = 0L,
+    val video_videoWidth: Long = 0L,
+    var video_actualFPS: Float = 0f,
 
 
-)
+    )

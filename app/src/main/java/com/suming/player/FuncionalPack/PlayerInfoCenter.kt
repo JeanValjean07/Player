@@ -1,18 +1,12 @@
 package com.suming.player.FuncionalPack
 
-import android.content.Context
-import android.net.Uri
 import android.util.Log
-import androidx.annotation.OptIn
-import androidx.core.net.toUri
-import androidx.media3.common.util.UnstableApi
 import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
-import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-@Suppress() //"unused"
+@Suppress("unused") //"unused"
 object PlayerInfoCenter {
 
     //日志
@@ -39,23 +33,7 @@ object PlayerInfoCenter {
 
 
     //可观察数据类
-    private val _observableMediaItem = MutableStateFlow(MediaItemForPlay(
-        MediaInfo_MediaUniqueID = "",
-        MediaInfo_DataBaseID = "",
-        MediaInfo_MediaUri = Uri.EMPTY,
-        MediaInfo_MediaUriString = "",
-        MediaInfo_MediaUriStandard = "",
-        MediaInfo_MediaUriNumOnly = 0,
-        MediaInfo_MediaType = "",
-        MediaInfo_AbsolutePath = "",
-        MediaInfo_FileName = "",
-        MediaInfo_MediaTitle = "",
-        MediaInfo_MediaArtist = "",
-        MediaInfo_Duration = 0,
-        MediaInfo_Video_Width = 0,
-        MediaInfo_Video_Height = 0,
-        MediaInfo_RealFps = 0f
-    ))
+    private var _observableMediaItem = MutableStateFlow(MediaItemForPlay())
     val observableMediaItem: StateFlow<MediaItemForPlay> = _observableMediaItem.asStateFlow()
 
 
@@ -73,139 +51,117 @@ object PlayerInfoCenter {
 
     }
 
-    //设置真实帧率值(不触发更新)
-    fun setMediaFps(fps:Float){
-        CURRENT_MediaItemPackage?.MediaInfo_RealFps = fps
+    //仅能外部后期传入的项
+    //设置真实帧率值
+    fun SET_Media_ActualFPS(fps:Float){
+        CURRENT_MediaItemPackage?.video_actualFPS = fps
     }
 
 
 
     //获取信息
-    //获取视频宽高比(返回默认保底值1)
-    fun getMediaAspectRatio(): Float {
-        //获取宽高
-        val MediaInfo_Video_Width = CURRENT_MediaItemPackage?.MediaInfo_Video_Width?:1
-        val MediaInfo_Video_Height = CURRENT_MediaItemPackage?.MediaInfo_Video_Height?:1
-
-        //计算视频宽高比
-        val aspectRatio = MediaInfo_Video_Width.toFloat() / MediaInfo_Video_Height.toFloat()
-
-        return aspectRatio
-    }
     //获取当前媒体信息完整包
-    fun getMediaInfoPack(): MediaItemForPlay? {
+    fun GET_Media_FullMediaInfoPack(): MediaItemForPlay? {
 
         return CURRENT_MediaItemPackage
     }
     //获取上一个媒体信息完整包
-    fun getLastMediaInfoPack(): MediaItemForPlay? {
+    fun GET_LAST_MediaInfoPack(): MediaItemForPlay? {
 
         return LAST_MediaItemPackage
     }
     //只返回首页微型播放器需要的信息迷你包
-    fun getMediaInfoForMiniView(): Triple<String, String, String> {
-        //从MediaInfo中提取三项信息(uriNumOnly,fileName,artist)
-        val MediaInfo_uriNumOnly = CURRENT_MediaItemPackage?.MediaInfo_MediaUniqueID?:""
-        val MediaInfo_FileName = CURRENT_MediaItemPackage?.MediaInfo_FileName?:""
-        val MediaInfo_MediaArtist = CURRENT_MediaItemPackage?.MediaInfo_MediaArtist?:""
+    fun GET_Media_MiniView_Pack(): Triple<String, String, String> {
+        //从MediaInfo中提取三项信息
+        val SPECIFIC_ID = CURRENT_MediaItemPackage?.media_api_SPECIFIC_ID ?: Undefined_String
+        val FileName = CURRENT_MediaItemPackage?.file_name ?: Undefined_String
+        val MediaArtist = CURRENT_MediaItemPackage?.media_artist ?: Undefined_String
 
 
-        return Triple(MediaInfo_uriNumOnly, MediaInfo_FileName, MediaInfo_MediaArtist)
+        return Triple(SPECIFIC_ID, FileName, MediaArtist)
     }
     //获取当前媒体的 SPECIFIC_ID
-    fun getMediaUniqueID(): String {
-        val MediaInfo_MediaUniqueID = CURRENT_MediaItemPackage?.MediaInfo_MediaUniqueID?:""
+    fun GET_Media_SPECIFIC_ID(): String {
+        val Media_SPECIFIC_ID = CURRENT_MediaItemPackage?.media_api_SPECIFIC_ID ?: Undefined_String
 
-        return MediaInfo_MediaUniqueID
+        return Media_SPECIFIC_ID
     }
-    //获取当前媒体的uriNumOnly
-    fun getMediaUriNumOnly(): Long {
-        val MediaInfo_MediaUriNumOnly = MediaInfoPackage?.MediaInfo_MediaUriNumOnly?:0L
+    //获取当前媒体的 NUM_ID
+    fun GET_Media_NUM_ID(): Long {
+        val Media_NUM_ID = CURRENT_MediaItemPackage?.media_api_NUM_ID ?: 0L
 
-        return MediaInfo_MediaUriNumOnly
+        return Media_NUM_ID
     }
     //获取当前媒体的标准链接
-    fun getMediaUriStandard(): String {
-        val MediaInfo_MediaUriStandard = MediaInfoPackage?.MediaInfo_MediaUriStandard?:""
+    fun GET_Media_UriStandard(): String {
+        val MediaInfo_MediaUriStandard = CURRENT_MediaItemPackage?.content_uriStandard ?: Undefined_String
 
         return MediaInfo_MediaUriStandard
     }
     //获取当前媒体的uriString
-    fun getMediaUriString(): String {
-        val MediaInfo_MediaUriString = MediaInfoPackage?.MediaInfo_MediaUriString?:""
+    fun GET_Media_UriString(): String {
+        val MediaInfo_MediaUriString = CURRENT_MediaItemPackage?.content_uriString ?: Undefined_String
 
         return MediaInfo_MediaUriString
     }
     //获取媒体是视频还是音乐
-    fun getMediaInfoType(): String {
+    fun GET_Media_SPECIFIC_TYPE(): String {
         //尝试获取类型
-        val MediaInfo_MediaType = MediaInfoPackage?.MediaInfo_MediaType ?: ""
+        val MediaInfo_MediaType = CURRENT_MediaItemPackage?.media_SPECIFIC_MediaType ?: Undefined
+
         //检查类型是否合法
-        if (MediaInfo_MediaType != MediaType.Video && MediaInfo_MediaType != MediaType.Audio){
+        if (MediaInfo_MediaType != Video && MediaInfo_MediaType != Audio){
             return "哎呀,骇亖我力"
         }
 
         return MediaInfo_MediaType
     }
     //获取当前媒体的文件名
-    fun getMediaFileName(): String {
-        val MediaInfo_MediaFileName = MediaInfoPackage?.MediaInfo_FileName?:""
+    fun GET_Media_FileName(): String {
+        val Media_FileName = CURRENT_MediaItemPackage?.file_name ?: Undefined_String
 
-        return MediaInfo_MediaFileName
+        return Media_FileName
     }
     //获取当前媒体的艺术家
-    fun getMediaArtist(): String {
-        val MediaInfo_MediaArtist = MediaInfoPackage?.MediaInfo_MediaArtist?:""
+    fun GET_Media_Artist(): String {
+        val MediaInfo_MediaArtist = CURRENT_MediaItemPackage?.media_artist ?: Undefined_String
 
         return MediaInfo_MediaArtist
     }
     //获取当前媒体的总时长
-    fun getMediaDuration(): Long {
-        val MediaInfo_MediaDuration = MediaInfoPackage?.MediaInfo_Duration?:0L
+    fun GET_Media_Duration(): Long {
+        val MediaInfo_MediaDuration = CURRENT_MediaItemPackage?.media_durationMs ?: 0L
 
         return MediaInfo_MediaDuration
     }
-    //获取数据库ID
-    fun getItemDataBaseID(): String {
-        return MediaInfoPackage?.MediaInfo_DataBaseID ?: ""
-    }
     //获取绝对路径
-    fun getMediaAbsolutePath(): String {
-        return MediaInfoPackage?.MediaInfo_AbsolutePath ?: ""
+    fun GET_Media_FilePath(): String {
+        val Media_FilePath = CURRENT_MediaItemPackage?.file_path ?: Undefined_String
+
+        return Media_FilePath
     }
+    //获取视频宽高比(返回默认保底值1)
+    fun GET_Media_AspectRatio(): Float {
+        //获取宽高
+        val MediaInfo_Video_Width = CURRENT_MediaItemPackage?.video_videoWidth ?: 1L
+        val MediaInfo_Video_Height = CURRENT_MediaItemPackage?.video_videoHeight ?: 1L
 
-    //判断传入的链接是否为正在播放的项(数据缓存)
-    fun isthisUriOngoing(context:Context,uriNeedCheck: Uri): Boolean {
-        if (MediaInfoPackage == null){
-            return false
-        }
+        //计算视频宽高比
+        val aspectRatio = MediaInfo_Video_Width.toFloat() / MediaInfo_Video_Height.toFloat()
 
-        val MediaInfo_MediaUriStandard = MediaInfoPackage!!.MediaInfo_MediaUriStandard
-        //如果传入标准链接,就直接对比标准链接
-        if (MediaUriManager.isMediaUriStandard(uriNeedCheck)){
-
-            return uriNeedCheck.toString() == MediaInfo_MediaUriStandard
-        }
-        //若不是标准链接,先转成标准链接,再对比
-        val standardUriNeedCheck = MediaUriManager.getStandardMediaUri(uriNeedCheck,context)
-
-        return standardUriNeedCheck.toString() == MediaInfo_MediaUriStandard
+        return aspectRatio
     }
 
 
 
+    //清除当前媒体信息
+    fun CLEAR_CurrentMediaInfo() {
+        //清空当前媒体信息
+        CURRENT_MediaItemPackage = null
 
-    //清除当前媒体信息(记得清除解码器链接缓存)
-    fun clearCurrentMediaInfo() {
-        MediaInfoPackage = null
-        //清除解码器链接缓存
-        MediaInfoRetriever.clearRetrieverUriCache()
-        //修改可观察标记
-        updateObservableUriString("")
-        updateObservableMediaItem(ObservableMediaItem(
-            MediaInfo_MediaUriString = Undefined,
-            MediaInfo_MediaType = MediaType.Undefined,
-        ))
+
+        //修改可观察标记为空
+        _observableMediaItem.value = MediaItemForPlay()
 
     }
 
@@ -213,26 +169,7 @@ object PlayerInfoCenter {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    //老函数归档
     private fun TrashCan(){
         /*
         //专供观察数据类

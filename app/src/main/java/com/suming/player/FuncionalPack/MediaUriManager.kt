@@ -49,34 +49,34 @@ object MediaUriManager {
     }
 
     //检查uri是否是标准格式
-    fun isMediaUriStandard(mediaUri: Uri): Boolean {
+    fun isMediaUriStandard(mediaUriString: String): Boolean {
         //使用正则表达式判断(目前通过video和audio两种类型)
         val regex = """^content://media/external/(?:video|audio)/media/\d+$""".toRegex()
 
-        return regex.matches(mediaUri.toString())
+        return regex.matches(mediaUriString)
     }
 
     //转换非标准链接为标准链接(自带是否标准检测)
-    fun getStandardMediaUri(mediaUri: Uri, context: Context): Uri {
+    fun getStandardMediaUri(mediaUriString: String, context: Context): String {
         //再次检查uri是否是标准格式,是标准格式时直接返回
-        if (isMediaUriStandard(mediaUri)) return mediaUri
+        if (isMediaUriStandard(mediaUriString)) return mediaUriString
 
         //提取文件路径
-        val filePath = getFilePath(context, mediaUri)
-        consoleLog("filePath: $filePath")
-        if (filePath == null) return Uri.EMPTY
+        val filePath = GET_FilePath(context,mediaUriString.toUri())
+        consoleLog("检查uri是否是标准格式-取到filePath: $filePath")
+        if (filePath == null) return ""
 
-        //查询数据库获取媒体uri
-        val mediaUri = getMediaUriByFilePath(filePath, context)
-        consoleLog("mediaUri: $mediaUri")
-        if (mediaUri == Uri.EMPTY) return Uri.EMPTY
+        //查询数据库获取媒体Uri
+        val mediaUri = searchUriBySysMediaApi(filePath, context)
+        consoleLog("检查uri是否是标准格式-取到Uri: $mediaUri")
+        if (mediaUri == Uri.EMPTY) return ""
 
 
-        return mediaUri
+        return mediaUri.toString()
     }
 
     //从文件路径获取uri(需查询系统媒体库)(路径必须是绝对实际路径)
-    fun getMediaUriByFilePath(filePath: String, context: Context): Uri {
+    fun searchUriBySysMediaApi(filePath: String, context: Context): Uri {
         //构建查询
         val contentResolver: ContentResolver = context.contentResolver
         val projection = arrayOf(MediaStore.Video.Media._ID)
@@ -111,7 +111,7 @@ object MediaUriManager {
 
     //工具函数
     //从uri获取文件绝对路径
-    private fun getFilePath(context: Context, uri: Uri): String? {
+    private fun GET_FilePath(context: Context, uri: Uri): String? {
         val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
             Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
         } else {
@@ -132,7 +132,7 @@ object MediaUriManager {
     }
 
 
-    //日志控制
+    //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "MediaUriManager: $msg")
