@@ -661,7 +661,9 @@ class MainActivity: AppCompatActivity() {
             //观察正在播放的媒体项变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableMediaItem.collect { uriString ->
-                    //consoleLog("MiniView观察者 当前媒体: $uriString")
+                    consoleLog("MiniView观察者 当前媒体: $uriString")
+
+                    //
                     showMiniViewLongProcess()
                 }
             }
@@ -670,7 +672,7 @@ class MainActivity: AppCompatActivity() {
             //观察播放状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableIsPlaying.collect { newState ->
-                    //consoleLog("MiniView观察者 当前播放状态: $newState")
+                    consoleLog("MiniView观察者 当前播放状态: $newState")
 
                     //刷新操作按钮
                     updateMiniViewPauseButton(newState)
@@ -682,14 +684,24 @@ class MainActivity: AppCompatActivity() {
     private fun showMiniViewLongProcess(){
         //从PlayerStateMediaInfo获取所有信息
         val (SPECIFIC_ID,FileName,MediaArtist) = PlayerInfoCenter.GET_Media_MiniView_Pack()
+        consoleLog("showMiniViewLongProcess: SPECIFIC_ID $SPECIFIC_ID")
         if (SPECIFIC_ID.isEmpty()){
             miniView_clear()
             return
         }
         //分离部分信息
-        val mediaType = SPECIFIC_ID.substringBefore("_")
-        val NUM_ID = SPECIFIC_ID.substringAfter("_").toLong()
+        var mediaType = ""
+        var NUM_ID = 0L
+        try {
+            mediaType = SPECIFIC_ID.substringBefore("_")
+            consoleLog("showMiniViewLongProcess: mediaType = $mediaType")
+            NUM_ID = SPECIFIC_ID.substringAfterLast("_").toLong()
+            consoleLog("showMiniViewLongProcess: NUM_ID = $NUM_ID")
+        }catch (e: Exception){
+            consoleLog("showMiniViewLongProcess: $e")
+        }
 
+        consoleLog("showMiniViewLongProcess: $mediaType $NUM_ID $FileName $MediaArtist")
         //文字上屏
         PlayingCard_TextMediaName.text = FileName
         PlayingCard_TextMediaArtist.text = MediaArtist
@@ -836,6 +848,10 @@ class MainActivity: AppCompatActivity() {
     private fun updateMiniViewArtwork_Video(){
         //绑定到视频
         fun connectToPlayEngine(){
+            consoleLog("updateMiniViewArtwork_Video: connectToPlayEngine ${PlayingCard_Artwork_Video}")
+            if (PlayingCard_Artwork_Video == null) {
+                consoleLog("updateMiniViewArtwork_Video: connectToPlayEngine PlayingCard_Artwork_Video is null")
+            }
             PlayingCard_Artwork_Video?.player = null
             PlayingCard_Artwork_Video?.player = PlayerSingleton.getPlayer()
         }
@@ -899,9 +915,11 @@ class MainActivity: AppCompatActivity() {
         }
 
         //变换卡片宽度
+        consoleLog("updateMiniViewArtwork_Video: transformCardSize_adaptVideo")
         transformCardSize_adaptVideo()
 
         //绑定到视频
+        consoleLog("updateMiniViewArtwork_Video: connectToPlayEngine")
         connectToPlayEngine()
 
         //(测试用)点击重新绑定视频视图

@@ -5,21 +5,22 @@ import android.net.Uri
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.suming.player.DataPack.DataClassForPlay.MediaItemForList
 
 @UnstableApi
 @Suppress("unused")
 class Recycler_PagingSource_CustomList(
     private val context: Context,
-) : PagingSource<Int, MiniMediaItemForList>() {
+) : PagingSource<Int, MediaItemForList>() {
 
-    override fun getRefreshKey(state: PagingState<Int, MiniMediaItemForList>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, MediaItemForList>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
                 ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
         }
     }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MiniMediaItemForList> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItemForList> {
         try {
             val page = params.key ?: 0
             val limit = params.loadSize
@@ -32,14 +33,19 @@ class Recycler_PagingSource_CustomList(
             //合成MediaItem
             val mediaItems = MiniMediaItems
                 .map { item ->
-                    MiniMediaItemForList(
-                        id = 114514,
-                        uri = Uri.EMPTY,
-                        uriNumOnly = 114514,
-                        filename = "item.filename",
-                        title = "item.title",
-                        artist = "item.artist",
-                        type = item.type,
+                    MediaItemForList(
+                        media_api_SPECIFIC_ID = item.type,
+                        media_api_NUM_ID = 114514L,
+                        media_api_dateAdded = 114514L,
+                        media_SPECIFIC_MediaType = "",
+                        content_uriString = "",
+                        file_path = "",
+                        file_name = "",
+                        file_size = 0,
+                        media_title = "",
+                        media_artist = "",
+                        media_durationMs = 0L,
+
                     )
                 }
             //计算下页键

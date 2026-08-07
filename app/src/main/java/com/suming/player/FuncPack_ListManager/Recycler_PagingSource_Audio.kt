@@ -38,21 +38,22 @@ class Recycler_PagingSource_Audio(
             val musicItems = musicStoreSettings
                 .map { setting ->
                     MediaItemFullForAudio(
-                        id = setting.MARK_ID.toLongOrNull() ?: 0,
-                        uriString = setting.info_uri_string,
-                        uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,
-                        filename = setting.info_filename,
-                        title = setting.info_title,
-                        artist = setting.info_artist,
-                        durationMs = setting.info_duration,
-                        //音频专属
-                        albumId = setting.info_album_id,
-                        album = setting.info_album,
-                        //其他
-                        path = setting.info_path,
-                        sizeBytes = setting.info_file_size,
-                        dateAdded = setting.info_date_added,
-                        format = setting.info_format,
+                        media_api_SPECIFIC_ID = setting.media_api_SPECIFIC_ID,
+                        media_api_NUM_ID = setting.media_api_NUM_ID,
+                        media_api_dateAdded = setting.media_api_dateAdded,
+                        media_SPECIFIC_MediaType = setting.media_SPECIFIC_MediaType,
+                        content_uriString = setting.content_uriString,
+                        file_path = setting.file_path,
+                        file_name = setting.file_name,
+                        file_size = setting.file_size,
+                        media_title = setting.media_title,
+                        media_artist = setting.media_artist,
+                        media_durationMs = setting.media_durationMs,
+                        media_format = setting.media_format,
+                        //-----------------------------------
+                        media_audio_bitrate = setting.media_audio_bitrate,
+                        media_audio_album = setting.media_audio_album,
+                        media_audio_albumId = setting.media_audio_albumId,
                     )
                 }
                 //计算下页键

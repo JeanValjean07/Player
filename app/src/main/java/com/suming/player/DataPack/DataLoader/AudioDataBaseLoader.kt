@@ -37,6 +37,7 @@ class AudioDataBaseLoader(
 
             //合成MediaItem
             val musicItems = musicStoreSettings.map { setting ->
+                //consoleLog("load: ${setting.file_name} ${setting.content_uriString}")
                     MediaItemFullForAudio(
                         media_api_SPECIFIC_ID = setting.media_api_SPECIFIC_ID,
                         media_api_NUM_ID = setting.media_api_NUM_ID,

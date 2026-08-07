@@ -93,7 +93,8 @@ class VideoSysApiQuerier(
                     val media_format = if (media_mimeType.contains('/')) media_mimeType.substringAfterLast('/') else media_mimeType
                     val media_api_SPECIFIC_ID = MediaInfoRetriever.calculate_SPECIFIC_ID(mediaType, media_api_NUM_ID.toString())
 
-
+                    //日志
+                    /*
                     consoleLog("读取到视频文件: " +
                             "media_api_SPECIFIC_ID: $media_api_SPECIFIC_ID, " +
                             "media_api_NUM_ID: $media_api_NUM_ID, " +
@@ -110,7 +111,7 @@ class VideoSysApiQuerier(
                             "mediaType: $mediaType, " +
                             "media_format: $media_format, "
                     )
-
+                     */
 
                     //检查文件是否应该添加
                     val save = when {

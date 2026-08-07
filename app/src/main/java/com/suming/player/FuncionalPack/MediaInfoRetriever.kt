@@ -88,6 +88,8 @@ object MediaInfoRetriever {
 
                 return Pair(false, MediaItemForPlay())
             }
+            //合成SPECIFIC_ID
+            val MediaInfo_SPECIFIC_ID = MediaInfo_MediaType + "_" + Media_NUM_ID
 
             //获取通用信息
             val MediaInfo_FileName = (File(file_path)).name ?: ""
@@ -109,7 +111,7 @@ object MediaInfoRetriever {
 
             //合成数据包
             val MediaInfoPack = MediaItemForPlay(
-                media_api_SPECIFIC_ID = "",
+                media_api_SPECIFIC_ID = MediaInfo_SPECIFIC_ID,
                 media_api_NUM_ID = Media_NUM_ID,
                 media_api_dateAdded = 0,
                 media_SPECIFIC_MediaType = MediaInfo_MediaType,

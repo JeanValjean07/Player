@@ -69,9 +69,11 @@ class RecyclerAdapterMusic(
 
 
 
+    //init(未使用)
+    /*
     init {
-        consoleLog("init: 哎呀，骇亖我力")
     }
+     */
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.activity_main_list_item_music, parent, false)
@@ -88,7 +90,7 @@ class RecyclerAdapterMusic(
 
     //绑定基本音乐卡片
     private fun bindBasicMusicCard(holder: ViewHolder, position: Int){
-        consoleLog("bindBasicMusicCard: $position")
+        //consoleLog("bindBasicMusicCard: $position")
         val item = getItem(position) ?: return
         holder.itemName.text = item.file_name.substringBeforeLast(".")
         holder.itemArtist.text = if (item.media_artist == "<unknown>" || item.media_artist == "") { "未知艺术家" } else { item.media_artist }
@@ -140,11 +142,15 @@ class RecyclerAdapterMusic(
             holder.isAnimShowed = true
         }
     }
+    private fun submitToImageViewNoAnim(holder: ViewHolder,Bitmap : Bitmap){
+        holder.itemFrame.setImageBitmap(Bitmap)
+    }
 
     //生成缩略图
     private fun captureAlbumFrame(item: MediaItemFullForAudio, holder: ViewHolder){
         coroutine_captureAlbum.launch {
             //获取专辑封面(让ArtworkCapturer承担截图任务)
+            //consoleLog("captureAlbumFrame: ${item.file_name} ${item.content_uriString}")
             var Bitmap = ArtworkCapturer.captureAlbumInMusic(
                 context = context,
                 uri = item.content_uriString.toUri(),
@@ -161,7 +167,7 @@ class RecyclerAdapterMusic(
             }
 
             //推送到ImageView
-            withContext(Dispatchers.Main) { submitToImageView(holder,Bitmap) }
+            withContext(Dispatchers.Main) { submitToImageViewNoAnim(holder,Bitmap) }
 
             //保存图片
             ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Audio, item.media_api_NUM_ID, Bitmap)
@@ -171,8 +177,8 @@ class RecyclerAdapterMusic(
 
 
 
-    //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "RecyclerAdapterMusic: $msg")
         }

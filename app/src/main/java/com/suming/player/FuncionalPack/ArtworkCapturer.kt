@@ -221,7 +221,7 @@ object ArtworkCapturer {
 
                 //检查是否有效
                 if (ByteArray == null) {
-                    consoleLog("获取专辑封面失败")
+                    //consoleLog("获取专辑封面失败")
                     return@withLock null
                 }
 

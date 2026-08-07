@@ -38,18 +38,21 @@ class Recycler_PagingSource_Video(
             val mediaItems = mediaStoreSettings
                 .map { setting ->
                     MediaItemFullForVideo(
+                        media_api_SPECIFIC_ID = setting.media_api_SPECIFIC_ID,
+                        media_api_NUM_ID = setting.media_api_NUM_ID,
+                        media_api_dateAdded = setting.media_api_dateAdded,
+                        media_SPECIFIC_MediaType = setting.media_SPECIFIC_MediaType,
+                        content_uriString = setting.content_uriString,
                         file_path = setting.file_path,
                         file_name = setting.file_name,
                         file_size = setting.file_size,
-                        media_api_id = setting.media_api_id,
-                        media_api_dateAdded = setting.media_api_dateAdded,
-                        content_uriString = setting.content_uriString,
-                        custom_media_Type = setting.custom_media_Type,
                         media_title = setting.media_title,
                         media_artist = setting.media_artist,
                         media_durationMs = setting.media_durationMs,
-                        media_video_resolution = setting.media_video_resolution,
                         media_format = setting.media_format,
+                        //-----------------------------------
+                        media_video_resolution = setting.media_video_resolution,
+                        media_video_bitrate = setting.media_video_bitrate,
                     )
                 }
 

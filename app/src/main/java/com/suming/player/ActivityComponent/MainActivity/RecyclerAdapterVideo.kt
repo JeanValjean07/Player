@@ -205,7 +205,7 @@ class RecyclerAdapterVideo(
             }
 
             //推送到ImageView
-            withContext(Dispatchers.Main) { submitToImageView(holder,Bitmap) }
+            withContext(Dispatchers.Main) { submitToImageViewNoAnim(holder,Bitmap) }
 
             //保存图片
             ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_NUM_ID, Bitmap)
@@ -220,6 +220,9 @@ class RecyclerAdapterVideo(
             holder.tvFrame.startAnimation(Animations.FadeIn)
             holder.isAnimShowed = true
         }
+    }
+    private fun submitToImageViewNoAnim(holder: ViewHolder, Bitmap : Bitmap){
+        holder.tvFrame.setImageBitmap(Bitmap)
     }
 
 

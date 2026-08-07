@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.CountDownTimer
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -29,7 +30,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
 import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
-import com.suming.player.DataPack.MediaInfo
+import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
@@ -188,7 +189,7 @@ object PlayerSingleton {
         //销毁播放器
         releasePlayer()
         //重置媒体状态
-        PlayerInfoCenter.clearCurrentMediaInfo()
+        PlayerInfoCenter.CLEAR_CurrentMediaInfo()
         //关闭本侧的媒体会话
         stopMediaSession(context)
         //关闭服务
@@ -200,7 +201,7 @@ object PlayerSingleton {
     fun clearMediaItem(){
         clearMediaItem_standardExo()
         //重置媒体状态
-        PlayerInfoCenter.clearCurrentMediaInfo()
+        PlayerInfoCenter.CLEAR_CurrentMediaInfo()
 
     }
 
@@ -216,14 +217,14 @@ object PlayerSingleton {
         val MediaInfo_MediaUriStandard = "114514"
 
         //如果传入标准链接,就直接对比标准链接
-        if (MediaUriManager.isMediaUriStandard(uriNeedCheck)){
+        if (MediaUriManager.isMediaUriStandard(uriNeedCheck.toString())){
 
             return uriNeedCheck.toString() == MediaInfo_MediaUriStandard
         }
         //若不是标准链接,先转成标准链接,再对比
-        val standardUriNeedCheck = MediaUriManager.getStandardMediaUri(uriNeedCheck,context)
+        val standardUriNeedCheck = MediaUriManager.getStandardMediaUri(uriNeedCheck.toString(),context)
 
-        return standardUriNeedCheck.toString() == MediaInfo_MediaUriStandard
+        return standardUriNeedCheck == MediaInfo_MediaUriStandard
     }
 
 
@@ -235,19 +236,14 @@ object PlayerSingleton {
         if (isthisUriOngoing(uri)) return false
 
         //保存上个媒体的需要保存的东西
-        if (MediaInfoPackLocal != null){
-            saveLastMediaInfo(MediaInfoPackLocal!!)
-        }
 
 
         //解码新媒体信息
-        MediaInfoPackLocal = null
-        retrieveMediaInFo(context, uri)
-        if (MediaInfoPackLocal == null){
-            return false
-        }
-        //把信息传递给PlayerInFoCenter
-        PlayerInfoCenter.setMediaInfoPack(MediaInfoPackLocal!!)
+        val (success,MediaItemForPlay) = MediaInfoRetriever.retrieveMediaInfo(uriString = uri.toString(),context = context)
+        if (!success) return false
+
+        //缓存信息
+        PlayerInfoCenter.setMediaInfoPack(MediaItemForPlay)
 
         //重置单个媒体状态
         clearItemState()
@@ -261,11 +257,11 @@ object PlayerSingleton {
 
         //开始构建mediaItem
         val mediaItem = MediaItem.Builder()
-            .setUri(MediaInfoPackLocal!!.MediaInfo_MediaUri)
+            .setUri(MediaItemForPlay.content_uriString.toUri())
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setTitle(MediaInfoPackLocal!!.MediaInfo_FileName)
-                    .setArtist(MediaInfoPackLocal!!.MediaInfo_MediaArtist)
+                    .setTitle(MediaItemForPlay.file_name)
+                    .setArtist(MediaItemForPlay.media_artist)
                     .setArtworkUri(cover_img_uri)
                     .build())
             .build()
@@ -290,11 +286,10 @@ object PlayerSingleton {
         startSessionService(context)
 
         //记录到清单
-        writeToRecord(context,MediaInfoPackLocal?.MediaInfo_MediaUriString ?: "")
+        //writeToRecord(context,MediaInfoPackLocal?.MediaInfo_MediaUriString ?: "")
 
         //读取单个媒体播放设置(由MediaDataBaseMaster读取并传回)
-        val DataBaseID = MediaInfoPackLocal?.MediaInfo_DataBaseID ?: ""
-        MediaDataBaseMaster.fetchMediaItemPack(itemID = DataBaseID, context = context)
+
 
         //启动监听器(仅在播放时申请焦点)
         val focus = _player?.isPlaying ?: false
@@ -304,14 +299,15 @@ object PlayerSingleton {
         PlayerListener.requestAudioFocus(context, force_request = false)
 
         //修改可观察标志,触发更新
-        PlayerInfoCenter.updateObservableUriString(MediaInfoPackLocal?.MediaInfo_MediaUriString ?: "")
+        //PlayerInfoCenter.updateObservableMediaItem(MediaItemForPlay)
 
     }
 
     //保存上个媒体的需保存内容
-    private fun saveLastMediaInfo(oldInfoPack: MediaInfo){
+    private fun saveLastMediaInfo(oldInfoPack: MediaItemForPlay){
+        /*
         //获取当前媒体ID数据
-        val DataBaseID = oldInfoPack.MediaInfo_DataBaseID
+        val DataBaseID = oldInfoPack.MediaInfo_DataBaseID ?: ""
         val mediaDuration = oldInfoPack.MediaInfo_Duration
         val currentPosition = _player?.currentPosition ?: 0L
 
@@ -326,16 +322,12 @@ object PlayerSingleton {
             )
         }
 
+         */
+
 
     }
 
-    //读取媒体信息
-    private var MediaInfoPackLocal: MediaInfo? = null
-    private fun retrieveMediaInFo(context: Context,uri: Uri){
-        val (_,_MediaInfoPack) = MediaInfoRetriever.retrieveMediaInfo(context,uri)
 
-        MediaInfoPackLocal = _MediaInfoPack
-    }
     //记下到播放记录
     private fun writeToRecord(context: Context,uriStandard: String){
         //把记录保存到记录管理器
@@ -343,21 +335,21 @@ object PlayerSingleton {
     }
     //获取艺术图链接
     private fun getArtworkFrameUri(context: Context, uri: Uri): Uri?{
-        if (uri != MediaInfoPackLocal!!.MediaInfo_MediaUri){
+        if (uri.toString() != PlayerInfoCenter.GET_Media_UriString()){
             consoleLog("发生了严重错误 getArtworkFrameUri")
             return null
         }
 
         //
-        val uriNumOnly = MediaInfoPackLocal!!.MediaInfo_MediaUriNumOnly
-        val mediaType = MediaInfoPackLocal!!.MediaInfo_MediaType
+        val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
+        val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
 
         var cover_img_uri = Uri.EMPTY
         if ( SettingsRequestCenter.get_PREFS_DisableMediaArtWork(context) ) {
             return null
         }else{
             //从ArtworkFrameManager获取即可
-            cover_img_uri = ArtworkFrameManager.GET_ArtworkFrame_Uri(context, mediaType, uriNumOnly)
+            cover_img_uri = ArtworkFrameManager.GET_ArtworkFrame_Uri(context, mediaType, NUM_ID)
 
         }
 

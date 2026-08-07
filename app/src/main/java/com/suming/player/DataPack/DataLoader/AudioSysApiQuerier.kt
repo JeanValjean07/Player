@@ -79,7 +79,7 @@ class AudioSysApiQuerier(
                 //读取
                 while (cursor.moveToNext()) {
                     val media_api_NUM_ID = cursor.getLong(col_media_api_id)
-                    val content_uriString = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, media_api_NUM_ID).toString()
+                    val content_uriString = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media_api_NUM_ID).toString()
                     val file_name = cursor.getString(col_file_name).orEmpty()
                     val media_title = cursor.getString(col_media_title).orEmpty()
                     val media_artist = cursor.getString(col_media_artist).orEmpty()
@@ -90,10 +90,12 @@ class AudioSysApiQuerier(
                     val file_size = cursor.getLong(col_media_size)
                     val media_api_dateAdded = cursor.getLong(col_media_date_added)
                     val media_mimeType = cursor.getString(col_media_mime_type).orEmpty()
-                    val mediaType = if(media_mimeType.contains("video")) MediaType.Audio else MediaType.Undefined
+                    val mediaType = if(media_mimeType.contains("audio")) MediaType.Audio else MediaType.Undefined
                     val media_format = if (media_mimeType.contains('/')) media_mimeType.substringAfterLast('/') else media_mimeType
                     val media_api_SPECIFIC_ID = MediaInfoRetriever.calculate_SPECIFIC_ID(mediaType, media_api_NUM_ID.toString())
 
+                    //日志
+                    /*
                     consoleLog("MediaStoreReaderForMusic: 读取到音频文件, " +
                             "media_api_SPECIFIC_ID: $media_api_SPECIFIC_ID, " +
                             "media_api_NUM_ID: $media_api_NUM_ID, " +
@@ -111,10 +113,11 @@ class AudioSysApiQuerier(
                             "albumId: $albumId, "+
                             "albumName: $albumName, "
                     )
+                    */
 
                     //检查文件是否应该添加
                     val save = when {
-                        //检查是否属于音频
+                        //检查是否属于音频文件
                         mediaType == MediaType.Audio -> {
                             //检查文件是否存在
                             val fileExists = if (PREFS_EnableFileExistCheck) {

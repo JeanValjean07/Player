@@ -34,10 +34,16 @@ object PlayerInfoCenter {
 
     //可观察数据类
     private var _observableMediaItem = MutableStateFlow(MediaItemForPlay())
-    val observableMediaItem: StateFlow<MediaItemForPlay> = _observableMediaItem.asStateFlow()
+    var observableMediaItem: StateFlow<MediaItemForPlay> = _observableMediaItem.asStateFlow()
+    fun updateObservableMediaItem(MediaItemPack: MediaItemForPlay){
+        _observableMediaItem.value = MediaItemPack
+    }
     //可观察是否正在播放
     private var _observableIsPlaying = MutableStateFlow(false)
-    val observableIsPlaying: StateFlow<Boolean> = _observableIsPlaying.asStateFlow()
+    var observableIsPlaying: StateFlow<Boolean> = _observableIsPlaying.asStateFlow()
+    fun updateObservableIsPlaying(isPlaying: Boolean){
+        _observableIsPlaying.value = isPlaying
+    }
 
 
 
@@ -50,7 +56,7 @@ object PlayerInfoCenter {
         //缓存新数据
         CURRENT_MediaItemPackage = MediaInfoPack
         //更新可观察数据类
-        _observableMediaItem.value = MediaInfoPack
+        updateObservableMediaItem(MediaInfoPack)
 
     }
 
