@@ -12,7 +12,6 @@ import androidx.cardview.widget.CardView
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -24,8 +23,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForMusic
-import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.DataPack.DataLoader.MediaDataBaseReaderForMusic
+import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.PlayerSingleton
@@ -310,12 +309,12 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
 
 
     //添加到自定义
-    private fun onAddToListClick(item: MediaItemForMusic){
+    private fun onAddToListClick(item: MediaItemFullForAudio){
 
 
     }
     //播放视频
-    private fun onPlayClick(item: MediaItemForMusic){
+    private fun onPlayClick(item: MediaItemFullForAudio){
         if (item.uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
             if (PlayerInfoCenter.isPlaying.value){
                 PlayerSingleton.pausePlay()

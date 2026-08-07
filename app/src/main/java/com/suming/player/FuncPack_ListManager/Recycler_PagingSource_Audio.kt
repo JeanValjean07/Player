@@ -4,28 +4,28 @@ import android.content.Context
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.suming.player.DataPack.DataBaseMusicStore.MusicStoreRepo
-import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
+import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
 
 @UnstableApi
 @Suppress("unused")
 class Recycler_PagingSource_Audio(
     private val context: Context,
-) : PagingSource<Int, MediaItemForMusic>() {
+) : PagingSource<Int, MediaItemFullForAudio>() {
 
-    override fun getRefreshKey(state: PagingState<Int, MediaItemForMusic>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, MediaItemFullForAudio>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
                 ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
         }
     }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItemForMusic> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItemFullForAudio> {
         try {
             val page = params.key ?: 0
             val limit = params.loadSize
             //读取数据库
-            val musicStoreRepo = MusicStoreRepo.get(context)
+            val musicStoreRepo = AudioRepo.get(context)
             val totalCount = musicStoreRepo.getTotalMusicCount()
             //排序字段
             var sortOrder: String
@@ -37,7 +37,7 @@ class Recycler_PagingSource_Audio(
             //合成MediaItem
             val musicItems = musicStoreSettings
                 .map { setting ->
-                    MediaItemForMusic(
+                    MediaItemFullForAudio(
                         id = setting.MARK_ID.toLongOrNull() ?: 0,
                         uriString = setting.info_uri_string,
                         uriNumOnly = setting.MARK_ID.toLongOrNull() ?: 0,

@@ -9,7 +9,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AlphaAnimation
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
@@ -21,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.AddonTools.ToolVibrate
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
 import com.suming.player.FuncionalPack.Animations
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.MediaType
@@ -37,17 +36,17 @@ import kotlinx.coroutines.withContext
 class RecyclerAdapterVideo(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
-    private val onClick_Duration: (MediaItemForVideo) -> Unit,
-    private val onClick_tvFormat: (MediaItemForVideo) -> Unit,
-    private val onClick_Options: (MediaItemForVideo, ViewHolder) -> Unit,
-): PagingDataAdapter<MediaItemForVideo, RecyclerAdapterVideo.ViewHolder>(diffCallback) {
+    private val onClick_Duration: (MediaItemFullForVideo) -> Unit,
+    private val onClick_tvFormat: (MediaItemFullForVideo) -> Unit,
+    private val onClick_Options: (MediaItemFullForVideo, ViewHolder) -> Unit,
+): PagingDataAdapter<MediaItemFullForVideo, RecyclerAdapterVideo.ViewHolder>(diffCallback) {
     companion object {
         //比较器
-        val diffCallback = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
-            override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
+        val diffCallback = object : DiffUtil.ItemCallback<MediaItemFullForVideo>() {
+            override fun areItemsTheSame(oldItem: MediaItemFullForVideo, newItem: MediaItemFullForVideo): Boolean {
                 return oldItem.file_path == newItem.file_path
             }
-            override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
+            override fun areContentsTheSame(oldItem: MediaItemFullForVideo, newItem: MediaItemFullForVideo): Boolean {
                 return oldItem == newItem
             }
         }
@@ -146,22 +145,22 @@ class RecyclerAdapterVideo(
     }
 
     //点击事件
-    private fun onClickFunc_touchLayer(item: MediaItemForVideo){
+    private fun onClickFunc_touchLayer(item: MediaItemFullForVideo){
         onItemClick(item.content_uriString.toUri())
     }
-    private fun onClickFunc_tvDuration(item: MediaItemForVideo){
+    private fun onClickFunc_tvDuration(item: MediaItemFullForVideo){
         onClick_Duration(item)
     }
-    private fun onClickFunc_tvOption(item: MediaItemForVideo,holder: ViewHolder){
+    private fun onClickFunc_tvOption(item: MediaItemFullForVideo, holder: ViewHolder){
         onClick_Options(item,holder)
     }
-    private fun onClickFunc_tvFormat(item: MediaItemForVideo){
+    private fun onClickFunc_tvFormat(item: MediaItemFullForVideo){
         onClick_tvFormat(item)
     }
 
 
     //Long Thread Functions
-    private fun loadArtworkFrame(item: MediaItemForVideo, holder: ViewHolder)  {
+    private fun loadArtworkFrame(item: MediaItemFullForVideo, holder: ViewHolder)  {
         //记录holder的tag
         val imageTag = item.file_name
         holder.tvFrame.tag = imageTag
@@ -184,7 +183,7 @@ class RecyclerAdapterVideo(
     }
 
     //截取缩略图
-    private fun capArtworkFrame(item: MediaItemForVideo, holder: ViewHolder){
+    private fun capArtworkFrame(item: MediaItemFullForVideo, holder: ViewHolder){
         coroutine_capArtwork.launch(Dispatchers.IO){
             //截取图片(让ArtworkCapturer承担截图任务)
             val Bitmap = ArtworkCapturer.captureFrameInVideo(

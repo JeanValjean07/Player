@@ -17,11 +17,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
-import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,19 +31,19 @@ import kotlinx.coroutines.withContext
 @Suppress("NewApi")
 class Recycler_Adaptor_Video(
     private val context: Context,
-    private val onAddToListClick: (MediaItemForVideo) -> Unit,
-    private val onPlayClick: (MediaItemForVideo, Int) -> Unit
-):PagingDataAdapter<MediaItemForVideo, Recycler_Adaptor_Video.viewHolder>(Differ) {
+    private val onAddToListClick: (MediaItemFullForVideo) -> Unit,
+    private val onPlayClick: (MediaItemFullForVideo, Int) -> Unit
+):PagingDataAdapter<MediaItemFullForVideo, Recycler_Adaptor_Video.viewHolder>(Differ) {
     companion object {
         //比较器
-        val Differ = object : DiffUtil.ItemCallback<MediaItemForVideo>() {
-            override fun areItemsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
+        val Differ = object : DiffUtil.ItemCallback<MediaItemFullForVideo>() {
+            override fun areItemsTheSame(oldItem: MediaItemFullForVideo, newItem: MediaItemFullForVideo): Boolean {
                 return oldItem.media_api_id == newItem.media_api_id
             }
-            override fun areContentsTheSame(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Boolean {
+            override fun areContentsTheSame(oldItem: MediaItemFullForVideo, newItem: MediaItemFullForVideo): Boolean {
                 return oldItem == newItem
             }
-            override fun getChangePayload(oldItem: MediaItemForVideo, newItem: MediaItemForVideo): Any? {
+            override fun getChangePayload(oldItem: MediaItemFullForVideo, newItem: MediaItemFullForVideo): Any? {
 
                 return null
             }
@@ -190,7 +189,7 @@ class Recycler_Adaptor_Video(
 
 
     //Long Thread Functions
-    private fun loadArtworkFrame(item: MediaItemForVideo, holder: viewHolder)  {
+    private fun loadArtworkFrame(item: MediaItemFullForVideo, holder: viewHolder)  {
         //记录holder的tag
         val imageTag = item.media_api_id.toString()
         holder.itemFrame.tag = imageTag

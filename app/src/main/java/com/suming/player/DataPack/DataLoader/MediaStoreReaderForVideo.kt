@@ -1,14 +1,14 @@
-package com.suming.player.DataPack.MediaDataReader
+package com.suming.player.DataPack.DataLoader
 
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
 import android.util.Log
-import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
-import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreSetting
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoDataClass
 import com.suming.player.DataPack.DataBaseStateConnector
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
@@ -31,14 +31,14 @@ class MediaStoreReaderForVideo(
 
 
 
-    suspend fun readAllVideos(): List<MediaItemForVideo> {
+    suspend fun readAllVideos(): List<MediaItemFullForVideo> {
 
         return withContext(Dispatchers.IO) {
             //初始化设置项
             init()
 
             //初始化列表
-            val list = mutableListOf<MediaItemForVideo>()
+            val list = mutableListOf<MediaItemFullForVideo>()
             //排序方式
             val sortOrder = "${MediaStore.Video.Media.DATE_ADDED} DESC"
             //查询投影
@@ -133,7 +133,7 @@ class MediaStoreReaderForVideo(
 
                     //汇总需要添加的条目
                     if (save) {
-                        list += MediaItemForVideo(
+                        list += MediaItemFullForVideo(
                             file_path = file_path,
                             file_name = file_name,
                             file_size = file_size,
@@ -156,14 +156,14 @@ class MediaStoreReaderForVideo(
     }
 
     //保存到数据库
-    suspend fun saveVideosToDatabase(videos: List<MediaItemForVideo>) {
+    suspend fun saveVideosToDatabase(videos: List<MediaItemFullForVideo>) {
 
-        val mediaStoreRepo = MediaStoreRepo.get(context)
+        val mediaStoreRepo = VideoRepo.get(context)
 
         val mediaStoreSettings = videos.map { video ->
 
 
-            MediaStoreSetting(
+            VideoDataClass(
                 file_path = video.file_path,
                 file_name = video.file_name,
                 file_size = video.file_size,
@@ -189,7 +189,7 @@ class MediaStoreReaderForVideo(
     }
 
     //读取所有视频并保存到数据库
-    suspend fun readAndSaveAllVideos(): List<MediaItemForVideo> {
+    suspend fun readAndSaveAllVideos(): List<MediaItemFullForVideo> {
         val videos = readAllVideos()
 
         saveVideosToDatabase(videos)
@@ -208,7 +208,7 @@ class MediaStoreReaderForVideo(
         }
     }
     //去除数据库中已无对应视频的条目
-    private suspend fun cleanupDeletedVideos(currentVideoIds: List<String>, mediaStoreRepo: MediaStoreRepo) {
+    private suspend fun cleanupDeletedVideos(currentVideoIds: List<String>, mediaStoreRepo: VideoRepo) {
         val allVideos = mediaStoreRepo.getAllVideos()
         //找出数据库中存在但不在当前读取列表中的视频ID
         val deletedVideoIds = allVideos

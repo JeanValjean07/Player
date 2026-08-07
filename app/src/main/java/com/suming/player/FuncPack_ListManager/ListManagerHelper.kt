@@ -8,8 +8,8 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
-import com.suming.player.DataPack.MediaModel.MediaItemForMusic
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
+import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
 
 @Suppress("unused")
 object ListManagerHelper {
@@ -344,10 +344,10 @@ object ListManagerHelper {
 
 
     //向实时视频列表和音乐列表传入内容
-    fun InfuseLiveVideoList(newList: List<MediaItemForVideo>){
+    fun InfuseLiveVideoList(newList: List<MediaItemFullForVideo>){
 
     }
-    fun InfuseLiveMusicList(newList: List<MediaItemForMusic>){
+    fun InfuseLiveMusicList(newList: List<MediaItemFullForAudio>){
 
     }
 

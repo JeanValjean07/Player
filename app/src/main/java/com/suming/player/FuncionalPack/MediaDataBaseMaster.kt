@@ -6,8 +6,8 @@ import android.os.Looper
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import com.suming.player.DataPack.DataBaseMediaItem.MediaItemRepo
-import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
+import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemRepo
+import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
 import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

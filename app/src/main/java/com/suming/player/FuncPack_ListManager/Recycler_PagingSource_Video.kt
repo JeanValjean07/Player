@@ -4,28 +4,28 @@ import android.content.Context
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
+import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
 
 @UnstableApi
 @Suppress("unused")
 class Recycler_PagingSource_Video(
     private val context: Context,
-) : PagingSource<Int, MediaItemForVideo>() {
+) : PagingSource<Int, MediaItemFullForVideo>() {
 
-    override fun getRefreshKey(state: PagingState<Int, MediaItemForVideo>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, MediaItemFullForVideo>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
                 ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
         }
     }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItemForVideo> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItemFullForVideo> {
         try {
             val page = params.key ?: 0
             val limit = params.loadSize
             //读取数据库
-            val mediaStoreRepo = MediaStoreRepo.get(context)
+            val mediaStoreRepo = VideoRepo.get(context)
             val totalCount = mediaStoreRepo.getTotalCount()
             //排序字段
             var sortOrder: String
@@ -37,7 +37,7 @@ class Recycler_PagingSource_Video(
             //合成MediaItem
             val mediaItems = mediaStoreSettings
                 .map { setting ->
-                    MediaItemForVideo(
+                    MediaItemFullForVideo(
                         file_path = setting.file_path,
                         file_name = setting.file_name,
                         file_size = setting.file_size,

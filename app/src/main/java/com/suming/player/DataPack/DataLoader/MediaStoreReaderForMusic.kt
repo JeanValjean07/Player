@@ -1,17 +1,14 @@
-package com.suming.player.DataPack.MediaDataReader
+package com.suming.player.DataPack.DataLoader
 
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
-import android.content.SharedPreferences
 import android.provider.MediaStore
 import android.util.Log
-import androidx.core.content.edit
-import com.suming.player.AddonTools.ToolEventBus
-import com.suming.player.DataPack.DataBaseMusicStore.MusicStoreRepo
-import com.suming.player.DataPack.DataBaseMusicStore.MusicStoreSetting
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioDataClass
 import com.suming.player.DataPack.DataBaseStateConnector
-import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,12 +27,12 @@ class MediaStoreReaderForMusic(
 
 
     //读取所有音乐
-    suspend fun readAllMusics(): List<MediaItemForMusic> {
+    suspend fun readAllMusics(): List<MediaItemFullForAudio> {
         //读取设置
         init()
 
         //初始化列表
-        val list = mutableListOf<MediaItemForMusic>()
+        val list = mutableListOf<MediaItemFullForAudio>()
         //排序方式
         val sortOrder = "${MediaStore.Audio.Media.DISPLAY_NAME} DESC"
         //查询投影
@@ -113,7 +110,7 @@ class MediaStoreReaderForMusic(
 
                     //汇总需要添加的条目
                     if (!shouldSkip) {
-                        list += MediaItemForMusic(
+                        list += MediaItemFullForAudio(
                             id = id,
                             uriString = uriString,
                             uriNumOnly = id,
@@ -141,13 +138,13 @@ class MediaStoreReaderForMusic(
 
     //Functions
     //保存到数据库
-    suspend fun saveMusicsToDatabase(musics: List<MediaItemForMusic>) {
+    suspend fun saveMusicsToDatabase(musics: List<MediaItemFullForAudio>) {
 
-        val musicStoreRepo = MusicStoreRepo.get(context)
+        val musicStoreRepo = AudioRepo.get(context)
 
         val musicStoreSettings = musics.map { music ->
 
-            MusicStoreSetting(
+            AudioDataClass(
                 //基本：唯一标识：音频的媒体库id,同时也是uriNumOnly的值
                 MARK_ID = music.id.toString(),
                 info_uri_string = music.uriString,
@@ -177,7 +174,7 @@ class MediaStoreReaderForMusic(
         }
     }
     //类功能主入口：读取所有音乐并保存到数据库
-    suspend fun readAndSaveAllMusics(): List<MediaItemForMusic> {
+    suspend fun readAndSaveAllMusics(): List<MediaItemFullForAudio> {
         val musics = readAllMusics()
         saveMusicsToDatabase(musics)
 
@@ -192,7 +189,7 @@ class MediaStoreReaderForMusic(
         }
     }
     //去除数据库中已无对应视频的条目
-    private suspend fun cleanupDeletedMusics(currentMusicIds: List<String>, musicStoreRepo: MusicStoreRepo) {
+    private suspend fun cleanupDeletedMusics(currentMusicIds: List<String>, musicStoreRepo: AudioRepo) {
         val allMusics = musicStoreRepo.getAllMusics()
         //找出数据库中存在但不在当前读取列表中的音乐ID
         val deletedMusicIds = allMusics

@@ -1,4 +1,4 @@
-package com.suming.player.DataPack.DataBaseMediaItem
+package com.suming.player.DataPack.DataBaseMediaSingleSetting
 
 import android.content.Context
 import androidx.room.Database

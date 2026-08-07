@@ -93,7 +93,7 @@ import com.suming.player.ActivityComponent.PlayerActivity.PlayerViewModel
 import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
+import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ArtworkCapturer

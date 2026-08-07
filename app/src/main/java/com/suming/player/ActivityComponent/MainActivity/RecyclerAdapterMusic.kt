@@ -17,7 +17,7 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
-import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaType
@@ -32,15 +32,15 @@ import kotlinx.coroutines.withContext
 class RecyclerAdapterMusic(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
-    private val onOptionsClick: (MediaItemForMusic, View) -> Unit,
-): PagingDataAdapter<MediaItemForMusic, RecyclerAdapterMusic.ViewHolder>(DiffUtil) {
+    private val onOptionsClick: (MediaItemFullForAudio, View) -> Unit,
+): PagingDataAdapter<MediaItemFullForAudio, RecyclerAdapterMusic.ViewHolder>(DiffUtil) {
     companion object {
         //条目比较器
-        val DiffUtil = object : DiffUtil.ItemCallback<MediaItemForMusic>() {
-            override fun areItemsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean  {
+        val DiffUtil = object : DiffUtil.ItemCallback<MediaItemFullForAudio>() {
+            override fun areItemsTheSame(oldItem: MediaItemFullForAudio, newItem: MediaItemFullForAudio): Boolean  {
                 return oldItem.uriNumOnly == newItem.uriNumOnly
             }
-            override fun areContentsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean {
+            override fun areContentsTheSame(oldItem: MediaItemFullForAudio, newItem: MediaItemFullForAudio): Boolean {
                 return oldItem == newItem
             }
         }
@@ -109,7 +109,7 @@ class RecyclerAdapterMusic(
 
 
     //Long Thread Functions
-    private fun loadArtworkFrame(item: MediaItemForMusic, holder: ViewHolder)   {
+    private fun loadArtworkFrame(item: MediaItemFullForAudio, holder: ViewHolder)   {
         //记录holder的tag
         val imageTag = item.uriNumOnly.hashCode().toString()
         holder.itemFrame.tag = imageTag
@@ -143,7 +143,7 @@ class RecyclerAdapterMusic(
     }
 
     //生成缩略图
-    private fun captureAlbumFrame(item: MediaItemForMusic, holder: ViewHolder){
+    private fun captureAlbumFrame(item: MediaItemFullForAudio, holder: ViewHolder){
         coroutine_captureAlbum.launch {
             //获取专辑封面(让ArtworkCapturer承担截图任务)
             var Bitmap = ArtworkCapturer.captureAlbumInMusic(

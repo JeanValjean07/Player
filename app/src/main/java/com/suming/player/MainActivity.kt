@@ -51,13 +51,13 @@ import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterMusic
 import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterVideo
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
-import com.suming.player.DataPack.DataBaseMusicStore.MusicStoreRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseStateConnector
-import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForMusic
-import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForVideo
-import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForMusic
-import com.suming.player.DataPack.MediaDataReader.MediaStoreReaderForVideo
+import com.suming.player.DataPack.DataLoader.MediaDataBaseReaderForMusic
+import com.suming.player.DataPack.DataLoader.MediaDataBaseReaderForVideo
+import com.suming.player.DataPack.DataLoader.MediaStoreReaderForMusic
+import com.suming.player.DataPack.DataLoader.MediaStoreReaderForVideo
 import com.suming.player.DataPack.MediaRecordPack
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncionalPack.ActivityResultConnector
@@ -507,7 +507,7 @@ class MainActivity: AppCompatActivity() {
             //获取强制每次读取标识
             val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
             //检查本地数据库是否已有视频数据
-            if (MediaStoreRepo(this@MainActivity).isEmpty() || queryNew){
+            if (VideoRepo(this@MainActivity).isEmpty() || queryNew){
                 //consoleLog("showVideoListCore: 本地数据库视频数据为空 触发读取媒体库视频")
                 //从系统读取视频
                 startLocalMediaReader(MediaType.Video)
@@ -581,7 +581,7 @@ class MainActivity: AppCompatActivity() {
         //检查本地数据库是否已有音乐数据
         lifecycleScope.launch(Dispatchers.IO) {
             val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
-            if (MusicStoreRepo(this@MainActivity).isEmpty() || queryNew){
+            if (AudioRepo(this@MainActivity).isEmpty() || queryNew){
                 //consoleLog("showMusicList数据库音乐数据为空,触发读取媒体库音乐")
                 //从系统读取音乐
                 startLocalMediaReader(MediaType.Audio)

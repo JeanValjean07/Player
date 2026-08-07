@@ -1,29 +1,29 @@
-package com.suming.player.DataPack.MediaDataReader
+package com.suming.player.DataPack.DataLoader
 
 import android.content.Context
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreRepo
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
+import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
 import com.suming.player.SettingsRequestCenter
 
-class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<Int, MediaItemForVideo>() {
+class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<Int, MediaItemFullForVideo>() {
 
 
-    override fun getRefreshKey(state: PagingState<Int, MediaItemForVideo>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, MediaItemFullForVideo>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
                 ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
         }
     }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItemForVideo> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItemFullForVideo> {
         try {
             val page = params.key ?: 0
             val limit = params.loadSize
             //读取数据库
-            val mediaStoreRepo = MediaStoreRepo.get(context)
+            val mediaStoreRepo = VideoRepo.get(context)
             val totalCount = mediaStoreRepo.getTotalCount()
             //排序字段合成
             val sortOrder = SettingsRequestCenter.get_PREFS_video_sortMethod(context)
@@ -35,7 +35,7 @@ class MediaDataBaseReaderForVideo(private val context: Context) : PagingSource<I
 
             //合成MediaItem
             val mediaItems = mediaStoreSettings.map { setting ->
-                    MediaItemForVideo(
+                    MediaItemFullForVideo(
                         file_path = setting.file_path,
                         file_name = setting.file_name,
                         file_size = setting.file_size,

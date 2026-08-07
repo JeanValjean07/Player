@@ -6,19 +6,15 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
-import com.suming.player.DataPack.MediaInfo
-import com.suming.player.FuncionalPack.MediaType
-import com.suming.player.FuncionalPack.PlayerInfoCenter.Undefined
 import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlin.String
 
-@Suppress("unused")
+@Suppress() //"unused"
 object PlayerInfoCenter {
 
-    //日志控制
+    //日志
     private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
             Log.d("SuMing", "PlayerInFoCenter: $msg")
@@ -26,37 +22,40 @@ object PlayerInfoCenter {
     }
 
 
+    //字段
+    private const val Audio = MediaType.Audio
+    private const val Video = MediaType.Video
+    private const val Undefined = MediaType.Undefined
+    private const val Undefined_String = ""
 
-    const val Undefined = ""
+
+    //完整数据类
+    data class MediaInfo(
+        var MediaInfo_MediaUniqueID: String,
+        var MediaInfo_DataBaseID : String,
+        var MediaInfo_MediaUri: Uri,
+        var MediaInfo_MediaUriString : String,
+        var MediaInfo_MediaUriStandard : String,
+        var MediaInfo_MediaUriNumOnly : Long,
+        //
+        var MediaInfo_MediaType : String,
+        var MediaInfo_AbsolutePath : String,
+        var MediaInfo_FileName : String,
+        var MediaInfo_MediaTitle : String,
+        var MediaInfo_MediaArtist : String,
+        //
+        var MediaInfo_Duration : Long,
+        //
+        var MediaInfo_Video_Width : Int,
+        var MediaInfo_Video_Height : Int,
+        //
+        var MediaInfo_RealFps: Float = 0f
 
 
-
-
-    //专供观察数据类
-    data class ObservableMediaItem(
-        var MediaInfo_MediaUriString: String = Undefined,
-        var MediaInfo_MediaType: String = MediaType.Undefined,
     )
-    //可观察数据类实例
-    private val _observableMediaItem = MutableStateFlow(ObservableMediaItem())
-    val observableMediaItem: StateFlow<ObservableMediaItem> = _observableMediaItem.asStateFlow()
-    //更新可观察数据类实例
-    fun updateObservableMediaItem(newObservableMediaItem: ObservableMediaItem){
-        _observableMediaItem.value = newObservableMediaItem
-    }
-
-    //可观察播放/暂停状态
-    private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
 
 
-
-
-    //是否已设置媒体
-    var state_item_set: Boolean = false
-    //是否正在播放
-    var state_isPlaying: Boolean = false
 
     //当前播放媒体信息
     var MediaInfoPackage: MediaInfo? = null
@@ -68,14 +67,6 @@ object PlayerInfoCenter {
 
 
 
-    //更新当前媒体链接(必须在其他信息完成替换后才触发观察事件变更)
-    fun updateObservableUriString(newUriString: String){
-        _uriString.value = newUriString
-    }
-    //更新播放状态
-    fun updateObservableIsPlaying(newIsPlaying: Boolean){
-        _isPlaying.value = newIsPlaying
-    }
 
 
 
@@ -273,6 +264,46 @@ object PlayerInfoCenter {
 
 
 
+    private fun TrashCan(){
+        /*
+        //专供观察数据类
+        data class ObservableMediaItem(
+            var MediaInfo_MediaUriString: String = Undefined,
+            var MediaInfo_MediaType: String = MediaType.Undefined,
+        )
+        //可观察数据类实例
+        private val _observableMediaItem = MutableStateFlow(ObservableMediaItem())
+        val observableMediaItem: StateFlow<ObservableMediaItem> = _observableMediaItem.asStateFlow()
+        //更新可观察数据类实例
+        fun updateObservableMediaItem(newObservableMediaItem: ObservableMediaItem){
+            _observableMediaItem.value = newObservableMediaItem
+        }
+
+        //可观察播放/暂停状态
+        private val _isPlaying = MutableStateFlow(false)
+        val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+
+
+
+
+
+        //是否已设置媒体
+        var state_item_set: Boolean = false
+        //是否正在播放
+        var state_isPlaying: Boolean = false
+
+        //更新当前媒体链接(必须在其他信息完成替换后才触发观察事件变更)
+    fun updateObservableUriString(newUriString: String){
+        _uriString.value = newUriString
+    }
+    //更新播放状态
+    fun updateObservableIsPlaying(newIsPlaying: Boolean){
+        _isPlaying.value = newIsPlaying
+    }
+
+
+         */
+    }
 
 
 }

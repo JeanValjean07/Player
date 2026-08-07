@@ -28,7 +28,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
-import com.suming.player.DataPack.DataBaseMediaItem.MediaItemSetting
+import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
 import com.suming.player.DataPack.MediaInfo
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ArtworkFrameManager

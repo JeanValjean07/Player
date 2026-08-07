@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
-import com.suming.player.DataPack.MediaModel.MediaItemForMusic
+import com.suming.player.DataPack.DataClass.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
@@ -31,16 +31,16 @@ import kotlinx.coroutines.withContext
 @Suppress("NewApi,unused")
 class Recycler_Adaptor_Audio(
     private val context: Context,
-    private val onAddToListClick: (MediaItemForMusic) -> Unit,
-    private val onPlayClick: (MediaItemForMusic) -> Unit
-): PagingDataAdapter<MediaItemForMusic, Recycler_Adaptor_Audio.viewHolder>(diffCallback) {
+    private val onAddToListClick: (MediaItemFullForAudio) -> Unit,
+    private val onPlayClick: (MediaItemFullForAudio) -> Unit
+): PagingDataAdapter<MediaItemFullForAudio, Recycler_Adaptor_Audio.viewHolder>(diffCallback) {
     companion object {
         //比较器
-        val diffCallback = object : DiffUtil.ItemCallback<MediaItemForMusic>() {
-            override fun areItemsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean {
+        val diffCallback = object : DiffUtil.ItemCallback<MediaItemFullForAudio>() {
+            override fun areItemsTheSame(oldItem: MediaItemFullForAudio, newItem: MediaItemFullForAudio): Boolean {
                 return oldItem.uriNumOnly == newItem.uriNumOnly
             }
-            override fun areContentsTheSame(oldItem: MediaItemForMusic, newItem: MediaItemForMusic): Boolean {
+            override fun areContentsTheSame(oldItem: MediaItemFullForAudio, newItem: MediaItemFullForAudio): Boolean {
                 return oldItem == newItem
             }
         }
@@ -166,7 +166,7 @@ class Recycler_Adaptor_Audio(
 
 
     //Long Thread Functions
-    private fun loadArtworkFrame(item: MediaItemForMusic, holder: viewHolder)   {
+    private fun loadArtworkFrame(item: MediaItemFullForAudio, holder: viewHolder)   {
         //记录holder的tag
         val imageTag = item.uriNumOnly.hashCode().toString()
         holder.itemFrame.tag = imageTag

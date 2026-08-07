@@ -23,8 +23,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.DataPack.MediaDataReader.MediaDataBaseReaderForVideo
-import com.suming.player.DataPack.MediaModel.MediaItemForVideo
+import com.suming.player.DataPack.DataLoader.MediaDataBaseReaderForVideo
+import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.PlayerSingleton
@@ -314,14 +314,14 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
 
     //添加到自定义
-    private fun onAddToListClick(item: MediaItemForVideo){
+    private fun onAddToListClick(item: MediaItemFullForVideo){
         consoleLog("添加到自定义列表: ${item.file_name}")
 
 
 
     }
     //播放视频
-    private fun onPlayClick(item: MediaItemForVideo, position: Int){
+    private fun onPlayClick(item: MediaItemFullForVideo, position: Int){
 
         if (item.content_uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
             if (PlayerInfoCenter.isPlaying.value){

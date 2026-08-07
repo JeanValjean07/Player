@@ -1,4 +1,4 @@
-package com.suming.player.DataPack.DataBaseMediaItem
+package com.suming.player.DataPack.DataBaseMediaSingleSetting
 
 import androidx.room.Dao
 import androidx.room.Delete
