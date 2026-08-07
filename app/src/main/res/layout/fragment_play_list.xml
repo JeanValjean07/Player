@@ -106,12 +106,11 @@
                                 tools:ignore="ContentDescription" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
-                    <!-- 按钮：停止播放 -->
+                    <!-- 按钮：更多选项 -->
                     <com.suming.player.ViewWidget.CircleButton
                         android:id="@+id/ButtonMore"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:layout_marginEnd="5dp"
                         android:src="@drawable/ic_general_more_opt"
                         android:layout_gravity="center"
                         app:buttonSize="50dp"
@@ -120,6 +119,22 @@
                         app:shadowOffset="4dp"
                         app:circlePadding="100dp"
                         app:iconPadding="150dp"
+                        app:shadowRadius="8dp"
+                        app:shadowColor="#33000000"
+                        />
+                    <!-- 按钮：页面锁定 -->
+                    <com.suming.player.ViewWidget.CircleButton
+                        android:id="@+id/ButtonLock"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginEnd="5dp"
+                        android:src="@drawable/ic_more_button_lock_off"
+                        android:layout_gravity="center"
+                        app:iconPadding="120dp"
+                        app:circlePadding="100dp"
+                        app:buttonSize="50dp"
+                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
+                        app:shadowOffset="4dp"
                         app:shadowRadius="8dp"
                         app:shadowColor="#33000000"
                         />

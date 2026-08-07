@@ -196,7 +196,7 @@ object PlayerSingleton {
 
     }
 
-    //
+    //清除当前媒体项
     fun clearMediaItem(){
         clearMediaItem_standardExo()
         //重置媒体状态

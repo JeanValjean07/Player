@@ -41,6 +41,7 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @UnstableApi
@@ -115,7 +116,7 @@ class ListManagerFragment: DialogFragment() {
         startMediaItemObserver()
 
         //启动ViewPager
-        registerViewPager(view)
+        registerViewPager()
 
 
         updateIcon_currentPlayingList()
@@ -156,6 +157,8 @@ class ListManagerFragment: DialogFragment() {
         ButtonCard_videoList = view.findViewById(R.id.ButtonCardVideo)
         ButtonCard_musicList = view.findViewById(R.id.ButtonCardMusic)
 
+        ViewPager = view.findViewById(R.id.ViewPager)
+
         ButtonIcon_currentPlayList = view.findViewById(R.id.ButtonCurrentListIcon)
 
         //执行显示重建
@@ -185,6 +188,18 @@ class ListManagerFragment: DialogFragment() {
             val ButtonMoreOpt = view.findViewById<CircleButton>(R.id.ButtonMore)
             ButtonMoreOpt.setOnClickListener {
                 showMoreOptMenu(ButtonMoreOpt)
+            }
+
+            //按钮：锁定页面
+            val ButtonLock = view.findViewById<CircleButton>(R.id.ButtonLock)
+            ButtonLock.setOnClickListener {
+                lockPage = !lockPage
+                if (lockPage){
+                    ButtonLock.setIconDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_more_button_lock_on))
+                }
+                else{
+                    ButtonLock.setIconDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_more_button_lock_off))
+                }
             }
 
 
@@ -228,64 +243,66 @@ class ListManagerFragment: DialogFragment() {
     }
 
     //启动ViewPager
-    private fun registerViewPager(view: View){
-        //启动viewPager
-        ViewPager = view.findViewById(R.id.ViewPager)
-        viewPagerAdapter = ViewPagerAdapter(this)
-        ViewPager.adapter = viewPagerAdapter
-        //开启页面监听器
-        startViewPagerListener()
-        //设置ViewPager缓存页面数量
-        ViewPager.offscreenPageLimit = 3
-        //默认显示列表
-        ViewPager.post {
-            if (viewPagerAdapter.itemCount > 0){
-                val acquiesceShowPage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
-                //使用上一次停留的页签
-                if (acquiesceShowPage == ListManagerHelper.ListMark_UseLast){
-                    val LastShowingListMark = ListManagerHelper.GET_STE_LastShowingListMark()
-                    when(LastShowingListMark){
-                        ListManagerHelper.ListMark_Custom -> {
-                            ViewPager.setCurrentItem(0, false)
+    private fun registerViewPager(){
+        lifecycleScope.launch(Dispatchers.Main) {
+
+            //delay(500)
+
+            //启动viewPager
+            viewPagerAdapter = ViewPagerAdapter(this@ListManagerFragment)
+            ViewPager.adapter = viewPagerAdapter
+            //开启页面监听器
+            startViewPagerListener()
+            //设置ViewPager缓存页面数量
+            ViewPager.offscreenPageLimit = 3
+            //默认显示列表
+            val smoothScroll = false
+            ViewPager.post {
+                if (viewPagerAdapter.itemCount > 0){
+                    val acquiesceShowPage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
+                    //使用上一次停留的页签
+                    if (acquiesceShowPage == ListManagerHelper.ListMark_UseLast){
+                        val LastShowingListMark = ListManagerHelper.GET_STE_LastShowingListMark()
+                        when(LastShowingListMark){
+                            ListManagerHelper.ListMark_Custom -> {
+                                ViewPager.setCurrentItem(0, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_History -> {
+                                ViewPager.setCurrentItem(1, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_Video -> {
+                                ViewPager.setCurrentItem(2, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_Audio -> {
+                                ViewPager.setCurrentItem(3, smoothScroll)
+                            }
+                            else -> {
+                                ViewPager.setCurrentItem(0, smoothScroll)
+                            }
                         }
-                        ListManagerHelper.ListMark_History -> {
-                            ViewPager.setCurrentItem(1, false)
-                        }
-                        ListManagerHelper.ListMark_Video -> {
-                            ViewPager.setCurrentItem(2, false)
-                        }
-                        ListManagerHelper.ListMark_Audio -> {
-                            ViewPager.setCurrentItem(3, false)
-                        }
-                        else -> {
-                            ViewPager.setCurrentItem(0, false)
-                        }
-                    }
-                }else{
-                    //使用固定默认页签
-                    when(acquiesceShowPage){
-                        ListManagerHelper.ListMark_Custom -> {
-                            ViewPager.setCurrentItem(0, false)
-                        }
-                        ListManagerHelper.ListMark_History -> {
-                            ViewPager.setCurrentItem(1, false)
-                        }
-                        ListManagerHelper.ListMark_Video -> {
-                            ViewPager.setCurrentItem(2, false)
-                        }
-                        ListManagerHelper.ListMark_Audio -> {
-                            ViewPager.setCurrentItem(3, false)
-                        }
-                        else -> {
-                            ViewPager.setCurrentItem(0, false)
+                    }else{
+                        //使用固定默认页签
+                        when(acquiesceShowPage){
+                            ListManagerHelper.ListMark_Custom -> {
+                                ViewPager.setCurrentItem(0, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_History -> {
+                                ViewPager.setCurrentItem(1, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_Video -> {
+                                ViewPager.setCurrentItem(2, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_Audio -> {
+                                ViewPager.setCurrentItem(3, smoothScroll)
+                            }
+                            else -> {
+                                ViewPager.setCurrentItem(0, smoothScroll)
+                            }
                         }
                     }
                 }
             }
         }
-
-
-
 
     }
 
@@ -482,7 +499,6 @@ class ListManagerFragment: DialogFragment() {
 
     //显示更多操作菜单
     private fun showMoreOptMenu(anchor: CircleButton){
-        //使用弹出菜单选择
         val popup = PopupMenu(requireContext(), anchor)
         popup.menuInflater.inflate(
             R.menu.popup_menu_list_more_opt,
@@ -504,7 +520,9 @@ class ListManagerFragment: DialogFragment() {
                     ToolVibrate().vibrate(requireContext())
                     //停止播放
                     PlayerSingleton.clearMediaItem()
-                    dismiss()
+
+                    customDismiss()
+
                     true
                 }
                 R.id.opt_clear_record -> {
@@ -515,14 +533,14 @@ class ListManagerFragment: DialogFragment() {
                     val MediaRecordManager = MediaRecordManager()
                     MediaRecordManager.clear_MediaInfo(requireContext())
                     //关闭
-                    dismiss()
+                    customDismiss()
+
                     true
                 }
                 else -> true
             }
         }
         popup.show()
-
     }
 
     //页签焦点
@@ -742,20 +760,15 @@ class ListManagerFragment: DialogFragment() {
 
 
     //播放点击事件
-    private fun onPlayClick(uriString: String) {
-        if (uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
-            PlayerSingleton.continuePlay(true)
-            requireContext().showCustomToast("已在播放该媒体",3)
-        }else{
-            PlayerSingleton.setMediaItem(uriString.toUri(), true)
-        }
+    private fun onPlayClick() {
+
     }
     //删除点击事件
     private fun onDeleteClick(uriNumOnly: Long)  {
 
     }
     //添加到自定义列表点击事件
-    private fun onAddToListClick(uriString: String) {
+    private fun onAddToListClick() {
 
     }
 

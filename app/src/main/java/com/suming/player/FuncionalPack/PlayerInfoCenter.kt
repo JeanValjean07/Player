@@ -7,10 +7,13 @@ import androidx.annotation.OptIn
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.DataPack.MediaInfo
+import com.suming.player.FuncionalPack.MediaType
+import com.suming.player.FuncionalPack.PlayerInfoCenter.Undefined
 import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.String
 
 @Suppress("unused")
 object PlayerInfoCenter {
@@ -239,6 +242,11 @@ object PlayerInfoCenter {
         MediaInfoRetriever.clearRetrieverUriCache()
         //修改可观察标记
         updateObservableUriString("")
+        updateObservableMediaItem(ObservableMediaItem(
+            MediaInfo_MediaUriString = Undefined,
+            MediaInfo_MediaType = MediaType.Undefined,
+        ))
+
     }
 
 

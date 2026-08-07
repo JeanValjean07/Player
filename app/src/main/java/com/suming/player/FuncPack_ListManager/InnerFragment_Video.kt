@@ -237,6 +237,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     private fun onMediaItemUpdate(){
         //获取当前播放项
         val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+        consoleLog("onMediaItemUpdate()当前播放项: $currentItemUri")
 
         //使用payload更新当前播放项指示器
         recyclerView_video_adapter.updateCurrentMediaItem(currentItemUri, ListManagerHelper.payload_event_item_update)
@@ -246,6 +247,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     private fun onMediaStateUpdate(){
         //获取当前播放项
         val currentItemUri = PlayerInfoCenter.observableMediaItem.value.MediaInfo_MediaUriString
+        consoleLog("onMediaStateUpdate()当前播放项: $currentItemUri")
 
         //使用payload更新当前播放项指示器
         recyclerView_video_adapter.updateCurrentIsPlayingState(currentItemUri, PlayerInfoCenter.isPlaying.value, ListManagerHelper.payload_event_item_state_update)

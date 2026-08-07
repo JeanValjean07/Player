@@ -149,7 +149,9 @@ class Recycler_Adaptor_Video(
     override fun onBindViewHolder(holder: viewHolder, position: Int, payloads: List<Any>){
         if (payloads.isNotEmpty()) {
             val item = getItem(position)
+            consoleLog("payloads.firstOrNull() = ${payloads.firstOrNull()}")
             when (payloads.firstOrNull()) {
+
                 ListManagerHelper.payload_event_item_update -> {
                     if (item?.content_uriString == PlayerInfoCenter.getMediaUriString()){
                         holder.setItemPlayingCard(true)
@@ -234,6 +236,10 @@ class Recycler_Adaptor_Video(
     fun updateCurrentMediaItem(targetItemUri: String, payloads: Any){
         if (targetItemUri == currentItemUri) return
 
+        if (targetItemUri == "") {
+            clearPlayingItem(ListManagerHelper.payload_event_item_clear_playing_mark)
+        }
+
         val cache = currentItemUri
 
         currentItemUri = targetItemUri
@@ -257,13 +263,19 @@ class Recycler_Adaptor_Video(
     }
     //清理播放标记
     fun clearPlayingItem(payloads: Any){
-        //consoleLog("清理播放标记 clearPlayingItem")
+        consoleLog("清理播放标记 clearPlayingItem")
         snapshot().forEachIndexed { index, item ->
             if (item?.content_uriString == currentItemUri){
                 notifyItemChanged(index, payloads)
             }
         }
         currentItemUri = ""
+    }
+
+    fun refreshList(){
+        //自主检查当前媒体和播放状态
+        val currentMediaItem = PlayerInfoCenter.getMediaUriString()
+
     }
 
 
