@@ -19,8 +19,8 @@ interface VideoDao {
 
 
     //根据 SPECIFIC_ID 查找单个视频项
-    @Query("SELECT * FROM tableVideoList WHERE media_api_SPECIFIC_ID = :path LIMIT 1")
-    suspend operator fun get(path: String): VideoDataClass?
+    @Query("SELECT * FROM tableVideoList WHERE media_api_NUM_ID = :NUM_ID LIMIT 1")
+    suspend operator fun get(NUM_ID: Long): VideoDataClass?
 
     //获取所有视频项
     @Query("SELECT * FROM tableVideoList")

@@ -20,7 +20,7 @@ class AudioSysApiQuerier(
 ) {
     //设置项
     private var PREFS_EnableFileExistCheck: Boolean = false
-
+    //初始化(自建)
     private fun init(){
         PREFS_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
     }

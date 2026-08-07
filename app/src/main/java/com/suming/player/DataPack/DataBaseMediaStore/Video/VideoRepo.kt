@@ -27,7 +27,7 @@ class VideoRepo(context: Context) {
     suspend fun saveVideoItems(videos: List<VideoDataClass>) = dao.insertOrUpdateAll(videos)
 
     //获取单个视频项信息
-    suspend fun getVideoItem(uriNumOnly: String): VideoDataClass? = dao[uriNumOnly]
+    suspend fun getVideoItem(media_api_NUM_ID: Long): VideoDataClass? = dao[media_api_NUM_ID]
     //获取所有视频项信息
     suspend fun getAllVideoItems(): List<VideoDataClass> = dao.getAllVideos()
 
@@ -64,7 +64,7 @@ class VideoRepo(context: Context) {
     suspend fun isEmpty(): Boolean = dao.getCount() == 0
 
     //删除视频项
-    suspend fun deleteVideo(video: VideoDataClass) = dao.delete(video)
+    suspend fun deleteVideoItem(video: VideoDataClass) = dao.delete(video)
     //清空所有视频项
     suspend fun clearAll() = dao.clearAll()
 

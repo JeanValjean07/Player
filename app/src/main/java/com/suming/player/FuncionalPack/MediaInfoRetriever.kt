@@ -198,6 +198,12 @@ object MediaInfoRetriever {
     }
 
 
+    //SPECIFIC_ID 计算器
+    const val SPECIFIC_ID_SEPARATOR = "_"
+    fun calculate_SPECIFIC_ID(mediaType: String, mediaNUMID: String): String{
+
+        return "${mediaType}${SPECIFIC_ID_SEPARATOR}${mediaNUMID}"
+    }
 
 
     //工具函数 - 根据uri获得绝对路径

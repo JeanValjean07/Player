@@ -9,6 +9,7 @@ import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoDataClass
 import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.DataPack.DataClass.MediaItemFullForVideo
+import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
@@ -58,8 +59,6 @@ class VideoSysApiQuerier(
             )
 
 
-
-
             //查询视频文件
             contentResolver.query(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
@@ -79,8 +78,8 @@ class VideoSysApiQuerier(
 
                 //读取媒体文件
                 while (cursor.moveToNext()) {
-                    val media_api_id = cursor.getLong(col_media_api_id)
-                    val content_uriString = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, media_api_id).toString()
+                    val media_api_NUM_ID = cursor.getLong(col_media_api_id)
+                    val content_uriString = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, media_api_NUM_ID).toString()
                     val file_name = cursor.getString(col_file_name).orEmpty()
                     val media_title = cursor.getString(col_media_title).orEmpty()
                     val media_artist = cursor.getString(col_media_artist).orEmpty()
@@ -92,10 +91,12 @@ class VideoSysApiQuerier(
                     val media_mimeType = cursor.getString(col_media_mime_type).orEmpty()
                     val mediaType = if(media_mimeType.contains("video")) MediaType.Video else MediaType.Undefined
                     val media_format = if (media_mimeType.contains('/')) media_mimeType.substringAfterLast('/') else media_mimeType
+                    val media_api_SPECIFIC_ID = MediaInfoRetriever.calculate_SPECIFIC_ID(mediaType, media_api_NUM_ID.toString())
 
-                    /*
+
                     consoleLog("读取到视频文件: " +
-                            "media_api_id: $media_api_id, " +
+                            "media_api_SPECIFIC_ID: $media_api_SPECIFIC_ID, " +
+                            "media_api_NUM_ID: $media_api_NUM_ID, " +
                             "content_uriString: $content_uriString, " +
                             "file_name: $file_name, " +
                             "media_title: $media_title, " +
@@ -107,10 +108,10 @@ class VideoSysApiQuerier(
                             "media_api_dateAdded: $media_api_dateAdded, " +
                             "media_mimeType: $media_mimeType, " +
                             "mediaType: $mediaType, " +
-                            "media_format: $media_format"
+                            "media_format: $media_format, "
+
                     )
 
-                     */
 
                     //检查文件是否应该添加
                     val save = when {
@@ -130,22 +131,23 @@ class VideoSysApiQuerier(
                         //不是视频时丢弃
                         else -> false
                     }
-
-                    //汇总需要添加的条目
                     if (save) {
                         list += MediaItemFullForVideo(
+                            media_api_SPECIFIC_ID = media_api_SPECIFIC_ID,
+                            media_api_NUM_ID = media_api_NUM_ID,
+                            media_api_dateAdded = media_api_dateAdded,
+                            media_SPECIFIC_MediaType = mediaType,
+                            content_uriString = content_uriString,
                             file_path = file_path,
                             file_name = file_name,
                             file_size = file_size,
-                            media_api_id = media_api_id,
-                            media_api_dateAdded = media_api_dateAdded,
-                            content_uriString = content_uriString,
-                            custom_media_Type = mediaType,
                             media_title = media_title,
                             media_artist = media_artist,
                             media_durationMs = media_durationMs,
-                            media_video_resolution = media_video_resolution,
                             media_format = media_format,
+
+                            media_video_resolution = media_video_resolution,
+                            media_video_bitrate = "114514",  //TODO
                         )
                     }
                 }
@@ -157,33 +159,36 @@ class VideoSysApiQuerier(
 
     //保存到数据库
     suspend fun saveVideosToDatabase(videos: List<MediaItemFullForVideo>) {
-
-        val mediaStoreRepo = VideoRepo.get(context)
-
-        val mediaStoreSettings = videos.map { video ->
-
-
-            VideoDataClass(
-                file_path = video.file_path,
-                file_name = video.file_name,
-                file_size = video.file_size,
-                media_api_id = video.media_api_id,
-                media_api_dateAdded = video.media_api_dateAdded,
-                content_uriString = video.content_uriString,
-                custom_media_Type = video.custom_media_Type,
-                media_title = video.media_title,
-                media_artist = video.media_artist,
-                media_durationMs = video.media_durationMs,
-                media_video_resolution = video.media_video_resolution,
-                media_format = video.media_format,
-            )
-        }
-
         withContext(Dispatchers.IO) {
+            //链接数据库仓库
+            val mediaStoreRepo = VideoRepo.get(context)
 
-            mediaStoreRepo.saveAllVideos(mediaStoreSettings)
+            //汇总视频数据
+            val mediaStoreSettings = videos.map { video ->
+                VideoDataClass(
+                    media_api_SPECIFIC_ID = video.media_api_SPECIFIC_ID,
+                    media_api_NUM_ID = video.media_api_NUM_ID,
+                    media_api_dateAdded = video.media_api_dateAdded,
+                    media_SPECIFIC_MediaType = video.media_SPECIFIC_MediaType,
+                    content_uriString = video.content_uriString,
+                    file_path = video.file_path,
+                    file_name = video.file_name,
+                    file_size = video.file_size,
+                    media_title = video.media_title,
+                    media_artist = video.media_artist,
+                    media_durationMs = video.media_durationMs,
+                    media_format = video.media_format,
 
-            cleanupDeletedVideos(videos.map { it.file_path }, mediaStoreRepo)
+                    media_video_resolution = video.media_video_resolution,
+                    media_video_bitrate = video.media_video_bitrate,
+                )
+            }
+
+            //批量保存
+            mediaStoreRepo.saveVideoItems(mediaStoreSettings)
+
+            //去重
+            cleanupDeletedVideos(videos.map { it.media_api_NUM_ID }, mediaStoreRepo)
 
         }
     }
@@ -208,17 +213,19 @@ class VideoSysApiQuerier(
         }
     }
     //去除数据库中已无对应视频的条目
-    private suspend fun cleanupDeletedVideos(currentVideoIds: List<String>, mediaStoreRepo: VideoRepo) {
-        val allVideos = mediaStoreRepo.getAllVideos()
+    private suspend fun cleanupDeletedVideos(currentVideoIds: List<Long>, mediaStoreRepo: VideoRepo) {
+        val allVideos = mediaStoreRepo.getAllVideoItems()
+
         //找出数据库中存在但不在当前读取列表中的视频ID
         val deletedVideoIds = allVideos
-            .map { it.file_path }
+            .map { it.media_api_NUM_ID }
             .filterNot { currentVideoIds.contains(it) }
+
         //批量删除
         if (deletedVideoIds.isNotEmpty()) {
             deletedVideoIds.forEach { videoId ->
-                mediaStoreRepo.getVideo(videoId)?.let { video ->
-                    mediaStoreRepo.deleteVideo(video)
+                mediaStoreRepo.getVideoItem(videoId)?.let { video ->
+                    mediaStoreRepo.deleteVideoItem(video)
                 }
             }
         }
