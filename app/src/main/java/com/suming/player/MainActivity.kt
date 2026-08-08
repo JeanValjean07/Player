@@ -80,7 +80,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Suppress("NewApi","unused",) //"unused",
+@Suppress("NewApi","unused") //"unused",
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
     //连接ViewModel
