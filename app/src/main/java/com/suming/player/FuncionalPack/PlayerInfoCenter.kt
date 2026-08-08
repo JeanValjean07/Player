@@ -20,8 +20,7 @@ object PlayerInfoCenter {
     //字段
     private const val Audio = MediaType.Audio
     private const val Video = MediaType.Video
-    private const val Undefined = MediaType.Undefined
-    private const val Undefined_String = ""
+    private const val Undefined = ""
 
 
 
@@ -82,16 +81,16 @@ object PlayerInfoCenter {
     //只返回首页微型播放器需要的信息迷你包
     fun GET_Media_MiniView_Pack(): Triple<String, String, String> {
         //从MediaInfo中提取三项信息
-        val SPECIFIC_ID = CURRENT_MediaItemPackage?.media_api_SPECIFIC_ID ?: Undefined_String
-        val FileName = CURRENT_MediaItemPackage?.file_name ?: Undefined_String
-        val MediaArtist = CURRENT_MediaItemPackage?.media_artist ?: Undefined_String
+        val SPECIFIC_ID = CURRENT_MediaItemPackage?.media_api_SPECIFIC_ID ?: Undefined
+        val FileName = CURRENT_MediaItemPackage?.file_name ?: Undefined
+        val MediaArtist = CURRENT_MediaItemPackage?.media_artist ?: Undefined
 
 
         return Triple(SPECIFIC_ID, FileName, MediaArtist)
     }
     //获取当前媒体的 SPECIFIC_ID
     fun GET_Media_SPECIFIC_ID(): String {
-        val Media_SPECIFIC_ID = CURRENT_MediaItemPackage?.media_api_SPECIFIC_ID ?: Undefined_String
+        val Media_SPECIFIC_ID = CURRENT_MediaItemPackage?.media_api_SPECIFIC_ID ?: Undefined
 
         return Media_SPECIFIC_ID
     }
@@ -103,13 +102,13 @@ object PlayerInfoCenter {
     }
     //获取当前媒体的标准链接
     fun GET_Media_UriStandard(): String {
-        val MediaInfo_MediaUriStandard = CURRENT_MediaItemPackage?.content_uriStandard ?: Undefined_String
+        val MediaInfo_MediaUriStandard = CURRENT_MediaItemPackage?.content_uriStandard ?: Undefined
 
         return MediaInfo_MediaUriStandard
     }
     //获取当前媒体的uriString
     fun GET_Media_UriString(): String {
-        val MediaInfo_MediaUriString = CURRENT_MediaItemPackage?.content_uriString ?: Undefined_String
+        val MediaInfo_MediaUriString = CURRENT_MediaItemPackage?.content_uriString ?: Undefined
 
         return MediaInfo_MediaUriString
     }
@@ -120,20 +119,20 @@ object PlayerInfoCenter {
 
         //检查类型是否合法
         if (MediaInfo_MediaType != Video && MediaInfo_MediaType != Audio){
-            return "哎呀,骇亖我力"
+            return Undefined
         }
 
         return MediaInfo_MediaType
     }
     //获取当前媒体的文件名
     fun GET_Media_FileName(): String {
-        val Media_FileName = CURRENT_MediaItemPackage?.file_name ?: Undefined_String
+        val Media_FileName = CURRENT_MediaItemPackage?.file_name ?: Undefined
 
         return Media_FileName
     }
     //获取当前媒体的艺术家
     fun GET_Media_Artist(): String {
-        val MediaInfo_MediaArtist = CURRENT_MediaItemPackage?.media_artist ?: Undefined_String
+        val MediaInfo_MediaArtist = CURRENT_MediaItemPackage?.media_artist ?: Undefined
 
         return MediaInfo_MediaArtist
     }
@@ -145,7 +144,7 @@ object PlayerInfoCenter {
     }
     //获取绝对路径
     fun GET_Media_FilePath(): String {
-        val Media_FilePath = CURRENT_MediaItemPackage?.file_path ?: Undefined_String
+        val Media_FilePath = CURRENT_MediaItemPackage?.file_path ?: Undefined
 
         return Media_FilePath
     }

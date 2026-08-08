@@ -63,6 +63,9 @@ object MediaUriManager {
 
     //转换非标准链接为标准链接(自带是否标准检测)
     fun getStandardMediaUri(mediaUriString: String, context: Context): String {
+        //若链接为空
+        if (mediaUriString == "") return ""
+
         //再次检查uri是否是标准格式,是标准格式时直接返回
         if (isMediaUriStandard(mediaUriString)) return mediaUriString
 

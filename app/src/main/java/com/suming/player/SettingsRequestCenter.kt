@@ -921,7 +921,7 @@ object SettingsRequestCenter {
             syncScrollerRunnableGap = PREFS_PlayVideoPage.getLong(syncScrollerRunnableGapName, -1L)
             //设置默认值
             if (syncScrollerRunnableGap == -1L) {
-                syncScrollerRunnableGap = 100
+                syncScrollerRunnableGap = 33L
             }
         }
 

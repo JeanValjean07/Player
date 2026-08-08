@@ -83,6 +83,7 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import coil.size.Dimension
 import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentEqualizer
 import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentMediaInfo
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerFragmentMoreButton
@@ -302,6 +303,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val player get() = PlayerSingleton.getInitPlayer()
     //连接到viewModel
     private val playerViewModel: PlayerViewModel by viewModels()
+    //字段
+    private val Undefined = ""
 
 
 
@@ -1185,17 +1188,23 @@ class PlayerActivityNeo: AppCompatActivity(){
         //获取原始链接并转换为标准格式链接
         val intentUri = getOriginalIntentUri(intent)
         val intentUriString = intentUri.toString()
-        val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUriString, this@PlayerActivityNeo)
+        val intentUriStandard = if (intentUriString != Undefined){
+            MediaUriManager.getStandardMediaUri(intentUriString, this@PlayerActivityNeo)
+        }else{
+            Undefined
+        }
+        //获取正在播放信息
         val ongoingUriStandard = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
         val ongoingMediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
         //日志-获取到的信息
         //consoleLog("intentUriStandard: $intentUriStandard, ongoingUriStandard: $ongoingUriStandard")
+
         //既无正在播放的媒体,也未传入链接,主动要求输入链接
         if (intentUri == Uri.EMPTY && ongoingUriStandard == Uri.EMPTY ){
             queryManualInputUri()
         }else{
             //未传入链接,但有正在播放的媒体,则绑定当前播放项
-            if(intentUriStandard == "" && ongoingUriStandard != Uri.EMPTY){
+            if(intentUriStandard == Undefined && ongoingUriStandard != Uri.EMPTY){
                 //consoleLog("未传入链接,但有正在播放的媒体,则绑定当前播放项")
                 if (ongoingMediaType == MediaType.Video){
                     connectCurrentMedia()
@@ -1205,10 +1214,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             }else{
                 //检查是否是同一项
                 if(intentUriStandard != ongoingUriStandard.toString()){
-                    consoleLog("传入链接,但与当前播放项不同,播放新项")
+                    //consoleLog("传入链接,但与当前播放项不同,播放新项")
                     startPlayNewMedia(intentUriString.toUri())
                 }else{
-                    consoleLog("传入链接,但与当前播放项相同,直接绑定")
+                    //consoleLog("传入链接,但与当前播放项相同,直接绑定")
                     connectCurrentMedia()
                 }
             }
@@ -1321,15 +1330,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         updateButtonState()
 
     }
-    //关闭遮罩
-    private fun closeCover( anim: Boolean = false, animDuration: Long = 250 ){
-        val cover = findViewById<LinearLayout>(R.id.cover)
-        if(anim){
-            cover.animate().alpha(0f).setDuration(animDuration).withEndAction { cover.visibility = View.GONE }
-        }else{
-            cover.visibility = View.GONE
-        }
-    }
+
+
 
 
 
@@ -1865,6 +1867,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         IDLE_Timer?.cancel()
     }
     //android:configChanges="orientation|screenSize|screenLayout"
+    @SuppressLint("SwitchIntDef")
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         when(newConfig.orientation){
@@ -1934,12 +1937,12 @@ class PlayerActivityNeo: AppCompatActivity(){
             notice("已关闭方向监听器", 1000)
         }
     }
-    //响应Fragment开启/关闭事件
+    //响应Fragment开启/关闭事件/Fragment计数器
     private var fragment_count = 0
     private fun onFragmentOpen(){
         //增加计数
         fragment_count += 1
-        consoleLog("计数增加。当前Fragment计数：$fragment_count")
+        //consoleLog("计数增加。当前Fragment计数：$fragment_count")
         //仅在数量为0时才执行
         if (fragment_count > 0){
             //关闭被控组件
@@ -1953,7 +1956,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun onFragmentClose(){
         //减少计数
         fragment_count -= 1
-        consoleLog("计数减少。当前Fragment计数：$fragment_count")
+        //consoleLog("计数减少。当前Fragment计数：$fragment_count")
         if (fragment_count <= 0){
             //开启被控组件
             startScrollerSync()
@@ -2974,6 +2977,16 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
     }
+    //关闭遮罩
+    private fun closeCover(anim: Boolean = false, animDuration: Long = 250){
+        val cover = findViewById<LinearLayout>(R.id.cover)
+        if(anim){
+            cover.animate().alpha(0f).setDuration(animDuration).withEndAction { cover.visibility = View.GONE }
+        }else{
+            cover.visibility = View.GONE
+        }
+    }
+
 
 
 
