@@ -91,7 +91,6 @@ class MainActivity: AppCompatActivity() {
 
 
     @SuppressLint("ClickableViewAccessibility" )
-    @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //界面设置
@@ -535,7 +534,7 @@ class MainActivity: AppCompatActivity() {
             },
             onClick_tvFormat = { item ->
                 ToolVibrate().vibrate(this@MainActivity)
-                notice("视频格式:${item.media_format}", 3000)
+                notice("视频格式:${item.media_format}  (${item.media_api_NUM_ID})", 3000)
             },
             onClick_Options = { item, holder ->
                 val popup = PopupMenu(holder.itemView.context, holder.tvOption)
@@ -1013,6 +1012,7 @@ class MainActivity: AppCompatActivity() {
     }
     //设置新的媒体项
     private fun setMediaItem(MediaInfo_MediaUri: Uri, playWhenReady: Boolean){
+
         //确保播放器已经启动
         PlayerSingleton.getInitPlayer()
         PlayerSingleton.addPlayerStateListener()

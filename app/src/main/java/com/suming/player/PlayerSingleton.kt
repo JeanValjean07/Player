@@ -457,6 +457,11 @@ object PlayerSingleton {
     fun getState_currentPosition(): Long {
         return _player?.currentPosition ?: 0L
     }
+    //获取是否播放结束
+    fun GET_STE_playEnd(): Boolean {
+
+        return playState_playEnd
+    }
 
     //播放和暂停
     private var playState_playEnd = false

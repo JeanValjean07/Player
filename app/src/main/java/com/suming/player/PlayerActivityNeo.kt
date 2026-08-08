@@ -1182,22 +1182,26 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //主业务线
     private fun mainBusiness(){
-        //感知机制(有视频在播放就直接绑定)
-
         //获取原始链接并转换为标准格式链接
         val intentUri = getOriginalIntentUri(intent)
         val intentUriString = intentUri.toString()
         val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUriString, this@PlayerActivityNeo)
         val ongoingUriStandard = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
-        consoleLog("intentUriStandard: $intentUriStandard, ongoingUriStandard: $ongoingUriStandard")
+        val ongoingMediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+        //日志-获取到的信息
+        //consoleLog("intentUriStandard: $intentUriStandard, ongoingUriStandard: $ongoingUriStandard")
         //既无正在播放的媒体,也未传入链接,主动要求输入链接
-        if (intentUri == Uri.EMPTY && ongoingUriStandard == Uri.EMPTY){
+        if (intentUri == Uri.EMPTY && ongoingUriStandard == Uri.EMPTY ){
             queryManualInputUri()
         }else{
             //未传入链接,但有正在播放的媒体,则绑定当前播放项
             if(intentUriStandard == "" && ongoingUriStandard != Uri.EMPTY){
-                consoleLog("未传入链接,但有正在播放的媒体,则绑定当前播放项")
-                connectCurrentMedia()
+                //consoleLog("未传入链接,但有正在播放的媒体,则绑定当前播放项")
+                if (ongoingMediaType == MediaType.Video){
+                    connectCurrentMedia()
+                }else{
+                    finish()
+                }
             }else{
                 //检查是否是同一项
                 if(intentUriStandard != ongoingUriStandard.toString()){
@@ -1211,6 +1215,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
 
     }
+
     //提取原始链接
     private fun getOriginalIntentUri(intent: Intent): Uri {
         //获取原始链接

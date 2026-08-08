@@ -163,6 +163,8 @@ object PlayerListener {
             AudioManager.AUDIOFOCUS_GAIN -> {
                 //consoleLog("stopFocusChange - AUDIOFOCUS_GAIN")
                 isFocus = true
+                //播放结束时不继续
+                if (PlayerSingleton.GET_STE_playEnd()) return
                 //检查是否需要继续播放
                 if (state_needContinue_whenFocusGain){
                     PlayerSingleton.continuePlay(true)
