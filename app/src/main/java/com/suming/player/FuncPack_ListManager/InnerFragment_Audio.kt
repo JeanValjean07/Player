@@ -315,7 +315,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
     }
     //播放视频
     private fun onPlayClick(item: MediaItemFullForAudio){
-        if (item.content_uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
+        if (item.content_uriString == PlayerSingleton.GET_STE_currentMediaItem_Uri().second.toString()){
             if (PlayerInfoCenter.observableIsPlaying.value){
                 PlayerSingleton.pausePlay()
             }else{

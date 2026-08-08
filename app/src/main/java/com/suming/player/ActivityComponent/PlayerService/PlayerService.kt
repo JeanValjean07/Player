@@ -200,7 +200,7 @@ class PlayerService: MediaSessionService() {
     //播放或暂停
     private fun pauseOrContinue() {
         //先检查目前是不是在播放(读取到的是父类修改后的状态,原本的播放状态应取反)
-        val isPlaying = !PlayerSingleton.getState_isNowPlaying()
+        val isPlaying = !PlayerSingleton.GET_STE_isNowPlaying()
         consoleLog("pauseOrContinue() 操作之前是否在播放 isPlaying: $isPlaying")
 
         if (isPlaying){

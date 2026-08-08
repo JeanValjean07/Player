@@ -31,10 +31,11 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
 import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
 import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
+import com.suming.player.DataPack.MediaRecordPack
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ArtworkFrameManager
-import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import com.suming.player.FuncionalPack.MediaInfoRetriever
+import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
@@ -230,6 +231,13 @@ object PlayerSingleton {
 
 
     //Long Process Functions
+    //设置新媒体项的外部接口(以后可以加些过滤)(返回是否设置成功)
+    fun setMediaItem(uri: Uri, playWhenReady: Boolean): Boolean {
+        //设置新媒体项
+        val success = setMediaItemCore(uri, playWhenReady)
+
+        return success
+    }
     //设置/变更媒体(设置新媒体项)
     private fun setMediaItemCore(uri: Uri, playWhenReady: Boolean): Boolean {
         //先判断是否是正在播放的媒体
@@ -271,13 +279,6 @@ object PlayerSingleton {
 
         return true
     }
-    //设置新媒体项的外部接口(以后可以加些过滤)(返回是否设置成功)
-    fun setMediaItem(uri: Uri, playWhenReady: Boolean): Boolean {
-        //设置新媒体项
-        val success = setMediaItemCore(uri, playWhenReady)
-
-        return success
-    }
     //完成媒体项变更的后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null) return
@@ -286,7 +287,7 @@ object PlayerSingleton {
         startSessionService(context)
 
         //记录到清单
-        //writeToRecord(context,MediaInfoPackLocal?.MediaInfo_MediaUriString ?: "")
+        writeToRecord(context)
 
         //读取单个媒体播放设置(由MediaDataBaseMaster读取并传回)
 
@@ -329,9 +330,23 @@ object PlayerSingleton {
 
 
     //记下到播放记录
-    private fun writeToRecord(context: Context,uriStandard: String){
+    private fun writeToRecord(context: Context){
         //把记录保存到记录管理器
-        //MediaRecordManager().writeRecord(uriStandard)
+        val mediaRecordManager = MediaRecordManager()
+        //获取当前信息
+        val SPECIFIC_ID = PlayerInfoCenter.GET_Media_SPECIFIC_ID()
+        val uriStandard = PlayerInfoCenter.GET_Media_UriString()
+        val fileName = PlayerInfoCenter.GET_Media_FileName()
+        val mediaArtist = PlayerInfoCenter.GET_Media_Artist()
+        //合成信息包
+        val mediaRecordPack = MediaRecordPack(
+            SPECIFIC_ID,
+            uriStandard,
+            fileName,
+            mediaArtist
+        )
+        //写入记录
+        mediaRecordManager.writeRecord(context,mediaRecordPack)
     }
     //获取艺术图链接
     private fun getArtworkFrameUri(context: Context, uri: Uri): Uri?{
@@ -405,7 +420,7 @@ object PlayerSingleton {
 
 
     //获取当前在播放的媒体项的链接(来自播放核心)(也可在PlayerInFoCenter获取缓存)
-    fun getState_currentMediaItem_Uri(): Pair<Boolean, Uri> {
+    fun GET_STE_currentMediaItem_Uri(): Pair<Boolean, Uri> {
         if (_player == null) {
             return Pair(false, Uri.EMPTY)
         }
@@ -427,8 +442,8 @@ object PlayerSingleton {
         }
     }
     //是否正在播放
-    fun getState_isNowPlaying(): Boolean {
-        if (_player == null) consoleLog("wtf? getState_isNowPlaying() _player  null")
+    fun GET_STE_isNowPlaying(): Boolean {
+        if (_player == null) consoleLog("wtf? GET_STE_isNowPlaying() _player  null")
 
         return _player?.isPlaying ?: false
     }

@@ -21,7 +21,7 @@ class MediaRecordManager {
     //记录所需字段
     val string_null = ""
     //表单标识
-    val item_file_full_path = "item_file_full_path"
+    val item_SPECIFIC_ID = "item_SPECIFIC_ID"
     val item_uri_standard = "item_uri_standard"
     val item_file_name = "item_file_name"
     val item_artist = "item_artist"
@@ -32,7 +32,7 @@ class MediaRecordManager {
         INIT_SPF(context)
 
         SPF_MediaRecord?.edit {
-            putString(item_file_full_path, mediaRecordPack.fileFullPath)
+            putString(item_SPECIFIC_ID, mediaRecordPack.SPECIFIC_ID)
             putString(item_uri_standard, mediaRecordPack.uriStandard)
             putString(item_file_name, mediaRecordPack.fileName)
             putString(item_artist, mediaRecordPack.mediaArtist)
@@ -42,13 +42,13 @@ class MediaRecordManager {
     fun readRecord(context: Context): MediaRecordPack{
         INIT_SPF(context)
 
-        val MediaInfo_FileFullPath =  SPF_MediaRecord?.getString(item_file_full_path ,string_null) ?: string_null
+        val MediaInfo_SPECIFIC_ID =  SPF_MediaRecord?.getString(item_SPECIFIC_ID ,string_null) ?: string_null
         val MediaInfo_UriStandard =  SPF_MediaRecord?.getString(item_uri_standard ,string_null) ?: string_null
         val MediaInfo_FileName = SPF_MediaRecord?.getString(item_file_name, string_null) ?: string_null
         val MediaInfo_MediaArtist = SPF_MediaRecord?.getString(item_artist, string_null) ?: string_null
 
 
-        return MediaRecordPack(MediaInfo_FileFullPath,MediaInfo_UriStandard,MediaInfo_FileName, MediaInfo_MediaArtist)
+        return MediaRecordPack(MediaInfo_SPECIFIC_ID,MediaInfo_UriStandard,MediaInfo_FileName, MediaInfo_MediaArtist)
     }
 
 

@@ -72,11 +72,14 @@ object MediaInfoRetriever {
             val Media_UriStandard = MediaUriManager.getStandardMediaUri(Media_UriString,context)
             //截取NUM_ID
             val Media_NUM_ID = Media_UriStandard.split("/").last().toLong()
-            consoleLog("retrieveMediaInfo-截取" +
+            //日志
+            /*consoleLog("retrieveMediaInfo-截取" +
                     "Media_UriString: $Media_UriString" +
                     "Media_UriStandard: $Media_UriStandard" +
                     "Media_NUM_ID: $Media_NUM_ID"
             )
+
+             */
 
             //获取媒体类型
             var MediaInfo_MediaType = retriever?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: ""

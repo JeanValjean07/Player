@@ -110,7 +110,7 @@ class PortalActivity : AppCompatActivity(){
         //consoleLog("以正在播放项为目标 processPending")
 
         //检查正在播放的媒体
-        val (ongoing , uri) = PlayerSingleton.getState_currentMediaItem_Uri()
+        val (ongoing , uri) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
         val uriString = uri.toString()
         //获取必要信息
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()

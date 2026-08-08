@@ -323,7 +323,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //播放视频
     private fun onPlayClick(item: MediaItemFullForVideo, position: Int){
 
-        if (item.content_uriString == PlayerSingleton.getState_currentMediaItem_Uri().second.toString()){
+        if (item.content_uriString == PlayerSingleton.GET_STE_currentMediaItem_Uri().second.toString()){
             if (PlayerInfoCenter.observableIsPlaying.value){
                 PlayerSingleton.pausePlay()
             }else{

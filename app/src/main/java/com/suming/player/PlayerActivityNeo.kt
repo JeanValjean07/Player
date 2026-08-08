@@ -56,7 +56,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.cardview.widget.CardView
@@ -1189,7 +1188,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         val intentUri = getOriginalIntentUri(intent)
         val intentUriString = intentUri.toString()
         val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUriString, this@PlayerActivityNeo)
-        val ongoingUriStandard = PlayerSingleton.getState_currentMediaItem_Uri().second
+        val ongoingUriStandard = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
         consoleLog("intentUriStandard: $intentUriStandard, ongoingUriStandard: $ongoingUriStandard")
         //既无正在播放的媒体,也未传入链接,主动要求输入链接
         if (intentUri == Uri.EMPTY && ongoingUriStandard == Uri.EMPTY){
@@ -1810,7 +1809,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //系统面板：分享
                 Intent.ACTION_SEND -> {
                     val uri = IntentCompat.getParcelableExtra(newIntent, Intent.EXTRA_STREAM, Uri::class.java) ?: return
-                    val currentUri = PlayerSingleton.getState_currentMediaItem_Uri().second
+                    val currentUri = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
                     //判断是否是同一个视频
                     if (uri == currentUri){
                         continuePlay()
@@ -1822,7 +1821,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //系统面板：选择其他应用打开
                 Intent.ACTION_VIEW -> {
                     val uri = newIntent.data ?: return
-                    val currentUri = PlayerSingleton.getState_currentMediaItem_Uri()
+                    val currentUri = PlayerSingleton.GET_STE_currentMediaItem_Uri()
                     consoleLog("currentUri: $currentUri, uri: $uri")
                     //判断是否是同一个视频
                     if (uri == currentUri){
@@ -1836,7 +1835,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 "ACTION_NEW_INTENT" -> {
                     consoleLog("onNewIntent ACTION_NEW_INTENT")
                     val uri = IntentCompat.getParcelableExtra(newIntent, "uri", Uri::class.java) ?: return
-                    val currentUri = PlayerSingleton.getState_currentMediaItem_Uri().second
+                    val currentUri = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
                     consoleLog("currentUri: $currentUri, uri: $uri")
                     //判断是否是同一个视频
                     if (uri == currentUri){

@@ -78,7 +78,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 @Suppress("NewApi","unused",) //"unused",
 @OptIn(UnstableApi::class)
@@ -200,7 +199,7 @@ class MainActivity: AppCompatActivity() {
                 val ReceiveKey = bundle.getString(FragmentConnector.receive_key)
                 when(ReceiveKey){
                     FragmentConnector.fragment_event_close -> {
-                        consoleLog("播放列表Fragment关闭")
+                        //consoleLog("播放列表Fragment关闭")
                     }
 
                 }
@@ -305,34 +304,35 @@ class MainActivity: AppCompatActivity() {
 
                     }
 
-                    delay(1000)
+                    delay(300)
 
-                    startListUnderTopObserver()
-                    //
-                    withContext(Dispatchers.Main) {
-                        //启动MiniView观察者
-                        startMiniViewObserver()
+                    //启动MiniView观察者
+                    startMiniViewObserver()
 
-                        val isAnyMediaOngoing = withContext(Dispatchers.Main){ isAnyMediaOngoing().first }
-                        if (!isAnyMediaOngoing){
+                    //检查是否有正在播放媒体/读取上次播放记录
+                    val isAnyMediaOngoing = withContext(Dispatchers.Main){ isAnyMediaOngoing().first }
+                    if (!isAnyMediaOngoing){
+                        if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)){
                             //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
-                            val MediaInfo_MediaRecordPack = getLastMediaRecord()
-                            if (MediaInfo_MediaRecordPack != null) {
+                            val MediaRecordPack = getLastMediaRecord()
+                            if (MediaRecordPack != null) {
                                 withContext(Dispatchers.Main) {
-                                    if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)){
-                                        //setMediaItem(MediaInfo_MediaRecordPack.uriStandard.to, false)
-                                    }
+                                    showMiniViewByRecord(MediaRecordPack)
                                 }
                             }
                         }
+
                     }
 
 
 
+                    //启动列表观察者
+                    startListUnderTopObserver()
+
                 }else{
+                    //显示“选择文件以播放”界面
                     showOpenFileButton()
                 }
-
             }
         }
     }
@@ -640,10 +640,7 @@ class MainActivity: AppCompatActivity() {
         val MediaInfo_MediaRecordPack = MediaRecordManager.readRecord(this@MainActivity)
 
         //检查必要字段是否为空
-        if (MediaInfo_MediaRecordPack.fileFullPath.isEmpty()) return null
-        //提取记录中的完整文件路径,检查该文件是否还存在
-        val file = File(MediaInfo_MediaRecordPack.fileFullPath)
-        if (!file.exists()) return null
+        if (MediaInfo_MediaRecordPack.SPECIFIC_ID.isEmpty()) return null
         //检查是否可解码该文件
         if (!MediaInfoRetriever.isUriStringValid(this,MediaInfo_MediaRecordPack.uriStandard)) return null
 
@@ -661,9 +658,10 @@ class MainActivity: AppCompatActivity() {
             //观察正在播放的媒体项变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableMediaItem.collect { uriString ->
-                    consoleLog("MiniView观察者 当前媒体: $uriString")
-
-                    //
+                    //consoleLog("MiniView观察者 当前媒体: $uriString")
+                    //清空链接缓存
+                    miniView_cache_MediaUri = ""
+                    //显示MiniView
                     showMiniViewLongProcess()
                 }
             }
@@ -672,7 +670,7 @@ class MainActivity: AppCompatActivity() {
             //观察播放状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableIsPlaying.collect { newState ->
-                    consoleLog("MiniView观察者 当前播放状态: $newState")
+                    //consoleLog("MiniView观察者 当前播放状态: $newState")
 
                     //刷新操作按钮
                     updateMiniViewPauseButton(newState)
@@ -684,7 +682,7 @@ class MainActivity: AppCompatActivity() {
     private fun showMiniViewLongProcess(){
         //从PlayerStateMediaInfo获取所有信息
         val (SPECIFIC_ID,FileName,MediaArtist) = PlayerInfoCenter.GET_Media_MiniView_Pack()
-        consoleLog("showMiniViewLongProcess: SPECIFIC_ID $SPECIFIC_ID")
+        //consoleLog("showMiniViewLongProcess: SPECIFIC_ID $SPECIFIC_ID")
         if (SPECIFIC_ID.isEmpty()){
             miniView_clear()
             return
@@ -693,21 +691,49 @@ class MainActivity: AppCompatActivity() {
         var mediaType = ""
         var NUM_ID = 0L
         try {
-            mediaType = SPECIFIC_ID.substringBefore("_")
-            consoleLog("showMiniViewLongProcess: mediaType = $mediaType")
-            NUM_ID = SPECIFIC_ID.substringAfterLast("_").toLong()
-            consoleLog("showMiniViewLongProcess: NUM_ID = $NUM_ID")
-        }catch (e: Exception){
-            consoleLog("showMiniViewLongProcess: $e")
-        }
 
-        consoleLog("showMiniViewLongProcess: $mediaType $NUM_ID $FileName $MediaArtist")
+            mediaType = SPECIFIC_ID.substringBefore("_")
+            NUM_ID = SPECIFIC_ID.substringAfterLast("_").toLong()
+
+        }catch (e: Exception){
+            consoleLog("showMiniViewLongProcess-字符串拆分出错: $e")
+        }
         //文字上屏
         PlayingCard_TextMediaName.text = FileName
         PlayingCard_TextMediaArtist.text = MediaArtist
         PlayingCard_ButtonPlay.visibility = View.VISIBLE
         //更新艺术图或视频
         updateMiniViewArtwork(mediaType, NUM_ID)
+
+    }
+    private fun showMiniViewByRecord(MediaRecordPack: MediaRecordPack){
+        //从MediaRecordPack获取信息
+        val SPECIFIC_ID = MediaRecordPack.SPECIFIC_ID
+        //consoleLog("showMiniViewByRecord: SPECIFIC_ID $SPECIFIC_ID")
+        if (SPECIFIC_ID.isEmpty()){
+            miniView_clear()
+            return
+        }
+        val FileName = MediaRecordPack.fileName
+        val MediaArtist = MediaRecordPack.mediaArtist
+        val uriString = MediaRecordPack.uriStandard
+        //分离部分信息
+        var mediaType = ""
+        var NUM_ID = 0L
+        try {
+            mediaType = SPECIFIC_ID.substringBefore("_")
+            NUM_ID = SPECIFIC_ID.substringAfterLast("_").toLong()
+        }catch (e: Exception){
+            consoleLog("showMiniViewByRecord-字符串拆分出错: $e")
+        }
+        //缓存播放链接
+        miniView_cache_MediaUri = uriString
+        //文字上屏
+        PlayingCard_TextMediaName.text = FileName
+        PlayingCard_TextMediaArtist.text = MediaArtist
+        PlayingCard_ButtonPlay.visibility = View.VISIBLE
+        //更新艺术图或视频
+        updateMiniViewArtwork_Image(NUM_ID, mediaType)
 
     }
     private fun initMiniView(){
@@ -741,8 +767,21 @@ class MainActivity: AppCompatActivity() {
         }
         PlayingCard_ButtonPlay.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
+            //检查是否有媒体在线
+            val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+            if (!ongoing){
+                if (miniView_cache_MediaUri.isNotEmpty()){
+                    val uri = miniView_cache_MediaUri.toUri()
+                    miniView_cache_MediaUri = ""
+                    setMediaItem(uri, true)
+                }else{
+                    showCustomToast("请先选择一项媒体以开始播放")
+                }
+                return@setOnClickListener
+            }
+
             //选择执行播放或暂停
-            if (PlayerSingleton.getState_isNowPlaying()){
+            if (PlayerSingleton.GET_STE_isNowPlaying()){
                 PlayerSingleton.pausePlay()
             }else{
                 PlayerSingleton.continuePlay(true)
@@ -770,15 +809,15 @@ class MainActivity: AppCompatActivity() {
     private fun updateMiniViewArtwork(type: String,NUM_ID: Long){
         val useImage = SettingsRequestCenter.get_PREFS_DisableMainPageSmallPlayer(this)
         if (useImage){
-            updateMiniViewArtwork_Image(NUM_ID.toString(), type)
+            updateMiniViewArtwork_Image(NUM_ID, type)
         }else{
             when(type){
-                MediaType.Audio -> updateMiniViewArtwork_Image(NUM_ID.toString(), type)
+                MediaType.Audio -> updateMiniViewArtwork_Image(NUM_ID, type)
                 MediaType.Video -> updateMiniViewArtwork_Video()
             }
         }
     }
-    private fun updateMiniViewArtwork_Image(uriNumOnly: String, type: String){
+    private fun updateMiniViewArtwork_Image(NUM_ID: Long, type: String){
         //变换卡片大小
         fun transformCardSize_toSquare(){
             //保持卡片高度不变
@@ -826,10 +865,10 @@ class MainActivity: AppCompatActivity() {
         }
 
         //判断是否为同一张图片
-        if (state_MiniViewArtwork_ImageUri == uriNumOnly) return
+        if (state_MiniViewArtwork_Image_NUM_ID == NUM_ID) return
 
         //获取图片
-        val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(this, type, uriNumOnly.toLong())
+        val Bitmap = ArtworkFrameManager.GET_ArtworkFrame_Bitmap(this, type, NUM_ID)
 
         //置入图片
         if (Bitmap == null){
@@ -838,20 +877,16 @@ class MainActivity: AppCompatActivity() {
             PlayingCard_Artwork_Image?.setImageBitmap(Bitmap)
 
             PlayingCard_Artwork_Image?.setOnClickListener {
-                updateMiniViewArtwork_Image(uriNumOnly, type)
+                updateMiniViewArtwork_Image(NUM_ID, type)
             }
 
-            state_MiniViewArtwork_ImageUri = uriNumOnly
+            state_MiniViewArtwork_Image_NUM_ID = NUM_ID
         }
     }
     @SuppressLint("InflateParams")
     private fun updateMiniViewArtwork_Video(){
         //绑定到视频
         fun connectToPlayEngine(){
-            consoleLog("updateMiniViewArtwork_Video: connectToPlayEngine ${PlayingCard_Artwork_Video}")
-            if (PlayingCard_Artwork_Video == null) {
-                consoleLog("updateMiniViewArtwork_Video: connectToPlayEngine PlayingCard_Artwork_Video is null")
-            }
             PlayingCard_Artwork_Video?.player = null
             PlayingCard_Artwork_Video?.player = PlayerSingleton.getPlayer()
         }
@@ -903,10 +938,9 @@ class MainActivity: AppCompatActivity() {
             //清除所有子视图
             PlayingCard_Artwork.removeAllViews()
             PlayingCard_Artwork_Image = null
-            state_MiniViewArtwork_ImageUri = ""
+            state_MiniViewArtwork_Image_NUM_ID = 0L
             //创建视频视图
-            PlayingCard_Artwork_Video = LayoutInflater.from(this)
-                .inflate(R.layout.piece_player_view_texture_ver, null, false) as PlayerView
+            PlayingCard_Artwork_Video = LayoutInflater.from(this).inflate(R.layout.piece_player_view_texture_ver, null, false) as PlayerView
 
 
             //添加视频视图
@@ -915,11 +949,9 @@ class MainActivity: AppCompatActivity() {
         }
 
         //变换卡片宽度
-        consoleLog("updateMiniViewArtwork_Video: transformCardSize_adaptVideo")
         transformCardSize_adaptVideo()
 
         //绑定到视频
-        consoleLog("updateMiniViewArtwork_Video: connectToPlayEngine")
         connectToPlayEngine()
 
         //(测试用)点击重新绑定视频视图
@@ -932,7 +964,8 @@ class MainActivity: AppCompatActivity() {
     val mini_view_type_image = "mini_view_type_image"
     val mini_view_type_video = "mini_view_type_video"
     private var state_MiniViewArtwork_type = mini_view_type_null
-    private var state_MiniViewArtwork_ImageUri = ""
+    private var state_MiniViewArtwork_Image_NUM_ID = 0L
+    private var miniView_cache_MediaUri: String = ""
     private fun miniView_clear(){
         //收起卡片(已取消)
         /*
@@ -946,13 +979,12 @@ class MainActivity: AppCompatActivity() {
         //
         PlayingCard_TextMediaName.text = "未在播放"
         PlayingCard_TextMediaArtist.text = "选择一项媒体以开始播放"
-        PlayingCard_ButtonPlay.visibility = View.GONE
+        //PlayingCard_ButtonPlay.visibility = View.GONE
 
         PlayingCard_Artwork.removeAllViews()
         state_MiniViewArtwork_type = mini_view_type_null
         PlayingCard_Artwork_Video = null
         PlayingCard_Artwork_Image = null
-
 
     }
     //MiniView视图合集
@@ -970,7 +1002,7 @@ class MainActivity: AppCompatActivity() {
     //检查是否有媒体正在在播放并获取链接
     private fun isAnyMediaOngoing(): Pair<Boolean, String>{
         //从播放器获取当前媒体状态
-        val (ongoing,currentMediaItem) = PlayerSingleton.getState_currentMediaItem_Uri()
+        val (ongoing,currentMediaItem) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
 
         return if (ongoing){
             val currentMediaUriString = currentMediaItem.toString()

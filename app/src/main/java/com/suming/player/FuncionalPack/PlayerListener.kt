@@ -141,7 +141,7 @@ object PlayerListener {
     private fun HandleFocusChange(focusChange: Int){
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
-                consoleLog("stopFocusChange - AUDIOFOCUS_LOSS")
+                //consoleLog("stopFocusChange - AUDIOFOCUS_LOSS")
                 isFocus = false
 
                 //暂停播放
@@ -150,7 +150,7 @@ object PlayerListener {
                 }
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                consoleLog("stopFocusChange - AUDIOFOCUS_LOSS_TRANSIENT")
+                //consoleLog("stopFocusChange - AUDIOFOCUS_LOSS_TRANSIENT")
                 isFocus = false
                 //暂停播放
                 if (state_needPause_whenFocusLoss){
@@ -158,10 +158,10 @@ object PlayerListener {
                 }
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                consoleLog("stopFocusChange - AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
+                //consoleLog("stopFocusChange - AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
-                consoleLog("stopFocusChange - AUDIOFOCUS_GAIN")
+                //consoleLog("stopFocusChange - AUDIOFOCUS_GAIN")
                 isFocus = true
                 //检查是否需要继续播放
                 if (state_needContinue_whenFocusGain){
@@ -204,7 +204,7 @@ object PlayerListener {
         if (state_listeners_Registered) return
         state_listeners_Registered = true
 
-        consoleLog("startListener")
+        //consoleLog("startListener")
 
         //开启音频设备监听
         startAudioDeviceCallback(context)
