@@ -59,6 +59,7 @@ import com.suming.player.DataPack.DataLoader.VideoDataBaseLoader
 import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
 import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
 import com.suming.player.DataPack.MediaRecordPack
+import com.suming.player.DataPack.MiniViewCachePack
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
@@ -660,8 +661,7 @@ class MainActivity: AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableMediaItem.collect { uriString ->
                     //consoleLog("MiniView观察者 当前媒体: $uriString")
-                    //清空链接缓存
-                    miniView_cache_MediaUri = ""
+
                     //显示MiniView
                     showMiniViewLongProcess()
                 }
@@ -685,8 +685,21 @@ class MainActivity: AppCompatActivity() {
         val (SPECIFIC_ID,FileName,MediaArtist) = PlayerInfoCenter.GET_Media_MiniView_Pack()
         //consoleLog("showMiniViewLongProcess: SPECIFIC_ID $SPECIFIC_ID")
         if (SPECIFIC_ID.isEmpty()){
-            miniView_clear()
+            if (miniView_cache_pack != null){
+                val (mediaType, NUM_ID, _, FileName, MediaArtist) = miniView_cache_pack!!
+                //文字上屏
+                PlayingCard_TextMediaName.text = FileName
+                PlayingCard_TextMediaArtist.text = MediaArtist
+                PlayingCard_ButtonPlay.visibility = View.VISIBLE
+                //更新艺术图
+                updateMiniViewArtwork_Image(NUM_ID, mediaType)
+            }else{
+                miniView_clear()
+            }
             return
+        }else{
+            //清空链接缓存
+            miniView_cache_pack = null
         }
         //分离部分信息
         var mediaType = ""
@@ -724,19 +737,24 @@ class MainActivity: AppCompatActivity() {
         try {
             mediaType = SPECIFIC_ID.substringBefore("_")
             NUM_ID = SPECIFIC_ID.substringAfterLast("_").toLong()
-            //缓存媒体类型
-            miniView_cache_MediaType = mediaType
+
             //consoleLog("miniView_cache_MediaType: $mediaType")
         }catch (e: Exception){
             consoleLog("showMiniViewByRecord-字符串拆分出错: $e")
         }
         //缓存播放链接
-        miniView_cache_MediaUri = uriString
+        miniView_cache_pack = MiniViewCachePack(
+            mediaType = mediaType,
+            NUM_ID = NUM_ID,
+            uriString = uriString,
+            FileName = FileName,
+            MediaArtist = MediaArtist
+        )
         //文字上屏
         PlayingCard_TextMediaName.text = FileName
         PlayingCard_TextMediaArtist.text = MediaArtist
         PlayingCard_ButtonPlay.visibility = View.VISIBLE
-        //更新艺术图或视频
+        //更新艺术图
         updateMiniViewArtwork_Image(NUM_ID, mediaType)
 
     }
@@ -764,13 +782,23 @@ class MainActivity: AppCompatActivity() {
 
             }else{
                 //未获取到正在播放的链接
-                if (miniView_cache_MediaUri == Undefined){
+                if (miniView_cache_pack == null){
                     showCustomToast("选择一项媒体以开始播放")
                 }else{
                     //唤起播放页
-                    val cacheUri = miniView_cache_MediaUri
-                    miniView_cache_MediaUri = Undefined
-                    startPlayerFromMiniView(cacheUri.toUri())
+                    val cacheUri = miniView_cache_pack?.uriString ?: Undefined
+
+                    if (cacheUri == Undefined) {
+                        miniView_cache_pack = null
+                    }
+
+                    //唤起播放页
+                    if (cacheUri.isNotEmpty()){
+                        startPlayerFromMiniView(cacheUri.toUri())
+                    }else{
+
+                        consoleLog("进入非预期分支,需检查代码")
+                    }
                 }
             }
         }
@@ -779,9 +807,9 @@ class MainActivity: AppCompatActivity() {
             //检查是否有媒体在线
             val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
             if (!ongoing){
-                if (miniView_cache_MediaUri.isNotEmpty()){
-                    val uri = miniView_cache_MediaUri.toUri()
-                    miniView_cache_MediaUri = ""
+                if (miniView_cache_pack != null){
+                    val uri = miniView_cache_pack?.uriString?.toUri() ?: Uri.EMPTY
+                    miniView_cache_pack = null
                     setMediaItem(uri, true)
                 }else{
                     showCustomToast("请先选择一项媒体以开始播放")
@@ -974,8 +1002,7 @@ class MainActivity: AppCompatActivity() {
     val mini_view_type_video = "mini_view_type_video"
     private var state_MiniViewArtwork_type = mini_view_type_null
     private var state_MiniViewArtwork_Image_NUM_ID = 0L
-    private var miniView_cache_MediaUri: String = Undefined
-    private var miniView_cache_MediaType: String = Undefined
+    private var miniView_cache_pack: MiniViewCachePack? = null
     private fun miniView_clear(){
         //收起卡片(已取消)
         /*
@@ -1384,12 +1411,15 @@ class MainActivity: AppCompatActivity() {
     private fun startPlayerFromMiniView(uri: Uri){
         var MediaInfo_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
         if (MediaInfo_MediaType == Undefined){
+            val miniView_cache_MediaType = miniView_cache_pack?.mediaType ?: Undefined
+            //consoleLog("startPlayerFromMiniView: miniView_cache_MediaType $miniView_cache_MediaType")
+
             if (miniView_cache_MediaType == MediaType.Video){
                 MediaInfo_MediaType = MediaType.Video
-                miniView_cache_MediaType = Undefined
             }else if (miniView_cache_MediaType == MediaType.Audio){
                 MediaInfo_MediaType = MediaType.Audio
-                miniView_cache_MediaType = Undefined
+            }else{
+                consoleLog("startPlayerFromMiniView: 失败-未知媒体类型")
             }
         }
         when (MediaInfo_MediaType) {
