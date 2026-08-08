@@ -1400,10 +1400,27 @@ class PlayerActivityNeo: AppCompatActivity(){
         startExoPlayer()
 
         //确认设置新媒体项
-        val successSetItem = PlayerSingleton.setMediaItem(uri, true)
+        val success = PlayerSingleton.setMediaItem(uri, true)
 
         //成功时绑定一次播放器视图,作为保险
-        if (successSetItem) bindPlayerView()
+        if (success){
+            bindPlayerView()
+        }else{
+            consoleLog("setNewMediaItem: 失败-设置新媒体项")
+            //进入检查流程
+            //1.检查文件是否还在
+            val file = File(uri.path ?: "")
+            if (!file.exists()){
+                consoleLog("setNewMediaItem: 失败-文件已不存在")
+                showCustomToast("此文件已不存在,请刷新列表", 3)
+                finish()
+                return
+            }
+
+            //如果未检查到问题,提示未知错误
+            showCustomToast("播放失败:未知错误", 3)
+
+        }
 
     }
     //媒体项变更回调(需升级为观察者观察统一状态)
