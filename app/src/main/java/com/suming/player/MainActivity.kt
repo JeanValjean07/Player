@@ -532,11 +532,9 @@ class MainActivity: AppCompatActivity() {
                 startVideoPlayer(uri)
             },
             onClick_Duration = { item ->
-                ToolVibrate().vibrate(this@MainActivity)
                 notice("视频时长:${FormatTime_withChar(item.media_durationMs)}", 2000)
             },
             onClick_tvFormat = { item ->
-                ToolVibrate().vibrate(this@MainActivity)
                 notice("视频格式:${item.media_format}  (${item.media_api_NUM_ID})", 3000)
             },
             onClick_Options = { item, holder ->
