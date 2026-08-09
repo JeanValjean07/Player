@@ -296,6 +296,7 @@ class MainActivity: AppCompatActivity() {
                 //Handler(Looper.getMainLooper()).postDelayed({   }, 1000)
                 //启动隐私权限面板
                 startPrivacyPermissionActivity()
+
             }else{
                 //已获得储存权限,显示主界面
                 if (isStoragePermissionValid){
@@ -326,16 +327,16 @@ class MainActivity: AppCompatActivity() {
 
                     }
 
-
-
-                    //启动列表观察者
-                    startListUnderTopObserver()
-
                 }else{
                     //显示“选择文件以播放”界面
                     showOpenFileButton()
                 }
             }
+            //启动MiniView观察者
+            startMiniViewObserver()
+
+            //启动列表观察者
+            startListUnderTopObserver()
         }
     }
 
