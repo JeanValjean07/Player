@@ -1332,6 +1332,7 @@
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
             <!--  卡片：重置  -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -1379,7 +1380,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:padding="10dp"
-                            android:text="重新生成"
+                            android:text="选择"
                             android:textColor="@color/HeadText"
                             android:textSize="12sp" />
                     </LinearLayout>
@@ -1397,6 +1398,7 @@
                 android:layout_marginTop="30dp"
                 android:clickable="true"
                 android:text="设备信息"
+                android:visibility="gone"
                 android:textColor="@color/Text2"
                 android:textSize="12sp" />
             <!--  超链接样式:撤回隐私同意  -->
@@ -1405,22 +1407,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="30dp"
                 android:clickable="true"
                 android:text="撤回隐私政策同意"
                 android:textColor="@color/Text2"
                 android:textSize="12sp" />
-            <!--  超链接样式:开源许可  -->
-            <TextView
-                android:id="@+id/openSourceLicense"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="2dp"
-                android:clickable="true"
-                android:text="开放源代码许可"
-                android:textColor="@color/Text2"
-                android:textSize="12sp" />
+
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

@@ -18,6 +18,7 @@ pluginManagement {
         maven { url = uri("https://mirrors.huaweicloud.com/repository/maven/") }
         maven { url = uri("https://jitpack.io") }
     }
+
 }
 
 @Suppress("UnstableApiUsage")

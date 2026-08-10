@@ -4,11 +4,9 @@ plugins {
 
     //Compose
     alias(libs.plugins.compose.compiler)
+
     //ksp
     id("com.google.devtools.ksp")
-
-    //Oss Licenses Plugin (已停用)
-    //id("com.google.android.gms.oss-licenses-plugin")
 
 
 }
@@ -61,14 +59,13 @@ dependencies {
     implementation("io.coil-kt:coil:2.4.0")
     implementation("androidx.fragment:fragment-ktx:1.8.5")
 
-    //Oss Licenses Plugin (已停用)
-    //implementation("com.google.android.gms:play-services-oss-licenses:17.3.0")
-    //implementation(libs.play.services.oss.licenses)
+
     //Compose
     implementation(platform("androidx.compose:compose-bom:2024.09.00"))
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling")
+
     //数据库
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
@@ -77,7 +74,10 @@ dependencies {
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.compose.foundation.foundation.layout)
     implementation(libs.androidx.core.animation)
+
+    //ksp
     ksp("androidx.room:room-compiler:2.6.1")
+
     //RxJava
     implementation("io.reactivex.rxjava3:rxjava:3.1.5")
     implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")

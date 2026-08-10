@@ -50,15 +50,13 @@ import kotlinx.coroutines.withContext
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import kotlin.system.exitProcess
 
-@Suppress("unused")
-@OptIn(UnstableApi::class)
+@Suppress("unused","NewApi")
 @SuppressLint("InflateParams", "SetTextI18n")
-@RequiresApi(Build.VERSION_CODES.Q)
+@OptIn(UnstableApi::class)
 class SettingsActivity: AppCompatActivity() {
 
 
@@ -130,40 +128,10 @@ class SettingsActivity: AppCompatActivity() {
                 //检查更新
                 checkNewVersion()
             }
-            //超链接：开放源代码许可
-            val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
-            openSourceLicense.paint.isUnderlineText = true
-            openSourceLicense.invalidate()
-            openSourceLicense.setOnClickListener {
-                ToolVibrate().vibrate(this@SettingsActivity)
 
-                showCustomToast("此功能正在替换实现方案,暂不提供",3)
 
-                /*
-                val isMicroG_Exist = checkMicroG()
-                if (packageNumber == 1){
-                    showCustomToast("无法读取应用列表,拒绝打开此页面",Toast.LENGTH_SHORT,3)
-                    return@setOnClickListener
-                }
-                if (isMicroG_Exist){
-                    showCustomToast("已安装MicroG服务的设备不支持打开此页",Toast.LENGTH_SHORT,3)
-                }
-                else{
-                    startActivity(Intent(this,
-                        OssLicensesMenuActivity::class.java
-                    ))
-                }
 
-                 */
-            }
-            //超链接：设备信息
-            val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
-            DeviceInfoPage.paint.isUnderlineText = true
-            DeviceInfoPage.invalidate()
-            DeviceInfoPage.setOnClickListener {
-                ToolVibrate().vibrate(this@SettingsActivity)
-                startActivity(Intent(this@SettingsActivity, DeviceInfoActivity::class.java))
-            }
+
             //撤回隐私政策同意
             val RevokePrivacyAgreement = findViewById<TextView>(R.id.RevokePrivacyAgreement)
             RevokePrivacyAgreement.paint.isUnderlineText = true
@@ -178,6 +146,27 @@ class SettingsActivity: AppCompatActivity() {
             }
 
 
+            //不再使用
+            /*
+            //超链接：开放源代码许可
+            val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
+            openSourceLicense.paint.isUnderlineText = true
+            openSourceLicense.invalidate()
+            openSourceLicense.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+
+
+            }
+            //超链接：设备信息
+            val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
+            DeviceInfoPage.paint.isUnderlineText = true
+            DeviceInfoPage.invalidate()
+            DeviceInfoPage.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                startActivity(Intent(this@SettingsActivity, DeviceInfoActivity::class.java))
+            }
+
+             */
 
 
 

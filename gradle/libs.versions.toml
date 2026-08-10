@@ -24,6 +24,7 @@ foundationLayoutVersion = "1.9.4"
 datastoreCore = "1.1.7"
 androidxFoundationLayout = "1.10.0"
 coreAnimation = "1.0.0"
+playServicesOssLicensesVersion = "17.5.1"
 
 
 [libraries]
@@ -50,9 +51,11 @@ foundation-layout = { group = "androidx.compose.foundation", name = "foundation-
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
 androidx-compose-foundation-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "androidxFoundationLayout" }
 androidx-core-animation = { group = "androidx.core", name = "core-animation", version.ref = "coreAnimation" }
+gms-play-services-oss-licenses = { group = "com.google.android.gms", name = "play-services-oss-licenses", version.ref = "playServicesOssLicensesVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
 

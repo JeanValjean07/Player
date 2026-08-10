@@ -12,8 +12,5 @@ plugins {
 buildscript {
     dependencies {
 
-        //Oss Licenses Plugin (已停用)
-        //classpath("com.google.android.gms:oss-licenses-plugin:0.10.6")
-
     }
 }
