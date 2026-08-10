@@ -2,6 +2,7 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -22,6 +23,7 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
@@ -33,10 +35,10 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
-import com.suming.player.ActivityComponent.SettingsActivity.SettingsFragmentDeleteCover
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.ReleaseInfo
+import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.ViewWidget.CircleButton
@@ -71,7 +73,8 @@ class SettingsActivity: AppCompatActivity() {
 
         registerSettings()
 
-
+        //开启显示监听
+        setupScrollContentListener()
 
 
     }
@@ -81,8 +84,6 @@ class SettingsActivity: AppCompatActivity() {
 
 
     }
-
-    private var AppVersion: String? = null
 
     private fun register(){
         lifecycleScope.launch(Dispatchers.Main) {
@@ -171,22 +172,14 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
 
                 //撤回隐私政策同意
-                val PrivacyPermissionHelper = PrivacyPermissionHelper()
-                PrivacyPermissionHelper.setPrivacyAgreed(this@SettingsActivity,false)
+                revokePrivacyAgreementAlert()
 
-                Handler(Looper.getMainLooper()).postDelayed({
-                    //退出
-                    finishAffinity()
-                    //结束进程
-                    exitProcess(0)
-                }, 500)
 
             }
 
 
 
-            //开启显示监听
-            setupScrollContentListener()
+
 
         }
     }
@@ -461,22 +454,9 @@ class SettingsActivity: AppCompatActivity() {
             val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
             ButtonRemoveAllThumbPath.setOnClickListener {
                 ToolVibrate().vibrate(this@SettingsActivity)
-                SettingsFragmentDeleteCover.newInstance().show(supportFragmentManager, "SettingsFragmentDeleteCover")
-            }
-            supportFragmentManager.setFragmentResultListener("FROM_FRAGMENT_DELETE_COVER", this@SettingsActivity) { _, bundle ->
-                val ReceiveKey = bundle.getString("KEY")
-                when (ReceiveKey) {
-                    "DeleteAllCover" -> {
-                        File(filesDir, "miniature/cover").deleteRecursively()
-                        File(filesDir, "miniature/music_cover").deleteRecursively()
-                    }
-                    "DeleteVideoCover" -> {
-                        File(filesDir, "miniature/cover").deleteRecursively()
-                    }
-                    "DeleteMusicCover" -> {
-                        File(filesDir, "miniature/music_cover").deleteRecursively()
-                    }
-                }
+
+                chooseDeleteFrameItem(ButtonRemoveAllThumbPath)
+
             }
 
         }
@@ -486,6 +466,7 @@ class SettingsActivity: AppCompatActivity() {
 
 
     //检查更新(依托github release api)
+    private var AppVersion: String? = null
     private fun checkNewVersion(){
         //读取当前版本(用于比对)
         if (AppVersion == null){
@@ -580,6 +561,39 @@ class SettingsActivity: AppCompatActivity() {
     }
 
 
+    //取消隐私政策同意
+    private fun revokePrivacyAgreementAlert(){
+        AlertDialog.Builder(this@SettingsActivity)
+            .setTitle("确定撤回同意吗?")
+            .setMessage("若确认，App将自动退出")
+            .setPositiveButton("确认") { dialog, which ->
+                ToolVibrate().vibrate(this)
+
+                revokePrivacyAgreementCore()
+
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, which ->
+                ToolVibrate().vibrate(this)
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+
+    }
+    private fun revokePrivacyAgreementCore(){
+
+        val PrivacyPermissionHelper = PrivacyPermissionHelper()
+        PrivacyPermissionHelper.setPrivacyAgreed(this@SettingsActivity,false)
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            //退出
+            finishAffinity()
+            //结束进程
+            exitProcess(0)
+        }, 500)
+    }
 
 
     //播放页样式
@@ -869,6 +883,67 @@ class SettingsActivity: AppCompatActivity() {
             3 -> ButtonTextVibrateMode.text = "EFFECT_DOUBLE_CLICK"
             4 -> ButtonTextVibrateMode.text = "EFFECT_HEAVY_CLICK"
         }
+
+    }
+    //删除缩略图缓存
+    private fun chooseDeleteFrameItem(anchor: View){
+        val popup = PopupMenu(this@SettingsActivity, anchor)
+        popup.menuInflater.inflate(R.menu.popup_menu_setting_delete_frame, popup.menu)
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.delete_all -> {
+                    ToolVibrate().vibrate(this)
+
+                    deleteArtworkFrameCache(
+                        context = this,
+                        deleteVideo = true,
+                        deleteAudio = true
+                    )
+
+                    true
+                }
+                R.id.delete_video -> {
+                    ToolVibrate().vibrate(this)
+
+                    deleteArtworkFrameCache(
+                        context = this,
+                        deleteVideo = true,
+                        deleteAudio = false
+                    )
+
+                    true
+                }
+                R.id.delete_audio -> {
+                    ToolVibrate().vibrate(this)
+
+                    deleteArtworkFrameCache(
+                        context = this,
+                        deleteVideo = false,
+                        deleteAudio = true
+                    )
+
+                    true
+                }
+                else -> true
+            }
+        }
+        popup.show()
+    }
+    private fun deleteArtworkFrameCache(context: Context, deleteVideo:Boolean = false, deleteAudio:Boolean = false){
+
+        val success = ArtworkFrameManager.delete_artwork(
+            context = context,
+            deleteVideo = deleteVideo,
+            deleteAudio = deleteAudio
+        )
+
+        if (success){
+            showCustomToast("删除成功", 3)
+        }
+        else{
+            showCustomToast("删除失败", 3)
+        }
+
 
     }
 

@@ -11,16 +11,9 @@ import java.io.File
 @Suppress("unused")
 object ArtworkFrameManager {
 
-    //此对象承担缩略图的获取和保存工作
-    //注意：文件名使用媒体的唯一ID
-    //{item.uriNumOnly}
-    //类型为 Long
-
-
     //缩略图保存路径结构
     private const val artwork_path_video = "AlbumFrame/VideoCover/"
     private const val artwork_path_audio = "AlbumFrame/AudioAlbumCover/"
-
 
 
     //缓存文件路径
@@ -173,6 +166,31 @@ object ArtworkFrameManager {
         }
     }
 
+
+    //删除缩略图
+    fun delete_artwork(context: Context, deleteVideo: Boolean = false, deleteAudio: Boolean = false): Boolean {
+        try{
+            if (deleteVideo){
+                if (artwork_File_path_video != null){
+                    File(context.filesDir, artwork_path_video).deleteRecursively()
+                    artwork_File_path_video?.mkdirs()
+                }
+            }
+            if (deleteAudio){
+                if (artwork_File_path_audio != null){
+                    File(context.filesDir, artwork_path_audio).deleteRecursively()
+                    artwork_File_path_audio?.mkdirs()
+                }
+            }
+
+            return true
+        }catch(e: Exception){
+            consoleLog("删除_artwork失败: ${e.message}")
+
+            return false
+        }
+
+    }
 
     //日志
     private fun consoleLog(msg: String, mark: Boolean = false) {
