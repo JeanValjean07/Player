@@ -17,5 +17,8 @@
     <item
         android:id="@+id/item_EFFECT_HEAVY_CLICK"
         android:title="EFFECT_HEAVY_CLICK" />
+    <item
+        android:id="@+id/item_100Ms"
+        android:title="100Ms默认振动 (OPPO专用)" />
 
 </menu>

@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -22,7 +21,6 @@ import android.widget.Space
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
@@ -410,7 +408,7 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 //使用弹出菜单选择
                 val popup = PopupMenu(this@SettingsActivity, ButtonCardVibrateMode)
-                popup.menuInflater.inflate(R.menu.activity_settings_popup_vibrate_mode, popup.menu)
+                popup.menuInflater.inflate(R.menu.popup_menu_vibrate_mode, popup.menu)
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         R.id.item_NoVibrate -> {
@@ -431,6 +429,10 @@ class SettingsActivity: AppCompatActivity() {
 
                         R.id.item_EFFECT_HEAVY_CLICK -> {
                             chooseVibrateMode(4); true
+                        }
+
+                        R.id.item_100Ms -> {
+                            chooseVibrateMode(5); true
                         }
 
                         else -> true
@@ -871,6 +873,7 @@ class SettingsActivity: AppCompatActivity() {
             2 -> ButtonTextVibrateMode.text = "EFFECT_TICK"
             3 -> ButtonTextVibrateMode.text = "EFFECT_DOUBLE_CLICK"
             4 -> ButtonTextVibrateMode.text = "EFFECT_HEAVY_CLICK"
+            5 -> ButtonTextVibrateMode.text = "100Ms 默认振动 (OPPO专用)"
         }
 
     }

@@ -6,6 +6,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.annotation.RequiresApi
+import androidx.core.content.edit
 
 @RequiresApi(Build.VERSION_CODES.Q)
 class ToolVibrate() {
@@ -54,6 +55,11 @@ class ToolVibrate() {
                 val effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
                 vib.vibrate(effect)
             }
+            5 -> {
+                val effect = VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE)
+                vib.vibrate(effect)
+            }
+
         }
     }
     //振动模式表
@@ -63,6 +69,7 @@ class ToolVibrate() {
     2 = VibrationEffect.EFFECT_TICK
     3 = VibrationEffect.EFFECT_DOUBLE_CLICK
     4 = VibrationEffect.EFFECT_HEAVY_CLICK
+    5 = 100Ms x DEFAULT_AMPLITUDE (OPPO专用)
     */
 
     //读取振动配置
@@ -86,7 +93,7 @@ class ToolVibrate() {
     fun setVibrateMode(context: Context, vibrateMode: Int) {
         val PREFS = context.getSharedPreferences("PREFS_Vibrate", Context.MODE_PRIVATE)
         PREFS_VibrateMode = vibrateMode
-        PREFS.edit().putInt("PREFS_VibrateMode", vibrateMode).apply()
+        PREFS.edit { putInt("PREFS_VibrateMode", vibrateMode) }
     }
 
 
