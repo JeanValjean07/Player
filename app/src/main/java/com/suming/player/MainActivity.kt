@@ -229,9 +229,12 @@ class MainActivity: AppCompatActivity() {
                 val intent = Intent(this@MainActivity, GuidanceActivity::class.java)
                 startActivity(intent)
             }
+            /*
             ButtonGuidance.visibility = View.VISIBLE
             ButtonGuidance.alpha = 0f
             ButtonGuidance.animate().alpha(1f).setDuration(300).start()
+
+             */
             //按钮：设置
             val ButtonSettings= findViewById<Button>(R.id.buttonSetting)
             ButtonSettings.setOnClickListener {
@@ -242,9 +245,12 @@ class MainActivity: AppCompatActivity() {
                 val intent = Intent(this@MainActivity, SettingsActivity::class.java)
                 startActivity(intent)
             }
+            /*
             ButtonSettings.visibility = View.VISIBLE
             ButtonSettings.alpha = 0f
             ButtonSettings.animate().alpha(1f).setDuration(300).start()
+
+             */
             //提示卡点击时关闭
             val NoticeCard = findViewById<CardView>(R.id.noticeCard)
             NoticeCard.setOnClickListener {

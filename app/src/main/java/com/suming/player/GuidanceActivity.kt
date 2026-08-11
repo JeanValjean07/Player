@@ -2,19 +2,17 @@ package com.suming.player
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
-import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -23,6 +21,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.ViewWidget.CircleButton
 
+@Suppress("NewApi")
 class GuidanceActivity: AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.Q)
@@ -56,11 +55,31 @@ class GuidanceActivity: AppCompatActivity() {
         //SvgRepo
         val buttonGoSvgRepo = findViewById<FrameLayout>(R.id.buttonGoSvgRepo)
         buttonGoSvgRepo.setOnClickListener {
-            val url = "https://www.svgrepo.com/"
-            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-            startActivity(intent)
+            ToolVibrate().vibrate(this)
+
+            AlertDialog.Builder(this@GuidanceActivity)
+                .setTitle("确定跳转吗?")
+                .setMessage("将唤醒浏览器并打开svgrepo.com")
+                .setPositiveButton("确认") { dialog, _ ->
+                    ToolVibrate().vibrate(this)
+
+                    val url = "https://www.svgrepo.com/"
+                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                    startActivity(intent)
+
+                    dialog.dismiss()
+                }
+                .setNegativeButton("取消") { dialog, _ ->
+                    ToolVibrate().vibrate(this)
+
+                    dialog.dismiss()
+                }
+                .setCancelable(true)
+                .show()
+
         }
 
+        //
         showWarningMessageCard()
 
     }
@@ -117,15 +136,27 @@ class GuidanceActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.platform_coolapk -> {
-                    reportByCoolApk(); true
+                    ToolVibrate().vibrate(this)
+
+                    reportByCoolApk()
+
+                    true
                 }
 
                 R.id.platform_bilibili -> {
-                    reportByBilibili(); true
+                    ToolVibrate().vibrate(this)
+
+                    reportByBilibili()
+
+                    true
                 }
 
                 R.id.platform_github_issue -> {
-                    reportByGithubIssue(); true
+                    ToolVibrate().vibrate(this)
+
+                    reportByGithubIssue()
+
+                    true
                 }
 
                 else -> true
@@ -134,24 +165,76 @@ class GuidanceActivity: AppCompatActivity() {
         popup.show()
     }
     private fun reportByBilibili(){
-        val url = "https://space.bilibili.com/1206378184"
-        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-        showCustomToast("正在跳转",3)
-        startActivity(intent)
+        AlertDialog.Builder(this@GuidanceActivity)
+            .setTitle("确定跳转吗?")
+            .setMessage("将唤醒哔哩哔哩App或浏览器")
+            .setPositiveButton("确认") { dialog, _ ->
+                ToolVibrate().vibrate(this)
+
+                val url = "https://space.bilibili.com/1206378184"
+                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                showCustomToast("正在跳转",3)
+                startActivity(intent)
+
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                ToolVibrate().vibrate(this)
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+
     }
     private fun reportByCoolApk(){
-        val webUrl = "https://www.coolapk.com/u/3105725"
-        val intent = Intent(Intent.ACTION_VIEW, webUrl.toUri())
+        AlertDialog.Builder(this@GuidanceActivity)
+            .setTitle("确定跳转吗?")
+            .setMessage("将唤醒酷安App或浏览器")
+            .setPositiveButton("确认") { dialog, which ->
+                ToolVibrate().vibrate(this)
 
-        showCustomToast("正在跳转,请稍等",3)
+                val webUrl = "https://www.coolapk.com/u/3105725"
+                val intent = Intent(Intent.ACTION_VIEW, webUrl.toUri())
 
-        startActivity(intent)
+                showCustomToast("正在跳转,请稍等",3)
+
+                startActivity(intent)
+
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                ToolVibrate().vibrate(this)
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+
+
     }
     private fun reportByGithubIssue(){
-        val url = "https://github.com/JeanValjean07/Player/issues"
-        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-        showCustomToast("正在跳转",3)
-        startActivity(intent)
+        AlertDialog.Builder(this@GuidanceActivity)
+            .setTitle("确定跳转吗?")
+            .setMessage("将唤醒浏览器或Github客户端")
+            .setPositiveButton("确认") { dialog, _ ->
+                ToolVibrate().vibrate(this)
+
+                val url = "https://github.com/JeanValjean07/Player/issues"
+                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                showCustomToast("正在跳转",3)
+                startActivity(intent)
+
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                ToolVibrate().vibrate(this)
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+
     }
 
 

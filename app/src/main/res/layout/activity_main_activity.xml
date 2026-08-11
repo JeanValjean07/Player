@@ -280,7 +280,6 @@
                             android:padding="0dp"
                             android:contentDescription="指南"
                             android:tooltipText="指南"
-                            android:visibility="gone"
                             android:text="指南" />
                         <!-- 设置按钮 -->
                         <Button
@@ -293,7 +292,6 @@
                             android:padding="0dp"
                             android:contentDescription="设置"
                             android:tooltipText="设置"
-                            android:visibility="gone"
                             android:textColor="@color/TextButtonText"
                             android:text="设置" />
                     </LinearLayout>
