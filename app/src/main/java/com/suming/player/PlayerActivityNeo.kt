@@ -2171,7 +2171,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     //截屏
-    @SuppressLint("UseKtx")
     private fun captureScreenShot(){
         fun generateFileName(): String {
             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
@@ -2224,7 +2223,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun updateCoverFrame_captureCurrentFrame(media_api_id: Long){
         fun handleSuccess(bitmap: Bitmap) {
             //保存图片
-            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(
+            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap_Custom(
                 this@PlayerActivityNeo,
                 MediaType.Video,
                 media_api_id,
@@ -2273,7 +2272,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
 
         //保存图片
-        ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(
+        ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap_Custom(
             this@PlayerActivityNeo,
             MediaType.Video,
             media_api_id,

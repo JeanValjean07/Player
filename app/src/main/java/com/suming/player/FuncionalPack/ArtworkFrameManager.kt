@@ -20,8 +20,8 @@ object ArtworkFrameManager {
     private var artwork_File_path_video: File? = null
     private var artwork_File_path_audio: File? = null
     private fun initFile(context: Context){
-        artwork_File_path_video = get_Artwork_Path_File_video(context)
-        artwork_File_path_audio = get_Artwork_Path_File_music(context)
+        if (artwork_File_path_video == null) artwork_File_path_video = get_Artwork_Path_File_video(context)
+        if (artwork_File_path_audio == null) artwork_File_path_audio = get_Artwork_Path_File_music(context)
     }
     private fun get_Artwork_Path_File_video(context: Context): File {
         //视频文件的原保存路径
@@ -47,28 +47,44 @@ object ArtworkFrameManager {
 
 
 
-    //获取Artwork图片Bitmap
+    //获取Artwork图片Bitmap(如果存在自定义图就返回自定义的)
     fun GET_ArtworkFrame_Bitmap(context: Context, type: String, artwork_media_api_id: Long): Bitmap? {
+        //确保文件路径存在
+        initFile(context)
+        //根据类型获取
         when(type){
             MediaType.Video -> {
-                //初始化路径对象
-                if (artwork_File_path_video == null) initFile(context)
-                //合成目标文件对象
-                val artwork_Frame_File = File(artwork_File_path_video, "${artwork_media_api_id}.webp")
+                //先找是否存在名为artwork_media_api_id的子文件夹
+                val customFrameFolder = File(artwork_File_path_video, "$artwork_media_api_id")
+                if (customFrameFolder.exists()){
+                    //找是否存在名为artwork_media_api_id的图片
+                    val customFrame_File = File(customFrameFolder, "${artwork_media_api_id}.webp")
+                    if (customFrame_File.exists()){
+                        //取出图片
+                        val customFrame_Bitmap = BitmapFactory.decodeFile(customFrame_File.absolutePath)
+                        if (customFrame_Bitmap != null){
+                            return customFrame_Bitmap
+                        }
+                    }
+                }
 
-                //检查目标图是否存在
+                //如果没有自定义图，就返回统一生成的图片
+                val artwork_Frame_File = File(artwork_File_path_video, "${artwork_media_api_id}.webp")
                 if (artwork_Frame_File.exists()){
                     //取出图片
                     val artwork_Frame_Bitmap = BitmapFactory.decodeFile(artwork_Frame_File.absolutePath)
-
-                    return artwork_Frame_Bitmap
+                    if (artwork_Frame_Bitmap != null){
+                        return artwork_Frame_Bitmap
+                    }else{
+                        return null
+                    }
                 }else{
                     return null
                 }
+
             }
             MediaType.Audio -> {
-                //初始化路径对象
-                if (artwork_File_path_audio == null) initFile(context)
+
                 //合成目标文件对象
                 val artwork_Frame_File = File(artwork_File_path_audio, "${artwork_media_api_id}.webp")
 
@@ -135,7 +151,7 @@ object ArtworkFrameManager {
 
 
 
-    //保存Bitmap到文件系统
+    //保存封面图片到文件系统
     fun SAVE_ArtworkFrame_Bitmap(context: Context ,type: String, artwork_media_api_id: Long, artwork_Frame_Bitmap: Bitmap){
         when(type){
             MediaType.Video -> {
@@ -150,6 +166,33 @@ object ArtworkFrameManager {
 
 
                 CORE_saveFile_Bitmap(artwork_File_path_audio!!, "${artwork_media_api_id}.webp", artwork_Frame_Bitmap)
+            }
+        }
+    }
+
+    //保存自定义封面图片到文件系统
+    fun SAVE_ArtworkFrame_Bitmap_Custom(context: Context ,type: String, artwork_media_api_id: Long, artwork_Frame_Bitmap: Bitmap){
+        when(type){
+            MediaType.Video -> {
+                if (artwork_File_path_video == null) initFile(context)
+
+                //在此文件夹下创建子文件夹
+                val artwork_Frame_File = File(artwork_File_path_video, "$artwork_media_api_id")
+                artwork_Frame_File.mkdirs()
+
+
+                CORE_saveFile_Bitmap(artwork_Frame_File, "${artwork_media_api_id}.webp", artwork_Frame_Bitmap)
+
+            }
+            MediaType.Audio -> {
+                if (artwork_File_path_audio == null) initFile(context)
+
+                //在此文件夹下创建子文件夹
+                val artwork_Frame_File = File(artwork_File_path_audio, "$artwork_media_api_id")
+                artwork_Frame_File.mkdirs()
+
+
+                CORE_saveFile_Bitmap(artwork_Frame_File, "${artwork_media_api_id}.webp", artwork_Frame_Bitmap)
             }
         }
     }
@@ -169,17 +212,70 @@ object ArtworkFrameManager {
 
     //删除缩略图
     fun delete_artwork(context: Context, deleteVideo: Boolean = false, deleteAudio: Boolean = false): Boolean {
+        initFile(context)
         try{
             if (deleteVideo){
-                if (artwork_File_path_video != null){
-                    File(context.filesDir, artwork_path_video).deleteRecursively()
-                    artwork_File_path_video?.mkdirs()
+                //仅删除下级文件，但保留所有文件夹
+                val folder = File(context.filesDir, artwork_path_video)
+                folder.listFiles()?.forEach { file ->
+                    if (file.isFile) file.delete()
                 }
+
+                //删除整个文件夹并重建
+                /*
+                File(context.filesDir, artwork_path_video).deleteRecursively()
+                artwork_File_path_video?.mkdirs()
+
+                 */
+
             }
             if (deleteAudio){
-                if (artwork_File_path_audio != null){
-                    File(context.filesDir, artwork_path_audio).deleteRecursively()
-                    artwork_File_path_audio?.mkdirs()
+                //仅删除下级文件，但保留所有文件夹
+                val folder = File(context.filesDir, artwork_path_audio)
+                folder.listFiles()?.forEach { file ->
+                    if (file.isFile) file.delete()
+                }
+
+                //删除整个文件夹并重建
+                /*
+                File(context.filesDir, artwork_path_audio).deleteRecursively()
+                artwork_File_path_audio?.mkdirs()
+
+                 */
+
+            }
+
+            return true
+        }catch(e: Exception){
+            consoleLog("删除_artwork失败: ${e.message}")
+
+            return false
+        }
+    }
+    //删除自定义缩略图
+    fun delete_artwork_custom(context: Context, deleteVideo: Boolean = false, deleteAudio: Boolean = false): Boolean {
+        initFile(context)
+        try{
+            if (deleteVideo){
+                //仅删除下级文件夹，但保留所有文件
+                val folder = File(context.filesDir, artwork_path_video)
+                folder.listFiles()?.forEach { file ->
+                    if (file.isDirectory) file.deleteRecursively()
+                }
+
+                //删除整个文件夹并重建
+                /*
+                File(context.filesDir, artwork_path_video).deleteRecursively()
+                artwork_File_path_video?.mkdirs()
+
+                 */
+
+            }
+            if (deleteAudio){
+                //仅删除下级文件夹，但保留所有文件
+                val folder = File(context.filesDir, artwork_path_audio)
+                folder.listFiles()?.forEach { file ->
+                    if (file.isDirectory) file.deleteRecursively()
                 }
             }
 
@@ -189,7 +285,6 @@ object ArtworkFrameManager {
 
             return false
         }
-
     }
 
     //日志

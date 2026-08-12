@@ -916,27 +916,91 @@ class SettingsActivity: AppCompatActivity() {
 
                     true
                 }
+                R.id.delete_video_custom -> {
+                    ToolVibrate().vibrate(this)
+
+                    deleteCustomFrameCache(
+                        context = this,
+                        deleteVideo = true,
+                        deleteAudio = false
+                    )
+
+                    true
+                }
+                R.id.delete_audio_custom -> {
+                    ToolVibrate().vibrate(this)
+
+                    deleteCustomFrameCache(
+                        context = this,
+                        deleteVideo = false,
+                        deleteAudio = true
+                    )
+
+                    true
+                }
                 else -> true
             }
         }
         popup.show()
     }
     private fun deleteArtworkFrameCache(context: Context, deleteVideo:Boolean = false, deleteAudio:Boolean = false){
+        AlertDialog.Builder(this@SettingsActivity)
+            .setTitle("确定删除所有默认封面吗?")
+            .setMessage("仅删除自动生成的封面，保留自定义封面")
+            .setPositiveButton("确认") { dialog, which ->
+                ToolVibrate().vibrate(this)
 
-        val success = ArtworkFrameManager.delete_artwork(
-            context = context,
-            deleteVideo = deleteVideo,
-            deleteAudio = deleteAudio
-        )
+                val success = ArtworkFrameManager.delete_artwork(
+                    context = context,
+                    deleteVideo = deleteVideo,
+                    deleteAudio = deleteAudio
+                )
 
-        if (success){
-            showCustomToast("删除成功", 3)
-        }
-        else{
-            showCustomToast("删除失败", 3)
-        }
+                if (success){
+                    showCustomToast("删除成功", 3)
+                }else{
+                    showCustomToast("删除失败", 3)
+                }
 
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, which ->
+                ToolVibrate().vibrate(this)
 
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+    }
+    private fun deleteCustomFrameCache(context: Context, deleteVideo:Boolean = false, deleteAudio:Boolean = false){
+        AlertDialog.Builder(this@SettingsActivity)
+            .setTitle("确定删除所有自定义封面吗?")
+            .setMessage("更建议您在播放页删除单个媒体的自定义封面")
+            .setPositiveButton("确认") { dialog, which ->
+                ToolVibrate().vibrate(this)
+
+                val success = ArtworkFrameManager.delete_artwork_custom(
+                    context = context,
+                    deleteVideo = deleteVideo,
+                    deleteAudio = deleteAudio
+                )
+
+                if (success){
+                    showCustomToast("删除成功", 3)
+                }
+                else{
+                    showCustomToast("删除失败", 3)
+                }
+
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, which ->
+                ToolVibrate().vibrate(this)
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
     }
 
     //顶栏效果

@@ -4,13 +4,19 @@
     tools:ignore="HardcodedText">
     <item
         android:id="@+id/delete_all"
-        android:title="删除所有缩略图缓存" />
+        android:title="删除所有默认缩略图" />
     <item
         android:id="@+id/delete_video"
-        android:title="删除视频缩略图缓存" />
+        android:title="删除视频默认缩略图" />
     <item
         android:id="@+id/delete_audio"
-        android:title="删除音频专辑图缓存" />
+        android:title="删除音频默认专辑图" />
+    <item
+        android:id="@+id/delete_video_custom"
+        android:title="删除自定义视频缩略图" />
+    <item
+        android:id="@+id/delete_audio_custom"
+        android:title="删除自定义音频专辑图" />
 
 
 </menu>

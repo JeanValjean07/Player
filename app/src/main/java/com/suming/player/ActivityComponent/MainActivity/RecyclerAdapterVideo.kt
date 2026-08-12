@@ -160,7 +160,7 @@ class RecyclerAdapterVideo(
 
 
     //Long Thread Functions
-    private fun loadArtworkFrame(item: MediaItemFullForVideo, holder: ViewHolder)  {
+    private fun loadArtworkFrame(item: MediaItemFullForVideo, holder: ViewHolder){
         //记录holder的tag
         val imageTag = item.media_api_NUM_ID
         holder.tvFrame.tag = imageTag
