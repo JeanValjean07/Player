@@ -579,6 +579,13 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="在部分机型上存在界面合成问题，导致含播放器的页面掉帧卡顿。如果确认您的设备开次此选项后没有问题，可选择开启。"
+                            android:textSize="12sp" />
+
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="25dp"
@@ -1068,9 +1075,7 @@
                                 android:layout_height="20dp"
                                 android:layout_marginEnd="2dp"
                                 android:backgroundTint="@color/ButtonCard_OFF"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
+                                android:layout_gravity="center"
                                 app:cardElevation="1dp"
                                 app:cardCornerRadius="5dp">
                                 <LinearLayout
@@ -1134,9 +1139,7 @@
                                 android:layout_height="20dp"
                                 android:layout_marginEnd="2dp"
                                 android:backgroundTint="@color/ButtonCard_OFF"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
+                                android:layout_gravity="center"
                                 app:cardElevation="1dp"
                                 app:cardCornerRadius="5dp">
                                 <LinearLayout
@@ -1199,9 +1202,7 @@
                                 android:layout_height="20dp"
                                 android:layout_marginEnd="2dp"
                                 android:backgroundTint="@color/ButtonCard_OFF"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
+                                android:layout_gravity="center"
                                 app:cardElevation="1dp"
                                 app:cardCornerRadius="5dp">
                                 <LinearLayout
@@ -1290,10 +1291,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="20dp"
                                 android:layout_marginEnd="2dp"
+                                android:layout_gravity="center"
                                 android:backgroundTint="@color/ButtonCard_OFF"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
                                 app:cardElevation="1dp"
                                 app:cardCornerRadius="5dp">
                                 <LinearLayout
@@ -1355,32 +1354,55 @@
                         android:text="重置"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp" />
-                    <!--  按钮：重置封面  -->
+                    <!--  封面缩略图管理  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:layout_weight="0"
-                            android:text="重新生成封面"
+                            android:text="封面缩略图管理"
                             android:textColor="@color/HeadText"
                             android:textSize="14sp" />
-
                         <View
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1" />
-
                         <TextView
                             android:id="@+id/RemoveAllThumbPath"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:padding="10dp"
-                            android:text="选择"
+                            android:text="管理"
+                            android:textColor="@color/HeadText"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                    <!--  媒体数据缓存管理  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="0"
+                            android:text="媒体数据缓存管理"
+                            android:textColor="@color/HeadText"
+                            android:textSize="14sp" />
+                        <View
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
+                        <TextView
+                            android:id="@+id/TextButton_DBManage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="10dp"
+                            android:text="管理"
                             android:textColor="@color/HeadText"
                             android:textSize="12sp" />
                     </LinearLayout>

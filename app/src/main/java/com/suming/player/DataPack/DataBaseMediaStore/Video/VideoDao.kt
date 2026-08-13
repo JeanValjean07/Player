@@ -69,7 +69,7 @@ interface VideoDao {
 
     //清空整个表
     @Query("DELETE FROM tableVideoList")
-    suspend fun clearAll()
+    suspend fun clearAll(): Int
 
     //检查该表是否为空
     @Query("SELECT COUNT(*) FROM tableVideoList")

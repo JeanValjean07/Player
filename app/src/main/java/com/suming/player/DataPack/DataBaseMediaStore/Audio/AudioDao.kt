@@ -67,7 +67,7 @@ interface AudioDao {
 
     //清空整个表
     @Query("DELETE FROM tableAudioList")
-    suspend fun clearAll()
+    suspend fun clearAll(): Int
 
     //检查该表是否为空
     @Query("SELECT COUNT(*) FROM tableAudioList")

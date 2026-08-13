@@ -66,7 +66,7 @@ class VideoRepo(context: Context) {
     //删除视频项
     suspend fun deleteVideoItem(video: VideoDataClass) = dao.delete(video)
     //清空所有视频项
-    suspend fun clearAll() = dao.clearAll()
+    suspend fun clearAll(): Int = dao.clearAll()
 
 
 

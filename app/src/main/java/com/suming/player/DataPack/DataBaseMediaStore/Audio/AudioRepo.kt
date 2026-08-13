@@ -68,7 +68,7 @@ class AudioRepo(context: Context) {
     //删除音乐
     suspend fun deleteMusic(music: AudioDataClass) = dao.delete(music)
     //清空所有数据
-    suspend fun clearAll() = dao.clearAll()
+    suspend fun clearAll(): Int = dao.clearAll()
 
 
     //根据排序方法获取所有视频

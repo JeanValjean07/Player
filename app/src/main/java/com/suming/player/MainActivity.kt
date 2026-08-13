@@ -462,7 +462,11 @@ class MainActivity: AppCompatActivity() {
             //页面标识防重复
             if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_video && state_VideoRecyclerView_started){
                 withContext(Dispatchers.Main){
-                    setListToTop()
+                    if (ListRecyclerView_Video.canScrollVertically(-1)){
+                        setListToTop()
+                    }else{
+                        main_video_list_adapter.refresh()
+                    }
                 }
                 return@launch
             }
@@ -487,7 +491,11 @@ class MainActivity: AppCompatActivity() {
             //页面标识防重复
             if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_music && state_MusicRecyclerView_started){
                 withContext(Dispatchers.Main){
-                    setListToTop()
+                    if (ListRecyclerView_Music.canScrollVertically(-1)){
+                        setListToTop()
+                    }else{
+                        main_music_list_adapter.refresh()
+                    }
                 }
                 return@launch
             }

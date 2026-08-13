@@ -35,6 +35,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.ReleaseInfo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.DeviceInfo
@@ -441,13 +443,20 @@ class SettingsActivity: AppCompatActivity() {
                 popup.show()
             }
 
-            //重新生成封面
+            //封面缩略图管理
             val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
             ButtonRemoveAllThumbPath.setOnClickListener {
                 ToolVibrate().vibrate(this@SettingsActivity)
 
                 chooseDeleteFrameItem(ButtonRemoveAllThumbPath)
 
+            }
+            //数据库缓存管理
+            val ButtonManageDB = findViewById<TextView>(R.id.TextButton_DBManage)
+            ButtonManageDB.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+
+                chooseDeleteDB(ButtonManageDB)
             }
 
         }
@@ -1002,6 +1011,91 @@ class SettingsActivity: AppCompatActivity() {
             .setCancelable(true)
             .show()
     }
+    //删除媒体数据缓存
+    private fun chooseDeleteDB(anchor: View){
+        val popup = PopupMenu(this@SettingsActivity, anchor)
+        popup.menuInflater.inflate(R.menu.popup_menu_setting_delete_db, popup.menu)
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.delete_video -> {
+                    ToolVibrate().vibrate(this)
+
+                    deleteDB(
+                        context = this,
+                        deleteVideo = true,
+                        deleteAudio = false
+                    )
+
+                    true
+                }
+                R.id.delete_audio -> {
+                    ToolVibrate().vibrate(this)
+
+                    deleteDB(
+                        context = this,
+                        deleteVideo = false,
+                        deleteAudio = true
+                    )
+
+                    true
+                }
+                else -> true
+            }
+        }
+        popup.show()
+    }
+    private fun deleteDB(context: Context, deleteVideo:Boolean = false, deleteAudio:Boolean = false){
+        AlertDialog.Builder(this@SettingsActivity)
+            .setTitle(if (deleteVideo )"确定删除视频数据缓存吗?" else "确定删除音频数据缓存吗?")
+            .setMessage("回到主页后会触发再次读取,仅作为清除异常数据使用")
+            .setPositiveButton("确认") { dialog, which ->
+                ToolVibrate().vibrate(this)
+
+                lifecycleScope.launch(Dispatchers.IO){
+                    deleteDB_Core(context,deleteVideo,deleteAudio)
+                }
+
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, which ->
+                ToolVibrate().vibrate(this)
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+    }
+    suspend fun deleteDB_Core(context: Context, deleteVideo:Boolean = false, deleteAudio:Boolean = false){
+        if (deleteVideo){
+            //链接数据库仓库
+            val mediaStoreRepo = VideoRepo.get(context)
+            val deleteCount = mediaStoreRepo.clearAll()
+            if (deleteCount > 0){
+                withContext(Dispatchers.Main){
+                    showCustomToast("成功删除${deleteCount}条视频数据", 3)
+                }
+            }else{
+                withContext(Dispatchers.Main){
+                    showCustomToast("未删除任何数据", 3)
+                }
+            }
+        }
+        if (deleteAudio){
+            //链接数据库仓库
+            val mediaStoreRepo = AudioRepo.get(context)
+            val deleteCount = mediaStoreRepo.clearAll()
+            if (deleteCount > 0){
+                withContext(Dispatchers.Main){
+                    showCustomToast("成功删除${deleteCount}条音频数据", 3)
+                }
+            }else{
+                withContext(Dispatchers.Main){
+                    showCustomToast("未删除任何数据", 3)
+                }
+            }
+        }
+    }
+
 
     //顶栏效果
     private var isTopBarTitleVisible = true
