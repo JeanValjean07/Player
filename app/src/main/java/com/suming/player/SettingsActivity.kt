@@ -717,10 +717,10 @@ class SettingsActivity: AppCompatActivity() {
     }
     private fun updateSeekHandlerGapText(){
         val ButtonTextSeekHandlerGap = findViewById<TextView>(R.id.ButtonTextSeekHandlerGap)
-        val seekHandlerGap = SettingsRequestCenter.get_value_seekHandlerGap(this)
-        when(seekHandlerGap){
+        when(val seekHandlerGap = SettingsRequestCenter.get_value_seekHandlerGap(this)){
             0L -> ButtonTextSeekHandlerGap.text = "无间隔"
             16L -> ButtonTextSeekHandlerGap.text = "60 Hz"
+            12L -> ButtonTextSeekHandlerGap.text = "90 Hz"
             33L -> ButtonTextSeekHandlerGap.text = "30 Hz"
             66L -> ButtonTextSeekHandlerGap.text = "15 Hz"
             else -> ButtonTextSeekHandlerGap.text = "$seekHandlerGap 毫秒"
@@ -783,6 +783,7 @@ class SettingsActivity: AppCompatActivity() {
         val ButtonTextTimerUpdateGap = findViewById<TextView>(R.id.ButtonTextTimerUpdateGap)
         when(val timerUpdateGap = SettingsRequestCenter.get_value_timerWindowUpdateGap(this)){
             8L -> ButtonTextTimerUpdateGap.text = "120 Hz"
+            12L -> ButtonTextTimerUpdateGap.text = "90 Hz"
             16L -> ButtonTextTimerUpdateGap.text = "60 Hz"
             33L -> ButtonTextTimerUpdateGap.text = "30 Hz"
             66L -> ButtonTextTimerUpdateGap.text = "15 Hz"
