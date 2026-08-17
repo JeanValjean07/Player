@@ -30,15 +30,22 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
 import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
 import com.suming.player.DataPack.MediaRecordPack
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
+import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -330,23 +337,51 @@ object PlayerSingleton {
 
 
     //记下到播放记录
+    private var coroutine_record = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private fun writeToRecord(context: Context){
-        //把记录保存到记录管理器
-        val mediaRecordManager = MediaRecordManager()
-        //获取当前信息
-        val SPECIFIC_ID = PlayerInfoCenter.GET_Media_SPECIFIC_ID()
-        val uriStandard = PlayerInfoCenter.GET_Media_UriString()
-        val fileName = PlayerInfoCenter.GET_Media_FileName()
-        val mediaArtist = PlayerInfoCenter.GET_Media_Artist()
-        //合成信息包
-        val mediaRecordPack = MediaRecordPack(
-            SPECIFIC_ID,
-            uriStandard,
-            fileName,
-            mediaArtist
-        )
-        //写入记录
-        mediaRecordManager.writeRecord(context,mediaRecordPack)
+        coroutine_record.launch {
+            //获取当前信息
+            val SPECIFIC_ID = PlayerInfoCenter.GET_Media_SPECIFIC_ID()
+
+            //只有已缓存在列表的媒体才能写入记录
+            val (mediaType,mediaNUMID) = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID)
+            if (mediaType == MediaType.Video){
+                val videoRepo = VideoRepo.get(context)
+                //检查是否存在NUM_ID为目标的项
+                if (!videoRepo.existsByNUM_ID(mediaNUMID)){
+                    //拒绝保存
+                    return@launch
+                }
+
+            }else if (mediaType == MediaType.Audio){
+                val audioRepo = AudioRepo.get(context)
+                //检查是否存在NUM_ID为目标的项
+                if (!audioRepo.existsByNUM_ID(mediaNUMID)){
+                    //拒绝保存
+                    return@launch
+                }
+
+            }else{
+                //拒绝保存
+                return@launch
+            }
+
+            //把记录保存到记录管理器
+            val mediaRecordManager = MediaRecordManager()
+
+            val uriStandard = PlayerInfoCenter.GET_Media_UriString()
+            val fileName = PlayerInfoCenter.GET_Media_FileName()
+            val mediaArtist = PlayerInfoCenter.GET_Media_Artist()
+            //合成信息包
+            val mediaRecordPack = MediaRecordPack(
+                SPECIFIC_ID,
+                uriStandard,
+                fileName,
+                mediaArtist
+            )
+            //写入记录
+            mediaRecordManager.writeRecord(context,mediaRecordPack)
+        }
     }
     //获取艺术图链接
     private fun getArtworkFrameUri(context: Context, uri: Uri): Uri?{

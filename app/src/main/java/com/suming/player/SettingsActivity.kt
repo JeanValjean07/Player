@@ -247,12 +247,12 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_LockRefreshRate(isChecked)
             }
-            //退出播放页时保持继续播放
-            val switch_RetainPlayingWhenFinish = findViewById<SwitchCompat>(R.id.RetainPlayingWhenFinish)
-            switch_RetainPlayingWhenFinish.isChecked = SettingsRequestCenter.get_PREFS_RetainPlayingWhenFinish(this@SettingsActivity)
-            switch_RetainPlayingWhenFinish.setOnCheckedChangeListener { _, isChecked ->
+            //启用首页MiniView
+            val SC_EnableMiniView = findViewById<SwitchCompat>(R.id.SC_EnableMiniView)
+            SC_EnableMiniView.isChecked = SettingsRequestCenter.GET_PRF_EnableMiniView(this@SettingsActivity)
+            SC_EnableMiniView.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
-                SettingsRequestCenter.set_PREFS_RetainPlayingWhenFinish(isChecked)
+                SettingsRequestCenter.SET_PRF_EnableMiniView(this@SettingsActivity, isChecked)
             }
             //禁用更多操作面板下滑手势
             val switch_DisableFragmentGesture = findViewById<SwitchCompat>(R.id.DisableFragmentGesture)
@@ -298,10 +298,10 @@ class SettingsActivity: AppCompatActivity() {
             }
             //禁用主页面小播放器
             val switch_DisableMainPageSmallPlayer = findViewById<SwitchCompat>(R.id.DisableMainPageSmallPlayer)
-            switch_DisableMainPageSmallPlayer.isChecked = SettingsRequestCenter.get_PREFS_DisableMainPageSmallPlayer(this@SettingsActivity)
+            switch_DisableMainPageSmallPlayer.isChecked = SettingsRequestCenter.GET_PRF_AlwaysUseImageInMiniView(this@SettingsActivity)
             switch_DisableMainPageSmallPlayer.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
-                SettingsRequestCenter.set_PREFS_DisableMainPageSmallPlayer(this@SettingsActivity, isChecked)
+                SettingsRequestCenter.SET_PRF_AlwaysUseImageInMiniView(this@SettingsActivity, isChecked)
             }
             //使用超长进度条
             val switch_UseSuperLongScroller = findViewById<SwitchCompat>(R.id.UseSuperLongScroller)

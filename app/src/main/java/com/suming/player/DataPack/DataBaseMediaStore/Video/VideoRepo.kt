@@ -63,6 +63,9 @@ class VideoRepo(context: Context) {
     //检查该库是否为空
     suspend fun isEmpty(): Boolean = dao.getCount() == 0
 
+    //检查是否存在NUM_ID为目标的项
+    suspend fun existsByNUM_ID(media_api_NUM_ID: Long): Boolean = dao.existsByNUM_ID(media_api_NUM_ID)
+
     //删除视频项
     suspend fun deleteVideoItem(video: VideoDataClass) = dao.delete(video)
     //清空所有视频项

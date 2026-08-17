@@ -63,6 +63,11 @@ interface VideoDao {
     @Query("SELECT COUNT(*) FROM tableVideoList")
     suspend fun getTotalVideoCount(): Int
 
+    //检查是否存在NUM_ID为目标的项
+    @Query("SELECT EXISTS(SELECT 1 FROM tableVideoList WHERE media_api_NUM_ID = :media_api_NUM_ID)")
+    suspend fun existsByNUM_ID(media_api_NUM_ID: Long): Boolean
+
+
     //删除单个视频项
     @Delete
     suspend fun delete(item: VideoDataClass)

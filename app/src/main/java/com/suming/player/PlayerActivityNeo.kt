@@ -1557,7 +1557,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var state_FromExitKeepPlaying = false
     private var state_FromExitCloseAllStuff = false
     private fun EnsureExit(flag_close_all: Boolean){
-        if (SettingsRequestCenter.get_PREFS_RetainPlayingWhenFinish(this)){
+        if (SettingsRequestCenter.GET_PRF_EnableMiniView(this)){
             if (flag_close_all){
                 EnsureExit_but_keep_playing()
                 if (state_onPlayError){ PlayerSingleton.releasePlayer() }

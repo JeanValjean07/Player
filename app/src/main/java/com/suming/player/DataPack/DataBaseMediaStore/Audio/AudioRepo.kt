@@ -64,6 +64,9 @@ class AudioRepo(context: Context) {
     //检查该库是否为空
     suspend fun isEmpty(): Boolean = dao.getCount() == 0
 
+    //检查是否存在NUM_ID为目标的项
+    suspend fun existsByNUM_ID(media_api_NUM_ID: Long): Boolean = dao.existsByNUM_ID(media_api_NUM_ID)
+
 
     //删除音乐
     suspend fun deleteMusic(music: AudioDataClass) = dao.delete(music)

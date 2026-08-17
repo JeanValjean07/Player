@@ -38,29 +38,51 @@ object SettingsRequestCenter {
             Pandora_MainPage = context.getSharedPreferences(Pandora_MainPage_Name, 0)
         }
     }
-    //禁用主页面小播放器
-    private var PREFS_DisableMainPageSmallPlayer = -1
-    const val PREFS_DisableMainPageSmallPlayer_Name = "PREFS_DisableMainPageSmallPlayer"
-    fun set_PREFS_DisableMainPageSmallPlayer(context: Context, enable: Boolean){
+    //启用主页MiniView
+    private var PRF_EnableMiniView = -1
+    const val PRF_EnableMiniView_Name = "PRF_EnableMiniView"
+    fun SET_PRF_EnableMiniView(context: Context, enable: Boolean){
+        OpenPandora_MainPage(context)
+
+        PRF_EnableMiniView = if (enable) 1 else 0
+        Pandora_MainPage!!.edit { putInt(PRF_EnableMiniView_Name, PRF_EnableMiniView) }
+    }
+    fun GET_PRF_EnableMiniView(context: Context): Boolean {
+        OpenPandora_MainPage(context)
+
+        //确保配置项已被读取过
+        if (PRF_EnableMiniView == -1) {
+            PRF_EnableMiniView = Pandora_MainPage!!.getInt(PRF_EnableMiniView_Name, -1)
+            if (PRF_EnableMiniView == -1) {
+                PRF_EnableMiniView = 1
+                Pandora_MainPage!!.edit { putInt(PRF_EnableMiniView_Name, 1) }
+            }
+        }
+        return PRF_EnableMiniView == 1
+    }
+    //始终在MiniView中使用图片
+    private var PRF_AlwaysUseImageInMiniView = -1
+    const val PRF_AlwaysUseImageInMiniView_Name = "PRF_AlwaysUseImageInMiniView"
+    fun SET_PRF_AlwaysUseImageInMiniView(context: Context, enable: Boolean){
         //确保配置单已初始化
         OpenPandora_MainPage(context)
         //设置时转为int写入本地缓存
-        PREFS_DisableMainPageSmallPlayer = if (enable) 1 else 0
+        PRF_AlwaysUseImageInMiniView = if (enable) 1 else 0
         //写入配置单
-        Pandora_MainPage!!.edit { putInt(PREFS_DisableMainPageSmallPlayer_Name, if (enable) 1 else 0) }
+        Pandora_MainPage!!.edit { putInt(PRF_AlwaysUseImageInMiniView_Name, if (enable) 1 else 0) }
     }
-    fun get_PREFS_DisableMainPageSmallPlayer(context: Context): Boolean {
+    fun GET_PRF_AlwaysUseImageInMiniView(context: Context): Boolean {
         //确保配置单已初始化
         OpenPandora_MainPage(context)
         //仅在未读取过时才读取(也就是值为-1时)
-        if (PREFS_DisableMainPageSmallPlayer == -1) {
+        if (PRF_AlwaysUseImageInMiniView == -1) {
             //从配置单读取
-            PREFS_DisableMainPageSmallPlayer = Pandora_MainPage!!.getInt(PREFS_DisableMainPageSmallPlayer_Name, -1)
+            PRF_AlwaysUseImageInMiniView = Pandora_MainPage!!.getInt(PRF_AlwaysUseImageInMiniView_Name, -1)
             //如果配置单内无该项,写入默认值
-            if (PREFS_DisableMainPageSmallPlayer == -1) {
+            if (PRF_AlwaysUseImageInMiniView == -1) {
                 //默认设为开启
-                PREFS_DisableMainPageSmallPlayer = 0
-                Pandora_MainPage!!.edit { putInt(PREFS_DisableMainPageSmallPlayer_Name, 0) }
+                PRF_AlwaysUseImageInMiniView = 0
+                Pandora_MainPage!!.edit { putInt(PRF_AlwaysUseImageInMiniView_Name, 0) }
 
                 /*
                 //按机型判断
@@ -76,7 +98,7 @@ object SettingsRequestCenter {
             }
         }
         //返回结果
-        return PREFS_DisableMainPageSmallPlayer == 1
+        return PRF_AlwaysUseImageInMiniView == 1
     }
     //每次启动时都重新读取媒体
     private var PREFS_QueryNewMediaOnStart = -1
@@ -590,28 +612,6 @@ object SettingsRequestCenter {
             }
         }
         return PREFS_AutoExitWhenEnd == 1
-    }
-    //退出时保持继续播放
-    private var PREFS_RetainPlayingWhenFinish = -1
-    fun set_PREFS_RetainPlayingWhenFinish(enable: Boolean){
-        PREFS_RetainPlayingWhenFinish = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_RetainPlayingWhenFinish", if (enable) 1 else 0) }
-    }
-    fun get_PREFS_RetainPlayingWhenFinish(context: Context): Boolean {
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayVideoPage_initialized) {
-            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
-            state_PREFS_PlayVideoPage_initialized = true
-        }
-        //确保配置项已被读取过
-        if (PREFS_RetainPlayingWhenFinish == -1) {
-            PREFS_RetainPlayingWhenFinish = PREFS_PlayVideoPage.getInt("PREFS_RetainPlayingWhenFinish", -1)
-            if (PREFS_RetainPlayingWhenFinish == -1) {
-                PREFS_RetainPlayingWhenFinish = 1
-                PREFS_PlayVideoPage.edit { putInt("PREFS_RetainPlayingWhenFinish", 1) }
-            }
-        }
-        return PREFS_RetainPlayingWhenFinish == 1
     }
     //开启方向监听器
     private var PREFS_EnableOrientationListener = -1

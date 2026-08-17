@@ -129,6 +129,11 @@ class MainActivity: AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        //检查是否启用MiniView
+        isMiniViewEnabled()
+
+        //检查正在播放的媒体是否还存在
+
     }
 
     override fun onPause() {
@@ -306,6 +311,7 @@ class MainActivity: AppCompatActivity() {
             }else{
                 //已获得储存权限,显示主界面
                 if (isStoragePermissionValid){
+
                     //显示列表
                     withContext(Dispatchers.Main){
                         showMediaList(savedInstanceState)
@@ -315,29 +321,44 @@ class MainActivity: AppCompatActivity() {
 
                     delay(300)
 
-                    //启动MiniView观察者
-                    startMiniViewObserver()
-
                     //检查是否有正在播放媒体/读取上次播放记录
-                    val isAnyMediaOngoing = withContext(Dispatchers.Main){ isAnyMediaOngoing().first }
-                    if (!isAnyMediaOngoing){
-                        if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)){
-                            //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
-                            val MediaRecordPack = getLastMediaRecord()
-                            if (MediaRecordPack != null) {
-                                withContext(Dispatchers.Main) {
-                                    showMiniViewByRecord(MediaRecordPack)
+                    if (SettingsRequestCenter.GET_PRF_EnableMiniView(this@MainActivity)) {
+                        //设置分支-启用主页MiniView
+                        withContext(Dispatchers.Main){
+                            showMiniView()
+                        }
+
+                        //检查是否有媒体正在播放
+                        val isAnyMediaOngoing = withContext(Dispatchers.Main) { isAnyMediaOngoing().first }
+                        if (!isAnyMediaOngoing) {
+                            //无播放时,检查是否启用继续播放功能
+                            if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(this@MainActivity)) {
+                                //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
+                                val MediaRecordPack = getLastMediaRecord()
+                                if (MediaRecordPack != null) {
+                                    withContext(Dispatchers.Main) {
+                                        showMiniViewByRecord(MediaRecordPack)
+                                    }
                                 }
                             }
                         }
-
+                    }else{
+                        //设置分支-不启用主页MiniView-隐藏MiniView
+                        withContext(Dispatchers.Main){
+                            hideMiniView()
+                        }
                     }
-
                 }else{
                     //显示“选择文件以播放”界面
                     showOpenFileButton()
                 }
             }
+
+
+
+
+
+
             //启动MiniView观察者
             startMiniViewObserver()
 
@@ -850,14 +871,36 @@ class MainActivity: AppCompatActivity() {
             //启动播放列表
             startPlayListFragment()
         }
+        //检查MiniView是否开启
+        lifecycleScope.launch(Dispatchers.IO){
+            isMiniViewEnabled = if (SettingsRequestCenter.GET_PRF_EnableMiniView(this@MainActivity)){
 
+                //开启MiniView功能
+                true
+
+            }else{
+                //关闭MiniView功能
+                false
+            }
+        }
+
+    }
+    private fun hideMiniView(){
+        //隐藏MiniView
+        PlayingCard.visibility = View.GONE
+    }
+    private fun showMiniView(){
+        //显示MiniView
+        PlayingCard.visibility = View.VISIBLE
+        PlayingCard.alpha = 0f
+        PlayingCard.animate().alpha(1f).setDuration(300).start()
     }
     private fun updateMiniViewPauseButton(isPlaying: Boolean){
         //更新操作按钮图标
         PlayingCard_ButtonPlay.setImageResource(if (isPlaying) R.drawable.ic_main_controller_pause else R.drawable.ic_main_controller_play)
     }
     private fun updateMiniViewArtwork(type: String,NUM_ID: Long){
-        val useImage = SettingsRequestCenter.get_PREFS_DisableMainPageSmallPlayer(this)
+        val useImage = SettingsRequestCenter.GET_PRF_AlwaysUseImageInMiniView(this@MainActivity)
         if (useImage){
             updateMiniViewArtwork_Image(NUM_ID, type)
         }else{
@@ -1286,6 +1329,33 @@ class MainActivity: AppCompatActivity() {
         }
     }
 
+    //检查是否开启MiniView功能并执行操作
+    private var isMiniViewEnabled = true
+    private fun isMiniViewEnabled(){
+        val new_isMiniViewEnabled = SettingsRequestCenter.GET_PRF_EnableMiniView(this@MainActivity)
+
+        if (new_isMiniViewEnabled != isMiniViewEnabled){
+            //发生变更
+            isMiniViewEnabled = new_isMiniViewEnabled
+            //检查新状态
+            if (new_isMiniViewEnabled){
+                //从关闭改为开启-显示MiniView
+                showMiniView()
+            }else{
+                //从开启改为关闭-隐藏MiniView
+                hideMiniView()
+                //停止正在播放的视频
+                val isAnyMediaOngoing = isAnyMediaOngoing().first
+                if (isAnyMediaOngoing) {
+                    //停止播放
+                    PlayerSingleton.clearMediaItem()
+                }
+            }
+
+        }
+    }
+
+    //检查当前媒体是否存在
 
     //通用事件观察
     private var eventObserver_started = false

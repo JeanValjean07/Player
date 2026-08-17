@@ -227,6 +227,13 @@ object MediaInfoRetriever {
 
         return "${mediaType}${SPECIFIC_ID_SEPARATOR}${mediaNUMID}"
     }
+    //SPECIFIC_ID 拆解器
+    fun split_SPECIFIC_ID(SPECIFIC_ID: String): Pair<String,Long>{
+        val mediaType = SPECIFIC_ID.substringBefore(SPECIFIC_ID_SEPARATOR)
+        val mediaNUMID = SPECIFIC_ID.substringAfter(SPECIFIC_ID_SEPARATOR).toLong()
+
+        return Pair(mediaType,mediaNUMID)
+    }
 
 
     //获取文件路径
