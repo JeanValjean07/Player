@@ -740,8 +740,8 @@ class MainActivity: AppCompatActivity() {
         var NUM_ID = 0L
         try {
 
-            mediaType = SPECIFIC_ID.substringBefore("_")
-            NUM_ID = SPECIFIC_ID.substringAfterLast("_").toLong()
+            mediaType = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID).first
+            NUM_ID = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID).second
 
         }catch (e: Exception){
             consoleLog("showMiniViewLongProcess-字符串拆分出错: $e")
@@ -769,8 +769,8 @@ class MainActivity: AppCompatActivity() {
         var mediaType = Undefined
         var NUM_ID = 0L
         try {
-            mediaType = SPECIFIC_ID.substringBefore("_")
-            NUM_ID = SPECIFIC_ID.substringAfterLast("_").toLong()
+            mediaType = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID).first
+            NUM_ID = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID).second
 
             //consoleLog("miniView_cache_MediaType: $mediaType")
         }catch (e: Exception){
