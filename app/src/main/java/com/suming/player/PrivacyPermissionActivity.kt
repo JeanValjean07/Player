@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.DeviceInfo
@@ -121,11 +122,15 @@ class PrivacyPermissionActivity: AppCompatActivity() {
         //隐私政策同意页面
         val privacy_button_agree = findViewById<CardView>(R.id.privacy_button_agree)
         privacy_button_agree.setOnClickListener {
+            ToolVibrate().vibrate(this@PrivacyPermissionActivity)
+
             PrivacyPermissionHelper.setPrivacyAgreed(this, true)
             checkPermissionState()
         }
         val privacy_button_disagree = findViewById<CardView>(R.id.privacy_button_disagree)
         privacy_button_disagree.setOnClickListener {
+            ToolVibrate().vibrate(this@PrivacyPermissionActivity)
+
             PrivacyPermissionHelper.setPrivacyAgreed(this, false)
             exit()
         }
@@ -133,22 +138,30 @@ class PrivacyPermissionActivity: AppCompatActivity() {
         //授予权限
         val button_permission_all_file = findViewById<CardView>(R.id.button_permission_all_file)
         button_permission_all_file.setOnClickListener {
+            ToolVibrate().vibrate(this@PrivacyPermissionActivity)
+
             requestAllFilePermission()
         }
         val button_permission_basic_storage = findViewById<CardView>(R.id.button_permission_basic_storage)
         button_permission_basic_storage.setOnClickListener {
+            ToolVibrate().vibrate(this@PrivacyPermissionActivity)
+
             requestBasicStoragePermission()
         }
 
         //在不授予权限的情况下继续
         val button_continue_without_permission = findViewById<CardView>(R.id.button_continue_without_permission)
         button_continue_without_permission.setOnClickListener {
+            ToolVibrate().vibrate(this@PrivacyPermissionActivity)
+
             sendActivityResult(ActivityResultConnector.ARAPI_Privacy_continue_without_storage_permission)
             finish()
         }
         //继续且不再提示
         val button_continue_and_never_alert = findViewById<CardView>(R.id.button_continue_and_never_alert)
         button_continue_and_never_alert.setOnClickListener {
+            ToolVibrate().vibrate(this@PrivacyPermissionActivity)
+
             PrivacyPermissionHelper.SET_PREFS_IgnoreStorageNeverAlert(this, true)
             sendActivityResult(ActivityResultConnector.ARAPI_Privacy_continue_without_storage_permission)
             finish()

@@ -108,18 +108,55 @@ class SettingsActivity: AppCompatActivity() {
             ButtonGoGithubRepo.setOnClickListener {
                 ToolVibrate().vibrate(this@SettingsActivity)
 
-                val url = "https://github.com/JeanValjean07/Player/"
-                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                startActivity(intent)
+                AlertDialog.Builder(this@SettingsActivity)
+                    .setTitle("将跳转至浏览器")
+                    .setMessage("是否继续?")
+                    .setPositiveButton("确认") { dialog, which ->
+                        ToolVibrate().vibrate(this@SettingsActivity)
+
+                        val url = "https://github.com/JeanValjean07/Player/"
+                        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                        startActivity(intent)
+
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("取消") { dialog, which ->
+                        ToolVibrate().vibrate(this@SettingsActivity)
+
+                        dialog.dismiss()
+                    }
+                    .setCancelable(true)
+                    .show()
+
+
             }
             //按钮：前往项目Github发布页
             val ButtonGoGithubRelease = findViewById<TextView>(R.id.Button_GoTo_GithubRelease)
             ButtonGoGithubRelease.setOnClickListener {
                 ToolVibrate().vibrate(this@SettingsActivity)
 
-                val url = "https://github.com/JeanValjean07/Player/releases"
-                val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                startActivity(intent)
+                AlertDialog.Builder(this@SettingsActivity)
+                    .setTitle("将跳转至浏览器")
+                    .setMessage("是否继续?")
+                    .setPositiveButton("确认") { dialog, which ->
+                        ToolVibrate().vibrate(this@SettingsActivity)
+
+                        val url = "https://github.com/JeanValjean07/Player/releases"
+                        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                        startActivity(intent)
+
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("取消") { dialog, which ->
+                        ToolVibrate().vibrate(this@SettingsActivity)
+
+                        dialog.dismiss()
+                    }
+                    .setCancelable(true)
+                    .show()
+
+
+
             }
             //按钮：自动检查更新
             val ButtonCheckUpdate = findViewById<TextView>(R.id.ButtonAutoUpdate)
@@ -954,7 +991,7 @@ class SettingsActivity: AppCompatActivity() {
     }
     private fun deleteArtworkFrameCache(context: Context, deleteVideo:Boolean = false, deleteAudio:Boolean = false){
         AlertDialog.Builder(this@SettingsActivity)
-            .setTitle("确定删除所有默认封面吗?")
+            .setTitle("确定删除选中的默认封面吗?")
             .setMessage("仅删除自动生成的封面，保留自定义封面")
             .setPositiveButton("确认") { dialog, which ->
                 ToolVibrate().vibrate(this)
@@ -983,7 +1020,7 @@ class SettingsActivity: AppCompatActivity() {
     }
     private fun deleteCustomFrameCache(context: Context, deleteVideo:Boolean = false, deleteAudio:Boolean = false){
         AlertDialog.Builder(this@SettingsActivity)
-            .setTitle("确定删除所有自定义封面吗?")
+            .setTitle("确定删除选中的自定义封面吗?")
             .setMessage("更建议您在播放页删除单个媒体的自定义封面")
             .setPositiveButton("确认") { dialog, which ->
                 ToolVibrate().vibrate(this)
