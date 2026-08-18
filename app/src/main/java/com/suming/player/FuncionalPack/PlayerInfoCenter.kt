@@ -194,6 +194,8 @@ object PlayerInfoCenter {
 
         //修改可观察标记为空
         _observableMediaItem.value = MediaItemForPlay()
+        //修改可观察播放状态为未播放
+        _observableIsPlaying.value = false
 
     }
 

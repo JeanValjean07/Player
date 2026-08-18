@@ -61,6 +61,7 @@ import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
 import com.suming.player.DataPack.MediaRecordPack
 import com.suming.player.DataPack.MiniViewCachePack
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
+import com.suming.player.FuncionalPack.ActivityCount
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
@@ -103,6 +104,7 @@ class MainActivity: AppCompatActivity() {
 
 
 
+
         //注册界面控件
         register()
 
@@ -126,12 +128,22 @@ class MainActivity: AppCompatActivity() {
 
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+
+
+    }
+
+
     override fun onResume() {
         super.onResume()
 
+
+
+
         //检查是否启用MiniView
         isMiniViewEnabled()
-
         //检查正在播放的媒体是否还存在
         isFileExist()
 
@@ -140,12 +152,11 @@ class MainActivity: AppCompatActivity() {
     override fun onPause() {
         super.onPause()
 
-    }
 
-    override fun onDestroy() {
-        super.onDestroy()
 
     }
+
+
 
     private fun init(){
         //获取MiniView视图
@@ -710,7 +721,7 @@ class MainActivity: AppCompatActivity() {
         if (miniViewObserverRunning) return
         miniViewObserverRunning = true
 
-        //启动MiniView观察者
+        //媒体项观察
         lifecycleScope.launch {
             //观察正在播放的媒体项变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -722,6 +733,7 @@ class MainActivity: AppCompatActivity() {
                 }
             }
         }
+        //播放状态观察
         lifecycleScope.launch {
             //观察播放状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -739,14 +751,17 @@ class MainActivity: AppCompatActivity() {
         //从PlayerStateMediaInfo获取所有信息
         val (SPECIFIC_ID,FileName,MediaArtist) = PlayerInfoCenter.GET_Media_MiniView_Pack()
         //consoleLog("showMiniViewLongProcess: SPECIFIC_ID：  $SPECIFIC_ID")
+        if (SPECIFIC_ID.isEmpty()){
+            miniView_clear()
+            return
+        }
         //分离部分信息
         var mediaType = ""
         var NUM_ID = 0L
         try {
-
+            //拆分字符串
             mediaType = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID).first
             NUM_ID = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID).second
-
         }catch (e: Exception){
             consoleLog("showMiniViewLongProcess-字符串拆分出错: $e")
         }
@@ -1439,17 +1454,24 @@ class MainActivity: AppCompatActivity() {
                     .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
                     .putExtra("uri", uri)
                     .putExtra("IntentSource", 3)
-                //构建可选参数
-                val options = ActivityOptionsCompat.makeCustomAnimation(
-                    this,
-                    R.anim.slide_in_vertical,
-                    R.anim.slide_dont_move
-                )
 
-                //启动活动
-                startActivity(intent, options.toBundle())
+                //是否使用进入动画
+                val useSlideInAnim = SettingsRequestCenter.GET_PRF_EnableMiniView(this@MainActivity)
+                if (useSlideInAnim){
+                    //构建可选参数
+                    val options = ActivityOptionsCompat.makeCustomAnimation(
+                        this,
+                        R.anim.slide_in_vertical,
+                        R.anim.slide_dont_move
+                    )
 
+                    //启动活动
+                    startActivity(intent, options.toBundle())
+                }else{
+                    //启动活动
+                    startActivity(intent)
 
+                }
             }
             1 -> {
                 //构建intent
@@ -1458,15 +1480,24 @@ class MainActivity: AppCompatActivity() {
                     .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
                     .putExtra("uri", uri)
                     .putExtra("IntentSource", 3)
-                //构建可选参数
-                val options = ActivityOptionsCompat.makeCustomAnimation(
-                    this,
-                    R.anim.slide_in_vertical,
-                    R.anim.slide_dont_move
-                )
 
-                //启动活动
-                startActivity(intent, options.toBundle())
+                //是否使用进入动画
+                val useSlideInAnim = SettingsRequestCenter.GET_PRF_EnableMiniView(this@MainActivity)
+                if (useSlideInAnim){
+                    //构建可选参数
+                    val options = ActivityOptionsCompat.makeCustomAnimation(
+                        this,
+                        R.anim.slide_in_vertical,
+                        R.anim.slide_dont_move
+                    )
+
+                    //启动活动
+                    startActivity(intent, options.toBundle())
+                }else{
+                    //启动活动
+                    startActivity(intent)
+
+                }
 
             }
         }

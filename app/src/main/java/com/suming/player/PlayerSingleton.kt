@@ -733,18 +733,8 @@ object PlayerSingleton {
 
 
 
-    //其他播放器功能
-    //前台状态汇总器
-    //注意：后台播放控制功能仅在播放页才生效,如果在主页并开启了MiniView,则永远保持开启后台播放,无法关闭
-    //ActivityOnResume和ActivityOnStop仅接收视频播放页传回的回调
-    fun ActivityOnResume(context: Context){
-        stopBackgroundPlay(context)
-    }
-    fun ActivityOnStop(context: Context){
-        startBackgroundPlay(context)
-    }
     //开始后台播放-操作合集
-    private fun startBackgroundPlay(context: Context){
+    fun startBackgroundPlay(){
         //检查是否开启后台播放功能
         if (SettingsRequestCenter.get_PREFS_BackgroundPlay(context)){
 
@@ -753,7 +743,7 @@ object PlayerSingleton {
         }
     }
     //回到前台播放-操作合集
-    private fun stopBackgroundPlay(context: Context){
+    fun stopBackgroundPlay(){
         //检查是否开启后台播放功能
         if (SettingsRequestCenter.get_PREFS_BackgroundPlay(context)){
 

@@ -254,7 +254,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="关闭后，播放列表功能将被禁用。"
+                            android:text="关闭后，媒体仅能在播放页内播放，退出时立即停止，且播放列表将无法在主页快捷访问。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：首页卡片不使用视频  -->

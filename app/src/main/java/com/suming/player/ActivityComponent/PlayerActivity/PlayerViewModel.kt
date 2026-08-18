@@ -77,38 +77,52 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
 
-    var PREFS_EnablePlayAreaMove: Boolean = false
+
 
 
 
     var statusBarHeight = 0
 
-    //设置项
-    var PREFS_AlwaysSeek: Boolean = false
-    var PREFS_TapJump: Boolean = false
-    var PREFS_LinkScroll: Boolean = true
 
-
-
-    //全新设置变量体系(仅保存需高频次访问的变量)
-    var PREFS_UseOnlySyncFrameWhenSeek: Boolean = true
-    var PREFS_UseSyncFrameWhenScrollerStop = true
-
-
-
-    var VALUE_Int_statusBarHeight: Int = 0
-
-
-
-
-    //标记播放器类型：传统Oro 或 新晋Neo
-    var state_player_type = ""
 
 
 
     var allowRecord_wasPlaying: Boolean = true
 
     var wasPlaying: Boolean = false
+
+
+
+
+
+
+
+    //标记播放器类型：传统Oro 或 新晋Neo
+    val PAGE_UNDEFINED = ""
+    val PAGE_TYPE_ORO = "Oro"
+    val PAGE_TYPE_NEO = "Neo"
+    var state_player_type = PAGE_UNDEFINED
+
+
+
+    //PRF Cache 设置项缓存
+    //是否启用播放区域移动
+    var PRF_Cache_EnablePlayAreaMove: Boolean = false
+    var PRF_Cache_EnablePlayAreaMove_Distance: Float = 0f
+    //是否寻帧时一律使用关键帧
+    var PRF_Cache_UseSyncFrame_whenSeek: Boolean = true
+    //是否进度条停止滚动时尾帧使用关键帧
+    var PRF_Cache_UseSyncFrame_whenScrollerStop: Boolean = true
+    //进度条相关
+    var PREFS_AlwaysSeek: Boolean = false
+    var PREFS_TapJump: Boolean = false
+    var PREFS_LinkScroll: Boolean = true
+
+
+
+
+    //onPause/onStop状态
+    var state_isFinishing = true
 
 
 

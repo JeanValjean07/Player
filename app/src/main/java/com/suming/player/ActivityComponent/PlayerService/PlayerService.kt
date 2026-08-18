@@ -114,8 +114,8 @@ class PlayerService: MediaSessionService() {
                     if (playerCommands.contains(Player.COMMAND_STOP)) {
                         consoleLog("停止")
                         //关掉播放引擎和监听器
-                        stopPlayEngine()
-                        PlayerListener.stopListener()
+                        stopPlayBundle()
+
                     }
                     //拖动进度
                     if (playerCommands.contains(Player.COMMAND_SEEK_TO_DEFAULT_POSITION)) {
@@ -175,11 +175,13 @@ class PlayerService: MediaSessionService() {
     override fun onTaskRemoved(rootIntent: Intent?) {
         consoleLog("触发 onTaskRemoved")
 
-        if(SettingsRequestCenter.get_PREFS_StopPlayerWhenTaskRemoved(this)){
+        val needStopEngine = SettingsRequestCenter.get_PREFS_StopPlayerWhenTaskRemoved(this@PlayerService) ||
+                                       !SettingsRequestCenter.GET_PRF_EnableMiniView(this@PlayerService)
 
-            stopPlayEngine()
 
-        }
+        if (needStopEngine) stopPlayBundle()
+
+
 
     }
 
@@ -188,8 +190,10 @@ class PlayerService: MediaSessionService() {
 
     //External Operation Functions
     //销毁播放器和媒体会话
-    private fun stopPlayEngine() {
+    private fun stopPlayBundle() {
         PlayerSingleton.stopPlayEngine()
+        //关闭监听器
+        stopPlayerListener()
         //关闭本地的媒体会话和服务
         stopLocalAll()
     }
