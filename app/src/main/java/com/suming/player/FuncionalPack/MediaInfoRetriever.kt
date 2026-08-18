@@ -164,7 +164,7 @@ object MediaInfoRetriever {
     }
 
 
-    //快速检查链接是否有效并返回媒体类型
+    //快速检查链接是否能解码并返回媒体类型
     fun getUriValidAndMediaType(context: Context,uriString: String): Pair<Boolean,String>{
         val retriever = MediaMetadataRetriever()
         //尝试解码
@@ -218,6 +218,33 @@ object MediaInfoRetriever {
             retriever.release()
         }
     }
+
+    //检查链接对应媒体是否还存在(MediaStore)
+    fun isMediaExist(context: Context,uri: Uri): Boolean{
+        var cursor: Cursor? = null
+        return try {
+
+            val projection = arrayOf(MediaStore.MediaColumns._ID)
+            cursor = context.contentResolver.query(uri, projection, null, null, null)
+
+            //返回查询结果是否为空
+            (cursor?.count ?: 0) > 0
+
+        }catch(e: Exception){
+            consoleLog("isMediaExist-查询媒体ID发生错误: $e")
+
+            false
+        }finally{
+            cursor?.close()
+        }
+    }
+    //检查对应文件是否还存在
+    fun isFileExist(file_path: String): Boolean{
+        val file = File(file_path)
+
+        return file.exists() && file.isFile
+    }
+
 
 
 

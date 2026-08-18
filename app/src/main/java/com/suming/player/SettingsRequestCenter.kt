@@ -156,6 +156,35 @@ object SettingsRequestCenter {
         //返回结果
         return PREFS_EnableContinuePlay == 1
     }
+    //继续播放上次的媒体时直接启动播放器
+    private var PRF_ContinuePlay_withEngin = -1
+    const val PRF_ContinuePlay_withEngin_Name = "PRF_ContinuePlay_withEngin"
+    fun SET_PRF_ContinuePlay_withEngin(context: Context, enable: Boolean){
+        OpenPandora_MainPage(context)
+
+        //设置时转为int写入本地缓存
+        PRF_ContinuePlay_withEngin = if (enable) 1 else 0
+        //写入配置单
+        Pandora_MainPage!!.edit { putInt(PRF_ContinuePlay_withEngin_Name, if (enable) 1 else 0) }
+    }
+    fun GET_PRF_ContinuePlay_withEngin(context: Context): Boolean {
+        OpenPandora_MainPage(context)
+
+        //仅在未读取过时才读取(也就是值为-1时)
+        if (PRF_ContinuePlay_withEngin == -1) {
+            //从配置单读取
+            PRF_ContinuePlay_withEngin = Pandora_MainPage!!.getInt(PRF_ContinuePlay_withEngin_Name, -1)
+            //如果配置单内无该项,写入默认值
+            if (PRF_ContinuePlay_withEngin == -1) {
+                //默认设为关闭
+                PRF_ContinuePlay_withEngin = 0
+                Pandora_MainPage!!.edit { putInt(PRF_ContinuePlay_withEngin_Name, 0) }
+            }
+        }
+        //返回结果
+        return PRF_ContinuePlay_withEngin == 1
+    }
+
 
 
     //默认显示页签

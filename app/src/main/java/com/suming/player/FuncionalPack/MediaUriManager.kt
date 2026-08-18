@@ -117,7 +117,7 @@ object MediaUriManager {
     }
 
 
-    //工具函数
+
     //从uri获取文件绝对路径
     private fun GET_FilePath(context: Context, uri: Uri): String? {
         val cleanUri = if (uri.scheme == null || uri.scheme == "file") {

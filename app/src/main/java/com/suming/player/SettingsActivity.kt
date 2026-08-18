@@ -233,6 +233,13 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_EnableContinuePlay(this@SettingsActivity, isChecked)
             }
+            //启动续播时启动播放器引擎
+            val SC_ContinuePlay_withEngin = findViewById<SwitchCompat>(R.id.SC_ContinuePlay_withEngin)
+            SC_ContinuePlay_withEngin.isChecked = SettingsRequestCenter.GET_PRF_ContinuePlay_withEngin(this@SettingsActivity)
+            SC_ContinuePlay_withEngin.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.SET_PRF_ContinuePlay_withEngin(this@SettingsActivity, isChecked)
+            }
             //后台划卡时关闭播放器
             val switch_StopPlayerWhenTaskRemoved = findViewById<SwitchCompat>(R.id.StopPlayerWhenTaskRemoved)
             switch_StopPlayerWhenTaskRemoved.isChecked = SettingsRequestCenter.get_PREFS_StopPlayerWhenTaskRemoved(this@SettingsActivity)

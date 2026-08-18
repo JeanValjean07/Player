@@ -64,10 +64,34 @@ object PlayerInfoCenter {
     fun SET_Media_ActualFPS(fps:Float){
         CURRENT_MediaItemPackage?.video_actualFPS = fps
     }
+    //写入cache包
+    fun SET_Media_CachePack(SPECIFIC_ID:String,mediaType:String,NUM_ID:Long,uriString:String,FileName:String,MediaArtist:String){
+        val newMediaPack = MediaItemForPlay(
+            media_api_SPECIFIC_ID = SPECIFIC_ID,
+            media_SPECIFIC_MediaType = mediaType,
+            media_api_NUM_ID = NUM_ID,
+            content_uriString = uriString,
+            file_name = FileName,
+            media_artist = MediaArtist,
+
+            isCache = true,
+        )
+        //写入本地数据包
+        CURRENT_MediaItemPackage = newMediaPack
+        //更新可观察数据类
+        updateObservableMediaItem(newMediaPack)
+
+
+    }
 
 
 
     //获取信息
+    //获取isCache状态
+    fun GET_Media_isCache(): Boolean {
+
+        return CURRENT_MediaItemPackage?.isCache ?: false
+    }
     //获取当前媒体信息完整包
     fun GET_Media_FullMediaInfoPack(): MediaItemForPlay? {
 

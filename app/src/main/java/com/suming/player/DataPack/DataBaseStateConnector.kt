@@ -29,6 +29,13 @@ object DataBaseStateConnector {
         _state_queryDisk.value = state + System.currentTimeMillis()
     }
 
+    //清空加载状态字段
+    fun clearLoadState(){
+        setState_queryDisk("")
+        setState_queryDisk_Music_state("")
+        setState_queryDisk_Video_state("")
+    }
+
 
 
     const val state_queryDisk_start = "state_queryDisk_started"

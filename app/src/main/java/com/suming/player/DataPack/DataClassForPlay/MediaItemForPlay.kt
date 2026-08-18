@@ -20,5 +20,8 @@ data class MediaItemForPlay (
     val video_videoWidth: Long = 0L,
     var video_actualFPS: Float = 0f,
 
+    //状态专属
+    val isCache: Boolean = false,
+
 
     )
