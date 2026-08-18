@@ -1288,6 +1288,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun startPlayNewMedia(uri: Uri){
         //设置新媒体项
         setNewMediaItem(uri)
+
+        //开启屏幕常量
+        rootConstraint.keepScreenOn = true
     }
     //连接正在播放的媒体
     private fun connectCurrentMedia(){
@@ -1313,7 +1316,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         //重置状态
         playerReadyFrom_FirstEntry = false
 
-
+        //更新屏幕常亮状态
+        updateKeepScreenOn()
 
         //刷新进度条
         updateScrollerAdapter()
@@ -1346,8 +1350,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
         }
+        //播放状态变更
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            updateButtonState()
+            //播放状态变更
+            isPlayingChanged()
         }
         override fun onVideoSizeChanged(videoSize: VideoSize) {
             super.onVideoSizeChanged(videoSize)
@@ -1440,6 +1446,19 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
+    //播放状态变更回调触发
+    private fun isPlayingChanged(){
+        //更新按钮状态
+        updateButtonState()
+
+        //更新屏幕常亮状态
+        updateKeepScreenOn()
+
+    }
+    //更新屏幕常亮状态
+    private fun updateKeepScreenOn(){
+        rootConstraint.keepScreenOn = PlayerSingleton.GET_STE_isNowPlaying()
+    }
 
 
 
@@ -1682,12 +1701,11 @@ class PlayerActivityNeo: AppCompatActivity(){
     //some callBacks
     override fun onPause() {
         super.onPause()
-        //consoleLog("onPause")
+
         //来自活动主动退出
         val isManualFinish = isFinishing
-        val isActRebuild = isChangingConfigurations
-        //consoleLog("onPause isManualFinish:$isManualFinish isActRebuild:$isActRebuild")
-        if (!isActRebuild){
+        val isActivityRebuild = isChangingConfigurations
+        if (!isActivityRebuild){
             if (isManualFinish){
 
                 playerViewModel.state_isFinishing = true
@@ -1698,9 +1716,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //是否后台播放
                 PlayerSingleton.startBackgroundPlay()
             }
-
         }
-
 
         //关闭视频控制
         stopVideoSeek()
@@ -1715,8 +1731,10 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     override fun onResume() {
         super.onResume()
-        //consoleLog("onResume")
 
+        //更新屏幕常亮状态
+        updateKeepScreenOn()
+        //判断是否继续播放
         if (playerViewModel.state_isFinishing){
             //consoleLog("onResume 来自活动销毁")
         }else{
@@ -1776,8 +1794,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     override fun onDestroy() {
         super.onDestroy()
-        //consoleLog("onDestroy")
-
 
         //停止UI端操作
         scroller.stopScroll()
@@ -1796,7 +1812,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
-        //consoleLog("onEnterAnimationComplete")
 
         state_EnterAnimationCompleted = true
 
@@ -1815,7 +1830,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     @SuppressLint("UnsafeIntentLaunch")
     override fun onNewIntent(newIntent: Intent?) {
         super.onNewIntent(newIntent)
-        consoleLog("onNewIntent")
+        //consoleLog("onNewIntent")
         if (newIntent?.action != null){
             when (newIntent.action) {
                 //系统面板：分享
@@ -2457,8 +2472,11 @@ class PlayerActivityNeo: AppCompatActivity(){
     //播放与暂停
     @Suppress("SameParameterValue")
     private fun recessPlay(){
-        //调用暂停播放
+        //调用暂停播放(确保活动内唯一调用)
         PlayerSingleton.pausePlay()
+
+        //关闭屏幕常量
+        rootConstraint.keepScreenOn = false
 
         //关闭本地界面更新
         stopVideoTimeSync()
@@ -2466,8 +2484,11 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     @Suppress("SameParameterValue")
     private fun continuePlay(need_requestFocus: Boolean = true){
-        //调用继续播放
+        //调用继续播放(确保活动内唯一调用)
         PlayerSingleton.continuePlay(need_requestFocus)
+
+        //开启屏幕常量
+        rootConstraint.keepScreenOn = true
 
         //开启本地界面更新
         startScrollerSync()

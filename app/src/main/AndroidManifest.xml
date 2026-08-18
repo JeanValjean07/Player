@@ -96,7 +96,8 @@
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <meta-data
                 android:name="android.notch_support"
-                android:value="true"/>
+                android:value="true"
+                />
         </activity>
         <!-- 播放页Oro -->
         <activity android:name=".PlayerActivityOro"

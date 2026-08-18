@@ -2,7 +2,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:keepScreenOn="true"
     android:id="@+id/rootConstraint"
     android:fitsSystemWindows="false"
     android:layout_width="match_parent"
