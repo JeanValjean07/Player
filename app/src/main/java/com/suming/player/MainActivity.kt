@@ -1602,13 +1602,13 @@ class MainActivity: AppCompatActivity() {
         //获取横竖屏模式
         isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         //获取屏幕信息
-        getScreenInfo()
+        getDisplayInfo()
 
     }
-    private fun getScreenInfo(){
-        //获取屏幕宽高
-        DeviceInfo.screenWidth = resources.displayMetrics.widthPixels
-        DeviceInfo.screenHeight = resources.displayMetrics.heightPixels
+    private var display_screen_height_pixels: Int = 0
+    private var display_screen_width_pixels: Int = 0
+    private var display_screen_density: Float = 0f
+    private fun getDisplayInfo(){
         //获取状态栏高度
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_root_constraint)) { _, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -1620,6 +1620,11 @@ class MainActivity: AppCompatActivity() {
 
             insets
         }
+        //获取屏幕宽高和密度
+        val DisplayMetrics = resources.displayMetrics
+        display_screen_width_pixels = DisplayMetrics.widthPixels
+        display_screen_height_pixels = DisplayMetrics.heightPixels
+        display_screen_density = DisplayMetrics.density
     }
     private fun compose(){
         //重组miniView(竖屏时不修改,横排时修改为悬浮并限制长度)
@@ -1725,7 +1730,7 @@ class MainActivity: AppCompatActivity() {
                 ConstraintSet.BOTTOM,
                 0
             )
-            constraintSet.constrainWidth(level_controllers.id, (DeviceInfo.screenWidth * 0.3f).toInt())
+            constraintSet.constrainWidth(level_controllers.id, (display_screen_width_pixels * 0.3f).toInt())
             constraintSet.applyTo(level_root)
 
             val constraintSetList = ConstraintSet()
@@ -1739,7 +1744,7 @@ class MainActivity: AppCompatActivity() {
                 0
             )
 
-            constraintSetList.constrainWidth(level_list.id, (DeviceInfo.screenWidth * 0.7f).toInt())
+            constraintSetList.constrainWidth(level_list.id, (display_screen_width_pixels * 0.7f).toInt())
             constraintSetList.applyTo(level_root)
 
             val level_controller_rightLine = findViewById<View>(R.id.level_controller_rightLine)

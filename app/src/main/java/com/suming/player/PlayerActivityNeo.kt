@@ -94,6 +94,7 @@ import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
+import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.FrameExtractor
 import com.suming.player.FuncionalPack.FrameListener
@@ -896,14 +897,15 @@ class PlayerActivityNeo: AppCompatActivity(){
                         finger1x = event.x
                         finger1y = event.y
                         //屏蔽纵向误触区域
-                        if (finger1y < DisplayMetric_ScreenHeight * 0.2 || finger1y > DisplayMetric_ScreenHeight * 0.95){
+                        if (finger1y < display_screen_height_pixels * 0.2
+                            || finger1y > display_screen_height_pixels * 0.95){
                             return@setOnTouchListener false
                         }
                         //分割横向功能区:初步信息获取
-                        if (finger1x < DisplayMetric_ScreenWidth * 0.2) {
+                        if (finger1x < display_screen_width_pixels * 0.2) {
                             touchLeft = true
                         }
-                        else if(finger1x > DisplayMetric_ScreenWidth * 0.8){
+                        else if(finger1x > display_screen_width_pixels * 0.8){
                             state_HeadSetInserted = PlayerListener.getState_isHeadsetPlugged(this@PlayerActivityNeo)
                             touchRight = true
                         }
@@ -2514,8 +2516,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
             scroller.layoutParams.width = 0
 
-
-            ScrollerHelper.singleFrame_WidthPx = (40 * DisplayMetrics.density).toInt()
+            //获取屏幕density
+            val density = display_screen_density
+            if (density == 0f) return@launch
+            ScrollerHelper.singleFrame_WidthPx = (40 * density).toInt()
 
             //计算进度条参数(委托给scrollerHelper)
             //先从信息中心拿到各种必要信息
@@ -2651,12 +2655,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     //进度条内边距设置
     private fun setScrollerPadding(){
         //计算边距
-        sidePadding = DisplayMetric_ScreenWidth / 2
+        sidePadding = display_screen_width_pixels / 2
         //根据横竖屏做不同设置
-        if (state_screen_orientation == 0) {
-            //竖屏
-            scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-        }else if(state_screen_orientation == 1){
+        if (isLandscape){
             //横屏
             var scrollerMarginType: Int
             //华为
@@ -2690,14 +2691,17 @@ class PlayerActivityNeo: AppCompatActivity(){
                     scroller.setPadding(sidePadding + playerViewModel.statusBarHeight / 2, 0, sidePadding + playerViewModel.statusBarHeight / 2 - 1, 0)
                 }
             }
+        }else{
+            //竖屏
+            scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
         }
-
     }
     //状态栏配置
     @Suppress("DEPRECATION")
     private fun setStatusBarParams(){
-        //横屏
-        if (state_screen_orientation == 1){
+        if (isLandscape){
+            //横屏
+
             //控件层参数
             ViewCompat.setFitsSystemWindows(controllerLayer, false)
             controllerLayer.requestLayout()
@@ -2723,9 +2727,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                                 or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         )
             }
-        }
-        //竖屏
-        else if (state_screen_orientation == 0) {
+        }else{
+            //竖屏
+
             //控件层参数
             ViewCompat.setFitsSystemWindows(controllerLayer, true)
             controllerLayer.requestLayout()
@@ -2736,7 +2740,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                     controllerLayer.updatePadding(top = systemBars.top)
 
-                    WindowInsetsCompat.CONSUMED }
+                    WindowInsetsCompat.CONSUMED
+                }
                 window.decorView.post { window.insetsController?.let { controller ->
                     controller.show(WindowInsets.Type.statusBars())
                     controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_DEFAULT
@@ -2779,19 +2784,18 @@ class PlayerActivityNeo: AppCompatActivity(){
     }   //暂停按钮
     //通知卡片位置设置
     private fun setNoticeCardPosition(){
-        //横屏
-        if (state_screen_orientation == 1) {
+        if (isLandscape){
+            //横屏
             (noticeCapsule.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(5f))
-        }
-        //竖屏
-        else if (state_screen_orientation == 0) {
+        }else{
+            //竖屏
             (noticeCapsule.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(100f))
         }
     }
     //调整控件位置
     private fun setControllerPosition(){
         //横屏
-        if (state_screen_orientation == 1) {
+        if (isLandscape){
             //控件位置动态调整
             val displayManager = this.getSystemService(DISPLAY_SERVICE) as DisplayManager
             val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
@@ -2806,38 +2810,38 @@ class PlayerActivityNeo: AppCompatActivity(){
                 (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (playerViewModel.statusBarHeight)
                 (controller_bottom_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = (playerViewModel.statusBarHeight)
             }
-        }
-        //竖屏重置
-        else if (state_screen_orientation == 0) {
+        }else{
+            //竖屏时重置所有
             (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = 0
             (controller_top_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = 0
             (controller_bottom_bar.layoutParams as ViewGroup.MarginLayoutParams).rightMargin = 0
             (controller_bottom_bar.layoutParams as ViewGroup.MarginLayoutParams).leftMargin = 0
         }
     }
-    //屏幕尺寸和方向记录
-    private lateinit var DisplayMetrics: DisplayMetrics
-    private var DisplayMetric_ScreenWidth = 0
-    private var DisplayMetric_ScreenHeight = 0
-    private var state_screen_orientation = 0
-    private fun displayMetricsLoad(){
-        //记录屏幕宽高
-        DisplayMetrics = resources.displayMetrics
-        DisplayMetric_ScreenWidth = DisplayMetrics.widthPixels
-        DisplayMetric_ScreenHeight = DisplayMetrics.heightPixels
-        //屏幕方向记录
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            state_screen_orientation = 1
-        }else if(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            state_screen_orientation = 0
-        }
-    }
     //更新屏幕参数
+    private var display_screen_height_pixels: Int = 0
+    private var display_screen_width_pixels: Int = 0
+    private var display_screen_density: Float = 0f
     private fun updateScreenParameters(){
-        //屏幕尺寸和方向记录
-        displayMetricsLoad()
-        //状态栏设置
-        setStatusBarParams()
+        //获取状态栏高度
+        if (DeviceInfo.statusBarHeight == 0){
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+                DeviceInfo.statusBarHeight = systemBars.top
+
+                insets
+            }
+        }else{
+            //状态栏设置
+            setStatusBarParams()
+        }
+        //获取屏幕宽高和密度
+        val DisplayMetrics = resources.displayMetrics
+        display_screen_width_pixels = DisplayMetrics.widthPixels
+        display_screen_height_pixels = DisplayMetrics.heightPixels
+        display_screen_density = DisplayMetrics.density
+
         //调整控件位置
         setControllerPosition()
         //通知卡片位置
