@@ -212,6 +212,7 @@ object SettingsRequestCenter {
                 Pandora_MainPage!!.edit { putString(PRF_DefaultPlayBehavior_Name,action_use_whole_play_page ) }
             }
         }
+
         //返回结果
         return PRF_DefaultPlayBehavior
     }

@@ -87,6 +87,7 @@ class MainActivity: AppCompatActivity() {
 
     //防止快速点击
     private var lock_clickMillisLock = 0L
+    private var lock_clickMillisLock_second = 0L
     //字段
     private val Undefined = ""
 
@@ -1439,11 +1440,12 @@ class MainActivity: AppCompatActivity() {
     //点击列表视频项
     private fun onVideoItemClick(uri: Uri){
         //防止快速发起
-        if (System.currentTimeMillis() - lock_clickMillisLock < 800) return
-        lock_clickMillisLock = System.currentTimeMillis()
+        if (System.currentTimeMillis() - lock_clickMillisLock_second < 800) return
+        lock_clickMillisLock_second = System.currentTimeMillis()
 
         //检查启动方式
-        val defaultPlayBehavior = SettingsRequestCenter.GET_PRF_DefaultPlayBehavior(this)
+        val defaultPlayBehavior = SettingsRequestCenter.GET_PRF_DefaultPlayBehavior(this@MainActivity)
+        //consoleLog("defaultPlayBehavior: $defaultPlayBehavior")
         when (defaultPlayBehavior) {
             //仅在MiniView中播放
             SettingsRequestCenter.action_just_in_mini_view -> {

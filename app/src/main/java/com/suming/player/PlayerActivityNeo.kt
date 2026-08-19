@@ -1178,11 +1178,31 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun mainBusiness(){
         //获取原始链接并转换为标准格式链接
         val intentUri = getOriginalIntentUri(intent)
+        consoleLog("intentUri: $intentUri")
+        if (intentUri == Uri.EMPTY){
+            showCustomToast("原始链接获取失败", 3)
+
+            finish()
+
+            return
+        }
         val intentUriString = intentUri.toString()
-        val intentUriStandard = if (intentUriString != Undefined){
-            MediaUriManager.getStandardMediaUri(intentUriString, this@PlayerActivityNeo)
-        }else{
-            Undefined
+        consoleLog("intentUriString: $intentUriString")
+        if (intentUriString == Undefined){
+            showCustomToast("原始链接转换失败", 3)
+
+            finish()
+
+            return
+        }
+        val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUriString, this@PlayerActivityNeo)
+        consoleLog("intentUriStandard: $intentUriStandard")
+        if (intentUriStandard == Undefined){
+            showCustomToast("链接规范化程序处理失败", 3)
+
+            finish()
+
+            return
         }
         //获取正在播放信息
         val ongoingUriStandard = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
@@ -1484,14 +1504,14 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun isFileExist(){
         //获取file_path
         val file_path = PlayerInfoCenter.GET_Media_FilePath()
-        consoleLog("isFileExist: file_path:$file_path")
+        //consoleLog("isFileExist: file_path:$file_path")
         if (file_path.isEmpty()) return
         //检查是否有媒体正在在播放
         val isAnyMediaOngoing = isAnyMediaOngoing().first
-        consoleLog("isFileExist: isAnyMediaOngoing:$isAnyMediaOngoing")
+        //consoleLog("isFileExist: isAnyMediaOngoing:$isAnyMediaOngoing")
         if (isAnyMediaOngoing) {
             val exist = MediaInfoRetriever.isFileExist(file_path)
-            consoleLog("isFileExist: exist:$exist")
+            //consoleLog("isFileExist: exist:$exist")
             if (!exist){
                 //文件不存在
                 showCustomToast("媒体已失效")
@@ -3071,7 +3091,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 maxRefreshRate = refreshRate
             }
         }
-        consoleLog("requestHighRefreshRate 决策目标刷新率为：$maxRefreshRate")
+        //consoleLog("requestHighRefreshRate 决策目标刷新率为：$maxRefreshRate")
 
         window.attributes.preferredRefreshRate = maxRefreshRate
     }

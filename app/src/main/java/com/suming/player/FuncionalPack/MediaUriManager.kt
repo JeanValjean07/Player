@@ -120,23 +120,29 @@ object MediaUriManager {
 
     //从uri获取文件绝对路径
     private fun GET_FilePath(context: Context, uri: Uri): String? {
-        val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
-            Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
-        } else {
-            uri
-        }
-        val absolutePath: String? = when (cleanUri.scheme) {
-            ContentResolver.SCHEME_CONTENT -> {
-                val projection = arrayOf(MediaStore.Video.Media.DATA)
-                context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
-                    if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
-                }
+        try{
+            val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
+                Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
+            } else {
+                uri
             }
-            ContentResolver.SCHEME_FILE    -> cleanUri.path
-            else                           -> cleanUri.path
-        }
+            val absolutePath: String? = when (cleanUri.scheme) {
+                ContentResolver.SCHEME_CONTENT -> {
+                    val projection = arrayOf(MediaStore.Video.Media.DATA)
+                    context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
+                        if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
+                    }
+                }
+                ContentResolver.SCHEME_FILE    -> cleanUri.path
+                else                           -> cleanUri.path
+            }
 
-        return absolutePath?.takeIf { File(it).exists() }
+            return absolutePath?.takeIf { File(it).exists() }
+        }catch(e: Exception){
+            consoleLog("GET_FilePath-获取文件路径失败: $e")
+
+            return null
+        }
     }
 
 
