@@ -67,6 +67,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.animation.PathInterpolatorCompat
 import androidx.core.view.updatePadding
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.MediaItem
@@ -1204,13 +1205,18 @@ class PlayerActivityNeo: AppCompatActivity(){
                     queryManualInputUri()
                 }else{
                     //有正在播放的项
-                    connectCurrentMedia()
+                    if (ongoingMediaType == MediaType.Video){
+                        //正在播放的是视频,直接绑定
+                        connectCurrentMedia()
+                    }else{
+                        finish()
+                    }
                 }
             }else{
                 //传入原始链接
                 if (intentUriStandard == Undefined){
                     //但链接转码失败,无法播放
-                    showCustomToast("链接转码失败,无法播放")
+                    showCustomToast("暂未适配路径式链接处理程序,无法播放,请使用“在其他应用打开”发起播放")
                     //停止播放引擎
                     PlayerSingleton.stopPlayEngine()
                     //退出活动
@@ -1221,14 +1227,18 @@ class PlayerActivityNeo: AppCompatActivity(){
                     //传入链接且可播放
                     if (intentUriStandard != ongoingUriStandard.toString()){
                         //传入链接,但与当前播放项不同,播放新项
-                        consoleLog("传入链接,但与当前播放项不同,播放新项")
+                        //consoleLog("传入链接,但与当前播放项不同,播放新项")
                         startPlayNewMedia(intentUriString.toUri())
 
                     }else{
                         //传入链接,但与当前播放项相同,直接绑定
-                        consoleLog("传入链接,但与当前播放项相同,直接绑定")
-                        connectCurrentMedia()
-
+                        //consoleLog("传入链接,但与当前播放项相同,直接绑定")
+                        if (ongoingMediaType == MediaType.Video){
+                            //正在播放的是视频,直接绑定
+                            connectCurrentMedia()
+                        }else{
+                            finish()
+                        }
                     }
                 }
             }
@@ -1977,6 +1987,11 @@ class PlayerActivityNeo: AppCompatActivity(){
     @SuppressLint("SwitchIntDef")
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        //consoleLog("onConfigurationChanged:newConfig:${newConfig.orientation}")
+        //通用行为
+        //关闭所有Fragment
+        closeAllDialogFragments()
+        //界面配置
         when(newConfig.orientation){
             //切换至横屏
             Configuration.ORIENTATION_LANDSCAPE -> {
@@ -1984,11 +1999,13 @@ class PlayerActivityNeo: AppCompatActivity(){
                 updateScreenParameters()
                 //启动隐藏控件倒计时
                 startIdleTimer()
+
             }
             //切换至竖屏
             Configuration.ORIENTATION_PORTRAIT -> {
                 isLandscape = false
                 updateScreenParameters()
+
             }
         }
     }
@@ -2025,6 +2042,16 @@ class PlayerActivityNeo: AppCompatActivity(){
     //启动播放列表面板
     private fun startPlayListFragment(){
         ListManagerFragment.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+    }
+    //关闭所有DialogFragment
+    fun closeAllDialogFragments(){
+        val manager = supportFragmentManager
+        val fragments = manager.fragments
+        fragments.forEach { fragment ->
+            if (fragment is DialogFragment && fragment.isVisible) {
+                fragment.dismiss()
+            }
+        }
     }
     //绑定播放器视图
     private fun bindPlayerView(){
@@ -2160,8 +2187,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //视频区域抬高动画
     private fun moveArea_playView_Down(){
-        //仅在竖屏下有效
-        if (isLandscape) return
+        //恢复动作不需要限定在竖屏下
+        //if (isLandscape) return
 
         //是否开启视频区域抬高动画
         val isEnable = playerViewModel.PRF_Cache_EnablePlayAreaMove
