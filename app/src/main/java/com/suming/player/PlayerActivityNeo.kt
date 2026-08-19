@@ -303,7 +303,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 if (playerViewModel.PRF_Cache_EnablePlayAreaMove_Distance == 0f){
                     val displayMetrics = context.resources.displayMetrics
                     //屏幕宽高px
-                    val widthPx = displayMetrics.widthPixels
+                    //val widthPx = displayMetrics.widthPixels
                     val heightPx = displayMetrics.heightPixels
                     //卡片上剩余高度px
                     val areaHeightPx = heightPx * 0.3
@@ -590,7 +590,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //退出按钮
             val ButtonExit = findViewById<CircleButton>(R.id.TopBarArea_ButtonExit)
             ButtonExit.setOnClickListener {
-                exitActivity()
+                exitActivity_ensure()
             }
             /*
             ButtonExit.setOnTouchListener { _, event ->
@@ -1176,60 +1176,60 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //主业务线
     private fun mainBusiness(){
+
         //获取原始链接并转换为标准格式链接
         val intentUri = getOriginalIntentUri(intent)
-        consoleLog("intentUri: $intentUri")
-        if (intentUri == Uri.EMPTY){
-            showCustomToast("原始链接获取失败", 3)
-
-            finish()
-
-            return
-        }
+        //consoleLog("intentUri: $intentUri")
         val intentUriString = intentUri.toString()
-        consoleLog("intentUriString: $intentUriString")
-        if (intentUriString == Undefined){
-            showCustomToast("原始链接转换失败", 3)
-
-            finish()
-
-            return
-        }
+        //consoleLog("intentUriString: $intentUriString")
         val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUriString, this@PlayerActivityNeo)
-        consoleLog("intentUriStandard: $intentUriStandard")
-        if (intentUriStandard == Undefined){
-            showCustomToast("链接规范化程序处理失败", 3)
+        //consoleLog("intentUriStandard: $intentUriStandard")
 
-            finish()
-
-            return
-        }
         //获取正在播放信息
         val ongoingUriStandard = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
         val ongoingMediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+
         //日志-获取到的信息
         //consoleLog("intentUriStandard: $intentUriStandard, ongoingUriStandard: $ongoingUriStandard")
 
-        //既无正在播放的媒体,也未传入链接,主动要求输入链接
+        //决策程序
         if (intentUri == Uri.EMPTY && ongoingUriStandard == Uri.EMPTY ){
             queryManualInputUri()
         }else{
-            //未传入链接,但有正在播放的媒体,则绑定当前播放项
-            if(intentUriStandard == Undefined && ongoingUriStandard != Uri.EMPTY){
-                //consoleLog("未传入链接,但有正在播放的媒体,则绑定当前播放项")
-                if (ongoingMediaType == MediaType.Video){
-                    connectCurrentMedia()
+            //未传入原始链接
+            if (intentUri == Uri.EMPTY){
+                //检查有没有正在播放的
+                if (ongoingUriStandard == Uri.EMPTY){
+                    //没有正在播放的项
+                    queryManualInputUri()
                 }else{
-                    finish()
+                    //有正在播放的项
+                    connectCurrentMedia()
                 }
             }else{
-                //检查是否是同一项
-                if(intentUriStandard != ongoingUriStandard.toString()){
-                    //consoleLog("传入链接,但与当前播放项不同,播放新项")
-                    startPlayNewMedia(intentUriString.toUri())
+                //传入原始链接
+                if (intentUriStandard == Undefined){
+                    //但链接转码失败,无法播放
+                    showCustomToast("链接转码失败,无法播放")
+                    //停止播放引擎
+                    PlayerSingleton.stopPlayEngine()
+                    //退出活动
+                    finish()
+
+                    return
                 }else{
-                    //consoleLog("传入链接,但与当前播放项相同,直接绑定")
-                    connectCurrentMedia()
+                    //传入链接且可播放
+                    if (intentUriStandard != ongoingUriStandard.toString()){
+                        //传入链接,但与当前播放项不同,播放新项
+                        consoleLog("传入链接,但与当前播放项不同,播放新项")
+                        startPlayNewMedia(intentUriString.toUri())
+
+                    }else{
+                        //传入链接,但与当前播放项相同,直接绑定
+                        consoleLog("传入链接,但与当前播放项相同,直接绑定")
+                        connectCurrentMedia()
+
+                    }
                 }
             }
         }
@@ -1442,7 +1442,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             if (!file.exists()){
                 consoleLog("setNewMediaItem: 失败-文件已不存在")
                 showCustomToast("此文件已不存在,请刷新列表", 3)
-                finish() //TODO
+                finish()
                 return
             }
 
@@ -1458,7 +1458,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //是音乐时主动退出页面
 
         if (PlayerInfoCenter.GET_Media_SPECIFIC_TYPE() != MediaType.Video){
-            finish()   //TODO
+            finish()
             return
         }
 

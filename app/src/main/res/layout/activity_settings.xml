@@ -79,6 +79,7 @@
                 android:layout_height="60dp"
                 />
 
+
             <!-- 版本卡片 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -126,6 +127,7 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
             <!-- 卡片：项目Github仓库页 -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/contentCard_githubRelease"
@@ -198,6 +200,7 @@
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
 
             <!--  卡片：通用  -->
             <androidx.cardview.widget.CardView
@@ -324,7 +327,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="每次启动App时可快速继续播放上一次的媒体，但不会自动开播。"
+                            android:text="每次启动App时可快速继续播放上一次的媒体，但不会自动开播，需要您再手动点击播放。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：继续播放时直接启动播放器核心  -->
@@ -359,7 +362,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="开启后，启动App时，续播媒体自动出现在系统播控中心。未开启时，续播媒体仅为显示占位，需在App内手动启动播放。"
+                            android:text="开启后，启动App时，续播媒体自动出现在系统播控中心。未开启时，续播媒体仅为显示占位，需在App内手动启动播放。该选项目的是减少老机型的压力，若您的设备性能强悍，可考虑开启。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：后台划卡时关闭播放器  -->
@@ -394,7 +397,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="划掉后台卡片时停止播放并关闭播放器。此选项还受系统电源配置限制。"
+                            android:text="开启后，划掉后台卡片时将停止播放并关闭播放器。关闭后，可以在后台无卡片的情况下纯净播放，不打扰您的前台工作。此选项受系统电源配置的限制，且仅支持华为，三星和其他类原生系统。"
                             android:textSize="12sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -487,7 +490,8 @@
                         </androidx.cardview.widget.CardView>
                     </LinearLayout>
 
-                    <!-- 标题：播放器核心设置 -->
+                    <!-- 段落 -->
+                    <!-- 段落标题：播放器核心设置 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -572,7 +576,7 @@
                             android:layout_marginStart="10dp"
                             android:textColor="@color/Text2" />
                     </LinearLayout>
-                    <!--  开关:播放区域移动  -->
+                    <!--  开关:播放区域跟随面板移动  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -614,13 +618,11 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:orientation="vertical">
-
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="在部分机型上存在界面合成问题，导致含播放器的页面掉帧卡顿。如果确认您的设备开次此选项后没有问题，可选择开启。"
                             android:textSize="12sp" />
-
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="25dp"
@@ -649,7 +651,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="建议在低性能设备上关闭，对于高性能设备，若出现卡顿，也可考虑关闭。"
+                            android:text="若下滑过程出现卡顿，可考虑关闭。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:始终使用深色播放界面  -->
@@ -720,7 +722,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="尝试使用高刷新率，不保证一定有效"
+                            android:text="向系统申请使用高刷新率，不保证一定有效。若发现您的播放页被锁60HZ，可尝试开启此选项。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:后台播放时关闭视频轨道  -->
@@ -758,7 +760,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="即使开启此选项，关闭视频轨道操作也只会在退到后台一分钟后进行。在安卓12及以下系统，此功能偶现异常，建议关闭。"
+                            android:text="即使开启此选项，关闭视频轨道操作也只会在退到后台一分钟后进行。在安卓12及以下系统，操作轨道偶尔会导致播放器崩溃，建议关闭。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：退出时先转为竖屏  -->
@@ -796,7 +798,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="平板电脑请关闭此选项，否则不能正常使用横屏播放。主页暂未适配横屏，推荐使用横屏锁定器强制锁定全局横屏。"
+                            android:text="平板电脑请务必关闭此选项，否则不能使用侧滑手势退出播放页。作为保险，使用退出按钮可执行强制退出，下滑关闭也是强制退出。"
                             android:textSize="12sp" />
                     </LinearLayout>
 
@@ -831,7 +833,8 @@
                         android:text="暂无可设置的项"
                         android:textSize="12sp" />
 
-                    <!-- 标题：新晋播放页设置 -->
+                    <!-- 段落 -->
+                    <!-- 段落标题：新晋播放页设置 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -889,46 +892,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="正常情况下，进度条包含最高20张缩略图。使用超长进度条时，开放至最高500张。使用时无法保存缩略图，每次都需要重新生成，占用一定性能。请注意，图数过多时，快速滚动进度条将导致高CPU负载和温度，易虚焊机型谨慎开启，或不要乱滑动进度条。"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                    <!--  开关：提高强制寻帧时间差  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="vertical">
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="25dp"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_weight="0"
-                                android:text="提高强制寻帧时间差"
-                                android:textColor="@color/HeadText"
-                                android:textSize="14sp"
-                                tools:ignore="TooManyViews" />
-                            <View
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1" />
-                            <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/useLongSeekGap"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor"
-                                tools:ignore="TooManyViews" />
-                        </LinearLayout>
-                        <!--  提示信息  -->
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="此开关暂无实际功能。"
+                            android:text="暂时废弃，回炉重造。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：进度条绘制使用兼容模式  -->
@@ -965,10 +929,10 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="横屏时，若您的进度条两端无法与中央竖线对齐，请打开兼容模式。您也可以将您的机型，系统版本和是否出现不兼容等情况反馈给我，这有助于完善程序内判断机制。"
+                            android:text="横屏时，若您的进度条两端无法与中央竖线对齐，请打开兼容模式，本质是取反分支。"
                             android:textSize="12sp" />
                     </LinearLayout>
-                    <!--  开关：进度条缩略图使用就近关键帧  -->
+                    <!--  开关：进度条缩略图截取时使用就近关键帧  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -984,7 +948,7 @@
                                 android:layout_height="match_parent"
                                 android:gravity="center"
                                 android:layout_weight="0"
-                                android:text="进度条缩略图使用就近关键帧"
+                                android:text="截取进度条缩略图时使用就近关键帧"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
@@ -1006,7 +970,7 @@
                             android:text="此选项已废弃，强制使用关键帧。"
                             android:textSize="12sp" />
                     </LinearLayout>
-                    <!--  开关：进度条停止时使用关键帧  -->
+                    <!--  开关：进度条滚动停止时使用关键帧  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -1041,7 +1005,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="开启后，在滚动进度条时可提升播放流畅性，但会导致进度条位置跳变。"
+                            android:text="开启后，在滚动进度条时可提升播放流畅性，但会导致进度条位置略微跳变。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：寻帧时一律使用关键帧  -->
