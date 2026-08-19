@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:background="@android:color/transparent"
-    tools:ignore="HardcodedText,UnusedAttribute">
+    tools:ignore="HardcodedText,UnusedAttribute,TooManyViews">
     <androidx.cardview.widget.CardView
         android:id="@+id/main_card"
         android:layout_width="match_parent"
@@ -110,7 +110,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
-                    <!-- 高度占位 -->
+                    <!-- 顶部栏高度占位 -->
                     <Space
                         android:layout_width="match_parent"
                         android:layout_height="50dp" />
@@ -370,7 +370,7 @@
                             android:layout_marginBottom="5dp"
                             android:layout_marginStart="5dp"
                             android:orientation="vertical">
-                            <!-- 标题：媒体储存提示 -->
+                            <!-- 标题：通用设置 -->
                             <LinearLayout
                                 android:id="@+id/SyncSettingsCard"
                                 android:layout_width="match_parent"
@@ -508,6 +508,89 @@
                                     app:trackTint="@color/switchTrackColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
+                    <!-- 卡片：更多设置(视频独立设置) -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
+                        app:cardCornerRadius="15dp"
+                        app:cardElevation="5dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginStart="5dp"
+                            android:orientation="vertical">
+                            <!-- 标题：更多设置 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_general_camara"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="更多设置"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2" />
+                            </LinearLayout>
+                            <!-- 列表选项：默认播放方式(在MiniView播放或弹出大播放页) -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_main_fragment_tab"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:text="默认播放方式"
+                                    android:textColor="@color/Text2"
+                                    android:textSize="16sp" />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1" />
+                                <TextView
+                                    android:id="@+id/ButtonTextChangeDefaultPlayMode"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="#加载中"
+                                    android:textSize="14sp"
+                                    android:gravity="center"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="12dp"
+                                    android:textColor="@color/Text2"
+                                    tools:ignore="SmallSp" />
+                            </LinearLayout>
+
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
                     <!-- 媒体储存提示 -->

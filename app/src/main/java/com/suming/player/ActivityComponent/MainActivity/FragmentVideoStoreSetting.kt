@@ -14,9 +14,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.TextView
-import androidx.annotation.RequiresApi
+import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
@@ -27,10 +26,10 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
-import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.FragmentConnector
+import com.suming.player.R
 import com.suming.player.SettingsRequestCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
@@ -107,6 +106,10 @@ class FragmentVideoStoreSetting: DialogFragment() {
         //初始化常用视图
         SortMethodText = view.findViewById(R.id.current_sort)
         SortOrientationText = view.findViewById(R.id.current_sort_orientation)
+
+        //默认播放行为文本
+        ButtonChangeDefaultPlayMode = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultPlayMode)
+
         //设置显示重组
         display(view)
     }
@@ -307,57 +310,68 @@ class FragmentVideoStoreSetting: DialogFragment() {
                 SettingsRequestCenter.set_PREFS_video_sortMethod(requireContext(), SettingsRequestCenter.sort_method_mime_type)
                 updateSortMethodText(SettingsRequestCenter.sort_method_mime_type)
             }
-        }
-    }
-    //设置面板显示细节
-    private fun display(view: View){
-        //获取当前屏幕方向
-        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        //操作主卡片视图
-        val mainCard = view.findViewById<CardView>(R.id.main_card)
-        //读取屏幕信息
-        val screenHeightPx = resources.displayMetrics.heightPixels
-        val screenWidthPx = resources.displayMetrics.widthPixels
-        val density = resources.displayMetrics.density
 
-        if (isLandscape){
-            //计算目标宽度
-            val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
-            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+            //默认播放行为
+            updateText_DefaultPlayMode()
+            ButtonChangeDefaultPlayMode.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //选择默认播放行为
+                startMenu_DefaultPlayMode(it)
 
-            mainCard.post {
-                if (targetScreenHeightDp < 50){
-                    mainCard.layoutParams.width = screenWidthPx
-                }else{
-                    mainCard.layoutParams.width = targetScreenWidthPx
-                }
-                //把高度改为match parent
-                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-
-                val statusBarHeight = getStatusBarHeightFromView(mainCard)
-                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
-
-                mainCard.requestLayout()
-            }
-
-        }else{
-            //计算目标高度
-            val targetHeightPx = (screenHeightPx * 0.7).toInt()
-            val targetScreenHeightDp = (screenHeightPx / density).toInt()
-
-            mainCard.post {
-                if (targetScreenHeightDp < 450){
-                    mainCard.layoutParams.height = screenHeightPx
-                }else{
-                    mainCard.layoutParams.height = targetHeightPx
-                }
-                mainCard.requestLayout()
             }
         }
     }
+
 
 
     //Functions
+    //弹出默认播放行为选择菜单
+    private fun startMenu_DefaultPlayMode(anchor: View){
+        val popup = PopupMenu(requireContext(), anchor)
+        popup.menuInflater.inflate(R.menu.popup_menu_mss_default_play_mode, popup.menu)
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                //仅在MiniView中播放
+                R.id.item_just_in_mini_view -> {
+                    ToolVibrate().vibrate(requireContext())
+
+                    //设置默认播放行为
+                    SettingsRequestCenter.SET_PRF_DefaultPlayBehavior(requireContext(), SettingsRequestCenter.action_just_in_mini_view)
+                    //更新默认播放行为文本
+                    updateText_DefaultPlayMode()
+
+                    true
+                }
+                //弹出完整播放页面
+                R.id.item_use_whole_play_page -> {
+                    ToolVibrate().vibrate(requireContext())
+
+                    //设置默认播放行为
+                    SettingsRequestCenter.SET_PRF_DefaultPlayBehavior(requireContext(), SettingsRequestCenter.action_use_whole_play_page)
+                    //更新默认播放行为文本
+                    updateText_DefaultPlayMode()
+
+                    true
+                }
+                else -> true
+            }
+        }
+        popup.show()
+    }
+    @SuppressLint("SetTextI18n")
+    private fun updateText_DefaultPlayMode(){
+        //读取当前默认播放行为
+        val defaultPlayBehavior = SettingsRequestCenter.GET_PRF_DefaultPlayBehavior(requireContext())
+        when (defaultPlayBehavior) {
+            SettingsRequestCenter.action_just_in_mini_view -> {
+                ButtonChangeDefaultPlayMode.text = "仅在MiniView中播放"
+            }
+            SettingsRequestCenter.action_use_whole_play_page -> {
+                ButtonChangeDefaultPlayMode.text = "弹出完整播放页面"
+            }
+        }
+    }
+    private lateinit var ButtonChangeDefaultPlayMode : TextView
     //发送Fragment返回值
     private fun setFragmentResult(event: String){
         val result = bundleOf(FragmentConnector.receive_key to event)
@@ -466,6 +480,53 @@ class FragmentVideoStoreSetting: DialogFragment() {
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "FragmentVideoStoreSetting-视频库设置面板: $msg")
+        }
+    }
+
+    //设置面板显示细节
+    private fun display(view: View){
+        //获取当前屏幕方向
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //操作主卡片视图
+        val mainCard = view.findViewById<CardView>(R.id.main_card)
+        //读取屏幕信息
+        val screenHeightPx = resources.displayMetrics.heightPixels
+        val screenWidthPx = resources.displayMetrics.widthPixels
+        val density = resources.displayMetrics.density
+
+        if (isLandscape){
+            //计算目标宽度
+            val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 50){
+                    mainCard.layoutParams.width = screenWidthPx
+                }else{
+                    mainCard.layoutParams.width = targetScreenWidthPx
+                }
+                //把高度改为match parent
+                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+
+                val statusBarHeight = getStatusBarHeightFromView(mainCard)
+                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
+
+                mainCard.requestLayout()
+            }
+
+        }else{
+            //计算目标高度
+            val targetHeightPx = (screenHeightPx * 0.7).toInt()
+            val targetScreenHeightDp = (screenHeightPx / density).toInt()
+
+            mainCard.post {
+                if (targetScreenHeightDp < 450){
+                    mainCard.layoutParams.height = screenHeightPx
+                }else{
+                    mainCard.layoutParams.height = targetHeightPx
+                }
+                mainCard.requestLayout()
+            }
         }
     }
 

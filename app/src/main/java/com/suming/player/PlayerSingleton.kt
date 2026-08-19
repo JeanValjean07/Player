@@ -29,6 +29,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
+import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
@@ -153,7 +154,8 @@ object PlayerSingleton {
             when (state) {
                 Player.STATE_READY ->  playState_Ready()
                 Player.STATE_ENDED ->  playState_End(context)
-                Player.STATE_IDLE ->  {   }
+                //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
+                Player.STATE_IDLE ->  onPlayEngineIDLE()
             }
         }
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -192,6 +194,11 @@ object PlayerSingleton {
 
     }
 
+    private fun onPlayEngineIDLE(){
+        //禁止在此处销毁播放器,否则其他监听器全部收不到该事件
+
+    }
+
     //销毁播放器并关闭媒体会话
     fun stopPlayEngine(){
         //销毁播放器
@@ -202,6 +209,8 @@ object PlayerSingleton {
         stopMediaSession(context)
         //关闭服务
         stopServices(context)
+        //关闭监听器
+        PlayerListener.stopListener()
 
     }
 

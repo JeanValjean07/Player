@@ -59,9 +59,7 @@ import com.suming.player.DataPack.DataLoader.VideoDataBaseLoader
 import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
 import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
 import com.suming.player.DataPack.MediaRecordPack
-import com.suming.player.DataPack.MiniViewCachePack
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
-import com.suming.player.FuncionalPack.ActivityCount
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
@@ -597,7 +595,7 @@ class MainActivity: AppCompatActivity() {
         main_video_list_adapter = RecyclerAdapterVideo(
             context = this,
             onItemClick = { uri ->
-                startVideoPlayer(uri)
+                onVideoItemClick(uri)
             },
             onClick_Duration = { item ->
                 notice("视频时长:${FormatTime_withChar(item.media_durationMs)}", 2000)
@@ -605,29 +603,29 @@ class MainActivity: AppCompatActivity() {
             onClick_tvFormat = { item ->
                 notice("视频格式:${item.media_format}  (${item.media_api_NUM_ID})", 3000)
             },
-            onClick_Options = { item, holder ->
+            onClick_Options = { mediaItem, holder ->
                 val popup = PopupMenu(holder.itemView.context, holder.tvOption)
-                popup.menuInflater.inflate(R.menu.activity_main_popup_options, popup.menu)
-                val popup_update_cover = popup.menu.findItem(R.id.MenuAction_Repic)
-                val popup_hide_item = popup.menu.findItem(R.id.MenuAction_Hide)
-                val popup_onSmallCardPlay = popup.menu.findItem(R.id.MenuAction_onSmallCardPlay)
+                popup.menuInflater.inflate(R.menu.popup_menu_main_item_v_options, popup.menu)
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.MenuAction_use_mini_view_play -> {
+                            ToolVibrate().vibrate(this@MainActivity)
+
+                            startMiniViewPlay(mediaItem.content_uriString.toUri())
+
+                            true
+                        }
+                        R.id.MenuAction_use_whole_play_page -> {
+                            ToolVibrate().vibrate(this@MainActivity)
+
+                            startVideoPlayer(mediaItem.content_uriString.toUri())
+
+                            true
+                        }
+                        else -> false
+                    }
+                }
                 popup.show()
-                //注册点击事件
-                popup_update_cover.setOnMenuItemClickListener {
-                    ToolVibrate().vibrate(this@MainActivity)
-                    showCustomToast("进入视频后,可在更多选项面板更新封面", 3)
-                    true
-                }
-                popup_hide_item.setOnMenuItemClickListener {
-                    ToolVibrate().vibrate(this@MainActivity)
-                    showCustomToast("功能开发中", 3)
-                    true
-                }
-                popup_onSmallCardPlay.setOnMenuItemClickListener {
-                    ToolVibrate().vibrate(this@MainActivity)
-                    startMiniViewPlay(item.content_uriString.toUri())
-                    true
-                }
             },
         )
         //设置adapter
@@ -1438,13 +1436,38 @@ class MainActivity: AppCompatActivity() {
 
     }
 
+    //点击列表视频项
+    private fun onVideoItemClick(uri: Uri){
+        //防止快速发起
+        if (System.currentTimeMillis() - lock_clickMillisLock < 800) return
+        lock_clickMillisLock = System.currentTimeMillis()
+
+        //检查启动方式
+        val defaultPlayBehavior = SettingsRequestCenter.GET_PRF_DefaultPlayBehavior(this)
+        when (defaultPlayBehavior) {
+            //仅在MiniView中播放
+            SettingsRequestCenter.action_just_in_mini_view -> {
+
+                startMiniViewPlay(uri)
+            }
+            //弹出完整播放页面
+            SettingsRequestCenter.action_use_whole_play_page -> {
+
+                startVideoPlayer(uri)
+            }
+        }
+
+    }
+
+
+
     //启动播放器
     private fun startVideoPlayer(uri: Uri){
         //防止快速发起
         if (System.currentTimeMillis() - lock_clickMillisLock < 800) return
         lock_clickMillisLock = System.currentTimeMillis()
 
-        //确认启动
+        //检查使用的页面类型
         val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(this)
         when(playPageType){
             0 -> {

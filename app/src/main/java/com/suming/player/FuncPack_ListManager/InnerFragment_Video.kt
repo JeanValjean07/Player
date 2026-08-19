@@ -485,7 +485,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     }
 
     //日志
-    private fun consoleLog(msg: String, mark: Boolean = true) {
+    private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
             Log.d("SuMing", "InnerFragment_Video: $msg")
         }

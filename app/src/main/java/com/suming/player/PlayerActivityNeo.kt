@@ -1344,9 +1344,11 @@ class PlayerActivityNeo: AppCompatActivity(){
                 Player.STATE_ENDED -> {
                     playState_playEnd()
                 }
+                //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
                 Player.STATE_IDLE -> {
-                    stopVideoTimeSync()
-                    stopScrollerSync()
+                    //consoleLog("onPlaybackStateChanged: STATE_IDLE")
+
+                    onPlayEngineIDLE()
                 }
             }
         }
@@ -1370,8 +1372,16 @@ class PlayerActivityNeo: AppCompatActivity(){
                 break
             }
         }
+        //媒体项变更(clearItem时会收到null)
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            onMediaItemChanged(mediaItem)
+            //consoleLog("onMediaItemTransition: $mediaItem, $reason")
+            //媒体项变更
+            if (mediaItem == null){
+                //媒体项被清除
+                onMediaItemCleared()
+            }else{
+                onMediaItemChanged(mediaItem)
+            }
         }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
@@ -1412,7 +1422,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             if (!file.exists()){
                 consoleLog("setNewMediaItem: 失败-文件已不存在")
                 showCustomToast("此文件已不存在,请刷新列表", 3)
-                finish()
+                finish() //TODO
                 return
             }
 
@@ -1428,7 +1438,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //是音乐时主动退出页面
 
         if (PlayerInfoCenter.GET_Media_SPECIFIC_TYPE() != MediaType.Video){
-            finish()
+            finish()   //TODO
             return
         }
 
@@ -1458,6 +1468,61 @@ class PlayerActivityNeo: AppCompatActivity(){
     //更新屏幕常亮状态
     private fun updateKeepScreenOn(){
         rootConstraint.keepScreenOn = PlayerSingleton.GET_STE_isNowPlaying()
+    }
+
+    //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
+    private fun onPlayEngineIDLE(){
+        showCustomToast("播放器已离线", 3)
+        //把播放器引擎关闭
+        PlayerSingleton.stopPlayEngine()
+        //离开活动
+        finish()
+
+    }
+
+    //检查文件是否还存在
+    private fun isFileExist(){
+        //获取file_path
+        val file_path = PlayerInfoCenter.GET_Media_FilePath()
+        consoleLog("isFileExist: file_path:$file_path")
+        if (file_path.isEmpty()) return
+        //检查是否有媒体正在在播放
+        val isAnyMediaOngoing = isAnyMediaOngoing().first
+        consoleLog("isFileExist: isAnyMediaOngoing:$isAnyMediaOngoing")
+        if (isAnyMediaOngoing) {
+            val exist = MediaInfoRetriever.isFileExist(file_path)
+            consoleLog("isFileExist: exist:$exist")
+            if (!exist){
+                //文件不存在
+                showCustomToast("媒体已失效")
+                //清除当前项
+                PlayerSingleton.clearMediaItem()
+                //离开活动
+                finish()
+
+            }
+        }
+
+    }
+    //检查是否有媒体正在在播放并获取链接
+    private fun isAnyMediaOngoing(): Pair<Boolean, String>{
+        //从播放器获取当前媒体状态
+        val (ongoing,currentMediaItem) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+
+        return if (ongoing){
+            val currentMediaUriString = currentMediaItem.toString()
+            Pair(true,currentMediaUriString)
+        }else{
+            Pair(false,"")
+        }
+    }
+
+    //媒体项被清除回调
+    private fun onMediaItemCleared(){
+        showCustomToast("当前播放项已被清除", 3)
+
+        //离开活动
+        finish()
     }
 
 
@@ -1505,7 +1570,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
 
-    //确认关闭操作
+    //确认关闭操作(已不再承担事务清理工作,仅存一个是否保持播放的判断,若无需考虑是否保持播放可直接使用finish())
     @SuppressLint("SourceLockedOrientationActivity")
     private fun exitActivity(){
         //退出前是否先转为竖屏
@@ -1528,7 +1593,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             exitActivity_showController()
 
         }
-
     }
     private fun exitActivity_showController(){
         if (!playerViewModel.state_controllerShowing){
@@ -1743,6 +1807,9 @@ class PlayerActivityNeo: AppCompatActivity(){
             PlayerSingleton.stopBackgroundPlay()
         }
 
+        //检查文件是否存在
+        isFileExist()
+
 
         //状态机(经典代码,别删除)
         /*
@@ -1905,7 +1972,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
         }
     }
-
+    //重写finish()以应用动画(活动内不应主动调用finish()而是使用exitActivity()入口)
     private var useSlideOutAnim = true
     override fun finish() {
         super.finish()
@@ -2846,7 +2913,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun updateScreenParameters(){
         //获取状态栏高度
         if (DeviceInfo.statusBarHeight == 0){
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.rootConstraint)) { _, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
                 DeviceInfo.statusBarHeight = systemBars.top

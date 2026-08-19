@@ -1,0 +1,12 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText" >
+    <item
+        android:id="@+id/MenuAction_use_mini_view_play"
+        android:title="在MiniView中播放" />
+    <item
+        android:id="@+id/MenuAction_use_whole_play_page"
+        android:title="在播放页播放" />
+
+</menu>
