@@ -398,7 +398,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
             ButtonExtractFrame.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                requireContext().showCustomToast("暂不开放此功能,实际上,以后更是打算取消", 3)
+                requireContext().showCustomToast("暂不开放此功能", 3)
             }
 
             //视频信息

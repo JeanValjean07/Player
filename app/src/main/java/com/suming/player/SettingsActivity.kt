@@ -670,7 +670,7 @@ class SettingsActivity: AppCompatActivity() {
     //寻帧间隔
     private fun chooseSeekHandlerGap(gap: Long) {
         ToolVibrate().vibrate(this)
-        SettingsRequestCenter.set_value_seekHandlerGap(this,gap)
+        SettingsRequestCenter.set_value_seekVideo_runnableGapMs(this,gap)
         updateSeekHandlerGapText()
     }
     private fun setSeekHandlerGapByInput(){
@@ -706,7 +706,7 @@ class SettingsActivity: AppCompatActivity() {
             }
             else {
                 //设置寻帧间隔
-                SettingsRequestCenter.set_value_seekHandlerGap(this,gapInput)
+                SettingsRequestCenter.set_value_seekVideo_runnableGapMs(this,gapInput)
                 //界面刷新
                 updateSeekHandlerGapText()
 
@@ -724,7 +724,7 @@ class SettingsActivity: AppCompatActivity() {
     }
     private fun updateSeekHandlerGapText(){
         val ButtonTextSeekHandlerGap = findViewById<TextView>(R.id.ButtonTextSeekHandlerGap)
-        when(val seekHandlerGap = SettingsRequestCenter.get_value_seekHandlerGap(this)){
+        when(val seekHandlerGap = SettingsRequestCenter.get_value_seekVideo_runnableGapMs(this)){
             0L -> ButtonTextSeekHandlerGap.text = "无间隔"
             16L -> ButtonTextSeekHandlerGap.text = "60 Hz"
             12L -> ButtonTextSeekHandlerGap.text = "90 Hz"
@@ -736,7 +736,7 @@ class SettingsActivity: AppCompatActivity() {
     //时间戳刷新间隔
     private fun chooseTimeUpdateGap(gap: Long) {
         ToolVibrate().vibrate(this)
-        SettingsRequestCenter.set_value_timerWindowUpdateGap(this,gap)
+        SettingsRequestCenter.set_value_timeStamp_updateGapMs(this,gap)
         updateTimerUpdateGapText()
     }
     private fun setTimerUpdateGapByInput() {
@@ -772,7 +772,7 @@ class SettingsActivity: AppCompatActivity() {
                 return@setOnClickListener
             }
             else {
-                SettingsRequestCenter.set_value_timerWindowUpdateGap(this,gapInput)
+                SettingsRequestCenter.set_value_timeStamp_updateGapMs(this,gapInput)
                 //界面刷新
                 updateTimerUpdateGapText()
                 dialog.dismiss()
@@ -788,7 +788,7 @@ class SettingsActivity: AppCompatActivity() {
     }
     private fun updateTimerUpdateGapText(){
         val ButtonTextTimerUpdateGap = findViewById<TextView>(R.id.ButtonTextTimerUpdateGap)
-        when(val timerUpdateGap = SettingsRequestCenter.get_value_timerWindowUpdateGap(this)){
+        when(val timerUpdateGap = SettingsRequestCenter.get_value_timeStamp_updateGapMs(this)){
             8L -> ButtonTextTimerUpdateGap.text = "120 Hz"
             12L -> ButtonTextTimerUpdateGap.text = "90 Hz"
             16L -> ButtonTextTimerUpdateGap.text = "60 Hz"
@@ -838,7 +838,7 @@ class SettingsActivity: AppCompatActivity() {
 
     }
     private fun chooseScrollerUpdateGapCore(gap: Long) {
-        SettingsRequestCenter.set_value_syncScrollerRunnableGap(this,gap)
+        SettingsRequestCenter.set_value_syncScroller_runnableGapMs(this,gap)
         updateScrollerUpdateGapText()
     }
     private fun setScrollerUpdateGapByInput() {
@@ -874,7 +874,7 @@ class SettingsActivity: AppCompatActivity() {
                 return@setOnClickListener
             }
             else{
-                SettingsRequestCenter.set_value_syncScrollerRunnableGap(this,gapInput)
+                SettingsRequestCenter.set_value_syncScroller_runnableGapMs(this,gapInput)
                 //界面刷新
                 updateScrollerUpdateGapText()
                 dialog.dismiss()
@@ -890,7 +890,7 @@ class SettingsActivity: AppCompatActivity() {
     }
     private fun updateScrollerUpdateGapText(){
         val ButtonTextScrollerUpdateGap = findViewById<TextView>(R.id.ButtonText_scrollerUpdateGap)
-        val scrollerUpdateGap = SettingsRequestCenter.get_value_syncScrollerRunnableGap(this)
+        val scrollerUpdateGap = SettingsRequestCenter.get_value_syncScroller_runnableGapMs(this)
         //consoleLog("updateScrollerUpdateGapText: $scrollerUpdateGap")
         when(scrollerUpdateGap){
             0L -> ButtonTextScrollerUpdateGap.text = "120 Hz"

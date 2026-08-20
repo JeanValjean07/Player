@@ -294,7 +294,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         lifecycleScope.launch(Dispatchers.IO) {
             //播放区域移动动画
             playerViewModel.PRF_Cache_EnablePlayAreaMove = SettingsRequestCenter.get_PREFS_EnablePlayAreaMoveAnim(context)
-            //播放区域移动动画距离
+            //播放区域移动动画距离计算(或许可以更持久化储存)
             if (playerViewModel.PRF_Cache_EnablePlayAreaMove){
                 if (playerViewModel.PRF_Cache_EnablePlayAreaMove_Distance == 0f){
                     val displayMetrics = context.resources.displayMetrics
@@ -324,11 +324,11 @@ class PlayerActivityNeo: AppCompatActivity(){
             playerViewModel.PREFS_TapJump = SettingsRequestCenter.get_PREFS_EnableTapJump(context)
 
             //视频寻帧间隔
-            value_seekVideo_runnableGapMs = SettingsRequestCenter.get_value_seekHandlerGap(context)
+            value_seekVideo_runnableGapMs = SettingsRequestCenter.get_value_seekVideo_runnableGapMs(context)
             //进度条更新间隔
-            value_syncScroller_runnableGapMs = SettingsRequestCenter.get_value_syncScrollerRunnableGap(context)
+            value_syncScroller_runnableGapMs = SettingsRequestCenter.get_value_syncScroller_runnableGapMs(context)
             //时间戳更新间隔
-            value_timeStamp_updateGapMs = SettingsRequestCenter.get_value_timerWindowUpdateGap(context)
+            value_timeStamp_updateGapMs = SettingsRequestCenter.get_value_timeStamp_updateGapMs(context)
 
         }
 

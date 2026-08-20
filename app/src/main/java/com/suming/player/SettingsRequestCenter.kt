@@ -921,80 +921,82 @@ object SettingsRequestCenter {
         return PREFS_UseOnlySyncFrameWhenSeek == 1
     }
 
-    //连续寻帧间隔
-    private var seekHandlerGap = -1L
-    const val seekHandlerGapName = "seekHandlerGap"
-    fun set_value_seekHandlerGap(context: Context, gap: Long){
+    //连续寻帧间隔(默认值66ms/15Hz)
+    private var value_seekVideo_runnableGapMs = -1L
+    const val value_seekVideo_runnableGapMs_Name = "value_seekVideo_runnableGapMs"
+    fun set_value_seekVideo_runnableGapMs(context: Context, gap: Long){
         initPlayVideoPageSetting(context)
 
         //刷新缓存并写入本地
-        seekHandlerGap = gap
-        PREFS_PlayVideoPage.edit { putLong(seekHandlerGapName, gap) }
+        value_seekVideo_runnableGapMs = gap
+        PREFS_PlayVideoPage.edit { putLong(value_seekVideo_runnableGapMs_Name, gap) }
     }
-    fun get_value_seekHandlerGap(context: Context): Long {
+    fun get_value_seekVideo_runnableGapMs(context: Context): Long {
         initPlayVideoPageSetting(context)
 
         //仅在无缓存时读盘
-        if (seekHandlerGap == -1L) {
-            seekHandlerGap = PREFS_PlayVideoPage.getLong(seekHandlerGapName, -1L)
-            if (seekHandlerGap == -1L) {
-                seekHandlerGap = 0L
-                PREFS_PlayVideoPage.edit { putLong(seekHandlerGapName, 0L) }
+        if (value_seekVideo_runnableGapMs == -1L) {
+            value_seekVideo_runnableGapMs = PREFS_PlayVideoPage.getLong(value_seekVideo_runnableGapMs_Name, -1L)
+            //设置默认值(设为66ms/15Hz)
+            if (value_seekVideo_runnableGapMs == -1L) {
+                value_seekVideo_runnableGapMs = 66L
+                PREFS_PlayVideoPage.edit { putLong(value_seekVideo_runnableGapMs_Name, 66L) }
             }
         }
-
-        return seekHandlerGap
+        return value_seekVideo_runnableGapMs
     }
-    //时间戳刷新间隔(主动刷新)
-    private var timerWindowUpdateGap = -1L
-    const val timerWindowUpdateGapName = "timerWindowUpdateGap"
-    fun set_value_timerWindowUpdateGap(context: Context, gap: Long){
+    //时间戳(被动)刷新间隔(默认值66ms/15Hz)
+    private var value_timeStamp_updateGapMs = -1L
+    const val value_timeStamp_updateGapMs_Name = "value_timeStamp_updateGapMs"
+    fun set_value_timeStamp_updateGapMs(context: Context, gap: Long){
         initPlayVideoPageSetting(context)
 
         //刷新缓存并写入本地
-        timerWindowUpdateGap = gap
-        PREFS_PlayVideoPage.edit { putLong(timerWindowUpdateGapName, gap) }
+        value_timeStamp_updateGapMs = gap
+        PREFS_PlayVideoPage.edit { putLong(value_timeStamp_updateGapMs_Name, gap) }
     }
-    fun get_value_timerWindowUpdateGap(context: Context): Long {
+    fun get_value_timeStamp_updateGapMs(context: Context): Long {
         initPlayVideoPageSetting(context)
 
         //仅在无缓存时读盘
-        if (timerWindowUpdateGap == -1L) {
-            timerWindowUpdateGap = PREFS_PlayVideoPage.getLong(timerWindowUpdateGapName, -1L)
-            if (timerWindowUpdateGap == -1L) {
-                timerWindowUpdateGap = 33L
-                PREFS_PlayVideoPage.edit { putLong(timerWindowUpdateGapName, 33L) }
+        if (value_timeStamp_updateGapMs == -1L) {
+            value_timeStamp_updateGapMs = PREFS_PlayVideoPage.getLong(value_timeStamp_updateGapMs_Name, -1L)
+            //设置默认值(设为66ms/15Hz)
+            if (value_timeStamp_updateGapMs == -1L) {
+                value_timeStamp_updateGapMs = 66L
+                PREFS_PlayVideoPage.edit { putLong(value_timeStamp_updateGapMs_Name, 66L) }
             }
         }
 
-        return timerWindowUpdateGap
+        return value_timeStamp_updateGapMs
     }
-    //进度条刷新间隔(主动刷新)
-    private var syncScrollerRunnableGap = -1L
-    const val syncScrollerRunnableGapName = "syncScrollerRunnableGap"
-    fun get_value_syncScrollerRunnableGap(context: Context):Long{
+    //进度条(主动)刷新间隔(默认值66ms/15Hz)
+    private var value_syncScroller_runnableGapMs = -1L
+    const val value_syncScroller_runnableGapMs_Name = "value_syncScroller_runnableGapMs"
+    fun get_value_syncScroller_runnableGapMs(context: Context):Long{
         initPlayVideoPageSetting(context)
 
         //仅在无缓存时读盘
-        if (syncScrollerRunnableGap == -1L) {
-            syncScrollerRunnableGap = PREFS_PlayVideoPage.getLong(syncScrollerRunnableGapName, -1L)
-            //设置默认值
-            if (syncScrollerRunnableGap == -1L) {
-                syncScrollerRunnableGap = 33L
+        if (value_syncScroller_runnableGapMs == -1L) {
+            value_syncScroller_runnableGapMs = PREFS_PlayVideoPage.getLong(value_syncScroller_runnableGapMs_Name, -1L)
+            //设置默认值(设为66ms/15Hz)
+            if (value_syncScroller_runnableGapMs == -1L) {
+                value_syncScroller_runnableGapMs = 66L
+                PREFS_PlayVideoPage.edit { putLong(value_syncScroller_runnableGapMs_Name, 66L) }
             }
         }
 
-        return syncScrollerRunnableGap
+        return value_syncScroller_runnableGapMs
     }
-    fun set_value_syncScrollerRunnableGap(context: Context, targetValue: Long){
+    fun set_value_syncScroller_runnableGapMs(context: Context, targetValue: Long){
         initPlayVideoPageSetting(context)
 
         //检查数值合法性
         if (targetValue !in 0L..1000L) return
 
         //刷新缓存并写入本地
-        syncScrollerRunnableGap = targetValue
-        PREFS_PlayVideoPage.edit { putLong(syncScrollerRunnableGapName, targetValue) }
+        value_syncScroller_runnableGapMs = targetValue
+        PREFS_PlayVideoPage.edit { putLong(value_syncScroller_runnableGapMs_Name, targetValue) }
 
     }
 
