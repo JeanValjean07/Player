@@ -6,11 +6,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-@Suppress("unused") //"unused"
+@Suppress("unused")
 object PlayerInfoCenter {
 
     //日志
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "PlayerInFoCenter: $msg")
         }
@@ -43,6 +43,12 @@ object PlayerInfoCenter {
     fun updateObservableIsPlaying(isPlaying: Boolean){
         _observableIsPlaying.value = isPlaying
     }
+    //可观察播放器是否死了(IDLE状态)
+    private var _observableIsPlayerIDLE = MutableStateFlow(false)
+    var observableIsPlayerIDLE: StateFlow<Boolean> = _observableIsPlayerIDLE.asStateFlow()
+    fun updateObservableIsPlayerIDLE(isPlayerIDLE: Boolean){
+        _observableIsPlayerIDLE.value = isPlayerIDLE
+    }
 
 
 
@@ -62,6 +68,8 @@ object PlayerInfoCenter {
     //仅能外部后期传入的项
     //设置真实帧率值
     fun SET_Media_ActualFPS(fps:Float){
+        //consoleLog("SET_Media_ActualFPS: $fps")
+
         CURRENT_MediaItemPackage?.video_actualFPS = fps
     }
     //写入cache包

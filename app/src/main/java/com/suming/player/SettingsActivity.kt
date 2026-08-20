@@ -1004,16 +1004,21 @@ class SettingsActivity: AppCompatActivity() {
             .setPositiveButton("确认") { dialog, which ->
                 ToolVibrate().vibrate(this)
 
-                val success = ArtworkFrameManager.delete_artwork(
-                    context = context,
-                    deleteVideo = deleteVideo,
-                    deleteAudio = deleteAudio
-                )
 
-                if (success){
-                    showCustomToast("删除成功", 3)
-                }else{
-                    showCustomToast("删除失败", 3)
+                lifecycleScope.launch(Dispatchers.IO){
+                    val success = ArtworkFrameManager.delete_artwork(
+                        context = context,
+                        deleteVideo = deleteVideo,
+                        deleteAudio = deleteAudio
+                    )
+
+                    withContext(Dispatchers.Main){
+                        if (success){
+                            showCustomToast("删除成功", 3)
+                        }else{
+                            showCustomToast("删除失败", 3)
+                        }
+                    }
                 }
 
                 dialog.dismiss()
@@ -1033,17 +1038,20 @@ class SettingsActivity: AppCompatActivity() {
             .setPositiveButton("确认") { dialog, which ->
                 ToolVibrate().vibrate(this)
 
-                val success = ArtworkFrameManager.delete_artwork_custom(
-                    context = context,
-                    deleteVideo = deleteVideo,
-                    deleteAudio = deleteAudio
-                )
+                lifecycleScope.launch(Dispatchers.IO){
+                    val success = ArtworkFrameManager.delete_artwork_custom(
+                        context = context,
+                        deleteVideo = deleteVideo,
+                        deleteAudio = deleteAudio
+                    )
 
-                if (success){
-                    showCustomToast("删除成功", 3)
-                }
-                else{
-                    showCustomToast("删除失败", 3)
+                    withContext(Dispatchers.Main){
+                        if (success){
+                            showCustomToast("删除成功", 3)
+                        }else{
+                            showCustomToast("删除失败", 3)
+                        }
+                    }
                 }
 
                 dialog.dismiss()

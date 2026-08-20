@@ -518,8 +518,9 @@ class ListManagerFragment: DialogFragment() {
                 }
                 R.id.opt_clear -> {
                     ToolVibrate().vibrate(requireContext())
-                    //停止播放
-                    PlayerSingleton.clearMediaItem()
+
+                    //清除播放项
+                    stopPlaying()
 
                     customDismiss()
 
@@ -527,11 +528,10 @@ class ListManagerFragment: DialogFragment() {
                 }
                 R.id.opt_clear_record -> {
                     ToolVibrate().vibrate(requireContext())
-                    //停止播放
-                    PlayerSingleton.clearMediaItem()
+
                     //清除播放记录
-                    val MediaRecordManager = MediaRecordManager()
-                    MediaRecordManager.clear_MediaInfo(requireContext())
+                    stopPlaying(true)
+
                     //关闭
                     customDismiss()
 
@@ -541,6 +541,18 @@ class ListManagerFragment: DialogFragment() {
             }
         }
         popup.show()
+    }
+
+    //停止播放(可选清除记录)
+    private fun stopPlaying(clearRecord: Boolean = false){
+        //停止播放(仅清除项但播放器在线)
+        PlayerSingleton.clearMediaItem()
+        //清除播放记录
+        if (clearRecord) {
+            //清除播放记录
+            val MediaRecordManager = MediaRecordManager()
+            MediaRecordManager.clear_MediaInfo(requireContext())
+        }
     }
 
     //页签焦点
@@ -826,7 +838,7 @@ class ListManagerFragment: DialogFragment() {
         when (loopMode) {
             ListManagerHelper.LOOP_MODE_ONE -> {
                 ListManagerHelper.setLoopMode(loopMode, requireContext())
-                //设为单集循环时,有必要可自动开始
+                //设为单集循环时,必要时可自动开始
                 PlayerSingleton.checkPlayEndAndRePlay()
             }
             ListManagerHelper.LOOP_MODE_OFF -> {

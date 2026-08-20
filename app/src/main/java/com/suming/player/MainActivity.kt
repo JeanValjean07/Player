@@ -79,7 +79,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Suppress("NewApi","unused") //"unused",
+@Suppress("NewApi","unused")
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
     //连接ViewModel
@@ -1426,6 +1426,8 @@ class MainActivity: AppCompatActivity() {
                     //更新封面帧
                     if (state.contains(ConnectCenter.connector_event_cover_frame_update)){
                         val (targetFilePath, targetMediaId) = ConnectCenter.getCoverFrameUpdateEvent_targetFileInfo()
+
+                        //consoleLog("更新封面帧: $targetFilePath, $targetMediaId")
 
                         main_video_list_adapter.updateCoverForItem(targetFilePath, targetMediaId)
 

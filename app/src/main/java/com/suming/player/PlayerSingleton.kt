@@ -17,6 +17,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -52,7 +53,7 @@ import java.util.Date
 import java.util.Locale
 
 @UnstableApi
-//@Suppress("unused")
+@Suppress("unused")
 object PlayerSingleton {
     //context
     private lateinit var context: Application
@@ -100,6 +101,9 @@ object PlayerSingleton {
     fun getInitPlayer(): ExoPlayer = _player ?: synchronized(this) {
         _player ?: buildPlayer().also { _player = it }
     }.also {
+        //更新播放器状态为非空闲
+        PlayerInfoCenter.updateObservableIsPlayerIDLE(false)
+
         stateLock_isPlayerInitialized = true
         initializationCallbacks.forEach { callback -> callback.invoke() }
         initializationCallbacks.clear()
@@ -165,6 +169,14 @@ object PlayerSingleton {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             onMediaItemChanged(mediaItem)
         }
+        override fun onTracksChanged(tracks: Tracks) {
+            for (trackGroup in tracks.groups) {
+                val format = trackGroup.getTrackFormat(0)
+                val fps = format.frameRate
+                PlayerInfoCenter.SET_Media_ActualFPS(fps)
+                break
+            }
+        }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
             onFatalErrorOccur(error)
@@ -196,11 +208,14 @@ object PlayerSingleton {
 
     private fun onPlayEngineIDLE(){
         //禁止在此处销毁播放器,否则其他监听器全部收不到该事件
+        PlayerInfoCenter.updateObservableIsPlayerIDLE(true)
 
     }
 
     //销毁播放器并关闭媒体会话
     fun stopPlayEngine(){
+        //清理播放项
+        clearMediaItem()
         //销毁播放器
         releasePlayer()
         //重置媒体状态
@@ -223,12 +238,8 @@ object PlayerSingleton {
     }
 
 
-    //获取当前媒体的播放进度
-    fun getEnginCurrentProgress(): Long {
-        return _player?.currentPosition ?: -1
-    }
 
-    //判断传入的链接是否为正在播放的项(核心)//TODO
+    //判断传入的链接是否为正在播放的项(核心)
     fun isthisUriOngoing(uriNeedCheck: Uri): Boolean {
         //从播放核心获取信息
         val MediaInfo_MediaUriStandard = "114514"

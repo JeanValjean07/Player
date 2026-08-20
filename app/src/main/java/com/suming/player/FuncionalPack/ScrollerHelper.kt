@@ -26,6 +26,7 @@ object ScrollerHelper {
 
 
     //定义进度条缩略图的储存位置
+    private var scroller_frame_folder_parent = "Scroller/video/"
     private var scroller_frame_folder = "Scroller/video/${current_uriNumOnly}/"
 
 
@@ -75,6 +76,20 @@ object ScrollerHelper {
     }
 
 
+    //删除进度条截图
+    fun deleteScrollerFrame(context: Context, NUM_ID: Long){
+        //找到scroller_frame_folder_parent下名为NUM_ID的文件夹
+        val parentFolder = File(context.filesDir, scroller_frame_folder_parent)
+        val targetFolder = File(parentFolder, NUM_ID.toString())
+        if (targetFolder.exists()){
+
+            consoleLog("deleteScrollerFrame: 删除进度条截图文件夹 $targetFolder")
+        }else{
+
+            consoleLog("deleteScrollerFrame: 未找到进度条截图文件夹 $targetFolder")
+        }
+
+    }
 
 
 
@@ -248,7 +263,7 @@ object ScrollerHelper {
 
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "ScrollerHelper: $msg")
         }

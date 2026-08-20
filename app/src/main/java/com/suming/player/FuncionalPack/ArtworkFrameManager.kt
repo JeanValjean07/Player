@@ -211,7 +211,7 @@ object ArtworkFrameManager {
 
 
     //删除缩略图
-    fun delete_artwork(context: Context, deleteVideo: Boolean = false, deleteAudio: Boolean = false): Boolean {
+    suspend fun delete_artwork(context: Context, deleteVideo: Boolean = false, deleteAudio: Boolean = false): Boolean {
         initFile(context)
         try{
             if (deleteVideo){
@@ -253,7 +253,7 @@ object ArtworkFrameManager {
         }
     }
     //删除自定义缩略图
-    fun delete_artwork_custom(context: Context, deleteVideo: Boolean = false, deleteAudio: Boolean = false): Boolean {
+    suspend fun delete_artwork_custom(context: Context, deleteVideo: Boolean = false, deleteAudio: Boolean = false): Boolean {
         initFile(context)
         try{
             if (deleteVideo){
@@ -277,6 +277,25 @@ object ArtworkFrameManager {
                 folder.listFiles()?.forEach { file ->
                     if (file.isDirectory) file.deleteRecursively()
                 }
+            }
+
+            return true
+        }catch(e: Exception){
+            consoleLog("删除_artwork失败: ${e.message}")
+
+            return false
+        }
+    }
+    //删除自定义缩略图(指定单个)
+    suspend fun delete_artwork_custom_single_video(context: Context, artwork_media_api_id: Long): Boolean {
+        initFile(context)
+
+        try{
+
+            //找到名为artwork_media_api_id的文件夹
+            val artwork_Frame_Folder = File(artwork_File_path_video, "$artwork_media_api_id")
+            if (artwork_Frame_Folder.isDirectory){
+                artwork_Frame_Folder.deleteRecursively()
             }
 
             return true

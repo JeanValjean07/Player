@@ -3,19 +3,15 @@ package com.suming.player
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
-import android.content.BroadcastReceiver
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.hardware.display.DisplayManager
 import android.media.AudioManager
-import android.media.MediaMetadataRetriever
-import android.media.audiofx.Equalizer
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -25,7 +21,6 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.Editable
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
@@ -68,12 +63,12 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.animation.PathInterpolatorCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.SeekParameters
@@ -84,12 +79,10 @@ import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentEqualizer
 import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentMediaInfo
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerFragmentMoreButton
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerScrollerAdapter
-import com.suming.player.ActivityComponent.PlayerActivity.PlayerScrollerViewModel
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerViewModel
 import com.suming.player.AddonTools.ToolEventBus
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ArtworkCapturer
@@ -124,7 +117,7 @@ import kotlin.math.hypot
 import kotlin.math.pow
 
 @UnstableApi
-@Suppress("NewApi") //"unused",
+@Suppress("NewApi","unused")
 class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -186,9 +179,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var orientationChangeTime = 0L
     private var LastOrientationChangeTime = 0L
 
-    //视频尺寸
-    private var videoSizeWidth = 0
-    private var videoSizeHeight = 0
+
 
     private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
     //空闲定时器
@@ -294,6 +285,10 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //主业务逻辑
         mainBusiness()
+
+
+        startPlayerStateObserver()
+
 
         //缓存需要频繁取用的变量+数值计算
         lifecycleScope.launch(Dispatchers.IO) {
@@ -1119,7 +1114,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     //打开均衡器面板
                     FragmentConnector.fragment_more_button_open_equalizer -> startEqualizerFragment()
                     //清除当前进度条缩略图
-                    FragmentConnector.fragment_more_button_clear_miniature -> clearMiniature()
+                    FragmentConnector.fragment_more_button_clear_miniature -> clearScrollerFrames()
                     //解除亮度控制
                     FragmentConnector.fragment_more_button_unlock_brightness_control -> unlockBrightnessControl()
                     //开启/退出事件
@@ -1131,6 +1126,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //重新绑定播放器视图
                     FragmentConnector.fragment_more_button_bind_play_view -> bindPlayerView()
+                    //删除自定义封面图
+                    FragmentConnector.fragment_more_button_delete_custom_cover -> deleteCustomCover()
                     //立即退出(来源于设置0秒后自动退出)
                     FragmentConnector.fragment_more_button_exit_right_now -> finish()
 
@@ -1377,8 +1374,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
                 Player.STATE_IDLE -> {
                     //consoleLog("onPlaybackStateChanged: STATE_IDLE")
-
-                    onPlayEngineIDLE()
                 }
             }
         }
@@ -1394,14 +1389,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 videoSizeHeight = videoSize.height
             }
         }
-        override fun onTracksChanged(tracks: Tracks) {
-            for (trackGroup in tracks.groups) {
-                val format = trackGroup.getTrackFormat(0)
-                val fps = format.frameRate
-                PlayerInfoCenter.SET_Media_ActualFPS(fps)
-                break
-            }
-        }
+
         //媒体项变更(clearItem时会收到null)
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             //consoleLog("onMediaItemTransition: $mediaItem, $reason")
@@ -1420,6 +1408,24 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private var state_PlayerListenerAdded: Boolean = false
+    //播放状态观察者
+    private fun startPlayerStateObserver(){
+        //目前只观察IDLE状态
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                PlayerInfoCenter.observableIsPlayerIDLE.collect() { idle ->
+                    //false时不操作
+                    if (!idle) return@collect
+                    consoleLog("观察到播放器IDLE状态变更: new idle: $idle")
+
+                    onPlayEngineIDLE()
+
+
+                }
+            }
+        }
+
+    }
     //启动ExoPlayer
     private fun startExoPlayer(){
         //确保播放器已启动(已在类空间内启动过)
@@ -2044,7 +2050,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         ListManagerFragment.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
     }
     //关闭所有DialogFragment
-    fun closeAllDialogFragments(){
+    private fun closeAllDialogFragments(){
         val manager = supportFragmentManager
         val fragments = manager.fragments
         fragments.forEach { fragment ->
@@ -2182,8 +2188,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //清除进度条截图
-    private fun clearMiniature(){
-        //路径变更,需要修改 //TODO
+    private fun clearScrollerFrames(){
+        //获取当前视频ID
+        val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
+        //删除进度条截图
+        ScrollerHelper.deleteScrollerFrame(this, NUM_ID)
     }
     //视频区域抬高动画
     private fun moveArea_playView_Down(){
@@ -2251,7 +2260,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         frameExtractor.startExtraction(videoPath)
 
     }
-    //截屏
+    //截屏(要用到视频尺寸数值)
+    private var videoSizeWidth = 0
+    private var videoSizeHeight = 0
     private fun captureScreenShot(){
         fun generateFileName(): String {
             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
@@ -2372,6 +2383,32 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun updateCoverFrame_publishMessage(file_path:String, media_api_id: Long){
         ConnectCenter.setCoverFrameUpdateEvent_targetFileInfo(file_path, media_api_id)
         ConnectCenter.setState_connector(ConnectCenter.connector_event_cover_frame_update)
+    }
+    private fun deleteCustomCover(){
+        //获取当前视频ID
+        val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
+        val file_path = PlayerInfoCenter.GET_Media_FilePath()
+        if (NUM_ID == 0L || file_path.isEmpty()){
+            showCustomToast("删除失败(媒体信息获取出错)", 3)
+            return
+        }
+        //删除自定义封面图
+        lifecycleScope.launch(Dispatchers.IO) {
+            val success = ArtworkFrameManager.delete_artwork_custom_single_video(
+                this@PlayerActivityNeo,
+                NUM_ID
+            )
+            withContext(Dispatchers.Main){
+                if (success){
+                    //刷新封面
+                    updateCoverFrame_publishMessage(file_path, NUM_ID)
+
+                    showCustomToast("删除成功", 3)
+                }else{
+                    showCustomToast("删除失败", 3)
+                }
+            }
+        }
     }
     //分享视频by uri
     private fun shareVideo(context: Context, videoUri: Uri) {

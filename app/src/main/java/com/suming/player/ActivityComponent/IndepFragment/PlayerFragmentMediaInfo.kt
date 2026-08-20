@@ -83,10 +83,11 @@ import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 @UnstableApi
-@RequiresApi(Build.VERSION_CODES.Q)
+@Suppress("NewApi","unused")
 class PlayerFragmentMediaInfo: DialogFragment() {
     companion object {
         fun newInstance() = PlayerFragmentMediaInfo().apply {
@@ -109,7 +110,6 @@ class PlayerFragmentMediaInfo: DialogFragment() {
     private var videoTitle = ""
     private var videoArtist = ""
     private var videoDate = ""
-
     private var realFpsForShow = 0f
 
 
@@ -325,9 +325,12 @@ class PlayerFragmentMediaInfo: DialogFragment() {
     private fun mainBusiness(){
         lifecycleScope.launch(Dispatchers.IO){
             //读取信息
-            val MediaInfoPack = PlayerInfoCenter.GET_LAST_MediaInfoPack()
+            val MediaInfoPack = PlayerInfoCenter.GET_Media_FullMediaInfoPack()
             if (MediaInfoPack == null){
-                requireContext().showCustomToast("信息读取失败")
+                withContext(Dispatchers.Main){
+                    requireContext().showCustomToast("信息读取失败")
+                }
+
                 dismiss()
                 return@launch
             }
@@ -338,7 +341,10 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             try{
                 retriever.setDataSource(file_path)
             }catch (e: Exception){
-                requireContext().showCustomToast("信息解码失败($e)")
+                withContext(Dispatchers.Main){
+                    requireContext().showCustomToast("信息解码失败($e)")
+                }
+
                 consoleLog("MediaMetadataRetriever() 发生错误：$e")
                 dismiss()
                 return@launch
@@ -359,7 +365,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             try {
                 Fps_capture_MediaMetadataRetriever = captureFps.toFloat()
             }catch(e: Exception){
-
+                consoleLog("MediaMetadataRetriever() 发生错误：$e")
             }
 
             retriever.release()
@@ -374,14 +380,12 @@ class PlayerFragmentMediaInfo: DialogFragment() {
                     if (mime?.startsWith("video/") == true) {
                         //视频轨道
                         Fps_real_int_MediaExtractor = format.getInteger(MediaFormat.KEY_FRAME_RATE)
-                        consoleLog("MediaExtractor() 找到视频轨道，帧率为 $Fps_real_int_MediaExtractor")
-                    }else{
-                        consoleLog("MediaExtractor() 未找到视频轨道")
+                        //consoleLog("MediaExtractor() 找到属于视频的轨道，帧率为 $Fps_real_int_MediaExtractor")
                     }
                 }
-            } catch (e: Exception) {
+            }catch(e: Exception){
                 consoleLog("MediaExtractor() 发生错误：$e")
-            } finally {
+            }finally{
                 extractor.release()
             }
 
@@ -396,7 +400,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             extractor.release()
 
 
-            forceUpdate.value++
+            forceUpdate.intValue++
 
         }
     }
@@ -530,7 +534,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
     fun CircleButton(onClick: () -> Unit,
                      modifier: Modifier = Modifier,
                      size: Dp = 30.dp,
-                     backgroundColor: androidx.compose.ui.graphics.Color = ColorPack.primary,
+                     backgroundColor: Color = ColorPack.primary,
                      gradient: Brush? = null,
                      border: BorderStroke? = null,
                      elevation: Dp = 3.dp,
@@ -626,7 +630,9 @@ class PlayerFragmentMediaInfo: DialogFragment() {
                         Text(text = "\n")
                     }
                     //视频实际帧率
-                    Text(text =  "实际帧率：$realFpsForShow FPS" , color = ColorPack.secondary)
+                    Text(text =  "实际帧率(轨道计算)：$Fps_real_int_MediaExtractor FPS" , color = ColorPack.secondary)
+                    Text(text = "\n")
+                    Text(text =  "实际帧率(播放器回报)：$Fps_real_float_ExoEngin FPS" , color = ColorPack.secondary)
                     Text(text = "\n")
                     Text(text = "视频编码：$videoMimeType", color = ColorPack.secondary)
                     Text(text = "\n")

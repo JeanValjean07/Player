@@ -22,6 +22,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
@@ -43,6 +44,7 @@ import com.suming.player.R
 import com.suming.player.SettingsRequestCenter
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import com.suming.player.ViewWidget.CircleButton
@@ -50,11 +52,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 @UnstableApi
+@Suppress("unused","NewApi")
 @SuppressLint("UseGetLayoutInflater", "InflateParams","SetTextI18n")
-@RequiresApi(Build.VERSION_CODES.Q)
 class PlayerFragmentMoreButton: DialogFragment() {
     companion object {
         fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments =
@@ -431,8 +434,53 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonClearMiniature = view.findViewById<TextView>(R.id.ButtonReCreateThumb)
             ButtonClearMiniature.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                returnFragment(FragmentConnector.fragment_more_button_clear_miniature)
-                dismiss()
+                AlertDialog.Builder(requireContext())
+                    .setTitle("确定删除进度条缩略图吗?")
+                    .setMessage("")
+                    .setPositiveButton("确认") { dialog, which ->
+                        ToolVibrate().vibrate(requireContext())
+
+                        returnFragment(FragmentConnector.fragment_more_button_clear_miniature)
+
+                        customDismiss()
+
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("取消") { dialog, which ->
+                        ToolVibrate().vibrate(requireContext())
+
+                        dialog.dismiss()
+                    }
+                    .setCancelable(true)
+                    .show()
+
+
+            }
+            //删除自定义封面图
+            val ButtonDeleteCustomCover = view.findViewById<TextView>(R.id.ButtonDeleteCustomCover)
+            ButtonDeleteCustomCover.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle("确定删除自定义封面吗?")
+                    .setMessage("")
+                    .setPositiveButton("确认") { dialog, which ->
+                        ToolVibrate().vibrate(requireContext())
+
+                        returnFragment(FragmentConnector.fragment_more_button_delete_custom_cover)
+
+                        customDismiss()
+
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("取消") { dialog, which ->
+                        ToolVibrate().vibrate(requireContext())
+
+                        dialog.dismiss()
+                    }
+                    .setCancelable(true)
+                    .show()
+
             }
             //解除亮度控制
             val ButtonUnBindBrightness = view.findViewById<TextView>(R.id.ButtonUnBindBrightness)
@@ -594,13 +642,21 @@ class PlayerFragmentMoreButton: DialogFragment() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.LoopMode_ONE -> {
-                    chooseLoopMode("ONE"); true
+                    chooseLoopMode("ONE")
+                    //设为单集循环时,必要时可自动开始
+                    PlayerSingleton.checkPlayEndAndRePlay()
+
+                    true
                 }
                 R.id.LoopMode_ALL -> {
-                    chooseLoopMode("ALL"); true
+                    chooseLoopMode("ALL")
+
+                    true
                 }
                 R.id.LoopMode_OFF -> {
-                    chooseLoopMode("OFF"); true
+                    chooseLoopMode("OFF")
+
+                    true
                 }
                 else -> true
             }
@@ -887,7 +943,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
         }
     }
-    fun getStatusBarHeightFromView(view: View): Int {
+    private fun getStatusBarHeightFromView(view: View): Int {
         val rect = Rect()
         view.getWindowVisibleDisplayFrame(rect)
         return rect.top
