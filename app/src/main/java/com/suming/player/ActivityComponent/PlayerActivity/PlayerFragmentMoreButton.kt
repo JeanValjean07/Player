@@ -498,6 +498,20 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 requireContext().showCustomToast("暂不开放此功能", 3)
             }
 
+            //保持屏幕常亮
+            val SC_KeepScreenOn = view.findViewById<SwitchCompat>(R.id.SC_KeepScreenOn)
+            SC_KeepScreenOn.isChecked = SettingsRequestCenter.GET_PRF_KeepScreenOn(requireContext())
+            SC_KeepScreenOn.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+
+                //修改设置
+                SettingsRequestCenter.SET_PRF_KeepScreenOn(requireContext(), SC_KeepScreenOn.isChecked)
+                //发回刷新消息
+                returnFragment(FragmentConnector.fragment_more_button_update_keep_screen_on)
+
+                customDismiss()
+            }
+
             //视频信息
             val ButtonVideoInfo = view.findViewById<TextView>(R.id.buttonVideoInfo)
             ButtonVideoInfo.setOnClickListener {

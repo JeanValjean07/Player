@@ -323,6 +323,9 @@ class PlayerActivityNeo: AppCompatActivity(){
             playerViewModel.PREFS_LinkScroll = SettingsRequestCenter.get_PREFS_EnableLinkScroll(context)
             playerViewModel.PREFS_TapJump = SettingsRequestCenter.get_PREFS_EnableTapJump(context)
 
+            //下滑距离(50dp转px)
+            playerViewModel.value_scrollDownExitDistance = dp2px(50f)
+
             //视频寻帧间隔
             value_seekVideo_runnableGapMs = SettingsRequestCenter.get_value_seekVideo_runnableGapMs(context)
             //进度条更新间隔
@@ -868,7 +871,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         if (touchCenter) {
                             state_RootCardClosing = true
                             touchCenterDistance += distanceY
-                            if (touchCenterDistance < -300) {
+                            if (touchCenterDistance < -playerViewModel.value_scrollDownExitDistance) {
                                 touchState_need_exit = true
                                 //振动:仅一次
                                 if (!touchState_need_exit_vibrated) {
@@ -1136,7 +1139,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                     FragmentConnector.fragment_more_button_delete_custom_cover -> deleteCustomCover()
                     //立即退出(来源于设置0秒后自动退出)
                     FragmentConnector.fragment_more_button_exit_right_now -> finish()
-
+                    //刷新屏幕常亮状态
+                    FragmentConnector.fragment_more_button_update_keep_screen_on -> updateKeepScreenOn()
                 }
             }
             //播放列表
@@ -1323,7 +1327,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         setNewMediaItem(uri)
 
         //开启屏幕常量
-        rootConstraint.keepScreenOn = true
+        setKeepScreenOn(true)
     }
     //连接正在播放的媒体
     private fun connectCurrentMedia(){
@@ -1509,7 +1513,13 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //更新屏幕常亮状态
     private fun updateKeepScreenOn(){
-        rootConstraint.keepScreenOn = PlayerSingleton.GET_STE_isNowPlaying()
+        val keepOn = SettingsRequestCenter.GET_PRF_KeepScreenOn(context)
+        if (keepOn){
+            rootConstraint.keepScreenOn = PlayerSingleton.GET_STE_isNowPlaying()
+        }else{
+            rootConstraint.keepScreenOn = false
+        }
+
     }
 
     //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
@@ -2045,6 +2055,29 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
+    //控制屏幕常量
+    private fun setKeepScreenOn(on: Boolean){
+        if (on){
+            val continueOn = SettingsRequestCenter.GET_PRF_KeepScreenOn(context)
+            if (continueOn){
+                rootConstraint.keepScreenOn = true
+            }else{
+                rootConstraint.keepScreenOn = false
+            }
+        }else{
+            //关闭屏幕常亮
+            rootConstraint.keepScreenOn = false
+        }
+
+    }
+    private fun updateKeepScreenOnState(){
+        val isPlaying = PlayerSingleton.GET_STE_isNowPlaying()
+        if (isPlaying){
+            setKeepScreenOn(true)
+        }else{
+            setKeepScreenOn(false)
+        }
+    }
 
     //启动更多操作面板
     private fun startMoreButtonFragment(){
@@ -2648,7 +2681,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         PlayerSingleton.pausePlay()
 
         //关闭屏幕常量
-        rootConstraint.keepScreenOn = false
+        setKeepScreenOn(false)
 
         //关闭本地界面更新
         stopVideoTimeSync()
@@ -2660,7 +2693,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         PlayerSingleton.continuePlay(need_requestFocus)
 
         //开启屏幕常量
-        rootConstraint.keepScreenOn = true
+        setKeepScreenOn(true)
 
         //开启本地界面更新
         startScrollerSync()

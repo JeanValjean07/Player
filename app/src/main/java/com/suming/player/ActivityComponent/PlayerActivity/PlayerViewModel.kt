@@ -103,6 +103,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     val PAGE_TYPE_NEO = "Neo"
     var state_player_type = PAGE_UNDEFINED
 
+    //下滑距离(单位需要转为px)(给个默认值200px)
+    var value_scrollDownExitDistance: Int = 200
+
 
 
     //PRF Cache 设置项缓存

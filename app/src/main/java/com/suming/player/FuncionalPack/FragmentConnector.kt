@@ -45,6 +45,8 @@ object FragmentConnector {
     const val fragment_more_button_sys_share_video = "fragment_more_button_sys_share_video"  //使用系统分享面板
     const val fragment_more_button_exit_right_now = "fragment_more_button_exit_right_now"  //立即退出(来源于设置0秒后自动退出)
     const val fragment_more_button_delete_custom_cover = "fragment_more_button_delete_custom_cover"  //删除自定义封面图
+    const val fragment_more_button_update_keep_screen_on = "fragment_more_button_update_keep_screen_on"  //刷新屏幕常亮状态
+
 
 
     //播放列表面板

@@ -813,6 +813,29 @@ object SettingsRequestCenter {
         }
         return PREFS_PlayPageType
     }
+    //保持界面常亮
+    private var PRF_KeepScreenOn = -1
+    const val PRF_KeepScreenOn_Name = "PRF_KeepScreenOn"
+    fun SET_PRF_KeepScreenOn(context: Context, enable: Boolean){
+        initPlayVideoPageSetting(context)
+
+        PRF_KeepScreenOn = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt(PRF_KeepScreenOn_Name, if (enable) 1 else 0) }
+
+    }
+    fun GET_PRF_KeepScreenOn(context: Context): Boolean{
+        initPlayVideoPageSetting(context)
+
+        if (PRF_KeepScreenOn == -1){
+            PRF_KeepScreenOn = PREFS_PlayVideoPage.getInt(PRF_KeepScreenOn_Name, -1)
+            if (PRF_KeepScreenOn == -1){
+                PRF_KeepScreenOn = 1
+                PREFS_PlayVideoPage.edit { putInt(PRF_KeepScreenOn_Name, 1) }
+            }
+        }
+
+        return PRF_KeepScreenOn == 1
+    }
 
 
     //进度条相关设置
