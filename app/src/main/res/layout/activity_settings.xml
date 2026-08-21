@@ -1043,7 +1043,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="若开启，滚动进度条时，可显示帧数减少，但寻帧速度加快。若关闭，可显示更多帧数，但寻帧速度变慢。若没有精确定位视频中的任意帧的需求，请开启此开关。若有精确定位需求，专业视频剪辑软件是您更好的选择。"
+                            android:text="若开启，滚动进度条时，可显示帧数减少，但寻帧速度加快。关闭时，根据滚动速度自动切换寻帧模式。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  选单：时间戳被动更新间隔  -->

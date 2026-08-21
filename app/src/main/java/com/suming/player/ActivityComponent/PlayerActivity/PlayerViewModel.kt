@@ -81,21 +81,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
 
 
-    var statusBarHeight = 0
 
 
-
-
-
-    var allowRecord_wasPlaying: Boolean = true
-
+    //上次是否在播放(进度条控制器专用)
     var wasPlaying: Boolean = false
-
-
-
-
-
-
 
     //标记播放器类型：传统Oro 或 新晋Neo
     val PAGE_UNDEFINED = ""
