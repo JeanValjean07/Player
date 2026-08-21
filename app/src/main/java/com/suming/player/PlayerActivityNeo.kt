@@ -631,6 +631,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //暂停/继续播放
             val PauseButton = findViewById<CircleButton>(R.id.ButtonPause)
             PauseButton.setOnClickListener {
+                //控制播放
                 if (player.isPlaying) {
                     scroller.stopScroll()
                     recessPlay()
@@ -649,6 +650,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                         notice("继续播放", 2000)
                     }
                 }
+                //确保播放区域在普通位置
+                removeFragmentCount()
             }
             //切换横屏
             val ButtonLandscapeButton = findViewById<CircleButton>(R.id.ButtonLandscape)
@@ -688,6 +691,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 this@PlayerActivityNeo,
                 object : GestureDetector.SimpleOnGestureListener() {
                     override fun onDoubleTap(e: MotionEvent): Boolean {
+                        //控制播放
                         if (player.isPlaying) {
                             recessPlay()
                             stopScrollerSync()
@@ -704,13 +708,20 @@ class PlayerActivityNeo: AppCompatActivity(){
                                 updateButtonState()
                             }
                         }
+                        //确保播放区域在普通位置
+                        removeFragmentCount()
+
                         return true
                     }
                     override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
                         if (ACTION_POINTER_DOWN) {
                             return true
                         }
+                        //触发控件显示变更
                         changeBackgroundColor()
+                        //确保播放区域在普通位置
+                        removeFragmentCount()
+
                         return true
                     }
                     override fun onLongPress(e: MotionEvent) {
@@ -726,12 +737,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         ToolVibrate().vibrate(this@PlayerActivityNeo)
                         super.onLongPress(e)
                     }
-                    override fun onScroll(
-                        e1: MotionEvent?,
-                        e2: MotionEvent,
-                        distanceX: Float,
-                        distanceY: Float
-                    ): Boolean {
+                    override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float):Boolean {
                         if (touchLeft) {
                             //点击区域功能提示:仅一次
                             if (!touchState_left_noticed) {
@@ -1609,8 +1615,11 @@ class PlayerActivityNeo: AppCompatActivity(){
     //确认关闭操作(已不再承担事务清理工作,仅存一个是否保持播放的判断,若无需考虑是否保持播放可直接使用finish())
     @SuppressLint("SourceLockedOrientationActivity")
     private fun exitActivity(){
+        exitActivity_showController()
+    }
+    private fun exitActivity_recOrientation(){
         //退出前是否先转为竖屏
-        val switchPortrait = SettingsRequestCenter.get_PREFS_EnsurePortraitWhenExit(this@PlayerActivityNeo)
+        val switchPortrait = SettingsRequestCenter.GET_PRF_SwitchPortrait_whenExit(this@PlayerActivityNeo)
         if (switchPortrait){
             val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             if (isLandscape){
@@ -1619,14 +1628,16 @@ class PlayerActivityNeo: AppCompatActivity(){
                 setOrientation_PORTRAIT()
             }else{
                 //确保控件显示时才能退出
-                exitActivity_showController()
-
+                //exitActivity_showController()
+                exitActivity_ensure()
             }
         }else{
             //退出前无需转为竖屏
 
             //确保控件显示时才能退出
-            exitActivity_showController()
+            //exitActivity_showController()
+
+            exitActivity_ensure()
 
         }
     }
@@ -1644,7 +1655,9 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         }else{
             //确认退出
-            exitActivity_ensure()
+            //exitActivity_ensure()
+
+            exitActivity_recOrientation()
 
         }
     }
@@ -2083,7 +2096,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun onFragmentOpen(){
         //增加计数
         fragment_count += 1
-        //consoleLog("计数增加。当前Fragment计数：$fragment_count")
+        consoleLog("计数增加。当前Fragment计数：$fragment_count")
         //仅在数量为0时才执行
         if (fragment_count > 0){
             //关闭被控组件
@@ -2095,8 +2108,12 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun onFragmentClose(){
         //减少计数
+        if (fragment_count <= 0){
+            fragment_count = 0
+            return
+        }
         fragment_count -= 1
-        //consoleLog("计数减少。当前Fragment计数：$fragment_count")
+        consoleLog("计数减少。当前Fragment计数：$fragment_count")
         if (fragment_count <= 0){
             //开启被控组件
             startScrollerSync()
@@ -2105,6 +2122,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             moveArea_playView_Down()
         }
     }
+    private fun removeFragmentCount(){
+        fragment_count = 1
+        onFragmentClose()
+    } //主动置0并触发onFragmentClose
 
     //退出动作决策程序(经典代码,别删除)
     /*
@@ -2874,39 +2895,69 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (isLandscape){
             //横屏
 
-            //控件层参数
-            ViewCompat.setFitsSystemWindows(controllerLayer, false)
+            //设置控件层铺满屏幕顶部
+            ViewCompat.setFitsSystemWindows(controllerLayer, true)
             controllerLayer.requestLayout()
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            //其他设置
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R){
+                //动态调整布局内边距
                 ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
                     val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
                     controllerLayer.updatePadding(top = systemBars.top)
 
-                    WindowInsetsCompat.CONSUMED }
+                    WindowInsetsCompat.CONSUMED
+                }
+                //监听状态栏变化
                 window.decorView.post { window.insetsController?.let { controller ->
                     controller.hide(WindowInsets.Type.statusBars())
                     controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 } }
-                //三星专用:显示到挖空区域
+                //显示到挖孔区域
                 window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            } else {
-                @Suppress("DEPRECATION")
-                window.decorView.systemUiVisibility = (
-                        View.SYSTEM_UI_FLAG_FULLSCREEN
-                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        )
+            }else{
+                //设置全屏显示相关行为
+                if (isDarkTheme){
+                    //恢复默认行为
+                    window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                                    //隐藏状态栏
+                                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                                    //设置状态栏可短暂划出
+                                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                                    //将内容显示到状态栏下方
+                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+
+                            )
+
+                }else{
+                    //恢复默认行为
+                    window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                                    //隐藏状态栏
+                                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                                    //设置状态栏可短暂划出
+                                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                                    //将内容显示到状态栏下方
+                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                    //设置状态栏字体颜色
+                                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+
+                            )
+                }
             }
         }else{
             //竖屏
 
-            //控件层参数
+            //设置控件层不铺满屏幕顶部
             ViewCompat.setFitsSystemWindows(controllerLayer, true)
             controllerLayer.requestLayout()
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            //其他设置
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
                 ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
                     val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
@@ -2917,12 +2968,39 @@ class PlayerActivityNeo: AppCompatActivity(){
                 window.decorView.post { window.insetsController?.let { controller ->
                     controller.show(WindowInsets.Type.statusBars())
                     controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_DEFAULT
-                } }
-                //三星专用:显示到挖空区域
+                }
+                }
+                //显示到挖孔区域
                 window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }else{
-                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+                //设置全屏显示相关行为
+                if (isDarkTheme){
+                    //恢复默认行为
+                    window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                                    //将内容显示到状态栏下方(不隐藏状态栏)
+                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN //or
+                                    //设置状态栏字体颜色
+                                    //View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+
+                            )
+
+                }else{
+                    //恢复默认行为
+                    window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                                    //将内容显示到状态栏下方(不隐藏状态栏)
+                                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                    //设置状态栏字体颜色
+                                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+
+                            )
+                }
             }
+
+
         }
     }
     //刷新按钮状态

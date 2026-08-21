@@ -5,7 +5,7 @@
     android:id="@+id/out_area"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
+    android:fitsSystemWindows="false"
     android:background="@android:color/transparent"
     tools:ignore="HardcodedText" >
     <androidx.cardview.widget.CardView
@@ -61,83 +61,90 @@
                         android:textSize="20sp"
                         android:textColor="@color/HeadText"
                         />
-                    <!-- 占位 -->
-                    <View
+
+                    <HorizontalScrollView
                         android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"/>
-                    <!-- 循环模式 -->
-                    <androidx.cardview.widget.CardView
-                        android:id="@+id/ButtonCardLoopMode"
-                        android:layout_width="wrap_content"
-                        android:layout_height="25dp"
-                        android:layout_marginEnd="10dp"
-                        android:layout_gravity="center"
-                        android:backgroundTint="@color/SecondaryColorPack_CardButtonBackground"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:cardElevation="2dp"
-                        app:cardCornerRadius="10dp">
+                        android:layout_height="50dp"
+                        android:scrollbars="none"
+                        android:layout_weight="1">
                         <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="10dp"
-                            android:layout_marginEnd="10dp"
-                            android:orientation="horizontal"
-                            tools:ignore="TooDeepLayout">
-                            <TextView
-                                android:id="@+id/ButtonTextLoopMode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="50dp"
+                            android:layout_gravity="end"
+                            android:orientation="horizontal">
+                            <!-- 循环模式 -->
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/ButtonCardLoopMode"
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_marginStart="5dp"
-                                android:gravity="center"
-                                android:text="加载中"
-                                android:textColor="@color/HeadText"
-                                android:textSize="11sp" />
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
+                                android:layout_height="25dp"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginEnd="10dp"
                                 android:layout_gravity="center"
-                                android:padding="2dp"
-                                android:backgroundTint="@android:color/transparent"
-                                android:scaleType="centerCrop"
-                                android:src="@drawable/ic_setting_arrow_down"
-                                tools:ignore="ContentDescription" />
+                                android:backgroundTint="@color/SecondaryColorPack_CardButtonBackground"
+                                app:cardElevation="2dp"
+                                app:cardCornerRadius="10dp">
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginEnd="10dp"
+                                    android:orientation="horizontal"
+                                    tools:ignore="TooDeepLayout">
+                                    <TextView
+                                        android:id="@+id/ButtonTextLoopMode"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="match_parent"
+                                        android:layout_marginStart="5dp"
+                                        android:gravity="center"
+                                        android:text="加载中"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp" />
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:padding="2dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_setting_arrow_down"
+                                        tools:ignore="ContentDescription" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                            <!-- 按钮：更多选项 -->
+                            <com.suming.player.ViewWidget.CircleButton
+                                android:id="@+id/ButtonMore"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:src="@drawable/ic_general_more_opt"
+                                android:layout_gravity="center"
+                                app:buttonSize="50dp"
+                                android:contentDescription="停止播放并移除底部播放卡片"
+                                app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
+                                app:shadowOffset="4dp"
+                                app:circlePadding="100dp"
+                                app:iconPadding="150dp"
+                                app:shadowRadius="8dp"
+                                app:shadowColor="#33000000"
+                                />
+                            <!-- 按钮：页面锁定 -->
+                            <com.suming.player.ViewWidget.CircleButton
+                                android:id="@+id/ButtonLock"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:layout_marginEnd="5dp"
+                                android:src="@drawable/ic_more_button_lock_off"
+                                android:layout_gravity="center"
+                                app:iconPadding="120dp"
+                                app:circlePadding="100dp"
+                                app:buttonSize="50dp"
+                                app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
+                                app:shadowOffset="4dp"
+                                app:shadowRadius="8dp"
+                                app:shadowColor="#33000000"
+                                />
                         </LinearLayout>
-                    </androidx.cardview.widget.CardView>
-                    <!-- 按钮：更多选项 -->
-                    <com.suming.player.ViewWidget.CircleButton
-                        android:id="@+id/ButtonMore"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:src="@drawable/ic_general_more_opt"
-                        android:layout_gravity="center"
-                        app:buttonSize="50dp"
-                        android:contentDescription="停止播放并移除底部播放卡片"
-                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
-                        app:shadowOffset="4dp"
-                        app:circlePadding="100dp"
-                        app:iconPadding="150dp"
-                        app:shadowRadius="8dp"
-                        app:shadowColor="#33000000"
-                        />
-                    <!-- 按钮：页面锁定 -->
-                    <com.suming.player.ViewWidget.CircleButton
-                        android:id="@+id/ButtonLock"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginEnd="5dp"
-                        android:src="@drawable/ic_more_button_lock_off"
-                        android:layout_gravity="center"
-                        app:iconPadding="120dp"
-                        app:circlePadding="100dp"
-                        app:buttonSize="50dp"
-                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
-                        app:shadowOffset="4dp"
-                        app:shadowRadius="8dp"
-                        app:shadowColor="#33000000"
-                        />
+                    </HorizontalScrollView>
+
                 </LinearLayout>
                 <!-- 横滑滚动页签 + 当前列表 -->
                 <androidx.constraintlayout.widget.ConstraintLayout

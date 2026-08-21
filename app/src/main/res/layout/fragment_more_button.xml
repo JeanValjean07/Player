@@ -5,7 +5,7 @@
     android:id="@+id/out_area"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
+    android:fitsSystemWindows="false"
     android:background="@android:color/transparent"
     tools:ignore="HardcodedText,UnusedAttribute,ContentDescription,TooManyViews" >
     <androidx.cardview.widget.CardView
@@ -74,61 +74,71 @@
                         android:layout_marginTop="10dp"
                         android:textColor="@color/HeadText"
                         />
-                    <View
+
+                    <HorizontalScrollView
                         android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"/>
-                    <!-- 按钮：提取帧 -->
-                    <ImageButton
-                        android:id="@+id/buttonExtractFrame"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:layout_gravity="center"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_more_button_optimize"
-                        tools:ignore="ContentDescription" />
-                    <!-- 按钮：回到起始 -->
-                    <ImageButton
-                        android:id="@+id/buttonBackToStart"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:layout_gravity="center"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_more_button_back_to_start"
-                        tools:ignore="ContentDescription" />
-                    <!-- 按钮：播放列表 -->
-                    <ImageButton
-                        android:id="@+id/ButtonPlayList"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:layout_gravity="center"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_more_button_list"
-                        tools:ignore="ContentDescription" />
-                    <!-- 按钮：截图 -->
-                    <ImageButton
-                        android:id="@+id/buttonCapture"
-                        android:layout_width="35dp"
-                        android:layout_height="35dp"
-                        android:layout_gravity="center"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_more_button_capture"
-                        tools:ignore="ContentDescription" />
-                    <!-- 按钮：页面锁定 -->
-                    <ImageButton
-                        android:id="@+id/buttonLock"
-                        android:layout_width="41dp"
-                        android:layout_height="41dp"
-                        android:layout_marginEnd="10dp"
-                        android:layout_gravity="center"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_more_button_lock_off"
-                        tools:ignore="ContentDescription" />
+                        android:layout_height="50dp"
+                        android:scrollbars="none"
+                        android:layout_weight="1">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="50dp"
+                            android:layout_gravity="end"
+                            android:orientation="horizontal">
+                            <!-- 按钮：提取帧 -->
+                            <ImageButton
+                                android:id="@+id/buttonExtractFrame"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:layout_gravity="center"
+                                android:backgroundTint="@android:color/transparent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_more_button_optimize"
+                                tools:ignore="ContentDescription" />
+                            <!-- 按钮：回到起始 -->
+                            <ImageButton
+                                android:id="@+id/buttonBackToStart"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:layout_gravity="center"
+                                android:backgroundTint="@android:color/transparent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_more_button_back_to_start"
+                                tools:ignore="ContentDescription" />
+                            <!-- 按钮：播放列表 -->
+                            <ImageButton
+                                android:id="@+id/ButtonPlayList"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:layout_gravity="center"
+                                android:backgroundTint="@android:color/transparent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_more_button_list"
+                                tools:ignore="ContentDescription" />
+                            <!-- 按钮：截图 -->
+                            <ImageButton
+                                android:id="@+id/buttonCapture"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:layout_gravity="center"
+                                android:backgroundTint="@android:color/transparent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_more_button_capture"
+                                tools:ignore="ContentDescription" />
+                            <!-- 按钮：页面锁定 -->
+                            <ImageButton
+                                android:id="@+id/buttonLock"
+                                android:layout_width="41dp"
+                                android:layout_height="41dp"
+                                android:layout_marginEnd="10dp"
+                                android:layout_gravity="center"
+                                android:backgroundTint="@android:color/transparent"
+                                android:scaleType="centerCrop"
+                                android:src="@drawable/ic_more_button_lock_off"
+                                tools:ignore="ContentDescription" />
+                        </LinearLayout>
+                    </HorizontalScrollView>
+
                 </LinearLayout>
             </FrameLayout>
 

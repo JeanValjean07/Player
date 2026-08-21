@@ -233,7 +233,7 @@ class MainActivity: AppCompatActivity() {
     //注册界面控件
     private fun register(){
         lifecycleScope.launch (Dispatchers.Main) {
-            delay(1000)
+            delay(300)
 
             //按钮：指南
             val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)

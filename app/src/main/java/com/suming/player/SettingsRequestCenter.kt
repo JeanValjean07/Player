@@ -718,32 +718,40 @@ object SettingsRequestCenter {
         return PREFS_DisableFragmentGesture == 1
     }
     //退出时确保是竖屏(默认设置区分设备dpi)
-    private var PREFS_EnsurePortraitWhenExit = -1
-    fun set_PREFS_EnsurePortraitWhenExit(enable: Boolean){
-        PREFS_EnsurePortraitWhenExit = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_EnsurePortraitWhenExit", if (enable) 1 else 0) }
+    private var PRF_SwitchPortrait_whenExit = -1
+    const val PRF_SwitchPortrait_whenExit_Name = "PRF_SwitchPortrait_whenExit"
+    fun SET_PRF_SwitchPortrait_whenExit(enable: Boolean){
+        //写入缓存和清单
+        PRF_SwitchPortrait_whenExit = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt(PRF_SwitchPortrait_whenExit_Name, if (enable) 1 else 0) }
     }
-    fun get_PREFS_EnsurePortraitWhenExit(context: Context): Boolean {
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayVideoPage_initialized) {
-            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
-            state_PREFS_PlayVideoPage_initialized = true
-        }
-        //确保配置项已被读取过
-        if (PREFS_EnsurePortraitWhenExit == -1) {
-            PREFS_EnsurePortraitWhenExit = PREFS_PlayVideoPage.getInt("PREFS_EnsurePortraitWhenExit", -1)
-            if (PREFS_EnsurePortraitWhenExit == -1) {
+    fun GET_PRF_SwitchPortrait_whenExit(context: Context): Boolean {
+        initPlayVideoPageSetting(context)
+
+        //仅在无缓存时读取
+        if (PRF_SwitchPortrait_whenExit == -1) {
+            PRF_SwitchPortrait_whenExit = PREFS_PlayVideoPage.getInt(PRF_SwitchPortrait_whenExit_Name, -1)
+            if (PRF_SwitchPortrait_whenExit == -1) {
+                //默认不开启
+                PREFS_PlayVideoPage.edit { putInt(PRF_SwitchPortrait_whenExit_Name, 0) }
+                PRF_SwitchPortrait_whenExit = 0
+
+                //默认值根据是否为平板选择
+                /*
                 val isDeviceTablet = isDeviceTablet(context)
                 if (isDeviceTablet){
-                    PREFS_PlayVideoPage.edit { putInt("PREFS_EnsurePortraitWhenExit", 0) }
-                    PREFS_EnsurePortraitWhenExit = 0
+                    PREFS_PlayVideoPage.edit { putInt(PRF_SwitchPortrait_whenExit_Name, 0) }
+                    PRF_SwitchPortrait_whenExit = 0
                 }else{
-                    PREFS_PlayVideoPage.edit { putInt("PREFS_EnsurePortraitWhenExit", 1) }
-                    PREFS_EnsurePortraitWhenExit = 1
+                    PREFS_PlayVideoPage.edit { putInt(PRF_SwitchPortrait_whenExit_Name, 1) }
+                    PRF_SwitchPortrait_whenExit = 1
                 }
+
+                 */
             }
         }
-        return PREFS_EnsurePortraitWhenExit == 1
+
+        return PRF_SwitchPortrait_whenExit == 1
     }
     private fun isDeviceTablet(context: Context): Boolean{
         val displayMetrics = context.resources.displayMetrics

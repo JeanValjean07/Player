@@ -269,11 +269,12 @@ class SettingsActivity: AppCompatActivity() {
                 SettingsRequestCenter.set_PREFS_DisableFragmentGesture(isChecked)
             }
             //退出播放页时确保竖屏
-            val switch_EnsurePortraitWhenExit = findViewById<SwitchCompat>(R.id.EnsurePortraitWhenExit)
-            switch_EnsurePortraitWhenExit.isChecked = SettingsRequestCenter.get_PREFS_EnsurePortraitWhenExit(this@SettingsActivity)
-            switch_EnsurePortraitWhenExit.setOnCheckedChangeListener { _, isChecked ->
+            val SC_SwitchPortrait_whenExit = findViewById<SwitchCompat>(R.id.EnsurePortraitWhenExit)
+            SC_SwitchPortrait_whenExit.isChecked = SettingsRequestCenter.GET_PRF_SwitchPortrait_whenExit(this@SettingsActivity)
+            SC_SwitchPortrait_whenExit.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
-                SettingsRequestCenter.set_PREFS_EnsurePortraitWhenExit(isChecked)
+
+                SettingsRequestCenter.SET_PRF_SwitchPortrait_whenExit(isChecked)
             }
             //启用播放区域移动动画
             val switch_EnablePlayAreaMoveAnim = findViewById<SwitchCompat>(R.id.EnablePlayAreaMoveAnim)

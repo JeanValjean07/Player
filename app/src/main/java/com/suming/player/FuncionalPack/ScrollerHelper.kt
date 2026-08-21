@@ -125,7 +125,7 @@ object ScrollerHelper {
             consoleLog("checkRetrieverState: 数据源改变,需要重设")
             setDataSource(absolutePath)
         }else{
-            consoleLog("checkRetrieverState: 数据源未改变,无需重设 absolutePath ${absolutePath} retriever_current_source $retriever_current_source")
+            consoleLog("checkRetrieverState: 数据源未改变,无需重设 absolutePath $absolutePath retriever_current_source $retriever_current_source")
         }
     }
 

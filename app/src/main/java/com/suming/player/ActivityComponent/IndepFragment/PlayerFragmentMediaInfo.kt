@@ -71,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
@@ -79,9 +80,11 @@ import androidx.media3.common.util.UnstableApi
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -113,41 +116,131 @@ class PlayerFragmentMediaInfo: DialogFragment() {
     private var realFpsForShow = 0f
 
 
-    @Suppress("DEPRECATION")
+
     override fun onStart() {
         super.onStart()
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+        //初始化显示
+        initDisplay()
+    }
 
-            //横屏时隐藏状态栏
+    @Suppress("DEPRECATION")
+    private fun initDisplay(){
+        //获取window
+        val window = dialog?.window ?: return
+        //检查横竖屏状态
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //检查深色模式
+        val isDarkMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+
+        //执行通用设置
+        //设置状态栏背景为透明(否则有色块跟随动画飞出)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        //设置背景压暗幅度
+        window.setDimAmount(0.1f)
+
+        //执行绑定屏幕方向的设置
+        if (isLandscape){
+            //横屏
+
+            //设置进场动画
+            window.setWindowAnimations(R.style.DialogSlideInOutHorizontal)
+
+
+            //执行状态栏设置
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                ViewCompat.setOnApplyWindowInsetsListener(dialog?.window?.decorView ?: return) { _, _ -> WindowInsetsCompat.CONSUMED }
-                //三星专用:显示到挖空区域
-                dialog?.window?.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            } else {
-                dialog?.window?.decorView?.systemUiVisibility = (
-                        View.SYSTEM_UI_FLAG_FULLSCREEN
-                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        )
+                //高版本
+
+                //监听状态栏变化
+                ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, _ -> WindowInsetsCompat.CONSUMED }
+
+                //显示到挖孔区域
+                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+
+                //设置状态栏字体颜色
+                val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+                insetsController.isAppearanceLightStatusBars = !isDarkMode
+
+            }else{
+                //低版本
+
+                //恢复默认行为
+                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                if (isDarkMode){
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                            //隐藏状态栏
+                            //View.SYSTEM_UI_FLAG_FULLSCREEN or
+                            //设置状态栏划出行为
+                            //View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY //or
+                            //将内容显示到状态栏下方
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN //or
+                            )
+                }else{
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                            //隐藏状态栏
+                            //View.SYSTEM_UI_FLAG_FULLSCREEN or
+                            //设置状态栏划出行为
+                            //View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY //or
+                            //将内容显示到状态栏下方
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                    //设置状态栏字体颜色
+                                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                            )
+                }
             }
 
-            dialog?.window?.setWindowAnimations(R.style.DialogSlideInOutHorizontal)
-            dialog?.window?.setDimAmount(0.1f)
-            dialog?.window?.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-            dialog?.window?.statusBarColor = Color(0x00000000).toArgb()
-            dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        }else{
+            //竖屏
 
-        }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            dialog?.window?.setWindowAnimations(R.style.DialogSlideInOut)
-            dialog?.window?.setDimAmount(0.1f)
-            dialog?.window?.statusBarColor = Color(0x00000000).toArgb()
-            dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            //设置进场动画
+            window.setWindowAnimations(R.style.DialogSlideInOut)
 
-            if(context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
-                val decorView: View = dialog?.window?.decorView ?: return
-                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+
+
+            //执行状态栏设置
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                //高版本
+
+                //监听状态栏变化
+                //ViewCompat.setOnApplyWindowInsetsListener(dialog?.window?.decorView ?: return) { view, insets -> WindowInsetsCompat.CONSUMED }
+                //显示到挖孔区域
+                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+
+                //设置状态栏字体颜色
+                val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+                insetsController.isAppearanceLightStatusBars = !isDarkMode
+
+            }else{
+                //低版本
+
+                //恢复默认行为
+                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                if (isDarkMode){
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                            //隐藏状态栏
+                            //View.SYSTEM_UI_FLAG_FULLSCREEN or
+                            //设置状态栏划出行为
+                            //View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY //or
+                            //将内容显示到状态栏下方
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN //or
+                            )
+                }else{
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                            //隐藏状态栏
+                            //View.SYSTEM_UI_FLAG_FULLSCREEN or
+                            //设置状态栏划出行为
+                            //View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY //or
+                            //将内容显示到状态栏下方
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                    //设置状态栏字体颜色
+                                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                            )
+                }
             }
+
         }
     }
 
@@ -156,10 +249,16 @@ class PlayerFragmentMediaInfo: DialogFragment() {
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.fragment_media_info, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?):View{
+        //获得view
+        val view = inflater.inflate(R.layout.fragment_media_info, container, false)
+
+        //初始化界面
+        init(view)
+
+        return view
+    }
+
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "CutPasteId")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //初始化
@@ -174,6 +273,9 @@ class PlayerFragmentMediaInfo: DialogFragment() {
         ComposeRoot.setContent {
             ComposeRoot()
         }
+
+        //发布开启事件
+        //returnFragment(FragmentConnector.fragment_event_open)
 
 
     }
@@ -324,6 +426,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
 
     private fun mainBusiness(){
         lifecycleScope.launch(Dispatchers.IO){
+            delay(700)
             //读取信息
             val MediaInfoPack = PlayerInfoCenter.GET_Media_FullMediaInfoPack()
             if (MediaInfoPack == null){
@@ -738,7 +841,8 @@ class PlayerFragmentMediaInfo: DialogFragment() {
         val result = bundleOf(FragmentConnector.receive_key to event,FragmentConnector.extra_key to extra)
         setFragmentResult(FragmentConnector.fragment_request_key_media_info, result)
     }
-    //设置面板高度
+    //Tool Functions
+    //设置面板几何参数
     private fun display(view: View){
         //获取当前屏幕方向
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -753,41 +857,31 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             //计算目标宽度
             val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
             val targetScreenHeightDp = (screenHeightPx / density).toInt()
-
-            mainCard.post {
-                if (targetScreenHeightDp < 50){
-                    mainCard.layoutParams.width = screenWidthPx
-                }else{
-                    mainCard.layoutParams.width = targetScreenWidthPx
-                }
-                //把高度改为match parent
-                mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-
-                val statusBarHeight = getStatusBarHeightFromView(mainCard)
-                mainCard.setContentPadding(0, statusBarHeight, 0, 0)
-
-                mainCard.requestLayout()
+            //进行宽度保底
+            if (targetScreenHeightDp < 50){
+                mainCard.layoutParams.width = screenWidthPx
+            }else{
+                mainCard.layoutParams.width = targetScreenWidthPx
             }
-
+            //设置卡片显示参数
+            mainCard.layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
+            mainCard.setContentPadding(0, DeviceInfo.statusBarHeight, 0, 0)
+            //请求布局更新
+            mainCard.requestLayout()
         }else{
             //计算目标高度
             val targetHeightPx = (screenHeightPx * 0.7).toInt()
             val targetScreenHeightDp = (screenHeightPx / density).toInt()
-
-            mainCard.post {
-                if (targetScreenHeightDp < 450){
-                    mainCard.layoutParams.height = screenHeightPx
-                }else{
-                    mainCard.layoutParams.height = targetHeightPx
-                }
-                mainCard.requestLayout()
+            //进行高度保底
+            if (targetScreenHeightDp < 450){
+                mainCard.layoutParams.height = screenHeightPx
+            }else{
+                mainCard.layoutParams.height = targetHeightPx
             }
+            //请求布局更新
+            mainCard.requestLayout()
+
         }
-    }
-    fun getStatusBarHeightFromView(view: View): Int {
-        val rect = Rect()
-        view.getWindowVisibleDisplayFrame(rect)
-        return rect.top
     }
     //自定义退出逻辑
     private var lockPage = false

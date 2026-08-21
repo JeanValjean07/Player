@@ -145,8 +145,16 @@ class PrivacyPermissionHelper {
     //检查访问所有文件(安卓11及以上才有)
     @RequiresApi(Build.VERSION_CODES.R)
     fun isAllFilesAccessGranted(): Boolean {
+        if (DeviceInfo.AndroidVersion == 0){
+            DeviceInfo.AndroidVersion = Build.VERSION.SDK_INT
+        }
 
-        return Environment.isExternalStorageManager()
+        if (DeviceInfo.AndroidVersion <= 29){
+            return false
+        }else{
+            return Environment.isExternalStorageManager()
+        }
+
     }
 
 
