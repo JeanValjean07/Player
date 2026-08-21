@@ -551,6 +551,7 @@ object PlayerSingleton {
     }
     //暂停播放
     fun pausePlay(){
+        consoleLog("pausePlay")
         //修改播放标记,记录本次暂停之前,到底有没有真的处于播放状态
         if (_player?.isPlaying == true){
             setState_wasPlaying(true)
