@@ -103,8 +103,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PRF_Cache_EnablePlayAreaMove_Distance: Float = 0f
     //是否寻帧时一律使用关键帧
     var PRF_Cache_UseSyncFrame_whenSeek: Boolean = true
-    //是否进度条停止滚动时尾帧使用关键帧
-    var PRF_Cache_UseSyncFrame_whenScrollerStop: Boolean = true
     //进度条相关
     var PREFS_AlwaysSeek: Boolean = false
     var PREFS_TapJump: Boolean = false

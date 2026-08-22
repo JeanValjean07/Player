@@ -861,29 +861,6 @@ object SettingsRequestCenter {
         }
         return PREFS_UseSyncFrameInScroller == 1
     }
-    //进度条停止滚动时使用关键尾帧
-    private var PREFS_UseSyncFrameWhenScrollerStop = -1
-    fun set_PREFS_UseSyncFrameWhenScrollerStop(enable: Boolean){
-        PREFS_UseSyncFrameWhenScrollerStop = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_UseSyncFrameWhenScrollerStop", if (enable) 1 else 0) }
-    }
-    fun get_PREFS_UseSyncFrameWhenScrollerStop(context: Context): Boolean {
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayVideoPage_initialized) {
-            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
-            state_PREFS_PlayVideoPage_initialized = true
-        }
-        //确保配置项已被读取过
-        if (PREFS_UseSyncFrameWhenScrollerStop == -1) {
-            PREFS_UseSyncFrameWhenScrollerStop = PREFS_PlayVideoPage.getInt("PREFS_UseSyncFrameWhenScrollerStop", -1)
-            if (PREFS_UseSyncFrameWhenScrollerStop == -1) {
-                PREFS_UseSyncFrameWhenScrollerStop = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_UseSyncFrameWhenScrollerStop", 0) }
-            }
-        }
-
-        return PREFS_UseSyncFrameWhenScrollerStop == 1
-    }
     //使用超长进度条
     private var PREFS_UseSuperLongScroller = -1
     fun set_PREFS_UseSuperLongScroller(enable: Boolean){

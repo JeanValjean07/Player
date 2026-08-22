@@ -80,6 +80,7 @@ import com.suming.player.ActivityComponent.IndepFragment.PlayerFragmentMediaInfo
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerFragmentMoreButton
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerScrollerAdapter
 import com.suming.player.ActivityComponent.PlayerActivity.PlayerViewModel
+import com.suming.player.ActivityComponent.PlayerActivity.SmoothScroller
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
@@ -242,6 +243,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val playerViewModel: PlayerViewModel by viewModels()
     //字段
     private val Undefined = ""
+    //测试
+    private var testMode = false
 
 
 
@@ -288,8 +291,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             //寻帧时一律使用关键帧
             playerViewModel.PRF_Cache_UseSyncFrame_whenSeek = SettingsRequestCenter.get_PREFS_UseOnlySyncFrameWhenSeek(context)
-            //进度条停止滚动时尾帧使用关键帧
-            playerViewModel.PRF_Cache_UseSyncFrame_whenScrollerStop = SettingsRequestCenter.get_PREFS_UseSyncFrameWhenScrollerStop(context)
+
 
             //读取进度条配置(已不再支持为每个视频单独配置,但暂未从数据库移除数据)
             playerViewModel.PREFS_AlwaysSeek = SettingsRequestCenter.get_PREFS_EnableAlwaysSeek(context)
@@ -414,13 +416,19 @@ class PlayerActivityNeo: AppCompatActivity(){
             //更多选项
             val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
-                //防止快速点击
-                if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
-                    return@setOnClickListener
+                if (testMode){
+                    setCustomParams()
+
+                }else{
+                    //防止快速点击
+                    if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
+                        return@setOnClickListener
+                    }
+                    clickMillis_MoreOptionPage = System.currentTimeMillis()
+                    //启动弹窗
+                    startMoreButtonFragment()
                 }
-                clickMillis_MoreOptionPage = System.currentTimeMillis()
-                //启动弹窗
-                startMoreButtonFragment()
+
             }
             //提示卡点击时关闭
             val noticeCard = findViewById<CardView>(R.id.noticeCapsule)
@@ -1610,8 +1618,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     override fun onResume() {
         super.onResume()
 
-        //更新屏幕常亮状态
-        updateKeepScreenOn()
         //判断是否继续播放
         if (playerViewModel.state_isFinishing){
             //consoleLog("onResume 来自活动销毁")
@@ -1620,6 +1626,12 @@ class PlayerActivityNeo: AppCompatActivity(){
             //是否后台播放
             PlayerSingleton.stopBackgroundPlay()
         }
+
+        updateControllers()
+
+        //更新屏幕常亮状态
+        updateKeepScreenOn()
+
 
         //检查文件是否存在
         isFileExist()
@@ -1925,6 +1937,56 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
 
+    //界面更新
+    private fun updateControllers(){
+        //通用
+        updateButtonState()
+
+
+        val isPlaying = player.isPlaying
+        if (isPlaying){
+            startScrollerSync(15)
+            startVideoTimeSync()
+        }else{
+
+        }
+    }
+
+    //测试函数-跳转任意位置
+    @SuppressLint("InflateParams")
+    private fun setCustomParams(){
+        val dialog = Dialog(this).apply {
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_input_box_double, null)
+        dialog.setContentView(dialogView)
+        val EditTextHour: EditText = dialogView.findViewById(R.id.dialog_input_hour)
+        val EditTextMinute: EditText = dialogView.findViewById(R.id.dialog_input_minute)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+        //修改提示文本
+        EditTextHour.hint = ""
+        EditTextMinute.hint = ""
+        Button.text = "确定"
+        //设置点击事件
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            var param1 = EditTextHour.text.toString().toIntOrNull()
+            var param2 = EditTextMinute.text.toString().toIntOrNull()
+
+            if (param1 == null) param1 = 0
+            if (param2 == null) param2 = 0
+
+
+
+            syncScrollTask_Core_Execute(param1, param2)
+
+
+
+            //关闭对话框
+            dialog.dismiss()
+        }
+        dialog.show()
+    }
 
     //设置项修改封装函数
     private fun changeStateAlwaysSeek(target: Boolean){
@@ -2333,38 +2395,16 @@ class PlayerActivityNeo: AppCompatActivity(){
                     @SuppressLint("SetTextI18n")
                     override fun onSingleTapUp(e: MotionEvent): Boolean {
                         singleTap = true
+                        //进入条件
                         if (!playerViewModel.PREFS_TapJump) {
                             if (playerViewModel.PREFS_LinkScroll) {
-                                notice("未开启单击跳转,如需跳转请先开启,或关闭链接滚动", 1000)
+                                //notice("未开启单击跳转", 1000)
                                 return false
                             }
                         }
 
-                        //根据百分比计算具体跳转时间点
-                        val totalContentWidth = scroller.computeHorizontalScrollRange()
-                        val scrolled = scroller.computeHorizontalScrollOffset()
-                        val leftPadding = scroller.paddingLeft
-                        val xInContent = e.x + scrolled - leftPadding
-                        if (totalContentWidth <= 0) return false
-                        val percent = xInContent / totalContentWidth
-                        val seekToMs = (percent * player.duration).toLong().coerceIn(0, player.duration)
-
-                        if (seekToMs <= 0) {
-                            return false
-                        }
-                        if (seekToMs >= player.duration) {
-                            return false
-                        }
-
-                        //设置为寻找关键帧
-                        player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
-                        //记录原播放状态
-                        playState_singleTap_wasPlaying = player.isPlaying
-
-                        //发送跳转命令
-                        seekTo_Core(8, seekToMs, Mark_playerReadyFrom_SingleTap)
-
-                        notice("跳转至${FormatTime_withChar(seekToMs)}", 1000)
+                        //发起单次点击跳转
+                        postSingleTapSeek(e.x)
 
 
                         return true
@@ -2379,21 +2419,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                             //consoleLog("ACTION_DOWN")
 
                             scrollerTouchState_ACTION_DOWN = true
-                            scrollerDesire_Active = true
-
-                            scrollerTouchState_DRAGGING = false
-                            scrollerTouchState_SETTLING = false
-
 
                         }
                         MotionEvent.ACTION_UP -> {
                             //consoleLog("ACTION_UP")
 
                             scrollerTouchState_ACTION_DOWN = false
-
-                            if (!scrollerTouchState_DRAGGING || !scrollerTouchState_SETTLING){
-                                scrollerDesire_Active = false
-                            }
 
                         }
                     }
@@ -2418,8 +2449,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                         RecyclerView.SCROLL_STATE_DRAGGING -> {
                             //consoleLog("RecyclerView.SCROLL_STATE_DRAGGING")
 
-                            scrollerTouchState_DRAGGING = true
-                            scrollerTouchState_SETTLING = false
+                            scrollerState_DRAGGING = true
+                            scrollerState_SETTLING = false
+                            scrollerState_IDLE = false
 
                             scrollerDesire_Active = true
 
@@ -2435,26 +2467,25 @@ class PlayerActivityNeo: AppCompatActivity(){
                         RecyclerView.SCROLL_STATE_SETTLING -> {
                             //consoleLog("RecyclerView.SCROLL_STATE_SETTLING")
 
-                            scrollerTouchState_DRAGGING = false
-                            scrollerTouchState_SETTLING = true
+                            scrollerState_DRAGGING = false
+                            scrollerState_SETTLING = true
+                            scrollerState_IDLE = false
 
-                            scrollerDesire_Active = true
+                            //scrollerDesire_Active = true  //SCROLL_STATE_SETTLING 不一定由拖动发起
 
                             return
                         }
                         RecyclerView.SCROLL_STATE_IDLE -> {
                             //consoleLog("RecyclerView.SCROLL_STATE_IDLE")
 
-                            scrollerTouchState_DRAGGING = false
-                            scrollerTouchState_SETTLING = false
+                            scrollerState_DRAGGING = false
+                            scrollerState_SETTLING = false
+                            scrollerState_IDLE = true
 
-                            scrollerDesire_Active = false
 
-                            //清理状态
-                            clearScrollerState()
 
                             //触发事件
-                            if (playerViewModel.PREFS_LinkScroll) {
+                            if (scrollerDesire_Active && playerViewModel.PREFS_LinkScroll) {
                                 //检查次数  //备用条件 processed_seek_count == posted_seek_count
                                 if (isSeekReady){
                                     //一个滚动事件完整跑完
@@ -2462,11 +2493,17 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                                 }else{
                                     //未完整跑完,重定向到Ready函数
-                                    Mark_playerReadyFrom = Mark_playerReadyFrom_ChaseSeek
+                                    Mark_playerReadyFrom = Mark_playerReadyFrom_TailSeek
 
                                 }
 
                             }
+
+                            scrollerDesire_Active = false
+
+                            //清理状态
+                            clearScrollerState()
+
 
 
                             return
@@ -2481,19 +2518,29 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
 
                     //修改seek参数(慢速滚动时切到精确帧,快速滚动时切到关键帧)
-                    if (scrollerTouchState_DRAGGING || scrollerTouchState_SETTLING){
+                    if (scrollerTouchState_ACTION_DOWN){
                         //修改视频seek参数
                         if (dx == 1 || dx == -1){
-                            if (playerViewModel.PRF_Cache_UseSyncFrame_whenSeek) {
-                                player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                            //进入低速滑动阶段
+                            //consoleLog("onScrolled 进入低速滑动阶段")
+
+                            if (playerViewModel.PRF_Cache_UseSyncFrame_whenSeek){
+                                //已开启设置项-一律使用关键帧
+
+                                setSeekParameter_useSync(1)
                             }else{
-                                player.setSeekParameters(SeekParameters.EXACT)
+                                setSeekParameter_useSync(0)
                             }
-                        } else {
-                            player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                        }else{
+                            //高速滑动阶段持续使用关键帧
+                            //consoleLog("onScrolled 高速滑动阶段")
+
+                            setSeekParameter_useSync(1)
                         }
                     }else{
-                        player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                        //consoleLog("onScrolled 无操作 重置")
+
+                        setSeekParameter_useSync(1)
                     }
 
                     //时间窗数值跟随进度条位置随动
@@ -2554,7 +2601,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private var scrollerWasPlayingState_recorded = false //本轮滚动是否记录过播放状态变化
-    private var scrollerLastAccurateSeekState_recorded = false //本轮滚动是否寻过精确尾帧
     private var playState_scroller_wasPlaying = false //本轮滚动是否播放
     private fun recordScrollerWasPlayingState(){
         if (scrollerWasPlayingState_recorded) return
@@ -2565,6 +2611,31 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     private var playState_singleTap_wasPlaying = false //singleTap专用wasPlaying
+    //单次点击位置计算
+    private fun postSingleTapSeek(e_x: Float){
+        //根据百分比计算具体跳转时间点
+        val totalContentWidth = scroller.computeHorizontalScrollRange()
+        val scrolled = scroller.computeHorizontalScrollOffset()
+        val leftPadding = scroller.paddingLeft
+        val xInContent = e_x + scrolled - leftPadding
+        if (totalContentWidth <= 0) return
+        val percent = xInContent / totalContentWidth
+        val seekToMs = (percent * player.duration).toLong().coerceIn(0, player.duration)
+        //验证目标位置是否有效
+        if (seekToMs <= 0 || seekToMs >= player.duration) return
+
+
+        //设置为寻找关键帧
+        setSeekParameter_useSync(1)
+        //记录原播放状态
+        playState_singleTap_wasPlaying = player.isPlaying
+
+        //发送跳转命令
+        seekTo_Core(8, seekToMs, Mark_playerReadyFrom_SingleTapSeek)
+
+        //发布通知
+        notice("跳转至${FormatTime_withChar(seekToMs)}", 1000)
+    }
     //跑完一个完整滚动事件
     private fun onScrollOnceComplete(){
         //consoleLog("一个滚动事件完整跑完 ${System.currentTimeMillis()}", 1000)
@@ -2572,40 +2643,60 @@ class PlayerActivityNeo: AppCompatActivity(){
         playerViewModel.playEnd = false
         PlayerSingleton.cancelState_PlayEnd()
 
-        //是否需要截取一次精确伪帧
-        if (playerViewModel.PRF_Cache_UseSyncFrame_whenScrollerStop){
-            if (scrollerLastAccurateSeekState_recorded){
-                //恢复播放状态
-                if (playState_scroller_wasPlaying){
-                    continuePlay()
-                }
-                //重置为寻找关键帧
-                player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
-            }else{
-                scrollerLastAccurateSeekState_recorded = true
-                //寻一次尾帧
-                standardSeekLoop_Core(true)
-            }
-        }else{
-            //恢复播放状态
-            if (playState_scroller_wasPlaying){
+
+        //恢复播放状态
+        if (playState_scroller_wasPlaying){
                 continuePlay()
             }
-            //重置为寻找关键帧
-            player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+
+        //重置为寻找关键帧
+        setSeekParameter_useSync(1)
+
+    }
+
+    //seekParameters管理 ()
+    private var seekParameter_useSync = -1 //是否使用同步帧
+    private fun setSeekParameter_useSync(target: Int){
+        if (seekParameter_useSync == -1){
+            //从player读取当前seekParameters
+            val useSync = player.seekParameters == SeekParameters.CLOSEST_SYNC
+            seekParameter_useSync = if (useSync) 1 else 0
         }
+        when (target){
+            //使用精确帧
+            0 -> {
+                if (seekParameter_useSync == 0) return
+
+                //consoleLog("设置为寻找精确帧")
+                //设置为寻找精确帧
+                player.setSeekParameters(SeekParameters.EXACT)
+                seekParameter_useSync = 0
+
+            }
+            //使用同步帧
+            1 -> {
+                if (seekParameter_useSync == 1) return
+
+                //consoleLog("设置为寻找关键帧")
+                //设置为寻找关键帧
+                player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                seekParameter_useSync = 1
+            }
+        }
+
     }
 
     //进度条状态
-    private var scrollerTouchState_DRAGGING = false
-    private var scrollerTouchState_SETTLING = false
+    private var scrollerState_DRAGGING = false
+    private var scrollerState_SETTLING = false
+    private var scrollerState_IDLE = true
     private var scrollerTouchState_ACTION_DOWN = false
     private var scrollerMotionState_Forward = true
     private var scrollerDesire_Active = false //主动被动状态:触摸立即进入true,直到下一次自然停止
     private fun clearScrollerState(){
 
-        scrollerTouchState_DRAGGING = false
-        scrollerTouchState_SETTLING = false
+        scrollerState_DRAGGING = false
+        scrollerState_SETTLING = false
         scrollerTouchState_ACTION_DOWN = false
         scrollerDesire_Active = false
 
@@ -2613,7 +2704,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         processed_seek_count = 0
 
         scrollerWasPlayingState_recorded = false
-        scrollerLastAccurateSeekState_recorded = false
 
     } //重置为未触摸过的状态
     //状态playerReady
@@ -2622,7 +2712,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         isSeekReady = true
         //检验来源
         when(Mark_playerReadyFrom){
-            Mark_playerReadyFrom_NormalSeek -> {
+            Mark_playerReadyFrom_MidSectionSeek -> {
                 //consoleLog("Mark_playerReadyFrom_NormalSeek")
 
                 //记录处理次数
@@ -2631,14 +2721,14 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
             }
-            Mark_playerReadyFrom_ChaseSeek -> {
+            Mark_playerReadyFrom_TailSeek -> {
                 //一个滚动事件完整跑完
                 onScrollOnceComplete()
             }
-            Mark_playerReadyFrom_SingleTap -> {
+            Mark_playerReadyFrom_SingleTapSeek -> {
                 //consoleLog("Mark_playerReadyFrom_SingleTap")
 
-                syncScrollTask_Core()
+                syncScrollTask_Core_Compute()
                 //恢复播放状态
                 if (playState_singleTap_wasPlaying){
                     continuePlay()
@@ -2664,9 +2754,9 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     private var Mark_playerReadyFrom = Undefined
-    private val Mark_playerReadyFrom_ChaseSeek = "Mark_playerReadyFrom_ChaseSeek"
-    private val Mark_playerReadyFrom_SingleTap = "Mark_playerReadyFrom_SingleTap"
-    private val Mark_playerReadyFrom_NormalSeek = "Mark_playerReadyFrom_NormalSeek"
+    private val Mark_playerReadyFrom_TailSeek = "Mark_playerReadyFrom_TailSeek"
+    private val Mark_playerReadyFrom_MidSectionSeek = "Mark_playerReadyFrom_MidSectionSeek"
+    private val Mark_playerReadyFrom_SingleTapSeek = "Mark_playerReadyFrom_SingleTapSeek"
     private val Mark_playerReadyFrom_setNewItem = "Mark_playerReadyFrom_setNewItem"
     //状态playEnd
     private fun playState_playEnd(){
@@ -2803,7 +2893,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 if (player.isPlaying){
                     startScrollerSync(9)
                 }else{
-                    syncScrollTask_Core()
+                    syncScrollTask_Core_Compute()
                 }
 
 
@@ -2905,6 +2995,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun setScrollerPadding(){
         //计算边距
         sidePadding = display_screen_width_pixels / 2
+
         //根据横竖屏做不同设置
         if (isLandscape){
             //横屏
@@ -3323,7 +3414,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var isSeekReady = true
     private var posted_seek_count = 0
     private var processed_seek_count = 0
-    //轻量暂停和轻量继续(循环专业)
+    //轻量暂停和轻量继续(循环专用)
     private fun pausePlay_Light(){
 
     }
@@ -3349,26 +3440,42 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //不再进入下一轮循环
                 task_syncScrollerPosition_Running = false
             }else{
-                syncScrollTask_Core()
+                syncScrollTask_Core_Compute()
 
                 //进入下一次循环
-                task_syncScrollerPosition_Handler.postDelayed(this, value_syncScroller_runnableGapMs)
+                task_syncScrollerPosition_Handler.postDelayed(this,value_syncScroller_runnableGapMs )  //value_syncScroller_runnableGapMs
             }
         }
     }
-    private fun syncScrollTask_Core(){
+    private fun syncScrollTask_Core_Compute(){
         //计算位置参数
         scrollerParamMain = ( player.currentPosition / ScrollerHelper.singleFrame_durationMs ).toInt()
         scrollerParamOffset = (( player.currentPosition - scrollerParamMain * ScrollerHelper.singleFrame_durationMs ) * ScrollerHelper.singleFrame_WidthPx / ScrollerHelper.singleFrame_durationMs ).toInt()
+        //consoleLog("scrollerParamMain = $scrollerParamMain, scrollerParamOffset = $scrollerParamOffset")
 
-        //设定进度条位置
-        scrollerLayoutManager.scrollToPositionWithOffset(scrollerParamMain, -scrollerParamOffset)
+
+        //设定进度条位置(旧版)
+        //scrollerLayoutManager.scrollToPositionWithOffset(scrollerParamMain, -scrollerParamOffset)
+
+        //设定进度条位置(新版)
+        syncScrollTask_Core_Execute(scrollerParamMain, scrollerParamOffset)
+
 
     } //进度条位置刷新核心函数
+    private fun syncScrollTask_Core_Execute(p1: Int, p2: Int){
+        val smoothScroller = SmoothScroller(this,p2)
+        smoothScroller.targetPosition = p1
+
+        scrollerLayoutManager.startSmoothScroll(smoothScroller)
+    }
+    private var scrollerParamMain = 0      //进度条大分段位置参数
+    private var scrollerParamOffset = 0    //进度条微调偏移量
     private fun startScrollerSync(num: Int) {
         //consoleLog("startScrollerSync $num")
         //未开启该项设置
         if (!playerViewModel.PREFS_LinkScroll) return
+        //未显示控件层
+        if (!playerViewModel.state_controllerShowing) return
         //未在播放状态
         if (!player.isPlaying) return
         //进入锁
@@ -3387,8 +3494,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private var value_syncScroller_runnableGapMs = 0L //进度条位置刷新间隔
     private var task_syncScrollerPosition_Running = false
-    private var scrollerParamMain = 0      //进度条大分段位置参数
-    private var scrollerParamOffset = 0    //进度条微调偏移量
     //Runnable-2:根据视频时间更新时间窗口进度数值
     private val task_timeStampSync_Handler = Handler(Looper.getMainLooper())
     private var task_timeStampSync_Runnable = object : Runnable{
@@ -3502,10 +3607,10 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             if (isSeekReady){
                 //设置精确帧
-                player.setSeekParameters(SeekParameters.EXACT)
+                setSeekParameter_useSync(0)
 
                 //发起寻帧
-                seekTo_Core(7,targetSeekToMs, Mark_playerReadyFrom_ChaseSeek)
+                seekTo_Core(7,targetSeekToMs, Mark_playerReadyFrom_TailSeek)
             }
 
         }else{
@@ -3526,12 +3631,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                             if (targetSeekToMs < player.currentPosition){
                                 //目标位置接近起始,直接置0快速回起始
                                 if (targetSeekToMs < 50){
-                                    if (scrollerDesire_Active) seekTo_Core(1,0, Mark_playerReadyFrom_NormalSeek)
+                                    if (scrollerDesire_Active) seekTo_Core(1,0, Mark_playerReadyFrom_MidSectionSeek)
                                 }else{
-                                    if (scrollerDesire_Active) seekTo_Core(2, targetSeekToMs,Mark_playerReadyFrom_NormalSeek)
+                                    if (scrollerDesire_Active) seekTo_Core(2, targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
                                 }
                             }else{
-                                if (scrollerDesire_Active) seekTo_Core(3,targetSeekToMs,Mark_playerReadyFrom_NormalSeek)
+                                if (scrollerDesire_Active) seekTo_Core(3,targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
                             }
                         }
                         //反向
@@ -3539,12 +3644,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                             if (targetSeekToMs < player.currentPosition){
                                 //目标位置接近起始,直接置0快速回起始
                                 if (targetSeekToMs < 50){
-                                    if (scrollerDesire_Active) seekTo_Core(4, 0,Mark_playerReadyFrom_NormalSeek)
+                                    if (scrollerDesire_Active) seekTo_Core(4, 0,Mark_playerReadyFrom_MidSectionSeek)
                                 }else{
-                                    if (scrollerDesire_Active) seekTo_Core(5, targetSeekToMs,Mark_playerReadyFrom_NormalSeek)
+                                    if (scrollerDesire_Active) seekTo_Core(5, targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
                                 }
                             }else{
-                                if (scrollerDesire_Active) seekTo_Core(6,targetSeekToMs,Mark_playerReadyFrom_NormalSeek)
+                                if (scrollerDesire_Active) seekTo_Core(6,targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
                             }
                         }
                     }
@@ -3553,6 +3658,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
 
     }
+    private var value_seekVideo_runnableGapMs = 0L
+    private var task_standardSeekLoop_Running = false
     private fun startVideoSeek(num: Int) {
         //consoleLog("startVideoSeek:$num")
 
@@ -3566,8 +3673,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         task_standardSeekLoop_Running = false
         task_standardSeekLoop_Handler.removeCallbacks(task_standardSeekLoop_Runnable)
     }
-    private var value_seekVideo_runnableGapMs = 0L
-    private var task_standardSeekLoop_Running = false
     //显示通知
     private var showNoticeJob: Job? = null
     private var showNoticeJobLong: Job? = null

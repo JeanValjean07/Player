@@ -297,13 +297,6 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@SettingsActivity)
                 SettingsRequestCenter.set_PREFS_UseOnlySyncFrameWhenSeek(isChecked)
             }
-            //进度条停止滚动时尾帧使用关键帧
-            val switch_UseSyncFrameWhenScrollerStop = findViewById<SwitchCompat>(R.id.UseSyncFrameWhenScrollerStop)
-            switch_UseSyncFrameWhenScrollerStop.isChecked = SettingsRequestCenter.get_PREFS_UseSyncFrameWhenScrollerStop(this@SettingsActivity)
-            switch_UseSyncFrameWhenScrollerStop.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(this@SettingsActivity)
-                SettingsRequestCenter.set_PREFS_UseSyncFrameWhenScrollerStop(isChecked)
-            }
             //禁用主页面小播放器
             val switch_DisableMainPageSmallPlayer = findViewById<SwitchCompat>(R.id.DisableMainPageSmallPlayer)
             switch_DisableMainPageSmallPlayer.isChecked = SettingsRequestCenter.GET_PRF_AlwaysUseImageInMiniView(this@SettingsActivity)

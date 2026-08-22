@@ -227,8 +227,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     override fun onResume() {
         super.onResume()
-        //发布开启事件
-        //returnFragment(FragmentConnector.fragment_event_open)
+        //发布开启事件(暂时转移到mainBusiness末尾)
+        returnFragment(FragmentConnector.fragment_event_open)
     }
     override fun onPause() {
         super.onPause()
@@ -703,8 +703,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
 
-            //发布开启事件
-            returnFragment(FragmentConnector.fragment_event_open)
         }
     }
 
