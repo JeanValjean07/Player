@@ -244,7 +244,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //字段
     private val Undefined = ""
     //测试
-    private var testMode = true
+    private var testMode = false
 
 
 
@@ -417,8 +417,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
                 if (testMode){
-
-                    bindPlayerView(true)
 
                 //setCustomParams()
 
@@ -1898,16 +1896,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
     //绑定播放器视图
-    private fun bindPlayerView(force: Boolean = false){
-        //consoleLog("bindPlayerView")
-        if (force){
-            playerView.player = null
-            playerView.player = player
-        }else{
-            //playerView.player = null
-            //playerView.player = player
-        }
-
+    private fun bindPlayerView(){
+        playerView.player = null
+        playerView.player = player
     }
     //修改方向监听器状态
     private fun updateOrientationListener(){
@@ -3576,8 +3567,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun startVideoSmartScroll() {
+        return
+        //关闭进度条同步任务
         stopScrollerSync()
         stopVideoTimeSync()
+        //
         player.volume = 0f
         player.play()
         if (singleTap){
