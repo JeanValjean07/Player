@@ -78,7 +78,7 @@ class PlayerService: MediaSessionService() {
                 override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
                     consoleLog("触发 onConnect")
 
-                    return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                    return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
                         .setAvailableSessionCommands(MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS)
                         .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
                         .build()

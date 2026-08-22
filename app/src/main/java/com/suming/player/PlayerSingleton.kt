@@ -179,6 +179,8 @@ object PlayerSingleton {
         }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
+            consoleLog("播放器错误:${error} message:${error.message} cause:${error.cause} errorCodeName:${error.errorCodeName}")
+
             onFatalErrorOccur(error)
         }
     }

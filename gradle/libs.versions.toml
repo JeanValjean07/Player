@@ -1,30 +1,34 @@
 [versions]
-agp = "8.12.0"
-kotlin = "2.0.21"
-coreKtx = "1.10.1"
+#AGP
+agp = "9.2.1"
+#Basic
+kotlin = "2.4.10"
+coreKtx = "1.19.0"
 junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
-appcompat = "1.6.1"
-material = "1.11.0"
-pagingCommon = "3.3.6"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+appcompat = "1.8.0"
+material = "1.14.0"
+pagingCommon = "3.5.1"
 leanbackPaging = "1.1.0"
-material3 = "1.3.2"
-ui = "1.9.0"
-media3Transformer = "1.8.0"
-foundationLayout = "1.9.0"
+material3 = "1.4.0"
+ui = "1.12.0"
+foundationLayout = "1.12.0"
 runtimeSavedInstanceState = "1.0.0-alpha11"
-toolsCore = "1.0.0-alpha13"
-media3Session = "1.8.0"
-lifecycleProcess = "2.9.3"
-lifecycleService = "2.9.3"
-playServicesOssLicenses = "17.3.0"
+toolsCore = "1.0.0-alpha14"
+lifecycleProcess = "2.11.0"
+lifecycleService = "2.11.0"
 library = "3.2.0-alpha11"
-foundationLayoutVersion = "1.9.4"
-datastoreCore = "1.1.7"
-androidxFoundationLayout = "1.10.0"
+foundationLayoutVersion = "1.12.0"
+datastoreCore = "1.2.1"
+androidxFoundationLayout = "1.12.0"
 coreAnimation = "1.0.0"
+
+#OSS
+playServicesOssLicenses = "17.5.1"
 playServicesOssLicensesVersion = "17.5.1"
+#ExoPlayer
+media3 = "1.11.0"
 
 
 [libraries]
@@ -38,20 +42,25 @@ androidx-paging-common = { group = "androidx.paging", name = "paging-common", ve
 androidx-leanback-paging = { group = "androidx.leanback", name = "leanback-paging", version.ref = "leanbackPaging" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
-androidx-media3-transformer = { group = "androidx.media3", name = "media3-transformer", version.ref = "media3Transformer" }
 androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-runtime-saved-instance-state = { group = "androidx.compose.runtime", name = "runtime-saved-instance-state", version.ref = "runtimeSavedInstanceState" }
 androidx-tools-core = { group = "androidx.privacysandbox.tools", name = "tools-core", version.ref = "toolsCore" }
-androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3Session" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
 androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
-play-services-oss-licenses = { group = "com.google.android.gms", name = "play-services-oss-licenses", version.ref = "playServicesOssLicenses" }
 androidx-library = { group = "androidx.databinding", name = "library", version.ref = "library" }
 foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
 androidx-compose-foundation-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "androidxFoundationLayout" }
 androidx-core-animation = { group = "androidx.core", name = "core-animation", version.ref = "coreAnimation" }
+#OSS
+play-services-oss-licenses = { group = "com.google.android.gms", name = "play-services-oss-licenses", version.ref = "playServicesOssLicenses" }
 gms-play-services-oss-licenses = { group = "com.google.android.gms", name = "play-services-oss-licenses", version.ref = "playServicesOssLicensesVersion" }
+#ExoPlayer
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
+androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
+androidx-media3-transformer = { group = "androidx.media3", name = "media3-transformer", version.ref = "media3" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

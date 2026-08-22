@@ -244,7 +244,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //字段
     private val Undefined = ""
     //测试
-    private var testMode = false
+    private var testMode = true
 
 
 
@@ -417,7 +417,10 @@ class PlayerActivityNeo: AppCompatActivity(){
             val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
                 if (testMode){
-                    setCustomParams()
+
+                    bindPlayerView(true)
+
+                //setCustomParams()
 
                 }else{
                     //防止快速点击
@@ -428,7 +431,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                     //启动弹窗
                     startMoreButtonFragment()
                 }
-
             }
             //提示卡点击时关闭
             val noticeCard = findViewById<CardView>(R.id.noticeCapsule)
@@ -1229,9 +1231,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                 PlayerInfoCenter.observableIsPlayerIDLE.collect() { idle ->
                     //false时不操作
                     if (!idle) return@collect
-                    consoleLog("观察到播放器IDLE状态变更: new idle: $idle")
+                    //consoleLog("观察到播放器IDLE状态变更: new idle: $idle")
 
-                    onPlayEngineIDLE()
+                    //onPlayEngineIDLE()
 
 
                 }
@@ -1896,10 +1898,16 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
     //绑定播放器视图
-    private fun bindPlayerView(){
+    private fun bindPlayerView(force: Boolean = false){
         //consoleLog("bindPlayerView")
-        playerView.player = null
-        playerView.player = player
+        if (force){
+            playerView.player = null
+            playerView.player = player
+        }else{
+            //playerView.player = null
+            //playerView.player = player
+        }
+
     }
     //修改方向监听器状态
     private fun updateOrientationListener(){
