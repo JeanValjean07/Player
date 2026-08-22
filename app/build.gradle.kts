@@ -29,6 +29,8 @@ android {
     defaultConfig {
         applicationId = "com.suming.player"
         minSdk = 26
+        maxSdk = 36
+        //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 1
         versionName = "3.6.6.4"

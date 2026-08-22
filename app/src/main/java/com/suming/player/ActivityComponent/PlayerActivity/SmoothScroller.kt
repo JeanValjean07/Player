@@ -6,8 +6,13 @@ import android.view.View
 import android.view.animation.LinearInterpolator
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
+import kotlin.time.Duration
 
-class SmoothScroller ( context: Context?, private val itemOffset: Int ): LinearSmoothScroller(context) {
+class SmoothScroller (
+    context: Context?,
+    private val itemOffset: Int,
+    private val duration: Long,
+    ): LinearSmoothScroller(context) {
 
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
@@ -64,7 +69,7 @@ class SmoothScroller ( context: Context?, private val itemOffset: Int ): LinearS
         //consoleLog("onTargetFound 计算移动距离 dx = $dx")
 
 
-        action.update(dx, 0, 300, animation)
+        action.update(dx, 0, (duration.toInt() * 2), null)
 
 
     }

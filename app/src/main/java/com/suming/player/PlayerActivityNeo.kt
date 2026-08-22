@@ -260,7 +260,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         register()
 
         //主业务逻辑
-        mainBusiness()
+        mainBusiness(savedInstanceState)
 
 
         startPlayerStateObserver()
@@ -988,7 +988,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     //主业务线
-    private fun mainBusiness(){
+    private fun mainBusiness(savedInstanceState: Bundle?){
 
         //获取原始链接并转换为标准格式链接
         val intentUri = getOriginalIntentUri(intent)
@@ -1006,45 +1006,18 @@ class PlayerActivityNeo: AppCompatActivity(){
         //consoleLog("intentUriStandard: $intentUriStandard, ongoingUriStandard: $ongoingUriStandard")
 
         //决策程序
-        if (intentUri == Uri.EMPTY && ongoingUriStandard == Uri.EMPTY ){
-            queryManualInputUri()
-        }else{
-            //未传入原始链接
-            if (intentUri == Uri.EMPTY){
-                //检查有没有正在播放的
-                if (ongoingUriStandard == Uri.EMPTY){
-                    //没有正在播放的项
-                    queryManualInputUri()
-                }else{
-                    //有正在播放的项
-                    if (ongoingMediaType == MediaType.Video){
-                        //正在播放的是视频,直接绑定
-                        connectCurrentMedia()
-                    }else{
-                        finish()
-                    }
-                }
+        if (savedInstanceState == null){
+            if (intentUri == Uri.EMPTY && ongoingUriStandard == Uri.EMPTY ){
+                queryManualInputUri()
             }else{
-                //传入原始链接
-                if (intentUriStandard == Undefined){
-                    //但链接转码失败,无法播放
-                    showCustomToast("暂未适配路径式链接处理程序,无法播放,请使用“在其他应用打开”发起播放")
-                    //停止播放引擎
-                    PlayerSingleton.stopPlayEngine()
-                    //退出活动
-                    finish()
-
-                    return
-                }else{
-                    //传入链接且可播放
-                    if (intentUriStandard != ongoingUriStandard.toString()){
-                        //传入链接,但与当前播放项不同,播放新项
-                        //consoleLog("传入链接,但与当前播放项不同,播放新项")
-                        startPlayNewMedia(intentUriString.toUri())
-
+                //未传入原始链接
+                if (intentUri == Uri.EMPTY){
+                    //检查有没有正在播放的
+                    if (ongoingUriStandard == Uri.EMPTY){
+                        //没有正在播放的项
+                        queryManualInputUri()
                     }else{
-                        //传入链接,但与当前播放项相同,直接绑定
-                        //consoleLog("传入链接,但与当前播放项相同,直接绑定")
+                        //有正在播放的项
                         if (ongoingMediaType == MediaType.Video){
                             //正在播放的是视频,直接绑定
                             connectCurrentMedia()
@@ -1052,9 +1025,45 @@ class PlayerActivityNeo: AppCompatActivity(){
                             finish()
                         }
                     }
+                }else{
+                    //传入原始链接
+                    if (intentUriStandard == Undefined){
+                        //但链接转码失败,无法播放
+                        showCustomToast("暂未适配路径式链接处理程序,无法播放,请使用“在其他应用打开”发起播放")
+                        //停止播放引擎
+                        PlayerSingleton.stopPlayEngine()
+                        //退出活动
+                        finish()
+
+                        return
+                    }else{
+                        //传入链接且可播放
+                        if (intentUriStandard != ongoingUriStandard.toString()){
+                            //传入链接,但与当前播放项不同,播放新项
+                            //consoleLog("传入链接,但与当前播放项不同,播放新项")
+                            startPlayNewMedia(intentUriString.toUri())
+
+                        }else{
+                            //传入链接,但与当前播放项相同,直接绑定
+                            //consoleLog("传入链接,但与当前播放项相同,直接绑定")
+                            if (ongoingMediaType == MediaType.Video){
+                                //正在播放的是视频,直接绑定
+                                connectCurrentMedia()
+                            }else{
+                                finish()
+                            }
+                        }
+                    }
                 }
             }
+        }else{
+            if (ongoingUriStandard == Uri.EMPTY){
+                queryManualInputUri()  //TODO 新的分支,或许可以做些什么
+            }else{
+                connectCurrentMedia()
+            }
         }
+
 
     }
 
@@ -3463,7 +3472,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     } //进度条位置刷新核心函数
     private fun syncScrollTask_Core_Execute(p1: Int, p2: Int){
-        val smoothScroller = SmoothScroller(this,p2)
+        val smoothScroller = SmoothScroller(this,p2,value_syncScroller_runnableGapMs)
         smoothScroller.targetPosition = p1
 
         scrollerLayoutManager.startSmoothScroll(smoothScroller)
