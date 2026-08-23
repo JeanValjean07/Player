@@ -4,10 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +19,7 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.media3.common.util.UnstableApi
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.ViewWidget.CircleButton
@@ -24,6 +27,7 @@ import com.suming.player.ViewWidget.CircleButton
 @Suppress("NewApi")
 class GuidanceActivity: AppCompatActivity() {
 
+    @OptIn(UnstableApi::class)
     @RequiresApi(Build.VERSION_CODES.Q)
     @SuppressLint("QueryPermissionsNeeded", "SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +45,7 @@ class GuidanceActivity: AppCompatActivity() {
         //按钮：返回
         val ButtonExit = findViewById<CircleButton>(R.id.AppBarButton_Exit)
         ButtonExit.setOnClickListener {
+
             finish()
         }
         //按钮：反馈
@@ -237,5 +242,11 @@ class GuidanceActivity: AppCompatActivity() {
 
     }
 
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "GuidanceActivity: $msg")
+        }
+    }
 
 }

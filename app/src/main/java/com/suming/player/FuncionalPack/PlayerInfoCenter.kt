@@ -54,6 +54,7 @@ object PlayerInfoCenter {
 
 
 
+
     //接收信息解码器传入的媒体信息
     fun setMediaInfoPack(MediaInfoPack: MediaItemForPlay) {
         //缓存旧数据

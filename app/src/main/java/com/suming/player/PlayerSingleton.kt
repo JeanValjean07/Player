@@ -79,6 +79,8 @@ object PlayerSingleton {
 
     //初始化播放器
     private fun buildPlayer(): ExoPlayer {
+        //consoleLog("buildPlayer")
+
         val trackSelector = getTrackSelector(context)
         val rendererFactory = getRendererFactory(context)
         //创建播放器
@@ -97,17 +99,32 @@ object PlayerSingleton {
         return ExoPlayer
     }
     //获取播放器,未启动时将播放器初始化
-    fun getInitPlayer(): ExoPlayer = _player ?: synchronized(this) {
-        _player ?: buildPlayer().also { _player = it }
-    }.also {
+    fun getInitPlayer(): ExoPlayer {
+
+        //双重检查锁定
+        var player = _player
+        if (player == null) {
+            synchronized(this) {
+                player = _player
+                if (player == null) {
+                    player = buildPlayer()
+                    _player = player
+                }
+            }
+        }
+
+
         //更新播放器状态为非空闲
         PlayerInfoCenter.updateObservableIsPlayerIDLE(false)
 
         stateLock_isPlayerInitialized = true
         initializationCallbacks.forEach { callback -> callback.invoke() }
         initializationCallbacks.clear()
+
         //添加播放器状态监听
         addPlayerStateListener()
+
+        return player!!
     }
     //获取播放器但不初始化
     fun getPlayer(): ExoPlayer? = _player
@@ -157,8 +174,11 @@ object PlayerSingleton {
             when (state) {
                 Player.STATE_READY ->  playState_Ready()
                 Player.STATE_ENDED ->  playState_End(context)
-                //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
-                Player.STATE_IDLE ->  onPlayEngineIDLE()
+                //播放器进入空闲状态
+                Player.STATE_IDLE -> {
+                    state_player_idle = true
+                    //留空,保证后续监听器能收到此状态,然后由AppCompat持有者反向通知 onPlayEngineIDLE()
+                }
             }
         }
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -207,9 +227,30 @@ object PlayerSingleton {
 
     }
 
-    private fun onPlayEngineIDLE(){
-        //禁止在此处销毁播放器,否则其他监听器全部收不到该事件
-        PlayerInfoCenter.updateObservableIsPlayerIDLE(true)
+    private var state_player_idle = false
+    fun onPlayEngineIDLE(): Boolean{
+        //关闭本地监听器
+        removePlayerStateListener()
+        //销毁播放器(包含置空_player实例)
+        stopPlayEngine()
+
+
+
+        //重启播放器
+        getInitPlayer()
+
+        return false
+
+        //检查是否成功重启播放器
+        if (_player == null) {
+            return false
+        }else{
+            //添加播放器回调监听
+            addPlayerStateListener()
+
+
+            return true
+        }
 
     }
 

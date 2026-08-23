@@ -71,6 +71,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -215,7 +216,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //context
     val context = this@PlayerActivityNeo
     //获取播放器引用
-    private val player get() = PlayerSingleton.getInitPlayer()
+    private var player: ExoPlayer? = null
     //连接到viewModel
     private val playerViewModel: PlayerViewModel by viewModels()
     //字段
@@ -235,6 +236,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         //初始化
         init()
 
+        connectToExoPlayer()
+
         //注册控件和手势
         register()
 
@@ -242,7 +245,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         mainBusiness(savedInstanceState)
 
 
-        startPlayerStateObserver()
 
 
         //缓存需要频繁取用的变量+数值计算
@@ -365,6 +367,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //退出按钮
             val ButtonExit = findViewById<CircleButton>(R.id.TopBarArea_ButtonExit)
             ButtonExit.setOnClickListener {
+                //scroller.stopScroll()
                 exitActivity_ensure()
             }
             /*
@@ -398,6 +401,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //setCustomParams()
 
                 }else{
+                    scroller.stopScroll()
                     //防止快速点击
                     if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                         return@setOnClickListener
@@ -416,8 +420,9 @@ class PlayerActivityNeo: AppCompatActivity(){
             //暂停/继续播放
             val PauseButton = findViewById<CircleButton>(R.id.ButtonPause)
             PauseButton.setOnClickListener {
+                scroller.stopScroll()
                 //控制播放
-                if (player.isPlaying) {
+                if (player?.isPlaying == true) {
                     scroller.stopScroll()
                     pausePlay()
                     stopScrollerSync()
@@ -444,6 +449,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                 when (event.actionMasked){
                     MotionEvent.ACTION_DOWN -> {
                         ToolVibrate().vibrate(this@PlayerActivityNeo)
+
+                        scroller.stopScroll()
+
+                        //切换横屏
                         switchLandscape_upMillis = 0L
                         switchLandscape_downMillis = System.currentTimeMillis()
                         SwitchLandscapeJob()
@@ -463,6 +472,9 @@ class PlayerActivityNeo: AppCompatActivity(){
             //更多选项
             val ButtonMoreOption = findViewById<CircleButton>(R.id.ButtonMoreOption)
             ButtonMoreOption.setOnClickListener {
+
+                scroller.stopScroll()
+
                 //防止快速点击
                 if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
                     return@setOnClickListener
@@ -477,7 +489,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 object : GestureDetector.SimpleOnGestureListener() {
                     override fun onDoubleTap(e: MotionEvent): Boolean {
                         //控制播放
-                        if (player.isPlaying) {
+                        if (player?.isPlaying == true) {
                             pausePlay()
                             stopScrollerSync()
                             notice("暂停播放", 1000)
@@ -511,11 +523,11 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     override fun onLongPress(e: MotionEvent) {
                         if (ACTION_POINTER_DOWN) return
-                        if (!player.isPlaying) {
+                        if (player?.isPlaying == true) {
                             return
                         }
-                        currentSpeed = player.playbackParameters.speed
-                        player.setPlaybackSpeed(currentSpeed * 2.0f)
+                        currentSpeed = player?.playbackParameters?.speed ?: 1.0f
+                        player?.setPlaybackSpeed(currentSpeed * 2.0f)
                         notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
                         setControllerInvisibleNoAnimation()
                         longPress = true
@@ -719,7 +731,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         //事件处理:长按
                         if (longPress) {
                             longPress = false
-                            player.setPlaybackSpeed(currentSpeed)
+                            player?.setPlaybackSpeed(currentSpeed)
 
 
                             val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
@@ -837,8 +849,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //回到视频起始
                     FragmentConnector.fragment_more_button_back_to_start -> {
-                        player.seekTo(0)
-                        player.play()
+                        player?.seekTo(0)
+                        player?.play()
                         startScrollerSync(3)
                         notice("回到视频起始", 3000)
                     }
@@ -1124,8 +1136,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         bindPlayerView()
 
         //添加播放器事件监听
-        player.removeListener(PlayerStateListener)
-        player.addListener(PlayerStateListener)
+        player?.removeListener(PlayerStateListener)
+        player?.addListener(PlayerStateListener)
         state_PlayerListenerAdded = true
 
         //关闭遮罩
@@ -1160,7 +1172,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
                 //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
                 Player.STATE_IDLE -> {
-                    //consoleLog("onPlaybackStateChanged: STATE_IDLE")
+                    consoleLog("onPlaybackStateChanged: STATE_IDLE")
+
+                    onPlayEngineIDLE()
+
                 }
             }
         }
@@ -1195,41 +1210,29 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private var state_PlayerListenerAdded: Boolean = false
-    //播放状态观察者
-    private fun startPlayerStateObserver(){
-        //目前只观察IDLE状态
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInfoCenter.observableIsPlayerIDLE.collect() { idle ->
-                    //false时不操作
-                    if (!idle) return@collect
-                    //consoleLog("观察到播放器IDLE状态变更: new idle: $idle")
 
-                    //onPlayEngineIDLE()
-
-
-                }
-            }
-        }
-
-    }
-    //启动ExoPlayer
-    private fun startExoPlayer(){
-        //确保播放器已启动(已在类空间内启动过)
-        //PlayerSingleton.getInitPlayer(this)
+    //连接ExoPlayer(可发起启动)
+    private fun connectToExoPlayer(){
+        //确保播放器已启动并获得引用
+        player = PlayerSingleton.getInitPlayer()
         //添加播放器事件监听
         startExoPlayerListener()
 
     }
     private fun startExoPlayerListener(){
-        player.removeListener(PlayerStateListener)
-        player.addListener(PlayerStateListener)
+        player?.removeListener(PlayerStateListener)
+        player?.addListener(PlayerStateListener)
         state_PlayerListenerAdded = true
+    }
+    private fun removeExoPlayerListener(){
+        player?.removeListener(PlayerStateListener)
+
+        state_PlayerListenerAdded = false
     }
     //设置新媒体项
     private fun setNewMediaItem(uri: Uri){
         //确保已启动播放器
-        startExoPlayer()
+        connectToExoPlayer()
 
         //显示遮罩
         showCover()
@@ -1310,11 +1313,23 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
     private fun onPlayEngineIDLE(){
-        showCustomToast("播放器已离线", 3)
-        //把播放器引擎关闭
-        PlayerSingleton.stopPlayEngine()
-        //离开活动
-        finish()
+        consoleLog("onPlayEngineIDLE")
+
+
+        onMediaItemCleared()
+
+        //清理监听器
+        removeExoPlayerListener()
+
+        //反向通知播放器
+        val success = PlayerSingleton.onPlayEngineIDLE()
+        //若成功,重新拿到播放器引用
+        if (success){
+            connectToExoPlayer()
+        }else{
+            consoleLog("onPlayEngineIDLE: 失败-连接播放器")
+        }
+
 
     }
 
@@ -1357,10 +1372,14 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //媒体项被清除回调
     private fun onMediaItemCleared(){
-        showCustomToast("当前播放项已被清除", 3)
+
+        //解绑播放区域
+        unbindPlayerView()
+        //关闭进度条
+        closeScroller()
 
         //离开活动
-        finish()
+        //finish()
     }
 
 
@@ -1418,6 +1437,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun exitActivity_ensure(){
+        scroller.stopScroll()
+
         val needCloseEngin = !SettingsRequestCenter.GET_PRF_EnableMiniView(this@PlayerActivityNeo)
         if (needCloseEngin){
             //consoleLog("关闭MiniView useSlideOutAnim = false")
@@ -1685,7 +1706,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         stopVideoTimeSync()
 
         //关闭播放器状态监听
-        player.removeListener(PlayerStateListener)
+        player?.removeListener(PlayerStateListener)
 
         //关闭本地监听器
         stopOrientationListener()
@@ -1887,6 +1908,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         playerView.player = null
         playerView.player = player
     }
+    //解绑播放器视图
+    private fun unbindPlayerView(){
+        playerView.player = null
+    }
+
     //修改方向监听器状态
     private fun updateOrientationListener(){
         //读取设置
@@ -1938,7 +1964,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         updateButtonState()
 
 
-        val isPlaying = player.isPlaying
+        val isPlaying = player?.isPlaying ?: false
         if (isPlaying){
             startScrollerSync(15)
             startVideoTimeSync()
@@ -2000,7 +2026,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var originalVolume = 0
     private var volumeChangeGap = 1   //音量变化步长
     private var state_HeadSetInserted = false
-
 
     //设置项修改封装函数
     private fun changeStateAlwaysSeek(target: Boolean){
@@ -2139,12 +2164,12 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             notice("已截屏并保存到系统截屏文件夹", 3000)
 
-            if (playerViewModel.wasPlaying){ player.play() }
+            if (playerViewModel.wasPlaying){ player?.play() }
 
         }
         notice("请稍等", 3000)
-        playerViewModel.wasPlaying = player.isPlaying
-        player.pause()
+        playerViewModel.wasPlaying = player?.isPlaying ?: false
+        player?.pause()
         lifecycleScope.launch(Dispatchers.IO) {
             delay(500)
             val Bitmap = createBitmap(videoSizeWidth, videoSizeHeight)
@@ -2174,7 +2199,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             )
 
             //恢复播放状态
-            if (playerViewModel.wasPlaying){ player.play() }
+            if (playerViewModel.wasPlaying){ player?.play() }
 
             //获取当前文件路径
             val file_path = PlayerInfoCenter.GET_Media_FilePath()
@@ -2186,8 +2211,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         }
         //记录原本的播放状态
-        playerViewModel.wasPlaying = player.isPlaying
-        player.pause()
+        playerViewModel.wasPlaying = player?.isPlaying ?: false
+        player?.pause()
         //发起截图
         lifecycleScope.launch(Dispatchers.IO) {
             delay(500)
@@ -2617,11 +2642,12 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (scrollerWasPlayingState_recorded) return
         scrollerWasPlayingState_recorded = true
         //记录当前播放状态变化
-        playState_scroller_wasPlaying = player.isPlaying
+        playState_scroller_wasPlaying = player?.isPlaying ?: false
         //consoleLog("playState_scroller_wasPlaying : $playState_scroller_wasPlaying")
 
     }
     private var playState_singleTap_wasPlaying = false //singleTap专用wasPlaying
+
     //刷新时间显示窗口
     private fun updateTimeStampWindow(){
         onScroll_currentMillis = System.currentTimeMillis()
@@ -2647,21 +2673,24 @@ class PlayerActivityNeo: AppCompatActivity(){
     //单次点击位置计算
     private fun postSingleTapSeek(e_x: Float){
         //根据百分比计算具体跳转时间点
+        val duration = player?.duration ?: -1L
+        if (duration <= 0) return
+
         val totalContentWidth = scroller.computeHorizontalScrollRange()
         val scrolled = scroller.computeHorizontalScrollOffset()
         val leftPadding = scroller.paddingLeft
         val xInContent = e_x + scrolled - leftPadding
         if (totalContentWidth <= 0) return
         val percent = xInContent / totalContentWidth
-        val seekToMs = (percent * player.duration).toLong().coerceIn(0, player.duration)
+        val seekToMs = (percent * duration).toLong().coerceIn(0, duration)
         //验证目标位置是否有效
-        if (seekToMs <= 0 || seekToMs >= player.duration) return
+        if (seekToMs !in 1..<duration) return
 
 
         //设置为寻找关键帧
         setSeekParameter_useSync(1)
         //记录原播放状态
-        playState_singleTap_wasPlaying = player.isPlaying
+        playState_singleTap_wasPlaying = player?.isPlaying ?: false
 
         //发送跳转命令
         seekTo_Core(8, seekToMs, Mark_playerReadyFrom_SingleTapSeek)
@@ -2695,7 +2724,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun setSeekParameter_useSync(target: Int){
         if (seekParameter_useSync == -1){
             //从player读取当前seekParameters
-            val useSync = player.seekParameters == SeekParameters.CLOSEST_SYNC
+            val useSync = player?.seekParameters == SeekParameters.CLOSEST_SYNC
             seekParameter_useSync = if (useSync) 1 else 0
         }
         when (target){
@@ -2705,7 +2734,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                 //consoleLog("设置为寻找精确帧")
                 //设置为寻找精确帧
-                player.setSeekParameters(SeekParameters.EXACT)
+                player?.setSeekParameters(SeekParameters.EXACT)
                 seekParameter_useSync = 0
 
             }
@@ -2715,7 +2744,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                 //consoleLog("设置为寻找关键帧")
                 //设置为寻找关键帧
-                player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+                player?.setSeekParameters(SeekParameters.CLOSEST_SYNC)
                 seekParameter_useSync = 1
             }
         }
@@ -2867,27 +2896,20 @@ class PlayerActivityNeo: AppCompatActivity(){
         val mediaDuration = PlayerInfoCenter.GET_Media_Duration()
         controller_timer_total.text = FormatTime_onlyNum(mediaDuration)
         //开始时间戳更新
-        if (player.isPlaying) startVideoTimeSync()
+        if (player?.isPlaying == true) startVideoTimeSync()
     }
     //更新进度条
-    private lateinit var scrollerLayoutManager: LinearLayoutManager
-    private fun foldScrollerArea(){
-        val player_scroller_center_line = findViewById<View>(R.id.player_scroller_center_line)
-        val controller_scroller_container = findViewById<ConstraintLayout>(R.id.controller_scroller_container)
-        val controller_bottom_padding = findViewById<View>(R.id.controller_bottom_padding)
+    private var scrollerLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+    private var scrollerAdapter : PlayerScrollerAdapter ?= null
+    private fun closeScroller(){
 
-        player_scroller_center_line.visibility = View.GONE
-
-        controller_scroller_container.visibility = View.GONE
-
-        controller_bottom_padding.background = null
-
+        scroller.adapter = null
+        scrollerAdapter = null
 
     }
     private fun updateScrollerAdapter(){
         lifecycleScope.launch(Dispatchers.IO) {
             //初始化进度条布局
-            scrollerLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             scroller.layoutManager = scrollerLayoutManager
             scroller.itemAnimator = null
             scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
@@ -2906,7 +2928,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             if (uriNumOnly == 0L || mediaDuration == 0L || absolutePath == "" ){
                 consoleLog("updateScrollerAdapter 进度条：获取信息无效，无法显示进度条")
                 withContext(Dispatchers.Main) {
-                    foldScrollerArea()
+                    closeScroller()
                     showCustomToast("发生错误,无法显示进度条")
                 }
                 return@launch
@@ -2916,13 +2938,13 @@ class PlayerActivityNeo: AppCompatActivity(){
             if (!success) {
                 consoleLog("updateScrollerAdapter 进度条：信息有效，但解码失败，无法显示进度条")
                 withContext(Dispatchers.Main) {
-                    foldScrollerArea()
+                    closeScroller()
                     showCustomToast("发生错误,无法显示进度条")
                 }
                 return@launch
             }
             //初始化scrollerAdapter
-            val scrollerAdapter = PlayerScrollerAdapter(context, mediaDuration,absolutePath)
+            scrollerAdapter = PlayerScrollerAdapter(context, mediaDuration,absolutePath)
 
             //应用
             withContext(Dispatchers.Main) {
@@ -2933,7 +2955,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 scroller.adapter = scrollerAdapter
 
                 //开启被控
-                if (player.isPlaying){
+                if (player?.isPlaying == true){
                     startScrollerSync(9)
                 }else{
                     syncScrollTask_Core_Compute()
@@ -3217,7 +3239,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     } //横屏按钮
     private fun updateButtonState(){
         val pauseButton = findViewById<CircleButton>(R.id.ButtonPause)
-        if (player.isPlaying){
+        if (player?.isPlaying == true){
             pauseButton.setIconResource(R.drawable.ic_controller_neo_pause)
         }else{
             pauseButton.setIconResource(R.drawable.ic_controller_neo_play)
@@ -3447,11 +3469,11 @@ class PlayerActivityNeo: AppCompatActivity(){
             //consoleLog("posted_seek_count : $posted_seek_count")
 
             //暂停播放
-            player.pause()
+            player?.pause()
 
             //发起Seek
             Mark_playerReadyFrom = mark
-            player.seekTo(pos)
+            player?.seekTo(pos)
         }
     } //num_max = 7
     private var isSeekReady = true
@@ -3473,7 +3495,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //consoleLog("task_syncScrollerPosition_Runnable")
 
             //视频处于播放结束状态
-            if (playerViewModel.playEnd && !player.isPlaying){
+            if (playerViewModel.playEnd && player?.isPlaying != true){
                 //让进度条滚动到末尾
                 scrollerParamMain -= 1
                 scrollerParamOffset = 150
@@ -3492,8 +3514,10 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun syncScrollTask_Core_Compute(){
         //计算位置参数
-        scrollerParamMain = ( player.currentPosition / ScrollerHelper.singleFrame_durationMs ).toInt()
-        scrollerParamOffset = (( player.currentPosition - scrollerParamMain * ScrollerHelper.singleFrame_durationMs ) * ScrollerHelper.singleFrame_WidthPx / ScrollerHelper.singleFrame_durationMs ).toInt()
+        val currentPosition = player?.currentPosition ?: -1L
+        if (currentPosition == -1L) return
+        scrollerParamMain = ( currentPosition / ScrollerHelper.singleFrame_durationMs ).toInt()
+        scrollerParamOffset = (( currentPosition - scrollerParamMain * ScrollerHelper.singleFrame_durationMs ) * ScrollerHelper.singleFrame_WidthPx / ScrollerHelper.singleFrame_durationMs ).toInt()
         //consoleLog("scrollerParamMain = $scrollerParamMain, scrollerParamOffset = $scrollerParamOffset")
 
 
@@ -3520,7 +3544,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //未显示控件层
         if (!playerViewModel.state_controllerShowing) return
         //未在播放状态
-        if (!player.isPlaying) return
+        if (player?.isPlaying != true) return
         //进入锁
         if (task_syncScrollerPosition_Running) return
         task_syncScrollerPosition_Running = true
@@ -3541,7 +3565,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val task_timeStampSync_Handler = Handler(Looper.getMainLooper())
     private var task_timeStampSync_Runnable = object : Runnable{
         override fun run() {
-            videoTimeSyncHandler_currentPosition = player.currentPosition
+            videoTimeSyncHandler_currentPosition = player?.currentPosition ?: -1L
+            if (videoTimeSyncHandler_currentPosition == -1L) return
 
             controller_timer_current.text = FormatTime_onlyNum(videoTimeSyncHandler_currentPosition)
 
@@ -3607,8 +3632,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         stopScrollerSync()
         stopVideoTimeSync()
         //
-        player.volume = 0f
-        player.play()
+        player?.volume = 0f
+        player?.play()
         if (singleTap){
             singleTap = false
             return
@@ -3646,10 +3671,12 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun standardSeekLoop_Core(forceOnce: Boolean = false){
         if (forceOnce){
             //根据 进度条比例位置 计算 目标视频位置
+            val duration = player?.duration ?: -1L
+            if (duration == -1L) return
             val totalScrollerLength = scroller.computeHorizontalScrollRange()
             val scrollerPos_Offset = scroller.computeHorizontalScrollOffset()
             val scrollerPos_Percent = scrollerPos_Offset.toFloat() / totalScrollerLength
-            val targetSeekToMs = (scrollerPos_Percent * player.duration).toLong()
+            val targetSeekToMs = (scrollerPos_Percent * duration).toLong()
 
             if (isSeekReady){
                 //设置精确帧
@@ -3663,10 +3690,13 @@ class PlayerActivityNeo: AppCompatActivity(){
             //仅在进度条Active状态下执行寻帧
             if (scrollerDesire_Active){
                 //根据 进度条比例位置 计算 目标视频位置
+                val currentPosition = player?.currentPosition ?: -1L
+                val duration = player?.duration ?: -1L
+                if (currentPosition == -1L || duration == -1L) return
                 val totalScrollerLength = scroller.computeHorizontalScrollRange()
                 val scrollerPos_Offset = scroller.computeHorizontalScrollOffset()
                 val scrollerPos_Percent = scrollerPos_Offset.toFloat() / totalScrollerLength
-                val targetSeekToMs = (scrollerPos_Percent * player.duration).toLong()
+                val targetSeekToMs = (scrollerPos_Percent * duration).toLong()
 
                 //仅在空闲时发起下一次寻帧
                 if (isSeekReady){
@@ -3674,7 +3704,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     when(scrollerMotionState_Forward){
                         //正向滚动
                         true -> {
-                            if (targetSeekToMs < player.currentPosition){
+                            if (targetSeekToMs < currentPosition){
                                 //目标位置接近起始,直接置0快速回起始
                                 if (targetSeekToMs < 50){
                                     if (scrollerDesire_Active) seekTo_Core(1,0, Mark_playerReadyFrom_MidSectionSeek)
@@ -3687,7 +3717,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         }
                         //反向
                         false -> {
-                            if (targetSeekToMs < player.currentPosition){
+                            if (targetSeekToMs < currentPosition){
                                 //目标位置接近起始,直接置0快速回起始
                                 if (targetSeekToMs < 50){
                                     if (scrollerDesire_Active) seekTo_Core(4, 0,Mark_playerReadyFrom_MidSectionSeek)
