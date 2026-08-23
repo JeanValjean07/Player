@@ -2288,8 +2288,10 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (isLandscape){
             setControllerInvisible()
         }else{
-            if (playerViewModel.PRF_Cache_EnableAutoHideController_whenPortrait){
-                setControllerInvisible()
+            if (!isDarkTheme){
+                if (playerViewModel.PRF_Cache_EnableAutoHideController_whenPortrait){
+                    setControllerInvisible()
+                }
             }
         }
     }

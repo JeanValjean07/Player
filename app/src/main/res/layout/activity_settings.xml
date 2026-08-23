@@ -836,7 +836,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="无操作一段时间后自动隐藏控件层并转为深色背景。横屏时强制开启，仅竖屏时可自行设置。"
+                            android:text="无操作一段时间后自动隐藏控件层并转为深色背景。横屏时强制开启，仅竖屏时可自行设置。仅在浅色模式下生效。"
                             android:textSize="12sp" />
                     </LinearLayout>
 

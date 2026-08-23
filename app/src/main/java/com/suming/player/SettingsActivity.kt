@@ -40,6 +40,7 @@ import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.ReleaseInfo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.DeviceInfo
+import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
@@ -630,10 +631,19 @@ class SettingsActivity: AppCompatActivity() {
 
     }
     private fun revokePrivacyAgreementCore(){
+        //关闭正在播放的媒体
+        PlayerSingleton.clearMediaItem()
+        PlayerSingleton.stopPlayEngine()
 
+        //清除媒体记录
+        val MediaRecordManager = MediaRecordManager()
+        MediaRecordManager.clear_MediaInfo(this)
+
+        //写入隐私政策同意状态
         val PrivacyPermissionHelper = PrivacyPermissionHelper()
         PrivacyPermissionHelper.setPrivacyAgreed(this@SettingsActivity,false)
 
+        //延时自动退出
         Handler(Looper.getMainLooper()).postDelayed({
             //退出
             finishAffinity()
