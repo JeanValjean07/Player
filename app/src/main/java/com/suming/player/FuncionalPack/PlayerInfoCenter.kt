@@ -43,13 +43,6 @@ object PlayerInfoCenter {
     fun updateObservableIsPlaying(isPlaying: Boolean){
         _observableIsPlaying.value = isPlaying
     }
-    //可观察播放器是否死了(IDLE状态)
-    private var _observableIsPlayerIDLE = MutableStateFlow(false)
-    var observableIsPlayerIDLE: StateFlow<Boolean> = _observableIsPlayerIDLE.asStateFlow()
-    fun updateObservableIsPlayerIDLE(isPlayerIDLE: Boolean){
-        _observableIsPlayerIDLE.value = isPlayerIDLE
-    }
-
 
 
 

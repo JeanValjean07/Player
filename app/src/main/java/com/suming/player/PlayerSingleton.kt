@@ -46,7 +46,9 @@ import com.suming.player.FuncionalPack.PlayerListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -114,12 +116,12 @@ object PlayerSingleton {
         }
 
 
-        //更新播放器状态为非空闲
-        PlayerInfoCenter.updateObservableIsPlayerIDLE(false)
-
+        /*
         stateLock_isPlayerInitialized = true
         initializationCallbacks.forEach { callback -> callback.invoke() }
         initializationCallbacks.clear()
+
+         */
 
         //添加播放器状态监听
         addPlayerStateListener()
@@ -155,6 +157,7 @@ object PlayerSingleton {
     }
 
     //播放器初始化监听
+    /*
     private val initializationCallbacks = mutableListOf<() -> Unit>()
     private var stateLock_isPlayerInitialized = false
     private fun addInitializationCallback(callback: () -> Unit) {
@@ -166,6 +169,8 @@ object PlayerSingleton {
             }
         }
     }
+
+     */
 
     //播放器回调监听
     private val PlayerStateListener = object : Player.Listener {
@@ -227,19 +232,23 @@ object PlayerSingleton {
 
     }
 
+
     private var state_player_idle = false
-    fun onPlayEngineIDLE(): Boolean{
-        //关闭本地监听器
-        removePlayerStateListener()
-        //销毁播放器(包含置空_player实例)
-        stopPlayEngine()
+    suspend fun onPlayEngineIDLE(): Boolean{
+        withContext(Dispatchers.Main) {
+            //关闭本地监听器
+            removePlayerStateListener()
+            //销毁播放器(包含置空_player实例)
+            stopPlayEngine()
+        }
 
 
+        delay(1000)
 
         //重启播放器
-        getInitPlayer()
-
-        return false
+        withContext(Dispatchers.Main) {
+            getInitPlayer()
+        }
 
         //检查是否成功重启播放器
         if (_player == null) {
@@ -351,6 +360,7 @@ object PlayerSingleton {
     //完成媒体项变更的后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null) return
+
 
         //启动服务和媒体会话
         startSessionService(context)

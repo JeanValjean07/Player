@@ -33,7 +33,7 @@ android {
         //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 1
-        versionName = "3.6.6.5"
+        versionName = "3.6.6.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -62,7 +62,8 @@ dependencies {
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.transformer)
 
-    //未区分
+
+    //LocalBroadcastManager
     implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
 
 

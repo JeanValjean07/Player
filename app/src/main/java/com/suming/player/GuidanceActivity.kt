@@ -110,20 +110,28 @@ class GuidanceActivity: AppCompatActivity() {
         var ifWarning = false
         var warningText = "环境提示\n\n"
 
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q){
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S){
             ifWarning = true
-            warningText += "您的系统是安卓10及以下版本，解码部分视频可能会出现兼容性问题。该问题出现在高版本系统设备所拍摄的视频中，来自网络的视频和本机拍摄的视频大概率不受影响。\n\n"
+            warningText += "安卓12及以下版本在设置新媒体项时有概率出现播放器核心崩溃的问题，安卓10及以下概率较高。\n\n"
         }
 
         when (Build.BRAND.lowercase()) {
-            "honor", "xiaomi", "redmi", "oppo", "realme", "oneplus", "vivo", "iqoo" -> {
+            "honor",  "vivo", "iqoo" -> {
                 ifWarning = true
                 warningText += "未测试过App在您的设备上的兼容性。"
+            }
+            "xiaomi", "redmi" -> {
+                ifWarning = true
+                warningText += "米系机型弹出面板时会卡一下，且背景颜色压暗过程无法线性显示，可影响播放区域随动功能的流畅度，若有问题可选择关闭。"
+            }
+            "oppo", "realme", "oneplus" -> {
+                ifWarning = true
+                warningText += "欧加机型似乎无法正常使用线性马达的线性震感(变成转子马达震感)，预留了一个oppo专用选项，可以试试，不保证一定有效。"
             }
             //原生/类原生/偏原生系统
             "samsung", "google", "sony", "nokia" -> {
                 ifWarning = true
-                warningText += "您的系统不具备强行停止进程的机制，如果遇到莫名其妙的问题，请将本App强行停止后重试。\n\n"
+                warningText += "您的系统不具备强行停止进程的机制，如果遇到未知问题，请将本App强行停止后重试。\n\n"
             }
         }
 

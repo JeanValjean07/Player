@@ -35,6 +35,7 @@
       <w>libavutil</w>
       <w>libswresample</w>
       <w>libswscale</w>
+      <w>localbroadcastmanager</w>
       <w>mediastore</w>
       <w>mudeo</w>
       <w>neos</w>

@@ -1170,7 +1170,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 Player.STATE_ENDED -> {
                     playState_playEnd()
                 }
-                //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
+                //播放器进入空闲状态
                 Player.STATE_IDLE -> {
                     consoleLog("onPlaybackStateChanged: STATE_IDLE")
 
@@ -1265,8 +1265,11 @@ class PlayerActivityNeo: AppCompatActivity(){
     //媒体项变更回调(需升级为观察者观察统一状态)
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null){ return }
-        //是音乐时主动退出页面
 
+        //隐藏错误面板
+        closeErrorCover()
+
+        //是音乐时主动退出页面
         if (PlayerInfoCenter.GET_Media_SPECIFIC_TYPE() != MediaType.Video){
             finish()
             return
@@ -1311,10 +1314,11 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
 
-    //播放器进入空闲状态(也是死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
+    //播放器进入空闲状态(在很多rom上等同于死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
     private fun onPlayEngineIDLE(){
         consoleLog("onPlayEngineIDLE")
 
+        showErrorCover("播放器已离线，正在恢复中")
 
         onMediaItemCleared()
 
@@ -1322,12 +1326,20 @@ class PlayerActivityNeo: AppCompatActivity(){
         removeExoPlayerListener()
 
         //反向通知播放器
-        val success = PlayerSingleton.onPlayEngineIDLE()
-        //若成功,重新拿到播放器引用
-        if (success){
-            connectToExoPlayer()
-        }else{
-            consoleLog("onPlayEngineIDLE: 失败-连接播放器")
+        lifecycleScope.launch {
+            val success = PlayerSingleton.onPlayEngineIDLE()
+            //若成功,重新拿到播放器引用
+            if (success){
+                withContext(Dispatchers.Main){
+                    connectToExoPlayer()
+                }
+
+                showErrorCover("播放器已恢复，可在播放列表面板中启动播放")
+            }else{
+                consoleLog("onPlayEngineIDLE: 失败-连接播放器")
+
+                showErrorCover("播放器恢复失败，请手动退出后重试")
+            }
         }
 
 
@@ -1377,6 +1389,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         unbindPlayerView()
         //关闭进度条
         closeScroller()
+
+        showErrorCover("播放项被清除了，可在播放列表面板中启动播放")
 
         //离开活动
         //finish()
@@ -3334,6 +3348,43 @@ class PlayerActivityNeo: AppCompatActivity(){
             cover.animate().alpha(1f).setDuration(animDuration).withEndAction { cover.visibility = View.VISIBLE }
         }else{
             cover.visibility = View.VISIBLE
+        }
+    }
+    //无播放项遮罩
+    private fun closeErrorCover(){
+        val cover = findViewById<LinearLayout>(R.id.player_core_layer_error)
+        val errorText = findViewById<TextView>(R.id.layer_error_text)
+        errorText.text = ""
+
+        cover.visibility = View.GONE
+
+    }
+    private fun showErrorCover(text: String){
+        val cover = findViewById<LinearLayout>(R.id.player_core_layer_error)
+        val errorText = findViewById<TextView>(R.id.layer_error_text)
+
+        errorText.text = text
+
+        cover.visibility = View.VISIBLE
+
+        //设置点击事件
+        val exitButton = findViewById<CardView>(R.id.layer_error_exit)
+        exitButton.setOnClickListener {
+            ToolVibrate().vibrate(this)
+
+            finish()
+        }
+        val openListButton = findViewById<CardView>(R.id.layer_error_open_list)
+        openListButton.setOnClickListener {
+            ToolVibrate().vibrate(this)
+
+            startPlayListFragment()
+        }
+        val closeButton = findViewById<CardView>(R.id.layer_error_close)
+        closeButton.setOnClickListener {
+            ToolVibrate().vibrate(this)
+            //检查播放器是否已经正常恢复
+
         }
     }
 
