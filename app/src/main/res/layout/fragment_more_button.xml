@@ -1163,6 +1163,88 @@
                                     android:textColor="@color/Text2"
                                     tools:ignore="SmallSp" />
                             </LinearLayout>
+                            <!-- 重新启用播放感知 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal"
+                                tools:ignore="UselessParent">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:src="@drawable/ic_art_herbs"
+                                    android:scaleType="centerCrop"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="重新启用播放感知"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2"
+                                    />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1"/>
+                                <TextView
+                                    android:id="@+id/Button_RestartPerception"
+                                    android:layout_width="35dp"
+                                    android:layout_height="20dp"
+                                    android:text="启用"
+                                    android:textSize="14sp"
+                                    android:gravity="center"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="12dp"
+                                    android:textColor="@color/Text2"
+                                    tools:ignore="SmallSp" />
+                            </LinearLayout>
+                            <!-- 进度条脱离异常状态 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal"
+                                tools:ignore="UselessParent">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:src="@drawable/ic_art_herbs"
+                                    android:scaleType="centerCrop"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="使进度条脱离异常状态"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2"
+                                    />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1"/>
+                                <TextView
+                                    android:id="@+id/Button_EscapeScrollerError"
+                                    android:layout_width="35dp"
+                                    android:layout_height="20dp"
+                                    android:text="脱离"
+                                    android:textSize="14sp"
+                                    android:gravity="center"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="12dp"
+                                    android:textColor="@color/Text2"
+                                    tools:ignore="SmallSp" />
+                            </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
                 </LinearLayout>

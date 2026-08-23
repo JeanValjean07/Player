@@ -207,27 +207,27 @@ class PlayerService: MediaSessionService() {
         val isPlaying = !PlayerSingleton.GET_STE_isNowPlaying()
         consoleLog("pauseOrContinue() 操作之前是否在播放 isPlaying: $isPlaying")
 
+        //切换state_perception_on
         if (isPlaying){
             //执行了暂停操作
-            if (PlayerListener.isFocus){
-                //在有焦点的状态下暂停,意味着再次获得焦点时不期望自动播放
-                PlayerListener.state_needContinue_whenFocusGain = false
-            }else{
+
+
+            if (!PlayerListener.isFocus){
                 //在无焦点的状态下暂停,意味着再次失去焦点时期望自动暂停
-                PlayerListener.state_needPause_whenFocusLoss = true
-
+                PlayerListener.state_perception_on = true
+            }else{
+                PlayerListener.state_perception_on = false
             }
-
 
         }else{
             //执行了继续播放操作
-            if (PlayerListener.isFocus){
-                //在有焦点的状态下继续播放
-                PlayerListener.state_needContinue_whenFocusGain = true
-            }else{
-                //在无焦点的状态下继续播放,意味着再次失去焦点时不期望自动暂停
-                PlayerListener.state_needPause_whenFocusLoss = false
+            if (!PlayerListener.isFocus){
 
+                //在无焦点的状态下继续播放,意味着再次失去焦点时不期望自动暂停
+                PlayerListener.state_perception_on = false
+
+            }else{
+                PlayerListener.state_perception_on = true
             }
 
 

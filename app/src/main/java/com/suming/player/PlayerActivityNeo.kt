@@ -917,7 +917,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     FragmentConnector.fragment_more_button_bind_play_view -> bindPlayerView()
                     //删除自定义封面图
                     FragmentConnector.fragment_more_button_delete_custom_cover -> deleteCustomCover()
-                    //立即退出(来源于设置0秒后自动退出)
+                    //立即退出
                     FragmentConnector.fragment_more_button_exit_right_now -> finish()
                     //刷新屏幕常亮状态
                     FragmentConnector.fragment_more_button_update_keep_screen_on -> updateKeepScreenOn()
@@ -2728,14 +2728,17 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var scrollerMotionState_Forward = true
     private var scrollerDesire_Active = false //主动被动状态:触摸立即进入true,直到下一次自然停止
     private fun clearScrollerState(){
+        //consoleLog("clearScrollerState")
 
         scrollerState_DRAGGING = false
         scrollerState_SETTLING = false
         scrollerTouchState_ACTION_DOWN = false
         scrollerDesire_Active = false
 
-        posted_seek_count = 0
-        processed_seek_count = 0
+        Mark_playerReadyFrom = Undefined
+
+        //posted_seek_count = 0
+        //processed_seek_count = 0
 
         scrollerWasPlayingState_recorded = false
 
@@ -2750,7 +2753,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //consoleLog("Mark_playerReadyFrom_NormalSeek")
 
                 //记录处理次数
-                processed_seek_count++
+                //processed_seek_count++
                 //consoleLog("processed_seek_count : $processed_seek_count")
 
 
@@ -2767,6 +2770,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                 if (playState_singleTap_wasPlaying){
                     continuePlay()
                 }
+
+                clearScrollerState()
             }
             //来自新的媒体设置成功
             Mark_playerReadyFrom_setNewItem -> {
@@ -2780,9 +2785,11 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //隐藏遮罩
                 closeCover()
             }
-            //其他非预期的来源
+            //外部控制寻帧
             else -> {
-                //consoleLog("Mark_playerReadyFrom : $Mark_playerReadyFrom")
+                //consoleLog("Mark_playerReadyFrom : OUT - $Mark_playerReadyFrom")
+
+                syncScrollTask_Core_Compute()
             }
         }
 
@@ -3434,7 +3441,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             isSeekReady = false
 
             //记录发起次数
-            posted_seek_count++
+            //posted_seek_count++
             //consoleLog("posted_seek_count : $posted_seek_count")
 
             //暂停播放
@@ -3446,8 +3453,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     } //num_max = 7
     private var isSeekReady = true
-    private var posted_seek_count = 0
-    private var processed_seek_count = 0
+    //private var posted_seek_count = 0
+    //private var processed_seek_count = 0
     //轻量暂停和轻量继续(循环专用)
     private fun pausePlay_Light(){
 

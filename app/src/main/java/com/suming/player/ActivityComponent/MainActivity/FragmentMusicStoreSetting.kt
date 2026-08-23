@@ -26,6 +26,7 @@ import androidx.cardview.widget.CardView
 import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
@@ -55,38 +56,128 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
     override fun onStart() {
         super.onStart()
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                ViewCompat.setOnApplyWindowInsetsListener(dialog?.window?.decorView ?: return) { _, _ -> WindowInsetsCompat.CONSUMED }
-                //三星专用:显示到挖空区域
-                dialog?.window?.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            } else {
-                @Suppress("DEPRECATION")
-                dialog?.window?.decorView?.systemUiVisibility = (
-                        View.SYSTEM_UI_FLAG_FULLSCREEN
-                                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        )
-            }
-            dialog?.window?.setWindowAnimations(R.style.DialogSlideInOutHorizontal)
-            dialog?.window?.setDimAmount(0.1f)
-            dialog?.window?.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-            @Suppress("DEPRECATION")
-            dialog?.window?.statusBarColor = Color.TRANSPARENT
-            dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        //初始化显示
+        initDisplay()
+    }
 
-        }
-        else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
-            dialog?.window?.setWindowAnimations(R.style.DialogSlideInOut)
-            dialog?.window?.setDimAmount(0.1f)
-            @Suppress("DEPRECATION")
-            dialog?.window?.statusBarColor = Color.TRANSPARENT
-            dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            if(context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_NO){
-                val decorView: View = dialog?.window?.decorView ?: return
-                @Suppress("DEPRECATION")
-                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+    @Suppress("DEPRECATION")
+    private fun initDisplay(){
+        //获取window
+        val window = dialog?.window ?: return
+        //检查横竖屏状态
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        //检查深色模式
+        val isDarkMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+
+        //执行通用设置
+        //设置状态栏背景为透明(否则有色块跟随动画飞出)
+        window.statusBarColor = Color.TRANSPARENT
+        //设置背景压暗幅度
+        window.setDimAmount(0f)
+
+        //执行绑定屏幕方向的设置
+        if (isLandscape){
+            //横屏
+
+            //设置进场动画
+            window.setWindowAnimations(R.style.DialogSlideInOutHorizontal)
+
+
+            //执行状态栏设置
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                //高版本
+
+                //监听状态栏变化
+                ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, _ -> WindowInsetsCompat.CONSUMED }
+
+                //显示到挖孔区域
+                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+
+                //设置状态栏字体颜色
+                val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+                insetsController.isAppearanceLightStatusBars = !isDarkMode
+
+            }else{
+                //低版本
+
+                //恢复默认行为
+                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                if (isDarkMode){
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                            //隐藏状态栏
+                            //View.SYSTEM_UI_FLAG_FULLSCREEN or
+                            //设置状态栏划出行为
+                            //View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY //or
+                            //将内容显示到状态栏下方
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN //or
+                            )
+                }else{
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                            //隐藏状态栏
+                            //View.SYSTEM_UI_FLAG_FULLSCREEN or
+                            //设置状态栏划出行为
+                            //View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY //or
+                            //将内容显示到状态栏下方
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                    //设置状态栏字体颜色
+                                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                            )
+                }
             }
+
+        }else{
+            //竖屏
+
+            //设置进场动画
+            window.setWindowAnimations(R.style.DialogSlideInOut)
+
+
+
+            //执行状态栏设置
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                //高版本
+
+                //监听状态栏变化
+                //ViewCompat.setOnApplyWindowInsetsListener(dialog?.window?.decorView ?: return) { view, insets -> WindowInsetsCompat.CONSUMED }
+                //显示到挖孔区域
+                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+
+                //设置状态栏字体颜色
+                val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+                insetsController.isAppearanceLightStatusBars = !isDarkMode
+
+            }else{
+                //低版本
+
+                //恢复默认行为
+                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+                if (isDarkMode){
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                            //隐藏状态栏
+                            //View.SYSTEM_UI_FLAG_FULLSCREEN or
+                            //设置状态栏划出行为
+                            //View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY //or
+                            //将内容显示到状态栏下方
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN //or
+                            )
+                }else{
+                    //覆盖本次设置
+                    window.decorView.systemUiVisibility = (
+                            //隐藏状态栏
+                            //View.SYSTEM_UI_FLAG_FULLSCREEN or
+                            //设置状态栏划出行为
+                            //View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY //or
+                            //将内容显示到状态栏下方
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                                    //设置状态栏字体颜色
+                                    View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                            )
+                }
+            }
+
         }
     }
 
@@ -95,9 +186,16 @@ class FragmentMusicStoreSetting: DialogFragment() {
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.activity_main_frag_music_mss, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?):View{
+        //获得view
+        val view = inflater.inflate(R.layout.activity_main_frag_music_mss, container, false)
+
+        //初始化界面
+        init(view)
+
+        return view
+    }
+
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //初始化

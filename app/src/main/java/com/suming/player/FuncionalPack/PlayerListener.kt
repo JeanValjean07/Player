@@ -139,8 +139,8 @@ object PlayerListener {
         if (focusRequest == null) initFocusRequest(context)
     }
     var isFocus = false
-    var state_needContinue_whenFocusGain = true     //获得焦点时是否继续
-    var state_needPause_whenFocusLoss = true   //丢焦点时是否自动暂停
+    var state_perception_on = true
+
 
     @OptIn(UnstableApi::class)
     private fun HandleFocusChange(focusChange: Int){
@@ -150,17 +150,16 @@ object PlayerListener {
                 isFocus = false
 
                 //暂停播放
-                if (state_needPause_whenFocusLoss){
-                    PlayerSingleton.pausePlay()
-                }
+                if (state_perception_on) PlayerSingleton.pausePlay()
+
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 //consoleLog("stopFocusChange - AUDIOFOCUS_LOSS_TRANSIENT")
                 isFocus = false
+
                 //暂停播放
-                if (state_needPause_whenFocusLoss){
-                    PlayerSingleton.pausePlay()
-                }
+                if (state_perception_on) PlayerSingleton.pausePlay()
+
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
                 //consoleLog("stopFocusChange - AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
@@ -172,8 +171,9 @@ object PlayerListener {
                 if (PlayerSingleton.getState_forcePause()) return
                 //播放结束时不继续
                 if (PlayerSingleton.GET_STE_playEnd()) return
+
                 //检查是否需要继续播放
-                if (state_needContinue_whenFocusGain){
+                if (state_perception_on){
                     PlayerSingleton.continuePlay(true)
                 }
             }

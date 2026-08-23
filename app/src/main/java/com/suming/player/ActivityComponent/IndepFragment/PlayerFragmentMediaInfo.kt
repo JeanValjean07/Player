@@ -132,7 +132,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
         //设置状态栏背景为透明(否则有色块跟随动画飞出)
         window.statusBarColor = android.graphics.Color.TRANSPARENT
         //设置背景压暗幅度
-        window.setDimAmount(0.1f)
+        window.setDimAmount(0f)
 
         //执行绑定屏幕方向的设置
         if (isLandscape){

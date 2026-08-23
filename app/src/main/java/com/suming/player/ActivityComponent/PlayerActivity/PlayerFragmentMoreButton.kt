@@ -49,6 +49,7 @@ import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
+import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -92,7 +93,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //设置状态栏背景为透明(否则有色块跟随动画飞出)
         window.statusBarColor = Color.TRANSPARENT
         //设置背景压暗幅度
-        window.setDimAmount(0.1f)
+        window.setDimAmount(0f)
 
         //执行绑定屏幕方向的设置
         if (isLandscape){
@@ -607,6 +608,54 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 returnFragment(FragmentConnector.fragment_more_button_bind_play_view)
                 dismiss()
             }
+            //重新启用播放感知
+            val Button_RestartPerception = view.findViewById<TextView>(R.id.Button_RestartPerception)
+            Button_RestartPerception.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle("重新启用播放感知")
+                    .setMessage("使用播控中心控制播放时，可能导致播放感知被无意关闭。查阅指南或发布页可了解详细逻辑。")
+                    .setPositiveButton("了解") { dialog, which ->
+                        ToolVibrate().vibrate(requireContext())
+
+                        PlayerListener.state_perception_on = true
+
+                        customDismiss()
+
+                        dialog.dismiss()
+                    }
+                    .setCancelable(true)
+                    .show()
+
+            }
+            //使进度条脱离异常状态
+            val Button_EscapeScrollerError = view.findViewById<TextView>(R.id.Button_EscapeScrollerError)
+            Button_EscapeScrollerError.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle("正在开发中")
+                    .setMessage("暂未发现导致进度条异常的场景，如果遇到，先退出播放页重进")
+                    .setPositiveButton("了解") { dialog, which ->
+                        ToolVibrate().vibrate(requireContext())
+
+                        customDismiss()
+
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("立即退出播放页") { dialog, which ->
+                        ToolVibrate().vibrate(requireContext())
+
+                        returnFragment(FragmentConnector.fragment_more_button_exit_right_now)
+
+                        dialog.dismiss()
+                    }
+                    .setCancelable(true)
+                    .show()
+
+            }
+
 
             //注册进度条相关功能(经典播放页时不显示进度条相关功能)
             val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
