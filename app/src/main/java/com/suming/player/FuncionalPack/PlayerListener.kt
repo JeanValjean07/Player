@@ -43,6 +43,7 @@ object PlayerListener {
     //音频设备监听
     private val DeviceCallback = object : AudioDeviceCallback() {
         //有设备断开了
+        @OptIn(UnstableApi::class)
         override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) {
             val relevant = removedDevices.filter {
                 it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
@@ -51,9 +52,11 @@ object PlayerListener {
             }
             //移除设备为耳机
             if (relevant.isNotEmpty()) {
+                //consoleLog("PlayerListener.onAudioDevicesRemoved")
+
                 state_HeadSetInserted = false
                 //暂停播放
-
+                PlayerSingleton.setState_forcePause()
             }
         }
         //有设备连接了
@@ -65,6 +68,8 @@ object PlayerListener {
                         it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
             }
             if (relevant.isNotEmpty()) {
+                //consoleLog("PlayerListener.onAudioDevicesAdded")
+
                 state_HeadSetInserted = true
                 //连接耳机时,若当前音量太高,限制一次
                 setVolumeLimitWhenHeadSetPlug()
@@ -163,6 +168,8 @@ object PlayerListener {
             AudioManager.AUDIOFOCUS_GAIN -> {
                 //consoleLog("stopFocusChange - AUDIOFOCUS_GAIN")
                 isFocus = true
+                //强制暂停时不继续
+                if (PlayerSingleton.getState_forcePause()) return
                 //播放结束时不继续
                 if (PlayerSingleton.GET_STE_playEnd()) return
                 //检查是否需要继续播放

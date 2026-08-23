@@ -30,7 +30,6 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
-import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
@@ -532,6 +531,8 @@ object PlayerSingleton {
         }
         playState_wasPlaying = true
 
+        //
+        forcePause = false
 
         //请求音频焦点
         if (requestFocus){
@@ -553,13 +554,15 @@ object PlayerSingleton {
     }
     //暂停播放
     fun pausePlay(){
-        consoleLog("pausePlay")
+        //consoleLog("pausePlay")
         //修改播放标记,记录本次暂停之前,到底有没有真的处于播放状态
         if (_player?.isPlaying == true){
             setState_wasPlaying(true)
         }else{
             setState_wasPlaying(false)
         }
+
+
 
         //写入可观察信息
         PlayerInfoCenter.updateObservableIsPlaying(false)
@@ -573,6 +576,14 @@ object PlayerSingleton {
         playState_wasPlaying = wasPlaying
     }
     fun getState_wasPlaying(): Boolean = playState_wasPlaying
+    //强制暂停(这种情况下,千万不能再自动继续播放)(强制暂停判断不应存在于continuePlay中,必须外部判断)
+    private var forcePause = false
+    fun setState_forcePause(){
+        this.forcePause = true
+        //自带一次暂停
+        pausePlay()
+    }
+    fun getState_forcePause(): Boolean = forcePause
 
     //重置播放结束状态
     fun cancelState_PlayEnd(){

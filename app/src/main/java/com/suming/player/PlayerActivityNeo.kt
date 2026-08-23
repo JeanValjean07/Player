@@ -115,20 +115,11 @@ import kotlin.math.hypot
 import kotlin.math.pow
 
 @UnstableApi
-@Suppress("NewApi","/unused")
+@Suppress("NewApi","unused")
 class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
-    //音量配置参数
-    private var maxVolume = 0
-    private var currentVolume = 0
-    private var originalVolume = 0
 
-
-    //功能:倍速滚动
-    private var lastPlaySpeed = 0f
-
-    //功能:VideoSeek
 
 
 
@@ -154,10 +145,9 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //自动旋转状态
     private var rotationSetting = 0
-    //PlayerReady
-    private var STATE_PlayerReady = false
-    //音量变化步长
-    private var volumeChangeGap = 1
+
+
+
     //滑动手势
     private var longPress = false
     private var touchLeft = false
@@ -170,13 +160,10 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
 
-    private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
-    //空闲定时器
-    private var IDLE_Timer: CountDownTimer? = null
-    private val IDLE_MS = 5_000L
-    private var state_EnterAnimationCompleted = false
-    //更新时间戳参数
-    private var lastMillis = 0L
+
+
+
+
     //倍速播放
     private var currentSpeed = 1.0f
 
@@ -187,27 +174,17 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
 
-    private var onScroll_currentMillis = 0L
-    private var onScroll_scrollPercent = 0f
-    private var onScroll_seekToMs = 0L
+
 
 
     private var videoTimeSyncHandler_currentPosition = 0L
 
 
-    //</editor-fold>
-    //测试中变量
-    //<editor-fold desc="测试中变量">
 
 
 
 
-    private var clickMillis_MoreOptionPage = 0L
 
-
-
-    private var switchLandscape_downMillis = 0L
-    private var switchLandscape_upMillis = 0L
 
 
 
@@ -217,17 +194,17 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var touchState_need_exit_vibrated = false
     private var touchState_scroll_vibrated = false
 
-    private var state_HeadSetInserted = false
+
 
 
     private var state_RootCardClosing = false
 
     private var touchCenterDistance = 0f
 
-    private var state_onPlayError = false
-
 
     //</editor-fold>
+
+
 
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
@@ -245,6 +222,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val Undefined = ""
     //测试
     private var testMode = false
+    //点击过滤
+    private var clickMillis_MoreOptionPage = 0L
 
 
 
@@ -291,7 +270,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             //寻帧时一律使用关键帧
             playerViewModel.PRF_Cache_UseSyncFrame_whenSeek = SettingsRequestCenter.get_PREFS_UseOnlySyncFrameWhenSeek(context)
-
+            //竖屏时也开启自动隐藏控件
+            playerViewModel.PRF_Cache_EnableAutoHideController_whenPortrait = SettingsRequestCenter.GET_PRF_EnableAutoHideController_whenPortrait(context)
 
             //读取进度条配置(已不再支持为每个视频单独配置,但暂未从数据库移除数据)
             playerViewModel.PREFS_AlwaysSeek = SettingsRequestCenter.get_PREFS_EnableAlwaysSeek(context)
@@ -366,17 +346,14 @@ class PlayerActivityNeo: AppCompatActivity(){
             windowInfo.screenBrightness = playerViewModel.BrightnessValue
             window.attributes = windowInfo
         }
+
         //音量管理与提示
-        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-        originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-        volumeChangeGap = 750/maxVolume
-        if (originalVolume == 0 && !playerViewModel.NOTICED_VolumeIsZero) {
-            playerViewModel.NOTICED_VolumeIsZero = true
-            notice("当前音量为0", 3000)
-        }
+        volumeDetect()
 
     }
+
+
+
 
     //注册
     @SuppressLint("ClickableViewAccessibility")
@@ -753,8 +730,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                             exitActivity_ensure()
                         }
 
-                        //固定事件:点击后开启隐藏控件倒计时
-                        startIdleTimer()
 
                         gestureDetectorPlayArea.onTouchEvent(event)
                     }
@@ -1178,7 +1153,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         override fun onPlaybackStateChanged(state: Int) {
             when (state) {
                 Player.STATE_READY -> {
-                    STATE_PlayerReady = true
                     playState_playerReady()
                 }
                 Player.STATE_ENDED -> {
@@ -1216,7 +1190,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-            state_onPlayError = true
+
             showCustomToast("播放错误: ${error.message}", 3)
         }
     }
@@ -1621,6 +1595,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         //关闭旋转监听器
         stopOrientationListener()
 
+        //关闭隐藏控件倒计时
+        closeIdleTimer()
+
 
     }
 
@@ -1640,6 +1617,9 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //更新屏幕常亮状态
         updateKeepScreenOn()
+
+        //开启隐藏控件倒计时
+        startIdleTimer()
 
 
         //检查文件是否存在
@@ -1709,8 +1689,13 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //关闭本地监听器
         stopOrientationListener()
+
+        //关闭隐藏控件倒计时
+        closeIdleTimer()
+
     }
 
+    private var state_EnterAnimationCompleted = false
     override fun onEnterAnimationComplete() {
         super.onEnterAnimationComplete()
 
@@ -1785,7 +1770,10 @@ class PlayerActivityNeo: AppCompatActivity(){
     //用户交互监听器
     override fun onUserInteraction() {
         super.onUserInteraction()
-        IDLE_Timer?.cancel()
+        //consoleLog("onUserInteraction")
+
+        //开启隐藏控件倒计时
+        startIdleTimer()
     }
     //android:configChanges="orientation|screenSize|screenLayout"
     @SuppressLint("SwitchIntDef")
@@ -1801,8 +1789,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             Configuration.ORIENTATION_LANDSCAPE -> {
                 isLandscape = true
                 updateScreenParameters()
-                //启动隐藏控件倒计时
-                startIdleTimer()
+
 
             }
             //切换至竖屏
@@ -1995,6 +1982,25 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
         dialog.show()
     }
+
+    //音量管理与提示
+    private fun volumeDetect(){
+        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        volumeChangeGap = 750/maxVolume
+        if (originalVolume == 0 && !playerViewModel.NOTICED_VolumeIsZero) {
+            playerViewModel.NOTICED_VolumeIsZero = true
+            notice("当前音量为0", 3000)
+        }
+    }
+    private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
+    private var maxVolume = 0
+    private var currentVolume = 0
+    private var originalVolume = 0
+    private var volumeChangeGap = 1   //音量变化步长
+    private var state_HeadSetInserted = false
+
 
     //设置项修改封装函数
     private fun changeStateAlwaysSeek(target: Boolean){
@@ -2265,17 +2271,26 @@ class PlayerActivityNeo: AppCompatActivity(){
         val chooser = Intent.createChooser(shareIntent, "分享视频")
         context.startActivity(chooser)
     }
-    //空闲倒计时
-    private fun startIdleTimer() {
+    //空闲定时器
+    private var IDLE_Timer: CountDownTimer? = null
+    private val IDLE_MS = 5_000L
+    private fun startIdleTimer(){
         IDLE_Timer?.cancel()
         IDLE_Timer = object : CountDownTimer(IDLE_MS, 1000L) {
             override fun onTick(millisUntilFinished: Long) {}
             override fun onFinish() { idleTimeout() }
         }.start()
     }
-    private fun idleTimeout() {
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+    private fun closeIdleTimer(){
+        IDLE_Timer?.cancel()
+    }
+    private fun idleTimeout(){
+        if (isLandscape){
             setControllerInvisible()
+        }else{
+            if (playerViewModel.PRF_Cache_EnableAutoHideController_whenPortrait){
+                setControllerInvisible()
+            }
         }
     }
     //启动和关闭小窗
@@ -2376,6 +2391,8 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
         }
     }
+    private var switchLandscape_downMillis = 0L //按下时间
+    private var switchLandscape_upMillis = 0L   //抬起时间
     @SuppressLint("SourceLockedOrientationActivity")
     private fun setOrientation_PORTRAIT(){
         scroller.stopScroll()
@@ -2509,9 +2526,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                             scrollerDesire_Active = false
 
-                            //清理状态
-                            clearScrollerState()
-
 
 
                             return
@@ -2537,6 +2551,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                                 setSeekParameter_useSync(1)
                             }else{
+
                                 setSeekParameter_useSync(0)
                             }
                         }else{
@@ -2552,22 +2567,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
 
                     //时间窗数值跟随进度条位置随动
-                    onScroll_currentMillis = System.currentTimeMillis()
-                    if (onScroll_currentMillis - lastMillis > value_timeStamp_updateGapMs) {
-                        lastMillis = onScroll_currentMillis
-                        if (playerViewModel.PREFS_LinkScroll) {
-
-                            //计算对应时间戳
-                            onScroll_scrollPercent = recyclerView.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
-                            onScroll_seekToMs = (onScroll_scrollPercent * PlayerInfoCenter.GET_Media_Duration()).toLong()
-
-                            //刷新时间显示
-                            controller_timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
-
-                        } else {
-                            return
-                        }
-                    }
+                    updateTimeStampWindow()
 
                     //记录运动方向
                     if (dx > 0){
@@ -2608,6 +2608,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             })
         }
     }
+    private var scroller_updateTimerStamp_lastMillis = 0L    //进度条被动刷新时的间隔
     private var scrollerWasPlayingState_recorded = false //本轮滚动是否记录过播放状态变化
     private var playState_scroller_wasPlaying = false //本轮滚动是否播放
     private fun recordScrollerWasPlayingState(){
@@ -2619,6 +2620,28 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     private var playState_singleTap_wasPlaying = false //singleTap专用wasPlaying
+    //刷新时间显示窗口
+    private fun updateTimeStampWindow(){
+        onScroll_currentMillis = System.currentTimeMillis()
+        if (onScroll_currentMillis - scroller_updateTimerStamp_lastMillis > value_timeStamp_updateGapMs) {
+            scroller_updateTimerStamp_lastMillis = onScroll_currentMillis
+            if (playerViewModel.PREFS_LinkScroll) {
+
+                //计算对应时间戳
+                onScroll_scrollPercent = scroller.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
+                onScroll_seekToMs = (onScroll_scrollPercent * PlayerInfoCenter.GET_Media_Duration()).toLong()
+
+                //刷新时间显示
+                controller_timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
+
+            } else {
+                return
+            }
+        }
+    }
+    private var onScroll_currentMillis = 0L
+    private var onScroll_scrollPercent = 0f
+    private var onScroll_seekToMs = 0L
     //单次点击位置计算
     private fun postSingleTapSeek(e_x: Float){
         //根据百分比计算具体跳转时间点
@@ -2650,6 +2673,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         //清除playEnd状态
         playerViewModel.playEnd = false
         PlayerSingleton.cancelState_PlayEnd()
+
+        //清理状态
+        clearScrollerState()
 
 
         //恢复播放状态

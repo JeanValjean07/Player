@@ -276,6 +276,15 @@ class SettingsActivity: AppCompatActivity() {
 
                 SettingsRequestCenter.SET_PRF_SwitchPortrait_whenExit(isChecked)
             }
+            //竖屏时也开启自动隐藏控件
+            val SC_EnableAutoHideController_whenPortrait = findViewById<SwitchCompat>(R.id.SC_EnableAutoHideController_whenPortrait)
+            SC_EnableAutoHideController_whenPortrait.isChecked = SettingsRequestCenter.GET_PRF_EnableAutoHideController_whenPortrait(this@SettingsActivity)
+            SC_EnableAutoHideController_whenPortrait.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(this@SettingsActivity)
+                SettingsRequestCenter.SET_PRF_EnableAutoHideController_whenPortrait(this@SettingsActivity, isChecked)
+            }
+
+
             //启用播放区域移动动画
             val switch_EnablePlayAreaMoveAnim = findViewById<SwitchCompat>(R.id.EnablePlayAreaMoveAnim)
             switch_EnablePlayAreaMoveAnim.isChecked = SettingsRequestCenter.get_PREFS_EnablePlayAreaMoveAnim(this@SettingsActivity)

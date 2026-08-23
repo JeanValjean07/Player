@@ -5,7 +5,6 @@ import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import com.suming.player.AddonTools.ToolEventBus
 
 @OptIn(UnstableApi::class)
 class ToolPlayerWrapper(player: ExoPlayer) : ForwardingPlayer(player) {
@@ -47,3 +46,4 @@ class ToolPlayerWrapper(player: ExoPlayer) : ForwardingPlayer(player) {
     }
 
 }
+

@@ -836,6 +836,37 @@ object SettingsRequestCenter {
 
         return PRF_KeepScreenOn == 1
     }
+    //竖屏时也开启自动隐藏控件
+    private var PRF_EnableAutoHideController_whenPortrait = -1
+    const val PRF_EnableAutoHideController_whenPortrait_Name = "PRF_EnableAutoHideController_whenPortrait"
+    fun SET_PRF_EnableAutoHideController_whenPortrait(context: Context, enable: Boolean) {
+        initPlayVideoPageSetting(context)
+
+        PRF_EnableAutoHideController_whenPortrait = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt(PRF_EnableAutoHideController_whenPortrait_Name, if (enable) 1 else 0)}
+
+
+    }
+    fun GET_PRF_EnableAutoHideController_whenPortrait(context: Context): Boolean {
+        initPlayVideoPageSetting(context)
+
+        if (PRF_EnableAutoHideController_whenPortrait == -1){
+            PRF_EnableAutoHideController_whenPortrait = PREFS_PlayVideoPage.getInt(PRF_EnableAutoHideController_whenPortrait_Name, -1)
+            //设置默认值为关闭
+            if (PRF_EnableAutoHideController_whenPortrait == -1){
+                PRF_EnableAutoHideController_whenPortrait = 0
+                PREFS_PlayVideoPage.edit { putInt(PRF_EnableAutoHideController_whenPortrait_Name, 0) }
+            }
+        }
+
+
+        return PRF_EnableAutoHideController_whenPortrait == 1
+    }
+
+
+
+
+
 
 
     //进度条相关设置

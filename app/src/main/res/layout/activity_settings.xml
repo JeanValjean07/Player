@@ -801,6 +801,44 @@
                             android:text="平板电脑请务必关闭此选项，否则不能使用侧滑手势退出播放页。作为保险，使用退出按钮可执行强制退出，下滑关闭也是强制退出。"
                             android:textSize="12sp" />
                     </LinearLayout>
+                    <!--  开关：竖屏时也开启自动隐藏控件  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal"
+                            tools:ignore="TooManyViews">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:layout_weight="0"
+                                android:text="竖屏时也开启自动隐藏控件"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/SC_EnableAutoHideController_whenPortrait"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="0"
+                                app:thumbTint="@color/switchThumbColor"
+                                app:trackTint="@color/switchTrackColor" />
+                        </LinearLayout>
+                        <!--  提示信息  -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="无操作一段时间后自动隐藏控件层并转为深色背景。横屏时强制开启，仅竖屏时可自行设置。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
 
                     <!-- 标题：经典播放页设置 -->
                     <LinearLayout

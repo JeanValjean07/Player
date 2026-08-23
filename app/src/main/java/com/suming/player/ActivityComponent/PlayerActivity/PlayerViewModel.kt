@@ -103,6 +103,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PRF_Cache_EnablePlayAreaMove_Distance: Float = 0f
     //是否寻帧时一律使用关键帧
     var PRF_Cache_UseSyncFrame_whenSeek: Boolean = true
+    //是否竖屏时也开启自动隐藏控件
+    var PRF_Cache_EnableAutoHideController_whenPortrait: Boolean = false
     //进度条相关
     var PREFS_AlwaysSeek: Boolean = false
     var PREFS_TapJump: Boolean = false

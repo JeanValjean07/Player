@@ -33,7 +33,7 @@ android {
         //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 1
-        versionName = "3.6.6.4"
+        versionName = "3.6.6.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -88,10 +88,10 @@ dependencies {
     //ksp
     ksp("androidx.room:room-compiler:2.8.4")
 
-    //RxJava
-    implementation("io.reactivex.rxjava3:rxjava:3.1.12")
-    implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
-    implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
+    //RxJava RxKotlin RxAndroid
+    //implementation("io.reactivex.rxjava3:rxjava:3.1.12")
+    //implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
+    //implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
     //Gson
     implementation("com.google.code.gson:gson:2.14.0")
     //Glide
