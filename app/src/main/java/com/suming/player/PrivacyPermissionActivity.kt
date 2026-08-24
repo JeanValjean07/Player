@@ -235,25 +235,29 @@ class PrivacyPermissionActivity: AppCompatActivity() {
     private lateinit var level_permissions: LinearLayout
 
     //显示权限提示
+    @SuppressLint("SetTextI18n")
     private fun showPermissionPrompt(){
         val permission_prompt_text = findViewById<TextView>(R.id.permission_prompt_text)
-        //根据安卓版本显示
+        //确保已缓存安卓版本号
         if (DeviceInfo.AndroidVersion == 0){
             DeviceInfo.AndroidVersion = Build.VERSION.SDK_INT
         }
+        //根据安卓版本显示
         when{
             DeviceInfo.AndroidVersion >= Build.VERSION_CODES.TIRAMISU -> {
-                permission_prompt_text.text = permission_prompt_text_tiramisu
+                permission_prompt_text.text = permission_prompt_text_tiramisu + permission_prompt_safe_mode + permission_prompt_all_file_access
             }
             else -> {
-                permission_prompt_text.text = permission_prompt_text_snow_cone
+                permission_prompt_text.text = permission_prompt_text_snow_cone + permission_prompt_safe_mode + permission_prompt_all_file_access
             }
         }
 
 
     }
     val permission_prompt_text_tiramisu = "在安卓13及以上版本，需要同时开启视频和音频的访问权限。开启“所有文件访问权限”可获得最高自由度。也可选择不开启任何权限，选择文件播放。"
-    val permission_prompt_text_snow_cone = "在安卓12及以下版本，需要开启储存权限。开启“所有文件访问权限”可获得最高自由度。也可选择不开启任何权限，选择文件播放。"
+    val permission_prompt_text_snow_cone = "在安卓12及以下版本，需要开启储存权限。开启“所有文件访问权限”可获得最高自由度。"
+    val permission_prompt_safe_mode = "\n\n也可选择不开启任何权限，选择文件播放。"
+    val permission_prompt_all_file_access = "\n\n如果您需要访问非公有文件夹和被.nomedia标记的文件夹内的媒体，则必须开启“所有文件访问权限”。"
 
     //要求所有文件访问权限
     private fun requestAllFilePermission(){

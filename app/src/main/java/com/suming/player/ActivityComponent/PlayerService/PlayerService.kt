@@ -15,7 +15,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.suming.player.PortalActivity
+import com.suming.player.EntranceActivity
 import com.suming.player.PlayerActionReceiver
 import com.suming.player.PlayerActivityNeo
 import com.suming.player.PlayerActivityOro
@@ -169,6 +169,8 @@ class PlayerService: MediaSessionService() {
     override fun onDestroy() {
         super.onDestroy()
         consoleLog("触发 onDestroy")
+
+        stopLocalAll()
 
     }
     //仅在后台划卡时触发,而且前提是系统不执行强行停止
@@ -359,7 +361,7 @@ class PlayerService: MediaSessionService() {
     //拉起活动意图(暂未使用)
     //直接拉起管理器,管理器自动判断到底拉起哪个页面
     private fun createPendingIntentManager(): PendingIntent {
-        val intent = Intent(this, PortalActivity::class.java).apply {
+        val intent = Intent(this, EntranceActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
             .putExtra("IntentSource", "FromPendingIntent")

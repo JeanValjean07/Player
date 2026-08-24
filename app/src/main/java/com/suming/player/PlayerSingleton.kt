@@ -271,12 +271,13 @@ object PlayerSingleton {
         releasePlayer()
         //重置媒体状态
         PlayerInfoCenter.CLEAR_CurrentMediaInfo()
+        //关闭监听器
+        PlayerListener.stopListener()
         //关闭本侧的媒体会话
         stopMediaSession(context)
         //关闭服务
         stopServices(context)
-        //关闭监听器
-        PlayerListener.stopListener()
+
 
     }
 
@@ -301,7 +302,7 @@ object PlayerSingleton {
             return uriNeedCheck.toString() == MediaInfo_MediaUriStandard
         }
         //若不是标准链接,先转成标准链接,再对比
-        val standardUriNeedCheck = MediaUriManager.getStandardMediaUri(uriNeedCheck.toString(),context)
+        val standardUriNeedCheck = MediaUriManager.GET_StandardMediaUri(uriNeedCheck.toString(),context)
 
         return standardUriNeedCheck == MediaInfo_MediaUriStandard
     }
@@ -405,6 +406,22 @@ object PlayerSingleton {
          */
 
 
+    }
+
+
+    fun test_setMedia(uri: Uri){
+        //开始构建mediaItem
+        val mediaItem = MediaItem.Builder()
+            .setUri(uri)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle("未知")
+                    .setArtist("未知")
+                    .build())
+            .build()
+
+        //设置给播放器
+        _player?.setMediaItem(mediaItem)
     }
 
 

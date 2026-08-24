@@ -69,7 +69,7 @@ object MediaInfoRetriever {
         try{
             val Media_UriString = uriString
             //确保链接标准
-            val Media_UriStandard = MediaUriManager.getStandardMediaUri(Media_UriString,context)
+            val Media_UriStandard = MediaUriManager.GET_StandardMediaUri(Media_UriString,context)
             //截取NUM_ID
             val Media_NUM_ID = Media_UriStandard.split("/").last().toLong()
             //日志
@@ -256,15 +256,20 @@ object MediaInfoRetriever {
     }
     //SPECIFIC_ID 拆解器
     fun split_SPECIFIC_ID(SPECIFIC_ID: String): Pair<String,Long>{
-        val mediaType = SPECIFIC_ID.substringBefore(SPECIFIC_ID_SEPARATOR)
-        val mediaNUMID = SPECIFIC_ID.substringAfter(SPECIFIC_ID_SEPARATOR).toLong()
+        try {
+            val mediaType = SPECIFIC_ID.substringBefore(SPECIFIC_ID_SEPARATOR)
+            val mediaNUMID = SPECIFIC_ID.substringAfter(SPECIFIC_ID_SEPARATOR).toLong()
 
-        return Pair(mediaType,mediaNUMID)
+            return Pair(mediaType,mediaNUMID)
+        }catch(e: Exception){
+            consoleLog("split_SPECIFIC_ID-拆解SPECIFIC_ID发生错误: $e")
+            return Pair("",0)
+        }
     }
 
 
     //获取文件路径
-    private fun GET_FilePath_From_MediaUri(context: Context, uri: Uri): String? {
+    fun GET_FilePath_From_MediaUri(context: Context, uri: Uri): String? {
         var cursor: Cursor? = null
         return try {
             val projection = arrayOf(MediaStore.MediaColumns.DATA)

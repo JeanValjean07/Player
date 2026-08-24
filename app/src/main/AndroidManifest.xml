@@ -113,8 +113,8 @@
                 android:name="android.notch_support"
                 android:value="true"/>
         </activity>
-        <!-- 播放页Picker -->
-        <activity android:name=".PortalActivity"
+        <!-- EntranceActivity -->
+        <activity android:name=".EntranceActivity"
             android:theme="@style/THEME_Player"
             android:label="播放器"
             android:screenOrientation="unspecified"
@@ -132,6 +132,17 @@
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="video/*" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
             </intent-filter>
             <meta-data
                 android:name="android.notch_support"

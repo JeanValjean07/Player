@@ -14,6 +14,7 @@ import java.io.File
 object MediaUriManager {
 
 
+    const val Undefined = ""
     const val Uri_Part_Video = "video"
     const val Uri_Part_Audio = "audio"
 
@@ -55,93 +56,229 @@ object MediaUriManager {
 
     //检查uri是否是标准格式
     fun isMediaUriStandard(mediaUriString: String): Boolean {
-        //使用正则表达式判断(目前通过video和audio两种类型)
-        val regex = """^content://media/external/(?:video|audio)/media/\d+$""".toRegex()
+        //去除尾部多余参数
+        val cleanUri = mediaUriString.substringBefore('?').substringBefore('#')
 
-        return regex.matches(mediaUriString)
+        //使用正则表达式判断(目前通过video和audio两种类型)
+        val regex = """^content://media/(?:external|internal)/(?:video|audio)/media/\d+$""".toRegex()
+
+
+        return regex.matches(cleanUri)
     }
 
-    //转换非标准链接为标准链接(自带是否标准检测)
-    fun getStandardMediaUri(mediaUriString: String, context: Context): String {
-        //若链接为空
-        if (mediaUriString == "") return ""
+    fun convertFileUriToMediaUri(context: Context, uri: Uri): Uri {
+        //检查是否已经是media URI
+        if (uri.toString().contains("/(video|audio)/media/")){
+            consoleLog("convertFileUriToMediaUri-已经是media URI: $uri")
+            return uri
+        }
 
-        //再次检查uri是否是标准格式,是标准格式时直接返回
-        if (isMediaUriStandard(mediaUriString)) return mediaUriString
+        // 从file URI中提取ID或路径
+        val filePath = GET_FilePath(context,uri)
+        consoleLog("convertFileUriToMediaUri-获取文件路径 :filePath = $filePath")
+        if (filePath == "") {
+            consoleLog("convertFileUriToMediaUri-获取文件路径失败:filePath 为空")
+            return uri
+        }
 
-        //提取文件路径
-        val filePath = GET_FilePath(context,mediaUriString.toUri())
-        consoleLog("检查uri是否是标准格式-取到filePath: $filePath")
-        if (filePath == null) return ""
+        //查询video表获取标准URI
+        val videoUri = searchUriBySysMediaApi(filePath, context)
+        consoleLog("convertFileUriToMediaUri-查询video表获取标准URI :videoUri = $videoUri")
 
-        //查询数据库获取媒体Uri
-        val mediaUri = searchUriBySysMediaApi(filePath, context)
-        consoleLog("检查uri是否是标准格式-取到Uri: $mediaUri")
-        if (mediaUri == Uri.EMPTY) return ""
+        return videoUri
+    }
 
+    //获取标准媒体Uri
+    fun GET_StandardMediaUri(mediaUriString: String, context: Context): String {
+        if (mediaUriString.isEmpty()) return Undefined
 
-        return mediaUri.toString()
+        //去除参数
+        val cleanUri = mediaUriString.substringBefore("?")
+
+        //检查是否标准
+        if (isMediaUriStandard(cleanUri)) return cleanUri
+
+        //
+        val uri = cleanUri.toUri()
+        val standardUri = when (uri.scheme) {
+            "content" -> convertContentUriDirectly(context, uri)
+            "file", null -> convertFileUriToMedia(context, uri)
+            else -> null
+        }
+
+        return standardUri?.toString() ?: Undefined
+    }
+
+    private fun convertContentUriDirectly(context: Context, uri: Uri): Uri? {
+        // 直接通过ID查询所有表
+        val id = uri.path?.substringAfterLast("/")?.toLongOrNull() ?: return null
+
+        val tables = listOf(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Files.getContentUri("external")
+        )
+
+        for (tableUri in tables) {
+            val testUri = ContentUris.withAppendedId(tableUri, id)
+            context.contentResolver.query(testUri, arrayOf("_ID"), null, null, null)?.use { c ->
+                if (c.moveToFirst()) {
+                    return testUri
+                }
+            }
+        }
+        return null
+    }
+
+    private fun convertFileUriToMedia(context: Context, uri: Uri): Uri? {
+        // 从文件路径获取uri(需查询系统媒体库)(路径必须是绝对实际路径)
+        return searchUriBySysMediaApi(uri.path?.substringBefore("?") ?: return null, context)
     }
 
     //从文件路径获取uri(需查询系统媒体库)(路径必须是绝对实际路径)
-    fun searchUriBySysMediaApi(filePath: String, context: Context): Uri {
-        //构建查询
-        val contentResolver: ContentResolver = context.contentResolver
-        val projection = arrayOf(MediaStore.Video.Media._ID)
-        val selection = "${MediaStore.Video.Media.DATA} = ?"
-        val selectionArgs = arrayOf(filePath)
-        var cursor: Cursor? = null
+    fun searchUriBySysMediaApi(file_path: String, context: Context): Uri {
+        //尝试所有可能的表
+        val tables = listOf(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Files.getContentUri("external")
+        )
 
-
-        return try{
-            cursor = contentResolver.query(
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                selection,
-                selectionArgs,
-                null
-            )
-            if (cursor != null && cursor.moveToFirst()) {
-                val idColumnIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
-                val id = cursor.getLong(idColumnIndex)
-                consoleLog("id: $id")
-                //构建标准uri
-                ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
-            }else{
-                consoleLog("未查询到媒体ID")
-                Uri.EMPTY
+        for (tableUri in tables) {
+            val uri = queryTable(context, tableUri, file_path)
+            if (uri != Uri.EMPTY) {
+                consoleLog("searchUriBySysMediaApi -在${tableUri}表中找到文件")
+                return uri
             }
-        }finally{
-            cursor?.close()
+        }
+
+        consoleLog("searchUriBySysMediaApi -所有表都未找到文件: $file_path")
+        return Uri.EMPTY
+    }
+
+    private fun queryTable(context: Context, tableUri: Uri, file_path: String): Uri {
+        val projection = arrayOf(MediaStore.MediaColumns._ID)
+        val selection = "${MediaStore.MediaColumns.DATA} = ?"
+        val selectionArgs = arrayOf(file_path)
+
+        context.contentResolver.query(tableUri, projection, selection, selectionArgs, null)
+            ?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
+                    return ContentUris.withAppendedId(tableUri, id)
+                }
+            }
+        return Uri.EMPTY
+    }
+
+
+    //检测媒体uri类型模式(false = 降级链接)
+    const val uriType_null = " uriType_null"
+    const val uriType_full_permission = " uriType_full_permission"
+    const val uriType_low_permission = " uriType_low_permission"
+    fun detectMediaUriTypeMode(uri: Uri?): String {
+        if (uri == null) return uriType_null
+
+        val uriString = uri.toString()
+
+        //检查是否是 content://
+        if (!uriString.startsWith("content://")) {
+            return uriType_null
+        }
+
+        //检查是否是 media
+        if (uri.authority != "media") {
+            return uriType_null
+        }
+
+        //获取路径部分
+        val path = uri.path ?: return uriType_null
+
+        return when {
+            //匹配视频媒体路径: /external/video/media/ 或 /internal/video/media/
+            path.contains("/video/media/") -> uriType_full_permission
+
+            //匹配音频媒体路径
+            path.contains("/audio/media/") -> uriType_full_permission
+
+            //匹配图片媒体路径
+            path.contains("/images/media/") -> uriType_full_permission
+
+            //匹配文件通用路径: /external/file/ 或 /internal/file/
+            path.contains("/file/") -> uriType_low_permission
+
+            // 其他路径
+            else -> uriType_null
         }
     }
 
 
 
     //从uri获取文件绝对路径
-    private fun GET_FilePath(context: Context, uri: Uri): String? {
+    fun GET_FilePath(context: Context, uri: Uri): String {
         try{
-            val cleanUri = if (uri.scheme == null || uri.scheme == "file") {
-                Uri.fromFile(File(uri.path?.substringBefore("?") ?: return null))
-            } else {
-                uri
+            //去除尾部多余参数
+            val cleanUri = if (uri.scheme == null || uri.scheme == "file"){
+                Uri.fromFile(File(uri.path?.substringBefore("?") ?: ""))
+            }else{
+                val baseUri = "${uri.scheme}://${uri.authority}${uri.path}"
+
+                baseUri.toUri()
             }
+
+            //根据uri类型获取绝对路径
             val absolutePath: String? = when (cleanUri.scheme) {
                 ContentResolver.SCHEME_CONTENT -> {
-                    val projection = arrayOf(MediaStore.Video.Media.DATA)
-                    context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
-                        if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
+
+                    val projection = arrayOf(
+                        MediaStore.MediaColumns.DATA,
+                        MediaStore.Video.Media.DATA,
+                        MediaStore.Audio.Media.DATA,
+                        MediaStore.Images.Media.DATA
+                    )
+
+                    var path: String? = null
+                    val uris = listOf(
+                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        MediaStore.Files.getContentUri("external")
+                    )
+
+                    for (tableUri in uris) {
+                        //从URI中提取ID
+                        val id = cleanUri.path?.substringAfterLast("/")?.toLongOrNull()
+                        if (id != null) {
+                            val idUri = ContentUris.withAppendedId(tableUri, id)
+                            context.contentResolver.query(idUri, projection, null, null, null)?.use { c ->
+                                if (c.moveToFirst()) {
+                                    for (column in projection) {
+                                        val index = c.getColumnIndex(column)
+                                        if (index != -1) {
+                                            path = c.getString(index)
+                                            if (!path.isNullOrEmpty()) break
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (!path.isNullOrEmpty()) break
                     }
+                    path
                 }
                 ContentResolver.SCHEME_FILE    -> cleanUri.path
                 else                           -> cleanUri.path
             }
 
-            return absolutePath?.takeIf { File(it).exists() }
+            val filePath = absolutePath?.takeIf { File(it).exists() }
+
+            return filePath ?: ""
         }catch(e: Exception){
             consoleLog("GET_FilePath-获取文件路径失败: $e")
 
-            return null
+            return ""
         }
     }
 

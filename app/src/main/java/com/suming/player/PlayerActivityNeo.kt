@@ -63,9 +63,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.animation.PathInterpolatorCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -982,7 +980,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //consoleLog("intentUri: $intentUri")
         val intentUriString = intentUri.toString()
         //consoleLog("intentUriString: $intentUriString")
-        val intentUriStandard = MediaUriManager.getStandardMediaUri(intentUriString, this@PlayerActivityNeo)
+        val intentUriStandard = MediaUriManager.GET_StandardMediaUri(intentUriString, this@PlayerActivityNeo)
         //consoleLog("intentUriStandard: $intentUriStandard")
 
         //获取正在播放信息
@@ -1015,14 +1013,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }else{
                     //传入原始链接
                     if (intentUriStandard == Undefined){
-                        //但链接转码失败,无法播放
-                        showCustomToast("暂未适配路径式链接处理程序,无法播放,请使用“在其他应用打开”发起播放")
-                        //停止播放引擎
-                        PlayerSingleton.stopPlayEngine()
-                        //退出活动
-                        finish()
 
-                        return
+                        //清除播放项
+                        PlayerSingleton.clearMediaItem()
+
+                        showErrorCover("请使用低权限播放页面打开此媒体")
+
                     }else{
                         //传入链接且可播放
                         if (intentUriStandard != ongoingUriStandard.toString()){
@@ -1053,6 +1049,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
     }
+
+    private var state_low_permission: Boolean = false
 
 
 
@@ -1127,8 +1125,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         //设置新媒体项
         setNewMediaItem(uri)
 
-        //开启屏幕常量
-        setKeepScreenOn(true)
     }
     //连接正在播放的媒体
     private fun connectCurrentMedia(){
@@ -1174,7 +1170,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 Player.STATE_IDLE -> {
                     consoleLog("onPlaybackStateChanged: STATE_IDLE")
 
-                    onPlayEngineIDLE()
+                    onPlayEngineIdle()
 
                 }
             }
@@ -1230,7 +1226,32 @@ class PlayerActivityNeo: AppCompatActivity(){
         state_PlayerListenerAdded = false
     }
     //设置新媒体项
-    private fun setNewMediaItem(uri: Uri){
+    private fun setNewMediaItem(uri: Uri): Boolean{
+        //检查媒体是否存在(uri方案 受.nomedia影响)
+        /*
+        val exist = MediaInfoRetriever.isMediaExist(context, uri)
+        consoleLog("setNewMediaItem: 检查目标是否存在 exist:$exist")
+        //检查文件是否存在 file_path 方案 (备用)
+
+         */
+        val file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri(context, uri) ?: ""
+        if (file_path == ""){
+            consoleLog("setNewMediaItem: 失败 无法获取 uri.path：原uri = $uri")
+            return false
+        }
+        val file = File(file_path)
+        val exist = file.exists()
+        if (!exist){
+            consoleLog("setNewMediaItem: 失败-文件已不存在")
+
+            //清除当前项
+            PlayerSingleton.clearMediaItem()
+
+            showErrorCover("目标文件不存在，请刷新列表")
+
+            return false
+        }
+
         //确保已启动播放器
         connectToExoPlayer()
 
@@ -1238,12 +1259,15 @@ class PlayerActivityNeo: AppCompatActivity(){
         showCover()
         //写入本次Ready来源
         Mark_playerReadyFrom = Mark_playerReadyFrom_setNewItem
+
         //确认设置新媒体项
         val success = PlayerSingleton.setMediaItem(uri, true)
 
         //成功时绑定一次播放器视图,作为保险
         if (success){
             bindPlayerView()
+
+            return true
         }else{
             consoleLog("setNewMediaItem: 失败-设置新媒体项")
             //进入检查流程
@@ -1253,12 +1277,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                 consoleLog("setNewMediaItem: 失败-文件已不存在")
                 showCustomToast("此文件已不存在,请刷新列表", 3)
                 finish()
-                return
             }
 
             //如果未检查到问题,提示未知错误
             showCustomToast("播放失败:未知错误", 3)
 
+            return false
         }
 
     }
@@ -1278,7 +1302,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         //重新绑定播放器视图
         bindPlayerView()
 
-
+        //刷新屏幕常亮状态
+        updateKeepScreenOn()
         //刷新视频总长度
         updateTimerWindow()
         //刷新进度条
@@ -1288,6 +1313,20 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
 
+    //媒体项被清除回调
+    private fun onMediaItemCleared(){
+
+        //解绑播放区域
+        unbindPlayerView()
+        //关闭进度条
+        closeScroller()
+        //刷新屏幕常亮状态
+        updateKeepScreenOn()
+
+
+        showErrorCover("播放项被清除了，可在播放列表面板中启动播放")
+
+    }
 
     //播放状态变更回调触发
     private fun isPlayingChanged(){
@@ -1299,7 +1338,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         updateLoopFunctionState()
 
     }
-
 
     //更新循环函数状态
     private fun updateLoopFunctionState(){
@@ -1314,31 +1352,38 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
 
-    //播放器进入空闲状态(在很多rom上等同于死亡状态,因为不可主动恢复,必须重建,等同于播放器已被销毁)
-    private fun onPlayEngineIDLE(){
-        consoleLog("onPlayEngineIDLE")
+    //播放器进入空闲状态
+    private fun onPlayEngineIdle(){
+        //consoleLog("onPlayEngineIDLE")
 
-        showErrorCover("播放器已离线，正在恢复中")
-
+        //清除播放项
         onMediaItemCleared()
+        //显示错误面板
+        showErrorCover("播放器已离线，正在恢复中")
 
         //清理监听器
         removeExoPlayerListener()
+        //清除本地引用
+        player = null
 
-        //反向通知播放器
+        //反向通知播放器重新启动
         lifecycleScope.launch {
+            //反向通知播放器重新启动,并获得是否成功的反馈
             val success = PlayerSingleton.onPlayEngineIDLE()
             //若成功,重新拿到播放器引用
             if (success){
+                //重新连接播放器
                 withContext(Dispatchers.Main){
                     connectToExoPlayer()
                 }
 
                 showErrorCover("播放器已恢复，可在播放列表面板中启动播放")
+
             }else{
                 consoleLog("onPlayEngineIDLE: 失败-连接播放器")
 
                 showErrorCover("播放器恢复失败，请手动退出后重试")
+
             }
         }
 
@@ -1346,11 +1391,12 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
     //检查文件是否还存在
-    private fun isFileExist(){
+    private fun detectFileExistState(){
         //获取file_path
         val file_path = PlayerInfoCenter.GET_Media_FilePath()
         //consoleLog("isFileExist: file_path:$file_path")
         if (file_path.isEmpty()) return
+
         //检查是否有媒体正在在播放
         val isAnyMediaOngoing = isAnyMediaOngoing().first
         //consoleLog("isFileExist: isAnyMediaOngoing:$isAnyMediaOngoing")
@@ -1359,16 +1405,17 @@ class PlayerActivityNeo: AppCompatActivity(){
             //consoleLog("isFileExist: exist:$exist")
             if (!exist){
                 //文件不存在
-                showCustomToast("媒体已失效")
+                //showCustomToast("文件已不存在")
                 //清除当前项
                 PlayerSingleton.clearMediaItem()
-                //离开活动
-                finish()
+
+                showErrorCover("目标文件已不存在")
 
             }
         }
 
     }
+
     //检查是否有媒体正在在播放并获取链接
     private fun isAnyMediaOngoing(): Pair<Boolean, String>{
         //从播放器获取当前媒体状态
@@ -1382,19 +1429,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
 
-    //媒体项被清除回调
-    private fun onMediaItemCleared(){
 
-        //解绑播放区域
-        unbindPlayerView()
-        //关闭进度条
-        closeScroller()
-
-        showErrorCover("播放项被清除了，可在播放列表面板中启动播放")
-
-        //离开活动
-        //finish()
-    }
 
 
 
@@ -1658,7 +1693,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
         //检查文件是否存在
-        isFileExist()
+        detectFileExistState()
 
 
         //状态机(经典代码,别删除)
@@ -1852,21 +1887,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
-    //控制屏幕常量
-    private fun setKeepScreenOn(on: Boolean){
-        if (on){
-            val continueOn = SettingsRequestCenter.GET_PRF_KeepScreenOn(context)
-            if (continueOn){
-                rootConstraint.keepScreenOn = true
-            }else{
-                rootConstraint.keepScreenOn = false
-            }
-        }else{
-            //关闭屏幕常亮
-            rootConstraint.keepScreenOn = false
-        }
 
-    }
     //更新屏幕常亮状态
     private fun updateKeepScreenOn(){
         val keepOn = SettingsRequestCenter.GET_PRF_KeepScreenOn(context)
@@ -1875,7 +1896,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         }else{
             rootConstraint.keepScreenOn = false
         }
-
     }
 
     //启动更多操作面板
@@ -2874,8 +2894,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         //调用暂停播放(确保活动内唯一调用)
         PlayerSingleton.pausePlay()
 
-        //关闭屏幕常量
-        setKeepScreenOn(false)
 
         //关闭本地界面更新
         stopVideoTimeSync()
@@ -2886,8 +2904,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         //调用继续播放(确保活动内唯一调用)
         PlayerSingleton.continuePlay(need_requestFocus)
 
-        //开启屏幕常量
-        setKeepScreenOn(true)
 
         //开启本地界面更新
         startScrollerSync(8)
@@ -2923,6 +2939,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun updateScrollerAdapter(){
         lifecycleScope.launch(Dispatchers.IO) {
+            if (state_low_permission) return@launch
+
             //初始化进度条布局
             scroller.layoutManager = scrollerLayoutManager
             scroller.itemAnimator = null
@@ -3384,8 +3402,16 @@ class PlayerActivityNeo: AppCompatActivity(){
         closeButton.setOnClickListener {
             ToolVibrate().vibrate(this)
             //检查播放器是否已经正常恢复
-
+            val (current_media_ongoing, current_media_uri) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+            if (!current_media_ongoing || current_media_uri == Uri.EMPTY){
+                showCustomToast("再次检查发现,目前确实没有媒体在播放", 3)
+            }else{
+                closeErrorCover()
+            }
         }
+
+        //把加载中遮罩关掉保险
+        closeCover()
     }
 
     //格式化时间戳显示
@@ -3564,7 +3590,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun syncScrollTask_Core_Compute(){
-        //计算位置参数
+
+        if (state_low_permission) return
+        if (ScrollerHelper.singleFrame_durationMs <= 0L) return
         val currentPosition = player?.currentPosition ?: -1L
         if (currentPosition == -1L) return
         scrollerParamMain = ( currentPosition / ScrollerHelper.singleFrame_durationMs ).toInt()
@@ -3596,11 +3624,12 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (!playerViewModel.state_controllerShowing) return
         //未在播放状态
         if (player?.isPlaying != true) return
+        //
+        if (ScrollerHelper.singleFrame_durationMs <= 0L) return
         //进入锁
         if (task_syncScrollerPosition_Running) return
         task_syncScrollerPosition_Running = true
-        //检查参数有效性
-        if (ScrollerHelper.singleFrame_durationMs == 0L) return
+
 
         //scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
         //发起滚动任务
