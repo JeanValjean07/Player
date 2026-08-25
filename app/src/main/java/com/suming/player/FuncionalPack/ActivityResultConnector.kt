@@ -15,10 +15,11 @@ object ActivityResultConnector {
     const val OBRTV_MCK_FileNotExist = "OBRTV_MCK_FileNotExist"
     const val OBRTV_MCK_FileExist = "OBRTV_MCK_FileExist"
 
-    //播放器核心 PlayerCore PC
-    const val OBRTV_PC = "OBRTV_PC"
-    const val OBRTV_PC_PlaySuccess = "OBRTV_PC_PlaySuccess"
-    const val OBRTV_PC_PlayFailed = "OBRTV_PC_PlayFailed"
+    //播放器核心 Engine
+    const val OBRTV_Engine = "OBRTV_Engine"
+    const val OBRTV_Engine_AlreadyPlayingTargetItem = "OBRTV_Engine_AlreadyPlayingTargetItem"
+    const val OBRTV_Engine_RetrieveFailed = "OBRTV_Engine_RetrieveFailed"
+    const val OBRTV_Engine_SetItemSuccess = "OBRTV_Engine_SetItemSuccess"
 
 
 

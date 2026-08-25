@@ -47,23 +47,44 @@ object MediaInfoRetriever {
 
             //根据uriString获取文件路径
             file_path = GET_FilePath_From_MediaUri(context, Media_UriString.toUri()) ?: return Pair(false, MediaItemForPlay())
+            consoleLog("retrieveMediaInfo-根据uriString获取文件路径: $file_path")
+            //字段示例
+            //1./storage/emulated/0/Pictures/音乐视频/Dancin.mp4
+            //2./storage/emulated/0/Pictures/音乐视频/Dancin.mp4
 
-        }else if (uriString == Undefined){
+        }else if(uriString == Undefined){
 
             //根据文件路径获取uriString
             Media_UriString = GET_MediaUri_From_FilePath(context, file_path) ?: return Pair(false, MediaItemForPlay())
+            consoleLog("retrieveMediaInfo-根据文件路径获取uriString: $Media_UriString")
 
         }
 
 
         //设置数据源
+        var use_file_path_success = false
         try{
             retriever?.setDataSource(file_path)
 
+            use_file_path_success = true
+
         }catch(e: Exception){
-            consoleLog("retrieveMediaInfo-setMediaUri-setDataSource发生错误: $e")
-            return Pair(false, MediaItemForPlay())
+            consoleLog("retrieveMediaInfo-setMediaUri-setDataSource -file_path 发生错误: $e  , ${e.message} ${e.cause} ${e.stackTrace} ")
+
+            use_file_path_success = false
         }
+        if (!use_file_path_success){
+            try{
+                retriever?.setDataSource(context,Media_UriString.toUri())
+
+
+            }catch(e: Exception){
+                consoleLog("retrieveMediaInfo-setMediaUri-setDataSource - uriString 发生错误: $e , ${e.message} ${e.cause} ${e.stackTrace} ")
+
+                return Pair(false, MediaItemForPlay())
+            }
+        }
+
 
         //解码
         try{

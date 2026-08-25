@@ -105,11 +105,10 @@ class EntranceActivity : AppCompatActivity(){
         //consoleLog("以新链接为目标 processOutSource ")
         if (targetUriString != Undefined){
             //分支-新链接不为空
-            //consoleLog("processOutSource 新链接不为空-原始链接: $targetUriString 来源标记:$source")
+            consoleLog("processOutSource 新链接不为空-原始链接: $targetUriString 来源标记:$source")
             //几种典型的targetUri:
             //MediaStore详细表链接(content://media/external/video/media/2599,content://media/external/audio/media/2537)
             //MediaStore文件表链接(content://media/external/file/2622) <- 一般是非公有文件夹和.nomedia文件夹出现这种链接
-
             //FileProvider链接:(不一定包含fileprovider字段,但一定包含storage/emulated/0字段)
             //content://bin.mt.plus.fp/storage/emulated/0/DCIM/xxxxxxxoriginal.mp4
             //content://com.coloros.filemanager/root/storage/emulated/0/Pictures/%E9%9F%B3%E4%B9%90%E8%A7%86%E9%A2%91/%E4%B8%8B%E5%B1%B1_DJ%E7%89%88.mp4
@@ -120,7 +119,7 @@ class EntranceActivity : AppCompatActivity(){
 
             //检查链接有效性和媒体类型(这个居然不需要任何权限就能查)
             val (success, mediaType) = MediaInfoRetriever.getUriValidAndMediaType(this,targetUriString)
-            ///consoleLog("processOutSource-链接有效性检查结果: success:$success, mediaType:$mediaType")
+            consoleLog("processOutSource-链接有效性检查结果: success:$success, mediaType:$mediaType")
             if (!success){ fail("播放失败(媒体无效)") ; return }
 
             //检查链接的权限级别(是否属于被降级的底权限链接)

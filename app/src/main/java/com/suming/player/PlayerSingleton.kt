@@ -36,6 +36,7 @@ import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
 import com.suming.player.DataPack.MediaRecordPack
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
+import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
@@ -311,23 +312,23 @@ object PlayerSingleton {
 
     //Long Process Functions
     //设置新媒体项的外部接口(以后可以加些过滤)(返回是否设置成功)
-    fun setMediaItem(uri: Uri, playWhenReady: Boolean): Boolean {
+    fun setMediaItem(uri: Uri, playWhenReady: Boolean): String {
         //设置新媒体项
         val success = setMediaItemCore(uri, playWhenReady)
 
         return success
     }
     //设置/变更媒体(设置新媒体项)
-    private fun setMediaItemCore(uri: Uri, playWhenReady: Boolean): Boolean {
+    private fun setMediaItemCore(uri: Uri, playWhenReady: Boolean): String {
         //先判断是否是正在播放的媒体
-        if (isthisUriOngoing(uri)) return false
+        if (isthisUriOngoing(uri)) return ActivityResultConnector.OBRTV_Engine_AlreadyPlayingTargetItem
 
         //保存上个媒体的需要保存的东西
 
 
         //解码新媒体信息
         val (success,MediaItemForPlay) = MediaInfoRetriever.retrieveMediaInfo(uriString = uri.toString(),context = context)
-        if (!success) return false
+        if (!success) return ActivityResultConnector.OBRTV_Engine_RetrieveFailed
 
         //缓存信息
         PlayerInfoCenter.setMediaInfoPack(MediaItemForPlay)
@@ -356,7 +357,7 @@ object PlayerSingleton {
         //设置给播放器
         _player?.setMediaItem(mediaItem)
 
-        return true
+        return ActivityResultConnector.OBRTV_Engine_SetItemSuccess
     }
     //完成媒体项变更的后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?){

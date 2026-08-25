@@ -84,6 +84,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
+import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
@@ -1234,6 +1235,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         val file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri(context, uri) ?: ""
         if (file_path == ""){
             consoleLog("setNewMediaItem: 失败 无法获取 uri.path：原uri = $uri")
+
+            showErrorCover("发生错误")
             return false
         }
         val file = File(file_path)
@@ -1244,7 +1247,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //清除当前项
             PlayerSingleton.clearMediaItem()
 
-            showErrorCover("目标文件不存在，请刷新列表")
+            showErrorCover("目标文件已不存在，请刷新列表")
 
             return false
         }
@@ -1258,28 +1261,32 @@ class PlayerActivityNeo: AppCompatActivity(){
         Mark_playerReadyFrom = Mark_playerReadyFrom_setNewItem
 
         //确认设置新媒体项
-        val success = PlayerSingleton.setMediaItem(uri, true)
+        val result = PlayerSingleton.setMediaItem(uri, true)
+        when(result){
+            ActivityResultConnector.OBRTV_Engine_SetItemSuccess -> {
+                //设置成功
+                bindPlayerView()
 
-        //成功时绑定一次播放器视图,作为保险
-        if (success){
-            bindPlayerView()
-
-            return true
-        }else{
-            consoleLog("setNewMediaItem: 失败-设置新媒体项")
-            //进入检查流程
-            //1.检查文件是否还在
-            val file = File(uri.path ?: "")
-            if (!file.exists()){
-                consoleLog("setNewMediaItem: 失败-文件已不存在")
-                showCustomToast("此文件已不存在,请刷新列表", 3)
-                finish()
+                return true
             }
+            ActivityResultConnector.OBRTV_Engine_AlreadyPlayingTargetItem -> {
+                //设置失败-目标项已在播放
 
-            //如果未检查到问题,提示未知错误
-            showCustomToast("播放失败:未知错误", 3)
+                return false
 
-            return false
+            }
+            ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
+                //设置失败-无法获取目标项信息
+                showErrorCover("媒体解码失败")
+
+                return false
+            }
+            else -> {
+                //未知错误
+                showErrorCover("未知错误")
+
+                return false
+            }
         }
 
     }
@@ -2946,7 +2953,10 @@ class PlayerActivityNeo: AppCompatActivity(){
 
             //获取屏幕density
             val density = display_screen_density
-            if (density == 0f) return@launch
+            if (density == 0f){
+                consoleLog("updateScrollerAdapter 进度条：获取屏幕density失败，无法显示进度条")
+                return@launch
+            }
             ScrollerHelper.singleFrame_WidthPx = (40 * density).toInt()
 
             //计算进度条参数(委托给scrollerHelper)
@@ -2990,6 +3000,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     syncScrollTask_Core_Compute()
                 }
 
+                consoleLog("updateScrollerAdapter 进度条：信息有效，解码成功，已显示进度条")
 
             }
         }

@@ -176,9 +176,9 @@ object SettingsRequestCenter {
             PRF_ContinuePlay_withEngin = Pandora_MainPage!!.getInt(PRF_ContinuePlay_withEngin_Name, -1)
             //如果配置单内无该项,写入默认值
             if (PRF_ContinuePlay_withEngin == -1) {
-                //默认设为关闭
-                PRF_ContinuePlay_withEngin = 0
-                Pandora_MainPage!!.edit { putInt(PRF_ContinuePlay_withEngin_Name, 0) }
+                //默认设为开启
+                PRF_ContinuePlay_withEngin = 1
+                Pandora_MainPage!!.edit { putInt(PRF_ContinuePlay_withEngin_Name, 1) }
             }
         }
         //返回结果
