@@ -261,14 +261,20 @@ class PrivacyPermissionActivity: AppCompatActivity() {
 
     //要求所有文件访问权限
     private fun requestAllFilePermission(){
-        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-        startActivity(intent)
+        if (DeviceInfo.AndroidVersion == 0) DeviceInfo.AndroidVersion = Build.VERSION.SDK_INT
+
+        if (DeviceInfo.AndroidVersion >= Build.VERSION_CODES.R){
+            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            startActivity(intent)
+        }else{
+            showCustomToast("当前安卓版本不支持所有文件访问权限")
+        }
+
     }
     //要求基本储存权限
     private fun requestBasicStoragePermission(){
-        if (DeviceInfo.AndroidVersion == 0){
-            DeviceInfo.AndroidVersion = Build.VERSION.SDK_INT
-        }
+        if (DeviceInfo.AndroidVersion == 0) DeviceInfo.AndroidVersion = Build.VERSION.SDK_INT
+
         when{
             DeviceInfo.AndroidVersion >= Build.VERSION_CODES.TIRAMISU -> {
                 val permissionsToRequest = arrayOf(
@@ -299,6 +305,8 @@ class PrivacyPermissionActivity: AppCompatActivity() {
     ) { resultMap ->
         val allGranted = resultMap.values.all { it }
 
+        if (DeviceInfo.AndroidVersion == 0) DeviceInfo.AndroidVersion = Build.VERSION.SDK_INT
+
         if (!allGranted) {
             //有权限被拒绝，检查是否被永久拒绝
             val permanentlyDenied = resultMap.filter { !it.value }
@@ -308,7 +316,12 @@ class PrivacyPermissionActivity: AppCompatActivity() {
                 }
 
             if (permanentlyDenied) {
-                showCustomToast("请开启“音乐和音频”与“照片和视频”权限")
+                if (DeviceInfo.AndroidVersion >= Build.VERSION_CODES.TIRAMISU){
+                    showCustomToast("请开启“音乐和音频”与“照片和视频”权限")
+                }else{
+                    showCustomToast("请开启“储存”权限")
+                }
+
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply { data = "package:$packageName".toUri() }
                 startActivity(intent)
             }

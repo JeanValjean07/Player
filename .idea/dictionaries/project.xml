@@ -8,6 +8,7 @@
       <w>avfilter</w>
       <w>backparent</w>
       <w>backtostart</w>
+      <w>bgcolor</w>
       <w>bilibili</w>
       <w>binded</w>
       <w>connec</w>
@@ -17,6 +18,7 @@
       <w>dongpo</w>
       <w>dont</w>
       <w>ffffff</w>
+      <w>filemanager</w>
       <w>fileprovider</w>
       <w>fingerup</w>
       <w>floatingwindow</w>
@@ -69,6 +71,7 @@
       <w>vivo</w>
       <w>wratio</w>
       <w>xjvm</w>
+      <w>xxxxxxxoriginal</w>
     </words>
   </dictionary>
 </component>
