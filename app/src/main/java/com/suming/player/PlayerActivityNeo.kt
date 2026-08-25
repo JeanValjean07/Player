@@ -1050,7 +1050,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
 
-    private var state_low_permission: Boolean = false
 
 
 
@@ -1132,9 +1131,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         bindPlayerView()
 
         //添加播放器事件监听
-        player?.removeListener(PlayerStateListener)
-        player?.addListener(PlayerStateListener)
-        state_PlayerListenerAdded = true
+        startExoPlayerListener()
 
         //关闭遮罩
         closeCover()
@@ -2345,11 +2342,11 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun idleTimeout(){
         if (isLandscape){
-            setControllerInvisible()
+            if (!scrollerDesire_Active) setControllerInvisible()
         }else{
             if (!isDarkTheme){
                 if (playerViewModel.PRF_Cache_EnableAutoHideController_whenPortrait){
-                    setControllerInvisible()
+                    if (!scrollerDesire_Active) setControllerInvisible()
                 }
             }
         }
@@ -2893,6 +2890,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun pausePlay(){
         //调用暂停播放(确保活动内唯一调用)
         PlayerSingleton.pausePlay()
+        //设为手动暂停状态
+        PlayerSingleton.manualPause = true
 
 
         //关闭本地界面更新
@@ -2939,8 +2938,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun updateScrollerAdapter(){
         lifecycleScope.launch(Dispatchers.IO) {
-            if (state_low_permission) return@launch
-
             //初始化进度条布局
             scroller.layoutManager = scrollerLayoutManager
             scroller.itemAnimator = null
@@ -3465,19 +3462,16 @@ class PlayerActivityNeo: AppCompatActivity(){
         )
         val targetHeight = view.measuredHeight
 
-        // 如果目标高度为0，则无需动画
         if (targetHeight <= 0) return
-        // 如果当前高度已经是目标高度，则无需动画
         if (view.layoutParams.height == targetHeight) return
 
-        // 初始高度设为0 (为了动画能从0开始)
         view.layoutParams.height = 0
         view.visibility = View.VISIBLE
 
 
         val animator = ValueAnimator.ofInt(0, targetHeight)
 
-        // 3. 设置动画更新监听器
+
         animator.addUpdateListener { animation ->
             val animatedValue = animation.animatedValue as Int
             view.layoutParams.height = animatedValue
@@ -3496,19 +3490,15 @@ class PlayerActivityNeo: AppCompatActivity(){
         )
         val targetHeight = view.measuredHeight
 
-        // 如果目标高度为0，则无需动画
         if (targetHeight <= 0) return
-        // 如果当前高度已经是目标高度，则无需动画
         if (view.layoutParams.height == targetHeight) return
 
-        // 初始高度设为0 (为了动画能从0开始)
         view.layoutParams.height = 0
         view.visibility = View.VISIBLE
 
 
         val animator = ValueAnimator.ofInt(0, targetHeight)
 
-        // 3. 设置动画更新监听器
         animator.addUpdateListener { animation ->
             val animatedValue = animation.animatedValue as Int
             view.layoutParams.height = animatedValue
@@ -3590,11 +3580,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     private fun syncScrollTask_Core_Compute(){
-
-        if (state_low_permission) return
         if (ScrollerHelper.singleFrame_durationMs <= 0L) return
+
         val currentPosition = player?.currentPosition ?: -1L
         if (currentPosition == -1L) return
+
         scrollerParamMain = ( currentPosition / ScrollerHelper.singleFrame_durationMs ).toInt()
         scrollerParamOffset = (( currentPosition - scrollerParamMain * ScrollerHelper.singleFrame_durationMs ) * ScrollerHelper.singleFrame_WidthPx / ScrollerHelper.singleFrame_durationMs ).toInt()
         //consoleLog("scrollerParamMain = $scrollerParamMain, scrollerParamOffset = $scrollerParamOffset")
@@ -3773,10 +3763,19 @@ class PlayerActivityNeo: AppCompatActivity(){
                 val currentPosition = player?.currentPosition ?: -1L
                 val duration = player?.duration ?: -1L
                 if (currentPosition == -1L || duration == -1L) return
+
                 val totalScrollerLength = scroller.computeHorizontalScrollRange()
+                if (totalScrollerLength == 0) return
+
                 val scrollerPos_Offset = scroller.computeHorizontalScrollOffset()
                 val scrollerPos_Percent = scrollerPos_Offset.toFloat() / totalScrollerLength
                 val targetSeekToMs = (scrollerPos_Percent * duration).toLong()
+                consoleLog(
+                    "totalScrollerLength:$totalScrollerLength," +
+                            "scrollerPos_Offset:$scrollerPos_Offset, " +
+                            "scrollerPos_Percent:$scrollerPos_Percent, " +
+                            "targetSeekToMs = $targetSeekToMs = $targetSeekToMs"
+                )
 
                 //仅在空闲时发起下一次寻帧
                 if (isSeekReady){
@@ -3812,7 +3811,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
         }
-
     }
     private var value_seekVideo_runnableGapMs = 0L
     private var task_standardSeekLoop_Running = false

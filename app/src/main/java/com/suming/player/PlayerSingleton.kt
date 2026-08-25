@@ -601,6 +601,7 @@ object PlayerSingleton {
 
         //
         forcePause = false
+        manualPause = false
 
         //请求音频焦点
         if (requestFocus){
@@ -652,6 +653,8 @@ object PlayerSingleton {
         pausePlay()
     }
     fun getState_forcePause(): Boolean = forcePause
+    //手动暂停
+    var manualPause = false
 
     //重置播放结束状态
     fun cancelState_PlayEnd(){
@@ -852,7 +855,10 @@ object PlayerSingleton {
         }else{
             //关闭后台播放功能：开始继续播放
             if(playState_wasPlaying){
-                continuePlay(true)
+                if (!manualPause) {
+                    consoleLog("stopBackgroundPlay 继续播放")
+                    continuePlay(true)
+                }
             }
         }
     }

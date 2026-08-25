@@ -105,7 +105,7 @@ class EntranceActivity : AppCompatActivity(){
         //consoleLog("以新链接为目标 processOutSource ")
         if (targetUriString != Undefined){
             //分支-新链接不为空
-            consoleLog("processOutSource 新链接不为空-原始链接: $targetUriString 来源标记:$source")
+            //consoleLog("processOutSource 新链接不为空-原始链接: $targetUriString 来源标记:$source")
             //几种典型的targetUri:
             //MediaStore详细表链接(content://media/external/video/media/2599,content://media/external/audio/media/2537)
             //MediaStore文件表链接(content://media/external/file/2622) <- 一般是非公有文件夹和.nomedia文件夹出现这种链接
@@ -128,7 +128,7 @@ class EntranceActivity : AppCompatActivity(){
             when (uriTypeMode){
                 //MediaStore详细表链接(content://media/external/video/media/2599,content://media/external/audio/media/2537)
                 MediaUriManager.uriType_media_store_detail -> {
-                    consoleLog("processOutSource -原始链接是MediaStore详细表链接: $targetUriString")
+                    //consoleLog("processOutSource -原始链接是MediaStore详细表链接: $targetUriString")
 
                     //启动播放页
                     startPage_selfDetectMediaType(targetUriString.toUri(), source,mediaType)
@@ -136,7 +136,7 @@ class EntranceActivity : AppCompatActivity(){
                 }
                 //MediaStore文件表链接(content://media/external/file/2622)
                 MediaUriManager.uriType_media_store_file -> {
-                    consoleLog("processOutSource -原始链接是MediaStore文件表链接: $targetUriString")
+                    //consoleLog("processOutSource -原始链接是MediaStore文件表链接: $targetUriString")
 
                     //检查权限
                     val privacyPermissionHelper = PrivacyPermissionHelper()
@@ -154,11 +154,11 @@ class EntranceActivity : AppCompatActivity(){
 
                 //FileProvider链接(content://fileprovider/filemanager/fileprovider/filemanager, content://bin.mt.plus.fp/storage/emulated/0/DCIM/xxxxxxxoriginal.mp4)
                 MediaUriManager.uriType_file_provider -> {
-                    consoleLog("processOutSource -原始链接是FileProvider链接: $targetUriString")
+                    //consoleLog("processOutSource -原始链接是FileProvider链接: $targetUriString")
 
                     //将FileProvider链接转换为标准链接
                     val standardUri = MediaUriManager.convert_FileManagerFileURI_to_MediaStoreMediaURI(this, targetUriString.toUri()).first
-                    consoleLog("processOutSource-转换后的标准链接: $standardUri")
+                    //consoleLog("processOutSource-转换后的标准链接: $standardUri")
                     if (standardUri == Uri.EMPTY){
                         if (DeviceInfo.AndroidVersion == 29){
                             fail("播放失败(安卓10无法访问非公有文件夹和.nomedia文件夹)")
@@ -218,7 +218,7 @@ class EntranceActivity : AppCompatActivity(){
     //以正在播放项为目标
     @OptIn(UnstableApi::class)
     private fun processPending(){
-        consoleLog("以正在播放项为目标 processPending")
+        //consoleLog("以正在播放项为目标 processPending")
 
         //获取正在播放的媒体链接
         val (ongoing , uri) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
