@@ -326,7 +326,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             PlayerSingleton.getInitPlayer()
             PlayerSingleton.addPlayerStateListener()
 
-            PlayerSingleton.setMediaItem(item.content_uriString.toUri(),true)
+            PlayerSingleton.setMediaItem(uri =  item.content_uriString.toUri(),playWhenReady =true)
         }
 
     }

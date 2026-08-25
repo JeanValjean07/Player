@@ -112,6 +112,23 @@
                 android:name="android.notch_support"
                 android:value="true"/>
         </activity>
+
+        <!-- 播放页Simple -->
+        <activity android:name=".PlayerActivitySimple"
+            android:theme="@style/THEME_Player"
+            android:label="播放器Simple"
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize|screenLayout"
+            android:launchMode="singleTask"
+            android:enableOnBackInvokedCallback="false"
+            android:exported="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
+            <meta-data
+                android:name="android.notch_support"
+                android:value="true"/>
+        </activity>
+
+
         <!-- EntranceActivity -->
         <activity android:name=".EntranceActivity"
             android:theme="@style/THEME_Player"

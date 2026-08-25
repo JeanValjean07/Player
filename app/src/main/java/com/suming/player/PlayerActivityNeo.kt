@@ -92,6 +92,7 @@ import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.FrameExtractor
 import com.suming.player.FuncionalPack.FrameListener
+import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.MediaUriManager
@@ -115,7 +116,7 @@ import kotlin.math.hypot
 import kotlin.math.pow
 
 @UnstableApi
-@Suppress("NewApi","unused")
+@Suppress("NewApi","/unused")
 class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
@@ -218,7 +219,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var player: ExoPlayer? = null
     //连接到viewModel
     private val playerViewModel: PlayerViewModel by viewModels()
-    //字段
+    //空字段
     private val Undefined = ""
     //测试
     private var testMode = false
@@ -234,16 +235,18 @@ class PlayerActivityNeo: AppCompatActivity(){
         super.onCreate(savedInstanceState)
         //初始化
         init()
+        consoleLog("onCreate: init() 执行完成")
 
         connectToExoPlayer()
+        consoleLog("onCreate: connectToExoPlayer() 执行完成")
 
         //注册控件和手势
         register()
+        consoleLog("onCreate: register() 执行完成")
 
         //主业务逻辑
         mainBusiness(savedInstanceState)
-
-
+        consoleLog("onCreate: mainBusiness() 执行完成")
 
 
         //缓存需要频繁取用的变量+数值计算
@@ -977,12 +980,14 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun mainBusiness(savedInstanceState: Bundle?){
 
         //获取原始链接并转换为标准格式链接
-        val intentUri = getOriginalIntentUri(intent)
-        //consoleLog("intentUri: $intentUri")
-        val intentUriString = intentUri.toString()
-        //consoleLog("intentUriString: $intentUriString")
-        val intentUriStandard = MediaUriManager.GET_StandardMediaUri(intentUriString, this@PlayerActivityNeo)
-        //consoleLog("intentUriStandard: $intentUriStandard")
+        val (URI,file_path) = detectOriginalInfo_fromIntent(intent)
+        consoleLog("URI: $URI")
+        val URI_String = URI.toString()
+        consoleLog("URI_String: $URI_String")
+
+        //尝试获取标准链接
+        val URI_Standard = MediaUriManager.GET_StandardMediaUri(URI_String, this@PlayerActivityNeo)
+        consoleLog("URI_Standard: $URI_Standard")
 
         //获取正在播放信息
         val ongoingUriStandard = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
@@ -993,11 +998,11 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //决策程序
         if (savedInstanceState == null){
-            if (intentUri == Uri.EMPTY && ongoingUriStandard == Uri.EMPTY ){
+            if (URI == Uri.EMPTY && ongoingUriStandard == Uri.EMPTY ){
                 queryManualInputUri()
             }else{
                 //未传入原始链接
-                if (intentUri == Uri.EMPTY){
+                if (URI == Uri.EMPTY){
                     //检查有没有正在播放的
                     if (ongoingUriStandard == Uri.EMPTY){
                         //没有正在播放的项
@@ -1008,24 +1013,39 @@ class PlayerActivityNeo: AppCompatActivity(){
                             //正在播放的是视频,直接绑定
                             connectCurrentMedia()
                         }else{
-                            finish()
+                            //finish()
                         }
                     }
                 }else{
-                    //传入原始链接
-                    if (intentUriStandard == Undefined){
+                    //分支-传入了原始链接
 
-                        //清除播放项
-                        PlayerSingleton.clearMediaItem()
+                    if (URI_Standard == Undefined){
+                        //检查URI_String的类型
+                        val URI_Standard_Type = MediaUriManager.detectMediaUriTypeMode(URI_String.toUri())
+                        consoleLog("URI_Standard_Type: $URI_Standard_Type")
+                        if (URI_Standard_Type == MediaUriManager.uriType_file_provider){
+                            //尝试获取文件路径
+                            val file_path = MediaUriManager.detect_FileProvider_URI(URI_String.toUri(),context).second
+                            if (file_path == Undefined){
+                                showErrorCover("无法获取文件路径")
+                                return
+                            }
+                            val file = File(file_path)
+                            if (!file.exists()){
+                                showErrorCover("文件不存在")
+                                return
+                            }
+                            //文件存在,尝试用文件路径播放
+                            startPlayNewMedia(URI_String.toUri(),file_path)
 
-                        showErrorCover("请使用低权限播放页面打开此媒体")
+                        }
 
                     }else{
                         //传入链接且可播放
-                        if (intentUriStandard != ongoingUriStandard.toString()){
+                        if (URI_Standard != ongoingUriStandard.toString()){
                             //传入链接,但与当前播放项不同,播放新项
                             //consoleLog("传入链接,但与当前播放项不同,播放新项")
-                            startPlayNewMedia(intentUriString.toUri())
+                            startPlayNewMedia(URI_Standard.toUri())
 
                         }else{
                             //传入链接,但与当前播放项相同,直接绑定
@@ -1054,16 +1074,14 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
 
-    //提取原始链接
-    private fun getOriginalIntentUri(intent: Intent): Uri {
-        //获取原始链接
-        val intentUri = IntentCompat.getParcelableExtra(intent, "uri", Uri::class.java)?: Uri.EMPTY
+    //提取原始URI信息
+    private fun detectOriginalInfo_fromIntent(intent: Intent): Pair<Uri, String> {
+        //获取原始链接中的信息
+        val Intent_URI = IntentCompat.getParcelableExtra(intent, IntentRepo.URI,  Uri::class.java) ?: Uri.EMPTY
+        val Intent_FILE_PATH = IntentCompat.getParcelableExtra(intent, IntentRepo.FILE_PATH, String::class.java) ?: Undefined
 
-        return if (intentUri == Uri.EMPTY){
-            Uri.EMPTY
-        }else{
-            intentUri
-        }
+
+        return Pair(Intent_URI, Intent_FILE_PATH)
     }
     //手动输入链接并发起播放
     @SuppressLint("InflateParams")
@@ -1121,9 +1139,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //开启播放新媒体项
-    private fun startPlayNewMedia(uri: Uri){
+    private fun startPlayNewMedia(uri: Uri, file_path: String = Undefined){
         //设置新媒体项
-        setNewMediaItem(uri)
+        setNewMediaItem(uri, file_path)
 
     }
     //连接正在播放的媒体
@@ -1224,7 +1242,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         state_PlayerListenerAdded = false
     }
     //设置新媒体项
-    private fun setNewMediaItem(uri: Uri): Boolean{
+    private fun setNewMediaItem(uri: Uri,file_path: String = Undefined): Boolean{
         //检查媒体是否存在(uri方案 受.nomedia影响)
         /*
         val exist = MediaInfoRetriever.isMediaExist(context, uri)
@@ -1232,11 +1250,15 @@ class PlayerActivityNeo: AppCompatActivity(){
         //检查文件是否存在 file_path 方案 (备用)
 
          */
-        val file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri(context, uri) ?: Undefined
-        if (file_path == ""){
+        val file_path = if (file_path != Undefined){
+            file_path
+        }else {
+            MediaInfoRetriever.GET_FilePath_From_MediaUri(context, uri) ?: Undefined
+        }
+        if (file_path == Undefined){
             consoleLog("setNewMediaItem: 失败 无法获取 uri.path：原uri = $uri")
 
-            showErrorCover("无法访问文件")
+            showErrorCover("无法获取文件路径")
             return false
         }
         val file = File(file_path)
@@ -1247,7 +1269,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //清除当前项
             PlayerSingleton.clearMediaItem()
 
-            showErrorCover("目标文件已不存在，请刷新列表")
+            showErrorCover("文件不存在，请刷新列表")
 
             return false
         }
@@ -1261,10 +1283,12 @@ class PlayerActivityNeo: AppCompatActivity(){
         Mark_playerReadyFrom = Mark_playerReadyFrom_setNewItem
 
         //确认设置新媒体项
-        val result = PlayerSingleton.setMediaItem(uri, true)
+        val result = PlayerSingleton.setMediaItem(uri, file_path,true)
         when(result){
             ActivityResultConnector.OBRTV_Engine_SetItemSuccess -> {
                 //设置成功
+                consoleLog("setNewMediaItem: 设置成功")
+
                 bindPlayerView()
 
                 return true
@@ -1292,16 +1316,23 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //媒体项变更回调(需升级为观察者观察统一状态)
     private fun onMediaItemChanged(mediaItem: MediaItem?){
-        if (mediaItem == null){ return }
+        consoleLog("onMediaItemChanged: $mediaItem")
+        if (mediaItem == null){
+            consoleLog("onMediaItemChanged: 失败-媒体项为空")
+            return
+        }
 
         //隐藏错误面板
         closeErrorCover()
 
         //是音乐时主动退出页面
+        /*
         if (PlayerInfoCenter.GET_Media_SPECIFIC_TYPE() != MediaType.Video){
             finish()
             return
         }
+
+         */
 
         //重新绑定播放器视图
         bindPlayerView()

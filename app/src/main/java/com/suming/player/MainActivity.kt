@@ -65,6 +65,7 @@ import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
+import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
@@ -1128,7 +1129,7 @@ class MainActivity: AppCompatActivity() {
         PlayerSingleton.addPlayerStateListener()
 
         //确认设置新媒体项
-        PlayerSingleton.setMediaItem(MediaInfo_MediaUri, playWhenReady)
+        PlayerSingleton.setMediaItem(uri = MediaInfo_MediaUri,playWhenReady = playWhenReady)
     }
     //从选单发起后台播放
     private fun startMiniViewPlay(uri: Uri){
@@ -1479,8 +1480,8 @@ class MainActivity: AppCompatActivity() {
                 val intent = Intent(this, PlayerActivityOro::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                    .putExtra("uri", uri)
-                    .putExtra("IntentSource", 3)
+                    .putExtra(IntentRepo.URI, uri)
+                    .putExtra(IntentRepo.SOURCE, 3)
 
                 //是否使用进入动画
                 val useSlideInAnim = SettingsRequestCenter.GET_PRF_EnableMiniView(this@MainActivity)
@@ -1505,8 +1506,8 @@ class MainActivity: AppCompatActivity() {
                 val intent = Intent(this, PlayerActivityNeo::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                    .putExtra("uri", uri)
-                    .putExtra("IntentSource", 3)
+                    .putExtra(IntentRepo.URI, uri)
+                    .putExtra(IntentRepo.SOURCE, 3)
 
                 //是否使用进入动画
                 val useSlideInAnim = SettingsRequestCenter.GET_PRF_EnableMiniView(this@MainActivity)

@@ -334,7 +334,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             PlayerSingleton.getInitPlayer()
             PlayerSingleton.addPlayerStateListener()
             //设置播放项
-            PlayerSingleton.setMediaItem(item.content_uriString.toUri(),true)
+            PlayerSingleton.setMediaItem(uri = item.content_uriString.toUri(),playWhenReady = true)
         }
 
     }

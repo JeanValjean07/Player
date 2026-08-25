@@ -10,13 +10,59 @@ import androidx.core.net.toUri
 import java.io.File
 import java.net.URLDecoder
 
-@Suppress() //"unused",
+@Suppress("/unused")
 object MediaUriManager {
 
 
     const val Undefined = ""
     const val Uri_Part_Video = "video"
     const val Uri_Part_Audio = "audio"
+
+
+
+
+    //尽可能多地获取信息(返回值1:标准链接 2:文件路径)
+    fun detect_FileProvider_URI(uri: Uri, context: Context): Pair<Uri, String> {
+
+        //从 FileProvider_URI 中 提取文件路径
+        val file_path = GET_file_path_from_file_uri(uri)
+        consoleLog("detect_FileProvider_URI -获取文件路径 -file_path:$file_path")
+        if (file_path == Undefined) {
+            consoleLog("detect_FileProvider_URI -获取文件路径失败:file_path 为空")
+            return Pair(uri, file_path)
+        }
+
+        //获取标准 MediaStore URI
+        //检查是否已经是 MediaStore 标准 MediaURI
+        if (uri.toString().contains("/(video|audio)/media/")){
+            consoleLog("detect_FileProvider_URI -已经是media URI: $uri")
+            return Pair(uri, file_path)
+        }
+
+        //查询 MediaStore 获取 标准MediaStore URI
+        val URI_Standard = searchUriBySysMediaApi(file_path, context)
+        consoleLog("detect_FileProvider_URI -查询video表获取标准URI :URI_Standard = $URI_Standard")
+        if (URI_Standard == Uri.EMPTY){
+            consoleLog("detect_FileProvider_URI -查询video表获取标准URI失败:file_path = $file_path")
+            return Pair(uri, file_path)
+        }
+
+
+        return Pair(URI_Standard, file_path)
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     //合成媒体Uri
@@ -89,6 +135,7 @@ object MediaUriManager {
 
         return videoUri
     }
+
 
     fun convert_FileManagerFileURI_to_MediaStoreMediaURI(context: Context, uri: Uri): Pair<Uri,String> {
         //检查是否已经是 MediaStore 标准 MediaURI
