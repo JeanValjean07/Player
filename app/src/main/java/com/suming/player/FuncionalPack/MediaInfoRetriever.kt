@@ -289,7 +289,7 @@ object MediaInfoRetriever {
     }
 
 
-    //获取文件路径
+    //获取文件路径(基于contentResolver)
     fun GET_FilePath_From_MediaUri(context: Context, uri: Uri): String? {
         var cursor: Cursor? = null
         return try {

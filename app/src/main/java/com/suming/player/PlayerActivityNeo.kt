@@ -1232,11 +1232,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         //检查文件是否存在 file_path 方案 (备用)
 
          */
-        val file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri(context, uri) ?: ""
+        val file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri(context, uri) ?: Undefined
         if (file_path == ""){
             consoleLog("setNewMediaItem: 失败 无法获取 uri.path：原uri = $uri")
 
-            showErrorCover("发生错误")
+            showErrorCover("无法访问文件")
             return false
         }
         val file = File(file_path)
