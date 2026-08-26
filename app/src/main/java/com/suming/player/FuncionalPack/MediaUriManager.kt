@@ -3,25 +3,28 @@ package com.suming.player.FuncionalPack
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.database.Cursor
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.net.toUri
 import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
 import java.net.URLDecoder
+
 
 @Suppress("/unused")
 object MediaUriManager {
 
-
+    //空字段
     const val Undefined = ""
-    const val Uri_Part_Video = "video"
-    const val Uri_Part_Audio = "audio"
 
 
 
 
-    //尽可能多地获取信息(返回值1:标准链接 2:文件路径)
+
+    //传入 FileProvider_URI 输出 标准MediaStore URI + 文件路径
     fun detect_FileProvider_URI(uri: Uri, context: Context): Pair<Uri, String> {
 
         //从 FileProvider_URI 中 提取文件路径
@@ -52,36 +55,224 @@ object MediaUriManager {
 
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //合成媒体Uri
-    fun GET_MediaUriBy(mediaType: String, NUM_ID: Long): Pair<Boolean, String> {
-        val type = if (mediaType == MediaType.Video) Uri_Part_Video else if (mediaType == MediaType.Audio) Uri_Part_Audio else {
-            return Pair(false, "")
+    //传入 文件路径 输出 标准MediaStore URI
+    fun detect_FilePath(file_path: String, context: Context): String {
+        //查询 MediaStore 获取 标准MediaStore URI
+        val URI_Standard = searchUriBySysMediaApi(file_path, context)
+        consoleLog("detect_FilePath -查询video表获取标准URI :URI_Standard = $URI_Standard")
+        if (URI_Standard == Uri.EMPTY){
+            consoleLog("detect_FilePath -查询video表获取标准URI失败:file_path = $file_path")
+            return Undefined
         }
 
-        //合成媒体链接
-        try{
-            val uri = "content://media/external/$type/media/$NUM_ID".toUri()
 
-            return Pair(true, uri.toString())
-        }catch(e: Exception){
-            consoleLog("GET_MediaUriBy-合成媒体Uri失败: $e")
+        return URI_Standard.toString()
+    }
 
-            return Pair(false, "")
+
+    //检测媒体uri类型模式 传入 URI 输出 UriTypeMode
+    const val uriType_null = "uriType_null"
+    const val uriType_media_store_detail = "uriType_media_store_detail"
+    const val uriType_media_store_file = "uriType_media_store_file"
+    const val uriType_file_provider = "uriType_file_provider"
+    const val uriType_special = "uriType_special"
+    fun detectMediaUriTypeMode(URI: Uri?): String {
+        consoleLog("detectMediaUriTypeMode -URI = $URI")
+        if (URI == null) return uriType_null
+        //缓存 URI_String
+        val URI_String = URI.toString()
+
+        //检查是否是 content:// 起手
+        if (URI_String.startsWith("content://")) {
+            //检查authority和path
+            val authority = URI.authority ?: Undefined
+            val path = URI.path ?: return uriType_null
+            consoleLog("detectMediaUriTypeMode -检查authority和path authority:${authority},path:$path")
+
+            when {
+                //MediaStore URI
+                (authority == "media") -> {
+                    //获取路径部分
+                    val path = URI.path ?: return uriType_null
+
+                    return when {
+                        //匹配视频媒体路径: /external/video/media/ 或 /internal/video/media/
+                        path.contains("/video/media/") -> uriType_media_store_detail
+
+                        //匹配音频媒体路径
+                        path.contains("/audio/media/") -> uriType_media_store_detail
+
+                        //匹配图片媒体路径
+                        path.contains("/images/media/") -> uriType_media_store_detail
+
+                        //匹配文件通用路径: /external/file/ 或 /internal/file/
+                        path.contains("/file/") -> uriType_media_store_file
+
+                        //其他路径
+                        else -> uriType_null
+                    }
+                }
+                //FileProvider URI Authority
+                ((authority.contains("fileprovider") || authority.contains("filemanager"))) -> {
+
+                    return uriType_file_provider
+                }
+                //FileProvider URI Path
+                ((path.contains("/storage/emulated/0"))) -> {
+                    return uriType_file_provider
+                }
+
+                //其他
+                else -> return uriType_null
+
+            }
+        }else{
+            //特殊检查  暂时只检查是否有基本的路径结构
+            if (URI_String.contains("/storage/emulated/0")){
+                return uriType_special
+            }else{
+                return uriType_null
+            }
+        }
+
+    }
+
+    //检测 URI 对应媒体 是否存在(传入URI 输出 是否存在)(只能判断 标准 MediaStore URI,其他URI是不行的)
+    fun isUriExistInMediaStore(URI: Uri, context: Context): Boolean {
+        consoleLog("isUriExistInMediaStore -URI = $URI")
+        if (URI == Uri.EMPTY) {
+            consoleLog("isUriExistInMediaStore -URI 为空")
+            return false
+        }
+
+        val resolver = context.contentResolver
+        var cursor: Cursor? = null
+        try {
+            //从URI中提取ID (只能处理 标准MediaStore URI)
+            val id = ContentUris.parseId(URI)
+            consoleLog("isUriExistInMediaStore -从 URI 中提取 ID :id = $id")
+
+
+            val queryUri: Uri?
+            val authority = URI.authority ?: return false
+            if (MediaStore.AUTHORITY == authority){
+                queryUri = URI
+            }else{
+                consoleLog("isUriExistInMediaStore -URI 不是 MediaStore URI")
+                return false
+            }
+
+            val column = MediaStore.MediaColumns._ID
+            val projection: Array<String> = arrayOf(column)
+            cursor = resolver.query(queryUri, projection, null, null, null)
+
+
+            //游标可移动代表媒体存在
+            return cursor != null && cursor.moveToFirst()
+
+        }catch(e: IllegalArgumentException){
+            consoleLog("isUriExistInMediaStore -发生错误: $e")
+            return false
+        }finally{
+            cursor?.close()
         }
     }
+
+
+    //检查文件是否存在(基于Stream 输入URI)
+    fun isFileExist(resolver: ContentResolver, uri: Uri): Boolean {
+        try {
+            val `is` = resolver.openInputStream(uri)
+            if (`is` != null) {
+                `is`.close() //能打开说明文件存在且可读
+                return true
+            }else{
+                consoleLog("isFileExist -文件打不开")
+                return false
+            }
+        }catch(e: FileNotFoundException) {
+            consoleLog("isFileExist -文件不存在: $e")
+            return false
+        }catch(e: IOException) {
+            consoleLog("isFileExist -其他 IO 错误: $e")
+            return false
+        }
+    }
+    //检查文件是否存在(基于IO File 输入 文件路径)
+    fun isFileExist(file_path: String): Boolean {
+        if (file_path == Undefined) {
+            consoleLog("isFileExist -文件路径为空")
+            return false
+        }
+
+        return File(file_path).exists()
+    }
+
+
+    //检查URI 是否是 MediaStore 标准 MediaURI
+    fun isURI_match_STD_MediaStoreURI(URI_String: String): Boolean {
+        //去除尾部多余参数
+        val cleanUri = URI_String.substringBefore('?').substringBefore('#')
+
+        //使用正则表达式判断(目前通过video和audio两种类型)
+        val regex = """^content://media/(?:external|internal)/(?:video|audio)/media/\d+$""".toRegex()
+
+
+        return regex.matches(cleanUri)
+    }
+
+    //传入 任意类型URI 输出 标准 MediaStore URI,降级返回值为空
+    fun GET_STD_MediaStoreURI_from_Any_URI(URI_String: String, context: Context): String {
+        if (URI_String.isEmpty()) return Undefined
+
+        //仅在原URI 是 MediaStore 标准 MediaURI 才时才尝试转换
+        if (!URI_String.startsWith("content://media/external/")) return Undefined
+
+        //去除可能存在的额外参数
+        val cleanUri = URI_String.substringBefore("?")
+
+        //检查是否标准
+        if (isURI_match_STD_MediaStoreURI(cleanUri)) return cleanUri
+
+        //转换为标准 MediaStore URI
+        val uri = cleanUri.toUri()
+        val standardUri = when (uri.scheme) {
+            "content" -> convertContentUriDirectly(context, uri)
+            else -> null
+        }
+
+        return standardUri?.toString() ?: Undefined
+    }
+
+    private fun convertContentUriDirectly(context: Context, uri: Uri): Uri? {
+        //直接通过ID查询所有表
+        val id = uri.path?.substringAfterLast("/")?.toLongOrNull() ?: return null
+
+        val tables = listOf(
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Files.getContentUri("external")
+        )
+
+        for (tableUri in tables) {
+            val testUri = ContentUris.withAppendedId(tableUri, id)
+            context.contentResolver.query(testUri, arrayOf("_ID"), null, null, null)?.use { c ->
+                if (c.moveToFirst()) {
+                    return testUri
+                }
+            }
+        }
+        return null
+    }
+
+
+
+
+
+
+
+
     fun GET_MediaUriBy(SPECIFIC_ID: String): Pair<Boolean, String> {
 
         val mediaType = SPECIFIC_ID.substringBefore("_")
@@ -99,18 +290,6 @@ object MediaUriManager {
         }
     }
 
-
-    //检查uri是否是标准格式
-    fun isMediaUriStandard(mediaUriString: String): Boolean {
-        //去除尾部多余参数
-        val cleanUri = mediaUriString.substringBefore('?').substringBefore('#')
-
-        //使用正则表达式判断(目前通过video和audio两种类型)
-        val regex = """^content://media/(?:external|internal)/(?:video|audio)/media/\d+$""".toRegex()
-
-
-        return regex.matches(cleanUri)
-    }
 
 
     fun convert_MediaStoreFileURI_to_MediaStoreMediaURI(context: Context, uri: Uri): Uri {
@@ -162,48 +341,9 @@ object MediaUriManager {
     }
 
 
-    //获取标准媒体Uri
-    fun GET_StandardMediaUri(mediaUriString: String, context: Context): String {
-        if (mediaUriString.isEmpty()) return Undefined
 
-        //去除参数
-        val cleanUri = mediaUriString.substringBefore("?")
 
-        //检查是否标准
-        if (isMediaUriStandard(cleanUri)) return cleanUri
 
-        //
-        val uri = cleanUri.toUri()
-        val standardUri = when (uri.scheme) {
-            "content" -> convertContentUriDirectly(context, uri)
-            "file", null -> convertFileUriToMedia(context, uri)
-            else -> null
-        }
-
-        return standardUri?.toString() ?: Undefined
-    }
-
-    private fun convertContentUriDirectly(context: Context, uri: Uri): Uri? {
-        // 直接通过ID查询所有表
-        val id = uri.path?.substringAfterLast("/")?.toLongOrNull() ?: return null
-
-        val tables = listOf(
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            MediaStore.Files.getContentUri("external")
-        )
-
-        for (tableUri in tables) {
-            val testUri = ContentUris.withAppendedId(tableUri, id)
-            context.contentResolver.query(testUri, arrayOf("_ID"), null, null, null)?.use { c ->
-                if (c.moveToFirst()) {
-                    return testUri
-                }
-            }
-        }
-        return null
-    }
 
     private fun convertFileUriToMedia(context: Context, uri: Uri): Uri? {
         // 从文件路径获取uri(需查询系统媒体库)(路径必须是绝对实际路径)
@@ -287,73 +427,6 @@ object MediaUriManager {
     }
 
 
-    //检测媒体uri类型模式(false = 降级链接)
-    const val uriType_null = "uriType_null"
-    const val uriType_media_store_detail = "uriType_media_store_detail"
-    const val uriType_media_store_file = "uriType_media_store_file"
-    const val uriType_file_provider = "uriType_file_provider"
-    const val uriType_special = "uriType_special"
-    fun detectMediaUriTypeMode(uri: Uri?): String {
-        consoleLog("detectMediaUriTypeMode -uri = $uri")
-        if (uri == null) return uriType_null
-
-        //
-        val uriString = uri.toString()
-
-        //检查是否是 content://
-        if (uriString.startsWith("content://")) {
-            //检查authority和path
-            val authority = uri.authority ?: Undefined
-            val path = uri.path ?: return uriType_null
-            consoleLog("detectMediaUriTypeMode -检查authority和path authority:${authority},path:$path")
-
-            when {
-                //MediaStore URI
-                (authority == "media") -> {
-                    //获取路径部分
-                    val path = uri.path ?: return uriType_null
-
-                    return when {
-                        //匹配视频媒体路径: /external/video/media/ 或 /internal/video/media/
-                        path.contains("/video/media/") -> uriType_media_store_detail
-
-                        //匹配音频媒体路径
-                        path.contains("/audio/media/") -> uriType_media_store_detail
-
-                        //匹配图片媒体路径
-                        path.contains("/images/media/") -> uriType_media_store_detail
-
-                        //匹配文件通用路径: /external/file/ 或 /internal/file/
-                        path.contains("/file/") -> uriType_media_store_file
-
-                        //其他路径
-                        else -> uriType_null
-                    }
-                }
-                //FileProvider URI Authority
-                ((authority.contains("fileprovider") || authority.contains("filemanager"))) -> {
-
-                    return uriType_file_provider
-                }
-                //FileProvider URI Path
-                ((path.contains("/storage/emulated/0"))) -> {
-                    return uriType_file_provider
-                }
-
-                //其他
-                else -> return uriType_null
-
-            }
-        }else{
-            //特殊检查  暂时只检查是否有基本的路径结构
-            if (uriString.contains("/storage/emulated/0")){
-                return uriType_special
-            }else{
-                return uriType_null
-            }
-        }
-
-    }
 
 
     //处理特殊 URI (简版,几乎只考虑了华为的私有URI,可扩展) //TODO

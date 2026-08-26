@@ -18,7 +18,6 @@ import androidx.media3.session.MediaSessionService
 import com.suming.player.EntranceActivity
 import com.suming.player.PlayerActionReceiver
 import com.suming.player.PlayerActivityNeo
-import com.suming.player.PlayerActivityOro
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import com.suming.player.ActivityComponent.PlayerActivity.ToolPlayerWrapper
@@ -376,14 +375,7 @@ class PlayerService: MediaSessionService() {
             .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
-    private fun createPendingIntentVideoOro(): PendingIntent {
-        val intent = Intent(this, PlayerActivityOro::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-            .putExtra("IntentSource", "FromPendingIntent")
-            .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
-        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
+
     private fun createPendingIntentMusic(): PendingIntent {
         val intent = Intent(this, MusicPlayer::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP

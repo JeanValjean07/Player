@@ -20,7 +20,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import com.suming.player.PlayerActivityNeo
-import com.suming.player.PlayerActivityOro
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
 
@@ -110,21 +109,12 @@ class FloatingWindowService : Service() {
                 mWindowManager?.updateViewLayout(mFloatingView, mParams!!)
                 isFolded = false
             }else {
-                if (source == 0){
-                    val intent = Intent(this, PlayerActivityOro::class.java)
-                        .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
-                        .putExtra("IntentSource","FromPendingIntent" )
-                    startActivity(intent)
-                }
-                else if (source == 1){
-                    val intent = Intent(this, PlayerActivityNeo::class.java)
-                        .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
-                        .putExtra("IntentSource","FromPendingIntent" )
-                    startActivity(intent)
-                }
-                else {
-                    showNotification_noSource("未知服务来源,拉起失败,请手动回到APP")
-                }
+                val intent = Intent(this, PlayerActivityNeo::class.java)
+                    .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+                    .putExtra("IntentSource","FromPendingIntent" )
+
+                startActivity(intent)
+
             }
 
 

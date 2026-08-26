@@ -4,11 +4,14 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.util.UnstableApi
+import coil.size.Dimension
 
 @UnstableApi
 //@Suppress("unused")
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
+    //空字段
+    var Undefined = ""
 
     //屏幕旋转状态
     var FromManualPortrait: Boolean = true
@@ -86,11 +89,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //上次是否在播放(进度条控制器专用)
     var wasPlaying: Boolean = false
 
-    //标记播放器类型：传统Oro 或 新晋Neo
-    val PAGE_UNDEFINED = ""
-    val PAGE_TYPE_ORO = "Oro"
-    val PAGE_TYPE_NEO = "Neo"
-    var state_player_type = PAGE_UNDEFINED
+    //S_AreaType
+    var state_s_area_type = S_Area_Helper.S_AreaType_UNDEFINED
 
     //下滑距离(单位需要转为px)(给个默认值200px)
     var value_scrollDownExitDistance: Int = 200
@@ -105,6 +105,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PRF_Cache_UseSyncFrame_whenSeek: Boolean = true
     //是否竖屏时也开启自动隐藏控件
     var PRF_Cache_EnableAutoHideController_whenPortrait: Boolean = false
+
     //进度条相关
     var PREFS_AlwaysSeek: Boolean = false
     var PREFS_TapJump: Boolean = false

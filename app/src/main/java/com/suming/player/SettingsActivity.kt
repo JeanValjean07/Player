@@ -55,10 +55,10 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import kotlin.system.exitProcess
 
-@Suppress("unused","NewApi")
+@Suppress("/unused","NewApi")
 @SuppressLint("InflateParams", "SetTextI18n")
 @OptIn(UnstableApi::class)
-class SettingsActivity: AppCompatActivity() {
+class SettingsActivity: AppCompatActivity(){
 
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
@@ -347,22 +347,20 @@ class SettingsActivity: AppCompatActivity() {
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         R.id.type_oro -> {
-                            choosePlayPageType(0); true
+                            choosePlayPageType(SettingsRequestCenter.PlayPageType_Oro); true
                         }
-
                         R.id.type_neo -> {
-                            choosePlayPageType(1); true
+                            choosePlayPageType(SettingsRequestCenter.PlayPageType_Neo); true
                         }
-
                         R.id.type_test -> {
-                            choosePlayPageType(2); true
+                            choosePlayPageType(SettingsRequestCenter.PlayPageType_Test); true
                         }
-
                         else -> true
                     }
                 }
                 popup.show()
             }
+
             //寻帧间隔
             val ButtonCardSeekHandlerGap = findViewById<CardView>(R.id.ButtonCardSeekHandlerGap)
             updateSeekHandlerGapText()
@@ -371,7 +369,7 @@ class SettingsActivity: AppCompatActivity() {
                 //使用弹出菜单选择
                 val popup = PopupMenu(this@SettingsActivity, ButtonCardSeekHandlerGap)
                 popup.menuInflater.inflate(
-                    R.menu.activity_settings_popup_seek_handler_gap,
+                    R.menu.popup_menu_gap_seek_loop,
                     popup.menu
                 )
                 popup.setOnMenuItemClickListener { item ->
@@ -489,6 +487,14 @@ class SettingsActivity: AppCompatActivity() {
                     }
                 }
                 popup.show()
+            }
+
+            //SeekBar刷新间隔
+            val ButtonCardSeekBarUpdateGap = findViewById<CardView>(R.id.ButtonCard_seekbarUpdateGap)
+            updateSeekBarUpdateGapText()
+            ButtonCardSeekBarUpdateGap.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                chooseSeekBarUpdateGap(ButtonCardSeekBarUpdateGap)
             }
 
             //封面缩略图管理
@@ -656,28 +662,29 @@ class SettingsActivity: AppCompatActivity() {
     //播放页样式
     private fun choosePlayPageType(playPageType: Int){
         when(playPageType){
-            0 -> {
-                SettingsRequestCenter.set_PREFS_PlayPageType(0)
+            SettingsRequestCenter.PlayPageType_Oro -> {
+                SettingsRequestCenter.SET_PRF_PlayPageType(this,playPageType)
                 showCustomToast("成功设置播放页样式为经典版本", 3)
                 updatePlayPageTypeText()
             }
-            1 -> {
-                SettingsRequestCenter.set_PREFS_PlayPageType(1)
+            SettingsRequestCenter.PlayPageType_Neo -> {
+                SettingsRequestCenter.SET_PRF_PlayPageType(this,playPageType)
                 showCustomToast("成功设置播放页样式为新晋版本", 3)
                 updatePlayPageTypeText()
             }
-            2 -> {
+            SettingsRequestCenter.PlayPageType_Test -> {
+                SettingsRequestCenter.SET_PRF_PlayPageType(this,playPageType)
                 showCustomToast("当前包中未包含测试版界面", 3)
             }
         }
     }
     private fun updatePlayPageTypeText(){
         val ButtonPlayerTypeText = findViewById<TextView>(R.id.ButtonPlayerTypeText)
-        val PlayPageType = SettingsRequestCenter.get_PREFS_PlayPageType(this)
+        val PlayPageType = SettingsRequestCenter.GET_PRF_PlayPageType(this)
         when(PlayPageType){
-            0 -> ButtonPlayerTypeText.text = "经典"
-            1 -> ButtonPlayerTypeText.text = "新晋"
-            2 -> ButtonPlayerTypeText.text = "测试"
+            SettingsRequestCenter.PlayPageType_Oro -> ButtonPlayerTypeText.text = "经典"
+            SettingsRequestCenter.PlayPageType_Neo -> ButtonPlayerTypeText.text = "新晋"
+            SettingsRequestCenter.PlayPageType_Test -> ButtonPlayerTypeText.text = "测试"
         }
     }
     //寻帧间隔
@@ -912,6 +919,114 @@ class SettingsActivity: AppCompatActivity() {
             33L -> ButtonTextScrollerUpdateGap.text = "30 Hz"
             66L -> ButtonTextScrollerUpdateGap.text = "15 Hz"
             else -> ButtonTextScrollerUpdateGap.text = "$scrollerUpdateGap 毫秒"
+        }
+    }
+    //SeekBar刷新间隔
+    private fun chooseSeekBarUpdateGap(anchor: CardView){
+        //使用弹出菜单选择
+        val popup = PopupMenu(this@SettingsActivity, anchor)
+        popup.menuInflater.inflate(
+            R.menu.popup_menu_seekbar_update_gap,
+            popup.menu
+        )
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId){
+                R.id.menu_item_100ms -> {
+                    ToolVibrate().vibrate(this)
+                    chooseSeekBarUpdateGapCore(100L); true
+                }
+                R.id.menu_item_250ms -> {
+                    ToolVibrate().vibrate(this)
+                    chooseSeekBarUpdateGapCore(250L); true
+                }
+                R.id.menu_item_500ms -> {
+                    ToolVibrate().vibrate(this)
+                    chooseSeekBarUpdateGapCore(500L); true
+                }
+                R.id.menu_item_750ms -> {
+                    ToolVibrate().vibrate(this)
+                    chooseSeekBarUpdateGapCore(750L); true
+                }
+                R.id.menu_item_1000ms -> {
+                    ToolVibrate().vibrate(this)
+                    chooseSeekBarUpdateGapCore(1000L); true
+                }
+                R.id.menu_item_Input -> {
+                    ToolVibrate().vibrate(this)
+                    setSeekBarUpdateGapByInput(); true
+                }
+                else -> true
+            }
+        }
+        popup.show()
+
+    }
+    private fun chooseSeekBarUpdateGapCore(gap: Long) {
+        SettingsRequestCenter.set_value_syncSeekbar_runnableGapMs(this,gap)
+        updateSeekBarUpdateGapText()
+    }
+    private fun setSeekBarUpdateGapByInput(){
+        ToolVibrate().vibrate(this)
+        //创建对话框
+        val dialog = Dialog(this).apply {
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_input_value, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+        title.text = "自定义进度条更新间隔"
+        Description.text = "仅控制进度条自主滚动时的更新间隔"
+        EditText.hint = "以毫秒为单位"
+        Button.text = "确定"
+
+        val imm = this.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val gapInput = EditText.text.toString().toLongOrNull()
+            if (gapInput == null) {
+                showCustomToast("未输入内容", 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            if (gapInput < 0L) {
+                showCustomToast("时间更新间隔不能小于0", 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            if (gapInput > 3000){
+                showCustomToast("时间更新间隔不能大于3秒", 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+
+            //输入检查完成
+            SettingsRequestCenter.set_value_syncSeekbar_runnableGapMs(this,gapInput)
+            //界面刷新
+            updateSeekBarUpdateGapText()
+            dialog.dismiss()
+
+        }
+        dialog.show()
+        //自动弹出键盘程序
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(50)
+            EditText.requestFocus()
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+    private fun updateSeekBarUpdateGapText(){
+        val ButtonTextSeekBarUpdateGap = findViewById<TextView>(R.id.ButtonText_seekbarUpdateGap)
+        val seekBarUpdateGap = SettingsRequestCenter.get_value_syncSeekbar_runnableGapMs(this)
+        //consoleLog("updateSeekBarUpdateGapText: $seekBarUpdateGap")
+        when(seekBarUpdateGap){
+            0L -> ButtonTextSeekBarUpdateGap.text = "无间隔(推荐设为更高值)"
+            in 1L..50L -> ButtonTextSeekBarUpdateGap.text = "$seekBarUpdateGap 毫秒 (推荐设为更高值)"
+            in 50L..999L -> ButtonTextSeekBarUpdateGap.text = "$seekBarUpdateGap 毫秒"
+            in 1000L..3000L -> ButtonTextSeekBarUpdateGap.text = "${seekBarUpdateGap/1000f}秒"
+            else -> ButtonTextSeekBarUpdateGap.text = "$seekBarUpdateGap 毫秒"
         }
     }
     //振动模式

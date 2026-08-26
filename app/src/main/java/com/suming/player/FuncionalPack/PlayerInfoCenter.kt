@@ -49,7 +49,7 @@ object PlayerInfoCenter {
 
 
     //接收信息解码器传入的媒体信息
-    fun setMediaInfoPack(MediaInfoPack: MediaItemForPlay) {
+    fun SET_MediaItemForPlay_Pack(MediaInfoPack: MediaItemForPlay) {
         //缓存旧数据
         LAST_MediaItemPackage = CURRENT_MediaItemPackage
         //缓存新数据
@@ -72,7 +72,7 @@ object PlayerInfoCenter {
             media_api_SPECIFIC_ID = SPECIFIC_ID,
             media_SPECIFIC_MediaType = mediaType,
             media_api_NUM_ID = NUM_ID,
-            content_uriString = uriString,
+            URI_STD = uriString,
             file_name = FileName,
             media_artist = MediaArtist,
 
@@ -128,13 +128,13 @@ object PlayerInfoCenter {
     }
     //获取当前媒体的标准链接
     fun GET_Media_UriStandard(): String {
-        val MediaInfo_MediaUriStandard = CURRENT_MediaItemPackage?.content_uriStandard ?: Undefined
+        val MediaInfo_MediaUriStandard = CURRENT_MediaItemPackage?.URI_STD ?: Undefined
 
         return MediaInfo_MediaUriStandard
     }
     //获取当前媒体的uriString
     fun GET_Media_UriString(): String {
-        val MediaInfo_MediaUriString = CURRENT_MediaItemPackage?.content_uriString ?: Undefined
+        val MediaInfo_MediaUriString = CURRENT_MediaItemPackage?.URI_STD ?: Undefined
 
         return MediaInfo_MediaUriString
     }

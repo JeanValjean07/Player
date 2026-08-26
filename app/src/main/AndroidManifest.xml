@@ -98,20 +98,7 @@
                 android:value="true"
                 />
         </activity>
-        <!-- 播放页Oro -->
-        <activity android:name=".PlayerActivityOro"
-            android:theme="@style/THEME_Player"
-            android:label="播放器Oro"
-            android:screenOrientation="unspecified"
-            android:configChanges="orientation|screenSize|screenLayout"
-            android:launchMode="singleTask"
-            android:enableOnBackInvokedCallback="false"
-            android:exported="true"
-            tools:ignore="DiscouragedApi,LockedOrientationActivity">
-            <meta-data
-                android:name="android.notch_support"
-                android:value="true"/>
-        </activity>
+
 
         <!-- 播放页Simple -->
         <activity android:name=".PlayerActivitySimple"

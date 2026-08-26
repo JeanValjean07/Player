@@ -22,5 +22,12 @@ object ActivityResultConnector {
     const val OBRTV_Engine_SetItemSuccess = "OBRTV_Engine_SetItemSuccess"
 
 
+    //解码器 retriever
+    const val retriever_type_not_support = "retriever_type_not_support"
+    const val retriever_complete = "retriever_complete"
+    const val retriever_error = ""
+    const val retriever_type_not_support3 = ""
+
+
 
 }

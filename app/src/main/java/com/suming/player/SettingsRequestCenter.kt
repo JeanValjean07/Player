@@ -507,6 +507,34 @@ object SettingsRequestCenter {
         PREFS_PlayVideoPage = context.getSharedPreferences( PREFS_PlayVideoPage_Name, 0)
         state_PREFS_PlayVideoPage_initialized = true
     }
+    //播放页样式
+    const val PlayPageType_Oro = 0
+    const val PlayPageType_Neo = 1
+    const val PlayPageType_Test = 2
+    private var PRF_PlayPageType = -1
+    const val PRF_PlayPageType_Name = "PRF_PlayPageType_Name"
+    fun SET_PRF_PlayPageType(context: Context, targetType: Int){
+        initPlayVideoPageSetting(context)
+
+        PRF_PlayPageType = targetType
+        PREFS_PlayVideoPage.edit { putInt(PRF_PlayPageType_Name, targetType) }
+    }
+    fun GET_PRF_PlayPageType(context: Context): Int{
+        initPlayVideoPageSetting(context)
+
+        //无缓存时读取
+        if (PRF_PlayPageType == -1) {
+            PRF_PlayPageType = PREFS_PlayVideoPage.getInt(PRF_PlayPageType_Name, -1)
+            //未写入时写入默认值
+            if (PRF_PlayPageType == -1) {
+                PRF_PlayPageType = PlayPageType_Neo
+                PREFS_PlayVideoPage.edit { putInt(PRF_PlayPageType_Name, PlayPageType_Neo) }
+            }
+        }
+
+        return PRF_PlayPageType
+    }
+
     //后台播放
     private var PREFS_BackgroundPlay = -1
     fun set_PREFS_BackgroundPlay(backgroundPlay: Boolean){
@@ -786,33 +814,6 @@ object SettingsRequestCenter {
         }
         return PREFS_EnablePlayAreaMoveAnim == 1
     }
-    //播放页样式丨0 = 经典, 1 = 新晋
-    private var PREFS_PlayPageType = -1
-    fun set_PREFS_PlayPageType(playPageType: Int){
-        PREFS_PlayPageType = playPageType
-        PREFS_PlayVideoPage.edit { putInt("PREFS_PlayPageType", playPageType) }
-    }
-    fun get_PREFS_PlayPageType(context: Context): Int{
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayVideoPage_initialized) {
-            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
-            state_PREFS_PlayVideoPage_initialized = true
-        }
-        //确保配置项已被读取过
-        if (PREFS_PlayPageType == -1) {
-            PREFS_PlayPageType = PREFS_PlayVideoPage.getInt("PREFS_PlayPageType", -1)
-            if (PREFS_PlayPageType == -1) {
-                if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
-                    PREFS_PlayPageType = 1
-                    PREFS_PlayVideoPage.edit { putInt("PREFS_PlayPageType", 1) }
-                }else{
-                    PREFS_PlayPageType = 1
-                    PREFS_PlayVideoPage.edit { putInt("PREFS_PlayPageType", 1) }
-                }
-            }
-        }
-        return PREFS_PlayPageType
-    }
     //保持界面常亮
     private var PRF_KeepScreenOn = -1
     const val PRF_KeepScreenOn_Name = "PRF_KeepScreenOn"
@@ -863,13 +864,6 @@ object SettingsRequestCenter {
         return PRF_EnableAutoHideController_whenPortrait == 1
     }
 
-
-
-
-
-
-
-    //进度条相关设置
     //进度条截取时使用关键帧
     private var PREFS_UseSyncFrameInScroller = -1
     fun set_PREFS_UseSyncFrameInScroller(enable: Boolean){
@@ -1009,7 +1003,7 @@ object SettingsRequestCenter {
 
         return value_timeStamp_updateGapMs
     }
-    //进度条(主动)刷新间隔(默认值66ms/15Hz)
+    //进度条(被动)刷新间隔(默认值66ms/15Hz)
     private var value_syncScroller_runnableGapMs = -1L
     const val value_syncScroller_runnableGapMs_Name = "value_syncScroller_runnableGapMs"
     fun get_value_syncScroller_runnableGapMs(context: Context):Long{
@@ -1020,8 +1014,8 @@ object SettingsRequestCenter {
             value_syncScroller_runnableGapMs = PREFS_PlayVideoPage.getLong(value_syncScroller_runnableGapMs_Name, -1L)
             //设置默认值(设为66ms/15Hz)
             if (value_syncScroller_runnableGapMs == -1L) {
-                value_syncScroller_runnableGapMs = 66L
-                PREFS_PlayVideoPage.edit { putLong(value_syncScroller_runnableGapMs_Name, 66L) }
+                value_syncScroller_runnableGapMs = 33L
+                PREFS_PlayVideoPage.edit { putLong(value_syncScroller_runnableGapMs_Name, 33L) }
             }
         }
 
@@ -1038,47 +1032,34 @@ object SettingsRequestCenter {
         PREFS_PlayVideoPage.edit { putLong(value_syncScroller_runnableGapMs_Name, targetValue) }
 
     }
+    //SeekBar(被动)刷新间隔(默认值66ms/15Hz)
+    private var value_syncSeekbar_runnableGapMs = -1L
+    const val value_syncSeekbar_runnableGapMs_Name = "value_syncSeekbar_runnableGapMs"
+    fun get_value_syncSeekbar_runnableGapMs(context: Context):Long{
+        initPlayVideoPageSetting(context)
 
-
-
-
-
-    //状态栏高度
-    private var VALUE_Int_statusBarHeight = -1
-    fun set_VALUE_Int_statusBarHeight(height: Int){
-        VALUE_Int_statusBarHeight = height
-        PREFS_PlayVideoPage.edit { putInt("VALUE_Int_statusBarHeight", height) }
-    }
-    fun get_VALUE_Int_statusBarHeight(context: Context): Int {
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayVideoPage_initialized) {
-            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
-            state_PREFS_PlayVideoPage_initialized = true
-        }
-        //确保配置项已被读取过
-        if (VALUE_Int_statusBarHeight == -1) {
-            VALUE_Int_statusBarHeight = PREFS_PlayVideoPage.getInt("VALUE_Int_statusBarHeight", -1)
-            if (VALUE_Int_statusBarHeight == -1) {
-                VALUE_Int_statusBarHeight = 200
-                //如果读取失败,就返回默认值200,因为无法在单例环境下决策出正确的值
+        //仅在无缓存时读盘
+        if (value_syncSeekbar_runnableGapMs == -1L) {
+            value_syncSeekbar_runnableGapMs = PREFS_PlayVideoPage.getLong(value_syncSeekbar_runnableGapMs_Name, -1L)
+            //设置默认值(设为1s)
+            if (value_syncSeekbar_runnableGapMs == -1L) {
+                value_syncSeekbar_runnableGapMs = 1000L
+                PREFS_PlayVideoPage.edit { putLong(value_syncSeekbar_runnableGapMs_Name, 1000L) }
             }
         }
 
-        return VALUE_Int_statusBarHeight
+        return value_syncSeekbar_runnableGapMs
     }
-    fun isStatusBarHeightExist(context: Context): Boolean {
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayVideoPage_initialized) {
-            PREFS_PlayVideoPage = context.getSharedPreferences("PREFS_PlayVideoPage", 0)
-            state_PREFS_PlayVideoPage_initialized = true
-        }
-        //确保配置项已被读取过
-        if (VALUE_Int_statusBarHeight == -1) {
-            VALUE_Int_statusBarHeight = PREFS_PlayVideoPage.getInt("VALUE_Int_statusBarHeight", -1)
+    fun set_value_syncSeekbar_runnableGapMs(context: Context, targetValue: Long){
+        initPlayVideoPageSetting(context)
 
-        }
+        //检查数值合法性
+        if (targetValue !in 0L..3000L) return
 
-        return VALUE_Int_statusBarHeight != -1
+        //刷新缓存并写入本地
+        value_syncSeekbar_runnableGapMs = targetValue
+        PREFS_PlayVideoPage.edit { putLong(value_syncSeekbar_runnableGapMs_Name, targetValue) }
+
     }
 
 

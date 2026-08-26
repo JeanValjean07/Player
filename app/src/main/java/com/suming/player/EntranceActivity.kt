@@ -12,6 +12,7 @@ import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
@@ -38,7 +39,8 @@ class EntranceActivity : AppCompatActivity(){
 
         mainBusiness()
 
-        //finish()
+
+        finish()
 
     }
 
@@ -48,6 +50,7 @@ class EntranceActivity : AppCompatActivity(){
     private fun mainBusiness(){
         //提取uri
         val (URI,SOURCE_CODE) = detectOriginalInfo_fromIntent(intent)
+        consoleLog(" mainBusiness() -URI = $URI, -SOURCE_CODE = $SOURCE_CODE")
         val URI_String = URI.toString()
 
         //根据 SOURCE_CODE 处理
@@ -57,7 +60,7 @@ class EntranceActivity : AppCompatActivity(){
                 processOutSource(URI_String, SOURCE_CODE)
             }
             //以正在播放项为目标
-            2 -> {
+            3 -> {
                 processPending()
             }
             //未知来源
@@ -103,13 +106,13 @@ class EntranceActivity : AppCompatActivity(){
         }
     }
 
-    //以新链接为目标
+    //以新链接为目标(注意:以下传入链接类型可被ExoPlayer直接播放:1. MediaStore详细表链接 2.文件路径。警告：FileProvider链接不一定能直接播放,MediaStore文件表链接也不行)
     @OptIn(UnstableApi::class)
     private fun processOutSource(URI_String: String,SOURCE: Int){
         //consoleLog("以新链接为目标 processOutSource ")
         if (URI_String != Undefined){
             //分支-新链接不为空
-            consoleLog("processOutSource 新链接不为空-原始链接: $URI_String 来源标记:$SOURCE")
+            //consoleLog("processOutSource 新链接不为空-原始链接: $URI_String 来源标记:$SOURCE")
             //典型值
             /*
             //MediaStore详细表链接(content://media/external/video/media/2599,content://media/external/audio/media/2537)
@@ -123,40 +126,42 @@ class EntranceActivity : AppCompatActivity(){
 
              */
 
-            //检查链接有效性和媒体类型(不需要任何权限就能查)
-            val (success, mediaType) = MediaInfoRetriever.getUriValidAndMediaType(context,URI_String)
-            consoleLog("processOutSource-链接有效性检查结果: valid?:$success, mediaType:$mediaType")
-            if (!success){
-                fail("播放失败(媒体无效)")
-                return
-            }else{
-                //一次性获取所有信息
-                val (retrieve_success,MediaItemForPlay) = MediaInfoRetriever.retrieveMediaInfo(uriString = URI_String,context = context)
-                consoleLog("processOutSource -解码链接:$URI_String 解码结果:$retrieve_success")
-                if (retrieve_success) {
-                    //缓存信息
-                    PlayerInfoCenter.setMediaInfoPack(MediaItemForPlay)
-                }else{
-                    consoleLog("processOutSource -设置新媒体项:$URI_String 解码失败")
+            //尝试直接解码
+            val (result,MediaItemForPlay,uriTypeMode) = MediaInfoRetriever.retrieveMediaInfo(context,URI_String)
+            //存到PlayerInfoCenter
+            PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay)
+            //失败检查
+            when(result){
+                ActivityResultConnector.retriever_type_not_support -> {
+                    fail("不支持的媒体格式")
+                    return
+                }
+                ActivityResultConnector.retriever_error -> {
+                    fail("初期解码进程失败")
+                    return
                 }
             }
+            val mediaType = MediaItemForPlay.media_SPECIFIC_MediaType
+            if (mediaType == MediaType.Undefined){
+                fail("不支持的媒体格式")
+                return
+            }
 
-            //检查链接的权限级别(是否属于被降级的底权限链接)
-            val uriTypeMode = MediaUriManager.detectMediaUriTypeMode(URI_String.toUri())
+            //区分uriTypeMode
             when (uriTypeMode){
-                //MediaStore详细表链接(content://media/external/video/media/2599,content://media/external/audio/media/2537)
+                //MediaStore详细表链接(示例 content://media/external/video/media/2599,content://media/external/audio/media/2537)
                 MediaUriManager.uriType_media_store_detail -> {
-                    //consoleLog("processOutSource -原始链接是MediaStore详细表链接: $targetUriString")
+                    //consoleLog("processOutSource -原始链接是MediaStore详细表链接: $URI_String")
 
                     //启动播放页
                     startPage_selfDetectMediaType(URI_String.toUri(),SOURCE,mediaType)
 
                 }
-                //MediaStore文件表链接(content://media/external/file/2622)
+                //MediaStore文件表链接(示例 content://media/external/file/2622)
                 MediaUriManager.uriType_media_store_file -> {
-                    //consoleLog("processOutSource -原始链接是MediaStore文件表链接: $targetUriString")
+                    consoleLog("processOutSource -原始链接是MediaStore文件表链接: $URI_String")
 
-                    //检查权限
+
                     val privacyPermissionHelper = PrivacyPermissionHelper()
                     val isAllFilesAccessGranted = privacyPermissionHelper.isAllFilesAccessGranted()
                     if (isAllFilesAccessGranted){
@@ -168,54 +173,60 @@ class EntranceActivity : AppCompatActivity(){
                         return
                     }
 
+
                 }
-
-                //FileProvider链接(content://fileprovider/filemanager/fileprovider/filemanager, content://bin.mt.plus.fp/storage/emulated/0/DCIM/xxxxxxxoriginal.mp4)
+                //FileProvider链接(示例 content://fileprovider/filemanager/fileprovider/filemanager, content://bin.mt.plus.fp/storage/emulated/0/DCIM/xxxxxxxoriginal.mp4)
                 MediaUriManager.uriType_file_provider -> {
-                    //consoleLog("processOutSource -原始链接是FileProvider链接: $targetUriString")
+                    consoleLog("processOutSource -原始链接是FileProvider链接: $URI_String")
 
-                    //将FileProvider链接转换为标准链接
-                    val (URI_Standard,file_path) = MediaUriManager.detect_FileProvider_URI(URI_String.toUri(),context)
-                    //consoleLog("processOutSource-转换后的标准链接: $URI_Standard")
-                    if (URI_Standard == Uri.EMPTY){
+                    //尝试获取文件路径
+                    val file_path = MediaItemForPlay.file_path
+                    if (file_path == Undefined){ fail("播放失败(无法获取文件路径)") ; return }
+                    //尝试查表获取标准链接
+                    val URI_Standard = MediaUriManager.detect_FilePath(file_path,context)
+                    val URI = if (URI_Standard == Undefined){
+                        URI_String.toUri()
+                    }else{
+                        URI_Standard.toUri()
+                    }
+                    consoleLog("processOutSource-转换后的标准链接: URI_Standard:$URI_Standard URI: $URI")
+
+                    //是否能成功转换出标准链接
+                    if (URI_Standard == Undefined){
                         //无法转换出标准链接,可能是文件夹非公有,或被.nomedia标记
+                        consoleLog("无法转换出标准链接: $URI_String")
 
-                        //需要判断:1.ExoPlayer是否能播放 2.MediaRetriever是否能获取到元数据,且两者独立
+                        //原则上,运行到这里以及说明解码是成功了的,直接尝试播放
+                        /*
+                        //进行一次模糊判断:看看这个文件到底存不存在
+                        //使用模糊判断 -检查获取到的文件路径
+                        consoleLog("processOutSource -uriTypeMode -模糊判断 -获取到的文件路径: $file_path")
+                        val file = File(file_path)
+                        if (!file.exists()){ fail("播放失败(文件不存在)") ; return }
 
-                        val PRF_StrictCheck = false //严格判断 //TODO 先置为false,后续补全
-                        if (PRF_StrictCheck){
-                            //使用严格判断
+                         */
 
-                        }else{
-                            //使用模糊判断 -检查获取到的文件路径
-                            consoleLog("processOutSource -uriTypeMode -模糊判断 -获取到的文件路径: $file_path")
-                            if (file_path == Undefined){ fail("播放失败(无法获取文件路径)") ; return }
-                            val file = File(file_path)
-                            if (!file.exists()){ fail("播放失败(文件不存在)") ; return }
-
-                            //文件存在,直接拿去播放
-                            startPage_selfDetectMediaType(URI_Standard,SOURCE,mediaType)
-
-                        }
+                        //播放
+                        //startPage_selfDetectMediaType(URI,SOURCE,mediaType)
+                        startPage_selfDetectMediaType(file_path.toUri(),SOURCE,mediaType)
 
 
                     }else{
                         //成功转换出详细表标准链接(格式:content://media/external/video/media/2624)
+                        consoleLog("成功转换出详细表标准链接: $URI_Standard")
 
                         //启动播放页
-                        startPage_selfDetectMediaType(URI_Standard,SOURCE,mediaType)
+                        startPage_selfDetectMediaType(URI,SOURCE,mediaType)
                     }
 
                 }
-
                 //链接无法解析
                 MediaUriManager.uriType_null -> {
                     consoleLog("processOutSource -uriTypeMode -无法解析链接: $URI_String")
 
                     fail("播放失败(无法解析链接:$URI_String)")
                 }
-
-                //特殊处理
+                //特殊链接
                 MediaUriManager.uriType_special -> {
                     consoleLog("processOutSource -uriTypeMode -特殊链接: $URI_String")
 
@@ -296,81 +307,6 @@ class EntranceActivity : AppCompatActivity(){
 
 
 
-    //使用SAF申请某个文件夹的访问
-    fun requestFolderAccessViaSAF(folderPath: String) {
-        try {
-            // 获取文件夹的父路径，确保用户选择的是视频所在目录
-            // 例如: /storage/emulated/0/Movies/精选/SL/bbbbb.mp4
-            // 我们请求访问: /storage/emulated/0/Movies/精选/SL/
-            val file = File(folderPath)
-            val parentDir = file.parentFile ?: return
-
-            // 构建一个提示，让用户知道我们想访问哪个文件夹
-            val folderName = parentDir.name
-
-            // 使用 Intent.ACTION_OPEN_DOCUMENT_TREE 请求文件夹访问权限
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-                // 可选：提示用户选择特定文件夹
-                putExtra(Intent.EXTRA_TITLE, "请选择 \"$folderName\" 文件夹")
-
-                // 可选：设置初始目录（但注意：这个在 Android 上不一定生效）
-                // 可以尝试引导用户到正确的目录
-                // Android 8+ 支持设置初始目录
-                // 但实际效果取决于系统
-            }
-
-            // 存储目标路径，以便在回调中验证
-            val key = "requested_folder_path"
-            // 可以用临时变量或保存在类属性中
-            val requestedFolderPath = parentDir.absolutePath
-
-            startActivityForResult(intent, REQUEST_CODE_OPEN_DIRECTORY)
-
-            consoleLog("请求 SAF 文件夹授权: ${parentDir.absolutePath}")
-        } catch (e: Exception) {
-            consoleLog("请求 SAF 授权失败: $e")
-            // 降级处理：提示用户手动操作
-            //showManualHelpDialog()
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        when (requestCode) {
-            REQUEST_CODE_OPEN_DIRECTORY -> {
-                if (resultCode == RESULT_OK && data != null) {
-                    // 用户选择了文件夹
-                    val treeUri = data.data
-
-                    if (treeUri != null) {
-                        // 获取持久化访问权限
-                        try {
-                            contentResolver.takePersistableUriPermission(
-                                treeUri,
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                            )
-
-                            consoleLog("获得文件夹访问权限: $treeUri")
-
-
-
-                        } catch (e: SecurityException) {
-                            consoleLog("无法持久化权限: $e")
-
-                        }
-                    }
-                } else {
-                    // 用户拒绝了权限
-                    consoleLog("用户拒绝了文件夹访问")
-
-                }
-            }
-        }
-    }
-
-
     //启动失败提示和自动退出
     private fun fail(failMsg: String = Undefined){
         if (failMsg != Undefined){
@@ -441,11 +377,13 @@ class EntranceActivity : AppCompatActivity(){
     @OptIn(UnstableApi::class)
     private fun startVideoPage_selfDetectStyle(uri: Uri) {
         //读取页面样式
-        val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(this)
+        val playPageType = SettingsRequestCenter.GET_PRF_PlayPageType(this)
         //根据页面样式启动页面
-        when(playPageType){
-            0 -> startVideoOroPage(uri)
-            1 -> startVideoNeoPage(uri)
+        when{
+            (playPageType == SettingsRequestCenter.PlayPageType_Oro || playPageType == SettingsRequestCenter.PlayPageType_Neo) -> startVideoNeoPage(uri)
+            playPageType == SettingsRequestCenter.PlayPageType_Test -> {
+
+            }
         }
 
     }
@@ -465,17 +403,7 @@ class EntranceActivity : AppCompatActivity(){
         //启动
         startActivity(intent)
     }
-    //启动视频页面oro
-    @OptIn(UnstableApi::class)
-    private fun startVideoOroPage(uri: Uri) {
-        //构建intent
-        val intent = Intent(this, PlayerActivityOro::class.java).apply { putExtra(IntentRepo.URI, uri) }
-            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
-        //启动
-        startActivity(intent)
-    }
 
     //启动音乐页面
     @OptIn(UnstableApi::class)

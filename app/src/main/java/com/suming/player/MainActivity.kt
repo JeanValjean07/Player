@@ -83,9 +83,9 @@ import kotlinx.coroutines.withContext
 @Suppress("NewApi","unused")
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
+
     //连接ViewModel
     private val mainViewModel: MainViewModel by viewModels()
-
     //防止快速点击
     private var lock_clickMillisLock = 0L
     private var lock_clickMillisLock_second = 0L
@@ -135,7 +135,6 @@ class MainActivity: AppCompatActivity() {
 
     }
 
-
     override fun onResume() {
         super.onResume()
 
@@ -155,8 +154,6 @@ class MainActivity: AppCompatActivity() {
 
 
     }
-
-
 
     private fun init(){
         //获取MiniView视图
@@ -749,23 +746,11 @@ class MainActivity: AppCompatActivity() {
     //显示MiniView LongProcess-把任务全部执行完,禁止扔到其他函数作用域
     private fun showMiniViewLongProcess(){
         //从PlayerStateMediaInfo获取所有信息
-        val (SPECIFIC_ID,FileName,MediaArtist) = PlayerInfoCenter.GET_Media_MiniView_Pack()
-        //consoleLog("showMiniViewLongProcess: SPECIFIC_ID：  $SPECIFIC_ID")
-        if (SPECIFIC_ID.isEmpty()){
-            miniView_clear()
-            return
-        }
-        //分离部分信息
-        var mediaType = ""
-        var NUM_ID = 0L
-        try {
-            //拆分字符串
-            mediaType = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID).first
-            NUM_ID = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID).second
-        }catch (e: Exception){
-            consoleLog("showMiniViewLongProcess-字符串拆分出错: $e")
-        }
-        if (SPECIFIC_ID.isEmpty()){
+        val (_,FileName,MediaArtist) = PlayerInfoCenter.GET_Media_MiniView_Pack()
+        val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+        val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
+        //决定是否能显示MiniView(只要mediaType在就当作能显示,哪怕FileName获取不到)
+        if (mediaType.isEmpty()){
             miniView_clear()
         }else{
             //文字上屏
@@ -775,6 +760,7 @@ class MainActivity: AppCompatActivity() {
             //更新艺术图或视频
             if (PlayerInfoCenter.GET_Media_isCache()){
                 updateMiniViewArtwork_Image(NUM_ID, mediaType)
+
             }else{
                 updateMiniViewArtwork(mediaType, NUM_ID)
             }
@@ -929,6 +915,8 @@ class MainActivity: AppCompatActivity() {
         }
     }
     private fun updateMiniViewArtwork_Image(NUM_ID: Long, type: String){
+        //NUM_ID需要有效
+        if (NUM_ID <= 0L) return
         //变换卡片大小
         fun transformCardSize_toSquare(){
             //保持卡片高度不变
@@ -1473,35 +1461,9 @@ class MainActivity: AppCompatActivity() {
         lock_clickMillisLock = System.currentTimeMillis()
 
         //检查使用的页面类型
-        val playPageType = SettingsRequestCenter.get_PREFS_PlayPageType(this)
-        when(playPageType){
-            0 -> {
-                //构建intent
-                val intent = Intent(this, PlayerActivityOro::class.java)
-                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                    .putExtra(IntentRepo.URI, uri)
-                    .putExtra(IntentRepo.SOURCE, 3)
-
-                //是否使用进入动画
-                val useSlideInAnim = SettingsRequestCenter.GET_PRF_EnableMiniView(this@MainActivity)
-                if (useSlideInAnim){
-                    //构建可选参数
-                    val options = ActivityOptionsCompat.makeCustomAnimation(
-                        this,
-                        R.anim.slide_in_vertical,
-                        R.anim.slide_dont_move
-                    )
-
-                    //启动活动
-                    startActivity(intent, options.toBundle())
-                }else{
-                    //启动活动
-                    startActivity(intent)
-
-                }
-            }
-            1 -> {
+        val playPageType = SettingsRequestCenter.GET_PRF_PlayPageType(this@MainActivity)
+        when{
+            (playPageType == SettingsRequestCenter.PlayPageType_Oro || playPageType == SettingsRequestCenter.PlayPageType_Neo) -> {
                 //构建intent
                 val intent = Intent(this, PlayerActivityNeo::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -1526,6 +1488,8 @@ class MainActivity: AppCompatActivity() {
                     startActivity(intent)
 
                 }
+            }
+            playPageType == SettingsRequestCenter.PlayPageType_Test -> {
 
             }
         }

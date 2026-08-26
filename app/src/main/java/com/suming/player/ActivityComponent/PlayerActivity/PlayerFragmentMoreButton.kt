@@ -20,6 +20,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
@@ -49,6 +50,7 @@ import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
+import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
@@ -450,6 +452,30 @@ class PlayerFragmentMoreButton: DialogFragment() {
             switch_saveLastPosition.isChecked = MediaDataBaseMaster.get_PREFS_saveProgress("",requireContext())
             switch_saveLastPosition.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+
+                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
+                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
+                if (MediaType.isEmpty() || NUM_ID <= 0){
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("媒体详情获取失败")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setPositiveButton("了解") { dialog, which ->
+                            ToolVibrate().vibrate(requireContext())
+
+                            customDismiss()
+
+                            dialog.dismiss()
+                        }
+                        .setCancelable(true)
+                        .show()
+
+                    switch_saveLastPosition.isChecked = false
+
+                    return@setOnClickListener
+                }
+
+
                 //修改设置
                 val isChecked = switch_saveLastPosition.isChecked
                 MediaDataBaseMaster.set_PREFS_saveProgress("",isChecked,requireContext())
@@ -490,6 +516,27 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonUpdateCover = view.findViewById<TextView>(R.id.buttonUpdateCover)
             ButtonUpdateCover.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+
+                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
+                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
+                if (MediaType.isEmpty() || NUM_ID <= 0){
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("媒体详情获取失败")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setPositiveButton("了解") { dialog, which ->
+                            ToolVibrate().vibrate(requireContext())
+
+                            customDismiss()
+
+                            dialog.dismiss()
+                        }
+                        .setCancelable(true)
+                        .show()
+
+                    return@setOnClickListener
+                }
+
                 updateCoverFrame(ButtonUpdateCover)
             }
             //提取所有帧
@@ -524,6 +571,27 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonSysShare = view.findViewById<TextView>(R.id.buttonSysShare)
             ButtonSysShare.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+
+                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
+                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
+                if (MediaType.isEmpty() || NUM_ID <= 0){
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("媒体详情获取失败")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setPositiveButton("了解") { dialog, which ->
+                            ToolVibrate().vibrate(requireContext())
+
+                            customDismiss()
+
+                            dialog.dismiss()
+                        }
+                        .setCancelable(true)
+                        .show()
+
+                    return@setOnClickListener
+                }
+
                 returnFragment(FragmentConnector.fragment_more_button_sys_share_video)
                 dismiss()
             }
@@ -546,6 +614,28 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonClearMiniature = view.findViewById<TextView>(R.id.ButtonReCreateThumb)
             ButtonClearMiniature.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+
+                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
+                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
+                if (MediaType.isEmpty() || NUM_ID <= 0){
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("媒体详情获取失败")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setPositiveButton("了解") { dialog, which ->
+                            ToolVibrate().vibrate(requireContext())
+
+                            customDismiss()
+
+                            dialog.dismiss()
+                        }
+                        .setCancelable(true)
+                        .show()
+
+                    return@setOnClickListener
+                }
+
+
                 AlertDialog.Builder(requireContext())
                     .setTitle("确定删除进度条缩略图吗?")
                     .setMessage("")
@@ -572,6 +662,27 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonDeleteCustomCover = view.findViewById<TextView>(R.id.ButtonDeleteCustomCover)
             ButtonDeleteCustomCover.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+
+                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
+                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
+                if (MediaType.isEmpty() || NUM_ID <= 0){
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("媒体详情获取失败")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setPositiveButton("了解") { dialog, which ->
+                            ToolVibrate().vibrate(requireContext())
+
+                            customDismiss()
+
+                            dialog.dismiss()
+                        }
+                        .setCancelable(true)
+                        .show()
+
+                    return@setOnClickListener
+                }
+
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("确定删除自定义封面吗?")
@@ -659,9 +770,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
             //注册进度条相关功能(经典播放页时不显示进度条相关功能)
             val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
-            if(viewModel.state_player_type == "Oro"){
+            if(viewModel.state_s_area_type == S_Area_Helper.S_AreaType_SEEKBAR){
                 CardScrollerStuff.visibility = View.GONE
-            }else if(viewModel.state_player_type == "Neo"){
+            }else if(viewModel.state_s_area_type == S_Area_Helper.S_AreaType_SCROLLER){
                 //按钮：AlwaysSeek
                 val ButtonAlwaysSeek = view.findViewById<FrameLayout>(R.id.ButtonActualAlwaysSeek)
                 val ButtonAlwaysSeekMaterial = view.findViewById<MaterialButton>(R.id.ButtonMaterialAlwaysSeek)
@@ -751,6 +862,40 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
             }
 
+            //未显示进度条
+            if (SettingsRequestCenter.GET_PRF_PlayPageType(requireContext()) == SettingsRequestCenter.PlayPageType_Neo){
+                if (viewModel.state_s_area_type == S_Area_Helper.S_AreaType_SEEKBAR){
+
+                    val text = "这是由于媒体所在的文件夹为非公有文件夹，或者文件夹被.nomedia标记，导致程序无法获取所需的必要信息，同时导致媒体信息等可能无法查看。" +
+                            "\n\n要解决此问题，请将媒体文件移动至公开文件夹，他们是：DCIM, Pictures, Movies, Music, Downloads, Documents，并保证文件夹未受到.nomedia等标记的影响。"
+
+
+                    val LinearLayout_whyNotShowScroller = view.findViewById<LinearLayout>(R.id.LinearLayout_whyNotShowScroller)
+                    val Button_whyNotShowScroller = view.findViewById<TextView>(R.id.Button_whyNotShowScroller)
+                    LinearLayout_whyNotShowScroller.visibility = View.VISIBLE
+                    Button_whyNotShowScroller.setOnClickListener {
+                        ToolVibrate().vibrate(requireContext())
+
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("未显示进度条？")
+                            .setMessage(text)
+                            .setPositiveButton("了解") { dialog, which ->
+                                ToolVibrate().vibrate(requireContext())
+
+                                customDismiss()
+
+                                dialog.dismiss()
+                            }
+                            .setCancelable(true)
+                            .show()
+
+
+
+                    }
+                }
+            }
+
+
 
         }
     }
@@ -765,6 +910,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
         setFragmentResult(FragmentConnector.fragment_request_key_more_button, result)
     }
 
+
+    //获取当前媒体类型和NUM_ID
+    private fun GET_MediaType_and_NUM_ID(): Pair<String, Long>{
+        val MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+        val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
+
+        return Pair(MediaType,NUM_ID)
+    }
 
     //更新封面选单
     private fun updateCoverFrame(anchor: TextView){

@@ -101,6 +101,7 @@
     <color name="MainColorPack_BrushColorTop">#EEFFFFFF</color>
     <color name="MainColorPack_BrushColorMiddle">#CCFFFFFF</color>
     <color name="MainColorPack_ContentCardBackground">#FFFFFFFF</color>
+    <color name="MainColorPack_ContentCardBackground_Secondary">#FFEEEEEE</color>
     <color name="MainColorPack_CardButtonBackground">#FFFFFFFF</color>
     <color name="MainColorPack_CardButtonBackground_state_ON">#FFB39DDB</color>
     <color name="MainColorPack_CardButtonBackground_state_OFF">#FFFFFFFF</color>
