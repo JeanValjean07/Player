@@ -142,7 +142,7 @@
                                 android:padding="6dp"
                                 android:backgroundTint="@android:color/transparent"
                                 android:scaleType="centerCrop"
-                                android:src="@drawable/ic_play_list_refresh"
+                                android:src="@drawable/ic_general_refresh"
                                 tools:ignore="ContentDescription" />
                             <TextView
                                 android:layout_width="wrap_content"

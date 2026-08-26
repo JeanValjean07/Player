@@ -5,25 +5,25 @@
 
     <item
         android:id="@+id/list_custom"
-        android:icon="@drawable/ic_play_list_refresh"
+        android:icon="@drawable/ic_general_refresh"
         android:title="自定义列表"
         />
 
     <item
         android:id="@+id/list_history"
-        android:icon="@drawable/ic_play_list_refresh"
+        android:icon="@drawable/ic_general_refresh"
         android:title="历史播放列表"
         />
 
     <item
         android:id="@+id/list_video_live"
-        android:icon="@drawable/ic_play_list_refresh"
+        android:icon="@drawable/ic_general_refresh"
         android:title="视频"
         />
 
     <item
         android:id="@+id/list_music_live"
-        android:icon="@drawable/ic_play_list_refresh"
+        android:icon="@drawable/ic_general_refresh"
         android:title="音乐"
         />
 </menu>

@@ -784,7 +784,7 @@
                                     android:layout_marginStart="10dp"
                                     android:layout_marginTop="1dp"
                                     android:scaleType="centerCrop"
-                                    android:src="@drawable/ic_more_button_background_play"
+                                    android:src="@drawable/ic_more_button_light"
                                     tools:ignore="ContentDescription" />
                                 <TextView
                                     android:layout_width="wrap_content"
@@ -1132,7 +1132,7 @@
                                 <ImageView
                                     android:layout_width="19dp"
                                     android:layout_height="19dp"
-                                    android:src="@drawable/ic_art_herbs"
+                                    android:src="@drawable/ic_more_button_bind_view"
                                     android:scaleType="centerCrop"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
@@ -1173,7 +1173,7 @@
                                 <ImageView
                                     android:layout_width="19dp"
                                     android:layout_height="19dp"
-                                    android:src="@drawable/ic_art_herbs"
+                                    android:src="@drawable/ic_general_refresh"
                                     android:scaleType="centerCrop"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
@@ -1214,7 +1214,7 @@
                                 <ImageView
                                     android:layout_width="19dp"
                                     android:layout_height="19dp"
-                                    android:src="@drawable/ic_art_herbs"
+                                    android:src="@drawable/ic_more_button_escape"
                                     android:scaleType="centerCrop"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
@@ -1257,7 +1257,7 @@
                                 <ImageView
                                     android:layout_width="19dp"
                                     android:layout_height="19dp"
-                                    android:src="@drawable/ic_art_herbs"
+                                    android:src="@drawable/ic_more_button_question"
                                     android:scaleType="centerCrop"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"

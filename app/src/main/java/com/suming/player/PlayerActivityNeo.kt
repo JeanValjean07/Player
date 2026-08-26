@@ -3130,6 +3130,13 @@ class PlayerActivityNeo: AppCompatActivity(){
                     start_S_Area_PassiveControl(52486)
                 }
             })
+
+            //开启被控
+            if (player?.isPlaying == true){
+                start_S_Area_PassiveControl(73465)
+            }else{
+                syncScrollTask_Core_Compute()
+            }
         }
     }
     //缓存显示配置
