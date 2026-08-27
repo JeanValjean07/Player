@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.CountDownTimer
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -50,7 +49,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -332,20 +330,29 @@ object PlayerSingleton {
 
 
         //解码新媒体信息
-        val (result,MediaItemForPlay,_) = MediaInfoRetriever.retrieveMediaInfo(URI_SP = URI_UP.toString(),context = context)
-        consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 解码结果:$result")
-        //需要中断的情况
-        when(result){
-            ActivityResultConnector.retriever_error -> {
-                return ActivityResultConnector.retriever_error
-            }
-            ActivityResultConnector.retriever_type_not_support -> {
-                return ActivityResultConnector.retriever_type_not_support
-            }
+        //检查是否需要解码
+        val current_item_URI_SP = PlayerInfoCenter.GET_Media_URI_SP()
+        val current_item_file_path = PlayerInfoCenter.GET_Media_FilePath()
+        consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 当前缓存链接:$current_item_URI_SP")
+        if (URI_UP.toString() != current_item_URI_SP && URI_UP.toString() != current_item_file_path){
+            val (result,MediaItemForPlay_Cache,_) = MediaInfoRetriever.retrieveMediaInfo(URI_SP = URI_UP.toString(),context = context)
+            consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 解码结果:$result")
+            //需要中断的情况
+            when(result){
+                ActivityResultConnector.retriever_error -> {
+                    return ActivityResultConnector.OBRTV_Engine_RetrieveFailed
+                }
+                ActivityResultConnector.retriever_type_not_support -> {
+                    return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
+                }
 
+            }
+            //将MediaItemForPlay缓存到PlayerInfoCenter
+            PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay_Cache)
         }
-        //将MediaItemForPlay缓存到PlayerInfoCenter
-        PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay)
+        val MediaItemForPlay = PlayerInfoCenter.GET_Media_FullMediaInfoPack()
+        if (MediaItemForPlay == null) return ActivityResultConnector.OBRTV_Engine_RetrieveFailed
+
 
         //重置单个媒体状态
         clearItemState()
@@ -461,7 +468,7 @@ object PlayerSingleton {
             //把记录保存到记录管理器
             val mediaRecordManager = MediaRecordManager()
 
-            val uriStandard = PlayerInfoCenter.GET_Media_UriString()
+            val uriStandard = PlayerInfoCenter.GET_Media_URI_STD()
             val fileName = PlayerInfoCenter.GET_Media_FileName()
             val mediaArtist = PlayerInfoCenter.GET_Media_Artist()
             //合成信息包
@@ -477,7 +484,7 @@ object PlayerSingleton {
     }
     //获取艺术图链接
     private fun getArtworkFrameUri(context: Context, uri: Uri): Uri{
-        if (uri.toString() != PlayerInfoCenter.GET_Media_UriString()){
+        if (uri.toString() != PlayerInfoCenter.GET_Media_URI_STD()){
             //consoleLog("发生了严重错误 getArtworkFrameUri")
             return Uri.EMPTY
         }

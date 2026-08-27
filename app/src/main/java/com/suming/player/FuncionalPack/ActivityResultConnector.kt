@@ -20,6 +20,7 @@ object ActivityResultConnector {
     const val OBRTV_Engine_AlreadyPlayingTargetItem = "OBRTV_Engine_AlreadyPlayingTargetItem"
     const val OBRTV_Engine_RetrieveFailed = "OBRTV_Engine_RetrieveFailed"
     const val OBRTV_Engine_SetItemSuccess = "OBRTV_Engine_SetItemSuccess"
+    const val OBRTV_Engine_TypeNotSupport = "OBRTV_Engine_TypeNotSupport"
 
 
     //解码器 retriever

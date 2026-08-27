@@ -12,6 +12,7 @@ import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.MediaInfoRetriever
@@ -147,111 +148,8 @@ class EntranceActivity : AppCompatActivity(){
                 return
             }
 
-            //区分uriTypeMode
-            when (uriTypeMode){
-                //MediaStore详细表链接(示例 content://media/external/video/media/2599,content://media/external/audio/media/2537)
-                MediaUriManager.uriType_media_store_detail -> {
-                    //consoleLog("processOutSource -原始链接是MediaStore详细表链接: $URI_String")
-
-                    //启动播放页
-                    startPage_selfDetectMediaType(URI_String.toUri(),SOURCE,mediaType)
-
-                }
-                //MediaStore文件表链接(示例 content://media/external/file/2622)
-                MediaUriManager.uriType_media_store_file -> {
-                    consoleLog("processOutSource -原始链接是MediaStore文件表链接: $URI_String")
-
-
-                    val privacyPermissionHelper = PrivacyPermissionHelper()
-                    val isAllFilesAccessGranted = privacyPermissionHelper.isAllFilesAccessGranted()
-                    if (isAllFilesAccessGranted){
-                        //启动播放(直接用File URI也可播放,无需再获取详细URI,而且根本也获取不到)
-                        startPage_selfDetectMediaType(URI_String.toUri(),SOURCE, mediaType)
-
-                    }else{
-                        fail("播放失败(请授权所有文件访问权限)")
-                        return
-                    }
-
-
-                }
-                //FileProvider链接(示例 content://fileprovider/filemanager/fileprovider/filemanager, content://bin.mt.plus.fp/storage/emulated/0/DCIM/xxxxxxxoriginal.mp4)
-                MediaUriManager.uriType_file_provider -> {
-                    consoleLog("processOutSource -原始链接是FileProvider链接: $URI_String")
-
-                    //尝试获取文件路径
-                    val file_path = MediaItemForPlay.file_path
-                    if (file_path == Undefined){ fail("播放失败(无法获取文件路径)") ; return }
-                    //尝试查表获取标准链接
-                    val URI_Standard = MediaUriManager.detect_FilePath(file_path,context)
-                    val URI = if (URI_Standard == Undefined){
-                        URI_String.toUri()
-                    }else{
-                        URI_Standard.toUri()
-                    }
-                    consoleLog("processOutSource-转换后的标准链接: URI_Standard:$URI_Standard URI: $URI")
-
-                    //是否能成功转换出标准链接
-                    if (URI_Standard == Undefined){
-                        //无法转换出标准链接,可能是文件夹非公有,或被.nomedia标记
-                        consoleLog("无法转换出标准链接: $URI_String")
-
-                        //原则上,运行到这里以及说明解码是成功了的,直接尝试播放
-                        /*
-                        //进行一次模糊判断:看看这个文件到底存不存在
-                        //使用模糊判断 -检查获取到的文件路径
-                        consoleLog("processOutSource -uriTypeMode -模糊判断 -获取到的文件路径: $file_path")
-                        val file = File(file_path)
-                        if (!file.exists()){ fail("播放失败(文件不存在)") ; return }
-
-                         */
-
-                        //播放
-                        //startPage_selfDetectMediaType(URI,SOURCE,mediaType)
-                        startPage_selfDetectMediaType(file_path.toUri(),SOURCE,mediaType)
-
-
-                    }else{
-                        //成功转换出详细表标准链接(格式:content://media/external/video/media/2624)
-                        consoleLog("成功转换出详细表标准链接: $URI_Standard")
-
-                        //启动播放页
-                        startPage_selfDetectMediaType(URI,SOURCE,mediaType)
-                    }
-
-                }
-                //链接无法解析
-                MediaUriManager.uriType_null -> {
-                    consoleLog("processOutSource -uriTypeMode -无法解析链接: $URI_String")
-
-                    fail("播放失败(无法解析链接:$URI_String)")
-                }
-                //特殊链接
-                MediaUriManager.uriType_special -> {
-                    consoleLog("processOutSource -uriTypeMode -特殊链接: $URI_String")
-
-                    //对特殊链接进行处理(转换为FileProvider链接)
-                    val processedUri = MediaUriManager.processSpecialUri(URI_String)
-                    consoleLog("processOutSource -uriTypeMode -特殊链接处理结果: $processedUri")
-                    if (processedUri == Uri.EMPTY){ fail("播放失败(特殊链接处理失败)") ; return }
-
-                    //将FileProvider链接转换为标准链接
-                    val standardUri = MediaUriManager.convert_FileManagerFileURI_to_MediaStoreMediaURI(this, URI_String.toUri()).first
-                    consoleLog("processOutSource-转换后的标准链接: $standardUri")
-                    if (standardUri == Uri.EMPTY){
-                        fail("播放失败(标准链接转换失败:$URI_String)")
-                    }else{
-                        //成功转换出详细表标准链接(格式:content://media/external/video/media/2624)
-
-                        //启动播放页
-                        startPage_selfDetectMediaType(standardUri,SOURCE,mediaType)
-                    }
-
-
-
-
-                }
-            }
+            //根据uriTypeMode处理
+            executeByUriTypeMode(uriTypeMode,URI_String,mediaType,SOURCE,MediaItemForPlay)
 
         }else{
             //分支-新链接为空
@@ -306,6 +204,132 @@ class EntranceActivity : AppCompatActivity(){
     }
 
 
+    //
+    private fun executeByUriTypeMode(uriTypeMode: String,URI_String: String,mediaType: String,SOURCE: Int,MediaItemForPlay: MediaItemForPlay){
+        //区分uriTypeMode
+        when (uriTypeMode){
+            //MediaStore详细表链接(示例 content://media/external/video/media/2599,content://media/external/audio/media/2537)
+            MediaUriManager.uriType_media_store_detail -> {
+                //consoleLog("processOutSource -原始链接是MediaStore详细表链接: $URI_String")
+
+                //启动播放页
+                startPage_selfDetectMediaType(URI_String.toUri(),SOURCE,mediaType)
+
+            }
+            //MediaStore文件表链接(示例 content://media/external/file/2622)
+            MediaUriManager.uriType_media_store_file -> {
+                consoleLog("processOutSource -原始链接是MediaStore文件表链接: $URI_String")
+
+                val privacyPermissionHelper = PrivacyPermissionHelper()
+                val isAllFilesAccessGranted = privacyPermissionHelper.isAllFilesAccessGranted()
+                if (isAllFilesAccessGranted){
+                    //启动播放(直接用File URI也可播放,无需再获取详细URI,而且根本也获取不到)
+                    startPage_selfDetectMediaType(URI_String.toUri(),SOURCE, mediaType)
+
+                }else{
+                    fail("播放失败(请授权所有文件访问权限)")
+                    return
+                }
+
+
+
+                //尝试获取文件路径
+                val file_path = MediaItemForPlay.file_path
+                if (file_path == Undefined){
+                    //尝试其他法子
+
+                    //启动播放(直接用File URI也可播放,无需再获取详细URI,而且根本也获取不到)
+                    startPage_selfDetectMediaType(URI_String.toUri(),SOURCE, mediaType)
+
+                }else{
+                    consoleLog("processOutSource -文件路径 启动播放: file_path $file_path")
+                    //启动播放(直接用File URI也可播放,无需再获取详细URI,而且根本也获取不到)
+                    startPage_selfDetectMediaType(file_path.toUri(),SOURCE, mediaType)
+
+                }
+
+
+            }
+            //FileProvider链接(示例 content://fileprovider/filemanager/fileprovider/filemanager, content://bin.mt.plus.fp/storage/emulated/0/DCIM/xxxxxxxoriginal.mp4)
+            MediaUriManager.uriType_file_provider -> {
+                consoleLog("processOutSource -原始链接是FileProvider链接: $URI_String")
+
+                //尝试获取文件路径
+                val file_path = MediaItemForPlay.file_path
+                if (file_path == Undefined){ fail("播放失败(无法获取文件路径)") ; return }
+                //尝试查表获取标准链接
+                val URI_Standard = MediaUriManager.detect_FilePath(file_path,context)
+                val URI = if (URI_Standard == Undefined){
+                    URI_String.toUri()
+                }else{
+                    URI_Standard.toUri()
+                }
+                consoleLog("processOutSource-转换后的标准链接: URI_Standard:$URI_Standard URI: $URI")
+
+                //是否能成功转换出标准链接
+                if (URI_Standard == Undefined){
+                    //无法转换出标准链接,可能是文件夹非公有,或被.nomedia标记
+                    consoleLog("无法转换出标准链接: $URI_String")
+
+                    //原则上,运行到这里以及说明解码是成功了的,直接尝试播放
+                    /*
+                    //进行一次模糊判断:看看这个文件到底存不存在
+                    //使用模糊判断 -检查获取到的文件路径
+                    consoleLog("processOutSource -uriTypeMode -模糊判断 -获取到的文件路径: $file_path")
+                    val file = File(file_path)
+                    if (!file.exists()){ fail("播放失败(文件不存在)") ; return }
+
+                     */
+
+                    //播放
+                    //startPage_selfDetectMediaType(URI,SOURCE,mediaType)
+                    consoleLog("processOutSource -uriTypeMode -播放文件路径:file_path.toUri()= ${file_path.toUri()}")
+                    startPage_selfDetectMediaType(file_path.toUri(),SOURCE,mediaType)
+
+
+                }else{
+                    //成功转换出详细表标准链接(格式:content://media/external/video/media/2624)
+                    consoleLog("成功转换出详细表标准链接: $URI_Standard")
+
+                    //启动播放页
+                    startPage_selfDetectMediaType(URI,SOURCE,mediaType)
+                }
+
+            }
+            //链接无法解析
+            MediaUriManager.uriType_null -> {
+                consoleLog("processOutSource -uriTypeMode -无法解析链接: $URI_String")
+
+                fail("播放失败(无法解析链接:$URI_String)")
+            }
+            //特殊链接
+            MediaUriManager.uriType_special -> {
+                consoleLog("processOutSource -uriTypeMode -特殊链接: $URI_String")
+
+                //对特殊链接进行处理(转换为FileProvider链接)
+                val processedUri = MediaUriManager.processSpecialUri(URI_String)
+                consoleLog("processOutSource -uriTypeMode -特殊链接处理结果: $processedUri")
+                if (processedUri == Uri.EMPTY){ fail("播放失败(特殊链接处理失败)") ; return }
+
+                //将FileProvider链接转换为标准链接
+                val standardUri = MediaUriManager.convert_FileManagerFileURI_to_MediaStoreMediaURI(this, URI_String.toUri()).first
+                consoleLog("processOutSource-转换后的标准链接: $standardUri")
+                if (standardUri == Uri.EMPTY){
+                    fail("播放失败(标准链接转换失败:$URI_String)")
+                }else{
+                    //成功转换出详细表标准链接(格式:content://media/external/video/media/2624)
+
+                    //启动播放页
+                    startPage_selfDetectMediaType(standardUri,SOURCE,mediaType)
+                }
+
+
+
+
+            }
+        }
+    }
+
 
     //启动失败提示和自动退出
     private fun fail(failMsg: String = Undefined){
@@ -323,6 +347,8 @@ class EntranceActivity : AppCompatActivity(){
     //根据媒体类型启动播放页(自己判断媒体类型或者主动传入媒体类型)
     @OptIn(UnstableApi::class)
     private fun startPage_selfDetectMediaType(uri: Uri, source: Int, mediaType: String){
+        consoleLog("startPage_selfDetectMediaType -uri: $uri -source: $source -mediaType: $mediaType")
+
         //根据发起来源选择启动页面
         when(source){
             //来自外部启动(以新传入的媒体为主)

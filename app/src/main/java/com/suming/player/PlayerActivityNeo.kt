@@ -949,7 +949,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //使用系统分享面板
                     FragmentConnector.fragment_more_button_sys_share_video -> {
-                        val uriString = PlayerInfoCenter.GET_Media_UriStandard()
+                        val uriString = PlayerInfoCenter.GET_Media_URI_SP()
                         shareVideo(this@PlayerActivityNeo, uriString.toUri())
                     }
                     //更新视频封面
@@ -1336,6 +1336,12 @@ class PlayerActivityNeo: AppCompatActivity(){
             ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
                 //设置失败-无法获取目标项信息
                 showErrorCover("媒体解码失败")
+
+                return false
+            }
+            ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
+                //设置失败-媒体类型不支持
+                showErrorCover("不支持的媒体类型")
 
                 return false
             }
@@ -1821,6 +1827,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         stopVideoSeek()
         stop_S_Area_PassiveControl(34564)
         stopVideoTimeSync()
+
+        //解绑播放器视图
+        playerView.player = null
 
         //关闭播放器状态监听
         player?.removeListener(PlayerStateListener)

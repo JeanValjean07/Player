@@ -131,6 +131,8 @@ class MainActivity: AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
+        //解绑播放器视图
+        PlayingCard_Artwork_Video?.player = null
 
 
     }
@@ -834,7 +836,7 @@ class MainActivity: AppCompatActivity() {
                 //检查缓存链接
                 if (PlayerInfoCenter.GET_Media_isCache()){
                     //拿到缓存链接
-                    val cacheUri = PlayerInfoCenter.GET_Media_UriString()
+                    val cacheUri = PlayerInfoCenter.GET_Media_URI_STD()
 
                     //唤起播放页
                     if (cacheUri.isNotEmpty()){
@@ -855,7 +857,7 @@ class MainActivity: AppCompatActivity() {
             val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
             if (!ongoing){
                 if (PlayerInfoCenter.GET_Media_isCache()){
-                    val uri = PlayerInfoCenter.GET_Media_UriString().toUri()
+                    val uri = PlayerInfoCenter.GET_Media_URI_STD().toUri()
 
                     //播放缓存链接
                     setMediaItem(uri, true)
@@ -944,6 +946,8 @@ class MainActivity: AppCompatActivity() {
         if (state_MiniViewArtwork_type != mini_view_type_image){
             //清除所有子视图
             PlayingCard_Artwork.removeAllViews()
+            //解绑播放器视图
+            PlayingCard_Artwork_Video?.player = null
             PlayingCard_Artwork_Video = null
             //变换卡片宽高
             transformCardSize_toSquare()
@@ -1123,7 +1127,7 @@ class MainActivity: AppCompatActivity() {
     private fun startMiniViewPlay(uri: Uri){
         //比对上次播放媒体信息与当前播放媒体信息
         val newUri = uri.toString()
-        val currentUri = PlayerInfoCenter.GET_Media_UriString()
+        val currentUri = PlayerInfoCenter.GET_Media_URI_STD()
         if (newUri == currentUri){
             showCustomToast("已在播放该媒体",3)
             PlayerSingleton.continuePlay(true)

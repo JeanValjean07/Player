@@ -127,13 +127,13 @@ object PlayerInfoCenter {
         return Media_NUM_ID
     }
     //获取当前媒体的标准链接
-    fun GET_Media_UriStandard(): String {
-        val MediaInfo_MediaUriStandard = CURRENT_MediaItemPackage?.URI_STD ?: Undefined
+    fun GET_Media_URI_SP(): String {
+        val MediaInfo_MediaUriStandard = CURRENT_MediaItemPackage?.URI_SP ?: Undefined
 
         return MediaInfo_MediaUriStandard
     }
     //获取当前媒体的uriString
-    fun GET_Media_UriString(): String {
+    fun GET_Media_URI_STD(): String {
         val MediaInfo_MediaUriString = CURRENT_MediaItemPackage?.URI_STD ?: Undefined
 
         return MediaInfo_MediaUriString

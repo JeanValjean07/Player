@@ -459,7 +459,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
                     AlertDialog.Builder(requireContext())
                         .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
                         .setPositiveButton("了解") { dialog, which ->
                             ToolVibrate().vibrate(requireContext())
 
@@ -523,7 +523,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
                     AlertDialog.Builder(requireContext())
                         .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
                         .setPositiveButton("了解") { dialog, which ->
                             ToolVibrate().vibrate(requireContext())
 
@@ -578,7 +578,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
                     AlertDialog.Builder(requireContext())
                         .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
                         .setPositiveButton("了解") { dialog, which ->
                             ToolVibrate().vibrate(requireContext())
 
@@ -621,7 +621,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
                     AlertDialog.Builder(requireContext())
                         .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
                         .setPositiveButton("了解") { dialog, which ->
                             ToolVibrate().vibrate(requireContext())
 
@@ -669,7 +669,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
                     AlertDialog.Builder(requireContext())
                         .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息")
+                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
                         .setPositiveButton("了解") { dialog, which ->
                             ToolVibrate().vibrate(requireContext())
 
@@ -894,6 +894,35 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     }
                 }
             }
+            //信息残缺(获取不到NUM_ID)
+            if (PlayerInfoCenter.GET_Media_NUM_ID() <= 0){
+                val LinearLayout_whyInformationLame = view.findViewById<LinearLayout>(R.id.LinearLayout_whyInformationLame)
+                val TextView_whyInformationLame = view.findViewById<TextView>(R.id.Button_whyInformationLame)
+                LinearLayout_whyInformationLame.visibility = View.VISIBLE
+                LinearLayout_whyInformationLame.setOnClickListener {
+                    ToolVibrate().vibrate(requireContext())
+
+                    val text = "这是由于媒体所在的文件夹为非公有文件夹，或者文件夹被.nomedia标记，导致程序无法获取所需的必要信息。在这种情况下，许多功能不可用。" +
+                            "\n\n要解决此问题，请将媒体文件移动至公开文件夹，他们是：DCIM, Pictures, Movies, Music, Downloads, Documents，并保证文件夹未受到.nomedia等标记的影响。"
+
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("信息残缺？")
+                        .setMessage(text)
+                        .setPositiveButton("了解") { dialog, which ->
+                            ToolVibrate().vibrate(requireContext())
+
+                            customDismiss()
+
+                            dialog.dismiss()
+                        }
+                        .setCancelable(true)
+                        .show()
+
+
+
+                }
+            }
 
 
 
@@ -909,6 +938,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val result = bundleOf(FragmentConnector.receive_key to event,FragmentConnector.extra_key to extra)
         setFragmentResult(FragmentConnector.fragment_request_key_more_button, result)
     }
+
+
 
 
     //获取当前媒体类型和NUM_ID

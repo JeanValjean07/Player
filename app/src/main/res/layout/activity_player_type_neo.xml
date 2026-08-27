@@ -414,11 +414,11 @@
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/controller_s_area"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="60dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toTopOf="@+id/controller_bottom_padding"
-                android:background="@color/MainColorPack_SurfaceBackground"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:background="@android:color/transparent"
                 android:visibility="visible"
                 android:clickable="true">
 
@@ -427,19 +427,19 @@
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/controller_s_area_scroller"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
+                    android:layout_height="60dp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     android:background="@color/MainColorPack_SurfaceBackground"
-                    android:visibility="gone"
+                    android:visibility="visible"
                     android:clickable="true">
                     <!-- 缩略图区顶部分隔线 -->
                     <View
                         android:id="@+id/controller_scroller_top_line"
                         android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="@color/player_scroller_top_line"
+                        android:layout_height="0.6dp"
+                        android:background="@color/strokeLine"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -448,15 +448,15 @@
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/controller_scroller_recyclerView"
                         android:layout_width="match_parent"
-                        android:layout_height="35dp"
+                        android:layout_height="36dp"
                         android:layout_gravity="center"
                         android:orientation="horizontal"
                         android:adjustViewBounds="false"
                         android:clipToPadding="false"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
+                        android:layout_marginTop="2dp"
                         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                         />
                     <!-- 中间竖线 -->
@@ -468,8 +468,17 @@
                         android:background="@color/player_scroller_center_line"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
+                        />
+
+                    <View
+                        android:id="@+id/controller_bottom_padding"
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp"
+                        android:background="@color/MainColorPack_SurfaceBackground"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
                         />
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -477,25 +486,23 @@
                 <LinearLayout
                     android:id="@+id/controller_s_area_seekbar"
                     android:layout_width="match_parent"
-                    android:layout_height="40dp"
+                    android:layout_height="60dp"
+                    android:orientation="vertical"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:visibility="gone">
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="40dp"
                         android:layout_gravity="center"
-                        android:backgroundTint="@color/MainColorPack_ContentCardBackground_Secondary"
                         app:cardCornerRadius="50dp"
-                        app:cardElevation="0dp"
+                        app:cardElevation="3dp"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="20dp"
+                        android:backgroundTint="@color/MainColorPack_ContentCardBackground">
                         <SeekBar
                             android:id="@+id/controller_seekbar"
                             android:layout_width="match_parent"
@@ -509,9 +516,7 @@
                             android:progressBackgroundTint="@color/Text2"
                             android:progressTint="@color/HeadText"
                             android:thumbOffset="7dp"
-                            app:layout_constraintStart_toEndOf="@+id/controller_timer_current"
-                            app:layout_constraintEnd_toStartOf="@+id/controller_timer_total"
-                            app:layout_constraintBottom_toBottomOf="parent"
+                            android:backgroundTint="@android:color/transparent"
                             />
                     </androidx.cardview.widget.CardView>
 
@@ -519,16 +524,6 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- 底部抬高 -->
-            <View
-                android:id="@+id/controller_bottom_padding"
-                android:layout_width="match_parent"
-                android:layout_height="20dp"
-                android:background="@color/Background"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                />
 
         </LinearLayout>
 
