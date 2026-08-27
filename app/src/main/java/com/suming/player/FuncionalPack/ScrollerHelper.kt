@@ -118,21 +118,21 @@ object ScrollerHelper {
     }
 
     //检查解码器状态
-    private fun checkRetrieverState(absolutePath: String){
+    private fun checkRetrieverState(file_path: String){
         if (retriever == null) initRetriever()
         //检查是否需要重设数据源
-        if (absolutePath != retriever_current_source){
-            consoleLog("checkRetrieverState: 数据源改变,需要重设")
-            setDataSource(absolutePath)
+        if (file_path != retriever_current_source){
+            //consoleLog("checkRetrieverState: 数据源改变,需要重设")
+            setDataSource(file_path)
         }else{
-            consoleLog("checkRetrieverState: 数据源未改变,无需重设 absolutePath $absolutePath retriever_current_source $retriever_current_source")
+            //consoleLog("checkRetrieverState: 数据源未改变,无需重设 file_path $file_path retriever_current_source $retriever_current_source")
         }
     }
 
     //截取视频帧
     private val mutex_scroller = Mutex()
     suspend fun captureFrameInVideo( context: Context,
-                                     absolutePath: String,
+                                     file_path: String,
                                      videoDurationUs: Long,
                                      timeUs: Long,
                                      option: Int,
@@ -141,7 +141,7 @@ object ScrollerHelper {
         return mutex_scroller.withLock {
             try {
                 //检查解码器状态
-                checkRetrieverState(absolutePath)
+                checkRetrieverState(file_path)
 
                 //截取帧
                 var bitmap = retriever?.getFrameAtTime(timeUs, option)
@@ -263,7 +263,7 @@ object ScrollerHelper {
 
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
+    private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
             Log.d("SuMing", "ScrollerHelper: $msg")
         }

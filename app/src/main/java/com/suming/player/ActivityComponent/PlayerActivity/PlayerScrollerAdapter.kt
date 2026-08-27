@@ -32,7 +32,7 @@ import kotlin.random.Random
 class PlayerScrollerAdapter(
     private val context: Context,
     private val mediaDuration: Long,
-    private val absolutePath: String,
+    private val file_path: String,
 ) : RecyclerView.Adapter<PlayerScrollerAdapter.scrollerViewHolder>() {
 
     //协程
@@ -128,7 +128,7 @@ class PlayerScrollerAdapter(
                 //开始截取图片
                 val bitmap = ScrollerHelper.captureFrameInVideo(
                     context = context,
-                    absolutePath = absolutePath,
+                    file_path = file_path,
                     videoDurationUs = mediaDuration * 1000,
                     timeUs = time * 1000,
                     option = MediaMetadataRetriever.OPTION_CLOSEST_SYNC,

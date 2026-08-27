@@ -71,6 +71,7 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
+import com.suming.player.FuncionalPack.TestHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -241,9 +242,16 @@ class MainActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@MainActivity)
                 ListRecyclerView_Video.stopScroll()
                 ListRecyclerView_Music.stopScroll()
-                //
-                val intent = Intent(this@MainActivity, GuidanceActivity::class.java)
-                startActivity(intent)
+
+                if (TestHelper.isTestMode){
+                    lifecycleScope.launch {
+                        PlayerSingleton.onPlayEngineIDLE()
+                    }
+                }else{
+                    //
+                    val intent = Intent(this@MainActivity, GuidanceActivity::class.java)
+                    startActivity(intent)
+                }
             }
             /*
             ButtonGuidance.visibility = View.VISIBLE
@@ -595,8 +603,8 @@ class MainActivity: AppCompatActivity() {
         //注册点击事件
         main_video_list_adapter = RecyclerAdapterVideo(
             context = this,
-            onItemClick = { uri ->
-                onVideoItemClick(uri)
+            onItemClick = { uri, file_path ->
+                onVideoItemClick(uri, file_path)
             },
             onClick_Duration = { item ->
                 notice("视频时长:${FormatTime_withChar(item.media_durationMs)}", 2000)
@@ -619,7 +627,7 @@ class MainActivity: AppCompatActivity() {
                         R.id.MenuAction_use_whole_play_page -> {
                             ToolVibrate().vibrate(this@MainActivity)
 
-                            startVideoPlayer(mediaItem.content_uriString.toUri())
+                            startVideoPlayer(mediaItem.content_uriString.toUri(), mediaItem.file_path)
 
                             true
                         }
@@ -826,11 +834,11 @@ class MainActivity: AppCompatActivity() {
             ListRecyclerView_Video.stopScroll()
             ListRecyclerView_Music.stopScroll()
             //获取到链接时启动播放页
-            val uri = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
-            if (uri != Uri.EMPTY){
-                val uri = uri
+            val URI = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
+            val file_path = PlayerInfoCenter.GET_Media_FilePath()
+            if (URI != Uri.EMPTY){
                 //唤起播放页
-                startPlayerFromMiniView(uri)
+                startPlayerFromMiniView(URI, file_path)
 
             }else{
                 //检查缓存链接
@@ -840,7 +848,7 @@ class MainActivity: AppCompatActivity() {
 
                     //唤起播放页
                     if (cacheUri.isNotEmpty()){
-                        startPlayerFromMiniView(cacheUri.toUri())
+                        startPlayerFromMiniView(cacheUri.toUri(), file_path)
                     }else{
 
                         consoleLog("进入非预期分支,需检查代码")
@@ -1433,7 +1441,8 @@ class MainActivity: AppCompatActivity() {
     }
 
     //点击列表视频项
-    private fun onVideoItemClick(uri: Uri){
+    private fun onVideoItemClick(uri: Uri, file_path: String){
+        //consoleLog("onVideoItemClick: uri = $uri, file_path = $file_path")
         //防止快速发起
         if (System.currentTimeMillis() - lock_clickMillisLock_second < 800) return
         lock_clickMillisLock_second = System.currentTimeMillis()
@@ -1450,7 +1459,7 @@ class MainActivity: AppCompatActivity() {
             //弹出完整播放页面
             SettingsRequestCenter.action_use_whole_play_page -> {
 
-                startVideoPlayer(uri)
+                startVideoPlayer(uri, file_path)
             }
         }
 
@@ -1459,7 +1468,7 @@ class MainActivity: AppCompatActivity() {
 
 
     //启动播放器
-    private fun startVideoPlayer(uri: Uri){
+    private fun startVideoPlayer(uri: Uri, file_path: String){
         //防止快速发起
         if (System.currentTimeMillis() - lock_clickMillisLock < 800) return
         lock_clickMillisLock = System.currentTimeMillis()
@@ -1473,6 +1482,7 @@ class MainActivity: AppCompatActivity() {
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
                     .putExtra(IntentRepo.URI, uri)
+                    .putExtra(IntentRepo.FILE_PATH, file_path)
                     .putExtra(IntentRepo.SOURCE, 3)
 
                 //是否使用进入动画
@@ -1541,12 +1551,12 @@ class MainActivity: AppCompatActivity() {
 
          */
     }
-    private fun startPlayerFromMiniView(uri: Uri){
+    private fun startPlayerFromMiniView(uri: Uri, file_path: String){
         val MediaInfo_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
 
         when (MediaInfo_MediaType) {
             MediaType.Video -> {
-                startVideoPlayer(uri)
+                startVideoPlayer(uri, file_path)
             }
             MediaType.Audio -> {
                 showCustomToast("暂不支持打开音乐播放页面",3)

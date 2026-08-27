@@ -116,13 +116,6 @@ object PlayerSingleton {
         }
 
 
-        /*
-        stateLock_isPlayerInitialized = true
-        initializationCallbacks.forEach { callback -> callback.invoke() }
-        initializationCallbacks.clear()
-
-         */
-
         //添加播放器状态监听
         addPlayerStateListener()
 
@@ -182,7 +175,7 @@ object PlayerSingleton {
                 //播放器进入空闲状态
                 Player.STATE_IDLE -> {
                     state_player_idle = true
-                    //留空,保证后续监听器能收到此状态,然后由AppCompat持有者反向通知 onPlayEngineIDLE()
+
                 }
             }
         }
@@ -233,18 +226,15 @@ object PlayerSingleton {
     }
 
 
-    private var state_player_idle = false
+    var state_player_idle = false
     suspend fun onPlayEngineIDLE(): Boolean{
+        //关闭播放器
         withContext(Dispatchers.Main) {
             //关闭本地监听器
             removePlayerStateListener()
             //销毁播放器(包含置空_player实例)
             stopPlayEngine()
         }
-
-
-        delay(1000)
-
         //重启播放器
         withContext(Dispatchers.Main) {
             getInitPlayer()
@@ -252,11 +242,13 @@ object PlayerSingleton {
 
         //检查是否成功重启播放器
         if (_player == null) {
+            state_player_idle = true
             return false
         }else{
             //添加播放器回调监听
             addPlayerStateListener()
 
+            state_player_idle = false
 
             return true
         }
@@ -502,7 +494,11 @@ object PlayerSingleton {
 
         }
 
-        return cover_img_uri
+        return if(cover_img_uri != Uri.EMPTY){
+            cover_img_uri
+        }else{
+            Uri.EMPTY
+        }
     }
     //启动服务和媒体会话
     private fun startSessionService(context: Context){

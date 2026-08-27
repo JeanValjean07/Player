@@ -101,6 +101,7 @@ import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.FuncionalPack.ScrollerHelper
+import com.suming.player.FuncionalPack.TestHelper
 import com.suming.player.IndepService.FloatingWindowService
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
@@ -223,8 +224,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val playerViewModel: PlayerViewModel by viewModels()
     //空字段
     private val Undefined = ""
-    //测试
-    private var testMode = false
     //点击过滤
     private var clickMillis_MoreOptionPage = 0L
 
@@ -310,33 +309,34 @@ class PlayerActivityNeo: AppCompatActivity(){
             when (newIntent.action) {
                 //系统面板：分享
                 Intent.ACTION_SEND -> {
-                    val uri = IntentCompat.getParcelableExtra(newIntent, Intent.EXTRA_STREAM, Uri::class.java) ?: return
+                    //获取原始链接
+                    val (URI, file_path) = detectOriginalInfo_fromIntent(newIntent)
                     val currentUri = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
                     //判断是否是同一个视频
-                    if (uri == currentUri){
+                    if (URI == currentUri){
                         continuePlay()
                     }else{
                         //设置新的媒体项
-                        setNewMediaItem(uri)
+                        setNewMediaItem(URI,file_path)
                     }
                 }
                 //系统面板：选择其他应用打开
                 Intent.ACTION_VIEW -> {
-                    val uri = newIntent.data ?: return
+                    val (URI, file_path) = detectOriginalInfo_fromIntent(newIntent)
                     val currentUri = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                    consoleLog("currentUri: $currentUri, uri: $uri")
+                    consoleLog("currentUri: $currentUri, URI: $URI")
                     //判断是否是同一个视频
-                    if (uri == currentUri){
+                    if (URI == currentUri){
                         continuePlay()
                     }else{
                         //设置新的媒体项
-                        setNewMediaItem(uri)
+                        setNewMediaItem(URI,file_path)
                     }
                 }
                 //常规重复调用(来自EntranceActivity)
                 IntentRepo.ACTION_NEW_INTENT -> {
                     consoleLog("onNewIntent ACTION_NEW_INTENT")
-                    val URI = IntentCompat.getParcelableExtra(newIntent, IntentRepo.URI, Uri::class.java) ?: return
+                    val (URI, file_path) = detectOriginalInfo_fromIntent(newIntent)
                     val ongoing_URI = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
                     consoleLog("onNewIntent -新的数据: URI:$URI, ongoing_URI:$ongoing_URI")
                     //判断是否是同一个视频
@@ -345,7 +345,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         continuePlay()
                     }else{
                         //设置新的媒体项
-                        setNewMediaItem(URI)
+                        setNewMediaItem(URI,file_path)
                     }
                 }
             }
@@ -451,8 +451,8 @@ class PlayerActivityNeo: AppCompatActivity(){
             //更多选项
             val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
-                if (testMode){
-
+                if (TestHelper.isTestMode){
+                    onPlayEngineIdle()
                 //setCustomParams()
 
                 }else{
@@ -1033,12 +1033,12 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun mainBusiness(savedInstanceState: Bundle?){
 
         //获取原始链接
-        val (URI, _) = detectOriginalInfo_fromIntent(intent)
+        val (URI, file_path) = detectOriginalInfo_fromIntent(intent)
         //用于播放的链接 URI_SP = URI String for Play
         val URI_SP = URI.toString()
         //用于其他事务的标准链接(尝试获取) URI_STD = URI Standard
         val URI_STD = MediaUriManager.GET_STD_MediaStoreURI_from_Any_URI(URI.toString(), context)
-        //consoleLog("URI_SP: $URI_SP, URI_STD: $URI_STD")
+        consoleLog("mainBusiness  URI_SP: $URI_SP, URI_STD: $URI_STD, file_path: $file_path")
 
 
         //获取正在播放信息
@@ -1085,7 +1085,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         //consoleLog("传入链接,但与当前播放项不同,播放新项")
 
                         //发起播放新项
-                        startPlayNewMedia(URI_SP.toUri())
+                        startPlayNewMedia(URI_SP.toUri(),file_path)
 
                     }else{
                         //传入链接,但与当前播放项相同,直接绑定,但是要先判断是不是视频
@@ -1118,8 +1118,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun detectOriginalInfo_fromIntent(intent: Intent): Pair<Uri, String> {
         //获取原始链接中的信息
         val Intent_URI = IntentCompat.getParcelableExtra(intent, IntentRepo.URI,  Uri::class.java) ?: Uri.EMPTY
-        val Intent_FILE_PATH = IntentCompat.getParcelableExtra(intent, IntentRepo.FILE_PATH, String::class.java) ?: Undefined
-
+        val Intent_FILE_PATH = intent.getStringExtra(IntentRepo.FILE_PATH) ?: Undefined
+        //consoleLog("detectOriginalInfo_fromIntent: Intent_URI = $Intent_URI, Intent_FILE_PATH = $Intent_FILE_PATH")
 
         return Pair(Intent_URI, Intent_FILE_PATH)
     }
@@ -1154,7 +1154,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 if (MediaInfoRetriever.isUriStringValid(this, userInput)){
                     isUriValid = true
                     dialog.dismiss()
-                    startPlayNewMedia(userInput.toUri())
+                    startPlayNewMedia(userInput.toUri(),file_path = "")
                 }else{
                     showCustomToast("链接无效", 3)
                 }
@@ -1179,9 +1179,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //开启播放新媒体项
-    private fun startPlayNewMedia(URI_UP: Uri){
+    private fun startPlayNewMedia(URI_UP: Uri, file_path: String){
         //设置新媒体项
-        setNewMediaItem(URI_UP)
+        setNewMediaItem(URI_UP,file_path)
 
     }
     //连接正在播放的媒体
@@ -1265,11 +1265,11 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //连接ExoPlayer(可发起启动)
     private fun connectToExoPlayer(){
+
         //确保播放器已启动并获得引用
         player = PlayerSingleton.getInitPlayer()
         //添加播放器事件监听
         startExoPlayerListener()
-
     }
     private fun startExoPlayerListener(){
         player?.removeListener(PlayerStateListener)
@@ -1282,9 +1282,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         state_PlayerListenerAdded = false
     }
     //设置新媒体项
-    private fun setNewMediaItem(URI_UP: Uri): Boolean{
+    private fun setNewMediaItem(URI_UP: Uri,file_path_e: String): Boolean{
         //检查文件是否存在(多级获取file_path,最终仍获取不到就失败)
-        var file_path = PlayerInfoCenter.CURRENT_MediaItemPackage?.file_path ?: Undefined
+        var file_path = file_path_e
         if (file_path == Undefined){
             file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC1(context, URI_UP)
         }
@@ -1428,7 +1428,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //播放器进入空闲状态
     private fun onPlayEngineIdle(){
-        //consoleLog("onPlayEngineIDLE")
+        consoleLog("onPlayEngineIDLE")
 
         //清除播放项
         onMediaItemCleared()
@@ -1451,12 +1451,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                     connectToExoPlayer()
                 }
 
-                showErrorCover("播放器已恢复，可在播放列表面板中启动播放")
+                showErrorCover("当前未在播放，可在播放列表面板中启动播放")
 
             }else{
                 consoleLog("onPlayEngineIDLE: 失败-连接播放器")
 
-                showErrorCover("播放器恢复失败，请手动退出后重试")
+                showErrorCover("播放器错误")
 
             }
         }
@@ -2838,7 +2838,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             val useSeekBar = SettingsRequestCenter.GET_PRF_PlayPageType(context) == S_Area_Helper.S_AreaType_SEEKBAR
             if (useSeekBar){
                 //consoleLog("updateScrollerAdapter 使用 SEEKBAR")
-                show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR)
+                withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) }
                 return@launch
             }
             //consoleLog("updateScrollerAdapter 使用 SCROLLER")
@@ -2855,14 +2855,14 @@ class PlayerActivityNeo: AppCompatActivity(){
             //先从信息中心拿到各种必要信息
             val uriNumOnly = PlayerInfoCenter.GET_Media_NUM_ID()
             val mediaDuration = PlayerInfoCenter.GET_Media_Duration()
-            val absolutePath = PlayerInfoCenter.GET_Media_FilePath()
-            if (uriNumOnly <= 0L || mediaDuration == 0L || absolutePath <= Undefined ){
+            val file_path = PlayerInfoCenter.GET_Media_FilePath()
+            if (uriNumOnly <= 0L || mediaDuration == 0L || file_path == Undefined ){
                 consoleLog("updateScrollerAdapter 进度条：获取信息无效，无法显示进度条")
                 withContext(Dispatchers.Main){ withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) } }
                 return@launch
             }
             //委托给scrollerHelper处理
-            val success = ScrollerHelper.prepareForNewMedia(uriNumOnly, mediaDuration, absolutePath)
+            val success = ScrollerHelper.prepareForNewMedia(uriNumOnly, mediaDuration, file_path)
             if (!success) {
                 //consoleLog("updateScrollerAdapter 进度条：信息有效，但解码失败，无法显示进度条")
                 withContext(Dispatchers.Main){ withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) } }
@@ -2877,7 +2877,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             scroller.itemAnimator = null
             scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
             scroller.layoutParams.width = 0
-            scrollerAdapter = PlayerScrollerAdapter(context, mediaDuration,absolutePath)
+            scrollerAdapter = PlayerScrollerAdapter(context, mediaDuration,file_path)
             //应用(已确定参数上支持显示,但还没确定Adapter能不能解码)
             withContext(Dispatchers.Main) {
 

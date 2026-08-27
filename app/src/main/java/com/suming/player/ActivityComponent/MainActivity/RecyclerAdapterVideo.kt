@@ -35,7 +35,7 @@ import kotlinx.coroutines.withContext
 @RequiresApi(Build.VERSION_CODES.Q)
 class RecyclerAdapterVideo(
     private val context: Context,
-    private val onItemClick: (Uri) -> Unit,
+    private val onItemClick: (Uri, String) -> Unit,
     private val onClick_Duration: (MediaItemFullForVideo) -> Unit,
     private val onClick_tvFormat: (MediaItemFullForVideo) -> Unit,
     private val onClick_Options: (MediaItemFullForVideo, ViewHolder) -> Unit,
@@ -146,7 +146,8 @@ class RecyclerAdapterVideo(
 
     //点击事件
     private fun onClickFunc_touchLayer(item: MediaItemFullForVideo){
-        onItemClick(item.content_uriString.toUri())
+        //consoleLog("onClickFunc_touchLayer: item.file_path = ${item.file_path}")
+        onItemClick(item.content_uriString.toUri(), item.file_path)
     }
     private fun onClickFunc_tvDuration(item: MediaItemFullForVideo){
         onClick_Duration(item)
@@ -198,7 +199,7 @@ class RecyclerAdapterVideo(
 
             //检查是否取图成功
             if (Bitmap == null){
-                consoleLog("截取视频封面失败: file_name=${item.file_name}")
+                //consoleLog("截取视频封面失败: file_name=${item.file_name}")
                 return@launch
             }else{
                 //consoleLog("截取视频封面成功: file_name=${item.file_name}")

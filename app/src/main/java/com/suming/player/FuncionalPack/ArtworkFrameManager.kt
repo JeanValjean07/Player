@@ -105,7 +105,7 @@ object ArtworkFrameManager {
     }
 
     //获取Artwork图片uri
-    fun GET_ArtworkFrame_Uri(context: Context, type: String, artwork_media_api_id: Long): Uri? {
+    fun GET_ArtworkFrame_Uri(context: Context, type: String, artwork_media_api_id: Long): Uri {
         when(type){
             MediaType.Video -> {
                 //拿到保存路径
@@ -118,10 +118,10 @@ object ArtworkFrameManager {
                     return try {
                         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", artwork_Frame_File)
                     }catch (e: Exception){
-                        null
+                        Uri.EMPTY
                     }
                 }else{
-                    return null
+                    return Uri.EMPTY
                 }
             }
             MediaType.Audio -> {
@@ -135,14 +135,14 @@ object ArtworkFrameManager {
                     return try {
                         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", artwork_Frame_File)
                     }catch (e: Exception){
-                        null
+                        Uri.EMPTY
                     }
                 }else{
-                    return null
+                    return Uri.EMPTY
                 }
             }
             else -> {
-                return null
+                return Uri.EMPTY
             }
         }
     }
