@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.util.Log
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.get
@@ -13,6 +14,7 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
+import java.io.FileInputStream
 import kotlin.random.Random
 
 object ScrollerHelper {
@@ -43,7 +45,7 @@ object ScrollerHelper {
 
 
     //完整准备进度条参数,返回值是否成功
-    fun prepareForNewMedia(uriNumOnly: Long, mediaDuration: Long, absolutePath: String): Boolean{
+    fun prepareForNewMedia(uriNumOnly: Long, mediaDuration: Long): Boolean{
         if (mediaDuration <= 0) return false
         if (uriNumOnly == 0L) return false
 
@@ -58,11 +60,6 @@ object ScrollerHelper {
         if (allFrame_totalFrameNumber < 1) allFrame_totalFrameNumber = 1
         if (singleFrame_durationMs < 1L) singleFrame_durationMs = 1L
         //consoleLog( "进度条参数计算 图片总数：${allFrame_totalFrameNumber},单张图片对应时长(毫秒)：${singleFrame_durationMs}" )
-        //处理绝对路径字段
-        val absolutePath = absolutePath.substringBefore("?")
-        //检查字段合理性
-        if (absolutePath.isEmpty()) return false
-
 
         //设置视频唯一标识
         setMediaItemMark(uriNumOnly)
@@ -96,53 +93,71 @@ object ScrollerHelper {
 
     //scroller retriever
     private var retriever: MediaMetadataRetriever? = null
-    private var retriever_current_source = ""
+
+
     //初始化解码器
-    fun initRetriever(){
+    fun init_retriever(){
         if (retriever == null) {
             retriever = MediaMetadataRetriever()
-            retriever_current_source = ""
         }
     }
-    //设置数据源
-    fun setDataSource(absolutePath: String){
-        if (absolutePath.isEmpty() || retriever_current_source == absolutePath) return
+    //释放解码器
+    fun release_retriever(){
+        retriever?.release()
+        retriever = null
+    }
+    //重启解码器
+    fun restart_retriever(){
+        release_retriever()
+        init_retriever()
+    }
+
+    //设置解码器
+    fun setup_retriever(file_path: String): Boolean{
+        //重启解码器
+        restart_retriever()
+
+        //设置数据源
         try {
-            retriever?.setDataSource(absolutePath)
-            retriever_current_source = absolutePath
-        } catch (e: Exception) {
-            retriever_current_source = ""
-            retriever = null
-            consoleLog("setDataSource:设置数据源失败了 error: ${e.message}")
+            retriever?.setDataSource(file_path)
+
+            return true
+        }catch (e: Exception){
+            release_retriever()
+
+            consoleLog("setup_retriever:e:$e,message:${e.message}")
+
+            return false
+        }
+    }
+    fun setup_retriever(context: Context, URI: Uri): Boolean{
+        //重启解码器
+        restart_retriever()
+
+        //设置数据源
+        try {
+            retriever?.setDataSource(context, URI)
+
+            return true
+        }catch (e: Exception){
+            release_retriever()
+
+            consoleLog("setup_retriever:e:$e,message:${e.message}")
+
+            return false
         }
     }
 
-    //检查解码器状态
-    private fun checkRetrieverState(file_path: String){
-        if (retriever == null) initRetriever()
-        //检查是否需要重设数据源
-        if (file_path != retriever_current_source){
-            //consoleLog("checkRetrieverState: 数据源改变,需要重设")
-            setDataSource(file_path)
-        }else{
-            //consoleLog("checkRetrieverState: 数据源未改变,无需重设 file_path $file_path retriever_current_source $retriever_current_source")
-        }
-    }
 
     //截取视频帧
     private val mutex_scroller = Mutex()
-    suspend fun captureFrameInVideo( context: Context,
-                                     file_path: String,
-                                     videoDurationUs: Long,
+    suspend fun captureFrameInVideo( videoDurationUs: Long,
                                      timeUs: Long,
                                      option: Int,
                                      needCheckDark: Boolean = false,
                                      needCompress: Boolean = true ): Bitmap? {
         return mutex_scroller.withLock {
             try {
-                //检查解码器状态
-                checkRetrieverState(file_path)
-
                 //截取帧
                 var bitmap = retriever?.getFrameAtTime(timeUs, option)
 
@@ -263,7 +278,7 @@ object ScrollerHelper {
 
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "ScrollerHelper: $msg")
         }

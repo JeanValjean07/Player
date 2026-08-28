@@ -26,8 +26,8 @@ object ActivityResultConnector {
     //解码器 retriever
     const val retriever_type_not_support = "retriever_type_not_support"
     const val retriever_complete = "retriever_complete"
-    const val retriever_error = ""
-    const val retriever_type_not_support3 = ""
+    const val retriever_error = "retriever_error"
+    const val retriever_get_type_failed = "retriever_get_type_failed"
 
 
 

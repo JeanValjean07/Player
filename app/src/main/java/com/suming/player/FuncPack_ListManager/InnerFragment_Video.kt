@@ -236,7 +236,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //播放项变更
     private fun onMediaItemUpdate(){
         //获取当前播放项
-        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.URI_STD
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.URI_S_FP
         consoleLog("onMediaItemUpdate()当前播放项: $currentItemUri")
 
         //使用payload更新当前播放项指示器
@@ -246,7 +246,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //播放状态变更
     private fun onMediaStateUpdate(){
         //获取当前播放项
-        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.URI_STD
+        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.URI_S_FP
         consoleLog("onMediaStateUpdate()当前播放项: $currentItemUri")
 
         //使用payload更新当前播放项指示器
@@ -334,7 +334,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             PlayerSingleton.getInitPlayer()
             PlayerSingleton.addPlayerStateListener()
             //设置播放项
-            PlayerSingleton.setMediaItem(uri = item.content_uriString.toUri(),playWhenReady = true)
+            PlayerSingleton.setMediaItem(URI_UP = item.content_uriString.toUri(),playWhenReady = true)
         }
 
     }

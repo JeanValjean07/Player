@@ -22,7 +22,9 @@ import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import com.suming.player.ActivityComponent.PlayerActivity.ToolPlayerWrapper
 import com.suming.player.FuncionalPack.BroadcastActions
+import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.PlayerListener
+import com.suming.player.FuncionalPack.SOURCE_CODE
 import com.suming.player.MusicPlayer
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +34,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 @UnstableApi
-@Suppress("unused")
+@Suppress("/unused")
 class PlayerService: MediaSessionService() {
     companion object {
         const val NOTIF_ID = 1
@@ -363,10 +365,11 @@ class PlayerService: MediaSessionService() {
         val intent = Intent(this, EntranceActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
-            .putExtra("IntentSource", "FromPendingIntent")
+            .putExtra(IntentRepo.SOURCE, SOURCE_CODE.SOURCE_Pending)
 
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
+
     private fun createPendingIntentVideoNeo(): PendingIntent {
         val intent = Intent(this, PlayerActivityNeo::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -375,7 +378,6 @@ class PlayerService: MediaSessionService() {
             .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
-
     private fun createPendingIntentMusic(): PendingIntent {
         val intent = Intent(this, MusicPlayer::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP

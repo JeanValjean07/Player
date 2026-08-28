@@ -21,6 +21,8 @@ class VideoSysApiQuerier(
     private val contentResolver: ContentResolver,
 ) {
 
+    //MediaInfoRetriever
+    private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
     //设置项
     private var PREFS_EnableFileExistCheck: Boolean = false
 

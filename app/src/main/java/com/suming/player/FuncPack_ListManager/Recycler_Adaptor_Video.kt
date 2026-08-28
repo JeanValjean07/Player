@@ -115,7 +115,7 @@ class Recycler_Adaptor_Video(
         val item = getItem(position) ?: return
 
         //检查是不是当前媒体
-        if (item.content_uriString == PlayerInfoCenter.GET_Media_URI_STD()){
+        if (item.content_uriString == PlayerInfoCenter.GET_Media_URI_S_FP()){
             holder.setItemPlayingCard(true)
             currentItemUri = item.content_uriString
             //检查并设置播放状态
@@ -152,7 +152,7 @@ class Recycler_Adaptor_Video(
             when (payloads.firstOrNull()) {
 
                 ListManagerHelper.payload_event_item_update -> {
-                    if (item?.content_uriString == PlayerInfoCenter.GET_Media_URI_STD()){
+                    if (item?.content_uriString == PlayerInfoCenter.GET_Media_URI_S_FP()){
                         holder.setItemPlayingCard(true)
                     }else{
                         holder.setItemPlayingCard(false)

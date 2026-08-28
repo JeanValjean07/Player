@@ -67,12 +67,12 @@ object PlayerInfoCenter {
         CURRENT_MediaItemPackage?.video_actualFPS = fps
     }
     //写入cache包
-    fun SET_Media_CachePack(SPECIFIC_ID:String,mediaType:String,NUM_ID:Long,uriString:String,FileName:String,MediaArtist:String){
+    fun SET_Media_CachePack(SPECIFIC_ID:String,mediaType:String,NUM_ID:Long,URI_S_FP:String,FileName:String,MediaArtist:String){
         val newMediaPack = MediaItemForPlay(
             media_api_SPECIFIC_ID = SPECIFIC_ID,
             media_SPECIFIC_MediaType = mediaType,
             media_api_NUM_ID = NUM_ID,
-            URI_STD = uriString,
+            URI_S_FP = URI_S_FP,
             file_name = FileName,
             media_artist = MediaArtist,
 
@@ -126,18 +126,13 @@ object PlayerInfoCenter {
 
         return Media_NUM_ID
     }
-    //获取当前媒体的标准链接
-    fun GET_Media_URI_SP(): String {
-        val MediaInfo_MediaUriStandard = CURRENT_MediaItemPackage?.URI_SP ?: Undefined
+    //获取当前媒体的URI_S_FP
+    fun GET_Media_URI_S_FP(): String {
+        val MediaInfo_MediaUriStandard = CURRENT_MediaItemPackage?.URI_S_FP ?: Undefined
 
         return MediaInfo_MediaUriStandard
     }
-    //获取当前媒体的uriString
-    fun GET_Media_URI_STD(): String {
-        val MediaInfo_MediaUriString = CURRENT_MediaItemPackage?.URI_STD ?: Undefined
 
-        return MediaInfo_MediaUriString
-    }
     //获取媒体是视频还是音乐
     fun GET_Media_SPECIFIC_TYPE(): String {
         //尝试获取类型

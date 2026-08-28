@@ -226,6 +226,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val Undefined = ""
     //点击过滤
     private var clickMillis_MoreOptionPage = 0L
+    //MediaInfoRetriever
+    private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
 
 
 
@@ -949,7 +951,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     //使用系统分享面板
                     FragmentConnector.fragment_more_button_sys_share_video -> {
-                        val uriString = PlayerInfoCenter.GET_Media_URI_SP()
+                        val uriString = PlayerInfoCenter.GET_Media_URI_S_FP()
                         shareVideo(this@PlayerActivityNeo, uriString.toUri())
                     }
                     //更新视频封面
@@ -1038,7 +1040,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         val URI_SP = URI.toString()
         //用于其他事务的标准链接(尝试获取) URI_STD = URI Standard
         val URI_STD = MediaUriManager.GET_STD_MediaStoreURI_from_Any_URI(URI.toString(), context)
-        consoleLog("mainBusiness  URI_SP: $URI_SP, URI_STD: $URI_STD, file_path: $file_path")
+        //consoleLog("mainBusiness  URI_SP: $URI_SP, URI_STD: $URI_STD, file_path: $file_path")
 
 
         //获取正在播放信息
@@ -2855,14 +2857,13 @@ class PlayerActivityNeo: AppCompatActivity(){
             //先从信息中心拿到各种必要信息
             val uriNumOnly = PlayerInfoCenter.GET_Media_NUM_ID()
             val mediaDuration = PlayerInfoCenter.GET_Media_Duration()
-            val file_path = PlayerInfoCenter.GET_Media_FilePath()
-            if (uriNumOnly <= 0L || mediaDuration == 0L || file_path == Undefined ){
+            if (uriNumOnly <= 0L || mediaDuration == 0L){
                 consoleLog("updateScrollerAdapter 进度条：获取信息无效，无法显示进度条")
                 withContext(Dispatchers.Main){ withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) } }
                 return@launch
             }
             //委托给scrollerHelper处理
-            val success = ScrollerHelper.prepareForNewMedia(uriNumOnly, mediaDuration, file_path)
+            val success = ScrollerHelper.prepareForNewMedia(uriNumOnly, mediaDuration)
             if (!success) {
                 //consoleLog("updateScrollerAdapter 进度条：信息有效，但解码失败，无法显示进度条")
                 withContext(Dispatchers.Main){ withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) } }
@@ -2870,16 +2871,25 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
             //已确认进度条可显示
             //consoleLog("updateScrollerAdapter 进度条：已确认参数上支持显示，开始初始化Adapter")
+            //检查能否解码
+            val URI = PlayerInfoCenter.GET_Media_URI_S_FP().toUri()
+            val success_r = ScrollerHelper.setup_retriever(context, URI)
+            if (!success_r){
+                consoleLog("updateScrollerAdapter 进度条：解码失败，无法显示进度条")
+                withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) }
+                return@launch
+            }
 
-            //初始化scroller组件
-            scrollerLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            scroller.layoutManager = scrollerLayoutManager
-            scroller.itemAnimator = null
-            scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-            scroller.layoutParams.width = 0
-            scrollerAdapter = PlayerScrollerAdapter(context, mediaDuration,file_path)
             //应用(已确定参数上支持显示,但还没确定Adapter能不能解码)
             withContext(Dispatchers.Main) {
+
+                //初始化scroller组件
+                scrollerLayoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+                scroller.layoutManager = scrollerLayoutManager
+                scroller.itemAnimator = null
+                scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+                scroller.layoutParams.width = 0
+                scrollerAdapter = PlayerScrollerAdapter(context, mediaDuration)
 
                 //显示进度条区域
                 show_s_area_type(S_Area_Helper.S_AreaType_SCROLLER)
@@ -3118,12 +3128,12 @@ class PlayerActivityNeo: AppCompatActivity(){
             seekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     if (fromUser){
-                        consoleLog("onProgressChanged $progress")
+                        //consoleLog("onProgressChanged $progress")
                         //读取进度条当前位置比例
                         val duration = player?.duration ?: -1L
                         if (duration <= 0) return
                         val seekToPosition = (progress / 1000f * duration).toLong()
-                        consoleLog("duration = $duration, seekToPosition = $seekToPosition")
+                        //consoleLog("duration = $duration, seekToPosition = $seekToPosition")
 
                         Mark_playerReadyFrom = Mark_playerReadyFrom_MidSectionSeek
                         player?.seekTo(seekToPosition)
@@ -3131,11 +3141,11 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
                 //触摸立即触发
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                    consoleLog("onStartTrackingTouch")
+                    //consoleLog("onStartTrackingTouch")
                     stop_S_Area_PassiveControl(52486)
                 }
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                    consoleLog("onStopTrackingTouch")
+                    //consoleLog("onStopTrackingTouch")
                     start_S_Area_PassiveControl(52486)
                 }
             })
@@ -3956,12 +3966,15 @@ class PlayerActivityNeo: AppCompatActivity(){
                 val scrollerPos_Offset = scroller.computeHorizontalScrollOffset()
                 val scrollerPos_Percent = scrollerPos_Offset.toFloat() / totalScrollerLength
                 val targetSeekToMs = (scrollerPos_Percent * duration).toLong()
+                /*
                 consoleLog(
                     "totalScrollerLength:$totalScrollerLength," +
                             "scrollerPos_Offset:$scrollerPos_Offset, " +
                             "scrollerPos_Percent:$scrollerPos_Percent, " +
                             "targetSeekToMs = $targetSeekToMs = $targetSeekToMs"
                 )
+
+                 */
 
                 //仅在空闲时发起下一次寻帧
                 if (isSeekReady){

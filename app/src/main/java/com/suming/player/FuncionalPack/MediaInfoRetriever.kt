@@ -12,9 +12,10 @@ import androidx.core.net.toUri
 import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
 import java.io.File
 import java.net.URLDecoder
+import kotlin.math.absoluteValue
 
-@Suppress() //"unused",
-object MediaInfoRetriever {
+@Suppress("/unused")
+class MediaInfoRetriever {
 
     //日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {
@@ -22,28 +23,61 @@ object MediaInfoRetriever {
             Log.d("SuMing", "MediaInfoRetriever: $msg")
         }
     }
-
-    const val Undefined = ""
-
-    //解码器
-    private var retriever: MediaMetadataRetriever? = null
+    //空字段
+    private val Undefined = ""
 
 
 
 
-    //解码 URI (自动检查 URI 类型,返回值在ActivityResultConnector查阅)
-    fun retrieveMediaInfo(context: Context,URI_SP:String): Triple<String, MediaItemForPlay, String> {
-        //解码器初始化
-        if(retriever == null) retriever = MediaMetadataRetriever()
+    //解码 URI (自动检查 URI 类型,返回值在ActivityResultConnector查阅)(传入file_path时就不再获取)
+    //传入(URI_S_FP:打算用于播放的链接,仅写入用作后期对照)
+    fun retrieveMediaInfo(context: Context, URI_S_FR:String, file_path:String, UriTypeMode_e:String, URI_S_FP:String): Triple<String, MediaItemForPlay, String> {
+        var retriever: MediaMetadataRetriever? = null
+        //初始化retriever
+        fun init_retriever(){
+            retriever = MediaMetadataRetriever()
+        }
+        //释放retriever
+        fun release_retriever(){
+            retriever?.release()
+            retriever = null
+        }
 
-        //缓存URI
-        val URI = URI_SP.toUri()
+
+
+        //缓存URI_S_FR
+        val URI_U_FR = URI_S_FR.toUri()
+
+        //启动retriever
+        init_retriever()
 
         //尝试设置数据源
         try{
-            retriever?.setDataSource(context,URI)
+            //检查URI_S是否实际上是一个文件路径
+            val is_file_path = MediaUriManager.spy_is_string_actually_a_file_path(URI_S_FR)
+            if (is_file_path){
+                val file_path = URI_S_FR
+                val URI_File = Uri.fromFile(File(file_path))
+
+                val pfd = context.contentResolver.openFileDescriptor(URI_File, "r")
+                if (pfd == null) {
+                    consoleLog("无法获取文件描述符")
+                    return Triple(ActivityResultConnector.retriever_error ,MediaItemForPlay(),Undefined)
+                }else{
+                    consoleLog("获取文件描述符成功")
+                }
+                //设置路径为数据源
+                pfd.use { fd -> retriever?.setDataSource(fd.fileDescriptor) }
+
+            }else{
+                //设置URI为数据源
+                retriever?.setDataSource(context,URI_U_FR)
+            }
+
         }catch(e: Exception){
-            consoleLog("retrieveMediaInfo -使用 URI 解码 设置源 时 发生错误: $e + ${e.message}")
+            consoleLog("retrieveMediaInfo -发生错误:e:$e,message:${e.message}")
+
+            return Triple(ActivityResultConnector.retriever_error ,MediaItemForPlay(),Undefined)
         }
 
         //尝试解码
@@ -57,28 +91,39 @@ object MediaInfoRetriever {
                 MediaInfo_MediaType_Original.contains("audio") -> {
                     MediaType.Audio
                 }
-                else -> {
-                    MediaType.Undefined
-                }
+                MediaInfo_MediaType_Original.isEmpty() -> Undefined
+                else -> MediaInfo_MediaType_Original
+
             }
-            if (MediaInfo_MediaType == MediaType.Undefined){
-                consoleLog("retrieveMediaInfo -使用 URI 解码时 发生错误: 无法处理的媒体类型")
+            if (MediaInfo_MediaType == Undefined){
+                consoleLog("retrieveMediaInfo -使用 URI 解码时 发生错误: 格式获取失败")
+                return Triple(ActivityResultConnector.retriever_get_type_failed ,MediaItemForPlay(),Undefined)
+            }
+            if (MediaInfo_MediaType != MediaType.Video && MediaInfo_MediaType != MediaType.Audio){
+                consoleLog("retrieveMediaInfo -使用 URI 解码时 发生错误: 格式获取成功但不支持")
                 return Triple(ActivityResultConnector.retriever_type_not_support,MediaItemForPlay(),Undefined)
             }
             //获取 URI 类型
-            val UriTypeMode = MediaUriManager.detectMediaUriTypeMode(URI)
-            consoleLog("retrieveMediaInfo -使用 URI 解码 UriTypeMode:$UriTypeMode")
+            val UriTypeMode = if (UriTypeMode_e == Undefined){
+                //consoleLog("retrieveMediaInfo -未传入 UriTypeMode, 本地尝试获取 UriTypeMode")
+                MediaUriManager.detectMediaUriTypeMode(URI_U_FR)
+            }else{
+                UriTypeMode_e
+            }
             //获取绝对路径
-            val file_path = when(UriTypeMode){
-                MediaUriManager.uriType_media_store_detail -> {
-                    GET_FilePath_From_MediaUri_SC1(context,URI)
+            val file_path =  if (file_path == Undefined){
+                when(UriTypeMode){
+                    MediaUriManager.uriType_media_store_detail -> {
+                        GET_FilePath_From_MediaUri_SC1(context,URI_U_FR)
+                    }
+                    MediaUriManager.uriType_contain_file_path -> {
+                        GET_FilePath_From_FileProviderURI(URI_U_FR)
+                    }
+                    else -> Undefined
+
                 }
-                MediaUriManager.uriType_file_provider -> {
-                    GET_FilePath_From_FileProviderURI(URI)
-                }
-                else -> {
-                    Undefined
-                }
+            }else{
+                file_path
             }
 
 
@@ -108,23 +153,34 @@ object MediaInfoRetriever {
 
             //检查链接格式(必须是标准 MediaStore URI 时才启用 NUM_ID 和 SPECIFIC_ID )
             val URI_STD = if (UriTypeMode == MediaUriManager.uriType_media_store_detail){
-                MediaUriManager.GET_STD_MediaStoreURI_from_Any_URI(URI_SP,context)
+                MediaUriManager.GET_STD_MediaStoreURI_from_Any_URI(URI_S_FR,context)
             }else{
-                Undefined
+                //万一传入链接是个标准链接
+                val is_URI_S_MS = MediaUriManager.spy_is_string_matches_a_MediaStore_S_URI(URI_S_FR)
+                if (is_URI_S_MS){
+                    URI_S_FR
+                }else{
+                    Undefined
+                }
             }
             val NUM_ID = if (URI_STD != Undefined){
                 URI_STD.split("/").last().toLong()
             }else{
-                -1L
+                if (file_path != Undefined){
+                    //TODO 这里有可能跟MediaStore自增ID冲突,只是概率极小
+                    file_path.hashCode().absoluteValue.toLong()
+                }else{
+                    0L
+                }
             }
-            val SPECIFIC_ID = if (NUM_ID >= 0){
+            val SPECIFIC_ID = if (NUM_ID > 0){
                 calculate_SPECIFIC_ID(MediaInfo_MediaType,NUM_ID.toString())
             }else{
                 Undefined
             }
 
             //日志
-            ///*
+              /*
             consoleLog("retrieveMediaInfo -使用 URI 解码 -结果：" +
                     "MediaInfo_MediaType: $MediaInfo_MediaType , " +
                     "file_path: $file_path , " +
@@ -138,7 +194,7 @@ object MediaInfoRetriever {
                     "NUM_ID: $NUM_ID , " +
                     "SPECIFIC_ID: $SPECIFIC_ID"
             )
-            // */
+               */
 
             //合成数据包
             val MediaInfoPack = MediaItemForPlay(
@@ -146,8 +202,7 @@ object MediaInfoRetriever {
                 media_api_NUM_ID = NUM_ID,
                 media_api_dateAdded = 0,
                 media_SPECIFIC_MediaType = MediaInfo_MediaType,
-                URI_SP = URI_SP,
-                URI_STD = URI_STD,
+                URI_S_FP = URI_S_FP,
                 file_path = file_path,
                 file_name = MediaInfo_FileName,
                 file_size = 0L,
@@ -169,9 +224,13 @@ object MediaInfoRetriever {
 
             return Triple(ActivityResultConnector.retriever_error, MediaItemForPlay(),Undefined)
         }finally{
-            retriever = null
+            release_retriever()
         }
+
     }
+
+
+
 
 
 
@@ -278,7 +337,7 @@ object MediaInfoRetriever {
 
 
     //SPECIFIC_ID 计算器
-    const val SPECIFIC_ID_SEPARATOR = "_"
+    private val SPECIFIC_ID_SEPARATOR = "_"
     fun calculate_SPECIFIC_ID(mediaType: String, mediaNUMID: String): String{
 
         return "${mediaType}${SPECIFIC_ID_SEPARATOR}${mediaNUMID}"
@@ -341,18 +400,16 @@ object MediaInfoRetriever {
         try{
             val path = URI.path ?: return MediaUriManager.Undefined
 
-            // 方法1: 直接提取路径
-            val filePath = path.replace("/root", "") // 移除 /root 前缀
-            // 或者使用更通用的方法
+            val file_path = path.replace("/root", "") // 移除 /root 前缀
             val storageIndex = path.indexOf("/storage/emulated/")
             if (storageIndex != -1) {
                 return path.substring(storageIndex)
             }
 
-            // 解码URL编码的路径
             return try {
                 URLDecoder.decode(path, "UTF-8")
-            } catch (e: Exception) {
+            }catch(e: Exception){
+                consoleLog("GET_FilePath_From_FileProviderURI -解码URL编码的路径失败: $e")
                 path
             }
 

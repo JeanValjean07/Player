@@ -92,6 +92,8 @@ class MainActivity: AppCompatActivity() {
     private var lock_clickMillisLock_second = 0L
     //字段
     private val Undefined = ""
+    //MediaInfoRetriever
+    private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
 
 
 
@@ -787,7 +789,7 @@ class MainActivity: AppCompatActivity() {
         }
         val FileName = MediaRecordPack.fileName
         val MediaArtist = MediaRecordPack.mediaArtist
-        val uriString = MediaRecordPack.uriStandard
+        val URI_S_FP = MediaRecordPack.uriStandard
         //分离部分信息
         var mediaType = Undefined
         var NUM_ID = 0L
@@ -802,7 +804,7 @@ class MainActivity: AppCompatActivity() {
 
         if (SettingsRequestCenter.GET_PRF_ContinuePlay_withEngin(this@MainActivity)){
             //直接启动播放器
-            setMediaItem(uriString.toUri(),false)
+            setMediaItem(URI_S_FP.toUri(),false)
 
         }else{
             //写入cache包
@@ -810,7 +812,7 @@ class MainActivity: AppCompatActivity() {
                 SPECIFIC_ID = SPECIFIC_ID,
                 mediaType = mediaType,
                 NUM_ID = NUM_ID,
-                uriString = uriString,
+                URI_S_FP = URI_S_FP,
                 FileName = FileName,
                 MediaArtist = MediaArtist
             )
@@ -844,7 +846,7 @@ class MainActivity: AppCompatActivity() {
                 //检查缓存链接
                 if (PlayerInfoCenter.GET_Media_isCache()){
                     //拿到缓存链接
-                    val cacheUri = PlayerInfoCenter.GET_Media_URI_STD()
+                    val cacheUri = PlayerInfoCenter.GET_Media_URI_S_FP()
 
                     //唤起播放页
                     if (cacheUri.isNotEmpty()){
@@ -865,7 +867,7 @@ class MainActivity: AppCompatActivity() {
             val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
             if (!ongoing){
                 if (PlayerInfoCenter.GET_Media_isCache()){
-                    val uri = PlayerInfoCenter.GET_Media_URI_STD().toUri()
+                    val uri = PlayerInfoCenter.GET_Media_URI_S_FP().toUri()
 
                     //播放缓存链接
                     setMediaItem(uri, true)
@@ -1129,13 +1131,13 @@ class MainActivity: AppCompatActivity() {
         PlayerSingleton.addPlayerStateListener()
 
         //确认设置新媒体项
-        PlayerSingleton.setMediaItem(uri = MediaInfo_MediaUri,playWhenReady = playWhenReady)
+        PlayerSingleton.setMediaItem(URI_UP  = MediaInfo_MediaUri,playWhenReady = playWhenReady)
     }
     //从选单发起后台播放
     private fun startMiniViewPlay(uri: Uri){
         //比对上次播放媒体信息与当前播放媒体信息
         val newUri = uri.toString()
-        val currentUri = PlayerInfoCenter.GET_Media_URI_STD()
+        val currentUri = PlayerInfoCenter.GET_Media_URI_S_FP()
         if (newUri == currentUri){
             showCustomToast("已在播放该媒体",3)
             PlayerSingleton.continuePlay(true)
