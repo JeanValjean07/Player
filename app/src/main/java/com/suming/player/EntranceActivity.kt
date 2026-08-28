@@ -61,17 +61,18 @@ class EntranceActivity : AppCompatActivity(){
     //主业务
     private fun mainBusiness(){
         //提取URI  URI_U_O = URI_Original
-        val (URI_U_O,SOURCE_CODE) = detectOriginalInfo_fromIntent(intent)
+        val (URI_U_O,SOURCE) = detectOriginalInfo_fromIntent(intent)
         val URI_S_O = URI_U_O.toString()   //URI_S_O = URI_String_Original
+        consoleLog("URI_S_O = $URI_S_O, SOURCE = $SOURCE")
 
         //根据 SOURCE_CODE 处理
-        when(SOURCE_CODE){
+        when(SOURCE){
             //以新链接为目标
-            1 -> {
-                processOutSource(URI_S_O, SOURCE_CODE)
+            SOURCE_CODE.VIEW,SOURCE_CODE.NORMAL -> {
+                processOutSource(URI_S_O, SOURCE)
             }
             //以正在播放项为目标
-            3 -> {
+            SOURCE_CODE.PENDING -> {
                 processPending()
             }
             //未知来源
@@ -151,7 +152,8 @@ class EntranceActivity : AppCompatActivity(){
                 //MediaStore文件表链接(示例 content://media/external/file/2622)
                 MediaUriManager.uriType_media_store_file -> {
 
-                    fail("播放失败(暂未适配MediaStore文件表链接)")  //TODO
+                    //
+                    executeByUriType_uriType_media_store_file(URI_S_O,SOURCE_CODE)
 
                     return
                 }
@@ -256,6 +258,47 @@ class EntranceActivity : AppCompatActivity(){
 
         //启动播放页
         startPage_selfDetectMediaType(URI_S_O.toUri(),file_path,SOURCE,mediaType)
+    }
+
+    //文件表URI(示例 content://media/external/file/2622)
+    private fun executeByUriType_uriType_media_store_file(URI_S_O: String,SOURCE: Int){
+        consoleLog("文件表URI -URI_S_O = $URI_S_O, SOURCE = $SOURCE")
+
+        //尝试解码获得媒体类型
+        val (result,MediaItemForPlay,_) = MediaInfoRetriever.retrieveMediaInfo(
+            context,
+            URI_S_O,
+            Undefined,
+            MediaUriManager.uriType_media_store_detail,
+            Undefined
+        )
+        //失败条件检查
+        when(result){
+            ActivityResultConnector.retriever_error -> {
+                fail("解码失败")
+                return
+            }
+            ActivityResultConnector.retriever_get_type_failed -> {
+                fail("格式获取失败")
+                return
+            }
+            ActivityResultConnector.retriever_type_not_support -> {
+                fail("格式不支持")
+                return
+            }
+        }
+        //获取媒体类型
+        val mediaType = MediaItemForPlay.media_SPECIFIC_MediaType
+        if (mediaType == MediaType.Undefined){
+            fail("格式不支持")
+            return
+        }
+        //获取文件路径
+        val file_path = MediaItemForPlay.file_path
+
+        //启动播放页
+        startPage_selfDetectMediaType(URI_S_O.toUri(),file_path,SOURCE,mediaType)
+
     }
 
     //包含文件路径 (示例 content://bin.mt.plus.fp/storage/emulated/0/DCIM/xxxxxxxoriginal.mp4)

@@ -370,22 +370,6 @@ class PlayerService: MediaSessionService() {
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
-    private fun createPendingIntentVideoNeo(): PendingIntent {
-        val intent = Intent(this, PlayerActivityNeo::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-            .putExtra("IntentSource", "FromPendingIntent")
-            .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
-        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
-    private fun createPendingIntentMusic(): PendingIntent {
-        val intent = Intent(this, MusicPlayer::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-            .putExtra("IntentSource", "FromPendingIntent")
-            .putExtra("MediaInfo_MediaUri", MediaInfo_MediaUriString)
-        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
 
 
     //基于广播的播放指令(暂未使用)
