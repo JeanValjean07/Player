@@ -962,12 +962,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun mainBusiness(savedInstanceState: Bundle?){
 
         //获取原始链接
-        val (URI, file_path) = detectOriginalInfo_fromIntent(intent)
-        //用于播放的链接 URI_SP = URI String for Play
-        val URI_SP = URI.toString()
-        //用于其他事务的标准链接(尝试获取) URI_STD = URI Standard
-        val URI_STD = MediaUriManager.GET_STD_MediaStoreURI_from_Any_URI(URI.toString(), context)
-        //consoleLog("mainBusiness  URI_SP: $URI_SP, URI_STD: $URI_STD, file_path: $file_path")
+        val (URI_U_O, file_path) = detectOriginalInfo_fromIntent(intent)
+        //将URI缓存为字符串
+        val URI_S_O = URI_U_O.toString()
 
 
         //获取正在播放信息
@@ -977,18 +974,17 @@ class PlayerActivityNeo: AppCompatActivity(){
         //日志-获取到的信息
         //consoleLog("intentUriStandard: $intentUriStandard, ongoing_URI: $ongoing_URI")
 
-        //设置媒体项决策程序
+        //设置媒体项决策程序 savedInstanceState == null 仅在首次启动时决定是否播放
         if (savedInstanceState == null){
-            //savedInstanceState == null 仅在首次启动时决定是否播放
-
-            if (URI_SP == Undefined && ongoing_URI == Uri.EMPTY ){
+            //
+            if (URI_S_O == Undefined && ongoing_URI == Uri.EMPTY ){
                 //分支描述:未传入播放链接,也没有正在播放的项,弹窗主动输入(彩蛋分支)
 
                 //弹窗主动输入播放链接
                 queryManualInputUri()
 
             }else{
-                if (URI_SP == Undefined){
+                if (URI_S_O == Undefined){
                     //分支描述:未传入原始链接,检查正在播放的项
 
                     //检查有没有正在播放的项
@@ -1009,12 +1005,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                     //分支-传入了原始链接
 
                     //检查新项是否与当前项相同
-                    if (URI_SP != ongoing_URI.toString()){
+                    if (URI_S_O != ongoing_URI.toString()){
                         //传入链接,但与当前播放项不同,播放新项
                         //consoleLog("传入链接,但与当前播放项不同,播放新项")
 
                         //发起播放新项
-                        startPlayNewMedia(URI_SP.toUri(),file_path)
+                        startPlayNewMedia(URI_U_O,file_path)
 
                     }else{
                         //传入链接,但与当前播放项相同,直接绑定,但是要先判断是不是视频
@@ -1023,7 +1019,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                             //正在播放的是视频,直接绑定
                             connectCurrentMedia()
                         }else{
-                            consoleLog("传入链接,但与当前播放项相同,直接绑定,但当前播放的不是视频,已自动退出")
                             finish()
                         }
                     }
@@ -1031,7 +1026,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
         }else{
             if (ongoing_URI == Uri.EMPTY){
-                queryManualInputUri()  //TODO 新的分支,或许可以做些什么
+                showErrorCover("当前没有正在播放的项")
             }else{
                 connectCurrentMedia()
             }
@@ -1190,23 +1185,30 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //播放器ID观察器
     private fun startExoPlayerIdleObserver(){
-        lifecycleScope.launch{
+        lifecycleScope.launch(Dispatchers.Main){
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableIsIdle.collect { state ->
-                    consoleLog("observableIsIdle: $state")
-                    if (state == 0L){
-                        //播放器未启动或者Idle了
-                        onPlayEngineIdle()
-                    }else{
-                        //检查ID
-                        if (state == cache_player_ID){
-                            //播放器实例未变更
-
-                        }else{
-
-                            onPlayEnginRestart(state)
+                    //consoleLog("observableIsIdle: $state")
+                    when(state){
+                        -1L -> {
+                            //播放器从未启动过,不操作
 
                         }
+                        0L -> {
+                            //播放器空闲事件
+                            onPlayEngineIdle()
+                        }
+                        else -> {
+                            if (state == cache_player_ID){
+                                //播放器实例未变更,无操作
+
+                            }else{
+                                //播放器重启事件
+                                onPlayEnginRestart(state)
+
+                            }
+                        }
+
                     }
                 }
             }
@@ -1225,28 +1227,32 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //播放器重新上线
     private fun onPlayEnginRestart(new_ID:Long){
-
-            consoleLog("onPlayEnginRestart: $new_ID")
+            //consoleLog("onPlayEnginRestart: $new_ID")
 
             //重新拿取引用
             player = PlayerSingleton.getPlayer()
             if (player == null){
-                consoleLog("onPlayEnginRestart: 未拿到播放器引用")
+                //consoleLog("onPlayEnginRestart: 未拿到播放器引用")
                 return
             }else{
-                consoleLog("onPlayEnginRestart: 成功拿到播放器引用")
+                //consoleLog("onPlayEnginRestart: 成功拿到播放器引用")
+
+                //主动检查正在播放的项
+                val (ongoing,ongoing_URI) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                //consoleLog("onPlayEnginRestart: 正在播放项:ongoing:${ongoing}, ongoing_URI:$ongoing_URI")
+                if (ongoing){
+                    connectCurrentMedia()
+                    closeErrorCover()
+                }else{
+                    //
+                    showErrorCover("当前没有正在播放的项")
+                }
             }
             //记入缓存
             cache_player_ID = new_ID
 
-            //
-            showErrorCover("当前没有正在播放的项")
-
             //重新添加监听器
             startExoPlayerListener()
-
-
-
 
     }
 
@@ -1790,6 +1796,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //关闭播放器状态监听+丢弃引用
         removeExoPlayerListener()
         player = null
+        cache_player_ID = 0L
 
         //关闭本地监听器
         stopOrientationListener()

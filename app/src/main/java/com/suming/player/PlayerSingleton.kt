@@ -112,10 +112,11 @@ object PlayerSingleton {
                     player = buildPlayer()
                     _player = player
 
-
                     //发布播放器上线消息
                     cache_player_ID = System.currentTimeMillis()
+                    consoleLog("getInitPlayer: 成功初始化播放器,播放器ID: $cache_player_ID")
                     PlayerInfoCenter.updateObservableIsIdle(cache_player_ID)
+
 
                 }
             }
@@ -612,7 +613,7 @@ object PlayerSingleton {
     }
     //是否正在播放
     fun GET_STE_isNowPlaying(): Boolean {
-        if (_player == null) consoleLog("wtf? GET_STE_isNowPlaying() _player  null")
+        if (_player == null) return false
 
         return _player?.isPlaying ?: false
     }

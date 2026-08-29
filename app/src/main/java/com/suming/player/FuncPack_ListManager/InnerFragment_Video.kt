@@ -337,7 +337,6 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         }else{
             //确保播放器已经启动
             PlayerSingleton.getInitPlayer()
-            PlayerSingleton.addPlayerStateListener()
             //设置播放项
             PlayerSingleton.setMediaItem(URI_UP = item.URI_S_FP.toUri(),playWhenReady = true)
         }
