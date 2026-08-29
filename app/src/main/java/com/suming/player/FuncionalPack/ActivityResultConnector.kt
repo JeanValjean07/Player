@@ -21,6 +21,7 @@ object ActivityResultConnector {
     const val OBRTV_Engine_RetrieveFailed = "OBRTV_Engine_RetrieveFailed"
     const val OBRTV_Engine_SetItemSuccess = "OBRTV_Engine_SetItemSuccess"
     const val OBRTV_Engine_TypeNotSupport = "OBRTV_Engine_TypeNotSupport"
+    const val OBRTV_Engine_OffLine = "OBRTV_Engine_OffLine"
 
 
     //解码器 retriever

@@ -322,6 +322,10 @@ object PlayerSingleton {
             return Undefined
         }
         clickMillis_setMediaItem = System.currentTimeMillis()
+        //检查是否启动了播放器
+        if (_player == null){
+            return ActivityResultConnector.OBRTV_Engine_OffLine
+        }
 
         //设置新媒体项
         val result = setMediaItemCore(URI_UP,file_path,playWhenReady)

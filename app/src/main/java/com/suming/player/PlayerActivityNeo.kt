@@ -1211,7 +1211,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
         }
-
     }
     //播放器进入空闲状态
     private fun onPlayEngineIdle(){
@@ -1221,7 +1220,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         player = null
         //清除播放项
         onMediaItemCleared()
-        showErrorCover("播放器正在恢复")
+        showErrorCover("当前未在播放")
 
     }
     //播放器重新上线
@@ -1256,7 +1255,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var cache_player_ID = 0L
     private fun connectToExoPlayer(){
         //确保播放器已启动并获得引用
-        player = PlayerSingleton.getPlayer()
+        player = PlayerSingleton.getInitPlayer()
         //记入缓存
         cache_player_ID = PlayerSingleton.cache_player_ID
         //添加播放器事件监听
