@@ -44,7 +44,13 @@ object PlayerInfoCenter {
         _observableIsPlaying.value = isPlaying
     }
 
-
+    //可观察IDLE状态(使用数字,0 = 杀死，其他使用System.currentTimeMillis(),可判断实例是否有变化)
+    private var _observableIsIdle = MutableStateFlow(0L)
+    var observableIsIdle: StateFlow<Long> = _observableIsIdle.asStateFlow()
+    fun updateObservableIsIdle(isIdle: Long){
+        consoleLog("updateObservableIsIdle: $isIdle")
+        _observableIsIdle.value = isIdle
+    }
 
 
 

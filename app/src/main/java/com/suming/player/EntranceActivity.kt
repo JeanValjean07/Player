@@ -21,6 +21,7 @@ import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
+import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SOURCE_CODE
 import java.io.File
 import java.net.URLDecoder
@@ -38,15 +39,34 @@ class EntranceActivity : AppCompatActivity(){
     private val context = this@EntranceActivity
     //MediaInfoRetriever
     private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
+    //PrivacyPermissionHelper
+    private val PrivacyPermissionHelper: PrivacyPermissionHelper = PrivacyPermissionHelper()
 
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        //检查权限
+        val isAllFilesAccessGranted = PrivacyPermissionHelper.isAllFilesAccessGranted()
+
+
         //持久化URI权限到Activity上下文
         val URI_U_O = intent.data ?: Uri.EMPTY
-        context.grantUriPermission(packageName, URI_U_O, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        //consoleLog("URI_U_O = $URI_U_O")
+        //尝试持久化URI权限到Activity上下文 //TODO 测试别的播放器能不能放
+        try{
+            context.grantUriPermission(packageName, URI_U_O, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        }catch(e: Exception){
+            if (!isAllFilesAccessGranted){
+                fail("请开启所有文件访问权限")
+                return
+            }else{
+                //fail("无法播放")
+                //return
+            }
+        }
+
 
         //主业务
         mainBusiness()
@@ -65,21 +85,22 @@ class EntranceActivity : AppCompatActivity(){
         val URI_S_O = URI_U_O.toString()   //URI_S_O = URI_String_Original
         consoleLog("URI_S_O = $URI_S_O, SOURCE = $SOURCE")
 
+
         //根据 SOURCE_CODE 处理
         when(SOURCE){
-            //以新链接为目标
-            SOURCE_CODE.VIEW,SOURCE_CODE.NORMAL -> {
-                processOutSource(URI_S_O, SOURCE)
+                //以新链接为目标
+                SOURCE_CODE.VIEW,SOURCE_CODE.NORMAL -> {
+                    processOutSource(URI_S_O, SOURCE)
+                }
+                //以正在播放项为目标
+                SOURCE_CODE.PENDING -> {
+                    processPending()
+                }
+                //未知来源
+                else -> {
+                    fail("页面打开失败(启动来源未知)")
+                }
             }
-            //以正在播放项为目标
-            SOURCE_CODE.PENDING -> {
-                processPending()
-            }
-            //未知来源
-            else -> {
-                fail("页面打开失败(启动来源未知)")
-            }
-        }
 
     }
 
@@ -162,6 +183,13 @@ class EntranceActivity : AppCompatActivity(){
 
                     //处理文件路径的URI
                     executeByUriType_uriType_contain_file_path(URI_S_O,SOURCE_CODE)
+
+                }
+                //其他ContentProvider URI
+                MediaUriManager.uriType_other_content_provider -> {
+
+                    //处理其他ContentProvider URI
+                    executeByUriType_uriType_other_content_provider(URI_U_O,SOURCE_CODE)
 
                 }
                 //链接无法解析
@@ -375,6 +403,108 @@ class EntranceActivity : AppCompatActivity(){
 
 
         }
+
+
+
+    }
+
+    //其他ContentProvider URI
+    private fun executeByUriType_uriType_other_content_provider(URI_U_O: Uri,SOURCE: Int){
+        //探测一下暴露了哪些可读的列 projection = null 获取所有列
+        try {
+            contentResolver.query(URI_U_O,null,null,null,null)?.use { cursor ->
+                //
+                cursor.columnNames.toList()
+
+                consoleLog("executeByUriType_uriType_other_content_provider -columnNames: ${cursor.columnNames.toList()}")
+                //
+                //(0 until cursor.columnCount).map { cursor.getColumnName(it) }
+            }
+        }catch(e: Exception){
+            consoleLog("executeByUriType_uriType_other_content_provider -无法查询该URI: $URI_U_O e:$e")
+            fail("无法查询该URI: $URI_U_O e:$e")
+        }
+
+        try {
+            contentResolver.openInputStream(URI_U_O)?.use { inputStream ->
+                // 如果这里成功了，那就直接读
+                consoleLog("成功读取文件流，大小: ${inputStream.available()}")
+            }
+        }catch(e: SecurityException){
+            // 大概率还是会报权限错误
+            consoleLog("无法通过ContentResolver读取，需要降级到方案A或B")
+            fail("无法通过ContentResolver读取，需要降级到方案A或B")
+
+        }
+
+        try {
+            contentResolver.openAssetFileDescriptor(URI_U_O, "r")?.use { afd ->
+                // AssetFileDescriptor 包含额外信息
+                val size = afd.length  // 文件大小
+                val startOffset = afd.startOffset
+                val declaredLength = afd.declaredLength
+
+                val retriever = MediaMetadataRetriever()
+                retriever.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+
+                val MediaInfo_MediaType_Original = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
+                    ?: Undefined
+                val MediaInfo_MediaType = when {
+                    MediaInfo_MediaType_Original.contains("video") -> {
+                        MediaType.Video
+                    }
+                    MediaInfo_MediaType_Original.contains("audio") -> {
+                        MediaType.Audio
+                    }
+                    MediaInfo_MediaType_Original.isEmpty() -> Undefined
+                    else -> MediaInfo_MediaType_Original
+
+                }
+                if (MediaInfo_MediaType == Undefined){
+                    consoleLog("格式获取失败")
+                    return
+                }
+                if (MediaInfo_MediaType != MediaType.Video && MediaInfo_MediaType != MediaType.Audio){
+                    consoleLog("格式获取成功但不支持")
+                    return
+                }
+
+
+                val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong()
+                val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toInt()
+                val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toInt()
+
+                consoleLog("视频时长: ${duration?.div(1000)}秒, 分辨率: ${width}x${height}")
+                retriever.release()
+
+                // 获取输入流
+                val inputStream = afd.createInputStream()
+                inputStream.use { stream ->
+                    // 读取内容...
+                    consoleLog("AssetFD方式 - 大小: $size, 偏移: $startOffset")
+                }
+
+                // 对于视频，可以直接使用
+                // mediaPlayer.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+
+                //启动播放页
+                startPage_selfDetectMediaType(URI_U_O,Undefined,SOURCE,MediaInfo_MediaType)
+
+
+                true
+            } ?: false
+        }catch(e: SecurityException){
+            consoleLog("AssetFD方式权限不足: ${e.message}")
+            fail("AssetFD方式权限不足: ${e.message}")
+        }catch(e: Exception){
+            consoleLog("AssetFD方式失败: ${e.message}")
+            fail("AssetFD方式失败: ${e.message}")
+        }
+
+
+
+
+
 
 
 

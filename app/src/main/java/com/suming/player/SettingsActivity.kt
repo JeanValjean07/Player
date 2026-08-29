@@ -112,7 +112,7 @@ class SettingsActivity: AppCompatActivity(){
                 AlertDialog.Builder(this@SettingsActivity)
                     .setTitle("将跳转至浏览器")
                     .setMessage("是否继续?")
-                    .setPositiveButton("确认") { dialog, which ->
+                    .setPositiveButton("确认") { dialog, _ ->
                         ToolVibrate().vibrate(this@SettingsActivity)
 
                         val url = "https://github.com/JeanValjean07/Player/"
@@ -121,7 +121,7 @@ class SettingsActivity: AppCompatActivity(){
 
                         dialog.dismiss()
                     }
-                    .setNegativeButton("取消") { dialog, which ->
+                    .setNegativeButton("取消") { dialog, _ ->
                         ToolVibrate().vibrate(this@SettingsActivity)
 
                         dialog.dismiss()
@@ -139,7 +139,7 @@ class SettingsActivity: AppCompatActivity(){
                 AlertDialog.Builder(this@SettingsActivity)
                     .setTitle("将跳转至浏览器")
                     .setMessage("是否继续?")
-                    .setPositiveButton("确认") { dialog, which ->
+                    .setPositiveButton("确认") { dialog, _ ->
                         ToolVibrate().vibrate(this@SettingsActivity)
 
                         val url = "https://github.com/JeanValjean07/Player/releases"
@@ -148,7 +148,7 @@ class SettingsActivity: AppCompatActivity(){
 
                         dialog.dismiss()
                     }
-                    .setNegativeButton("取消") { dialog, which ->
+                    .setNegativeButton("取消") { dialog, _ ->
                         ToolVibrate().vibrate(this@SettingsActivity)
 
                         dialog.dismiss()
@@ -575,7 +575,7 @@ class SettingsActivity: AppCompatActivity(){
                 }
 
                 //解析
-                val jsonString = response.body?.string() ?: return@withContext null
+                val jsonString = response.body.string()
                 val json = JSONObject(jsonString)
                 val tagName = json.getString("tag_name")
                 val version = tagName.removePrefix("v")
@@ -606,9 +606,11 @@ class SettingsActivity: AppCompatActivity(){
 
                 ReleaseInfo(version, downloadUrl)
 
-            } catch (e: Exception) {
-                //withContext(Dispatchers.Main) { showCustomToast("检查更新失败: ${e.message}") }
+            }catch(e: Exception){
                 //consoleLog("从 github api 检查更新 - 网络请求出错: ${e.message}")
+
+                withContext(Dispatchers.Main) { showCustomToast("检查更新失败: ${e.message}") }
+
                 null
             }
         }
@@ -620,14 +622,14 @@ class SettingsActivity: AppCompatActivity(){
         AlertDialog.Builder(this@SettingsActivity)
             .setTitle("确定撤回同意吗?")
             .setMessage("若确认，App将自动退出")
-            .setPositiveButton("确认") { dialog, which ->
+            .setPositiveButton("确认") { dialog, _ ->
                 ToolVibrate().vibrate(this)
 
                 revokePrivacyAgreementCore()
 
                 dialog.dismiss()
             }
-            .setNegativeButton("取消") { dialog, which ->
+            .setNegativeButton("取消") { dialog, _ ->
                 ToolVibrate().vibrate(this)
 
                 dialog.dismiss()
@@ -738,6 +740,7 @@ class SettingsActivity: AppCompatActivity(){
         CoroutineScope(Dispatchers.Main).launch {
             delay(50)
             EditText.requestFocus()
+            @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
         }
 
@@ -803,6 +806,7 @@ class SettingsActivity: AppCompatActivity(){
         CoroutineScope(Dispatchers.Main).launch {
             delay(50)
             EditText.requestFocus()
+            @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
         }
     }
@@ -905,6 +909,7 @@ class SettingsActivity: AppCompatActivity(){
         CoroutineScope(Dispatchers.Main).launch {
             delay(50)
             EditText.requestFocus()
+            @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
         }
     }
@@ -1014,6 +1019,7 @@ class SettingsActivity: AppCompatActivity(){
         CoroutineScope(Dispatchers.Main).launch {
             delay(50)
             EditText.requestFocus()
+            @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
         }
     }
@@ -1129,7 +1135,7 @@ class SettingsActivity: AppCompatActivity(){
         AlertDialog.Builder(this@SettingsActivity)
             .setTitle("确定删除选中的默认封面吗?")
             .setMessage("仅删除自动生成的封面，保留自定义封面")
-            .setPositiveButton("确认") { dialog, which ->
+            .setPositiveButton("确认") { dialog, _ ->
                 ToolVibrate().vibrate(this)
 
 
@@ -1151,7 +1157,7 @@ class SettingsActivity: AppCompatActivity(){
 
                 dialog.dismiss()
             }
-            .setNegativeButton("取消") { dialog, which ->
+            .setNegativeButton("取消") { dialog, _ ->
                 ToolVibrate().vibrate(this)
 
                 dialog.dismiss()
@@ -1163,7 +1169,7 @@ class SettingsActivity: AppCompatActivity(){
         AlertDialog.Builder(this@SettingsActivity)
             .setTitle("确定删除选中的自定义封面吗?")
             .setMessage("更建议您在播放页删除单个媒体的自定义封面")
-            .setPositiveButton("确认") { dialog, which ->
+            .setPositiveButton("确认") { dialog, _ ->
                 ToolVibrate().vibrate(this)
 
                 lifecycleScope.launch(Dispatchers.IO){
@@ -1184,7 +1190,7 @@ class SettingsActivity: AppCompatActivity(){
 
                 dialog.dismiss()
             }
-            .setNegativeButton("取消") { dialog, which ->
+            .setNegativeButton("取消") { dialog, _ ->
                 ToolVibrate().vibrate(this)
 
                 dialog.dismiss()
@@ -1229,7 +1235,7 @@ class SettingsActivity: AppCompatActivity(){
         AlertDialog.Builder(this@SettingsActivity)
             .setTitle(if (deleteVideo )"确定删除视频数据缓存吗?" else "确定删除音频数据缓存吗?")
             .setMessage("回到主页后会触发再次读取,仅作为清除异常数据使用")
-            .setPositiveButton("确认") { dialog, which ->
+            .setPositiveButton("确认") { dialog, _ ->
                 ToolVibrate().vibrate(this)
 
                 lifecycleScope.launch(Dispatchers.IO){
@@ -1238,7 +1244,7 @@ class SettingsActivity: AppCompatActivity(){
 
                 dialog.dismiss()
             }
-            .setNegativeButton("取消") { dialog, which ->
+            .setNegativeButton("取消") { dialog, _ ->
                 ToolVibrate().vibrate(this)
 
                 dialog.dismiss()
@@ -1332,7 +1338,7 @@ class SettingsActivity: AppCompatActivity(){
         if (scrollArea == null){
             scrollArea = findViewById(R.id.ScrollArea)
         }
-        scrollArea?.setOnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
+        scrollArea?.setOnScrollChangeListener { _, _, scrollY, _, _ ->
             //未在顶部时隐藏顶部栏文字区
             if (scrollY == 0){
                 topBarEffect_In_Title()
@@ -1361,7 +1367,7 @@ class SettingsActivity: AppCompatActivity(){
         AppBarTitle = findViewById(R.id.AppBarTitle)
         //获取状态栏高度
         if (DeviceInfo.statusBarHeight != 0){
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
 
                 DeviceInfo.statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
                 onStatusBarHeightGet(DeviceInfo.statusBarHeight)
@@ -1376,14 +1382,17 @@ class SettingsActivity: AppCompatActivity(){
         (AppBarCore.layoutParams as ViewGroup.MarginLayoutParams).topMargin = statusBarHeight
         AppBarSpacer.layoutParams.height = statusBarHeight + dpToPx(60f).toInt()
     }
+    @Suppress("unused")
     private fun dpToPx(dp: Float): Float {
         val metrics = resources.displayMetrics
         return dp * metrics.density
     }
+    @Suppress("unused")
     private fun pxToDp(px: Float): Float {
         val metrics = resources.displayMetrics
         return px / metrics.density
     }
+
 
     //检查应用列表
     private var packageNumber = 0

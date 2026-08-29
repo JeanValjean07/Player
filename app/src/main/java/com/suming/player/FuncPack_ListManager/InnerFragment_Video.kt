@@ -212,7 +212,10 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
                 ListManagerHelper.event_detail_general_update_list_state -> {
                     onFragmentFocused()
                 }
-
+                //列表更新
+                ListManagerHelper.event_video_list_refresh -> {
+                    recyclerView_video_adapter.refresh()
+                }
                 //播放项变更
                 ListManagerHelper.event_detail_general_media_item_update -> {
                     onMediaItemUpdate()
@@ -259,9 +262,11 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
     //页面获得焦点
     private fun onFragmentFocused(){
-
+        //刷新列表
         updateCurrentListStateText()
-
+        //刷新列表
+        recyclerView_video_adapter.refresh()
+        //检查当前播放项
         checkNowOngoingItem()
     }
 
@@ -323,7 +328,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //播放视频
     private fun onPlayClick(item: MediaItemFullForVideo, position: Int){
 
-        if (item.content_uriString == PlayerSingleton.GET_STE_currentMediaItem_Uri().second.toString()){
+        if (item.URI_S_FP == PlayerSingleton.GET_STE_currentMediaItem_Uri().second.toString()){
             if (PlayerInfoCenter.observableIsPlaying.value){
                 PlayerSingleton.pausePlay()
             }else{
@@ -334,7 +339,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             PlayerSingleton.getInitPlayer()
             PlayerSingleton.addPlayerStateListener()
             //设置播放项
-            PlayerSingleton.setMediaItem(URI_UP = item.content_uriString.toUri(),playWhenReady = true)
+            PlayerSingleton.setMediaItem(URI_UP = item.URI_S_FP.toUri(),playWhenReady = true)
         }
 
     }

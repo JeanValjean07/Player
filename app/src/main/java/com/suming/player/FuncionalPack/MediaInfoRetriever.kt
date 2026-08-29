@@ -170,7 +170,7 @@ class MediaInfoRetriever {
                     //TODO 这里有可能跟MediaStore自增ID冲突,只是概率极小
                     file_path.hashCode().absoluteValue.toLong()
                 }else{
-                    0L
+                    URI_S_FP.hashCode().absoluteValue.toLong()
                 }
             }
             val SPECIFIC_ID = if (NUM_ID > 0){
@@ -180,7 +180,7 @@ class MediaInfoRetriever {
             }
 
             //日志
-              /*
+             // /*
             consoleLog("retrieveMediaInfo -使用 URI 解码 -结果：" +
                     "MediaInfo_MediaType: $MediaInfo_MediaType , " +
                     "file_path: $file_path , " +
@@ -194,7 +194,7 @@ class MediaInfoRetriever {
                     "NUM_ID: $NUM_ID , " +
                     "SPECIFIC_ID: $SPECIFIC_ID"
             )
-               */
+            //   */
 
             //合成数据包
             val MediaInfoPack = MediaItemForPlay(

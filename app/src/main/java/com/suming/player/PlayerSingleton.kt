@@ -46,9 +46,8 @@ import com.suming.player.FuncionalPack.PlayerListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -98,6 +97,7 @@ object PlayerSingleton {
                 playWhenReady = false
             }
 
+
         return ExoPlayer
     }
     //获取播放器,未启动时将播放器初始化
@@ -111,10 +111,15 @@ object PlayerSingleton {
                 if (player == null) {
                     player = buildPlayer()
                     _player = player
+
+
+                    //发布播放器上线消息
+                    cache_player_ID = System.currentTimeMillis()
+                    PlayerInfoCenter.updateObservableIsIdle(cache_player_ID)
+
                 }
             }
         }
-
 
         //添加播放器状态监听
         addPlayerStateListener()
@@ -123,6 +128,9 @@ object PlayerSingleton {
     }
     //获取播放器但不初始化
     fun getPlayer(): ExoPlayer? = _player
+
+    //播放器ID
+    var cache_player_ID = 0L
 
     //播放器组件
     fun getTrackSelector(context: Context): DefaultTrackSelector =
@@ -174,8 +182,7 @@ object PlayerSingleton {
                 Player.STATE_ENDED ->  playState_End(context)
                 //播放器进入空闲状态
                 Player.STATE_IDLE -> {
-                    state_player_idle = true
-
+                    onPlayEngineIdle()
                 }
             }
         }
@@ -184,6 +191,7 @@ object PlayerSingleton {
             PlayerInfoCenter.updateObservableIsPlaying(isPlaying)
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            consoleLog("onMediaItemTransition mediaItem:${mediaItem} reason:${reason}")
             onMediaItemChanged(mediaItem)
         }
         override fun onTracksChanged(tracks: Tracks) {
@@ -204,14 +212,16 @@ object PlayerSingleton {
     private var playerState_PlayerStateListenerAdded = false
     fun addPlayerStateListener(){
         if (playerState_PlayerStateListenerAdded) return
-
-        _player?.removeListener(PlayerStateListener)
-        _player?.addListener(PlayerStateListener)
         playerState_PlayerStateListenerAdded = true
+        consoleLog("addPlayerStateListener")
+        _player?.addListener(PlayerStateListener)
+
     }
     fun removePlayerStateListener(){
-        _player?.removeListener(PlayerStateListener)
+        if (!playerState_PlayerStateListenerAdded) return
         playerState_PlayerStateListenerAdded = false
+        consoleLog("removePlayerStateListener")
+        _player?.removeListener(PlayerStateListener)
     }
 
 
@@ -224,39 +234,38 @@ object PlayerSingleton {
 
 
     }
+    //
+    private val coroutine_restart = CoroutineScope(Dispatchers.Main)
+    private fun onPlayEngineIdle(){
+        coroutine_restart.launch{
+            //consoleLog("onPlayEngineIdle")
+            //发布Idle消息
+            cache_player_ID = 0L
+            PlayerInfoCenter.updateObservableIsIdle(0L)
 
-
-    var state_player_idle = false
-    suspend fun onPlayEngineIDLE(): Boolean{
-        //关闭播放器
-        withContext(Dispatchers.Main) {
+            //开始重启播放器
             //关闭本地监听器
             removePlayerStateListener()
             //销毁播放器(包含置空_player实例)
+            //consoleLog("onPlayEngineIdle: stopPlayEngine")
             stopPlayEngine()
-        }
-        //重启播放器
-        withContext(Dispatchers.Main) {
+
+            delay(500)
+            //consoleLog("onPlayEngineIdle: getInitPlayer")
+            //重启播放器(getInitPlayer()自带监听器添加)
             getInitPlayer()
-        }
-
-        //检查是否成功重启播放器
-        if (_player == null) {
-            state_player_idle = true
-            return false
-        }else{
-            //添加播放器回调监听
+            //添加本地监听器
             addPlayerStateListener()
-
-            state_player_idle = false
-
-            return true
         }
 
     }
 
     //销毁播放器并关闭媒体会话
     fun stopPlayEngine(){
+        //consoleLog("stopPlayEngine")
+        //发布消息
+        cache_player_ID = 0L
+        PlayerInfoCenter.updateObservableIsIdle(0L)
         //清理播放项
         clearMediaItem()
         //销毁播放器
@@ -269,6 +278,8 @@ object PlayerSingleton {
         stopMediaSession(context)
         //关闭服务
         stopServices(context)
+        //
+        _player = null
 
 
     }
@@ -304,7 +315,14 @@ object PlayerSingleton {
 
     //Long Process Functions
     //设置新媒体项的外部接口(以后可以加些过滤)(返回ActivityResultConnector内的状态码)
+    private var clickMillis_setMediaItem = 0L
     fun setMediaItem(URI_UP: Uri, file_path: String = "",playWhenReady: Boolean): String {
+        //设置频率限制
+        if (System.currentTimeMillis() - clickMillis_setMediaItem < 1500) {
+            return Undefined
+        }
+        clickMillis_setMediaItem = System.currentTimeMillis()
+
         //设置新媒体项
         val result = setMediaItemCore(URI_UP,file_path,playWhenReady)
 
@@ -737,6 +755,7 @@ object PlayerSingleton {
     }
     //列表模式-由列表管理器告知下一个媒体该放什么
     fun requireNextMedia(){
+        ListManagerHelper.onPlayEndCall_switchNextMedia()
 
     }
 

@@ -10,7 +10,7 @@ data class AudioDataClass(
     val media_api_NUM_ID: Long = 0,
     val media_api_dateAdded: Long = 0,
     val media_SPECIFIC_MediaType: String = "",
-    val content_uriString: String,
+    val URI_S_FP: String,
     val file_path: String = "",
     val file_name: String = "",
     val file_size: Long,
@@ -31,7 +31,7 @@ data class AudioDataClass(
                 media_api_NUM_ID == other.media_api_NUM_ID &&
                 media_api_dateAdded == other.media_api_dateAdded &&
                 media_SPECIFIC_MediaType == other.media_SPECIFIC_MediaType &&
-                content_uriString == other.content_uriString &&
+                URI_S_FP == other.URI_S_FP &&
                 file_path == other.file_path &&
                 file_name == other.file_name &&
                 file_size == other.file_size &&

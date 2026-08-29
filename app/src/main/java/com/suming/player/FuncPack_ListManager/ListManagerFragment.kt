@@ -2,6 +2,7 @@ package com.suming.player.FuncPack_ListManager
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
@@ -16,6 +17,7 @@ import android.view.WindowManager
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
@@ -37,14 +39,22 @@ import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
+import com.suming.player.DataPack.DataBaseStateConnector
+import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
+import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaRecordManager
+import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
+import com.suming.player.SettingsRequestCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @UnstableApi
 @SuppressLint("ComposableNaming","NewApi")
@@ -60,6 +70,8 @@ class ListManagerFragment: DialogFragment() {
     }
 
 
+    //ctx
+    private lateinit var context: Context
 
 
     override fun onStart() {
@@ -191,6 +203,9 @@ class ListManagerFragment: DialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //获得上下文
+        context = requireContext()
+        //设置样式
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
     }
 
@@ -222,11 +237,8 @@ class ListManagerFragment: DialogFragment() {
         //注册子Fragment通信
         registerChildFragment()
 
-        lifecycleScope.launch {
-            delay(500)
-            //发布开启事件
-            //returnFragmentResult(FragmentConnector.fragment_event_open)
-        }
+        registerParentFragment()
+
 
 
     }
@@ -239,16 +251,13 @@ class ListManagerFragment: DialogFragment() {
     override fun onPause() {
         super.onPause()
         //发布关闭事件
-        //returnFragmentResult(FragmentConnector.fragment_event_close)
+        returnFragmentResult(FragmentConnector.fragment_event_close)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         //移除ViewPager监听
         stopViewPagerListener()
-
-        //发布消息
-        onFragmentClose()
 
     }
 
@@ -410,9 +419,6 @@ class ListManagerFragment: DialogFragment() {
     }
 
 
-    private fun onFragmentClose(){
-        returnFragmentResult(FragmentConnector.fragment_event_close)
-    }
 
     //viewPager
     private lateinit var ViewPager: ViewPager2
@@ -476,7 +482,7 @@ class ListManagerFragment: DialogFragment() {
     )
 
 
-    //注册子Fragment返回消息监听
+    //注册子Fragment返回消息监听  子Fragment -> 父Fragment  fragment_request_key_xxx_reverse
     private fun registerChildFragment(){
         //自定义列表
         childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_custom_reverse, this){ _, bundle ->
@@ -527,7 +533,7 @@ class ListManagerFragment: DialogFragment() {
         }
 
     }
-    //向子Fragment传递事件
+    //向子Fragment传递事件  父Fragment -> 子Fragment  fragment_request_key_xxx  (no_reverse)
     private fun sendChildFragmentEvent(targetList: Any, data: String, extra: String = "") {
         //合成position
         val position = if (targetList is String){
@@ -538,30 +544,50 @@ class ListManagerFragment: DialogFragment() {
         when(position){
             0 -> {
                 //自定义列表
-                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_custom, bundleOf(
-                    ListManagerHelper.event_key_general to data, ListManagerHelper.event_key_extra to extra
-                ))
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_custom, Bundle().apply {
+                    putString(ListManagerHelper.event_key_general, data)
+                    putString(ListManagerHelper.event_key_extra, extra)
+                })
             }
             1 -> {
                 //历史列表
-                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_history, bundleOf(
-                    ListManagerHelper.event_key_general to data, ListManagerHelper.event_key_extra to extra
-                ))
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_history, Bundle().apply {
+                    putString(ListManagerHelper.event_key_general, data)
+                    putString(ListManagerHelper.event_key_extra, extra)
+                })
             }
             2 -> {
                 //视频列表
-                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_video, bundleOf(
-                    ListManagerHelper.event_key_general to data, ListManagerHelper.event_key_extra to extra
-                ))
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_video, Bundle().apply {
+                    putString(ListManagerHelper.event_key_general, data)
+                    putString(ListManagerHelper.event_key_extra, extra)
+                })
             }
             3 -> {
                 //音乐列表
-                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_audio, bundleOf(
-                    ListManagerHelper.event_key_general to data, ListManagerHelper.event_key_extra to extra
-                ))
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_audio, Bundle().apply {
+                    putString(ListManagerHelper.event_key_general, data)
+                    putString(ListManagerHelper.event_key_extra, extra)
+                })
             }
             else -> {
                 return
+            }
+        }
+    }
+
+    //注册父Fragment传入消息监听
+    private fun registerParentFragment(){
+        parentFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_play_list, this){ _, bundle ->
+            val key = bundle.getString(FragmentConnector.receive_key) ?: return@setFragmentResultListener
+            when(key){
+                //列表更新
+                ListManagerHelper.event_video_list_refresh -> {
+                    sendChildFragmentEvent(2, ListManagerHelper.event_video_list_refresh)
+                    sendChildFragmentEvent(3, ListManagerHelper.event_audio_list_refresh)
+
+                }
+
             }
         }
     }
@@ -640,6 +666,11 @@ class ListManagerFragment: DialogFragment() {
 
                     true
                 }
+                R.id.opt_player_escape -> {
+                    ToolVibrate().vibrate(requireContext())
+                    escapePlayerError()
+                    true
+                }
                 else -> true
             }
         }
@@ -667,6 +698,7 @@ class ListManagerFragment: DialogFragment() {
             3 -> onFocusPage_Audio()
         }
     }
+    //页签聚焦操作
     private fun onFocusPage_Custom(){
         updateCardPosition(0)
         updateCardColor(0)
@@ -678,10 +710,36 @@ class ListManagerFragment: DialogFragment() {
     private fun onFocusPage_Video(){
         updateCardPosition(2)
         updateCardColor(2)
+        //触发读取(//TODO 放在这里可能导致IO频次太多)
+        //检查是否需要读取系统视频
+        lifecycleScope.launch(Dispatchers.IO) {
+            //检查本地数据库是否已有视频数据
+            if (VideoRepo(context).isEmpty()){
+                //通知状态变更
+                DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
+
+                val mediaReader = VideoSysApiQuerier(context, context.contentResolver)
+                mediaReader.readAndSaveAllVideos()
+
+            }
+        }
     }
     private fun onFocusPage_Audio(){
         updateCardPosition(3)
         updateCardColor(3)
+        //触发读取(//TODO 放在这里可能导致IO频次太多)
+        //检查是否需要读取系统音乐
+        lifecycleScope.launch(Dispatchers.IO) {
+            //检查本地数据库是否已有音乐数据
+            if (AudioRepo(context).isEmpty()){
+                //通知状态变更
+                DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
+
+                val mediaReader = AudioSysApiQuerier(context, context.contentResolver)
+                mediaReader.readAndSaveAllMusics()
+
+            }
+        }
     }
     //页签点击切换
     private lateinit var ButtonCard_Area: HorizontalScrollView
@@ -873,6 +931,28 @@ class ListManagerFragment: DialogFragment() {
     }
 
 
+    //播放器脱离卡死
+    private fun escapePlayerError(){
+        AlertDialog.Builder(context)
+            .setTitle("确定脱离播放器卡死吗?")
+            .setMessage("当无法正常播放时使用。会使正在播放的媒体立即停止")
+            .setPositiveButton("确认") { dialog, _ ->
+                ToolVibrate().vibrate(context)
+                PlayerSingleton.stopPlayEngine()
+                dialog.dismiss()
+
+                customDismiss()
+
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                ToolVibrate().vibrate(context)
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+
+    }
 
     //播放点击事件
     private fun onPlayClick() {
@@ -889,14 +969,19 @@ class ListManagerFragment: DialogFragment() {
 
 
 
-    //发布事件回Activity
+    //发布事件回Activity  fragment_request_key_play_list_reverse   Fragment -> Activity
+    @Suppress("unused")
     private fun returnFragmentResult(event: String){
-        val result = bundleOf(FragmentConnector.receive_key to event)
-        setFragmentResult(FragmentConnector.fragment_request_key_play_list, result)
+        val result = Bundle().apply { putString(FragmentConnector.receive_key, event) }
+        setFragmentResult(FragmentConnector.fragment_request_key_play_list_reverse, result)
     }
+    @Suppress("unused")
     private fun returnFragmentResult(event: String,extra: String){
-        val result = bundleOf(FragmentConnector.receive_key to event,FragmentConnector.extra_key to extra)
-        setFragmentResult(FragmentConnector.fragment_request_key_play_list, result)
+        val result = Bundle().apply {
+            putString(FragmentConnector.receive_key, event)
+            putString(FragmentConnector.extra_key, extra)
+        }
+        setFragmentResult(FragmentConnector.fragment_request_key_play_list_reverse, result)
     }
 
 
@@ -968,7 +1053,8 @@ class ListManagerFragment: DialogFragment() {
 
     //设置面板几何参数
     private fun display(view: View){
-        //获取状态栏高度(由于函数调用处提前,已无法获取高度)
+        //获取状态栏高度(由于函数调用处提前,已无法获取高度)(这个东西有点意思,留着不要删)
+        @Suppress("unused")
         fun getStatusBarHeightFromView(view: View): Int {
             val rect = Rect()
             view.getWindowVisibleDisplayFrame(rect)
@@ -1027,6 +1113,7 @@ class ListManagerFragment: DialogFragment() {
     }
 
     //日志
+    @Suppress("unused")
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "ListManagerFragment: $msg")

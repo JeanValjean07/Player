@@ -8,10 +8,24 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
+import androidx.core.net.toUri
+import coil.size.Dimension
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioDataClass
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoDataClass
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
+import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
+import com.suming.player.FuncionalPack.MediaType
+import com.suming.player.FuncionalPack.PlayerInfoCenter
+import com.suming.player.PlayerSingleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-@Suppress("unused")
+@Suppress("/unused")
 object ListManagerHelper {
     //context
     private lateinit var context: Application
@@ -29,6 +43,8 @@ object ListManagerHelper {
             Log.d("SuMing", "ListManagerHelper: $msg")
         }
     }
+    //空字段
+    const val Undefined = ""
 
 
 
@@ -155,10 +171,287 @@ object ListManagerHelper {
 
 
 
+    //音乐列表
+    var ListContent_AudioList = mutableListOf<AudioDataClass>()
+    //从数据库获取音乐列表
+    private val coroutine_load = CoroutineScope(Dispatchers.IO)
+    fun GET_AudioList_fromDataBase(){
+        coroutine_load.launch{
+            ListContent_AudioList.clear()
+            ListContent_AudioList.addAll(AudioRepo(context).getAllMusics())
+
+        }
+
+    }
+
+    //视频列表
+    var ListContent_VideoList = mutableListOf<VideoDataClass>()
+    //从数据库获取视频列表
+    fun GET_VideoList_fromDataBase(){
+        coroutine_load.launch{
+            ListContent_VideoList.clear()
+            ListContent_VideoList.addAll(VideoRepo(context).getAllVideoItems())
+
+        }
+
+
+    }
+
+    //从音乐列表中获取上一个或下一个音乐 (返回 URI_S_O )
+    private fun GET_NextOrPrev_Media_formAudioList(target: String,I_ongoing_URI_S_FP:String=Undefined):String {
+        if (ListContent_AudioList.isEmpty()) return Undefined
+        val ongoing_URI_S_FP = if (I_ongoing_URI_S_FP == Undefined){
+            PlayerInfoCenter.GET_Media_URI_S_FP()
+        }else{
+            I_ongoing_URI_S_FP
+        }
+        //定位当前项索引
+        val current_index = ListContent_AudioList.indexOfFirst { it.URI_S_FP == ongoing_URI_S_FP }
+        //获取列表总项数
+        val totalCount = ListContent_AudioList.size
+        if (totalCount == 0) return Undefined
+
+        when(target){
+            Next -> {
+                val startIndex = current_index
+                val availableUri = findAvailableAudio(startIndex, direction = 1, maxAttempts = 3)
+                //availableUri可以是空字符串
+
+                return availableUri
+            }
+            Previous -> {
+                val startIndex = current_index
+                val availableUri = findAvailableAudio(startIndex, direction = -1, maxAttempts = 3)
+                //注意availableUri可以是空字符串
+
+                return availableUri
+            }
+            else -> return Undefined
+        }
+    }
+    //从视频列表中获取上一个或下一个视频 (返回 URI_S_O )
+    private fun GET_NextOrPrev_Media_formVideoList(target: String,I_ongoing_URI_S_FP:String=Undefined):String {
+        if (ListContent_VideoList.isEmpty()) return Undefined
+        val ongoing_URI_S_FP = if (I_ongoing_URI_S_FP == Undefined){
+            PlayerInfoCenter.GET_Media_URI_S_FP()
+        }else{
+            I_ongoing_URI_S_FP
+        }
+        //定位当前项索引
+        val current_index = ListContent_VideoList.indexOfFirst { it.URI_S_FP == ongoing_URI_S_FP }
+        //获取列表总项数
+        val totalCount = ListContent_VideoList.size
+        if (totalCount == 0) return Undefined
+
+        when(target){
+            Next -> {
+                val startIndex = current_index
+                val availableUri = findAvailableVideo(startIndex, direction = 1, maxAttempts = 3)
+                //availableUri可以是空字符串
+
+                return availableUri
+            }
+            Previous -> {
+                val startIndex = current_index
+                val availableUri = findAvailableVideo(startIndex, direction = -1, maxAttempts = 3)
+                //注意availableUri可以是空字符串
+
+                return availableUri
+            }
+            else -> return Undefined
+        }
+    }
+
+    //direction Next = 1, Previous = -1
+    private fun findAvailableAudio(startIndex: Int, direction: Int, maxAttempts: Int = 3): String {
+        val totalCount = ListContent_AudioList.size
+        if (totalCount == 0) return Undefined
+
+        var attempts = 0
+        var currentIndex = startIndex
+
+        while (attempts < maxAttempts) {
+            //计算目标索引(索引可以循环)
+            var targetIndex = currentIndex + direction
+            if (targetIndex < 0) targetIndex = totalCount - 1
+            if (targetIndex >= totalCount) targetIndex = 0
+
+            //回到起始位置,已经遍历完全部
+            if (targetIndex == startIndex && attempts > 0){
+                break
+            }
+
+            val audioData = ListContent_AudioList[targetIndex]
+            //检查是否可读
+            if (isFileAccessible(audioData.URI_S_FP)) {
+                return audioData.URI_S_FP
+            }
+
+            //尝试下一个
+            attempts++
+            currentIndex = targetIndex
+        }
+
+        return Undefined
+    }
+    private fun findAvailableVideo(startIndex: Int, direction: Int, maxAttempts: Int = 3): String {
+        val totalCount = ListContent_VideoList.size
+        if (totalCount == 0) return Undefined
+
+        var attempts = 0
+        var currentIndex = startIndex
+
+        while (attempts < maxAttempts) {
+            //计算目标索引(索引可以循环)
+            var targetIndex = currentIndex + direction
+            if (targetIndex < 0) targetIndex = totalCount - 1
+            if (targetIndex >= totalCount) targetIndex = 0
+
+            //回到起始位置,已经遍历完全部
+            if (targetIndex == startIndex && attempts > 0){
+                break
+            }
+
+            val videoData = ListContent_VideoList[targetIndex]
+            //检查是否可读
+            if (isFileAccessible(videoData.URI_S_FP)) {
+                return videoData.URI_S_FP
+            }
+
+            //尝试下一个
+            attempts++
+            currentIndex = targetIndex
+        }
+
+        return Undefined
+    }
+    private fun isFileAccessible(uri: String): Boolean {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(Uri.parse(uri))
+            inputStream?.use { stream ->
+                //尝试读取第一个字节判断文件是否可读
+                stream.read() != -1
+            } ?: false
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 
 
 
 
+    //MediaSession调用入口
+    private var clickMillis_MediaSession_switchCall: Long = 0
+    fun MediaSessionCall_switchNextMedia(){
+        //点击频率限制
+        if (System.currentTimeMillis() - clickMillis_MediaSession_switchCall < 2000) {
+            return
+        }
+        clickMillis_MediaSession_switchCall = System.currentTimeMillis()
+
+
+        consoleLog("MediaSessionCall_switchNextMedia")
+        //检查当前使用的列表
+        val target_URI_S_FP = GET_NextOrPrev_Media_formCurrentList(Next)
+        if (target_URI_S_FP == Undefined) return
+        consoleLog("MediaSessionCall_switchPreviousMedia target_URI_S_FP = $target_URI_S_FP")
+
+        //发起播放
+        PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+
+
+    }
+    fun MediaSessionCall_switchPreviousMedia(){
+        //点击频率限制
+        if (System.currentTimeMillis() - clickMillis_MediaSession_switchCall < 2000) {
+            return
+        }
+        clickMillis_MediaSession_switchCall = System.currentTimeMillis()
+
+        consoleLog("MediaSessionCall_switchPreviousMedia")
+        //检查当前使用的列表
+        val target_URI_S_FP = GET_NextOrPrev_Media_formCurrentList(Previous)
+        if (target_URI_S_FP == Undefined) return
+        consoleLog("MediaSessionCall_switchPreviousMedia target_URI_S_FP = $target_URI_S_FP")
+
+        //发起播放
+        PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+
+
+    }
+    //自动播放调用入口(目前没区别,不确定后续有没有新功能加入)
+    fun onPlayEndCall_switchNextMedia(){
+        //检查当前使用的列表
+        val target_URI_S_FP = GET_NextOrPrev_Media_formCurrentList(Next)
+        if (target_URI_S_FP == Undefined) return
+        consoleLog("MediaSessionCall_switchPreviousMedia target_URI_S_FP = $target_URI_S_FP")
+
+        //发起播放
+        PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+
+    }
+    fun onPlayEndCall_switchPreviousMedia(){
+        //检查当前使用的列表
+        val target_URI_S_FP = GET_NextOrPrev_Media_formCurrentList(Previous)
+        if (target_URI_S_FP == Undefined) return
+        consoleLog("MediaSessionCall_switchPreviousMedia target_URI_S_FP = $target_URI_S_FP")
+
+        //发起播放
+        PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+
+
+    }
+
+
+    const val Next = "target_Next"
+    const val Previous = "target_Previous"
+    //从目标列表获取上一个或下一个
+    private fun GET_NextOrPrev_Media_formCurrentList(target: String):String{
+        when(state_currentPlayingListMark){
+            ListMark_Custom -> {
+                //从自定义列表中获取
+                return Undefined
+
+            }
+            ListMark_History -> {
+                //从已播列表中获取
+                //TODO 没做完,返回空
+                return Undefined
+
+            }
+            ListMark_Video -> {
+                //先检查正在播放的是视频还是音乐,如果是视频,则从视频列表中获取,否则从音乐列表中获取
+                val current_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+                if (current_MediaType == MediaType.Video){
+                    //从视频列表中获取
+                    return GET_NextOrPrev_Media_formVideoList(target)
+                }else if (current_MediaType == MediaType.Audio){
+                    //从音乐列表中获取
+                    return GET_NextOrPrev_Media_formAudioList(target)
+                }else{
+                    return Undefined
+                }
+
+
+            }
+            ListMark_Audio -> {
+                //先检查正在播放的是视频还是音乐,如果是视频,则从视频列表中获取,否则从音乐列表中获取
+                val current_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+                if (current_MediaType == MediaType.Video){
+                    //从视频列表中获取
+                    return GET_NextOrPrev_Media_formVideoList(target)
+                }else if (current_MediaType == MediaType.Audio){
+                    //从音乐列表中获取
+                    return GET_NextOrPrev_Media_formAudioList(target)
+                }else{
+                    return Undefined
+                }
+
+            }
+            else -> return Undefined
+        }
+    }
 
 
 
@@ -236,6 +529,9 @@ object ListManagerHelper {
         ListContent_HistoryList.clear()
     }
 
+    //来自Activity的消息字段
+    const val event_video_list_refresh = "event_video_list_refresh"
+    const val event_audio_list_refresh = "event_audio_list_refresh"
 
     //列表Fragment间通信字段
     const val event_key_general = "event_key_general"

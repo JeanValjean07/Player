@@ -102,7 +102,7 @@ class RecyclerAdapterMusic(
             holder.itemName.isSelected = true
         }
         holder.itemHandle.setOnClickListener {
-            onItemClick(item.content_uriString.toUri())
+            onItemClick(item.URI_S_FP.toUri())
         }
         holder.ButtonOptions.setOnClickListener {
             onOptionsClick(item, it)
@@ -111,7 +111,7 @@ class RecyclerAdapterMusic(
 
 
     //Long Thread Functions
-    private fun loadArtworkFrame(item: MediaItemFullForAudio, holder: ViewHolder)   {
+    private fun loadArtworkFrame(item: MediaItemFullForAudio, holder: ViewHolder) {
         //记录holder的tag
         val imageTag = item.media_api_NUM_ID.hashCode().toString()
         holder.itemFrame.tag = imageTag
@@ -153,7 +153,7 @@ class RecyclerAdapterMusic(
             //consoleLog("captureAlbumFrame: ${item.file_name} ${item.content_uriString}")
             var Bitmap = ArtworkCapturer.captureAlbumInMusic(
                 context = context,
-                uri = item.content_uriString.toUri(),
+                uri = item.URI_S_FP.toUri(),
                 needCompress = true,
             )
 

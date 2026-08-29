@@ -72,6 +72,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     //连接到共享ViewModel
     private val viewModel: PlayerViewModel by activityViewModels()
+    //空字段
+    private val Undefined = ""
 
 
 
@@ -230,7 +232,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     override fun onResume() {
         super.onResume()
-        //发布开启事件(暂时转移到mainBusiness末尾)
+        //发布开启事件
         returnFragment(FragmentConnector.fragment_event_open)
     }
     override fun onPause() {
@@ -602,13 +604,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
                 context?.showCustomToast("暂不开放此功能", 3)
 
-                /*
-                val result = bundleOf("KEY" to "Equalizer")
-                setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-
-                Dismiss()
-
-                 */
             }
             //清除当前进度条缩略图
             val ButtonClearMiniature = view.findViewById<TextView>(R.id.ButtonReCreateThumb)
@@ -864,10 +859,13 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
             //未显示进度条
             if (SettingsRequestCenter.GET_PRF_PlayPageType(requireContext()) == SettingsRequestCenter.PlayPageType_Neo){
-                if (viewModel.state_s_area_type == S_Area_Helper.S_AreaType_SEEKBAR){
 
-                    val text = "这是由于媒体所在的文件夹为非公有文件夹，或者文件夹被.nomedia标记，导致程序无法获取所需的必要信息，同时导致媒体信息等可能无法查看。" +
-                            "\n\n要解决此问题，请将媒体文件移动至公开文件夹，他们是：DCIM, Pictures, Movies, Music, Downloads, Documents，并保证文件夹未受到.nomedia等标记的影响。"
+
+                    val text = "未显示进度条：" +
+                        "\n高版本系统可能存在权限问题，导致程序无法正常截取缩略图，此时将退回传统进度条。" +
+                        "\n\n进度条缩略图与视频不匹配：" +
+                        "\n若媒体存在于非公有文件夹或被.nomedia标记的文件夹，媒体库不会为媒体分配自增ID，程序自主算出一个ID。在极端情况下，ID可能冲突，导致一个媒体的进度条缩略图是其他媒体的。"
+
 
 
                     val LinearLayout_whyNotShowScroller = view.findViewById<LinearLayout>(R.id.LinearLayout_whyNotShowScroller)
@@ -877,7 +875,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                         ToolVibrate().vibrate(requireContext())
 
                         AlertDialog.Builder(requireContext())
-                            .setTitle("未显示进度条？")
+                            .setTitle("未显示进度条或进度条异常？")
                             .setMessage(text)
                             .setPositiveButton("了解") { dialog, which ->
                                 ToolVibrate().vibrate(requireContext())
@@ -892,18 +890,18 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
                     }
-                }
+
             }
-            //信息残缺(获取不到NUM_ID)
-            if (PlayerInfoCenter.GET_Media_NUM_ID() <= 0){
+            //信息残缺
+            if (PlayerInfoCenter.GET_Media_FilePath() == Undefined){
                 val LinearLayout_whyInformationLame = view.findViewById<LinearLayout>(R.id.LinearLayout_whyInformationLame)
                 val TextView_whyInformationLame = view.findViewById<TextView>(R.id.Button_whyInformationLame)
                 LinearLayout_whyInformationLame.visibility = View.VISIBLE
-                LinearLayout_whyInformationLame.setOnClickListener {
+                TextView_whyInformationLame.setOnClickListener {
                     ToolVibrate().vibrate(requireContext())
 
-                    val text = "这是由于媒体所在的文件夹为非公有文件夹，或者文件夹被.nomedia标记，导致程序无法获取所需的必要信息。在这种情况下，许多功能不可用。" +
-                            "\n\n要解决此问题，请将媒体文件移动至公开文件夹，他们是：DCIM, Pictures, Movies, Music, Downloads, Documents，并保证文件夹未受到.nomedia等标记的影响。"
+                    val text = "由于高版本系统权限收紧，程序可能无法正常获取文件路径等信息" +
+                            "\n\n此时多项检查将会失效，并且不保证此种情况下程序正常运行，可能存在崩溃风险。"
 
 
                     AlertDialog.Builder(requireContext())
@@ -929,14 +927,14 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
     }
 
-    //发布事件
+    //发布事件回Activity  Fragment -> Activity  fragment_request_key_more_button_reverse
     private fun returnFragment(event: String){
         val result = bundleOf(FragmentConnector.receive_key to event)
-        setFragmentResult(FragmentConnector.fragment_request_key_more_button, result)
+        setFragmentResult(FragmentConnector.fragment_request_key_more_button_reverse, result)
     }
     private fun returnFragment(event: String,extra: String){
         val result = bundleOf(FragmentConnector.receive_key to event,FragmentConnector.extra_key to extra)
-        setFragmentResult(FragmentConnector.fragment_request_key_more_button, result)
+        setFragmentResult(FragmentConnector.fragment_request_key_more_button_reverse, result)
     }
 
 

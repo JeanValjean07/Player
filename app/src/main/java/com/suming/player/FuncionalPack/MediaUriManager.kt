@@ -75,6 +75,7 @@ object MediaUriManager {
     const val uriType_media_store_detail = "uriType_media_store_detail"
     const val uriType_media_store_file = "uriType_media_store_file"
     const val uriType_contain_file_path = "uriType_contain_file_path"
+    const val uriType_other_content_provider = "uriType_other_content_provider"
     fun detectMediaUriTypeMode(URI: Uri?): String {
         //consoleLog("detectMediaUriTypeMode -URI = $URI")
         if (URI == null) return uriType_null
@@ -87,7 +88,7 @@ object MediaUriManager {
             //检查authority和path
             val authority = URI.authority ?: Undefined
             val path = URI.path ?: Undefined
-            //consoleLog("detectMediaUriTypeMode -检查authority和path authority:${authority},path:$path")
+            consoleLog("detectMediaUriTypeMode -检查authority和path authority:${authority},path:$path")
 
             when {
                 //MediaStore URI Authority
@@ -114,11 +115,14 @@ object MediaUriManager {
                 }
                 //包含文件路径
                 ((path.contains("storage/emulated/0"))) -> {
+                    return uriType_other_content_provider    //测试中,原是 uriType_contain_file_path
+                }
+                //包含文件路径
+                ((path.contains("/external_files/"))) -> {
                     return uriType_contain_file_path
                 }
-
-                //其他
-                else -> return uriType_null
+                //其他ContentProvider URI
+                else -> return uriType_other_content_provider
 
             }
         }else{

@@ -39,7 +39,7 @@ class VideoDataBaseLoader(private val context: Context) : PagingSource<Int, Medi
                         media_api_SPECIFIC_ID = setting.media_api_SPECIFIC_ID,
                         media_api_NUM_ID = setting.media_api_NUM_ID,
                         media_api_dateAdded = setting.media_api_dateAdded,
-                        content_uriString = setting.content_uriString,
+                        URI_S_FP = setting.URI_S_FP,
                         file_path = setting.file_path,
                         file_name = setting.file_name,
                         file_size = setting.file_size,

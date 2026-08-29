@@ -828,14 +828,14 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             String.format("%02d时%02d分%02d秒",  hours, minutes, seconds)
         }
     }
-    //发布事件
+    //发布事件回Activity  Fragment -> Activity  fragment_request_key_media_info_reverse
     private fun returnFragment(event: String){
         val result = bundleOf(FragmentConnector.receive_key to event)
-        setFragmentResult(FragmentConnector.fragment_request_key_media_info, result)
+        setFragmentResult(FragmentConnector.fragment_request_key_media_info_reverse, result)
     }
     private fun returnFragment(event: String,extra: String){
         val result = bundleOf(FragmentConnector.receive_key to event,FragmentConnector.extra_key to extra)
-        setFragmentResult(FragmentConnector.fragment_request_key_media_info, result)
+        setFragmentResult(FragmentConnector.fragment_request_key_media_info_reverse, result)
     }
     //Tool Functions
     //设置面板几何参数

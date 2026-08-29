@@ -8,7 +8,7 @@ data class MediaItemFullForAudio (
     val media_api_NUM_ID: Long = 0,
     val media_api_dateAdded: Long = 0,
     val media_SPECIFIC_MediaType: String = "",
-    val content_uriString: String,
+    val URI_S_FP: String,
     val file_path: String = "",
     val file_name: String = "",
     val file_size: Long,
@@ -30,7 +30,7 @@ data class MediaItemFullForAudio (
                 media_api_NUM_ID = parcel.readLong(),
                 media_api_dateAdded = parcel.readLong(),
                 media_SPECIFIC_MediaType = parcel.readString()!!,
-                content_uriString = parcel.readString()!!,
+                URI_S_FP = parcel.readString()!!,
                 file_path = parcel.readString()!!,
                 file_name = parcel.readString()!!,
                 file_size = parcel.readLong(),
@@ -59,7 +59,7 @@ data class MediaItemFullForAudio (
         dest.writeLong(media_api_NUM_ID)
         dest.writeLong(media_api_dateAdded)
         dest.writeString(media_SPECIFIC_MediaType)
-        dest.writeString(content_uriString)
+        dest.writeString(URI_S_FP)
         dest.writeString(file_path)
         dest.writeString(file_name)
         dest.writeLong(file_size)

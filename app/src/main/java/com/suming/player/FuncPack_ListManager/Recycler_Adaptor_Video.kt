@@ -11,13 +11,16 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterVideo.ViewHolder
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
+import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
@@ -90,6 +93,7 @@ class Recycler_Adaptor_Video(
 
     }
     //协程
+    private val coroutine_capArtwork = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutine_loadArtwork = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutine_loadArtwork_in = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -115,9 +119,9 @@ class Recycler_Adaptor_Video(
         val item = getItem(position) ?: return
 
         //检查是不是当前媒体
-        if (item.content_uriString == PlayerInfoCenter.GET_Media_URI_S_FP()){
+        if (item.URI_S_FP == PlayerInfoCenter.GET_Media_URI_S_FP()){
             holder.setItemPlayingCard(true)
-            currentItemUri = item.content_uriString
+            currentItemUri = item.URI_S_FP
             //检查并设置播放状态
             holder.setItemPlayingButton(PlayerInfoCenter.observableIsPlaying.value)
         }else{
@@ -152,7 +156,7 @@ class Recycler_Adaptor_Video(
             when (payloads.firstOrNull()) {
 
                 ListManagerHelper.payload_event_item_update -> {
-                    if (item?.content_uriString == PlayerInfoCenter.GET_Media_URI_S_FP()){
+                    if (item?.URI_S_FP == PlayerInfoCenter.GET_Media_URI_S_FP()){
                         holder.setItemPlayingCard(true)
                     }else{
                         holder.setItemPlayingCard(false)
@@ -189,7 +193,7 @@ class Recycler_Adaptor_Video(
 
 
     //Long Thread Functions
-    private fun loadArtworkFrame(item: MediaItemFullForVideo, holder: viewHolder)  {
+    private fun loadArtworkFrame(item: MediaItemFullForVideo, holder: viewHolder) {
         //记录holder的tag
         val imageTag = item.media_api_NUM_ID.toString()
         holder.itemFrame.tag = imageTag
@@ -207,14 +211,51 @@ class Recycler_Adaptor_Video(
                     }
                 }else{ Frame.recycle() }
 
+            }else{
+                //截取图片
+                capArtworkFrame(item, holder)
             }
 
         }
 
     }
 
+    //截取缩略图
+    private fun capArtworkFrame(item: MediaItemFullForVideo, holder: viewHolder){
+        coroutine_capArtwork.launch(Dispatchers.IO){
+            //截取图片(让ArtworkCapturer承担截图任务)
+            val Bitmap = ArtworkCapturer.captureFrameInVideo(
+                context = context,
+                uri = item.URI_S_FP.toUri(),
+                videoDurationUs = item.media_durationMs * 1_000L,
+                timeUs = 0L,
+                option = ArtworkCapturer.OPTION_CLOSEST_SYNC,
+                needCheckDark = true,
+                needCompress = true,
+            )
+
+            //检查是否取图成功
+            if (Bitmap == null){
+                //consoleLog("截取视频封面失败: file_name=${item.file_name}")
+                return@launch
+            }else{
+                //consoleLog("截取视频封面成功: file_name=${item.file_name}")
+            }
+
+            //推送到ImageView
+            withContext(Dispatchers.Main) { submitToImageViewNoAnim(holder,Bitmap) }
+
+            //保存图片
+            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Video, item.media_api_NUM_ID, Bitmap)
+
+        }
+    }
+
     //推送到ImageView
     private fun submitToImageView(holder: viewHolder, Bitmap : Bitmap){
+        holder.itemFrame.setImageBitmap(Bitmap)
+    }
+    private fun submitToImageViewNoAnim(holder: viewHolder, Bitmap : Bitmap){
         holder.itemFrame.setImageBitmap(Bitmap)
     }
 
@@ -244,7 +285,7 @@ class Recycler_Adaptor_Video(
         currentItemUri = targetItemUri
 
         snapshot().forEachIndexed { index, item ->
-            if (item?.content_uriString == targetItemUri || item?.content_uriString == cache) {
+            if (item?.URI_S_FP == targetItemUri || item?.URI_S_FP == cache) {
 
                 notifyItemChanged(index, payloads)
             }
@@ -254,7 +295,7 @@ class Recycler_Adaptor_Video(
     //切换当前播放状态
     fun updateCurrentIsPlayingState(targetItemUri: String,newIsPlaying: Boolean, payloads: Any){
         snapshot().forEachIndexed { index, item ->
-            if (item?.content_uriString == targetItemUri) {
+            if (item?.URI_S_FP == targetItemUri) {
 
                 notifyItemChanged(index, payloads)
             }
@@ -264,7 +305,7 @@ class Recycler_Adaptor_Video(
     fun clearPlayingItem(payloads: Any){
         consoleLog("清理播放标记 clearPlayingItem")
         snapshot().forEachIndexed { index, item ->
-            if (item?.content_uriString == currentItemUri){
+            if (item?.URI_S_FP == currentItemUri){
                 notifyItemChanged(index, payloads)
             }
         }

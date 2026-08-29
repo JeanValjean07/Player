@@ -11,13 +11,16 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterMusic.ViewHolder
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
+import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
@@ -82,6 +85,7 @@ class Recycler_Adaptor_Audio(
         }
     }
     //协程
+    private val coroutine_captureAlbum = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutine_loadArtwork = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutine_loadArtwork_in = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -97,9 +101,9 @@ class Recycler_Adaptor_Audio(
         val item = getItem(position) ?: return
 
         //检查是不是当前媒体
-        if (item.content_uriString == PlayerInfoCenter.GET_Media_URI_S_FP()){
+        if (item.URI_S_FP == PlayerInfoCenter.GET_Media_URI_S_FP()){
             holder.setItemPlayingCard(true)
-            currentItemUri = item.content_uriString
+            currentItemUri = item.URI_S_FP
             //检查并设置播放状态
             holder.setItemPlayingButton(PlayerInfoCenter.observableIsPlaying.value)
         }else{
@@ -131,7 +135,7 @@ class Recycler_Adaptor_Audio(
             val item = getItem(position)
             when (payloads.firstOrNull()) {
                 ListManagerHelper.payload_event_item_update -> {
-                    if (item?.content_uriString == PlayerInfoCenter.GET_Media_URI_S_FP()){
+                    if (item?.URI_S_FP == PlayerInfoCenter.GET_Media_URI_S_FP()){
                         holder.setItemPlayingCard(true)
                     }else{
                         holder.setItemPlayingCard(false)
@@ -181,16 +185,51 @@ class Recycler_Adaptor_Audio(
                         submitToImageView(holder,Bitmap)
                     }else{ Bitmap.recycle() }
                 }
+            }else{
+                //获取专辑封面
+                captureAlbumFrame(item, holder)
             }
         }
     }
+
+    //生成缩略图
+    private fun captureAlbumFrame(item: MediaItemFullForAudio, holder: viewHolder){
+        coroutine_captureAlbum.launch {
+            //获取专辑封面(让ArtworkCapturer承担截图任务)
+            //consoleLog("captureAlbumFrame: ${item.file_name} ${item.content_uriString}")
+            var Bitmap = ArtworkCapturer.captureAlbumInMusic(
+                context = context,
+                uri = item.URI_S_FP.toUri(),
+                needCompress = true,
+            )
+
+            //检查是否取图成功
+            if (Bitmap == null){
+                Bitmap = ArtworkCapturer.getDefaultAlbumFrame(context)
+            }
+
+            if (Bitmap == null){
+                return@launch
+            }
+
+            //推送到ImageView
+            withContext(Dispatchers.Main) { submitToImageViewNoAnim(holder,Bitmap) }
+
+            //保存图片
+            ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap(context, MediaType.Audio, item.media_api_NUM_ID, Bitmap)
+
+        }
+    }
+
 
     //推送到ImageView
     private fun submitToImageView(holder: viewHolder,Bitmap : Bitmap){
         holder.itemFrame.setImageBitmap(Bitmap)
 
     }
-
+    private fun submitToImageViewNoAnim(holder: viewHolder,Bitmap : Bitmap){
+        holder.itemFrame.setImageBitmap(Bitmap)
+    }
 
     //外部控制
     //重置可见项
@@ -213,7 +252,7 @@ class Recycler_Adaptor_Audio(
         currentItemUri = targetItemUri
 
         snapshot().forEachIndexed { index, item ->
-            if (item?.content_uriString == targetItemUri || item?.content_uriString == cache) {
+            if (item?.URI_S_FP == targetItemUri || item?.URI_S_FP == cache) {
 
                 notifyItemChanged(index, payloads)
             }
@@ -223,7 +262,7 @@ class Recycler_Adaptor_Audio(
     //切换当前播放状态
     fun updateCurrentIsPlayingState(targetItemUri: String,newIsPlaying: Boolean, payloads: Any){
         snapshot().forEachIndexed { index, item ->
-            if (item?.content_uriString == targetItemUri) {
+            if (item?.URI_S_FP == targetItemUri) {
 
                 notifyItemChanged(index, payloads)
             }
@@ -233,7 +272,7 @@ class Recycler_Adaptor_Audio(
     fun clearPlayingItem(payloads: Any){
         //consoleLog("清理播放标记 clearPlayingItem")
         snapshot().forEachIndexed { index, item ->
-            if (item?.content_uriString == currentItemUri){
+            if (item?.URI_S_FP == currentItemUri){
                 notifyItemChanged(index, payloads)
             }
         }

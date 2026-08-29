@@ -147,7 +147,7 @@ class RecyclerAdapterVideo(
     //点击事件
     private fun onClickFunc_touchLayer(item: MediaItemFullForVideo){
         //consoleLog("onClickFunc_touchLayer: item.file_path = ${item.file_path}")
-        onItemClick(item.content_uriString.toUri(), item.file_path)
+        onItemClick(item.URI_S_FP.toUri(), item.file_path)
     }
     private fun onClickFunc_tvDuration(item: MediaItemFullForVideo){
         onClick_Duration(item)
@@ -189,7 +189,7 @@ class RecyclerAdapterVideo(
             //截取图片(让ArtworkCapturer承担截图任务)
             val Bitmap = ArtworkCapturer.captureFrameInVideo(
                 context = context,
-                uri = item.content_uriString.toUri(),
+                uri = item.URI_S_FP.toUri(),
                 videoDurationUs = item.media_durationMs * 1_000L,
                 timeUs = 0L,
                 option = ArtworkCapturer.OPTION_CLOSEST_SYNC,

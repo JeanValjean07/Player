@@ -64,7 +64,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.animation.PathInterpolatorCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -84,6 +86,7 @@ import com.suming.player.ActivityComponent.PlayerActivity.S_Area_Helper
 import com.suming.player.ActivityComponent.PlayerActivity.SmoothScroller
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ActivityResultConnector
@@ -119,96 +122,21 @@ import kotlin.math.hypot
 import kotlin.math.pow
 
 @UnstableApi
-@Suppress("NewApi","unused")
+@Suppress("NewApi","/unused")
 class PlayerActivityNeo: AppCompatActivity(){
     //变量初始化
     //<editor-fold desc="变量初始化">
-
-
-
-
-    //播放区域点击事件
-    private var touchState_two_fingers = false
-    private var ACTION_POINTER_DOWN = false
-    private var originalDistance = 0f
-    private var distanceGap = 0f
-    private var center0x = 0f
-    private var center0y = 0f
-    private var center1x = 0f
-    private var center1y = 0f
-    private var originalScale = 1f
-    private var scale = 1.0
-    private var definiteScale = 1.0f
-    private var center2x = 0f
-    private var center2y = 0f
-    private var center0pivoted = false
-    private var finger1x = 0f
-    private var finger1y = 0f
-    private var finger2x = 0f
-    private var finger2y = 0f
-
-    //自动旋转状态
-    private var rotationSetting = 0
-
-
-
-    //滑动手势
-    private var longPress = false
-    private var touchLeft = false
-    private var touchRight = false
-    private var touchCenter = false
-    private var scrollDistance = 0
     //方向回调
     private var orientationChangeTime = 0L
     private var LastOrientationChangeTime = 0L
 
-
-
-
-
-
+    //自动旋转状态
+    private var rotationSetting = 0
 
     //倍速播放
     private var currentSpeed = 1.0f
 
-    private var singleTap = false
-
-
-
-
-
-
-
-
-
-    private var videoTimeSyncHandler_currentPosition = 0L
-
-
-
-
-
-
-
-
-
-
-    private var touchState_need_exit = false
-    private var touchState_left_noticed = false
-    private var touchState_right_noticed = false
-    private var touchState_need_exit_vibrated = false
-    private var touchState_scroll_vibrated = false
-
-
-
-
-    private var state_RootCardClosing = false
-
-    private var touchCenterDistance = 0f
-
-
     //</editor-fold>
-
-
 
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
@@ -217,7 +145,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //context
-    val context = this@PlayerActivityNeo
+    private val context = this@PlayerActivityNeo
     //获取播放器引用
     private var player: ExoPlayer? = null
     //连接到viewModel
@@ -232,8 +160,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
     @OptIn(UnstableApi::class)
-    @SuppressLint("CutPasteId", "SetTextI18n", "InflateParams", "RestrictedApi", "SourceLockedOrientationActivity", "UseKtx","DEPRECATION", "CommitPrefEdits")
-    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //初始化
@@ -241,6 +167,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //确保播放器已启动并确保本地监听器已附加
         connectToExoPlayer()
+
+        startExoPlayerIdleObserver()
 
         //注册控件和手势
         register()
@@ -303,7 +231,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
 
     }
-    @SuppressLint("UnsafeIntentLaunch")
+
     override fun onNewIntent(newIntent: Intent?) {
         super.onNewIntent(newIntent)
         consoleLog("onNewIntent")
@@ -580,7 +508,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                     override fun onLongPress(e: MotionEvent) {
                         if (ACTION_POINTER_DOWN) return
-                        if (player?.isPlaying == true) {
+                        if (player?.isPlaying == false) {
                             return
                         }
                         currentSpeed = player?.playbackParameters?.speed ?: 1.0f
@@ -720,7 +648,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                             }
                         }
                         if (touchCenter) {
-                            state_RootCardClosing = true
                             touchCenterDistance += distanceY
                             if (touchCenterDistance < -playerViewModel.value_scrollDownExitDistance) {
                                 touchState_need_exit = true
@@ -873,10 +800,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                 onTouchEvent(event)
             }
         }
-        //注册Fragment监听器
+        //注册Fragment监听器(Fragment -> Activity 反向传递需要用带 reverse 的 request key)
         lifecycleScope.launch(Dispatchers.Main) {
-            //均衡器面板
-            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_equalizer, context) { _, bundle ->
+            //均衡器面板  Fragment -> Activity  fragment_request_key_equalizer_reverse
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_equalizer_reverse, context) { _, bundle ->
                 val receive_key = bundle.getString(FragmentConnector.receive_key)
                 when(receive_key){
                     //开启/退出事件
@@ -896,8 +823,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                 }
             }
-            //更多操作面板
-            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_more_button, context) { _, bundle ->
+            //更多操作面板  Fragment -> Activity  fragment_request_key_more_button_reverse
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_more_button_reverse, context) { _, bundle ->
                 val receive_key = bundle.getString(FragmentConnector.receive_key)
                 when(receive_key){
                     //截屏
@@ -992,8 +919,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                     FragmentConnector.fragment_more_button_update_keep_screen_on -> updateKeepScreenOn()
                 }
             }
-            //播放列表
-            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_play_list, context) { _, bundle ->
+            //播放列表  Fragment -> Activity  fragment_request_key_play_list_reverse
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_play_list_reverse, context) { _, bundle ->
                 val receive_key = bundle.getString(FragmentConnector.receive_key)
                 when(receive_key){
                     //开启/退出事件
@@ -1005,8 +932,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                 }
             }
-            //媒体信息
-            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_media_info, this@PlayerActivityNeo) { _, bundle ->
+            //媒体信息  Fragment -> Activity  fragment_request_key_media_info_reverse
+            supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_media_info_reverse, context) { _, bundle ->
                 val receive_key = bundle.getString(FragmentConnector.receive_key)
                 when(receive_key){
                     //开启/退出事件
@@ -1224,12 +1151,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                 Player.STATE_ENDED -> {
                     playState_playEnd()
                 }
-                //播放器进入空闲状态
                 Player.STATE_IDLE -> {
-                    consoleLog("onPlaybackStateChanged: STATE_IDLE")
-
-                    onPlayEngineIdle()
-
+                    //IDLE处理已转移到PlayerInfoCenter的Observable中
                 }
             }
         }
@@ -1248,7 +1171,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //媒体项变更(clearItem时会收到null)
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            //consoleLog("onMediaItemTransition: $mediaItem, $reason")
+            consoleLog("onMediaItemTransition: $mediaItem, $reason")
             //媒体项变更
             if (mediaItem == null){
                 //媒体项被清除
@@ -1265,50 +1188,119 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private var state_PlayerListenerAdded: Boolean = false
 
-    //连接ExoPlayer(可发起启动)
-    private fun connectToExoPlayer(){
+    //播放器ID观察器
+    private fun startExoPlayerIdleObserver(){
+        lifecycleScope.launch{
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                PlayerInfoCenter.observableIsIdle.collect { state ->
+                    consoleLog("observableIsIdle: $state")
+                    if (state == 0L){
+                        //播放器未启动或者Idle了
+                        onPlayEngineIdle()
+                    }else{
+                        //检查ID
+                        if (state == cache_player_ID){
+                            //播放器实例未变更
 
+                        }else{
+
+                            onPlayEnginRestart(state)
+
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    //播放器进入空闲状态
+    private fun onPlayEngineIdle(){
+        consoleLog("onPlayEngineIdle")
+        //进行收尾工作(移除监听器,移除引用)
+        removeExoPlayerListener()
+        player = null
+        //清除播放项
+        onMediaItemCleared()
+        showErrorCover("播放器正在恢复")
+
+    }
+    //播放器重新上线
+    private fun onPlayEnginRestart(new_ID:Long){
+
+            consoleLog("onPlayEnginRestart: $new_ID")
+
+            //重新拿取引用
+            player = PlayerSingleton.getPlayer()
+            if (player == null){
+                consoleLog("onPlayEnginRestart: 未拿到播放器引用")
+                return
+            }else{
+                consoleLog("onPlayEnginRestart: 成功拿到播放器引用")
+            }
+            //记入缓存
+            cache_player_ID = new_ID
+
+            //
+            showErrorCover("当前没有正在播放的项")
+
+            //重新添加监听器
+            startExoPlayerListener()
+
+
+
+
+    }
+
+
+    //连接ExoPlayer(可发起启动)
+    private var cache_player_ID = 0L
+    private fun connectToExoPlayer(){
         //确保播放器已启动并获得引用
-        player = PlayerSingleton.getInitPlayer()
+        player = PlayerSingleton.getPlayer()
+        //记入缓存
+        cache_player_ID = PlayerSingleton.cache_player_ID
         //添加播放器事件监听
         startExoPlayerListener()
     }
     private fun startExoPlayerListener(){
-        player?.removeListener(PlayerStateListener)
-        player?.addListener(PlayerStateListener)
+        if (state_PlayerListenerAdded) return
         state_PlayerListenerAdded = true
+        consoleLog("startExoPlayerListener")
+        player?.addListener(PlayerStateListener)
+
     }
     private fun removeExoPlayerListener(){
-        player?.removeListener(PlayerStateListener)
-
+        if (!state_PlayerListenerAdded) return
         state_PlayerListenerAdded = false
+        consoleLog("removeExoPlayerListener")
+        player?.removeListener(PlayerStateListener)
     }
     //设置新媒体项
-    private fun setNewMediaItem(URI_UP: Uri,file_path_e: String): Boolean{
-        //检查文件是否存在(多级获取file_path,最终仍获取不到就失败)
-        var file_path = file_path_e
+    private fun setNewMediaItem(URI_UP: Uri,file_path_o: String): Boolean{
+        //检查文件是否存在(文件路径可空,仅在有文件路径时检查)
+        var file_path = file_path_o
         if (file_path == Undefined){
             file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC1(context, URI_UP)
         }
         if (file_path == Undefined){
-            consoleLog("setNewMediaItem: 失败 无法获取 file_path, 原uri = $URI_UP")
-
-            showErrorCover("无法获取文件路径")
-
-            return false
+            file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC2(context, URI_UP)
         }
-        val file = File(file_path)
-        val exist = file.exists()
-        if (!exist){
-            consoleLog("setNewMediaItem: 失败-文件已不存在")
+        if (file_path != Undefined){
+            //仅在获取到文件路径时才检查文件是否存在
+            val file = File(file_path)
+            val exist = file.exists()
+            if (!exist){
+                consoleLog("setNewMediaItem: 失败-文件已不存在")
 
-            //清除当前项
-            PlayerSingleton.clearMediaItem()
+                //清除当前项
+                PlayerSingleton.clearMediaItem()
 
-            showErrorCover("文件不存在，请刷新列表")
+                showErrorCover("文件不存在，请刷新列表")
 
-            return false
+                return false
+            }
         }
+
 
         //确保已启动播放器
         connectToExoPlayer()
@@ -1428,43 +1420,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
 
-    //播放器进入空闲状态
-    private fun onPlayEngineIdle(){
-        consoleLog("onPlayEngineIDLE")
-
-        //清除播放项
-        onMediaItemCleared()
-        //显示错误面板
-        showErrorCover("播放器已离线，正在恢复中")
-
-        //清理监听器
-        removeExoPlayerListener()
-        //清除本地引用
-        player = null
-
-        //反向通知播放器重新启动
-        lifecycleScope.launch {
-            //反向通知播放器重新启动,并获得是否成功的反馈
-            val success = PlayerSingleton.onPlayEngineIDLE()
-            //若成功,重新拿到播放器引用
-            if (success){
-                //重新连接播放器
-                withContext(Dispatchers.Main){
-                    connectToExoPlayer()
-                }
-
-                showErrorCover("当前未在播放，可在播放列表面板中启动播放")
-
-            }else{
-                consoleLog("onPlayEngineIDLE: 失败-连接播放器")
-
-                showErrorCover("播放器错误")
-
-            }
-        }
-
-
-    }
 
     //检查文件是否还存在
     private fun detectFileExistState(){
@@ -1833,8 +1788,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         //解绑播放器视图
         playerView.player = null
 
-        //关闭播放器状态监听
-        player?.removeListener(PlayerStateListener)
+        //关闭播放器状态监听+丢弃引用
+        removeExoPlayerListener()
+        player = null
 
         //关闭本地监听器
         stopOrientationListener()
@@ -3831,14 +3787,15 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val task_timeStampSync_Handler = Handler(Looper.getMainLooper())
     private var task_timeStampSync_Runnable = object : Runnable{
         override fun run() {
-            videoTimeSyncHandler_currentPosition = player?.currentPosition ?: -1L
-            if (videoTimeSyncHandler_currentPosition == -1L) return
+            timeStampSync_cache_currentPosition = player?.currentPosition ?: -1L
+            if (timeStampSync_cache_currentPosition == -1L) return
 
-            controller_timer_current.text = FormatTime_onlyNum(videoTimeSyncHandler_currentPosition)
+            controller_timer_current.text = FormatTime_onlyNum(timeStampSync_cache_currentPosition)
 
             task_timeStampSync_Handler.postDelayed(this, 1000)
         }
     }
+    private var timeStampSync_cache_currentPosition = 0L
     private fun startVideoTimeSync() {
         task_timeStampSync_Handler.post(task_timeStampSync_Runnable)
     }
@@ -4066,6 +4023,44 @@ class PlayerActivityNeo: AppCompatActivity(){
             ButtonChangeOrientation("long")
         }
     }
+
+
+    //播放区域点击事件
+    //<editor-fold desc="点击事件变量">
+    private var touchState_two_fingers = false
+    private var ACTION_POINTER_DOWN = false
+    private var originalDistance = 0f
+    private var distanceGap = 0f
+    private var center0x = 0f
+    private var center0y = 0f
+    private var center1x = 0f
+    private var center1y = 0f
+    private var originalScale = 1f
+    private var scale = 1.0
+    private var definiteScale = 1.0f
+    private var center2x = 0f
+    private var center2y = 0f
+    private var center0pivoted = false
+    private var finger1x = 0f
+    private var finger1y = 0f
+    private var finger2x = 0f
+    private var finger2y = 0f
+    private var singleTap = false
+    private var touchState_need_exit = false
+    private var touchState_left_noticed = false
+    private var touchState_right_noticed = false
+    private var touchState_need_exit_vibrated = false
+    private var touchState_scroll_vibrated = false
+    private var touchCenterDistance = 0f
+    private var longPress = false
+    private var touchLeft = false
+    private var touchRight = false
+    private var touchCenter = false
+    private var scrollDistance = 0
+    //</editor-fold desc="点击事件">
+
+
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     //已废弃代码
     //退出动作决策程序(已废弃)

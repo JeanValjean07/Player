@@ -60,6 +60,7 @@ import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
 import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
 import com.suming.player.DataPack.MediaRecordPack
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
+import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ConnectCenter
@@ -81,7 +82,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Suppress("NewApi","unused")
+@Suppress("NewApi","/unused")
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
 
@@ -123,11 +124,12 @@ class MainActivity: AppCompatActivity() {
         setupEventObserver()
 
 
-
-
-
-
-
+        //发起列表读取
+        lifecycleScope.launch(Dispatchers.IO) {
+            delay(3000)
+            ListManagerHelper.GET_AudioList_fromDataBase()
+            ListManagerHelper.GET_VideoList_fromDataBase()
+        }
 
     }
 
@@ -246,9 +248,7 @@ class MainActivity: AppCompatActivity() {
                 ListRecyclerView_Music.stopScroll()
 
                 if (TestHelper.isTestMode){
-                    lifecycleScope.launch {
-                        PlayerSingleton.onPlayEngineIDLE()
-                    }
+
                 }else{
                     //
                     val intent = Intent(this@MainActivity, GuidanceActivity::class.java)
@@ -622,14 +622,14 @@ class MainActivity: AppCompatActivity() {
                         R.id.MenuAction_use_mini_view_play -> {
                             ToolVibrate().vibrate(this@MainActivity)
 
-                            startMiniViewPlay(mediaItem.content_uriString.toUri())
+                            startMiniViewPlay(mediaItem.URI_S_FP.toUri())
 
                             true
                         }
                         R.id.MenuAction_use_whole_play_page -> {
                             ToolVibrate().vibrate(this@MainActivity)
 
-                            startVideoPlayer(mediaItem.content_uriString.toUri(), mediaItem.file_path)
+                            startVideoPlayer(mediaItem.URI_S_FP.toUri(), mediaItem.file_path)
 
                             true
                         }
@@ -734,9 +734,7 @@ class MainActivity: AppCompatActivity() {
         lifecycleScope.launch {
             //观察正在播放的媒体项变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInfoCenter.observableMediaItem.collect { uriString ->
-                    //consoleLog("MiniView观察者 当前媒体: $uriString")
-
+                PlayerInfoCenter.observableMediaItem.collect { _ ->
                     //显示MiniView
                     showMiniViewLongProcess()
                 }
@@ -1406,7 +1404,6 @@ class MainActivity: AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 DataBaseStateConnector.state_queryDisk.collect { state ->
                     if (state.isEmpty()) return@collect
-                    //consoleLog("观察到媒体库加载状态变更: new state: $state")
                     //读取完成
                     if (state.contains(DataBaseStateConnector.state_queryDisk_success)) {
                         //刷新列表
@@ -1415,6 +1412,14 @@ class MainActivity: AppCompatActivity() {
                         refreshList()
                         //清空字段
                         DataBaseStateConnector.clearLoadState()
+                        //读取完成的消息发到Fragment
+                        supportFragmentManager.setFragmentResult(
+                            FragmentConnector.fragment_request_key_play_list,
+                            Bundle().apply {
+                                putString(FragmentConnector.receive_key, FragmentConnector.fragment_play_list_require_refresh)
+                            }
+                        )
+
                     }
                 }
             }
@@ -1803,6 +1808,7 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
+    @Suppress("unused")
     private fun Int.dpToPx(): Int {
         return (this * Resources.getSystem().displayMetrics.density).toInt()
     }

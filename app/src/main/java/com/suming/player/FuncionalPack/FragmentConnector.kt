@@ -25,7 +25,8 @@ object FragmentConnector {
     const val fragment_event_open = "fragment_event_open"
 
     //更多操作面板
-    const val fragment_request_key_more_button = "fragment_request_key_more_button"  //独立key
+    const val fragment_request_key_more_button = "fragment_request_key_more_button"  //Activity -> Fragment
+    const val fragment_request_key_more_button_reverse = "fragment_request_key_more_button_reverse" //Fragment -> Activity
     //更多操作面板具体事件
     const val fragment_more_button_capture_frame = "fragment_more_button_capture_frame"  //截屏
     const val fragment_more_button_back_to_start = "fragment_more_button_back_to_start"  //回到视频起始
@@ -50,17 +51,24 @@ object FragmentConnector {
 
 
     //播放列表面板
-    const val fragment_request_key_play_list = "fragment_request_key_play_list"
+    const val fragment_request_key_play_list = "fragment_request_key_play_list" //Activity -> Fragment
+    const val fragment_request_key_play_list_reverse = "fragment_request_key_play_list_reverse" //Fragment -> Activity
+    //播放列表面板具体事件
+    const val fragment_play_list_require_refresh = "fragment_play_list_require_refresh"
 
 
     //均衡器面板
-    const val fragment_request_key_equalizer = "fragment_request_key_equalizer"
+    const val fragment_request_key_equalizer = "fragment_request_key_equalizer" //Activity -> Fragment
+    const val fragment_request_key_equalizer_reverse = "fragment_request_key_equalizer_reverse" //Fragment -> Activity
     //均衡器面板具体事件
 
 
 
     //媒体信息面板
-    const val fragment_request_key_media_info = "fragment_request_key_media_info"
+    const val fragment_request_key_media_info = "fragment_request_key_media_info" //Activity -> Fragment
+    const val fragment_request_key_media_info_reverse = "fragment_request_key_media_info_reverse" //Fragment -> Activity
+    //媒体信息面板具体事件
+
 
 
     //媒体库面板request_key
