@@ -21,6 +21,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -44,8 +45,10 @@ import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
 import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
+import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
+import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
@@ -59,7 +62,7 @@ import kotlinx.coroutines.withContext
 @UnstableApi
 @SuppressLint("ComposableNaming","NewApi")
 @Suppress("/unused")
-class ListManagerFragment: DialogFragment() {
+class ListManagerFragment: DialogFragment(){
     companion object {
         fun newInstance(): ListManagerFragment =
             ListManagerFragment().apply {
@@ -69,9 +72,12 @@ class ListManagerFragment: DialogFragment() {
             }
     }
 
-
+    //空字段
+    private val Undefined = ""
     //ctx
     private lateinit var context: Context
+    //MediaInfoRetriever
+    val MediaInfoRetriever = MediaInfoRetriever()
 
 
     override fun onStart() {
@@ -231,13 +237,14 @@ class ListManagerFragment: DialogFragment() {
         //启动ViewPager
         registerViewPager()
 
-
+        //更新当前播放列表指示图标
         updateIcon_currentPlayingList()
 
-        //注册子Fragment通信
-        registerChildFragment()
 
-        registerParentFragment()
+        //注册来自 子Fragment 的消息监听
+        register_C_Fragment_Listener()
+        //注册来自 Activity 的消息监听
+        register_Activity_Listener()
 
 
 
@@ -246,12 +253,12 @@ class ListManagerFragment: DialogFragment() {
     override fun onResume() {
         super.onResume()
         //发布开启事件
-        returnFragmentResult(FragmentConnector.fragment_event_open)
+        return_FragmentResult_toActivity(FragmentConnector.fragment_event_open)
     }
     override fun onPause() {
         super.onPause()
         //发布关闭事件
-        returnFragmentResult(FragmentConnector.fragment_event_close)
+        return_FragmentResult_toActivity(FragmentConnector.fragment_event_close)
     }
 
     override fun onDestroy() {
@@ -481,9 +488,85 @@ class ListManagerFragment: DialogFragment() {
         ListManagerHelper.ListMark_Audio to 3,
     )
 
+    //观察当前播放状态
+    private var MediaItemObserverRunning = false
+    private fun startMediaItemObserver() {
+        if (MediaItemObserverRunning) return
+        MediaItemObserverRunning = true
 
-    //注册子Fragment返回消息监听  子Fragment -> 父Fragment  fragment_request_key_xxx_reverse
-    private fun registerChildFragment(){
+        //观察正在播放的媒体项变更
+        lifecycleScope.launch {
+            //观察正在播放的媒体项变更
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                PlayerInfoCenter.observableMediaItem.collect { _ ->
+                    //发送到 子Fragment (两个页面一起更新)
+                    send_C_Fragment_Event(2, ListManagerHelper.event_detail_general_media_item_update)
+                    send_C_Fragment_Event(3, ListManagerHelper.event_detail_general_media_item_update)
+
+                }
+            }
+        }
+        //观察播放状态变更
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                PlayerInfoCenter.observableIsPlaying.collect { _ ->
+                    //发送到 子Fragment (两个页面一起更新)
+                    send_C_Fragment_Event(2, ListManagerHelper.event_detail_general_media_state_update)
+                    send_C_Fragment_Event(3, ListManagerHelper.event_detail_general_media_state_update)
+
+                }
+            }
+        }
+    }
+
+    //播放请求
+    private fun onPlayNewItemRequest(URI_S_FP: String){
+        //consoleLog("收到请求播放新的媒体项: $URI_S_FP")
+        //检查文件是否存在可读
+        val success = MediaInfoRetriever.isUriReadable(context,URI_S_FP)
+        //consoleLog("isUriReadable: $success")
+        if (success){
+            if (URI_S_FP == PlayerSingleton.GET_STE_currentMediaItem_Uri().second.toString()){
+                if (PlayerInfoCenter.observableIsPlaying.value){
+                    PlayerSingleton.pausePlay()
+                }else{
+                    PlayerSingleton.continuePlay(true)
+                }
+            }else{
+                //确保播放器已经启动
+                PlayerSingleton.getInitPlayer()
+                //设置播放项
+                val result = PlayerSingleton.setMediaItem(URI_UP = URI_S_FP.toUri(),playWhenReady = true)
+                when(result){
+                    ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
+                        context.showCustomToast("文件似乎已经不存在",3)
+                    }
+                    ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
+                        context.showCustomToast("设置过于频繁",3)
+                    }
+                    ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
+                        context.showCustomToast("不支持的格式",3)
+                    }
+                }
+            }
+        }else{
+            context.showCustomToast("文件似乎已经不存在",3)
+        }
+    }
+
+    //删除点击事件
+    private fun onDeleteClick(uriNumOnly: Long)  {
+
+    }
+    //添加到自定义列表点击事件
+    private fun onAddToListClick() {
+
+    }
+
+
+
+    //注册 子Fragment 返回消息监听  子Fragment -> 父Fragment  reverse
+    private fun register_C_Fragment_Listener(){
         //自定义列表
         childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_custom_reverse, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
@@ -510,10 +593,15 @@ class ListManagerFragment: DialogFragment() {
         //视频列表
         childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_video_reverse, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: Undefined
             when(key){
                 //刷新当前播放列表指示图标
                 ListManagerHelper.event_detail_general_update_currentPlayingList_icon -> {
                     updateIcon_currentPlayingList()
+                }
+                //播放新的媒体项
+                ListManagerHelper.event_detail_general_play_new_item -> {
+                    onPlayNewItemRequest(extra)
                 }
 
 
@@ -522,19 +610,23 @@ class ListManagerFragment: DialogFragment() {
         //音乐列表
         childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_audio_reverse, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: Undefined
             when(key){
                 //刷新当前播放列表指示图标
                 ListManagerHelper.event_detail_general_update_currentPlayingList_icon -> {
                     updateIcon_currentPlayingList()
                 }
-
+                //播放新的媒体项
+                ListManagerHelper.event_detail_general_play_new_item -> {
+                    onPlayNewItemRequest(extra)
+                }
 
             }
         }
 
     }
-    //向子Fragment传递事件  父Fragment -> 子Fragment  fragment_request_key_xxx  (no_reverse)
-    private fun sendChildFragmentEvent(targetList: Any, data: String, extra: String = "") {
+    //向 子Fragment 传递事件  父Fragment -> 子Fragment  no_reverse
+    private fun send_C_Fragment_Event(targetList: Any, data: String, extra: String = Undefined) {
         //合成position
         val position = if (targetList is String){
             viewPagerPageMarkMapString[targetList] ?: return
@@ -576,53 +668,31 @@ class ListManagerFragment: DialogFragment() {
         }
     }
 
-    //注册父Fragment传入消息监听
-    private fun registerParentFragment(){
+    //注册来自 Activity 的消息监听
+    private fun register_Activity_Listener(){
         parentFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_play_list, this){ _, bundle ->
             val key = bundle.getString(FragmentConnector.receive_key) ?: return@setFragmentResultListener
             when(key){
-                //列表更新
+                //刷新RecyclerView Adapter (已使用场景:1.外部刷新完成,通知内部刷新)
                 ListManagerHelper.event_video_list_refresh -> {
-                    sendChildFragmentEvent(2, ListManagerHelper.event_video_list_refresh)
-                    sendChildFragmentEvent(3, ListManagerHelper.event_audio_list_refresh)
-
+                    send_C_Fragment_Event(2, ListManagerHelper.event_video_list_refresh)
+                    send_C_Fragment_Event(3, ListManagerHelper.event_audio_list_refresh)
                 }
 
             }
         }
     }
-
-    //观察当前播放项
-    private var MediaItemObserverRunning = false
-    private fun startMediaItemObserver() {
-        if (MediaItemObserverRunning) return
-        MediaItemObserverRunning = true
-
-        //启动MediaItem观察者
-        lifecycleScope.launch {
-            //观察正在播放的媒体项变更
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInfoCenter.observableMediaItem.collect { _ ->
-
-                    //传入当前页签
-                    val currentViewPagerPage = ViewPager.currentItem
-
-                    sendChildFragmentEvent(currentViewPagerPage, ListManagerHelper.event_detail_general_media_item_update)
-
-                }
-            }
+    //发布事件回 Activity   fragment_request_key_play_list_reverse   Fragment -> Activity
+    private fun return_FragmentResult_toActivity(event: String){
+        val result = Bundle().apply { putString(FragmentConnector.receive_key, event) }
+        setFragmentResult(FragmentConnector.fragment_request_key_play_list_reverse, result)
+    }
+    private fun return_FragmentResult_toActivity(event: String,extra: String){
+        val result = Bundle().apply {
+            putString(FragmentConnector.receive_key, event)
+            putString(FragmentConnector.extra_key, extra)
         }
-        //观察播放状态变更
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                PlayerInfoCenter.observableIsPlaying.collect { _ ->
-                    //传入当前页签
-                    val currentViewPagerPage = ViewPager.currentItem
-                    sendChildFragmentEvent(currentViewPagerPage, ListManagerHelper.event_detail_general_media_state_update)
-
-                }
-            }
-        }
+        setFragmentResult(FragmentConnector.fragment_request_key_play_list_reverse, result)
     }
 
 
@@ -749,8 +819,9 @@ class ListManagerFragment: DialogFragment() {
     private lateinit var ButtonCard_musicList: CardView
     private fun switchToCustomPageByButton(){
         //已在此页时回到顶部
-        if (ViewPager.currentItem == 0) {
-            sendChildFragmentEvent(0, ListManagerHelper.event_detail_general_goto_list_top)
+        if (ViewPager.currentItem == 0){
+            //发送到 子Fragment
+            send_C_Fragment_Event(0, ListManagerHelper.event_detail_general_goto_list_top)
             return
         }
         //切换到自定义页签
@@ -758,8 +829,9 @@ class ListManagerFragment: DialogFragment() {
     }
     private fun switchToHistoryPageByButton(){
         //已在此页时回到顶部
-        if (ViewPager.currentItem == 1) {
-            sendChildFragmentEvent(1, ListManagerHelper.event_detail_general_goto_list_top)
+        if (ViewPager.currentItem == 1){
+            //发送到 子Fragment
+            send_C_Fragment_Event(1, ListManagerHelper.event_detail_general_goto_list_top)
             return
         }
         //切换到视频页签
@@ -767,8 +839,9 @@ class ListManagerFragment: DialogFragment() {
     }
     private fun switchToVideoPageByButton(){
         //已在此页时回到顶部
-        if (ViewPager.currentItem == 2) {
-            sendChildFragmentEvent(2, ListManagerHelper.event_detail_general_goto_list_top)
+        if (ViewPager.currentItem == 2){
+            //发送到 子Fragment
+            send_C_Fragment_Event(2, ListManagerHelper.event_detail_general_goto_list_top)
             return
         }
         //切换到视频页签
@@ -776,8 +849,9 @@ class ListManagerFragment: DialogFragment() {
     }
     private fun switchToAudioPageByButton(){
         //已在此页时回到顶部
-        if (ViewPager.currentItem == 3) {
-            sendChildFragmentEvent(3, ListManagerHelper.event_detail_general_goto_list_top)
+        if (ViewPager.currentItem == 3){
+            //发送到 子Fragment
+            send_C_Fragment_Event(3, ListManagerHelper.event_detail_general_goto_list_top)
             return
         }
         //切换到音乐页签
@@ -859,7 +933,8 @@ class ListManagerFragment: DialogFragment() {
 
         //通知子Fragment更新
         val currentPage = ViewPager.currentItem
-        sendChildFragmentEvent(currentPage, ListManagerHelper.event_detail_general_update_list_state)
+        send_C_Fragment_Event(currentPage, ListManagerHelper.event_detail_general_update_list_state)
+
         //更新当前播放列表指示图标
         updateIcon_currentPlayingList()
         //更新当前播放列表图标
@@ -954,35 +1029,6 @@ class ListManagerFragment: DialogFragment() {
 
     }
 
-    //播放点击事件
-    private fun onPlayClick() {
-
-    }
-    //删除点击事件
-    private fun onDeleteClick(uriNumOnly: Long)  {
-
-    }
-    //添加到自定义列表点击事件
-    private fun onAddToListClick() {
-
-    }
-
-
-
-    //发布事件回Activity  fragment_request_key_play_list_reverse   Fragment -> Activity
-    @Suppress("unused")
-    private fun returnFragmentResult(event: String){
-        val result = Bundle().apply { putString(FragmentConnector.receive_key, event) }
-        setFragmentResult(FragmentConnector.fragment_request_key_play_list_reverse, result)
-    }
-    @Suppress("unused")
-    private fun returnFragmentResult(event: String,extra: String){
-        val result = Bundle().apply {
-            putString(FragmentConnector.receive_key, event)
-            putString(FragmentConnector.extra_key, extra)
-        }
-        setFragmentResult(FragmentConnector.fragment_request_key_play_list_reverse, result)
-    }
 
 
     //循环模式
@@ -1025,15 +1071,15 @@ class ListManagerFragment: DialogFragment() {
         //设置循环模式
         when (loopMode) {
             ListManagerHelper.LOOP_MODE_ONE -> {
-                ListManagerHelper.setLoopMode(loopMode, requireContext())
+                ListManagerHelper.setLoopMode(loopMode)
                 //设为单集循环时,必要时可自动开始
                 PlayerSingleton.checkPlayEndAndRePlay()
             }
             ListManagerHelper.LOOP_MODE_OFF -> {
-                ListManagerHelper.setLoopMode(loopMode, requireContext())
+                ListManagerHelper.setLoopMode(loopMode)
             }
             ListManagerHelper.LOOP_MODE_ALL -> {
-                ListManagerHelper.setLoopMode(loopMode, requireContext())
+                ListManagerHelper.setLoopMode(loopMode)
             }
         }
         //刷新显示文本
@@ -1041,7 +1087,7 @@ class ListManagerFragment: DialogFragment() {
 
     }
     private fun updateLoopModeText(){
-        val currentLoopMode = ListManagerHelper.getLoopMode(requireContext())
+        val currentLoopMode = ListManagerHelper.getLoopMode()
         val ButtonTextLoopMode = view?.findViewById<TextView>(R.id.ButtonTextLoopMode)
         ButtonTextLoopMode?.text = when (currentLoopMode) {
             "ONE" -> "单集循环"

@@ -43,6 +43,7 @@ import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
+import com.suming.player.FuncionalPack.SupportFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -114,7 +115,7 @@ object PlayerSingleton {
 
                     //发布播放器上线消息
                     cache_player_ID = System.currentTimeMillis()
-                    consoleLog("getInitPlayer: 成功初始化播放器,播放器ID: $cache_player_ID")
+                    //consoleLog("getInitPlayer: 成功初始化播放器,播放器ID: $cache_player_ID")
                     PlayerInfoCenter.updateObservableIsIdle(cache_player_ID)
 
 
@@ -146,6 +147,13 @@ object PlayerSingleton {
                 //.setEnableDecoderFallback(true)
                 .also { inner_rendererFactory = it }
         }
+    fun releaseTrackSelector(){
+        //inner_trackSelector?.release()  //不知道为什么这一行执行会崩溃说线程错误
+        inner_trackSelector = null
+    }
+    fun releaseRendererFactory(){
+        inner_rendererFactory = null
+    }
     fun createCustomCodecFactory(): MediaCodecAdapter.Factory {
         @Suppress("DEPRECATION")
         return MediaCodecAdapter.Factory.DEFAULT
@@ -192,7 +200,7 @@ object PlayerSingleton {
             PlayerInfoCenter.updateObservableIsPlaying(isPlaying)
         }
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            consoleLog("onMediaItemTransition mediaItem:${mediaItem} reason:${reason}")
+            //consoleLog("onMediaItemTransition mediaItem:${mediaItem} reason:${reason}")
             onMediaItemChanged(mediaItem)
         }
         override fun onTracksChanged(tracks: Tracks) {
@@ -205,7 +213,6 @@ object PlayerSingleton {
         }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-            consoleLog("播放器错误:${error} message:${error.message} cause:${error.cause} errorCodeName:${error.errorCodeName}")
 
             onFatalErrorOccur(error)
         }
@@ -214,14 +221,14 @@ object PlayerSingleton {
     fun addPlayerStateListener(){
         if (playerState_PlayerStateListenerAdded) return
         playerState_PlayerStateListenerAdded = true
-        consoleLog("addPlayerStateListener")
+        //consoleLog("addPlayerStateListener")
         _player?.addListener(PlayerStateListener)
 
     }
     fun removePlayerStateListener(){
         if (!playerState_PlayerStateListenerAdded) return
         playerState_PlayerStateListenerAdded = false
-        consoleLog("removePlayerStateListener")
+        //consoleLog("removePlayerStateListener")
         _player?.removeListener(PlayerStateListener)
     }
 
@@ -239,7 +246,7 @@ object PlayerSingleton {
     private val coroutine_restart = CoroutineScope(Dispatchers.Main)
     private fun onPlayEngineIdle(){
         coroutine_restart.launch{
-            //consoleLog("onPlayEngineIdle")
+            consoleLog("onPlayEngineIdle")
             //发布Idle消息
             cache_player_ID = 0L
             PlayerInfoCenter.updateObservableIsIdle(0L)
@@ -258,7 +265,6 @@ object PlayerSingleton {
             //添加本地监听器
             addPlayerStateListener()
         }
-
     }
 
     //销毁播放器并关闭媒体会话
@@ -320,7 +326,7 @@ object PlayerSingleton {
     fun setMediaItem(URI_UP: Uri, file_path: String = "",playWhenReady: Boolean): String {
         //设置频率限制
         if (System.currentTimeMillis() - clickMillis_setMediaItem < 1500) {
-            return Undefined
+            return ActivityResultConnector.OBRTV_Engine_SoFrequent
         }
         clickMillis_setMediaItem = System.currentTimeMillis()
         //检查是否启动了播放器
@@ -350,39 +356,35 @@ object PlayerSingleton {
         //解码新媒体信息
         //检查是否需要解码
         val current_item_URI_SP = PlayerInfoCenter.GET_Media_URI_S_FP()
-        val current_item_file_path = PlayerInfoCenter.GET_Media_FilePath()
-        consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 当前缓存链接:$current_item_URI_SP")
-        if (URI_UP.toString() != current_item_URI_SP && URI_UP.toString() != current_item_file_path){
-            val (result,MediaItemForPlay_Cache,_) = MediaInfoRetriever.retrieveMediaInfo(
-                context,
-                URI_UP.toString(),
-                file_path,
-                Undefined,
-                URI_S_FP,
-                )
-            consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 解码结果:$result")
-            //需要中断的情况
-            when(result){
-                ActivityResultConnector.retriever_error -> {
+        consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 当前项(缓存):$current_item_URI_SP")
+        //获取媒体信息
+        val (result,MediaItemForPlay_Cache,_) = MediaInfoRetriever.retrieveMediaInfo(
+            context,
+            URI_UP.toString(),
+            file_path,
+            Undefined,
+            URI_S_FP,
+        )
+        consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 解码结果:$result")
+        //检查解码结果
+        when(result){
+            ActivityResultConnector.retriever_error -> {
 
-                    return ActivityResultConnector.OBRTV_Engine_RetrieveFailed
-                }
-                ActivityResultConnector.retriever_type_not_support -> {
-                    return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
-                }
-                ActivityResultConnector.retriever_complete -> {
-                    //将MediaItemForPlay缓存到PlayerInfoCenter
-                    PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay_Cache)
-                }
-
+                return ActivityResultConnector.OBRTV_Engine_RetrieveFailed
             }
-
-        }else{
-            consoleLog("setMediaItemCore -媒体信息已在缓存中， 无需解码")
+            ActivityResultConnector.retriever_type_not_support -> {
+                return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
+            }
         }
-        val MediaItemForPlay = PlayerInfoCenter.GET_Media_FullMediaInfoPack()
-        if (MediaItemForPlay == null) return ActivityResultConnector.OBRTV_Engine_RetrieveFailed
+        //检查媒体格式是否支持
+        val format = MediaItemForPlay_Cache.media_format
+        if (!SupportFormat.isFormatSupported(format)){
 
+            return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
+        }
+
+        //将MediaItemForPlay缓存到PlayerInfoCenter
+        PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay_Cache)
 
         //重置单个媒体状态
         clearItemState()
@@ -395,14 +397,13 @@ object PlayerSingleton {
         val cover_img_uri = getArtworkFrameUri(context,URI_UP)
 
 
-
         //开始构建mediaItem
         val mediaItem = MediaItem.Builder()
                 .setUri(URI_UP)
                 .setMediaMetadata(
                     MediaMetadata.Builder()
-                        .setTitle(MediaItemForPlay.file_name)
-                        .setArtist(MediaItemForPlay.media_artist)
+                        .setTitle(MediaItemForPlay_Cache.file_name)
+                        .setArtist(MediaItemForPlay_Cache.media_artist)
                         .setArtworkUri(cover_img_uri)
                         .build())
                 .build()
@@ -734,7 +735,7 @@ object PlayerSingleton {
             pausePlay()
         }
         //检查循环模式
-        val loopMode = ListManagerHelper.getLoopMode(context)
+        val loopMode = ListManagerHelper.getLoopMode()
         when(loopMode){
             ListManagerHelper.LOOP_MODE_OFF -> justStop()
             ListManagerHelper.LOOP_MODE_ONE -> repeatMedia()
@@ -770,9 +771,15 @@ object PlayerSingleton {
 
     //释放播放器
     fun releasePlayer() {
-        releasePlayer_standardExo()
-        _player = null
-        playerState_PlayerStateListenerAdded = false
+
+            _player?.release()
+            _player = null
+            playerState_PlayerStateListenerAdded = false
+            //销毁trackSelector和rendererFactory防止偶尔复用导致exoplayer拒绝使用复用实例而崩溃
+            releaseTrackSelector()
+            releaseRendererFactory()
+
+
     }
 
 
@@ -781,10 +788,6 @@ object PlayerSingleton {
     fun clearMediaItem_standardExo() { _player?.clearMediaItems() }
     //挂起
     fun stopPlayer_standardExo() { _player?.stop() }
-    //释放
-    fun releasePlayer_standardExo() {
-        _player?.release()
-    }
 
 
 

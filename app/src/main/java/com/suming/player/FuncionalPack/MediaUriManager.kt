@@ -88,7 +88,7 @@ object MediaUriManager {
             //检查authority和path
             val authority = URI.authority ?: Undefined
             val path = URI.path ?: Undefined
-            consoleLog("detectMediaUriTypeMode -检查authority和path authority:${authority},path:$path")
+            //consoleLog("detectMediaUriTypeMode -检查authority和path authority:${authority},path:$path")
 
             when {
                 //MediaStore URI Authority
@@ -139,9 +139,9 @@ object MediaUriManager {
 
     //检测 URI 对应媒体 是否存在(传入URI 输出 是否存在)(只能判断 标准 MediaStore URI,其他URI是不行的)
     fun isUriExistInMediaStore(URI: Uri, context: Context): Boolean {
-        consoleLog("isUriExistInMediaStore -URI = $URI")
+        //consoleLog("isUriExistInMediaStore -URI = $URI")
         if (URI == Uri.EMPTY) {
-            consoleLog("isUriExistInMediaStore -URI 为空")
+            //consoleLog("isUriExistInMediaStore -URI 为空")
             return false
         }
 
@@ -150,7 +150,7 @@ object MediaUriManager {
         try {
             //从URI中提取ID (只能处理 标准MediaStore URI)
             val id = ContentUris.parseId(URI)
-            consoleLog("isUriExistInMediaStore -从 URI 中提取 ID :id = $id")
+            //consoleLog("isUriExistInMediaStore -从 URI 中提取 ID :id = $id")
 
 
             val queryUri: Uri?
@@ -158,7 +158,7 @@ object MediaUriManager {
             if (MediaStore.AUTHORITY == authority){
                 queryUri = URI
             }else{
-                consoleLog("isUriExistInMediaStore -URI 不是 MediaStore URI")
+                //consoleLog("isUriExistInMediaStore -URI 不是 MediaStore URI")
                 return false
             }
 
@@ -171,7 +171,7 @@ object MediaUriManager {
             return cursor != null && cursor.moveToFirst()
 
         }catch(e: IllegalArgumentException){
-            consoleLog("isUriExistInMediaStore -发生错误: $e")
+            //consoleLog("isUriExistInMediaStore -发生错误: $e")
             return false
         }finally{
             cursor?.close()
@@ -197,21 +197,21 @@ object MediaUriManager {
                 `is`.close() //能打开说明文件存在且可读
                 return true
             }else{
-                consoleLog("isFileExist -文件打不开")
+                //consoleLog("isFileExist -文件打不开")
                 return false
             }
         }catch(e: FileNotFoundException) {
-            consoleLog("isFileExist -文件不存在: $e")
+            //consoleLog("isFileExist -文件不存在: $e")
             return false
         }catch(e: IOException) {
-            consoleLog("isFileExist -其他 IO 错误: $e")
+            //consoleLog("isFileExist -其他 IO 错误: $e")
             return false
         }
     }
     //检查文件是否存在(基于IO File 输入 文件路径)
     fun isFileExist(file_path: String): Boolean {
         if (file_path == Undefined) {
-            consoleLog("isFileExist -文件路径为空")
+            //consoleLog("isFileExist -文件路径为空")
             return false
         }
 
@@ -315,7 +315,7 @@ object MediaUriManager {
 
             return Pair(true, uri.toString())
         }catch(e: Exception){
-            consoleLog("GET_MediaUriBy-合成媒体Uri失败: $e")
+            //consoleLog("GET_MediaUriBy-合成媒体Uri失败: $e")
 
             return Pair(false, "")
         }
@@ -326,22 +326,22 @@ object MediaUriManager {
     fun convert_MediaStoreFileURI_to_MediaStoreMediaURI(context: Context, uri: Uri): Uri {
         //检查是否已经是 MediaStore 标准 MediaURI
         if (uri.toString().contains("/(video|audio)/media/")){
-            consoleLog("convertFileUriToMediaUri-已经是media URI: $uri")
+            //consoleLog("convertFileUriToMediaUri-已经是media URI: $uri")
             return uri
         }
 
         //从 MediaStoreFileURI 中 提取文件路径
         val filePath = GET_file_path_from_media_uri(context,uri)
-        consoleLog("convert_MediaStoreFileURI_to_MediaStoreMediaURI -获取文件路径 :filePath = $filePath")
+        //consoleLog("convert_MediaStoreFileURI_to_MediaStoreMediaURI -获取文件路径 :filePath = $filePath")
         if (filePath == "") {
-            consoleLog("convertFileUriToMediaUri-获取文件路径失败:filePath 为空")
+            //consoleLog("convertFileUriToMediaUri-获取文件路径失败:filePath 为空")
             return uri
         }
         //-获取文件路径 :filePath = /storage/emulated/0/Movies/游戏录像/260527 - 西海岸高速酒吧.mp4
 
         //查询video表获取标准URI
         val videoUri = searchUriBySysMediaApi(filePath, context)
-        consoleLog("convert_MediaStoreFileURI_to_MediaStoreMediaURI -查询video表获取标准URI :videoUri = $videoUri")
+        //consoleLog("convert_MediaStoreFileURI_to_MediaStoreMediaURI -查询video表获取标准URI :videoUri = $videoUri")
 
         return videoUri
     }
@@ -350,22 +350,22 @@ object MediaUriManager {
     fun convert_FileManagerFileURI_to_MediaStoreMediaURI(context: Context, uri: Uri): Pair<Uri,String> {
         //检查是否已经是 MediaStore 标准 MediaURI
         if (uri.toString().contains("/(video|audio)/media/")){
-            consoleLog("convert_FileManagerFileURI_to_MediaStoreMediaURI -已经是media URI: $uri")
+            //consoleLog("convert_FileManagerFileURI_to_MediaStoreMediaURI -已经是media URI: $uri")
             return Pair(uri, Undefined)
         }
 
         //从 FileManagerFileURI 中 提取文件路径
         val filePath = GET_file_path_from_file_uri(uri)
-        consoleLog("convert_FileManagerFileURI_to_MediaStoreMediaURI -获取文件路径 :filePath = $filePath")
+        //consoleLog("convert_FileManagerFileURI_to_MediaStoreMediaURI -获取文件路径 :filePath = $filePath")
         if (filePath == Undefined) {
-            consoleLog("convert_FileManagerFileURI_to_MediaStoreMediaURI -获取文件路径失败:filePath 为空")
+            //consoleLog("convert_FileManagerFileURI_to_MediaStoreMediaURI -获取文件路径失败:filePath 为空")
             return Pair(uri, filePath)
         }
         //-获取文件路径 :filePath = /storage/emulated/0/Movies/精选/SL/Cecelia Taylor.mp4
 
         //查询video表获取标准URI
         val videoUri = searchUriBySysMediaApi(filePath, context)
-        consoleLog("convert_FileManagerFileURI_to_MediaStoreMediaURI -查询video表获取标准URI :videoUri = $videoUri")
+        //consoleLog("convert_FileManagerFileURI_to_MediaStoreMediaURI -查询video表获取标准URI :videoUri = $videoUri")
 
         return Pair(videoUri, filePath)
 
@@ -395,7 +395,7 @@ object MediaUriManager {
             val uri = queryTable(context, tableUri, file_path)
             if (uri != Uri.EMPTY){
                 //找到文件
-                consoleLog("searchUriBySysMediaApi -在${tableUri}表中找到文件")
+                //consoleLog("searchUriBySysMediaApi -在${tableUri}表中找到文件")
                 return uri
             }
         }
@@ -406,7 +406,7 @@ object MediaUriManager {
             val uri = queryTableFuzzyMatch(context, tableUri, fileName, parentDir)
             if (uri != Uri.EMPTY){
                 //找到文件
-                consoleLog("searchUriBySysMediaApi -在${tableUri}表中找到文件")
+                //consoleLog("searchUriBySysMediaApi -在${tableUri}表中找到文件")
                 return uri
             }
         }

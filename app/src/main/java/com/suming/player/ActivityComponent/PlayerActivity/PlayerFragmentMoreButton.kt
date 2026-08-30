@@ -1021,14 +1021,14 @@ class PlayerFragmentMoreButton: DialogFragment(){
             "ALL" -> "ALL"
             "OFF" -> "OFF"
             else -> "OFF"
-        },requireContext())
+        })
 
         //刷新显示文本
         updateLoopModeText()
     }
     private fun updateLoopModeText(){
         val ButtonTextLoopMode = view?.findViewById<TextView>(R.id.ButtonTextLoopMode)
-        ButtonTextLoopMode?.text = when (ListManagerHelper.getLoopMode(requireContext())) {
+        ButtonTextLoopMode?.text = when (ListManagerHelper.getLoopMode()) {
             "ONE" -> "单集循环"
             "ALL" -> "列表循环"
             "OFF" -> "播完暂停"

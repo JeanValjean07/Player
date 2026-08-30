@@ -7,8 +7,10 @@ import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.media3.common.util.UnstableApi
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioDataClass
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoDataClass
@@ -59,19 +61,19 @@ object ListManagerHelper {
     const val LOOP_MODE_ONE = "ONE"
     const val LOOP_MODE_ALL = "ALL"
     @SuppressLint("StaticFieldLeak")
-    fun setLoopMode(mode: String, context: Context) {
+    fun setLoopMode(mode: String){
         initListSetting()
 
         //刷新缓存并落盘
         PREFS_LoopMode  = mode
         Paradox_List?.edit{ putString(PREFS_LoopMode_Key, PREFS_LoopMode ).apply() }
     }
-    fun getLoopMode(context: Context): String{
+    fun getLoopMode(): String{
         initListSetting()
 
 
-        PREFS_LoopMode  = Paradox_List?.getString(PREFS_LoopMode_Key, "OFF") ?: "OFF"
-        if (PREFS_LoopMode != "OFF" && PREFS_LoopMode != "ONE" && PREFS_LoopMode != "ALL"){ PREFS_LoopMode = "OFF" }
+        PREFS_LoopMode  = Paradox_List?.getString(PREFS_LoopMode_Key, LOOP_MODE_OFF) ?: LOOP_MODE_OFF
+        if (PREFS_LoopMode != LOOP_MODE_OFF && PREFS_LoopMode != LOOP_MODE_ONE && PREFS_LoopMode != LOOP_MODE_ALL){ PREFS_LoopMode = LOOP_MODE_OFF }
 
         return PREFS_LoopMode
     }
@@ -323,14 +325,14 @@ object ListManagerHelper {
         return Undefined
     }
     private fun isFileAccessible(uri: String): Boolean {
-        return try {
-            val inputStream = context.contentResolver.openInputStream(Uri.parse(uri))
+        return try{
+            val inputStream = context.contentResolver.openInputStream(uri.toUri())
             inputStream?.use { stream ->
                 //尝试读取第一个字节判断文件是否可读
                 stream.read() != -1
             } ?: false
-        } catch (e: Exception) {
-            e.printStackTrace()
+        }catch(e: Exception){
+            consoleLog("isFileAccessible Exception: $e")
             false
         }
     }
@@ -340,6 +342,8 @@ object ListManagerHelper {
 
     //MediaSession调用入口
     private var clickMillis_MediaSession_switchCall: Long = 0
+
+    @OptIn(UnstableApi::class)
     fun MediaSessionCall_switchNextMedia(){
         //点击频率限制
         if (System.currentTimeMillis() - clickMillis_MediaSession_switchCall < 2000) {
@@ -359,6 +363,7 @@ object ListManagerHelper {
 
 
     }
+    @OptIn(UnstableApi::class)
     fun MediaSessionCall_switchPreviousMedia(){
         //点击频率限制
         if (System.currentTimeMillis() - clickMillis_MediaSession_switchCall < 2000) {
@@ -378,6 +383,7 @@ object ListManagerHelper {
 
     }
     //自动播放调用入口(目前没区别,不确定后续有没有新功能加入)
+    @OptIn(UnstableApi::class)
     fun onPlayEndCall_switchNextMedia(){
         //检查当前使用的列表
         val target_URI_S_FP = GET_NextOrPrev_Media_formCurrentList(Next)
@@ -388,6 +394,7 @@ object ListManagerHelper {
         PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
 
     }
+    @OptIn(UnstableApi::class)
     fun onPlayEndCall_switchPreviousMedia(){
         //检查当前使用的列表
         val target_URI_S_FP = GET_NextOrPrev_Media_formCurrentList(Previous)
@@ -549,14 +556,15 @@ object ListManagerHelper {
     const val event_detail_general_update_list_state = "event_detail_general_update_list_state"
     const val event_detail_general_media_item_update = "event_detail_general_media_item_update"
     const val event_detail_general_media_state_update = "event_detail_general_media_state_update"
+    const val event_detail_general_play_new_item = "event_detail_general_play_new_item"
     //特殊通信事件(每个页面用不同的字段) event_detail_
 
 
 
-    //Adaptor Payload字段 payload_event_
-    const val payload_event_item_update = "payload_event_item_update"
-    const val payload_event_item_state_update = "payload_event_item_state_update"
-    const val payload_event_item_clear_playing_mark = "payload_event_item_clear_playing_mark"
+    //Adaptor Payload字段 (应承载最具体的事件!,而非仅通知状态变更)
+    const val payload_event_disable_this_item = "payload_event_disable_this_item"  //将这一项设为完全未在播放
+    const val payload_event_enable_this_item_with_play = "payload_event_enable_this_item_with_play"  //将这一项设为进行中,且播放中
+    const val payload_event_enable_this_item_without_play = "payload_event_enable_this_item_without_play"  //将这一项设为进行中,但未在播放中
 
 
 

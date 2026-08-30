@@ -16,7 +16,6 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.suming.player.ActivityComponent.MainActivity.RecyclerAdapterVideo.ViewHolder
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
@@ -35,7 +34,7 @@ import kotlinx.coroutines.withContext
 class Recycler_Adaptor_Video(
     private val context: Context,
     private val onAddToListClick: (MediaItemFullForVideo) -> Unit,
-    private val onPlayClick: (MediaItemFullForVideo, Int) -> Unit
+    private val onPlayItemClick: (MediaItemFullForVideo) -> Unit
 ):PagingDataAdapter<MediaItemFullForVideo, Recycler_Adaptor_Video.viewHolder>(Differ) {
     companion object {
         //比较器
@@ -58,6 +57,8 @@ class Recycler_Adaptor_Video(
 
     }
 
+    //空字段
+    private val Undefined = ""
 
     class viewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val item_root_card: CardView = itemView.findViewById(R.id.item_root_card)
@@ -67,11 +68,10 @@ class Recycler_Adaptor_Video(
         val ButtonAddToList: ImageView = itemView.findViewById(R.id.ButtonAddToList)
         val ButtonPlay: ImageView = itemView.findViewById(R.id.ButtonPlay)
         val itemFrame: ImageView = itemView.findViewById(R.id.tvThumb)
-
         var itemFrameJob: Job? = null
 
-        //是否正在播放
-        fun setItemPlayingCard(isItemOn: Boolean){
+        //基础控制函数(最基础:仅控制自己这点,不联动分毫)
+        fun set_item_ongoing(isItemOn: Boolean){
             //写入状态
             itemName.isSelected = isItemOn
             //修改背景颜色
@@ -80,15 +80,26 @@ class Recycler_Adaptor_Video(
             }else{
                 ContextCompat.getColorStateList(itemView.context, R.color.SecondaryColorPack_ContentCardBackground)
             }
-            //把按钮一并至于暂停状态
-            if (!isItemOn){
-                setItemPlayingButton(false)
-            }
 
-
-        }
-        fun setItemPlayingButton(isPlaying: Boolean){
+        }  //设置进行中状态(是否选中)
+        fun set_item_is_playing(isPlaying: Boolean){
             ButtonPlay.setImageResource(if (isPlaying) R.drawable.ic_frag_list_item_pause else R.drawable.ic_frag_list_item_play)
+        }  //设置播放状态按钮(播放/暂停)
+
+        //完全未在播放的项:取消主题色,按钮置于继续
+        fun disable_this_item(){
+            set_item_ongoing(false)
+            set_item_is_playing(false)
+        }
+        //进行中,且正在播放的项:保持主题色,按钮置于暂停
+        fun enable_this_item_with_play(){
+            set_item_ongoing(true)
+            set_item_is_playing(true)
+        }
+        //进行中,且未播放的项:保持主题色,按钮置于继续
+        fun enable_this_item_without_play(){
+            set_item_ongoing(true)
+            set_item_is_playing(false)
         }
 
     }
@@ -118,15 +129,19 @@ class Recycler_Adaptor_Video(
     override fun onBindViewHolder(holder: viewHolder, position: Int) {
         val item = getItem(position) ?: return
 
-        //检查是不是当前媒体
-        if (item.URI_S_FP == PlayerInfoCenter.GET_Media_URI_S_FP()){
-            holder.setItemPlayingCard(true)
-            currentItemUri = item.URI_S_FP
-            //检查并设置播放状态
-            holder.setItemPlayingButton(PlayerInfoCenter.observableIsPlaying.value)
+        //卡片颜色与按钮状态
+        if (item.URI_S_FP == cache_URI_S_FP){
+            //是进行中媒体,检查是否正在播放
+            if (cache_isPlaying){
+                holder.enable_this_item_with_play()
+            }else{
+                holder.enable_this_item_without_play()
+            }
         }else{
-            holder.setItemPlayingCard(false)
+            //不是当前进行中的媒体项,设为disabled
+            holder.disable_this_item()
         }
+
 
         holder.itemName.text = item.file_name.substringBeforeLast(".")
         holder.itemArtist.text = "未知艺术家"
@@ -144,30 +159,26 @@ class Recycler_Adaptor_Video(
         holder.ButtonPlay.setOnClickListener {
             ToolVibrate().vibrate(context)
 
-            onPlayClick(item, position)
+            onPlayItemClick(item)
         }
         holder.itemName.setOnClickListener { holder.itemName.isSelected = true }
     }
 
     override fun onBindViewHolder(holder: viewHolder, position: Int, payloads: List<Any>){
-        if (payloads.isNotEmpty()) {
+        if (payloads.isNotEmpty()){
             val item = getItem(position)
-            consoleLog("payloads.firstOrNull() = ${payloads.firstOrNull()}")
             when (payloads.firstOrNull()) {
-
-                ListManagerHelper.payload_event_item_update -> {
-                    if (item?.URI_S_FP == PlayerInfoCenter.GET_Media_URI_S_FP()){
-                        holder.setItemPlayingCard(true)
-                    }else{
-                        holder.setItemPlayingCard(false)
-                    }
+                //不是进行中的项,设为disabled
+                ListManagerHelper.payload_event_disable_this_item -> {
+                    holder.disable_this_item()
                 }
-                ListManagerHelper.payload_event_item_state_update -> {
-                    holder.setItemPlayingButton(PlayerInfoCenter.observableIsPlaying.value)
+                //进行中,且正在播放
+                ListManagerHelper.payload_event_enable_this_item_with_play -> {
+                    holder.enable_this_item_with_play()
                 }
-                ListManagerHelper.payload_event_item_clear_playing_mark -> {
-                    holder.setItemPlayingCard(false)
-                    holder.setItemPlayingButton(false)
+                //进行中,但未播放
+                ListManagerHelper.payload_event_enable_this_item_without_play -> {
+                    holder.enable_this_item_without_play()
                 }
             }
         }else{
@@ -260,62 +271,49 @@ class Recycler_Adaptor_Video(
     }
 
 
-    //外部控制
-    //重置可见项
-    fun refreshVisibleItems(layoutManager: LinearLayoutManager) {
-        val firstVisible = layoutManager.findFirstVisibleItemPosition()
-        val lastVisible = layoutManager.findLastVisibleItemPosition()
 
-        //刷新所有可见项
-        if (firstVisible >= 0 && lastVisible >= 0) {
-            notifyItemRangeChanged(firstVisible, lastVisible - firstVisible + 1)
-        }
-    }
-    //切换当前播放项指示器
-    private var currentItemUri = ""
-    fun updateCurrentMediaItem(targetItemUri: String, payloads: Any){
-        if (targetItemUri == currentItemUri) return
+    //切换当前项状态
+    fun update_ongoingMediaState(URI_S_FP: String,isPlaying: Boolean,recyclerView: RecyclerView){
+        //写入缓存
+        cache_URI_S_FP = URI_S_FP
+        cache_isPlaying = isPlaying
+        //使用post保证高频时不吞更新
+        recyclerView.post {
+            //获取当前可见范围
+            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+            val firstVisible = layoutManager.findFirstVisibleItemPosition()
+            val lastVisible = layoutManager.findLastVisibleItemPosition() + 1
+            if (firstVisible == RecyclerView.NO_POSITION) return@post
+            //遍历检查
+            for (index in firstVisible..lastVisible) {
+                //consoleLog("update_ongoingMediaState (视频列表): $index")
+                val item = snapshot().getOrNull(index) ?: continue
+                //检查这一项是否是进行中的项
+                if (item.URI_S_FP == URI_S_FP && cache_URI_S_FP != Undefined) {
+                    //是进行中的项,那么他是否在播放中?
+                    if (isPlaying){
+                        //进行中,且正在播放
+                        notifyItemChanged(index, ListManagerHelper.payload_event_enable_this_item_with_play)
+                    }else {
+                        //进行中,但未播放
+                        notifyItemChanged(index, ListManagerHelper.payload_event_enable_this_item_without_play)
+                    }
+                }else{
+                    //不是进行中的项,设为disabled
+                    notifyItemChanged(index, ListManagerHelper.payload_event_disable_this_item)
 
-        if (targetItemUri == "") {
-            clearPlayingItem(ListManagerHelper.payload_event_item_clear_playing_mark)
-        }
-
-        val cache = currentItemUri
-
-        currentItemUri = targetItemUri
-
-        snapshot().forEachIndexed { index, item ->
-            if (item?.URI_S_FP == targetItemUri || item?.URI_S_FP == cache) {
-
-                notifyItemChanged(index, payloads)
-            }
-        }
-
-    }
-    //切换当前播放状态
-    fun updateCurrentIsPlayingState(targetItemUri: String,newIsPlaying: Boolean, payloads: Any){
-        snapshot().forEachIndexed { index, item ->
-            if (item?.URI_S_FP == targetItemUri) {
-
-                notifyItemChanged(index, payloads)
+                }
             }
         }
     }
-    //清理播放标记
-    fun clearPlayingItem(payloads: Any){
-        consoleLog("清理播放标记 clearPlayingItem")
-        snapshot().forEachIndexed { index, item ->
-            if (item?.URI_S_FP == currentItemUri){
-                notifyItemChanged(index, payloads)
-            }
-        }
-        currentItemUri = ""
-    }
-
+    //缓存下当前 URI_S_FP
+    private var cache_URI_S_FP = Undefined
+    //缓存下当前 isPlaying
+    private var cache_isPlaying = false
 
 
     //日志
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "RecyclerAdapterVideo: $msg")
         }

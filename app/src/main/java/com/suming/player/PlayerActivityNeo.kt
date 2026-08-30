@@ -1108,6 +1108,14 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //连接正在播放的媒体
     private fun connectCurrentMedia(){
+        //检查正在播放的媒体的类型
+        val ongoing_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+        if (ongoing_MediaType != MediaType.Video){
+            showCustomToast("当前正在播放的项不是视频,自动退出播放页", 3)
+            finish()
+            return
+        }
+
         //绑定播放器视图
         bindPlayerView()
 
@@ -1268,38 +1276,65 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun startExoPlayerListener(){
         if (state_PlayerListenerAdded) return
         state_PlayerListenerAdded = true
-        consoleLog("startExoPlayerListener")
+        //consoleLog("startExoPlayerListener")
         player?.addListener(PlayerStateListener)
 
     }
     private fun removeExoPlayerListener(){
         if (!state_PlayerListenerAdded) return
         state_PlayerListenerAdded = false
-        consoleLog("removeExoPlayerListener")
+        //consoleLog("removeExoPlayerListener")
         player?.removeListener(PlayerStateListener)
     }
     //设置新媒体项
-    private fun setNewMediaItem(URI_UP: Uri,file_path_o: String): Boolean{
-        //检查文件是否存在(文件路径可空,仅在有文件路径时检查)
+    private fun setNewMediaItem(URI_U_FP: Uri,file_path_o: String): Boolean{
+        //缓存URI为字符串
+        val URI_S_FP = URI_U_FP.toString()
+        //检查文件是否存在(字节流方案,不再依赖文件路径)
         var file_path = file_path_o
         if (file_path == Undefined){
-            file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC1(context, URI_UP)
+            file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC1(context, URI_U_FP)
         }
         if (file_path == Undefined){
-            file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC2(context, URI_UP)
+            file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC2(context, URI_U_FP)
         }
-        if (file_path != Undefined){
+        //文件可读性检查方案
+        if (file_path == Undefined){
+            val can_read = MediaInfoRetriever.isUriReadable(context, URI_S_FP)
+            if (!can_read){
+                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                if (ongoing){
+                    showCustomToast("文件不可读")
+                    //链接当前播放项
+                    connectCurrentMedia()
+                }else{
+                    //当前正在播放,提示用户
+                    showErrorCover("文件不可读")
+
+                }
+            }
+            //文件不可读,结束设置流程
+            return false
+        }else{
             //仅在获取到文件路径时才检查文件是否存在
             val file = File(file_path)
             val exist = file.exists()
             if (!exist){
                 consoleLog("setNewMediaItem: 失败-文件已不存在")
+                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                if (ongoing){
+                    showCustomToast("文件已不存在")
+                    //链接当前播放项
+                    connectCurrentMedia()
+                }else{
+                    //当前正在播放,提示用户
+                    showErrorCover("文件不存在")
 
-                //清除当前项
-                PlayerSingleton.clearMediaItem()
+                }
 
-                showErrorCover("文件不存在，请刷新列表")
-
+                //文件不存在,结束设置流程
                 return false
             }
         }
@@ -1308,13 +1343,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         //确保已启动播放器
         connectToExoPlayer()
 
-        //显示遮罩
-        showCover()
         //写入本次Ready来源
         Mark_playerReadyFrom = Mark_playerReadyFrom_setNewItem
 
         //确认设置新媒体项
-        val result = PlayerSingleton.setMediaItem(URI_UP, file_path,true)
+        val result = PlayerSingleton.setMediaItem(URI_U_FP, file_path,true)
         when(result){
             ActivityResultConnector.OBRTV_Engine_SetItemSuccess -> {
                 //设置成功
@@ -1322,30 +1355,76 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                 bindPlayerView()
 
+                //返回成功信息
                 return true
             }
             ActivityResultConnector.OBRTV_Engine_AlreadyPlayingTargetItem -> {
                 //设置失败-目标项已在播放
 
+                //链接当前播放项
+                connectCurrentMedia()
+
                 return false
 
             }
             ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
-                //设置失败-无法获取目标项信息
-                showErrorCover("媒体解码失败")
+                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                if (ongoing){
+                    showCustomToast("媒体解码失败")
+                    //链接当前播放项
+                    connectCurrentMedia()
+                }else{
+                    //设置失败-无法获取目标项信息
+                    showErrorCover("媒体解码失败")
 
+                }
+                //媒体解码失败,结束设置流程
                 return false
             }
             ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
-                //设置失败-媒体类型不支持
-                showErrorCover("不支持的媒体类型")
+                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                if (ongoing){
+                    showCustomToast("不支持的媒体类型")
+                    //链接当前播放项
+                    connectCurrentMedia()
+                }else{
+                    //设置失败-媒体类型不支持
+                    showErrorCover("不支持的媒体类型")
 
+                }
+                //不支持的媒体类型,结束设置流程
+                return false
+            }
+            ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
+                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                if (ongoing){
+                    showCustomToast("设置过于频繁")
+                    //链接当前播放项
+                    connectCurrentMedia()
+                }else{
+                    //设置失败-过于频繁
+                    showErrorCover("设置过于频繁")
+
+                }
+                //设置过于频繁,结束设置流程
                 return false
             }
             else -> {
-                //未知错误
-                showErrorCover("未知错误")
+                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                if (ongoing){
+                    showCustomToast("未知错误")
+                    //链接当前播放项
+                    connectCurrentMedia()
+                }else{
+                    //未知错误
+                    showErrorCover("未知错误")
 
+                }
+                //未知错误,结束设置流程
                 return false
             }
         }
@@ -2672,7 +2751,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val Mark_playerReadyFrom_setNewItem = "Mark_playerReadyFrom_setNewItem"
     //状态playEnd
     private fun playState_playEnd(){
-        val loopMode = ListManagerHelper.getLoopMode(this)
+        val loopMode = ListManagerHelper.getLoopMode()
         when (loopMode) {
             ListManagerHelper.LOOP_MODE_ONE -> {
                 notice("单集循环", 3000)

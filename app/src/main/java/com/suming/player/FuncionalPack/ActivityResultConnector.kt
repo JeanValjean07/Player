@@ -20,8 +20,10 @@ object ActivityResultConnector {
     const val OBRTV_Engine_AlreadyPlayingTargetItem = "OBRTV_Engine_AlreadyPlayingTargetItem"
     const val OBRTV_Engine_RetrieveFailed = "OBRTV_Engine_RetrieveFailed"
     const val OBRTV_Engine_SetItemSuccess = "OBRTV_Engine_SetItemSuccess"
-    const val OBRTV_Engine_TypeNotSupport = "OBRTV_Engine_TypeNotSupport"
-    const val OBRTV_Engine_OffLine = "OBRTV_Engine_OffLine"
+    const val OBRTV_Engine_TypeNotSupport = "OBRTV_Engine_TypeNotSupport"  //不支持的媒体类型
+    const val OBRTV_Engine_OffLine = "OBRTV_Engine_OffLine"   //播放器离线
+    const val OBRTV_Engine_SoFrequent = "OBRTV_Engine_SoFrequent"  //设置过快
+
 
 
     //解码器 retriever

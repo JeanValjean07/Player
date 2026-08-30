@@ -1,10 +1,12 @@
 package com.suming.player.FuncPack_ListManager
 
+import android.content.Context
 import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
@@ -23,8 +25,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataLoader.VideoDataBaseLoader
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
+import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.PlayerSingleton
@@ -35,9 +40,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @UnstableApi
-@Suppress("NewApi","unused") //"unused",
+@Suppress("NewApi","/unused")
 class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     companion object {
         fun newInstance(): InnerFragment_Video {
@@ -49,19 +55,23 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
     //当前页签(固定值)
     private val flag_currentPage = ListManagerHelper.ListMark_Video
 
-
+    //context
+    private lateinit var context: Context
 
 
     @OptIn(UnstableApi::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        //获取context
+        context = requireContext()
+
         //初始化组件
         init(view)
 
         //组件注册
         register(view)
 
-        //开启Fragment通信
-        registerFragmentResultListener()
+        //注册来自 父Fragment 的消息监听器
+        register_C_Fragment_Listener()
 
         //启动RecyclerView
         startRecyclerView(view)
@@ -80,6 +90,9 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         ButtonSetAsCurrentListText = view.findViewById(R.id.ButtonSetAsCurrentListText)
         ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
         topBar_bottomLine = view.findViewById(R.id.topBar_bottomLine)
+        //加载提示
+        LoadingLayout = view.findViewById(R.id.LoadingLayout)
+        LoadingLayoutText = view.findViewById(R.id.LoadingLayoutText)
 
     }
 
@@ -159,7 +172,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         recyclerView_video_adapter = Recycler_Adaptor_Video(
             requireContext(),
             onAddToListClick = { item -> onAddToListClick(item) },
-            onPlayClick = { item, position -> onPlayClick(item, position) },
+            onPlayItemClick = { item -> onPlayItemClick(item) },
         )
         //添加页脚
         /*
@@ -198,8 +211,8 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
 
     //Fragment通信
-    //注册接收父Fragment返回值
-    private fun registerFragmentResultListener(){
+    //注册来自 父Fragment 的消息监听
+    private fun register_C_Fragment_Listener(){
         parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_video, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
             val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: ""
@@ -218,7 +231,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
                 }
                 //播放项变更
                 ListManagerHelper.event_detail_general_media_item_update -> {
-                    onMediaItemUpdate()
+                    onMediaStateUpdate()
                 }
                 //播放状态变更
                 ListManagerHelper.event_detail_general_media_state_update -> {
@@ -227,37 +240,33 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             }
         }
     }
-    //发送Fragment结果
-    private fun sendFragmentResult(event: String){
-        parentFragmentManager.setFragmentResult(
-            ListManagerHelper.fragment_request_key_video_reverse,
-            bundleOf(ListManagerHelper.event_key_general to event)
-        )
+    //向 父Fragment 发送事件结果
+    private fun send_P_Fragment_Event(event: String){
+        val result = Bundle().apply { putString(ListManagerHelper.event_key_general, event) }
+        parentFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_video_reverse, result)
+    }
+    private fun send_P_Fragment_Event(event: String,extra: String){
+        val result = Bundle().apply { putString(ListManagerHelper.event_key_general, event); putString(ListManagerHelper.event_key_extra, extra) }
+        parentFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_video_reverse, result)
     }
 
 
-    //播放项变更
-    private fun onMediaItemUpdate(){
-        //获取当前播放项
-        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.URI_S_FP
-        consoleLog("onMediaItemUpdate()当前播放项: $currentItemUri")
-
-        //使用payload更新当前播放项指示器
-        recyclerView_video_adapter.updateCurrentMediaItem(currentItemUri, ListManagerHelper.payload_event_item_update)
-
-    }
     //播放状态变更
     private fun onMediaStateUpdate(){
         //获取当前播放项
-        val currentItemUri = PlayerInfoCenter.observableMediaItem.value.URI_S_FP
-        consoleLog("onMediaStateUpdate()当前播放项: $currentItemUri")
+        val ongoing_URI_S_FP = PlayerInfoCenter.observableMediaItem.value.URI_S_FP
+        //获取当前播放/暂停状态
+        val isPlaying = PlayerInfoCenter.observableIsPlaying.value
+        consoleLog("onMediaStateUpdate (视频列表): $ongoing_URI_S_FP, $isPlaying")
 
-        //使用payload更新当前播放项指示器
-        recyclerView_video_adapter.updateCurrentIsPlayingState(currentItemUri, PlayerInfoCenter.observableIsPlaying.value, ListManagerHelper.payload_event_item_state_update)
+        //仅通知当前项的数据
+        recyclerView_video_adapter.update_ongoingMediaState(
+            ongoing_URI_S_FP,
+            isPlaying,
+            recyclerView
+        )
 
     }
-
-
 
 
     //页面获得焦点
@@ -266,8 +275,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         updateCurrentListStateText()
         //刷新列表
         recyclerView_video_adapter.refresh()
-        //检查当前播放项
-        checkNowOngoingItem()
+
     }
 
     //页签设置选单
@@ -306,17 +314,6 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         popup.show()
     }
 
-    //检查
-    private fun checkNowOngoingItem(){
-        val currentMediaType = PlayerInfoCenter.observableMediaItem.value.media_SPECIFIC_MediaType
-        //consoleLog("currentMediaType: $currentMediaType")
-        if (currentMediaType != MediaType.Video){
-            //consoleLog("当前播放项不是视频,清理播放标记")
-            //清理播放标记
-            recyclerView_video_adapter.clearPlayingItem(ListManagerHelper.payload_event_item_clear_playing_mark)
-        }
-    }
-
 
     //添加到自定义
     private fun onAddToListClick(item: MediaItemFullForVideo){
@@ -326,20 +323,11 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
     }
     //播放视频
-    private fun onPlayClick(item: MediaItemFullForVideo, position: Int){
-
-        if (item.URI_S_FP == PlayerSingleton.GET_STE_currentMediaItem_Uri().second.toString()){
-            if (PlayerInfoCenter.observableIsPlaying.value){
-                PlayerSingleton.pausePlay()
-            }else{
-                PlayerSingleton.continuePlay(true)
-            }
-        }else{
-            //确保播放器已经启动
-            PlayerSingleton.getInitPlayer()
-            //设置播放项
-            PlayerSingleton.setMediaItem(URI_UP = item.URI_S_FP.toUri(),playWhenReady = true)
-        }
+    private fun onPlayItemClick(item: MediaItemFullForVideo){
+        //传回 父Fragment 统一处理
+        val URI_S_FP = item.URI_S_FP
+        //通知 父Fragment 播放
+        send_P_Fragment_Event(ListManagerHelper.event_detail_general_play_new_item,URI_S_FP)
 
     }
 
@@ -374,8 +362,8 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         //更新当前播放列表图标
         if (success){
             requireContext().showCustomToast("设置成功",2)
-
-            sendFragmentResult(ListManagerHelper.event_detail_general_update_currentPlayingList_icon)
+            //通知父Fragment更新当前播放列表图标
+            send_P_Fragment_Event(ListManagerHelper.event_detail_general_update_currentPlayingList_icon)
         }else{
             requireContext().showCustomToast("设置失败",2)
         }
@@ -457,39 +445,61 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             }
         }
     }
-    //加载状态提示(需要重做)
-    private fun showLoadingNotice() {
+    //加载状态提示
+    private lateinit var LoadingLayout: LinearLayout
+    private lateinit var LoadingLayoutText: TextView
+    private fun showLoadingNotice(){
+        if (state_adapter_load_complete) return
 
+        LoadingLayoutText.text = "加载中"
+        LoadingLayout.visibility = View.VISIBLE
     }
-    private fun showErrorNotice() {
+    private fun showErrorNotice(){
+        if (state_adapter_load_complete) return
 
+        LoadingLayoutText.text = "加载失败"
+        LoadingLayout.visibility = View.VISIBLE
+    }
+    private fun showLoadingSuccess(){
+        LoadingLayoutText.text = "加载成功"
+        LoadingLayout.visibility = View.GONE
     }
     private fun LoadingComplete(view: View) {
         //刷新状态
         state_adapter_load_complete = true
         //更新总项数文字
         val itemCount = recyclerView_video_adapter.itemCount
-        showItemCount(itemCount,view)
+        showItemCount(view)
         if (itemCount == 0) {
             showEmptyNotice()
+        }else{
+            showLoadingSuccess()
         }
-
     }
     private fun showEmptyNotice() {
-
+        LoadingLayoutText.text = "什么都没有"
+        LoadingLayout.visibility = View.VISIBLE
     }
-    private fun showItemCount(count: Int,view: View) {
+    //从数据库读取总数
+    private fun showItemCount(view: View) {
         val TextItemCount = view.findViewById<TextView>(R.id.TextItemCount)
-        TextItemCount.text = count.toString()
+        //从数据库读取总数
+        lifecycleScope.launch(Dispatchers.IO){
+            val count = VideoRepo(context).getTotalCount()
+            withContext(Dispatchers.Main){
+                TextItemCount.text = "$count"
+            }
+        }
     }
 
     //dp转换为px
+    @Suppress("unused")
     private fun Int.dpToPx(): Int {
         return (this * Resources.getSystem().displayMetrics.density).toInt()
     }
 
     //日志
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "InnerFragment_Video: $msg")
         }

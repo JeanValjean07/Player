@@ -48,7 +48,7 @@ object PlayerInfoCenter {
     private var _observableIsIdle = MutableStateFlow(-1L)
     var observableIsIdle: StateFlow<Long> = _observableIsIdle.asStateFlow()
     fun updateObservableIsIdle(isIdle: Long){
-        consoleLog("updateObservableIsIdle: $isIdle")
+        //consoleLog("updateObservableIsIdle: $isIdle")
         _observableIsIdle.value = isIdle
     }
 

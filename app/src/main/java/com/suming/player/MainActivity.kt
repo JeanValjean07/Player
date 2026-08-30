@@ -1129,7 +1129,18 @@ class MainActivity: AppCompatActivity() {
         PlayerSingleton.addPlayerStateListener()
 
         //确认设置新媒体项
-        PlayerSingleton.setMediaItem(URI_UP  = MediaInfo_MediaUri,playWhenReady = playWhenReady)
+        val result = PlayerSingleton.setMediaItem(URI_UP  = MediaInfo_MediaUri,playWhenReady = playWhenReady)
+        when(result){
+            ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
+                showCustomToast("文件似乎已经不存在",3)
+            }
+            ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
+                showCustomToast("设置过于频繁",3)
+            }
+            ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
+                showCustomToast("不支持的格式",3)
+            }
+        }
     }
     //从选单发起后台播放
     private fun startMiniViewPlay(uri: Uri){

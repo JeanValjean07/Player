@@ -83,16 +83,16 @@ class MediaInfoRetriever {
         //尝试解码
         try{
             //获取媒体类型
-            val MediaInfo_MediaType_Original = retriever?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: Undefined
+            val MediaInfo_Format_O = retriever?.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE) ?: Undefined
             val MediaInfo_MediaType = when {
-                MediaInfo_MediaType_Original.contains("video") -> {
+                MediaInfo_Format_O.contains("video") -> {
                     MediaType.Video
                 }
-                MediaInfo_MediaType_Original.contains("audio") -> {
+                MediaInfo_Format_O.contains("audio") -> {
                     MediaType.Audio
                 }
-                MediaInfo_MediaType_Original.isEmpty() -> Undefined
-                else -> MediaInfo_MediaType_Original
+                MediaInfo_Format_O.isEmpty() -> Undefined
+                else -> MediaInfo_Format_O
 
             }
             if (MediaInfo_MediaType == Undefined){
@@ -103,6 +103,7 @@ class MediaInfoRetriever {
                 consoleLog("retrieveMediaInfo -使用 URI 解码时 发生错误: 格式获取成功但不支持")
                 return Triple(ActivityResultConnector.retriever_type_not_support,MediaItemForPlay(),Undefined)
             }
+            val MediaInfo_Format = MediaInfo_Format_O.substringAfterLast("/")
             //获取 URI 类型
             val UriTypeMode = if (UriTypeMode_e == Undefined){
                 //consoleLog("retrieveMediaInfo -未传入 UriTypeMode, 本地尝试获取 UriTypeMode")
@@ -188,6 +189,7 @@ class MediaInfoRetriever {
                     "MediaInfo_Duration: $MediaInfo_Duration , " +
                     "MediaInfo_MediaTitle: $MediaInfo_MediaTitle , " +
                     "MediaInfo_MediaArtist: $MediaInfo_MediaArtist , " +
+                    "MediaInfo_Format: $MediaInfo_Format , " +
                     "MediaInfo_VideoWidth: $MediaInfo_VideoWidth , " +
                     "MediaInfo_VideoHeight: $MediaInfo_VideoHeight , " +
                     "URI_STD: $URI_STD , " +
@@ -209,7 +211,7 @@ class MediaInfoRetriever {
                 media_title = MediaInfo_MediaTitle,
                 media_artist = MediaInfo_MediaArtist,
                 media_durationMs = MediaInfo_Duration,
-                media_format = "",
+                media_format = MediaInfo_Format,
 
                 //类型专属
                 video_videoHeight = MediaInfo_VideoHeight,
@@ -334,6 +336,19 @@ class MediaInfoRetriever {
     }
 
 
+    //URI是否可读(字节流方案)
+    fun isUriReadable(context: Context,URI_S_FP: String): Boolean{
+        return try{
+            val inputStream = context.contentResolver.openInputStream(URI_S_FP.toUri())
+            inputStream?.use { stream ->
+                //尝试读取第一个字节判断文件是否可读
+                stream.read() != -1
+            } ?: false
+        }catch(e: Exception){
+            consoleLog("检查URI是否可读失败或不可读 Exception: $e")
+            false
+        }
+    }
 
 
     //SPECIFIC_ID 计算器
