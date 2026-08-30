@@ -47,6 +47,9 @@ object FragmentConnector {
     const val fragment_more_button_exit_right_now = "fragment_more_button_exit_right_now"  //立即退出
     const val fragment_more_button_delete_custom_cover = "fragment_more_button_delete_custom_cover"  //删除自定义封面图
     const val fragment_more_button_update_keep_screen_on = "fragment_more_button_update_keep_screen_on"  //刷新屏幕常亮状态
+    const val fragment_more_button_updated_seek_mode = "fragment_more_button_updated_seek_mode"  //SeekMode刷新了
+    const val fragment_more_button_updated_link_scroll = "fragment_more_button_updated_link_scroll"  //LinkScroll刷新了
+    const val fragment_more_button_updated_tap_jump = "fragment_more_button_updated_tap_jump"  //TapJump刷新了
 
 
 

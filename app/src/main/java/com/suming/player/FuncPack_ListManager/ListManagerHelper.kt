@@ -9,12 +9,10 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.content.edit
 import androidx.core.net.toUri
-import coil.size.Dimension
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioDataClass
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoDataClass
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
-import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 import com.suming.player.FuncionalPack.MediaType
@@ -23,7 +21,6 @@ import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Suppress("/unused")
 object ListManagerHelper {

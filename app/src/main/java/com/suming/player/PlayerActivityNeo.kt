@@ -86,7 +86,6 @@ import com.suming.player.ActivityComponent.PlayerActivity.S_Area_Helper
 import com.suming.player.ActivityComponent.PlayerActivity.SmoothScroller
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ActivityResultConnector
@@ -100,7 +99,6 @@ import com.suming.player.FuncionalPack.FrameListener
 import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
-import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.FuncionalPack.ScrollerHelper
@@ -857,15 +855,15 @@ class PlayerActivityNeo: AppCompatActivity(){
                         updateOrientationListener()
                     }
 
-                    //进度条
-                    "AlwaysSeek" -> {
-                        changeStateAlwaysSeek(bundle.getBoolean("target"))
+                    //进度条SeekMode刷新
+                    FragmentConnector.fragment_more_button_updated_seek_mode -> {
+                        onSettingChange_SeekMode()
                     }
-                    "LinkScroll" -> {
-                        changeStateLinkScroll(bundle.getBoolean("target"))
+                    FragmentConnector.fragment_more_button_updated_link_scroll -> {
+                        onSettingChange_LinkScroll()
                     }
-                    "TapJump" -> {
-                        changeStateTapJump(bundle.getBoolean("target"))
+                    FragmentConnector.fragment_more_button_updated_tap_jump -> {
+                        onSettingChange_TapJump()
                     }
 
                     //开启小窗模式
@@ -1727,6 +1725,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         //开启隐藏控件倒计时
         startIdleTimer()
 
+        //关闭小窗
+        stopFloatingWindow()
 
         //检查文件是否存在
         detectFileExistState()
@@ -1789,6 +1789,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         stopVideoSeek()
         stop_S_Area_PassiveControl(34564)
         stopVideoTimeSync()
+
+        //关闭小窗
+        stopFloatingWindow(true)
 
         //解绑播放器视图
         playerView.player = null
@@ -1996,7 +1999,8 @@ class PlayerActivityNeo: AppCompatActivity(){
             start_S_Area_PassiveControl(42625)
             startVideoTimeSync()
         }else{
-
+            stop_S_Area_PassiveControl(42625)
+            stopVideoTimeSync()
         }
     }
 
@@ -2055,15 +2059,23 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var state_HeadSetInserted = false
 
     //设置项修改封装函数
-    private fun changeStateAlwaysSeek(target: Boolean){
-        if (target){
-            notice("已关闭AlwaysSeek", 3000)
+    private fun onSettingChange_SeekMode(){
+        //读取viewModel中的最新值
+        val enable = playerViewModel.PREFS_AlwaysSeek
+        //执行对应操作
+        if (enable){
+            notice("寻帧模式已设置为常规寻帧", 3000)
+            //停止滚动已尽快结束AlwaysSeek进程
+            scroller.stopScroll()
         }else{
-            notice("已开启AlwaysSeek", 3000)
+            notice("寻帧模式已设置为倍速模拟", 3000)
         }
     }
-    private fun changeStateLinkScroll(target: Boolean){
-        if (target){
+    private fun onSettingChange_LinkScroll(){
+        //读取viewModel中的最新值
+        val enable = playerViewModel.PREFS_LinkScroll
+        //执行对应操作
+        if (enable){
             playerViewModel.PREFS_LinkScroll = true
             notice("已将进度条与视频进度同步", 3000)
         }else{
@@ -2074,11 +2086,14 @@ class PlayerActivityNeo: AppCompatActivity(){
             notice("已关闭链接滚动条与视频进度", 3000)
         }
     }
-    private fun changeStateTapJump(target: Boolean){
-        if (target){
-            notice("已开启TapJump", 3000)
+    private fun onSettingChange_TapJump(){
+        //读取viewModel中的最新值
+        val enable = playerViewModel.PREFS_TapJump
+        //执行对应操作
+        if (enable){
+            notice("已开启单击跳转", 3000)
         }else{
-            notice("已关闭TapJump", 3000)
+            notice("已关闭单击跳转", 3000)
         }
     }
     //清除进度条截图
@@ -2348,18 +2363,21 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //启动和关闭小窗
-    private var state_FromFloatingWindow = false
+    private var state_FloatingWindow_Active = false
     private fun startFloatingWindow() {
         //检查悬浮窗权限是否开启
         fun checkOverlayPermission(): Boolean {
             return Settings.canDrawOverlays(this)
         }
         if (!checkOverlayPermission()){
-            notice("请先开启悬浮窗权限", 1000)
+            showCustomToast("请先开启悬浮窗权限", 3)
             return
         }
         //通过检测，确认启动小窗
         else{
+            if (state_FloatingWindow_Active) return
+            state_FloatingWindow_Active = true
+
             //启动小窗服务
             val displayMetrics = resources.displayMetrics
             val screenWidth = displayMetrics.widthPixels
@@ -2369,8 +2387,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             intentFloatingWindow.putExtra("SCREEN_WIDTH", screenWidth)
             intentFloatingWindow.putExtra("state_PlayerType", 1)   //该传入值需要区分页面类型 flag_page_type
             startService(intentFloatingWindow)
-            //修改状态
-            state_FromFloatingWindow = true
+
             //主动返回系统桌面
             val intentHomeLauncher = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_HOME)
@@ -2379,9 +2396,16 @@ class PlayerActivityNeo: AppCompatActivity(){
             startActivity(intentHomeLauncher)
         }
     }
-    private fun stopFloatingWindow() {
-        state_FromFloatingWindow = false
+    private fun stopFloatingWindow(from_destroy: Boolean = false) {
+        if (!state_FloatingWindow_Active) return
+        state_FloatingWindow_Active = false
+
         stopService(Intent(applicationContext, FloatingWindowService::class.java))
+
+        if (!from_destroy){
+            //不是来自活动销毁时，重新绑定播放器视图
+            bindPlayerView()
+        }
     }
     //切换横屏
     private fun ButtonChangeOrientation(flag_short_or_long: String){

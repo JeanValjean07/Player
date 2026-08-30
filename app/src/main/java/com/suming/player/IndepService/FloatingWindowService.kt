@@ -16,9 +16,10 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import androidx.annotation.OptIn
 import androidx.core.app.NotificationCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
+import com.suming.player.FuncionalPack.IntentRepo
+import com.suming.player.FuncionalPack.SOURCE_CODE
 import com.suming.player.PlayerActivityNeo
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
@@ -27,8 +28,7 @@ class FloatingWindowService : Service() {
     private var mWindowManager: WindowManager? = null
     private var mFloatingView: View? = null
     private var mParams: WindowManager.LayoutParams? = null
-    //启动来源
-    private var source = -1
+
     //视频尺寸
     private var videoSizeWidth = 0
     private var videoSizeHeight = 0
@@ -70,7 +70,7 @@ class FloatingWindowService : Service() {
         videoSizeWidth = intent?.getIntExtra("VIDEO_SIZE_WIDTH", 0) ?: 0
         videoSizeHeight = intent?.getIntExtra("VIDEO_SIZE_HEIGHT", 0) ?: 0
         screenWidth = intent?.getIntExtra("SCREEN_WIDTH", 0) ?: 0
-        source = intent?.getIntExtra("state_PlayerType", -1) ?: -1
+
         //动态设置尺寸
         videoSizeWidthD = screenWidth / 2
         videoSizeHeightD = (videoSizeWidthD * (videoSizeHeight.toFloat() / videoSizeWidth)).toInt()
@@ -91,13 +91,10 @@ class FloatingWindowService : Service() {
         mFloatingView = LayoutInflater.from(this).inflate(R.layout.float_window_mini_player, null)
 
 
-
         //关闭按钮
         val closeBtn = mFloatingView!!.findViewById<ImageButton?>(R.id.close_btn)
         closeBtn?.setOnClickListener {
-            LocalBroadcastManager.getInstance(this).sendBroadcast(Intent("LOCAL_RECEIVER").apply {
-                putExtra("key", "PLAYER_PAUSE")
-            })
+
             stopSelf()
         }
         //打开按钮
@@ -111,7 +108,7 @@ class FloatingWindowService : Service() {
             }else {
                 val intent = Intent(this, PlayerActivityNeo::class.java)
                     .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
-                    .putExtra("IntentSource","FromPendingIntent" )
+                    .putExtra(IntentRepo.SOURCE, SOURCE_CODE.SOURCE_Pending )
 
                 startActivity(intent)
 

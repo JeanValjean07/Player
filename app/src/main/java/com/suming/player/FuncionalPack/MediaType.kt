@@ -1,7 +1,5 @@
 package com.suming.player.FuncionalPack
 
-import coil.size.Dimension
-
 object MediaType {
 
 

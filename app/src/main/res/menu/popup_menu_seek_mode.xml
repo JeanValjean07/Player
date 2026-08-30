@@ -1,0 +1,12 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText">
+    <item
+        android:id="@+id/enable_always_seek"
+        android:title="常规寻帧" />
+    <item
+        android:id="@+id/disable_always_seek"
+        android:title="倍速模拟" />
+
+</menu>

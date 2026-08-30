@@ -33,7 +33,7 @@ android {
         //noinspection OldTargetApi
         targetSdk = 36
         versionCode = 1
-        versionName = "3.6.6.9"
+        versionName = "3.7.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -56,16 +56,11 @@ android {
 
 dependencies {
 
-    //ExoPlayer
+    //ExoPlayer Media3
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.transformer)
-
-
-    //LocalBroadcastManager
-    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
-
 
 
     //Compose
@@ -89,17 +84,23 @@ dependencies {
     //ksp
     ksp("androidx.room:room-compiler:2.8.4")
 
-    //RxJava RxKotlin RxAndroid
+    //RxJava RxKotlin RxAndroid (已停用)
     //implementation("io.reactivex.rxjava3:rxjava:3.1.12")
     //implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
     //implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
-    //Gson
-    implementation("com.google.code.gson:gson:2.14.0")
+
+    //LocalBroadcastManager (已废弃)
+    //implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
+
+    //Gson (暂未使用)
+    //implementation("com.google.code.gson:gson:2.14.0")
+
+    //图片加载库 (暂未使用:手搓方案还没到性能瓶颈,不使用库)
     //Glide
-    implementation("com.github.bumptech.glide:glide:5.0.9")
-    annotationProcessor("com.github.bumptech.glide:compiler:5.0.9")
+    //implementation("com.github.bumptech.glide:glide:5.0.9")
+    //annotationProcessor("com.github.bumptech.glide:compiler:5.0.9")
     //coil
-    implementation("io.coil-kt:coil:2.7.0")
+    //implementation("io.coil-kt:coil:2.7.0")
 
     //OkHttp
     implementation("com.squareup.okhttp3:okhttp:5.5.0")

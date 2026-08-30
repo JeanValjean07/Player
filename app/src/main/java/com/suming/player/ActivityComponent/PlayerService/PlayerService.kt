@@ -15,17 +15,13 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.suming.player.EntranceActivity
-import com.suming.player.PlayerActionReceiver
-import com.suming.player.PlayerActivityNeo
-import com.suming.player.PlayerSingleton
-import com.suming.player.R
 import com.suming.player.ActivityComponent.PlayerActivity.ToolPlayerWrapper
-import com.suming.player.FuncionalPack.BroadcastActions
+import com.suming.player.EntranceActivity
 import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.FuncionalPack.SOURCE_CODE
-import com.suming.player.MusicPlayer
+import com.suming.player.PlayerSingleton
+import com.suming.player.R
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -283,8 +279,8 @@ class PlayerService: MediaSessionService() {
             .setContentText(MediaInfo_FileName)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSmallIcon(R.drawable.ic_player_service_notification)
-            .addAction(android.R.drawable.ic_media_play, "播放", BroadcastPlay())
-            .addAction(android.R.drawable.ic_media_pause, "暂停", BroadcastPause())
+            .addAction(android.R.drawable.ic_media_play, "播放", null)
+            .addAction(android.R.drawable.ic_media_pause, "暂停", null)
             .setAutoCancel(false)
             .build()
 
@@ -370,8 +366,8 @@ class PlayerService: MediaSessionService() {
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
-
-
+    //基于广播的播放指令(已废弃)
+    /*
     //基于广播的播放指令(暂未使用)
     private fun BroadcastPlay(): PendingIntent {
         val intent = Intent(this, PlayerActionReceiver::class.java)
@@ -388,6 +384,8 @@ class PlayerService: MediaSessionService() {
 
         return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
+
+     */
 
 
 

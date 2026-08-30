@@ -1,10 +1,8 @@
 package com.suming.player.ActivityComponent.PlayerActivity
 
 import android.app.Application
-import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.util.UnstableApi
-import coil.size.Dimension
 
 @UnstableApi
 //@Suppress("unused")

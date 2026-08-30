@@ -63,7 +63,7 @@ import kotlin.math.abs
 @UnstableApi
 @Suppress("unused","NewApi")
 @SuppressLint("UseGetLayoutInflater", "InflateParams","SetTextI18n")
-class PlayerFragmentMoreButton: DialogFragment() {
+class PlayerFragmentMoreButton: DialogFragment(){
     companion object {
         fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments =
             bundleOf()
@@ -74,7 +74,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private val viewModel: PlayerViewModel by activityViewModels()
     //空字段
     private val Undefined = ""
-
+    //
+    private lateinit var context : Context
 
 
 
@@ -209,6 +210,8 @@ class PlayerFragmentMoreButton: DialogFragment() {
         super.onCreate(savedInstanceState)
         //
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
+        //
+        context = requireContext()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?):View{
@@ -455,27 +458,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             switch_saveLastPosition.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
-                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
-                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
-                if (MediaType.isEmpty() || NUM_ID <= 0){
 
-                    AlertDialog.Builder(requireContext())
-                        .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
-                        .setPositiveButton("了解") { dialog, which ->
-                            ToolVibrate().vibrate(requireContext())
-
-                            customDismiss()
-
-                            dialog.dismiss()
-                        }
-                        .setCancelable(true)
-                        .show()
-
-                    switch_saveLastPosition.isChecked = false
-
-                    return@setOnClickListener
-                }
 
 
                 //修改设置
@@ -490,8 +473,17 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
             ButtonCapture.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                returnFragment(FragmentConnector.fragment_more_button_capture_frame)
-                dismiss()
+
+                //检查是否正在播放
+                val (ongoing, _) = checkOngoingMedia()
+                if (ongoing){
+                    returnFragment(FragmentConnector.fragment_more_button_capture_frame)
+                    dismiss()
+
+                }else{
+                    context.showCustomToast("未在播放,无法操作", 3)
+                }
+
             }
             //打开播放列表
             val ButtonPlayList = view.findViewById<ImageButton>(R.id.ButtonPlayList)
@@ -504,42 +496,46 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
             ButtonBackToStart.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                returnFragment(FragmentConnector.fragment_more_button_back_to_start)
-                dismiss()
+
+                //检查是否正在播放
+                val (ongoing, _) = checkOngoingMedia()
+                if (ongoing){
+                    returnFragment(FragmentConnector.fragment_more_button_back_to_start)
+                    dismiss()
+                }else{
+                    context.showCustomToast("未在播放,无法操作", 3)
+                }
+
             }
 
             //开启小窗
             val ButtonStartPiP = view.findViewById<TextView>(R.id.ButtonStartPiP)
             ButtonStartPiP.setOnClickListener {
-                returnFragment(FragmentConnector.fragment_more_button_start_pip_window)
-                dismiss()
+                ToolVibrate().vibrate(requireContext())
+
+                //检查是否正在播放
+                val (ongoing, _) = checkOngoingMedia()
+                if (ongoing){
+                    //开启小窗
+                    returnFragment(FragmentConnector.fragment_more_button_start_pip_window)
+                    dismiss()
+                }else{
+                    context.showCustomToast("未在播放,无法操作", 3)
+                }
             }
             //更新封面
             val ButtonUpdateCover = view.findViewById<TextView>(R.id.buttonUpdateCover)
             ButtonUpdateCover.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
-                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
-                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
-                if (MediaType.isEmpty() || NUM_ID <= 0){
-
-                    AlertDialog.Builder(requireContext())
-                        .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
-                        .setPositiveButton("了解") { dialog, which ->
-                            ToolVibrate().vibrate(requireContext())
-
-                            customDismiss()
-
-                            dialog.dismiss()
-                        }
-                        .setCancelable(true)
-                        .show()
-
-                    return@setOnClickListener
+                //检查是否正在播放
+                val (ongoing, _) = checkOngoingMedia()
+                if (ongoing){
+                    //更新封面
+                    updateCoverFrame(ButtonUpdateCover)
+                }else{
+                    context.showCustomToast("未在播放,无法操作", 3)
                 }
-
-                updateCoverFrame(ButtonUpdateCover)
             }
             //提取所有帧
             val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
@@ -566,43 +562,40 @@ class PlayerFragmentMoreButton: DialogFragment() {
             val ButtonVideoInfo = view.findViewById<TextView>(R.id.buttonVideoInfo)
             ButtonVideoInfo.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-                returnFragment(FragmentConnector.fragment_more_button_open_video_info)
-                dismiss()
+
+                //检查是否正在播放
+                val (ongoing, _) = checkOngoingMedia()
+                if (ongoing){
+                    returnFragment(FragmentConnector.fragment_more_button_open_video_info)
+                    dismiss()
+                }else{
+                    context.showCustomToast("未在播放,无法操作", 3)
+                }
+
             }
             //分享
             val ButtonSysShare = view.findViewById<TextView>(R.id.buttonSysShare)
             ButtonSysShare.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
-                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
-                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
-                if (MediaType.isEmpty() || NUM_ID <= 0){
+                //检查是否正在播放
+                val (ongoing, _) = checkOngoingMedia()
+                if (ongoing){
 
-                    AlertDialog.Builder(requireContext())
-                        .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
-                        .setPositiveButton("了解") { dialog, which ->
-                            ToolVibrate().vibrate(requireContext())
+                    returnFragment(FragmentConnector.fragment_more_button_sys_share_video)
+                    dismiss()
 
-                            customDismiss()
-
-                            dialog.dismiss()
-                        }
-                        .setCancelable(true)
-                        .show()
-
-                    return@setOnClickListener
+                }else{
+                    context.showCustomToast("未在播放,无法操作", 3)
                 }
 
-                returnFragment(FragmentConnector.fragment_more_button_sys_share_video)
-                dismiss()
             }
             //均衡器
             val ButtonEqualizer = view.findViewById<TextView>(R.id.buttonEqualizer)
             ButtonEqualizer.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
-                context?.showCustomToast("暂不开放此功能", 3)
+                context.showCustomToast("暂不开放此功能", 3)
 
             }
             //清除当前进度条缩略图
@@ -610,46 +603,33 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ButtonClearMiniature.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
-                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
-                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
-                if (MediaType.isEmpty() || NUM_ID <= 0){
-
+                //检查是否正在播放
+                val (ongoing, _) = checkOngoingMedia()
+                if (ongoing){
                     AlertDialog.Builder(requireContext())
-                        .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
-                        .setPositiveButton("了解") { dialog, which ->
+                        .setTitle("确定删除进度条缩略图吗?")
+                        .setMessage("")
+                        .setPositiveButton("确认") { dialog, which ->
                             ToolVibrate().vibrate(requireContext())
 
+                            returnFragment(FragmentConnector.fragment_more_button_clear_miniature)
+
                             customDismiss()
+
+                            dialog.dismiss()
+                        }
+                        .setNegativeButton("取消") { dialog, which ->
+                            ToolVibrate().vibrate(requireContext())
 
                             dialog.dismiss()
                         }
                         .setCancelable(true)
                         .show()
 
-                    return@setOnClickListener
+                }else{
+                    context.showCustomToast("未在播放,无法操作", 3)
                 }
 
-
-                AlertDialog.Builder(requireContext())
-                    .setTitle("确定删除进度条缩略图吗?")
-                    .setMessage("")
-                    .setPositiveButton("确认") { dialog, which ->
-                        ToolVibrate().vibrate(requireContext())
-
-                        returnFragment(FragmentConnector.fragment_more_button_clear_miniature)
-
-                        customDismiss()
-
-                        dialog.dismiss()
-                    }
-                    .setNegativeButton("取消") { dialog, which ->
-                        ToolVibrate().vibrate(requireContext())
-
-                        dialog.dismiss()
-                    }
-                    .setCancelable(true)
-                    .show()
 
 
             }
@@ -658,9 +638,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ButtonDeleteCustomCover.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
-                //检查能否进行此项设置(是否可获取到媒体类型和NUM_ID)
-                val (MediaType,NUM_ID) = GET_MediaType_and_NUM_ID()
-                if (MediaType.isEmpty() || NUM_ID <= 0){
+                //检查是否正在播放
+                val (ongoing, _) = checkOngoingMedia()
+                if (ongoing){
 
                     AlertDialog.Builder(requireContext())
                         .setTitle("媒体详情获取失败")
@@ -676,28 +656,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
                         .show()
 
                     return@setOnClickListener
+                }else{
+                    context.showCustomToast("未在播放,无法操作", 3)
                 }
-
-
-                AlertDialog.Builder(requireContext())
-                    .setTitle("确定删除自定义封面吗?")
-                    .setMessage("")
-                    .setPositiveButton("确认") { dialog, which ->
-                        ToolVibrate().vibrate(requireContext())
-
-                        returnFragment(FragmentConnector.fragment_more_button_delete_custom_cover)
-
-                        customDismiss()
-
-                        dialog.dismiss()
-                    }
-                    .setNegativeButton("取消") { dialog, which ->
-                        ToolVibrate().vibrate(requireContext())
-
-                        dialog.dismiss()
-                    }
-                    .setCancelable(true)
-                    .show()
 
             }
             //解除亮度控制
@@ -763,38 +724,74 @@ class PlayerFragmentMoreButton: DialogFragment() {
             }
 
 
-            //注册进度条相关功能(经典播放页时不显示进度条相关功能)
+            //注册进度条相关功能
             val CardScrollerStuff = view.findViewById<CardView>(R.id.card_scrollerStuff)
-            if(viewModel.state_s_area_type == S_Area_Helper.S_AreaType_SEEKBAR){
-                CardScrollerStuff.visibility = View.GONE
-            }else if(viewModel.state_s_area_type == S_Area_Helper.S_AreaType_SCROLLER){
+            if(viewModel.state_s_area_type == S_Area_Helper.S_AreaType_SCROLLER){
+
                 //按钮：AlwaysSeek
-                val ButtonAlwaysSeek = view.findViewById<FrameLayout>(R.id.ButtonActualAlwaysSeek)
-                val ButtonAlwaysSeekMaterial = view.findViewById<MaterialButton>(R.id.ButtonMaterialAlwaysSeek)
-                fun updateButtonAlwaysSeekColor(){
-                    if (viewModel.PREFS_AlwaysSeek){
-                        ButtonAlwaysSeekMaterial.backgroundTintList = ColorStateList.valueOf(
-                            ContextCompat.getColor(requireContext(), R.color.THEME_1_Background_ButtonCircle_ON))
+                val BTC_SeekMode = view.findViewById<CardView>(R.id.ButtonCard_SeekMode)
+                //刷新显示文字
+                fun update_BTT_SeekMode(){
+                    val BTT_SeekMode = view.findViewById<TextView>(R.id.ButtonText_SeekMode)
+                    //转换自AlwaysSeek Boolean
+                    val AlwaysSeek = SettingsRequestCenter.get_PREFS_EnableAlwaysSeek(context)
+
+                    if (AlwaysSeek){
+                        BTT_SeekMode.text = "常规寻帧"
                     }else{
-                        ButtonAlwaysSeekMaterial.backgroundTintList = ColorStateList.valueOf(
-                            ContextCompat.getColor(requireContext(), R.color.THEME_1_Background_ButtonCircle_OFF))
+                        BTT_SeekMode.text = "倍速模拟"
                     }
                 }
-                updateButtonAlwaysSeekColor()
-                ButtonAlwaysSeek.setOnClickListener {
+                update_BTT_SeekMode()
+                //弹出菜单选择
+                fun popupMenu_SeekMode(anchor: View){
+                    val popup = PopupMenu(requireContext(), anchor)
+                    popup.menuInflater.inflate(R.menu.popup_menu_seek_mode, popup.menu)
+                    popup.setOnMenuItemClickListener { item ->
+                        when (item.itemId) {
+                            R.id.enable_always_seek -> {
+
+                                //修改viewModel的值
+                                viewModel.PREFS_AlwaysSeek = true
+                                //写入设置
+                                SettingsRequestCenter.set_PREFS_EnableAlwaysSeek(true)
+                                //刷新显示文字
+                                update_BTT_SeekMode()
+
+                                //发回消息
+                                returnFragment(FragmentConnector.fragment_more_button_updated_seek_mode)
+                                //关闭面板
+                                customDismiss()
+
+                                true
+                            }
+                            R.id.disable_always_seek -> {
+                                //修改viewModel的值
+                                viewModel.PREFS_AlwaysSeek = false
+                                //写入设置
+                                SettingsRequestCenter.set_PREFS_EnableAlwaysSeek(false)
+                                //刷新显示文字
+                                update_BTT_SeekMode()
+
+                                //发回消息
+                                returnFragment(FragmentConnector.fragment_more_button_updated_seek_mode)
+                                //关闭面板
+                                customDismiss()
+
+                                true
+                            }
+                            else -> true
+                        }
+                    }
+                    popup.show()
+                }
+                //设置点击事件
+                BTC_SeekMode.setOnClickListener {
                     ToolVibrate().vibrate(requireContext())
-                    //立即切换变量并写入数据库
-                    val target = !viewModel.PREFS_AlwaysSeek
-                    viewModel.PREFS_AlwaysSeek = target
-                    SettingsRequestCenter.set_PREFS_EnableAlwaysSeek(target)
 
-                    //按钮改为目标颜色
-                    updateButtonAlwaysSeekColor()
+                    //弹出菜单选择
+                    popupMenu_SeekMode(it)
 
-                    //发回并关闭
-                    val result = bundleOf("KEY" to "AlwaysSeek", "target" to target)
-                    setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
-                    customDismiss()
                 }
 
                 //按钮：链接滚动条与视频进度
@@ -812,17 +809,18 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 updateButtonLinkScrollColor()
                 ButtonLinkScroll.setOnClickListener {
                     ToolVibrate().vibrate(requireContext())
-                    //立即切换变量并写入数据库
-                    val target = !viewModel.PREFS_LinkScroll
-                    viewModel.PREFS_LinkScroll = target
-                    SettingsRequestCenter.set_PREFS_EnableLinkScroll(target)
 
+                    //新值无脑取反即可
+                    viewModel.PREFS_LinkScroll = !viewModel.PREFS_LinkScroll
+
+                    //写入设置
+                    SettingsRequestCenter.set_PREFS_EnableLinkScroll(viewModel.PREFS_LinkScroll)
                     //按钮改为目标颜色
                     updateButtonLinkScrollColor()
 
-                    //发回并关闭
-                    val result = bundleOf("KEY" to "LinkScroll", "target" to target)
-                    setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                    //发回消息
+                    returnFragment(FragmentConnector.fragment_more_button_updated_link_scroll)
+                    //关闭面板
                     customDismiss()
                 }
 
@@ -841,20 +839,23 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 updateButtonTapJumpColor()
                 ButtonTapJump.setOnClickListener {
                     ToolVibrate().vibrate(requireContext())
-                    //立即切换变量并写入数据库
-                    val target = !viewModel.PREFS_TapJump
-                    viewModel.PREFS_TapJump = target
-                    SettingsRequestCenter.set_PREFS_EnableTapJump(target)
 
+                    //新值无脑取反即可
+                    viewModel.PREFS_TapJump = !viewModel.PREFS_TapJump
+
+                    //写入设置
+                    SettingsRequestCenter.set_PREFS_EnableTapJump(viewModel.PREFS_TapJump)
                     //按钮改为目标颜色
                     updateButtonTapJumpColor()
 
-                    //发回并关闭
-                    val result = bundleOf("KEY" to "TapJump", "target" to target)
-                    setFragmentResult("FROM_FRAGMENT_MORE_BUTTON", result)
+                    //发回消息
+                    returnFragment(FragmentConnector.fragment_more_button_updated_tap_jump)
+                    //关闭面板
                     customDismiss()
                 }
 
+            }else{
+                CardScrollerStuff.visibility = View.GONE
             }
 
             //未显示进度条
@@ -946,6 +947,13 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
 
         return Pair(MediaType,NUM_ID)
+    }
+    //检查是否正在播放
+    private fun checkOngoingMedia():Pair<Boolean,String>{
+        val (ongoing,URI_U_FP) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+        val URI_S_FP = URI_U_FP.toString()
+
+        return Pair(ongoing,URI_S_FP)
     }
 
     //更新封面选单
