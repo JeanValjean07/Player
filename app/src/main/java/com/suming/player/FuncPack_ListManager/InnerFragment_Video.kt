@@ -257,7 +257,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         val ongoing_URI_S_FP = PlayerInfoCenter.observableMediaItem.value.URI_S_FP
         //获取当前播放/暂停状态
         val isPlaying = PlayerInfoCenter.observableIsPlaying.value
-        consoleLog("onMediaStateUpdate (视频列表): $ongoing_URI_S_FP, $isPlaying")
+        //consoleLog("onMediaStateUpdate (视频列表): $ongoing_URI_S_FP, $isPlaying")
 
         //仅通知当前项的数据
         recyclerView_video_adapter.update_ongoingMediaState(
@@ -317,7 +317,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
     //添加到自定义
     private fun onAddToListClick(item: MediaItemFullForVideo){
-        consoleLog("添加到自定义列表: ${item.file_name}")
+        //consoleLog("添加到自定义列表: ${item.file_name}")
 
 
 

@@ -14,12 +14,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
+import androidx.compose.remote.creation.dsl.sqrt
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
@@ -34,6 +36,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
+import androidx.recyclerview.widget.LinearSmoothScroller
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.suming.player.PlayerSingleton
@@ -58,6 +62,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 
 @UnstableApi
 @SuppressLint("ComposableNaming","NewApi")
@@ -421,6 +426,13 @@ class ListManagerFragment: DialogFragment(){
                     }
                 }
             }
+
+            //修改横滑动画
+            val snapHelper = LinearDecelerateSnapHelper(context)
+            val recyclerView = ViewPager.getChildAt(0) as RecyclerView
+            recyclerView.onFlingListener = null
+            snapHelper.attachToRecyclerView(recyclerView)
+
         }
 
     }
@@ -447,6 +459,7 @@ class ListManagerFragment: DialogFragment(){
                 else -> ListFragment()
             }
 
+
     }
     //viewPager页面切换监听器
     private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
@@ -462,6 +475,7 @@ class ListManagerFragment: DialogFragment(){
         override fun onPageScrollStateChanged(state: Int) {
 
         }
+
     }
     private var state_viewPagerListener_started = false
     private fun startViewPagerListener(){
@@ -487,6 +501,8 @@ class ListManagerFragment: DialogFragment(){
         ListManagerHelper.ListMark_Video to 2,
         ListManagerHelper.ListMark_Audio to 3,
     )
+
+
 
     //观察当前播放状态
     private var MediaItemObserverRunning = false

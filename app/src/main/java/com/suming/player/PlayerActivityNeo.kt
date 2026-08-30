@@ -1172,7 +1172,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //媒体项变更(clearItem时会收到null)
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            consoleLog("onMediaItemTransition: $mediaItem, $reason")
+            //consoleLog("onMediaItemTransition: $mediaItem, $reason")
             //媒体项变更
             if (mediaItem == null){
                 //媒体项被清除
@@ -1222,7 +1222,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //播放器进入空闲状态
     private fun onPlayEngineIdle(){
-        consoleLog("onPlayEngineIdle")
+        //consoleLog("onPlayEngineIdle")
         //进行收尾工作(移除监听器,移除引用)
         removeExoPlayerListener()
         player = null
@@ -1233,33 +1233,36 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     //播放器重新上线
     private fun onPlayEnginRestart(new_ID:Long){
-            //consoleLog("onPlayEnginRestart: $new_ID")
+        //consoleLog("onPlayEnginRestart: $new_ID")
 
-            //重新拿取引用
-            player = PlayerSingleton.getPlayer()
-            if (player == null){
-                //consoleLog("onPlayEnginRestart: 未拿到播放器引用")
-                return
+        //移除一次旧的监听器(保底)
+        removeExoPlayerListener()
+
+        //重新拿取引用
+        player = PlayerSingleton.getPlayer()
+        if (player == null){
+            //consoleLog("onPlayEnginRestart: 未拿到播放器引用")
+            return
+        }else{
+            //consoleLog("onPlayEnginRestart: 成功拿到播放器引用")
+
+            //主动检查正在播放的项
+            val (ongoing,ongoing_URI) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+            //consoleLog("onPlayEnginRestart: 正在播放项:ongoing:${ongoing}, ongoing_URI:$ongoing_URI")
+            if (ongoing){
+                connectCurrentMedia()
+                closeErrorCover()
             }else{
-                //consoleLog("onPlayEnginRestart: 成功拿到播放器引用")
-
-                //主动检查正在播放的项
-                val (ongoing,ongoing_URI) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                //consoleLog("onPlayEnginRestart: 正在播放项:ongoing:${ongoing}, ongoing_URI:$ongoing_URI")
-                if (ongoing){
-                    connectCurrentMedia()
-                    closeErrorCover()
-                }else{
-                    //
-                    showErrorCover("当前没有正在播放的项")
-                }
+                //
+                showErrorCover("当前没有正在播放的项")
             }
-            //记入缓存
-            cache_player_ID = new_ID
+        }
+        //记入缓存
+        cache_player_ID = new_ID
 
-            //重新添加监听器
-            startExoPlayerListener()
-
+        //重新添加监听器(将state_PlayerListenerAdded置于false以强制添加)
+        state_PlayerListenerAdded = false
+        startExoPlayerListener()
     }
 
 
@@ -1281,8 +1284,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     private fun removeExoPlayerListener(){
-        if (!state_PlayerListenerAdded) return
-        state_PlayerListenerAdded = false
         //consoleLog("removeExoPlayerListener")
         player?.removeListener(PlayerStateListener)
     }

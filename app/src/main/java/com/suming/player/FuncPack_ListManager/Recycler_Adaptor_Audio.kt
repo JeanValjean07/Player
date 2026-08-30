@@ -152,17 +152,17 @@ class Recycler_Adaptor_Audio(
                 //不是进行中的项,设为disabled
                 ListManagerHelper.payload_event_disable_this_item -> {
                     holder.disable_this_item()
-                    consoleLog("onBindViewHolder (音频列表): $position 不是进行中的项,设为disabled")
+                    //consoleLog("onBindViewHolder (音频列表): $position 不是进行中的项,设为disabled")
                 }
                 //进行中,且正在播放
                 ListManagerHelper.payload_event_enable_this_item_with_play -> {
                     holder.enable_this_item_with_play()
-                    consoleLog("onBindViewHolder (音频列表): $position 进行中,且正在播放")
+                    //consoleLog("onBindViewHolder (音频列表): $position 进行中,且正在播放")
                 }
                 //进行中,但未播放
                 ListManagerHelper.payload_event_enable_this_item_without_play -> {
                     holder.enable_this_item_without_play()
-                    consoleLog("onBindViewHolder (音频列表): $position 进行中,但未播放")
+                    //consoleLog("onBindViewHolder (音频列表): $position 进行中,但未播放")
                 }
             }
         }else{
@@ -271,16 +271,16 @@ class Recycler_Adaptor_Audio(
                     if (cache_isPlaying){
                         //进行中,且正在播放
                         notifyItemChanged(index, ListManagerHelper.payload_event_enable_this_item_with_play)
-                        consoleLog("update_ongoingMediaState (音频列表): $index 进行中,且正在播放")
+                        //consoleLog("update_ongoingMediaState (音频列表): $index 进行中,且正在播放")
                     }else {
                         //进行中,但未播放
                         notifyItemChanged(index, ListManagerHelper.payload_event_enable_this_item_without_play)
-                        consoleLog("update_ongoingMediaState (音频列表): $index 进行中,但未播放")
+                        //consoleLog("update_ongoingMediaState (音频列表): $index 进行中,但未播放")
                     }
                 }else{
                     //不是进行中的项,设为disabled
                     notifyItemChanged(index, ListManagerHelper.payload_event_disable_this_item)
-                    consoleLog("update_ongoingMediaState (音频列表): $index 不是进行中的项,设为disabled")
+                    //consoleLog("update_ongoingMediaState (音频列表): $index 不是进行中的项,设为disabled")
 
                 }
             }

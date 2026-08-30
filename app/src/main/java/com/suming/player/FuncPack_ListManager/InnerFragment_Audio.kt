@@ -207,7 +207,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
         val ongoing_URI_S_FP = PlayerInfoCenter.observableMediaItem.value.URI_S_FP
         //获取当前播放/暂停状态
         val isPlaying = PlayerInfoCenter.observableIsPlaying.value
-        consoleLog("onMediaStateUpdate (音频列表): $ongoing_URI_S_FP, $isPlaying")
+        //consoleLog("onMediaStateUpdate (音频列表): $ongoing_URI_S_FP, $isPlaying")
 
         //仅通知当前项的数据
         recyclerView_music_adapter.update_ongoingMediaState(

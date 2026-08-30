@@ -29,6 +29,7 @@ playServicesOssLicenses = "17.5.1"
 playServicesOssLicensesVersion = "17.5.1"
 #ExoPlayer
 media3 = "1.11.0"
+remoteCreationCore = "1.0.0-alpha18"
 
 
 [libraries]
@@ -60,6 +61,7 @@ androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplaye
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
 androidx-media3-transformer = { group = "androidx.media3", name = "media3-transformer", version.ref = "media3" }
+androidx-compose-remote-creation-core = { group = "androidx.compose.remote", name = "remote-creation-core", version.ref = "remoteCreationCore" }
 
 
 [plugins]

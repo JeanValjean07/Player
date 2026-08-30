@@ -56,6 +56,7 @@ android {
 
 dependencies {
 
+    implementation(libs.androidx.compose.remote.creation.core)
     //ExoPlayer Media3
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
