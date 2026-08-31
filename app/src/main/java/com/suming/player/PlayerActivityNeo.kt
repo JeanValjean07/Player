@@ -117,6 +117,7 @@ import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.hypot
+import kotlin.math.min
 import kotlin.math.pow
 
 @UnstableApi
@@ -380,8 +381,9 @@ class PlayerActivityNeo: AppCompatActivity(){
             val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
                 if (TestHelper.isTestMode){
-                    onPlayEngineIdle()
-                //setCustomParams()
+                    PlayerSingleton.onError = true
+                    PlayerSingleton.onPlayEngineIdle()
+
 
                 }else{
                     scroller.stopScroll()
@@ -2916,7 +2918,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                 return@launch
             }
             //consoleLog("updateScrollerAdapter 使用 SCROLLER")
-
             //获取屏幕信息
             val density = display_screen_density
             if (density == 0f){
@@ -2924,6 +2925,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) }
                 return@launch
             }
+            //计算单图宽度px (40dp)
             ScrollerHelper.singleFrame_WidthPx = (40 * density).toInt()
             //计算进度条参数
             //先从信息中心拿到各种必要信息
@@ -2941,6 +2943,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                 withContext(Dispatchers.Main){ withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) } }
                 return@launch
             }
+            //计算单侧图片数量(屏幕宽度参与计算)
+            ScrollerHelper.halfScreenEndIndex = min(((display_screen_width_pixels / 2 / ScrollerHelper.singleFrame_WidthPx) + 1),ScrollerHelper.allFrame_totalFrameNumber - 1)
+            //consoleLog("updateScrollerAdapter 进度条：半屏结束位索引为${ScrollerHelper.halfScreenEndIndex}")
             //已确认进度条可显示
             //consoleLog("updateScrollerAdapter 进度条：已确认参数上支持显示，开始初始化Adapter")
             //检查能否解码
@@ -2961,7 +2966,8 @@ class PlayerActivityNeo: AppCompatActivity(){
                 scroller.itemAnimator = null
                 scroller.setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 scroller.layoutParams.width = 0
-                scrollerAdapter = PlayerScrollerAdapter(context, mediaDuration)
+
+                scrollerAdapter = PlayerScrollerAdapter(context, mediaDuration,scroller)
 
                 //显示进度条区域
                 show_s_area_type(S_Area_Helper.S_AreaType_SCROLLER)

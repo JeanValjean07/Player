@@ -41,6 +41,9 @@ object ScrollerHelper {
     //单张图片对应的视频时长
     var singleFrame_durationMs = 0L
 
+    //半屏结束位索引
+    var halfScreenEndIndex = 0
+
 
 
 
@@ -60,6 +63,7 @@ object ScrollerHelper {
         if (allFrame_totalFrameNumber < 1) allFrame_totalFrameNumber = 1
         if (singleFrame_durationMs < 1L) singleFrame_durationMs = 1L
         //consoleLog( "进度条参数计算 图片总数：${allFrame_totalFrameNumber},单张图片对应时长(毫秒)：${singleFrame_durationMs}" )
+
 
         //设置视频唯一标识
         setMediaItemMark(uriNumOnly)
@@ -278,7 +282,7 @@ object ScrollerHelper {
 
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
+    private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
             Log.d("SuMing", "ScrollerHelper: $msg")
         }

@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.CountDownTimer
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -238,6 +239,7 @@ object PlayerSingleton {
     private fun onFatalErrorOccur(error: PlaybackException){
         consoleLog("播放器错误:${error} message:${error.message} cause:${error.cause} errorCodeName:${error.errorCodeName}")
 
+        onError = true
         //解锁一次保底
         isLocked = false
 
@@ -245,9 +247,10 @@ object PlayerSingleton {
 
 
     }
+    var onError = false
     //播放器进入空闲状态时,重启播放器
     private val coroutine_restart = CoroutineScope(Dispatchers.Main)
-    private fun onPlayEngineIdle(){
+    fun onPlayEngineIdle(){
         coroutine_restart.launch{
             consoleLog("onPlayEngineIdle")
 
@@ -262,30 +265,55 @@ object PlayerSingleton {
             //关闭本地监听器
             removePlayerStateListener()
             //销毁播放器(包含置空_player实例)
-            //consoleLog("onPlayEngineIdle: stopPlayEngine")
-            stopPlayEngine()
+            consoleLog("onPlayEngineIdle: stopPlayEngine")
+            stopPlayEngine(false)
 
-            delay(500)
-            //consoleLog("onPlayEngineIdle: getInitPlayer")
+            delay(100)
+            consoleLog("onPlayEngineIdle: getInitPlayer")
             //重启播放器(getInitPlayer()自带监听器添加)
             getInitPlayer()
+            //检查是否重启成功
+            if (getPlayer() == null){
+                //重启失败时,直接关闭播放器
+                consoleLog("onPlayEngineIdle: getInitPlayer 失败")
+                stopPlayEngine()
+            }else{
+                //重启成功,检查是否需要恢复播放,且仅在发生报错时恢复
+                consoleLog("onPlayEngineIdle: getInitPlayer 成功 onError:${onError}")
+                if (onError){
+                    onError = false
+                    //恢复播放
+                    val last_URI_S_FP = PlayerInfoCenter.GET_Media_URI_S_FP()
+                    consoleLog("onPlayEngineIdle: last_URI_S_FP:$last_URI_S_FP")
+                    //检查文件是否可读
+                    val is_readable = MediaInfoRetriever.isUriReadable(context,last_URI_S_FP)
+                    consoleLog("onPlayEngineIdle: isUriReadable:${is_readable}")
+                    if (is_readable){
+                        //可读,则恢复播放
+                        setMediaItem(last_URI_S_FP.toUri(),Undefined,true,true)
+                    }
+                }
+            }
             //添加本地监听器
             addPlayerStateListener()
         }
     }
 
+
     //销毁播放器并关闭媒体会话
-    fun stopPlayEngine(){
+    fun stopPlayEngine(clear_info_center: Boolean = true){
         //consoleLog("stopPlayEngine")
         //发布消息
         cache_player_ID = 0L
         PlayerInfoCenter.updateObservableIsIdle(0L)
         //清理播放项
-        clearMediaItem()
+        clearMediaItem(clear_info_center)
         //销毁播放器
         releasePlayer()
-        //重置媒体状态
-        PlayerInfoCenter.CLEAR_CurrentMediaInfo()
+        //重置媒体状态(可选)
+        if (clear_info_center){
+            PlayerInfoCenter.CLEAR_CurrentMediaInfo()
+        }
         //关闭监听器
         PlayerListener.stopListener()
         //关闭本侧的媒体会话
@@ -299,10 +327,12 @@ object PlayerSingleton {
     }
 
     //清除当前媒体项
-    fun clearMediaItem(){
+    fun clearMediaItem(clear_info_center: Boolean = true){
         clearMediaItem_standardExo()
-        //重置媒体状态
-        PlayerInfoCenter.CLEAR_CurrentMediaInfo()
+        //重置媒体状态(可选)
+        if (clear_info_center){
+            PlayerInfoCenter.CLEAR_CurrentMediaInfo()
+        }
 
     }
 
@@ -326,6 +356,7 @@ object PlayerSingleton {
 
     //MediaInfoRetriever
     private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
+
 
     //Long Process Functions
     //设置新媒体项的外部接口(以后可以加些过滤)(返回ActivityResultConnector内的状态码)(file_path作用:??//TODO)
@@ -544,7 +575,7 @@ object PlayerSingleton {
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
 
         var cover_img_uri = Uri.EMPTY
-        if (SettingsRequestCenter.get_PREFS_DisableMediaArtWork(context)){
+        if (SettingsRequestCenter.GET_PREFS_DisableMediaArtWork(context)){
             return Uri.EMPTY
         }else{
             //从ArtworkFrameManager获取即可

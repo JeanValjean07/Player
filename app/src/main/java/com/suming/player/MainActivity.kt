@@ -794,7 +794,7 @@ class MainActivity: AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableMediaItem.collect { _ ->
                     if (onPaused) return@collect
-                    consoleLog("观察到 正在播放的媒体项 发生变更")
+                    //consoleLog("观察到 正在播放的媒体项 发生变更")
                     //显示MiniView
                     showMiniViewLongProcess()
                 }
@@ -806,7 +806,7 @@ class MainActivity: AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableIsPlaying.collect { newState ->
                     if (onPaused) return@collect
-                    consoleLog("观察到 播放/暂停 发生变更")
+                    //consoleLog("观察到 播放/暂停 发生变更")
                     //刷新操作按钮
                     updateMiniViewPauseButton(newState)
                 }
@@ -982,7 +982,7 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_ButtonPlay.setImageResource(if (isPlaying) R.drawable.ic_main_controller_pause else R.drawable.ic_main_controller_play)
     }
     private fun updateMiniViewArtwork(type: String,NUM_ID: Long){
-        consoleLog("updateMiniViewArtwork()")
+        //consoleLog("updateMiniViewArtwork()")
         val useImage = SettingsRequestCenter.GET_PRF_AlwaysUseImageInMiniView(this@MainActivity)
         if (useImage){
             updateMiniViewArtwork_Image(NUM_ID, type)
@@ -1836,7 +1836,7 @@ class MainActivity: AppCompatActivity() {
                 ConstraintSet.BOTTOM,
                 0
             )
-            constraintSet.constrainWidth(level_controllers.id, (display_screen_width_pixels * 0.3f).toInt())
+            constraintSet.constrainWidth(level_controllers.id, (display_screen_width_pixels * 0.5f).toInt())
             constraintSet.applyTo(level_root)
 
             val constraintSetList = ConstraintSet()
@@ -1850,7 +1850,7 @@ class MainActivity: AppCompatActivity() {
                 0
             )
 
-            constraintSetList.constrainWidth(level_list.id, (display_screen_width_pixels * 0.7f).toInt())
+            constraintSetList.constrainWidth(level_list.id, (display_screen_width_pixels * 0.5f).toInt())
             constraintSetList.applyTo(level_root)
 
             val level_controller_rightLine = findViewById<View>(R.id.level_controller_rightLine)

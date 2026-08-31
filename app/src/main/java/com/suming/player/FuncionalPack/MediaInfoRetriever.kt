@@ -53,6 +53,12 @@ class MediaInfoRetriever {
 
         //尝试设置数据源
         try{
+            consoleLog("retrieveMediaInfo -尝试设置数据源:URI_S_FR:$URI_S_FR")
+            //设置URI为数据源
+            retriever?.setDataSource(context,URI_U_FR)
+
+            //原方案可自动区分文件路径和URI,已停用
+            /*
             //检查URI_S是否实际上是一个文件路径
             val is_file_path = MediaUriManager.spy_is_string_actually_a_file_path(URI_S_FR)
             if (is_file_path){
@@ -74,8 +80,10 @@ class MediaInfoRetriever {
                 retriever?.setDataSource(context,URI_U_FR)
             }
 
+             */
+
         }catch(e: Exception){
-            consoleLog("retrieveMediaInfo -发生错误:e:$e,message:${e.message}")
+            consoleLog("retrieveMediaInfo -尝试设置数据源 -Exception :e:$e,message:${e.message}")
 
             return Triple(ActivityResultConnector.retriever_error ,MediaItemForPlay(),Undefined)
         }
@@ -181,7 +189,7 @@ class MediaInfoRetriever {
             }
 
             //日志
-             // /*
+              /*
             consoleLog("retrieveMediaInfo -使用 URI 解码 -结果：" +
                     "MediaInfo_MediaType: $MediaInfo_MediaType , " +
                     "file_path: $file_path , " +
@@ -196,7 +204,7 @@ class MediaInfoRetriever {
                     "NUM_ID: $NUM_ID , " +
                     "SPECIFIC_ID: $SPECIFIC_ID"
             )
-            //   */
+              */
 
             //合成数据包
             val MediaInfoPack = MediaItemForPlay(

@@ -35,7 +35,7 @@ object PlayerInfoCenter {
     private var _observableMediaItem = MutableStateFlow(MediaItemForPlay())
     var observableMediaItem: StateFlow<MediaItemForPlay> = _observableMediaItem.asStateFlow()
     fun updateObservableMediaItem(MediaItemPack: MediaItemForPlay){
-        consoleLog("updateObservableMediaItem: $MediaItemPack")
+        //consoleLog("updateObservableMediaItem: $MediaItemPack")
         _observableMediaItem.value = MediaItemPack
     }
     //可观察是否正在播放
@@ -57,7 +57,7 @@ object PlayerInfoCenter {
 
     //接收信息解码器传入的媒体信息
     fun SET_MediaItemForPlay_Pack(MediaInfoPack: MediaItemForPlay) {
-        consoleLog("SET_MediaItemForPlay_Pack: $MediaInfoPack")
+        //consoleLog("SET_MediaItemForPlay_Pack: $MediaInfoPack")
         //缓存旧数据
         LAST_MediaItemPackage = CURRENT_MediaItemPackage
         //缓存新数据

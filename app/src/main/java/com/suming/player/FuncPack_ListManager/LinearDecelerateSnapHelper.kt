@@ -228,7 +228,7 @@ class LinearDecelerateSnapHelper(private val context: Context, private val isHor
     }
 
     //日志
-    private fun consoleLog(msg: String, mark: Boolean = true) {
+    private fun consoleLog(msg: String, mark: Boolean = false) {
         if (mark) {
             Log.d("SuMing", "LinearDecelerateSnapHelper: $msg")
         }

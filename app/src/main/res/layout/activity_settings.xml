@@ -549,7 +549,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="在OneUI系统上，媒体会话预览图可能出现闪烁，若闪烁引起不适，请立即关闭。仅在触发播放器媒体变更时生效。"
+                            android:text="在部分系统上，设置预览图会导致系统界面崩溃(突然黑屏,软重启等)，此选项仅在通过检测的设备上默认开启。仅在触发播放器媒体变更时生效。"
                             android:textSize="12sp" />
                     </LinearLayout>
 
@@ -1471,7 +1471,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="如果在华为设备上出现系统界面崩溃，可尝试拉高此值。"
+                            android:text="仅供测试。"
                             android:textSize="12sp" />
                     </LinearLayout>
 

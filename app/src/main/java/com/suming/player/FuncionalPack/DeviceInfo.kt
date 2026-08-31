@@ -1,7 +1,5 @@
 package com.suming.player.FuncionalPack
 
-import android.content.Context
-import android.util.DisplayMetrics
 import android.util.Log
 
 object DeviceInfo {
@@ -18,66 +16,33 @@ object DeviceInfo {
 
 
 
-    //屏幕宽高
-    private var screenWidth_px : Int = 0
-    private var screenHeight_px : Int = 0
-
-
-
     //Android版本
     var AndroidVersion : Int = 0
 
 
-    //不要在这里统一承载DisplayMetrics,因为切横屏时不方便更新,不如每个活动自带一个
-    /*
-    private var DisplayMetrics: DisplayMetrics ?= null
-    private fun initDisplayMetrics(context: Context){
-        if (DisplayMetrics == null){
-            DisplayMetrics = context.resources.displayMetrics
+    //获取安卓版本(安卓10-api29,安卓11-api30,安卓12-api31,安卓13-api33,安卓14-api34,15-api35,16-api36,17-api37)
+    fun GET_AndroidVersion(): Int{
+        if (AndroidVersion == 0){
+            AndroidVersion = android.os.Build.VERSION.SDK_INT
         }
 
+        return AndroidVersion
     }
 
-    //获取屏幕宽高
-    fun GET_INFO_screenWidthHeight(context: Context): Pair<Int, Int>{
-        initDisplayMetrics(context)
 
-        if (screenWidth_px == 0){
-            screenWidth_px = DisplayMetrics?.widthPixels ?: 0
-        }
-        if (screenHeight_px == 0){
-            screenHeight_px = DisplayMetrics?.heightPixels ?: 0
-        }
 
-        return Pair(screenWidth_px, screenHeight_px)
-    }
-    fun GET_INFO_screenHeight_px(context: Context): Int{
-        initDisplayMetrics(context)
+    //BRAND
+    var BRAND : String = ""
 
-        if (screenHeight_px == 0){
-            screenHeight_px = DisplayMetrics?.heightPixels ?: 0
+    //获取BRAND
+    fun GET_BRAND(): String{
+        if (BRAND == ""){
+            BRAND = android.os.Build.BRAND.lowercase()
         }
 
+        return BRAND
 
-        return screenHeight_px
     }
-    fun GET_INFO_screenWidth_px(context: Context): Int{
-        initDisplayMetrics(context)
-
-        if (screenWidth_px == 0){
-            screenWidth_px = DisplayMetrics?.widthPixels ?: 0
-        }
-
-        return screenWidth_px
-    }
-    //获取屏幕density
-    fun GET_INFO_screenDensity(context: Context): Float{
-        initDisplayMetrics(context)
-
-        return DisplayMetrics?.density ?: 0f
-    }
-
-     */
 
 
 }

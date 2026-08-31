@@ -11,9 +11,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.core.graphics.scale
-import androidx.databinding.ObservableList
 import androidx.media3.common.util.UnstableApi
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.FuncionalPack.ScrollerHelper
 import com.suming.player.R
@@ -21,17 +20,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.random.Random
 
 @UnstableApi
 class PlayerScrollerAdapter(
     private val context: Context,
     private val mediaDuration: Long,
+    private val recyclerView: RecyclerView,
 ) : RecyclerView.Adapter<PlayerScrollerAdapter.scrollerViewHolder>() {
 
     //协程
@@ -40,7 +37,8 @@ class PlayerScrollerAdapter(
     //缩略图内存缓存
     private val BitmapCache = LruCache<Int, Bitmap>(10 * 1024 * 1024)
     //占位图
-    private var placeholderBitmap : Bitmap? = null
+    private var BitmapHolder : Bitmap? = null
+
     //viewHolder
     class scrollerViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var itemFrame_Job_capture: Job? = null
@@ -52,52 +50,6 @@ class PlayerScrollerAdapter(
 
 
     init {
-        //consoleLog("init")
-        //列表监听器
-        /*
-        frames.addOnListChangedCallback(object : ObservableList.OnListChangedCallback<ObservableList<PlayerScrollerViewModel.scrollerItem>>() {
-            @SuppressLint("NotifyDataSetChanged")
-            override fun onChanged(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>) =
-                notifyDataSetChanged()
-            override fun onItemRangeChanged(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
-                                            positionStart: Int,
-                                            itemCount: Int) {
-                if (Looper.myLooper() == Looper.getMainLooper()) {
-                    notifyItemRangeChanged(positionStart, itemCount)
-                } else {
-                    recyclerView?.post {
-                        notifyItemRangeChanged(positionStart, itemCount)
-                    }
-                }
-            }
-            override fun onItemRangeInserted(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
-                                             positionStart: Int,
-                                             itemCount: Int) {
-                recyclerView?.post {
-                    if (itemCount == 1) notifyItemInserted(positionStart)
-                    else notifyItemRangeInserted(positionStart, itemCount)
-                }
-            }
-            override fun onItemRangeMoved(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
-                                          fromPosition: Int,
-                                          toPosition: Int,
-                                          itemCount: Int) {
-                recyclerView?.post {
-                    for (i in 0 until itemCount) {
-                        notifyItemMoved(fromPosition + i, toPosition + i)
-                    }
-                }
-            }
-            override fun onItemRangeRemoved(sender: ObservableList<PlayerScrollerViewModel.scrollerItem>,
-                                            positionStart: Int,
-                                            itemCount: Int) {
-                recyclerView?.post {
-                    notifyItemRangeRemoved(positionStart, itemCount)
-                }
-            }
-        })
-
-         */
 
         //加载已有图
         loadFrameFolder()
@@ -113,14 +65,14 @@ class PlayerScrollerAdapter(
     }
 
     override fun onBindViewHolder(holder: scrollerViewHolder, position: Int) {
-        //consoleLog("onBindViewHolder: position $position 触发绑定")
         //取出缓存中的图片
         val frame = BitmapCache.get(position)
         if (frame == null){
-            consoleLog("onBindViewHolder: position $position 缓存中没有图片")
-            holder.itemFrame.setImageBitmap(placeholderBitmap)
 
-            //启动协程
+            //设置占位图
+            holder.itemFrame.setImageBitmap(BitmapHolder)
+
+            //启动协程获取图片
             coroutine_capture.launch {
                 //开始截取图片,计算次位置的视频时间ms
                 val time = position * ScrollerHelper.singleFrame_durationMs
@@ -133,9 +85,20 @@ class PlayerScrollerAdapter(
                     needCompress = true,
                 )
                 if (bitmap != null){
-                    consoleLog("onBindViewHolder: position $position 截取到图片")
                     //尝试设置为占位图
-                    setPlaceholderBitmap(bitmap)
+                    if (BitmapHolder == null) {
+                        BitmapHolder = bitmap
+                        //首次设置时通知更新可见项
+                        withContext(Dispatchers.Main) {
+                            //首次设置时通知更新可见项
+                            recyclerView.post {
+                                for (position in 0 until ScrollerHelper.halfScreenEndIndex) {
+                                    notifyItemChanged(position)
+                                }
+                            }
+                        }
+
+                    }
                     //将图片缓存到内存池
                     BitmapCache.put(position, bitmap)
                     //上屏
@@ -151,8 +114,20 @@ class PlayerScrollerAdapter(
                 }
             }
         }else{
-            consoleLog("onBindViewHolder: position $position 缓存中有图片,直接上屏")
+            //直接上屏
             holder.itemFrame.setImageBitmap(frame)
+            //保存占位图
+            if (BitmapHolder == null) {
+                BitmapHolder = frame
+                //首次设置时通知更新可见项
+                recyclerView.post {
+                    for (position in 0 until ScrollerHelper.halfScreenEndIndex) {
+                        notifyItemChanged(position)
+                    }
+                }
+
+            }
+
         }
 
     }
@@ -162,12 +137,6 @@ class PlayerScrollerAdapter(
 
 
 
-    //放置占位图
-    private fun setPlaceholderBitmap(bitmap: Bitmap){
-        if (placeholderBitmap != null) return
-
-        placeholderBitmap = bitmap
-    }
 
     //一次性加载已有缩略图到缓存池
     private fun loadFrameFolder(){
@@ -175,18 +144,17 @@ class PlayerScrollerAdapter(
         fun loadBitmapTargetPosition(position: Int): Bitmap? {
             return try {
                 val thumbPath = ScrollerHelper.getScrollerFramePath(context)
-                //consoleLog("loadFrameFolder: 缩略图路径:$thumbPath")
+
                 if (thumbPath.exists()) {
-                    //consoleLog("loadFrameFolder: 缩略图路径存在")
+
                     //加载该文件夹下文件名为position.webp的图片
                     BitmapFactory.decodeFile(File(thumbPath, "${position}.webp").absolutePath)
-                }
-                else {
+
+                }else{
                     null
                 }
-            }
-            catch (e: Exception) {
-                e.printStackTrace()
+            }catch(e: Exception){
+                consoleLog("loadFrameFolder: position $position 加载图片失败,e:${e.message}")
                 null
             }
         }
@@ -195,7 +163,7 @@ class PlayerScrollerAdapter(
         val positions = (0 until ScrollerHelper.allFrame_totalFrameNumber).toList()
         positions.map { position ->
             val bitmap = loadBitmapTargetPosition(position)
-            //consoleLog("loadFrameFolder: position $position 是否为空:${bitmap == null}")
+
             position to bitmap
         }.forEach { (position, bitmap) ->
             bitmap?.let { BitmapCache.put(position, it) }
@@ -204,9 +172,8 @@ class PlayerScrollerAdapter(
     }
 
 
-
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "PlayerScrollerAdapter: $msg")
         }

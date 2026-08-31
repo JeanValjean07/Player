@@ -217,10 +217,10 @@ class SettingsActivity: AppCompatActivity(){
         lifecycleScope.launch(Dispatchers.Main) {
             //媒体会话不使用封面图片
             val switch_DisableMediaArtWork = findViewById<SwitchCompat>(R.id.DisableMediaArtWork)
-            switch_DisableMediaArtWork.isChecked = SettingsRequestCenter.get_PREFS_DisableMediaArtWork(this@SettingsActivity)
+            switch_DisableMediaArtWork.isChecked = SettingsRequestCenter.GET_PREFS_DisableMediaArtWork(context)
             switch_DisableMediaArtWork.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(this@SettingsActivity)
-                SettingsRequestCenter.set_PREFS_DisableMediaArtWork(isChecked)
+                SettingsRequestCenter.SET_PREFS_DisableMediaArtWork(context,isChecked)
             }
             //始终使用深色播放页面
             val switch_AlwaysUseDarkTheme = findViewById<SwitchCompat>(R.id.AlwaysUseDarkTheme)

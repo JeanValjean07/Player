@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.util.Log
 import androidx.core.content.edit
+import com.suming.player.FuncionalPack.DeviceInfo
 import kotlin.math.sqrt
 
 @Suppress("unused")
@@ -425,24 +426,45 @@ object SettingsRequestCenter {
     //PREFS in PREFS_PlayEngin -------------------------------------------------------------
     private lateinit var PREFS_PlayEngin: SharedPreferences
     private var state_PREFS_PlayEngin_initialized = false
-    //禁用媒体会话插入预览图
-    private var PREFS_DisableMediaArtWork = -1
-    fun set_PREFS_DisableMediaArtWork(disable: Boolean){
-        PREFS_DisableMediaArtWork = if (disable) 1 else 0
-        PREFS_PlayEngin.edit { putInt("PREFS_DisableMediaArtWork", if (disable) 1 else 0) }
-    }
-    fun get_PREFS_DisableMediaArtWork(context: Context): Boolean{
-        //确保配置清单已初始化
+    const val PREFS_PlayEngin_Name = "PREFS_PlayEngin"
+    private fun init_PREFS_PlayEngin(context: Context){
         if (!state_PREFS_PlayEngin_initialized){
-            PREFS_PlayEngin = context.getSharedPreferences("PREFS_PlayEngin", 0)
+            PREFS_PlayEngin = context.getSharedPreferences(PREFS_PlayEngin_Name, 0)
             state_PREFS_PlayEngin_initialized = true
         }
-        //确保配置项已被读取过
+    }
+    //禁用媒体会话插入预览图
+    private var PREFS_DisableMediaArtWork = -1
+    const val PREFS_DisableMediaArtWork_Name = "PREFS_DisableMediaArtWork"
+    fun SET_PREFS_DisableMediaArtWork(context: Context, disable: Boolean){
+        init_PREFS_PlayEngin(context)
+
+        PREFS_DisableMediaArtWork = if (disable) 1 else 0
+        PREFS_PlayEngin.edit { putInt(PREFS_DisableMediaArtWork_Name, if (disable) 1 else 0) }
+    }
+    fun GET_PREFS_DisableMediaArtWork(context: Context): Boolean{
+        init_PREFS_PlayEngin(context)
+
+        //仅在无缓存时读取
         if (PREFS_DisableMediaArtWork == -1){
-            PREFS_DisableMediaArtWork = PREFS_PlayEngin.getInt("PREFS_DisableMediaArtWork", -1)
+            PREFS_DisableMediaArtWork = PREFS_PlayEngin.getInt(PREFS_DisableMediaArtWork_Name, -1)
+            //配置默认值(仅在已过测的设备上关闭禁用预览图,即开启预览图)
             if (PREFS_DisableMediaArtWork == -1){
-                PREFS_DisableMediaArtWork = 0
-                PREFS_PlayEngin.edit { putInt("PREFS_DisableMediaArtWork", 0) }
+                val BRAND = DeviceInfo.GET_BRAND()
+                val ANDROID_VERSION = DeviceInfo.GET_AndroidVersion()
+                when (BRAND){
+                    "huawei","honor" ->{
+                        when (ANDROID_VERSION){
+                            29 -> PREFS_DisableMediaArtWork = 0
+                            else -> PREFS_DisableMediaArtWork = 1
+                        }
+                    }
+                    "samsung" -> PREFS_DisableMediaArtWork = 0
+                    else -> PREFS_DisableMediaArtWork = 0
+
+                }
+                //写入配置项
+                PREFS_PlayEngin.edit { putInt(PREFS_DisableMediaArtWork_Name, PREFS_DisableMediaArtWork) }
             }
         }
 
