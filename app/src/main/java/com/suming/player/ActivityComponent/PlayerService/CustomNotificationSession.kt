@@ -56,15 +56,19 @@ class CustomNotificationSession(context: Context): DefaultMediaNotificationProvi
 
         //设置播控中心图标(区分机型)
         //小米:加底自动裁圆角 三星:取tint,不能裁圆角,华为:拒绝显示图标
-        val BuildBrandString = Build.BRAND
-        if (BuildBrandString.equals("xiaomi",ignoreCase = true) || BuildBrandString.equals("xiaomi",ignoreCase = true)){
-            setSmallIcon(R.drawable.ic_launcher_all)
-        }else if (BuildBrandString.equals("samsung",ignoreCase = true)){
-            setSmallIcon(R.drawable.ic_player_service_notification)
+        val BuildBrandString = Build.BRAND.lowercase()
+        when(BuildBrandString){
+            "xiaomi" -> {
+                setSmallIcon(R.drawable.ic_launcher_all)
+            }
+
+            "samsung" -> {
+                setSmallIcon(R.drawable.ic_notification_icon_light_only)
+            }
+            "huawei", "honor" -> {
+                setSmallIcon(R.drawable.ic_notification_icon_light_only)
+            }
         }
-
-
-
 
 
         return list.build()

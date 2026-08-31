@@ -113,6 +113,9 @@
     <color name="SecondaryColorPack_CardButtonBackground_state_ON">#FF4527A0</color>
     <color name="SecondaryColorPack_LineColor">#FF424242</color>
 
+    <!-- 首页专辑区域 -->
+    <color name="AlbumSquare_Background_Themed">#FF331848</color>
+
     <!-- 文字 -->
     <color name="ColorPack_PrimaryTextColor">#FF000000</color>
     <color name="ColorPack_SecondaryTextColor">#FF212121</color>

@@ -11,6 +11,9 @@ object IntentRepo {
 
     const val ACTION_NEW_INTENT = "ACTION_NEW_INTENT"
 
+    //EntranceActivity委托
+    const val ACTION_ENTRANCE_REQUEST = "ACTION_ENTRANCE_REQUEST"
+
 
 
 

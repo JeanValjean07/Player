@@ -281,6 +281,33 @@ object SettingsRequestCenter {
         return State_LastStayTab
     }
 
+    //开局延迟时长
+    const val PRF_onStartDelayMillis_Name = "PRF_onStartDelayMillis"
+    private var PRF_onStartDelayMillis = 0L
+    fun SET_PRF_onStartDelayMillis(context: Context, target: Long){
+        OpenPandora_MainPage(context)
+        //写入本地缓存
+        PRF_onStartDelayMillis = target
+        //写入配置单
+        Pandora_MainPage!!.edit { putLong(PRF_onStartDelayMillis_Name, target) }
+    }
+    fun GET_PRF_onStartDelayMillis(context: Context): Long {
+        OpenPandora_MainPage(context)
+        //仅在未读取过时才读取(也就是值为0时)
+        if (PRF_onStartDelayMillis == 0L) {
+            //从配置单读取
+            PRF_onStartDelayMillis = Pandora_MainPage!!.getLong(PRF_onStartDelayMillis_Name, 0L)
+            //如果配置单内无该项,写入默认值
+            if (PRF_onStartDelayMillis == 0L) {
+                //默认设为1200
+                PRF_onStartDelayMillis = 1200L
+                Pandora_MainPage!!.edit { putLong(PRF_onStartDelayMillis_Name, 1200L) }
+            }
+        }
+        //返回结果
+        return PRF_onStartDelayMillis
+    }
+
 
 
 

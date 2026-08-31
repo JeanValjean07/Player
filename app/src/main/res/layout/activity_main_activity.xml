@@ -448,81 +448,36 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 tools:ignore="NestedWeights" />
-            <!-- 正在播放卡片 -->
-            <androidx.cardview.widget.CardView
+            <!-- 正在播放卡片区域 -->
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/level_miniView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_height="90dp"
                 android:backgroundTint="@color/MainColorPack_SurfaceBackground"
-                android:clickable="true"
-                app:cardElevation="10dp"
-                app:cardCornerRadius="0dp"
-                android:visibility="gone">
+                android:clickable="true">
+                <!-- 背景区域 -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
+                    android:layout_height="70dp"
+                    android:background="@color/MainColorPack_ContentCardBackground"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
                     android:orientation="vertical">
                     <!-- 顶部分隔线 -->
                     <View
                         android:id="@+id/miniView_topLine"
                         android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
+                        android:layout_height="1dp"
                         android:background="@color/strokeLine"
-                        app:layout_constraintTop_toTopOf="parent"
                         />
-                    <!-- 主要区域 -->
-                    <androidx.constraintlayout.widget.ConstraintLayout
+                    <!-- 按钮区 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="50dp">
-                        <!-- 封面区 -->
-                        <androidx.cardview.widget.CardView
-                            android:id="@+id/PlayingCard_Artwork"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:layout_marginStart="10dp"
-                            android:backgroundTint="@color/Background4"
-                            app:cardElevation="0dp"
-                            app:cardCornerRadius="5dp"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintStart_toStartOf="parent">
-                        </androidx.cardview.widget.CardView>
-                        <!-- 标题和艺术家 -->
-                        <LinearLayout
-                            android:id="@+id/PlayingCard_InfoContainer"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            android:layout_marginEnd="10dp"
-                            app:layout_constraintStart_toEndOf="@+id/PlayingCard_Artwork"
-                            app:layout_constraintEnd_toStartOf="@+id/PlayingCard_ButtonPlay"
-                            android:orientation="vertical">
-                            <TextView
-                                android:id="@+id/PlayingCard_MediaName"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:maxLines="1"
-                                android:text="正在加载媒体标题"
-                                android:textSize="13sp"
-                                android:textColor="@color/HeadText"
-                                android:layout_marginStart="10dp"
-                                />
-                            <TextView
-                                android:id="@+id/PlayingCard_MediaArtist"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textSize="10sp"
-                                android:textColor="@color/HeadText"
-                                android:text="正在加载媒体艺术家"
-                                android:layout_marginStart="10dp"
-                                tools:ignore="SmallSp" />
-                        </LinearLayout>
-                        <!-- 控制按钮 -->
+                        android:layout_height="50dp"
+                        android:gravity="end"
+                        android:orientation="horizontal" >
+                        <!-- 播放/暂停按钮 -->
                         <ImageButton
                             android:id="@+id/PlayingCard_ButtonPlay"
                             android:layout_width="50dp"
@@ -533,34 +488,103 @@
                             android:scaleType="centerCrop"
                             android:src="@drawable/ic_main_controller_play"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintDimensionRatio="H,1:1"
                             app:layout_constraintEnd_toStartOf="@+id/PlayingCard_ButtonList"
-                            app:layout_constraintDimensionRatio="H,1:1"/>
+                            app:layout_constraintTop_toTopOf="parent" />
+                        <!-- 播放列表面板按钮 -->
                         <ImageButton
                             android:id="@+id/PlayingCard_ButtonList"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
                             android:contentDescription="playOrPause"
                             android:padding="13dp"
-                            android:src="@drawable/ic_main_controller_list"
-                            android:background="?attr/selectableItemBackgroundBorderless"
                             android:scaleType="centerCrop"
+                            android:src="@drawable/ic_main_controller_list"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintDimensionRatio="H,1:1"
-                            />
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-                    <!-- 底部安全区view -->
-                    <View
-                        android:id="@+id/miniView_bottomSafeArea"
-                        android:layout_width="match_parent"
-                        android:layout_height="20dp"
-                        android:elevation="20dp"
-                        android:background="@android:color/transparent"
-                        />
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </LinearLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                <!-- 内容区域 -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
+                    <!-- 封面区 -->
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/PlayingCard_Artwork"
+                        android:layout_width="65dp"
+                        android:layout_height="65dp"
+                        android:layout_marginStart="10dp"
+                        android:backgroundTint="@color/AlbumSquare_Background_Themed"
+                        app:cardElevation="10dp"
+                        app:cardCornerRadius="10dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        android:layout_marginTop="10dp"
+                        android:visibility="visible">
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:padding="12dp"
+                            android:contentDescription="artwork"
+                            android:src="@drawable/ic_main_null_album"
+                            />
+                    </androidx.cardview.widget.CardView>
+                    <!-- 标题和艺术家 -->
+                    <LinearLayout
+                        android:id="@+id/PlayingCard_InfoContainer"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/PlayingCard_Artwork"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        android:layout_marginEnd="100dp"
+                        app:layout_constraintTop_toTopOf="parent">
+                        <TextView
+                            android:id="@+id/PlayingCard_MediaName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:ellipsize="marquee"
+                            android:marqueeRepeatLimit="1"
+                            android:scrollHorizontally="true"
+                            android:focusable="true"
+                            android:focusableInTouchMode="true"
+                            android:text=""
+                            android:textColor="@color/HeadText"
+                            android:textSize="13sp" />
+                        <TextView
+                            android:id="@+id/PlayingCard_MediaArtist"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:singleLine="true"
+                            android:ellipsize="marquee"
+                            android:marqueeRepeatLimit="1"
+                            android:scrollHorizontally="true"
+                            android:focusable="true"
+                            android:focusableInTouchMode="true"
+                            android:text=""
+                            android:textColor="@color/HeadText"
+                            android:textSize="10sp"
+                            tools:ignore="SmallSp" />
+                    </LinearLayout>
+
+
+                </androidx.constraintlayout.widget.ConstraintLayout
+                    >
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
 
         <View

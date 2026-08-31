@@ -60,6 +60,8 @@ import kotlin.system.exitProcess
 @OptIn(UnstableApi::class)
 class SettingsActivity: AppCompatActivity(){
 
+    //context
+    private val context: Context = this@SettingsActivity
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -511,6 +513,63 @@ class SettingsActivity: AppCompatActivity(){
                 ToolVibrate().vibrate(this@SettingsActivity)
 
                 chooseDeleteDB(ButtonManageDB)
+            }
+
+            //
+            val ButtonCard_onStartDelayMillis = findViewById<CardView>(R.id.ButtonCard_onStartDelayMillis)
+            val ButtonText_onStartDelayMillis = findViewById<TextView>(R.id.ButtonText_onStartDelayMillis)
+            fun updateOnStartDelayMillisText(){
+                val delayMillis = SettingsRequestCenter.GET_PRF_onStartDelayMillis(context)
+                ButtonText_onStartDelayMillis.text = "${delayMillis}ms"
+            }
+            updateOnStartDelayMillisText()
+            ButtonCard_onStartDelayMillis.setOnClickListener {
+                ToolVibrate().vibrate(this@SettingsActivity)
+                //创建对话框
+                val dialog = Dialog(context).apply {
+                    window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+                }
+                val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
+                dialog.setContentView(dialogView)
+                val title: TextView = dialogView.findViewById(R.id.dialog_title)
+                val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+                val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+                val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+                title.text = "自定义开局延迟时长"
+                Description.text = "仅供测试 Ms"
+                EditText.hint = "以毫秒为单位"
+                Button.text = "确定"
+
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                Button.setOnClickListener {
+                    val gapInput = EditText.text.toString().toLongOrNull()
+                    if (gapInput == null || gapInput == 0L) {
+                        showCustomToast("未输入内容", 3)
+                        dialog.dismiss()
+                        return@setOnClickListener
+
+                    }
+                    else if (gapInput > 10000) {
+                        showCustomToast("开局延迟时长不能大于10秒", 3)
+                        dialog.dismiss()
+                        return@setOnClickListener
+                    }
+                    else {
+                        SettingsRequestCenter.SET_PRF_onStartDelayMillis(context,gapInput)
+                        //界面刷新
+                        updateOnStartDelayMillisText()
+                        dialog.dismiss()
+                    }
+                }
+                dialog.show()
+                //自动弹出键盘程序
+                CoroutineScope(Dispatchers.Main).launch {
+                    delay(50)
+                    EditText.requestFocus()
+                    @Suppress("DEPRECATION")
+                    imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+                }
             }
 
         }

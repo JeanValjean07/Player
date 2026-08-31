@@ -588,14 +588,14 @@ class EntranceActivity : AppCompatActivity(){
 
     //启动音乐页面
     @OptIn(UnstableApi::class)
-    private fun startMusicPage(uri: Uri) {
-        //启动播放器
-        PlayerSingleton.getInitPlayer()
-        //越权设置音频
-        PlayerSingleton.setMediaItem(URI_UP = uri,playWhenReady = true)
+    private fun startMusicPage(URI_U_FP: Uri) {
 
         //构建intent
         val intent = Intent(context, MainActivity::class.java)
+            .apply {
+                putExtra(IntentRepo.URI, URI_U_FP.toString())
+                action = IntentRepo.ACTION_ENTRANCE_REQUEST
+            }
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         //启动

@@ -238,15 +238,22 @@ object PlayerSingleton {
     private fun onFatalErrorOccur(error: PlaybackException){
         consoleLog("播放器错误:${error} message:${error.message} cause:${error.cause} errorCodeName:${error.errorCodeName}")
 
+        //解锁一次保底
+        isLocked = false
+
         //记录原本的媒体uri,然后重启播放器
 
 
     }
-    //
+    //播放器进入空闲状态时,重启播放器
     private val coroutine_restart = CoroutineScope(Dispatchers.Main)
     private fun onPlayEngineIdle(){
         coroutine_restart.launch{
             consoleLog("onPlayEngineIdle")
+
+            //解锁一次保底
+            isLocked = false
+
             //发布Idle消息
             cache_player_ID = 0L
             PlayerInfoCenter.updateObservableIsIdle(0L)
@@ -321,24 +328,37 @@ object PlayerSingleton {
     private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
 
     //Long Process Functions
-    //设置新媒体项的外部接口(以后可以加些过滤)(返回ActivityResultConnector内的状态码)
+    //设置新媒体项的外部接口(以后可以加些过滤)(返回ActivityResultConnector内的状态码)(file_path作用:??//TODO)
     private var clickMillis_setMediaItem = 0L
-    fun setMediaItem(URI_UP: Uri, file_path: String = "",playWhenReady: Boolean): String {
+    fun setMediaItem(URI_UP:Uri,file_path:String=Undefined,playWhenReady:Boolean,ignoreLock:Boolean=false): String {
+        //检查是否已被锁定+进入流程后加锁
+        if (isLocked && !ignoreLock){
+            return ActivityResultConnector.OBRTV_Engine_Locked
+        }
+        isLocked = true
         //设置频率限制
         if (System.currentTimeMillis() - clickMillis_setMediaItem < 1500) {
+            //流程结束时解锁
+            isLocked = false
             return ActivityResultConnector.OBRTV_Engine_SoFrequent
         }
         clickMillis_setMediaItem = System.currentTimeMillis()
         //检查是否启动了播放器
         if (_player == null){
+            //流程结束时解锁
+            isLocked = false
+
             return ActivityResultConnector.OBRTV_Engine_OffLine
         }
 
         //设置新媒体项
         val result = setMediaItemCore(URI_UP,file_path,playWhenReady)
+        //流程结束时解锁
+        isLocked = false
 
         return result
     }
+    var isLocked = false
     //设置/变更媒体(设置新媒体项) URI_UP = URI URI for Play
     private fun setMediaItemCore(URI_UP: Uri, file_path: String = Undefined,playWhenReady: Boolean): String {
         //consoleLog("setMediaItemCore -设置新媒体项:$uri")
@@ -356,7 +376,6 @@ object PlayerSingleton {
         //解码新媒体信息
         //检查是否需要解码
         val current_item_URI_SP = PlayerInfoCenter.GET_Media_URI_S_FP()
-        consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 当前项(缓存):$current_item_URI_SP")
         //获取媒体信息
         val (result,MediaItemForPlay_Cache,_) = MediaInfoRetriever.retrieveMediaInfo(
             context,
@@ -365,7 +384,6 @@ object PlayerSingleton {
             Undefined,
             URI_S_FP,
         )
-        consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 解码结果:$result")
         //检查解码结果
         when(result){
             ActivityResultConnector.retriever_error -> {
@@ -408,7 +426,6 @@ object PlayerSingleton {
                         .build())
                 .build()
 
-
         //设置给播放器
         _player?.setMediaItem(mediaItem)
 
@@ -418,6 +435,8 @@ object PlayerSingleton {
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         if (mediaItem == null) return
 
+        //解锁一次
+        isLocked = false
 
         //启动服务和媒体会话
         startSessionService(context)
@@ -435,8 +454,6 @@ object PlayerSingleton {
         //请求音频焦点
         PlayerListener.requestAudioFocus(context, force_request = false)
 
-        //修改可观察标志,触发更新
-        //PlayerInfoCenter.updateObservableMediaItem(MediaItemForPlay)
 
     }
 

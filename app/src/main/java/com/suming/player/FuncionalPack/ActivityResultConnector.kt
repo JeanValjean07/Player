@@ -23,6 +23,7 @@ object ActivityResultConnector {
     const val OBRTV_Engine_TypeNotSupport = "OBRTV_Engine_TypeNotSupport"  //不支持的媒体类型
     const val OBRTV_Engine_OffLine = "OBRTV_Engine_OffLine"   //播放器离线
     const val OBRTV_Engine_SoFrequent = "OBRTV_Engine_SoFrequent"  //设置过快
+    const val OBRTV_Engine_Locked = "OBRTV_Engine_Locked"  //播放器已被锁定(当前台持有者包含自动设置项的任务时,需要开启锁定功能)
 
 
 

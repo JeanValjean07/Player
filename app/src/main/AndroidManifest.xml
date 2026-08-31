@@ -41,13 +41,12 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
+        android:supportsRtl="false"
         android:hardwareAccelerated="true"
         android:theme="@style/Theme.SpeedSpy"
         tools:replace="android:allowBackup"
         android:enableOnBackInvokedCallback="false"
-        tools:ignore="ForegroundServicePermission"
-        tools:targetApi="33">
+        tools:ignore="UnusedAttribute">
 
 
 
@@ -56,6 +55,7 @@
             android:theme="@style/THEME_BASIC"
             android:hardwareAccelerated="true"
             android:label="播放器"
+            android:launchMode="singleTask"
             android:exported="true"
             android:enableOnBackInvokedCallback="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
@@ -204,6 +204,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
         <!-- 播放控制广播接收器 -->
+        <!--
         <receiver android:name=".PlayerActionReceiver"
             android:exported="false">
             <intent-filter>
@@ -211,6 +212,7 @@
                 <action android:name="PLAYER_PAUSE"/>
             </intent-filter>
         </receiver>
+         -->
         <!-- 媒体会话操作接收器(没用) -->
         <receiver
             android:name="androidx.media3.session.MediaButtonReceiver"

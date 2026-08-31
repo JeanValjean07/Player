@@ -1413,6 +1413,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //设置过于频繁,结束设置流程
                 return false
             }
+            ActivityResultConnector.OBRTV_Engine_Locked -> {
+                showCustomToast("播放器处于锁定窗口期", 3)
+                finish()
+
+                return false
+            }
             else -> {
                 //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
                 val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
