@@ -97,6 +97,8 @@ class MainActivity: AppCompatActivity() {
     private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
     //ctx
     private val context = this@MainActivity
+    //
+    private var onPaused = false
 
 
 
@@ -184,6 +186,20 @@ class MainActivity: AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
+        onPaused = false
+
+        /*
+        if (PlayingCard_Artwork_Video != null){
+            val ongoing = PlayerSingleton.GET_STE_currentMediaItem_Uri().first
+            if (ongoing){
+                PlayingCard_Artwork_Video?.player = PlayerSingleton.getPlayer()
+            }
+        }
+
+         */
+
+        showMiniViewLongProcess()
+
 
         //检查正在播放的媒体是否还存在
         isFileExist()
@@ -193,6 +209,11 @@ class MainActivity: AppCompatActivity() {
     override fun onPause() {
         super.onPause()
 
+        onPaused = true
+
+        if (PlayingCard_Artwork_Video != null){
+            //PlayingCard_Artwork_Video?.player = null
+        }
 
 
     }
@@ -772,6 +793,7 @@ class MainActivity: AppCompatActivity() {
             //观察正在播放的媒体项变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableMediaItem.collect { _ ->
+                    if (onPaused) return@collect
                     consoleLog("观察到 正在播放的媒体项 发生变更")
                     //显示MiniView
                     showMiniViewLongProcess()
@@ -783,6 +805,7 @@ class MainActivity: AppCompatActivity() {
             //观察播放状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableIsPlaying.collect { newState ->
+                    if (onPaused) return@collect
                     consoleLog("观察到 播放/暂停 发生变更")
                     //刷新操作按钮
                     updateMiniViewPauseButton(newState)
@@ -866,39 +889,13 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_ButtonPlay = findViewById(R.id.PlayingCard_ButtonPlay)
         PlayingCard_ButtonList = findViewById(R.id.PlayingCard_ButtonList)
         //点击事件设定
-        PlayingCard_Artwork.setOnClickListener {
-            ToolVibrate().vibrate(this@MainActivity)
-            //停止列表防卡顿
-            ListRecyclerView_Video.stopScroll()
-            ListRecyclerView_Music.stopScroll()
-            //获取到链接时启动播放页
-            val URI = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
-            val file_path = PlayerInfoCenter.GET_Media_FilePath()
-            if (URI != Uri.EMPTY){
-                //唤起播放页
-                startPlayerFromMiniView(URI, file_path)
-
-            }else{
-                //检查缓存链接
-                if (PlayerInfoCenter.GET_Media_isCache()){
-                    //拿到缓存链接
-                    val cacheUri = PlayerInfoCenter.GET_Media_URI_S_FP()
-
-                    //唤起播放页
-                    if (cacheUri.isNotEmpty()){
-                        startPlayerFromMiniView(cacheUri.toUri(), file_path)
-                    }else{
-
-                        consoleLog("进入非预期分支,需检查代码")
-                    }
-
-                }else{
-                    showCustomToast("选择一项媒体以开始播放")
-                }
-            }
-        }
+        //播放/暂停按钮
         PlayingCard_ButtonPlay.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
+
+            PlayingCard_TextMediaName.isSelected = true
+            PlayingCard_TextMediaArtist.isSelected = true
+
             //检查是否有媒体在线
             val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
             if (!ongoing){
@@ -921,6 +918,7 @@ class MainActivity: AppCompatActivity() {
                 PlayerSingleton.continuePlay(true)
             }
         }
+        //播放列表按钮
         PlayingCard_ButtonList.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
             //防止快速点击
@@ -934,17 +932,50 @@ class MainActivity: AppCompatActivity() {
             //启动播放列表
             startPlayListFragment()
         }
-        PlayingCard_TextMediaName.setOnClickListener {
+        //艺术图按钮+容器:均打开播放页
+        PlayingCard_Artwork.setOnClickListener {
             ToolVibrate().vibrate(this@MainActivity)
 
-            PlayingCard_TextMediaName.isSelected = true
-            PlayingCard_TextMediaArtist.isSelected = true
+            onPlayingCard_EnterClick()
+        }
+        PlayingCard_InfoContainer.setOnClickListener {
+            ToolVibrate().vibrate(this@MainActivity)
 
-            showMiniViewLongProcess()
+            onPlayingCard_EnterClick()
 
         }
 
 
+    }
+    private fun onPlayingCard_EnterClick(){
+        //停止列表防卡顿
+        ListRecyclerView_Video.stopScroll()
+        ListRecyclerView_Music.stopScroll()
+        //获取到链接时启动播放页
+        val URI = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
+        val file_path = PlayerInfoCenter.GET_Media_FilePath()
+        if (URI != Uri.EMPTY){
+            //唤起播放页
+            startPlayerFromMiniView(URI, file_path)
+
+        }else{
+            //检查缓存链接
+            if (PlayerInfoCenter.GET_Media_isCache()){
+                //拿到缓存链接
+                val cacheUri = PlayerInfoCenter.GET_Media_URI_S_FP()
+
+                //唤起播放页
+                if (cacheUri.isNotEmpty()){
+                    startPlayerFromMiniView(cacheUri.toUri(), file_path)
+                }else{
+
+                    consoleLog("进入非预期分支,需检查代码")
+                }
+
+            }else{
+                showCustomToast("选择一项媒体以开始播放")
+            }
+        }
     }
     private fun updateMiniViewPauseButton(isPlaying: Boolean){
         //更新操作按钮图标
