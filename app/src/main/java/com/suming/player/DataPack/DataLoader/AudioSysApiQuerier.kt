@@ -22,18 +22,17 @@ class AudioSysApiQuerier(
 ) {
     //MediaInfoRetriever
     private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
-    //设置项
-    private var PREFS_EnableFileExistCheck: Boolean = false
-    //初始化(自建)
-    private fun init(){
-        PREFS_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
-    }
+
 
 
     //读取所有音乐
     suspend fun readAllMusics(): List<MediaItemFullForAudio> {
+        //通知状态变更(开始加载)(二合一项和音乐独占项都更新)
+        DataBaseStateConnector.setState_queryDisk_Music_state(DataBaseStateConnector.state_queryDisk_start)
+        DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
+
         //读取设置
-        init()
+        val PRF_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
 
         //初始化列表
         val list = mutableListOf<MediaItemFullForAudio>()
@@ -122,7 +121,7 @@ class AudioSysApiQuerier(
                         //检查是否属于音频文件
                         mediaType == MediaType.Audio -> {
                             //检查文件是否存在
-                            val fileExists = if (PREFS_EnableFileExistCheck) {
+                            val fileExists = if (PRF_EnableFileExistCheck) {
                                 isFileExist(file_path)
                             }else{
                                 true
@@ -228,8 +227,18 @@ class AudioSysApiQuerier(
             }
         }
 
-        //发布完成通知
-        DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_success)
+        //TODO 可升级为Channel或MutableSharedFlow方案
+        //回到主线程刷新(在主线程才能保证前一次被处理完成后才发出第二次,否则会吞掉一次)
+        withContext(Dispatchers.Main){
+            //通知状态变更(完成加载)(二合一项和音乐独占项都更新)
+            DataBaseStateConnector.setState_queryDisk_Music_state(DataBaseStateConnector.state_queryDisk_success)
+            DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_success)
+
+            //触发刷新后回到idle状态
+            DataBaseStateConnector.setState_queryDisk_Music_state(DataBaseStateConnector.state_queryDisk_idle)
+            DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_idle)
+        }
+
     }
 
     //日志

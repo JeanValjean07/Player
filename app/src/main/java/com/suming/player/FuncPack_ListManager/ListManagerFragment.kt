@@ -243,6 +243,8 @@ class ListManagerFragment: DialogFragment(){
         //注册来自 Activity 的消息监听
         register_Activity_Listener()
 
+        setupEventObserver()
+
 
 
     }
@@ -749,9 +751,11 @@ class ListManagerFragment: DialogFragment(){
 
                     true
                 }
-                R.id.opt_player_escape -> {
+                R.id.opt_player_closed -> {
                     ToolVibrate().vibrate(requireContext())
-                    escapePlayerError()
+
+                    closePlayer()
+
                     true
                 }
                 else -> true
@@ -1019,14 +1023,14 @@ class ListManagerFragment: DialogFragment(){
     }
 
 
-    //播放器脱离卡死
-    private fun escapePlayerError(){
+    //关闭播放器
+    private fun closePlayer(){
         AlertDialog.Builder(context)
-            .setTitle("确定脱离播放器卡死吗?")
-            .setMessage("当无法正常播放时使用。会使正在播放的媒体立即停止")
+            .setTitle("确定关闭播放器吗?")
+            .setMessage("正在播放的媒体会立即停止")
             .setPositiveButton("确认") { dialog, _ ->
                 ToolVibrate().vibrate(context)
-                PlayerSingleton.stopPlayEngine()
+                PlayerSingleton.stopPlayEngineBundle()
                 dialog.dismiss()
 
                 customDismiss()
@@ -1042,6 +1046,37 @@ class ListManagerFragment: DialogFragment(){
 
     }
 
+    //事件观察器
+    private fun setupEventObserver() {
+        //视频列表加载状态
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                DataBaseStateConnector.state_queryDisk_Video_state.collect { state ->
+                    if (state == DataBaseStateConnector.state_queryDisk_idle) return@collect
+                    when (state) {
+                        DataBaseStateConnector.state_queryDisk_success -> {
+                            //通知视频列表刷新
+                            send_C_Fragment_Event(ListManagerHelper.ListMark_Video, ListManagerHelper.event_video_list_refresh)
+                        }
+                    }
+                }
+            }
+        }
+        //音频列表加载状态
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                DataBaseStateConnector.state_queryDisk_Music_state.collect { state ->
+                    if (state == DataBaseStateConnector.state_queryDisk_idle) return@collect
+                    when (state) {
+                        DataBaseStateConnector.state_queryDisk_success -> {
+                            //通知音乐列表刷新
+                            send_C_Fragment_Event(ListManagerHelper.ListMark_Audio, ListManagerHelper.event_audio_list_refresh)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 
     //循环模式

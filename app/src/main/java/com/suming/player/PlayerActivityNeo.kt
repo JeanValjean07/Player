@@ -1292,20 +1292,12 @@ class PlayerActivityNeo: AppCompatActivity(){
         player?.removeListener(PlayerStateListener)
     }
     //设置新媒体项
-    private suspend fun setNewMediaItem(URI_U_FP: Uri,file_path_o: String): Boolean{
+    private suspend fun setNewMediaItem(URI_U_FP: Uri,file_path:String): Boolean{
         if (state_setting_media) return false
         state_setting_media = true
 
         //缓存URI为字符串
         val URI_S_FP = URI_U_FP.toString()
-        //检查文件是否存在(字节流方案,不再依赖文件路径)
-        var file_path = file_path_o
-        if (file_path == Undefined){
-            file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC1(context, URI_U_FP)
-        }
-        if (file_path == Undefined){
-            file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC2(context, URI_U_FP)
-        }
 
         //确保已启动播放器
         withContext(Dispatchers.Main){ connectToExoPlayer() }

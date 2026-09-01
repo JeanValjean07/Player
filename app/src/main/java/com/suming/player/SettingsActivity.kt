@@ -704,7 +704,7 @@ class SettingsActivity: AppCompatActivity(){
     private fun revokePrivacyAgreementCore(){
         //关闭正在播放的媒体
         PlayerSingleton.clearMediaItem()
-        PlayerSingleton.stopPlayEngine()
+        PlayerSingleton.stopPlayEngineBundle()
 
         //清除媒体记录
         val MediaRecordManager = MediaRecordManager()

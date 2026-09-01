@@ -53,34 +53,8 @@ class MediaInfoRetriever {
 
         //尝试设置数据源
         try{
-            consoleLog("retrieveMediaInfo -尝试设置数据源:URI_S_FR:$URI_S_FR")
             //设置URI为数据源
             retriever?.setDataSource(context,URI_U_FR)
-
-            //原方案可自动区分文件路径和URI,已停用
-            /*
-            //检查URI_S是否实际上是一个文件路径
-            val is_file_path = MediaUriManager.spy_is_string_actually_a_file_path(URI_S_FR)
-            if (is_file_path){
-                val file_path = URI_S_FR
-                val URI_File = Uri.fromFile(File(file_path))
-
-                val pfd = context.contentResolver.openFileDescriptor(URI_File, "r")
-                if (pfd == null) {
-                    consoleLog("无法获取文件描述符")
-                    return Triple(ActivityResultConnector.retriever_error ,MediaItemForPlay(),Undefined)
-                }else{
-                    consoleLog("获取文件描述符成功")
-                }
-                //设置路径为数据源
-                pfd.use { fd -> retriever?.setDataSource(fd.fileDescriptor) }
-
-            }else{
-                //设置URI为数据源
-                retriever?.setDataSource(context,URI_U_FR)
-            }
-
-             */
 
         }catch(e: Exception){
             consoleLog("retrieveMediaInfo -尝试设置数据源 -Exception :e:$e,message:${e.message}")
@@ -123,10 +97,10 @@ class MediaInfoRetriever {
             val file_path =  if (file_path == Undefined){
                 when(UriTypeMode){
                     MediaUriManager.uriType_media_store_detail -> {
-                        GET_FilePath_From_MediaUri_SC1(context,URI_U_FR)
+                        get_file_path_from_URI(context,URI_U_FR)
                     }
                     MediaUriManager.uriType_contain_file_path -> {
-                        GET_FilePath_From_FileProviderURI(URI_U_FR)
+                        get_file_path_from_FileProviderURI(URI_U_FR)
                     }
                     else -> Undefined
 
@@ -317,7 +291,7 @@ class MediaInfoRetriever {
         }
     }
 
-    //检查链接对应媒体是否还存在(MediaStore)
+    //检查链接对应媒体是否还存在于MediaStore
     fun isMediaExist(context: Context,uri: Uri): Boolean{
         var cursor: Cursor? = null
         return try {
@@ -342,9 +316,7 @@ class MediaInfoRetriever {
 
         return file.exists() && file.isFile
     }
-
-
-    //URI是否可读(字节流方案)
+    //检查URI 是否可读(字节流方案)
     fun isUriReadable(context: Context,URI_S_FP: String): Boolean{
         return try{
             val inputStream = context.contentResolver.openInputStream(URI_S_FP.toUri())
@@ -379,27 +351,8 @@ class MediaInfoRetriever {
     }
 
 
-    //获取文件路径
-    //从URI获取文件路径(必须是详情URI 2种方案 1基于contentResolver 2基于)
-    fun GET_FilePath_From_MediaUri_SC1(context: Context, uri: Uri): String {
-        var cursor: Cursor? = null
-        return try {
-            val projection = arrayOf(MediaStore.MediaColumns.DATA)
-            cursor = context.contentResolver.query(uri, projection, null, null, null)
-            val path = cursor?.let {
-                val columnIndex = it.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
-                it.moveToFirst()
-                it.getString(columnIndex)
-            }
-            return path ?: Undefined
-        }catch(e: Exception){
-            consoleLog("GET_FilePath_From_MediaUri_SC1 -获取文件路径发生错误: $e")
-            Undefined
-        }finally{
-            cursor?.close()
-        }
-    }
-    fun GET_FilePath_From_MediaUri_SC2(context: Context, uri: Uri): String {
+    //从 URI 获取 文件路径
+    fun get_file_path_from_URI(context: Context, uri: Uri): String {
         try {
             val cleanUri = if (uri.scheme == null || uri.scheme == "file"){
                 Uri.fromFile(File(uri.path?.substringBefore("?") ?: return Undefined))
@@ -410,7 +363,7 @@ class MediaInfoRetriever {
                 ContentResolver.SCHEME_CONTENT -> {
                     val projection = arrayOf(MediaStore.Video.Media.DATA)
                     context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
-                        if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
+                        if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)) else null
                     }
                 }
                 ContentResolver.SCHEME_FILE    -> cleanUri.path
@@ -423,8 +376,9 @@ class MediaInfoRetriever {
         }
 
     }
-    //从FileProviderURI获取文件路径
-    fun GET_FilePath_From_FileProviderURI(URI: Uri): String {
+
+    //从 FileProviderURI 获取 文件路径
+    fun get_file_path_from_FileProviderURI(URI: Uri): String {
         try{
             val path = URI.path ?: return MediaUriManager.Undefined
 
@@ -448,8 +402,9 @@ class MediaInfoRetriever {
         }
     }
 
-    //获取Uri
-    private fun GET_MediaUri_From_FilePath(context: Context, filePath: String): String? {
+
+    //从 文件路径 获取 媒体URI (已知文件路径查询MediaStore)
+    private fun get_MediaUri_From_FilePath(context: Context, filePath: String): String? {
         val file = File(filePath)
         if (!file.exists()) return null
 

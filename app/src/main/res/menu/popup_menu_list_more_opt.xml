@@ -15,8 +15,8 @@
         android:id="@+id/opt_clear_record"
         android:title="停止播放并清除记录" />
     <item
-        android:id="@+id/opt_player_escape"
-        android:title="播放器脱离卡死" />
+        android:id="@+id/opt_player_closed"
+        android:title="关闭播放器" />
 
 
 </menu>

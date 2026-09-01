@@ -29,6 +29,7 @@ import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataLoader.VideoDataBaseLoader
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
+import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
@@ -71,7 +72,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         register(view)
 
         //注册来自 父Fragment 的消息监听器
-        register_C_Fragment_Listener()
+        register_P_Fragment_Listener()
 
         //启动RecyclerView
         startRecyclerView(view)
@@ -141,10 +142,20 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             val ButtonForceRefresh = view.findViewById<CardView>(R.id.ButtonForceRefresh)
             ButtonForceRefresh.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+                //发起重读数据库
+                lifecycleScope.launch(Dispatchers.IO){
+                    val videoReader = VideoSysApiQuerier(context, context.contentResolver)
+                    videoReader.readAndSaveAllVideos()
 
-                recyclerView.smoothScrollToPosition(0)
-                recyclerView_video_adapter.refresh()
+                    withContext(Dispatchers.Main){
+                        //延迟200Ms自动回顶部
+                        delay(200)
+                        recyclerView.smoothScrollToPosition(0)
+                    }
+                }
+
             }
+
 
         }
         //延时注册
@@ -212,7 +223,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
     //Fragment通信
     //注册来自 父Fragment 的消息监听
-    private fun register_C_Fragment_Listener(){
+    private fun register_P_Fragment_Listener(){
         parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_video, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
             val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: ""
@@ -225,7 +236,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
                 ListManagerHelper.event_detail_general_update_list_state -> {
                     onFragmentFocused()
                 }
-                //列表更新
+                //列表adapter刷新
                 ListManagerHelper.event_video_list_refresh -> {
                     recyclerView_video_adapter.refresh()
                 }

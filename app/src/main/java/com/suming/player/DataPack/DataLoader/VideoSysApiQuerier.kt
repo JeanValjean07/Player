@@ -30,6 +30,11 @@ class VideoSysApiQuerier(
     suspend fun readAllVideos(): List<MediaItemFullForVideo> {
 
         return withContext(Dispatchers.IO) {
+
+            //通知状态变更(开始加载)(二合一项和视频独占项都更新)
+            DataBaseStateConnector.setState_queryDisk_Video_state(DataBaseStateConnector.state_queryDisk_start)
+            DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
+
             //初始化设置项
             val PRF_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
 
@@ -225,8 +230,16 @@ class VideoSysApiQuerier(
             }
         }
 
-        //发布完成通知
-        DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_success)
+        withContext(Dispatchers.Main){
+            //通知状态变更(完成加载)(二合一项和视频独占项都更新)
+            DataBaseStateConnector.setState_queryDisk_Video_state(DataBaseStateConnector.state_queryDisk_success)
+            DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_success)
+
+            //触发刷新后回到idle状态
+            DataBaseStateConnector.setState_queryDisk_Video_state(DataBaseStateConnector.state_queryDisk_idle)
+            DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_idle)
+        }
+
 
     }
 

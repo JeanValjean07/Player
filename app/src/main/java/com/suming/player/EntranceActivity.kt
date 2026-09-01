@@ -225,7 +225,7 @@ class EntranceActivity : AppCompatActivity(){
                     }else{
                         //按理说不会走到这里,因为不可能正在播放空链接,如果出现非预期情况,关闭播放器作为保底
                         //关闭播放器
-                        PlayerSingleton.stopPlayEngine()
+                        PlayerSingleton.stopPlayEngineBundle()
 
                         fail("打开页面失败(未知错误)")
                     }
@@ -240,7 +240,7 @@ class EntranceActivity : AppCompatActivity(){
             else -> {
                 //按理说不会出现不支持的媒体类型,因为播放前就有一道检查,如果出现非预期情况,关闭播放器作为保底
                 //关闭播放器
-                PlayerSingleton.stopPlayEngine()
+                PlayerSingleton.stopPlayEngineBundle()
 
                 fail("打开页面失败(不支持的媒体类型)")
             }

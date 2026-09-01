@@ -1255,9 +1255,6 @@ class MainActivity: AppCompatActivity() {
 
     //从读取本地视频和音乐数据
     private suspend fun startLocalMediaReader(mediaType: String){
-        withContext(Dispatchers.Main) { setLoadingText("正在读取本地媒体", false, 0) }
-        //通知状态变更
-        DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
         //发起加载
         when(mediaType){
             MediaType.Video -> {
@@ -1478,42 +1475,39 @@ class MainActivity: AppCompatActivity() {
 
 
     //通用事件观察
-    private var eventObserver_started = false
     private fun setupEventObserver() {
-        if (eventObserver_started){ return }
-        eventObserver_started = true
-        //启动列表加载状态观察
+        //列表加载状态
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 DataBaseStateConnector.state_queryDisk.collect { state ->
-                    if (state.isEmpty()) return@collect
+                    if (state == DataBaseStateConnector.state_queryDisk_idle) return@collect
                     //读取完成
-                    if (state.contains(DataBaseStateConnector.state_queryDisk_success)) {
-                        //刷新列表
-                        setLoadingText("读取完成",true,2000)
-                        //刷新列表
-                        refreshList()
-                        //清空字段
-                        DataBaseStateConnector.clearLoadState()
-                        //读取完成的消息发到Fragment
-                        supportFragmentManager.setFragmentResult(
-                            FragmentConnector.fragment_request_key_play_list,
-                            Bundle().apply {
-                                putString(FragmentConnector.receive_key, FragmentConnector.fragment_play_list_require_refresh)
-                            }
-                        )
+                    when (state) {
+                        DataBaseStateConnector.state_queryDisk_success -> {
+                            //刷新列表
+                            setLoadingText("读取完成", true, 2000)
+                            //刷新列表
+                            refreshList()
+
+                        }
+                        DataBaseStateConnector.state_queryDisk_start -> {
+                            //刷新列表
+                            setLoadingText("正在读取本地媒体", false, 0)
+
+                        }
 
                     }
                 }
             }
         }
-        //杂项观察
+
+        //杂项事件汇总
         lifecycleScope.launch {
             //观察杂项连接器变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 ConnectCenter.state_connector.collect { state ->
                     if (state.isEmpty()) return@collect
-                    //consoleLog("观察到杂项连接器变更: new state: $state")
+
                     //更新封面帧
                     if (state.contains(ConnectCenter.connector_event_cover_frame_update)){
                         val (targetFilePath, targetMediaId) = ConnectCenter.getCoverFrameUpdateEvent_targetFileInfo()

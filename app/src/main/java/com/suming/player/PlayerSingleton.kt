@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.CountDownTimer
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -41,7 +40,6 @@ import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
-import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.FuncionalPack.SupportFormat
@@ -157,7 +155,7 @@ object PlayerSingleton {
     private fun release_RendererFactory(){
         _rendererFactory = null
     }
-    private fun createCustomCodecFactory(): MediaCodecAdapter.Factory {
+    private fun create_customCodecFactory(): MediaCodecAdapter.Factory {
         @Suppress("DEPRECATION")
         return MediaCodecAdapter.Factory.DEFAULT
     }
@@ -168,7 +166,7 @@ object PlayerSingleton {
         override fun onPlaybackStateChanged(state: Int) {
             when (state) {
                 Player.STATE_READY ->  playState_Ready()
-                Player.STATE_ENDED ->  playState_End(context)
+                Player.STATE_ENDED ->  playState_End()
                 //播放器进入空闲状态
                 Player.STATE_IDLE -> {
                     on_EngineIdle()
@@ -240,19 +238,30 @@ object PlayerSingleton {
         _player?.prepare()
     }
 
-    //播放器打包方法
     //释放播放器
     fun releasePlayer() {
-
+        //移除播放器监听器
+        removePlayerStateListener()
+        //释放播放器并清除引用
         _player?.release()
         _player = null
+        //清除ID缓存
         cache_player_instance_id = 0L
+
 
         //销毁trackSelector和rendererFactory防止偶尔复用导致exoplayer拒绝使用复用实例而崩溃
         release_trackSelector()
         release_RendererFactory()
 
 
+    }
+    //清除当前媒体项
+    fun clearMediaItem(clear_info_center: Boolean = true){
+        core_exoplayer_clearMediaItem()
+        //清除媒体项信息缓存
+        if (clear_info_center){
+            PlayerInfoCenter.CLEAR_CurrentMediaInfo()
+        }
     }
 
     //播放器错误处理(发生错误后应该是会自动进入idle状态)
@@ -306,6 +315,27 @@ object PlayerSingleton {
     }
 
 
+    //销毁播放器并关闭媒体会话
+    fun stopPlayEngineBundle(clear_info_center: Boolean = true){
+        //consoleLog("stopPlayEngine")
+
+        //清理播放项
+        clearMediaItem(clear_info_center)
+        //销毁播放器
+        releasePlayer()
+        //关闭监听器
+        PlayerListener.stopListener()
+        //关闭本侧的媒体会话
+        stopMediaSession(context)
+        //关闭服务
+        stopServices(context)
+
+    }
+
+
+
+
+
 
 
 
@@ -344,46 +374,6 @@ object PlayerSingleton {
     const val engine_phase_release_start = 8   //销毁
     const val engine_phase_release_complete = 8   //销毁
 
-
-
-
-    //销毁播放器并关闭媒体会话
-    fun stopPlayEngine(clear_info_center: Boolean = true){
-        //consoleLog("stopPlayEngine")
-        //发布消息
-        cache_player_instance_id = 0L
-        PlayerInfoCenter.updateObservableIsIdle(0L)
-        //清理播放项
-        clearMediaItem(clear_info_center)
-        //销毁播放器
-        releasePlayer()
-        //重置媒体状态(可选)
-        if (clear_info_center){
-            PlayerInfoCenter.CLEAR_CurrentMediaInfo()
-        }
-        //关闭监听器
-        PlayerListener.stopListener()
-        //关闭本侧的媒体会话
-        stopMediaSession(context)
-        //关闭服务
-        stopServices(context)
-        //
-        _player = null
-
-
-    }
-
-    //清除当前媒体项
-    private var onClearMediaItem = false
-    fun clearMediaItem(clear_info_center: Boolean = true){
-        onClearMediaItem = true
-        core_exoplayer_clearMediaItem()
-        //重置媒体状态(可选)
-        if (clear_info_center){
-            PlayerInfoCenter.CLEAR_CurrentMediaInfo()
-        }
-        onClearMediaItem = false
-    }
 
 
 
@@ -818,7 +808,7 @@ object PlayerSingleton {
     }
     private var mark_needApplyPara = false
     //播放状态-当前媒体结束
-    private fun playState_End(context: Context){
+    private fun playState_End(){
         //若开启了本次播放完成后关闭功能
         if (timerState_autoShut_Reach){
             //关闭倒计时(含清除状态)
@@ -826,8 +816,7 @@ object PlayerSingleton {
             //让播放暂停
             pausePlay()
         }
-        //检查是否有来自清除媒体
-        if (onClearMediaItem) return
+
         //检查循环模式
         val loopMode = ListManagerHelper.getLoopMode()
         when(loopMode){

@@ -28,6 +28,7 @@ import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataLoader.AudioDataBaseLoader
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
+import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.PlayerSingleton
@@ -70,7 +71,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
         register(view)
 
         //开启Fragment通信
-        register_C_Fragment_Listener()
+        register_P_Fragment_Listener()
 
         //启动RecyclerView
         startRecyclerView(view)
@@ -144,9 +145,17 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             val ButtonForceRefresh = view.findViewById<CardView>(R.id.ButtonForceRefresh)
             ButtonForceRefresh.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+                //发起重读数据库
+                lifecycleScope.launch(Dispatchers.IO){
+                    val musicReader = AudioSysApiQuerier(context, context.contentResolver)
+                    musicReader.readAndSaveAllMusics()
 
-                recyclerView.smoothScrollToPosition(0)
-                recyclerView_music_adapter.refresh()
+                    withContext(Dispatchers.Main){
+                        //延迟200Ms自动回顶部
+                        delay(200)
+                        recyclerView.smoothScrollToPosition(0)
+                    }
+                }
             }
 
         }
@@ -162,7 +171,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
 
     //Fragment通信
     //注册来自 父Fragment 的消息监听
-    private fun register_C_Fragment_Listener(){
+    private fun register_P_Fragment_Listener(){
         parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_audio, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
             val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: ""
@@ -175,7 +184,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
                 ListManagerHelper.event_detail_general_update_list_state -> {
                     onFragmentFocused()
                 }
-                //列表更新
+                //列表adapter刷新
                 ListManagerHelper.event_audio_list_refresh -> {
                     recyclerView_music_adapter.refresh()
                 }
