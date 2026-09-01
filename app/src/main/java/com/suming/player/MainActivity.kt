@@ -72,7 +72,6 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
-import com.suming.player.FuncionalPack.TestHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -211,10 +210,6 @@ class MainActivity: AppCompatActivity() {
 
         onPaused = true
 
-        if (PlayingCard_Artwork_Video != null){
-            //PlayingCard_Artwork_Video?.player = null
-        }
-
 
     }
 
@@ -300,6 +295,8 @@ class MainActivity: AppCompatActivity() {
             val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
             ButtonGuidance.setOnClickListener {
                 ToolVibrate().vibrate(this@MainActivity)
+
+
                 ListRecyclerView_Video.stopScroll()
                 ListRecyclerView_Music.stopScroll()
 
@@ -324,12 +321,6 @@ class MainActivity: AppCompatActivity() {
                 val intent = Intent(this@MainActivity, SettingsActivity::class.java)
                 startActivity(intent)
             }
-            /*
-            ButtonSettings.visibility = View.VISIBLE
-            ButtonSettings.alpha = 0f
-            ButtonSettings.animate().alpha(1f).setDuration(300).start()
-
-             */
             //提示卡点击时关闭
             val NoticeCard = findViewById<CardView>(R.id.noticeCard)
             NoticeCard.setOnClickListener {
@@ -1048,8 +1039,6 @@ class MainActivity: AppCompatActivity() {
             state_MiniViewArtwork_type = mini_view_type_image
             //添加图片视图后,置入图片
             PlayingCard_Artwork_Image?.post{
-                consoleLog("PlayingCard_Artwork_Image -post触发")
-
                 //置入图片
                 pushImageToImageView(NUM_ID, type)
                 //变换卡片宽高
@@ -1071,7 +1060,7 @@ class MainActivity: AppCompatActivity() {
         //绑定到视频
         fun connectToPlayEngine(){
             PlayingCard_Artwork_Video?.player = null
-            PlayingCard_Artwork_Video?.player = PlayerSingleton.getPlayer()
+            PlayingCard_Artwork_Video?.player = PlayerSingleton.get_player_ref()
         }
         //变换卡片宽度
         fun transformCardSize_adaptVideo(){
@@ -1225,8 +1214,7 @@ class MainActivity: AppCompatActivity() {
     private fun setMediaItem(MediaInfo_MediaUri: Uri, playWhenReady: Boolean, ignoreLock: Boolean = false){
 
         //确保播放器已经启动
-        PlayerSingleton.getInitPlayer()
-        PlayerSingleton.addPlayerStateListener()
+        PlayerSingleton.init_player_get_ref()
 
         //确认设置新媒体项
         lifecycleScope.launch (Dispatchers.IO){

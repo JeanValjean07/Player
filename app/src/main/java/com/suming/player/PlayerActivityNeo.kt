@@ -387,21 +387,14 @@ class PlayerActivityNeo: AppCompatActivity(){
             //更多选项
             val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
-                if (TestHelper.isTestMode){
-                    PlayerSingleton.onError = true
-                    PlayerSingleton.onPlayEngineIdle()
-
-
-                }else{
-                    scroller.stopScroll()
-                    //防止快速点击
-                    if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
-                        return@setOnClickListener
-                    }
-                    clickMillis_MoreOptionPage = System.currentTimeMillis()
-                    //启动弹窗
-                    startMoreButtonFragment()
+                scroller.stopScroll()
+                //防止快速点击
+                if (System.currentTimeMillis() - clickMillis_MoreOptionPage < 800) {
+                    return@setOnClickListener
                 }
+                clickMillis_MoreOptionPage = System.currentTimeMillis()
+                //启动弹窗
+                startMoreButtonFragment()
             }
             //提示卡点击时关闭
             val noticeCard = findViewById<CardView>(R.id.noticeCapsule)
@@ -1250,7 +1243,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         removeExoPlayerListener()
 
         //重新拿取引用
-        player = PlayerSingleton.getPlayer()
+        player = PlayerSingleton.get_player_ref()
         if (player == null){
             //consoleLog("onPlayEnginRestart: 未拿到播放器引用")
             return
@@ -1281,9 +1274,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var cache_player_ID = 0L
     private fun connectToExoPlayer(){
         //确保播放器已启动并获得引用
-        player = PlayerSingleton.getInitPlayer()
+        player = PlayerSingleton.init_player_get_ref()
         //记入缓存
-        cache_player_ID = PlayerSingleton.cache_player_ID
+        cache_player_ID = PlayerSingleton.cache_player_instance_id
         //添加播放器事件监听
         startExoPlayerListener()
     }
@@ -1302,6 +1295,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private suspend fun setNewMediaItem(URI_U_FP: Uri,file_path_o: String): Boolean{
         if (state_setting_media) return false
         state_setting_media = true
+
         //缓存URI为字符串
         val URI_S_FP = URI_U_FP.toString()
         //检查文件是否存在(字节流方案,不再依赖文件路径)
@@ -1312,55 +1306,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (file_path == Undefined){
             file_path = MediaInfoRetriever.GET_FilePath_From_MediaUri_SC2(context, URI_U_FP)
         }
-        //文件可读性检查方案
-        if (file_path == Undefined){
-            val can_read = MediaInfoRetriever.isUriReadable(context, URI_S_FP)
-            if (!can_read){
-                withContext(Dispatchers.Main){
-                    //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                    if (ongoing){
-                        showCustomToast("文件不可读")
-                        //链接当前播放项
-                        connectCurrentMedia()
-                    }else{
-                        //当前正在播放,提示用户
-                        showErrorCover("文件不可读")
-
-                    }
-                }
-            }
-
-            state_setting_media = false
-            //文件不可读,结束设置流程
-            return false
-        }else{
-            //仅在获取到文件路径时才检查文件是否存在
-            val file = File(file_path)
-            val exist = file.exists()
-            if (!exist){
-                consoleLog("setNewMediaItem: 失败-文件已不存在")
-                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                withContext(Dispatchers.Main){
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                    if (ongoing){
-                        showCustomToast("文件已不存在")
-                        //链接当前播放项
-                        connectCurrentMedia()
-                    }else{
-                        //当前正在播放,提示用户
-                        showErrorCover("文件不存在")
-
-                    }
-
-                }
-
-                state_setting_media = false
-                //文件不存在,结束设置流程
-                return false
-            }
-        }
-
 
         //确保已启动播放器
         withContext(Dispatchers.Main){ connectToExoPlayer() }
@@ -1378,6 +1323,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 withContext(Dispatchers.Main){ bindPlayerView() }
 
                 state_setting_media = false
+                consoleLog("ActivityResultConnector.OBRTV_Engine_SetItemSuccess $state_setting_media")
                 //返回成功信息
                 return true
             }
@@ -1497,7 +1443,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //隐藏错误面板
         closeErrorCover()
-        closeCover()
 
         //非视频时主动退出页面
         if (PlayerInfoCenter.GET_Media_SPECIFIC_TYPE() != MediaType.Video){
@@ -1531,9 +1476,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         //刷新屏幕常亮状态
         updateKeepScreenOn()
 
-        if (state_setting_media) {
-            showCover()
-        }else{
+        consoleLog("onMediaItemCleared:state_setting_media $state_setting_media")
+        if (!state_setting_media){
+            consoleLog("onMediaItemCleared: 失败-媒体项被清除除了")
             showErrorCover("播放项被清除了，可在播放列表面板中启动播放")
         }
 
@@ -2812,6 +2757,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val Mark_playerReadyFrom_setNewItem = "Mark_playerReadyFrom_setNewItem"
     //状态playEnd
     private fun playState_playEnd(){
+        if (!PlayerSingleton.GET_STE_currentMediaItem_Uri().first) return
+
         val loopMode = ListManagerHelper.getLoopMode()
         when (loopMode) {
             ListManagerHelper.LOOP_MODE_ONE -> {

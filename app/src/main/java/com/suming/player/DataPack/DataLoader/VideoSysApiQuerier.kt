@@ -23,13 +23,6 @@ class VideoSysApiQuerier(
 
     //MediaInfoRetriever
     private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
-    //设置项
-    private var PREFS_EnableFileExistCheck: Boolean = false
-
-    //初始化设置项
-    private fun init(){
-        PREFS_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
-    }
 
 
 
@@ -38,7 +31,7 @@ class VideoSysApiQuerier(
 
         return withContext(Dispatchers.IO) {
             //初始化设置项
-            init()
+            val PRF_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
 
             //初始化列表
             val list = mutableListOf<MediaItemFullForVideo>()
@@ -120,7 +113,7 @@ class VideoSysApiQuerier(
                         //检查是否属于视频
                         mediaType == MediaType.Video -> {
                             //检查文件是否存在
-                            val fileExists = if (PREFS_EnableFileExistCheck) {
+                            val fileExists = if (PRF_EnableFileExistCheck) {
                                 isFileExist(file_path)
                             }else{
                                 true

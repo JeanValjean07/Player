@@ -9,7 +9,7 @@ object SupportFormat {
 
     //支持的音频格式
     val AUDIO_FORMATS_SUPPORTED = setOf(
-        "mp3","mpeg","flac"
+        "mp3","mpeg","flac","x-ms-wma"
     )
 
     //所有支持的格式

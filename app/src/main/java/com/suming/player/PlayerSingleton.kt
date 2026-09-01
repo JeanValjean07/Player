@@ -56,7 +56,7 @@ import java.util.Date
 import java.util.Locale
 
 @UnstableApi
-@Suppress("unused")
+@Suppress("/unused")
 object PlayerSingleton {
     //context
     private lateinit var context: Application
@@ -73,20 +73,23 @@ object PlayerSingleton {
             Log.d("SuMing", "PlayerSingleton: $msg")
         }
     }
-
     //空字段
     const val Undefined = ""
+    //MediaInfoRetriever
+    private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
 
 
-    //播放器内部实例
+
+
+
+    //播放器实例
     private var _player: ExoPlayer? = null
-
     //初始化播放器
     private fun buildPlayer(): ExoPlayer {
         //consoleLog("buildPlayer")
 
-        val trackSelector = getTrackSelector(context)
-        val rendererFactory = getRendererFactory(context)
+        val trackSelector = get_trackSelector(context)
+        val rendererFactory = get_RendererFactory(context)
         //创建播放器
         val ExoPlayer = ExoPlayer.Builder(context)
             .setSeekParameters(SeekParameters.CLOSEST_SYNC)
@@ -103,10 +106,9 @@ object PlayerSingleton {
 
         return ExoPlayer
     }
-    //获取播放器,未启动时将播放器初始化
-    fun getInitPlayer(): ExoPlayer {
-
-        //双重检查锁定
+    //初始化播放器并获得引用
+    fun init_player_get_ref(): ExoPlayer {
+        //双重检查锁定初始化
         var player = _player
         if (player == null) {
             synchronized(this) {
@@ -115,11 +117,8 @@ object PlayerSingleton {
                     player = buildPlayer()
                     _player = player
 
-                    //发布播放器上线消息
-                    cache_player_ID = System.currentTimeMillis()
-                    //consoleLog("getInitPlayer: 成功初始化播放器,播放器ID: $cache_player_ID")
-                    PlayerInfoCenter.updateObservableIsIdle(cache_player_ID)
-
+                    //新的播放器实例上线
+                    on_newInstance_built()
 
                 }
             }
@@ -130,61 +129,40 @@ object PlayerSingleton {
 
         return player!!
     }
-    //获取播放器但不初始化
-    fun getPlayer(): ExoPlayer? = _player
-
-    //播放器ID
-    var cache_player_ID = 0L
+    //获取播放器引用但不初始化
+    fun get_player_ref(): ExoPlayer? = _player
+    //播放器 ID 缓存 (需公开)
+    var cache_player_instance_id = 0L
 
     //播放器组件
-    fun getTrackSelector(context: Context): DefaultTrackSelector =
-        inner_trackSelector ?: synchronized(this) {
-            inner_trackSelector ?: DefaultTrackSelector(context)
-                .also { inner_trackSelector = it }
+    @SuppressLint("StaticFieldLeak")
+    private var _trackSelector: DefaultTrackSelector? = null
+    private var _rendererFactory: RenderersFactory? = null
+    private fun get_trackSelector(context: Context): DefaultTrackSelector =
+        _trackSelector ?: synchronized(this) {
+            _trackSelector ?: DefaultTrackSelector(context)
+                .also { _trackSelector = it }
 
         }
-    fun getRendererFactory(context: Context): RenderersFactory =
-        inner_rendererFactory ?: synchronized(this) {
-            inner_rendererFactory ?: DefaultRenderersFactory(context)
+    private fun get_RendererFactory(context: Context): RenderersFactory =
+        _rendererFactory ?: synchronized(this) {
+            _rendererFactory ?: DefaultRenderersFactory(context)
                 //.setEnableDecoderFallback(true)
-                .also { inner_rendererFactory = it }
+                .also { _rendererFactory = it }
         }
-    fun releaseTrackSelector(){
-        //inner_trackSelector?.release()  //不知道为什么这一行执行会崩溃说线程错误
-        inner_trackSelector = null
+    private fun release_trackSelector(){
+        //_trackSelector?.release()  //不知道为什么这一行执行会崩溃说线程错误
+        _trackSelector = null
     }
-    fun releaseRendererFactory(){
-        inner_rendererFactory = null
+    private fun release_RendererFactory(){
+        _rendererFactory = null
     }
-    fun createCustomCodecFactory(): MediaCodecAdapter.Factory {
+    private fun createCustomCodecFactory(): MediaCodecAdapter.Factory {
         @Suppress("DEPRECATION")
         return MediaCodecAdapter.Factory.DEFAULT
     }
-    @SuppressLint("StaticFieldLeak")
-    private var inner_trackSelector: DefaultTrackSelector? = null
-    private var inner_rendererFactory: RenderersFactory? = null
-    //外部获取播放器&组件
-    fun getPlayerFromService(): ExoPlayer?{
-        return _player
-    }
 
-    //播放器初始化监听
-    /*
-    private val initializationCallbacks = mutableListOf<() -> Unit>()
-    private var stateLock_isPlayerInitialized = false
-    private fun addInitializationCallback(callback: () -> Unit) {
-        synchronized(initializationCallbacks) {
-            if (stateLock_isPlayerInitialized && _player != null) {
-                callback.invoke()
-            } else {
-                initializationCallbacks.add(callback)
-            }
-        }
-    }
-
-     */
-
-    //播放器回调监听
+    //播放器回调监听器
     private val PlayerStateListener = object : Player.Listener {
         @SuppressLint("SwitchIntDef")
         override fun onPlaybackStateChanged(state: Int) {
@@ -193,7 +171,7 @@ object PlayerSingleton {
                 Player.STATE_ENDED ->  playState_End(context)
                 //播放器进入空闲状态
                 Player.STATE_IDLE -> {
-                    onPlayEngineIdle()
+                    on_EngineIdle()
                 }
             }
         }
@@ -216,97 +194,164 @@ object PlayerSingleton {
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
 
-            onFatalErrorOccur(error)
+            on_EngineErrorOccur(error)
         }
     }
-    private var playerState_PlayerStateListenerAdded = false
-    fun addPlayerStateListener(){
-        if (playerState_PlayerStateListenerAdded) return
-        playerState_PlayerStateListenerAdded = true
-        //consoleLog("addPlayerStateListener")
+    //播放器 监听器 ID 缓存
+    private var cache_player_listener_id = 0L
+    //操作方法
+    private fun addPlayerStateListener(){
+        if (cache_player_instance_id == 0L) return
+        if (cache_player_listener_id != 0L && cache_player_listener_id != cache_player_instance_id) return
+
+        //记下监听器ID缓存
+        cache_player_listener_id = cache_player_instance_id
+
+        //执行监听器添加
         _player?.addListener(PlayerStateListener)
 
     }
-    fun removePlayerStateListener(){
-        if (!playerState_PlayerStateListenerAdded) return
-        playerState_PlayerStateListenerAdded = false
-        //consoleLog("removePlayerStateListener")
+    private fun removePlayerStateListener(){
+        //清除监听器ID缓存
+        cache_player_listener_id = 0L
+
+        //执行移除
         _player?.removeListener(PlayerStateListener)
     }
 
+    //新的播放器实例上线
+    private fun on_newInstance_built(){
+        //计下实例缓存
+        cache_player_instance_id = System.currentTimeMillis()
+        //添加监听器
+        addPlayerStateListener()
+        //通报实例更新
+        PlayerInfoCenter.updateObservableIsIdle(cache_player_instance_id)
+    }
+
+    //播放器单一方法
+    private fun core_exoplayer_clearMediaItem() {
+        _player?.clearMediaItems()
+    }
+    private fun core_exoplayer_stop() {
+        _player?.stop()
+    }
+    fun core_exoplayer_prepare() {
+        _player?.prepare()
+    }
+
+    //播放器打包方法
+    //释放播放器
+    fun releasePlayer() {
+
+        _player?.release()
+        _player = null
+        cache_player_instance_id = 0L
+
+        //销毁trackSelector和rendererFactory防止偶尔复用导致exoplayer拒绝使用复用实例而崩溃
+        release_trackSelector()
+        release_RendererFactory()
 
 
-    //播放器错误处理
-    private fun onFatalErrorOccur(error: PlaybackException){
-        consoleLog("播放器错误:${error} message:${error.message} cause:${error.cause} errorCodeName:${error.errorCodeName}")
+    }
 
-        onError = true
-        //解锁一次保底
+    //播放器错误处理(发生错误后应该是会自动进入idle状态)
+    private fun on_EngineErrorOccur(error: PlaybackException){
+        //ErrorOccur之后虽然同样进入idle状态,但只有在error导致的idle之后才尝试恢复播放
+
+        //收集可用于恢复播放的信息
+        val current_media_progress = _player?.currentPosition ?: 0L
+
+        //仅在信息有效时开启onError标志
+        if (current_media_progress > 0L) onError = true
+
+
+        //解锁一次作为保底
         isLocked = false
 
-        //记录原本的媒体uri,然后重启播放器
+        consoleLog(
+            "EngineErrorOccur:ERROR:${error},MESSAGE:${error.message},CAUSE:${error.cause},ECN:${error.errorCodeName}\n" +
+            "收集需要恢复的信息:"
+        )
+
+        //如果来自 Source Error,必须先清除媒体,再调prepare()，否之一直循环报错
+        if (error.message == "Source error") clearMediaItem()
 
 
     }
-    var onError = false
-    //播放器进入空闲状态时,重启播放器
-    private val coroutine_restart = CoroutineScope(Dispatchers.Main)
-    fun onPlayEngineIdle(){
-        coroutine_restart.launch{
-            consoleLog("onPlayEngineIdle")
+    private var onError = false
+    //播放器进入空闲状态
+    fun on_EngineIdle(){
+        consoleLog("EngineIdle:是否来自报错onError:${onError}")
 
-            //解锁一次保底
-            isLocked = false
+        //进行操作
 
-            //发布Idle消息
-            cache_player_ID = 0L
-            PlayerInfoCenter.updateObservableIsIdle(0L)
 
-            //开始重启播放器
-            //关闭本地监听器
-            removePlayerStateListener()
-            //销毁播放器(包含置空_player实例)
-            consoleLog("onPlayEngineIdle: stopPlayEngine")
-            stopPlayEngine(false)
+        //使用prepare()使播放器重新上线
+        core_exoplayer_prepare()
 
-            delay(100)
-            consoleLog("onPlayEngineIdle: getInitPlayer")
-            //重启播放器(getInitPlayer()自带监听器添加)
-            getInitPlayer()
-            //检查是否重启成功
-            if (getPlayer() == null){
-                //重启失败时,直接关闭播放器
-                consoleLog("onPlayEngineIdle: getInitPlayer 失败")
-                stopPlayEngine()
-            }else{
-                //重启成功,检查是否需要恢复播放,且仅在发生报错时恢复
-                consoleLog("onPlayEngineIdle: getInitPlayer 成功 onError:${onError}")
-                if (onError){
-                    onError = false
-                    //恢复播放
-                    val last_URI_S_FP = PlayerInfoCenter.GET_Media_URI_S_FP()
-                    consoleLog("onPlayEngineIdle: last_URI_S_FP:$last_URI_S_FP")
-                    //检查文件是否可读
-                    val is_readable = MediaInfoRetriever.isUriReadable(context,last_URI_S_FP)
-                    consoleLog("onPlayEngineIdle: isUriReadable:${is_readable}")
-                    if (is_readable){
-                        //可读,则恢复播放
-                        val result = setMediaItem(last_URI_S_FP.toUri(),Undefined,true,true)
-                        consoleLog("onPlayEngineIdle: setMediaItem result:$result")
-                    }
-                }
-            }
-            //添加本地监听器
-            addPlayerStateListener()
-        }
     }
+
+
+    //通知服务和媒体会话被系统侧销毁(系统侧销毁等于stop()了player让其进入idle,并带有一次主动暂停,可调用prepare()重新上线)
+    fun notify_session_service_release(){
+        //关闭播放器端的媒体会话(已包含关闭服务)
+        stopMediaSession(context)
+
+        //关闭监听器
+        PlayerListener.stopListener()
+
+        //调用prepare()让播放器重新上线
+        core_exoplayer_prepare()
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //阶段事件回环
+    private var engine_phase = 0
+
+    const val engine_phase_offline = 1   //未启动
+    const val engine_phase_build_start = 2   //启动(创建)中
+    const val engine_phase_build_success = 2
+    const val engine_phase_build_fail = 2
+    const val engine_phase_online = 3   //上线(启动完成)
+    const val engine_phase_set_item_start = 4   //开始进入媒体设置流程
+    const val engine_phase_set_item_success = 5   //设置完成
+    const val engine_phase_item_ready = 6  //
+    const val engine_phase_clear_item_start = 6  //开始清除项
+    const val engine_phase_clear_item_success = 7   //清除完成
+    const val engine_phase_error_occur = 21  //错误
+    const val engine_phase_idle = 22   //空闲
+    const val engine_phase_release_start = 8   //销毁
+    const val engine_phase_release_complete = 8   //销毁
+
+
 
 
     //销毁播放器并关闭媒体会话
     fun stopPlayEngine(clear_info_center: Boolean = true){
         //consoleLog("stopPlayEngine")
         //发布消息
-        cache_player_ID = 0L
+        cache_player_instance_id = 0L
         PlayerInfoCenter.updateObservableIsIdle(0L)
         //清理播放项
         clearMediaItem(clear_info_center)
@@ -329,39 +374,22 @@ object PlayerSingleton {
     }
 
     //清除当前媒体项
+    private var onClearMediaItem = false
     fun clearMediaItem(clear_info_center: Boolean = true){
-        clearMediaItem_standardExo()
+        onClearMediaItem = true
+        core_exoplayer_clearMediaItem()
         //重置媒体状态(可选)
         if (clear_info_center){
             PlayerInfoCenter.CLEAR_CurrentMediaInfo()
         }
-
+        onClearMediaItem = false
     }
 
 
-
-    //判断传入的链接是否为正在播放的项(核心)
-    fun isthisUriOngoing(uriNeedCheck: Uri): Boolean {
-        //从播放核心获取信息
-        val MediaInfo_MediaUriStandard = "114514"
-
-        //如果传入标准链接,就直接对比标准链接
-        if (MediaUriManager.spy_is_string_matches_a_MediaStore_S_URI(uriNeedCheck.toString())){
-
-            return uriNeedCheck.toString() == MediaInfo_MediaUriStandard
-        }
-
-
-        return uriNeedCheck.toString() == MediaInfo_MediaUriStandard
-    }
-
-
-    //MediaInfoRetriever
-    private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
 
 
     //Long Process Functions
-    //设置新媒体项的外部接口(以后可以加些过滤)(返回ActivityResultConnector内的状态码)(file_path作用:??//TODO)
+    //设置新媒体项的外部接口(以后可以加些过滤)(返回ActivityResultConnector内的结果码)
     private var clickMillis_setMediaItem = 0L
     suspend fun setMediaItem(URI_UP:Uri,file_path:String=Undefined,playWhenReady:Boolean,ignoreLock:Boolean=false): String {
         //检查是否已被锁定+进入流程后加锁
@@ -369,18 +397,21 @@ object PlayerSingleton {
             return ActivityResultConnector.OBRTV_Engine_Locked
         }
         isLocked = true
-        //设置频率限制
+        //设置媒体项频率限制
         if (System.currentTimeMillis() - clickMillis_setMediaItem < 1500 && !ignoreLock) {
+
             //流程结束时解锁
             isLocked = false
+            //流程中断,返回结码
             return ActivityResultConnector.OBRTV_Engine_SoFrequent
         }
         clickMillis_setMediaItem = System.currentTimeMillis()
         //检查是否启动了播放器
         if (_player == null){
+
             //流程结束时解锁
             isLocked = false
-
+            //流程中断,返回结码
             return ActivityResultConnector.OBRTV_Engine_OffLine
         }
 
@@ -392,26 +423,24 @@ object PlayerSingleton {
         return result
     }
     var isLocked = false
-    //设置/变更媒体(设置新媒体项) URI_UP = URI URI for Play
-    private suspend fun setMediaItemCore(URI_UP: Uri, file_path: String = Undefined,playWhenReady: Boolean): String {
+    //设置/变更媒体(设置新媒体项)(返回值为结果码)
+    private suspend fun setMediaItemCore(URI_UP: Uri, file_path:String=Undefined, playWhenReady:Boolean): String {
         //consoleLog("setMediaItemCore -设置新媒体项:$uri")
-        //缓存成字符串
+        //说明:file_path的作用仅为获取文件名(也可作为文件存在检查)
+
+        //将播放链接缓存成字符串
         val URI_S_FP = URI_UP.toString()
 
-        //先判断是否是正在播放的媒体
-        if (withContext(Dispatchers.Main) { isthisUriOngoing(URI_UP) }) {
-            //consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 已在播放")
-            return ActivityResultConnector.OBRTV_Engine_AlreadyPlayingTargetItem
-        }
+        //先判断是否是正在播放的媒体(约定交给外层判断)
+        //Moved
 
         //保存上个媒体的需要保存的东西
+        //TODO
 
+        //移除上个媒体(感觉不应该在此流程里移除,副作用太多)
+        //Cancelled
 
-        //移除上个媒体(不移除缓存)
-        withContext(Dispatchers.Main) { clearMediaItem(false) }
-
-        //解码新媒体信息
-        //检查是否需要解码
+        //解码新媒体信息(包含检查是否需要解码:对比当前数据包的URI键是否和新URI一致,无需解码时直接拿到数据包)
         var MediaItemForPlay = MediaItemForPlay()
         val current_item_URI_SP = withContext(Dispatchers.Main) { PlayerInfoCenter.GET_Media_URI_S_FP() }
         if (current_item_URI_SP == URI_S_FP){
@@ -611,19 +640,18 @@ object PlayerSingleton {
             Uri.EMPTY
         }
     }
-    //启动服务和媒体会话
-    private fun startSessionService(context: Context){
-        //链接到媒体会话
-        connectToMediaSession(context)
-        //未来可能需要自行写入信息以支持自定义通知
-    }
-
 
 
     //媒体会话和服务
     private var controller: MediaController? = null
     private var MediaSessionController: ListenableFuture<MediaController>? = null
     private var sessionState_MediaSession_connected = false
+    //启动服务和媒体会话
+    private fun startSessionService(context: Context){
+        //链接到媒体会话
+        connectToMediaSession(context)
+        //未来可能需要自行写入信息以支持自定义通知
+    }
     //连接到媒体会话控制器
     private fun connectToMediaSession(context: Context){
         if (sessionState_MediaSession_connected) return
@@ -646,17 +674,13 @@ object PlayerSingleton {
         context.stopService(Intent(context, PlayerService::class.java))
         sessionState_MediaSession_connected = false
     }
-    //外部接口-完整清除媒体会话
+    //完整清除媒体会话
     fun stopMediaSession(context: Context){
         stopMediaSessionController()
         stopServices(context)
         sessionState_MediaSession_connected = false
     }
-    //外部接口-完整启动媒体会话
-    fun startMediaSession(context: Context){
-        //用内部接口
-        startSessionService(context)
-    }
+
 
 
 
@@ -748,8 +772,6 @@ object PlayerSingleton {
             setState_wasPlaying(false)
         }
 
-
-
         //写入可观察信息
         PlayerInfoCenter.updateObservableIsPlaying(false)
 
@@ -804,6 +826,8 @@ object PlayerSingleton {
             //让播放暂停
             pausePlay()
         }
+        //检查是否有来自清除媒体
+        if (onClearMediaItem) return
         //检查循环模式
         val loopMode = ListManagerHelper.getLoopMode()
         when(loopMode){
@@ -837,27 +861,6 @@ object PlayerSingleton {
 
 
 
-
-
-    //释放播放器
-    fun releasePlayer() {
-
-            _player?.release()
-            _player = null
-            playerState_PlayerStateListenerAdded = false
-            //销毁trackSelector和rendererFactory防止偶尔复用导致exoplayer拒绝使用复用实例而崩溃
-            releaseTrackSelector()
-            releaseRendererFactory()
-
-
-    }
-
-
-    //ExoPlayer标准方法
-    //清除媒体项
-    fun clearMediaItem_standardExo() { _player?.clearMediaItems() }
-    //挂起
-    fun stopPlayer_standardExo() { _player?.stop() }
 
 
 
@@ -904,7 +907,7 @@ object PlayerSingleton {
         if (state_VideoTrack_Disabled) return
         //执行禁用视频轨道
         state_VideoTrack_Disabled = true
-        inner_trackSelector?.parameters = inner_trackSelector!!
+        _trackSelector?.parameters = _trackSelector!!
             .buildUponParameters()
             .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, true)
             .build()
@@ -914,7 +917,7 @@ object PlayerSingleton {
         //
         if (state_VideoTrack_Disabled){
             state_VideoTrack_Disabled = false
-            inner_trackSelector?.parameters = inner_trackSelector!!
+            _trackSelector?.parameters = _trackSelector!!
                 .buildUponParameters()
                 .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, false)
                 .build()
@@ -926,7 +929,7 @@ object PlayerSingleton {
         if (state_AudioTrack_Disabled) return
         //执行禁用音频轨道
         state_AudioTrack_Disabled = true
-        inner_trackSelector?.parameters = inner_trackSelector!!
+        _trackSelector?.parameters = _trackSelector!!
             .buildUponParameters()
             .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
             .build()
@@ -935,7 +938,7 @@ object PlayerSingleton {
     fun trackAffair_EnableAudioTrack(){
         if (state_AudioTrack_Disabled){
             state_AudioTrack_Disabled = false
-            inner_trackSelector?.parameters = inner_trackSelector!!
+            _trackSelector?.parameters = _trackSelector!!
                 .buildUponParameters()
                 .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, false)
                 .build()
@@ -1040,7 +1043,7 @@ object PlayerSingleton {
             //关闭监听器
             PlayerListener.stopListener()
             //关闭播放器
-            stopPlayer_standardExo()
+            core_exoplayer_stop()
         }
     }
     fun set_timer_autoShut(CountDownDuration_Min: Int){

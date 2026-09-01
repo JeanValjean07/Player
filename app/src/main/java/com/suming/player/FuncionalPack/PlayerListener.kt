@@ -191,7 +191,7 @@ object PlayerListener {
             }
         }else{
             //检查播放器当前是否在播放
-            val player = PlayerSingleton.getPlayer()
+            val player = PlayerSingleton.get_player_ref()
             if (player == null) return
             if (player.isPlaying) {
                 audioManager?.requestAudioFocus(focusRequest!!)

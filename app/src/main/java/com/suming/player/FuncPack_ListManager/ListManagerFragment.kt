@@ -1,7 +1,6 @@
 package com.suming.player.FuncPack_ListManager
 
 import android.annotation.SuppressLint
-import android.app.Dialog
 import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Configuration
@@ -14,14 +13,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
-import androidx.compose.remote.creation.dsl.sqrt
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
@@ -36,7 +33,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
-import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
@@ -54,15 +50,11 @@ import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
-import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
-import com.suming.player.SettingsRequestCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.abs
 
 @UnstableApi
 @SuppressLint("ComposableNaming","NewApi")
@@ -550,7 +542,7 @@ class ListManagerFragment: DialogFragment(){
                 }
             }else{
                 //确保播放器已经启动
-                PlayerSingleton.getInitPlayer()
+                PlayerSingleton.init_player_get_ref()
                 //设置播放项
                 lifecycleScope.launch (Dispatchers.IO){
                     val result = PlayerSingleton.setMediaItem(URI_UP = URI_S_FP.toUri(),playWhenReady = true)

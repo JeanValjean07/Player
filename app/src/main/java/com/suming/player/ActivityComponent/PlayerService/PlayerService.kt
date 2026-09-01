@@ -61,7 +61,7 @@ class PlayerService: MediaSessionService() {
 
 
         //获取播放器
-        val player = PlayerSingleton.getInitPlayer()
+        val player = PlayerSingleton.init_player_get_ref()
 
         //指定通知,包含设置自定义控制按钮和播控中心小图标
         setMediaNotificationProvider(CustomNotificationSession(this))
@@ -107,7 +107,7 @@ class PlayerService: MediaSessionService() {
                     if (playerCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS)) {
                         consoleLog("上一曲")
                     }
-                    //停止播放(划掉音频播控卡片)
+                    //停止播放(划掉音频播控卡片)(划掉后播放器会被停止,调用prepare()使其重新上线)
                     if (playerCommands.contains(Player.COMMAND_STOP)) {
                         consoleLog("停止")
                         //关掉播放引擎和监听器
@@ -190,16 +190,12 @@ class PlayerService: MediaSessionService() {
     //External Operation Functions
     //销毁播放器和媒体会话
     private fun stopPlayBundle() {
-        PlayerSingleton.stopPlayEngine()
-        //关闭监听器
-        stopPlayerListener()
+        //通知播放器服务和媒体会话销毁
+        PlayerSingleton.notify_session_service_release()
         //关闭本地的媒体会话和服务
         stopLocalAll()
     }
-    //关掉监听器
-    private fun stopPlayerListener() {
-        PlayerListener.stopListener()
-    }
+
     //播放或暂停
     private fun pauseOrContinue() {
         //先检查目前是不是在播放(读取到的是父类修改后的状态,原本的播放状态应取反)

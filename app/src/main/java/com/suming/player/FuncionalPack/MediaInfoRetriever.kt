@@ -400,23 +400,28 @@ class MediaInfoRetriever {
         }
     }
     fun GET_FilePath_From_MediaUri_SC2(context: Context, uri: Uri): String {
-        val cleanUri = if (uri.scheme == null || uri.scheme == "file"){
-            Uri.fromFile(File(uri.path?.substringBefore("?") ?: return Undefined))
-        }else{
-            uri
-        }
-        val absolutePath: String? = when (cleanUri.scheme){
-            ContentResolver.SCHEME_CONTENT -> {
-                val projection = arrayOf(MediaStore.Video.Media.DATA)
-                context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
-                    if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
-                }
+        try {
+            val cleanUri = if (uri.scheme == null || uri.scheme == "file"){
+                Uri.fromFile(File(uri.path?.substringBefore("?") ?: return Undefined))
+            }else{
+                uri
             }
-            ContentResolver.SCHEME_FILE    -> cleanUri.path
-            else                           -> cleanUri.path
+            val absolutePath: String? = when (cleanUri.scheme){
+                ContentResolver.SCHEME_CONTENT -> {
+                    val projection = arrayOf(MediaStore.Video.Media.DATA)
+                    context.contentResolver.query(cleanUri, projection, null, null, null)?.use { c ->
+                        if (c.moveToFirst()) c.getString(c.getColumnIndexOrThrow(MediaStore.Video.Media.DATA)) else null
+                    }
+                }
+                ContentResolver.SCHEME_FILE    -> cleanUri.path
+                else                           -> cleanUri.path
+            }
+
+            return absolutePath?.takeIf { File(it).exists() } ?: Undefined
+        }catch(e: Exception){
+            return Undefined
         }
 
-        return absolutePath?.takeIf { File(it).exists() } ?: Undefined
     }
     //从FileProviderURI获取文件路径
     fun GET_FilePath_From_FileProviderURI(URI: Uri): String {
