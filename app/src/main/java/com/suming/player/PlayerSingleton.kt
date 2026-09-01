@@ -290,7 +290,8 @@ object PlayerSingleton {
                     consoleLog("onPlayEngineIdle: isUriReadable:${is_readable}")
                     if (is_readable){
                         //可读,则恢复播放
-                        setMediaItem(last_URI_S_FP.toUri(),Undefined,true,true)
+                        val result = setMediaItem(last_URI_S_FP.toUri(),Undefined,true,true)
+                        consoleLog("onPlayEngineIdle: setMediaItem result:$result")
                     }
                 }
             }
@@ -368,7 +369,7 @@ object PlayerSingleton {
         }
         isLocked = true
         //设置频率限制
-        if (System.currentTimeMillis() - clickMillis_setMediaItem < 1500) {
+        if (System.currentTimeMillis() - clickMillis_setMediaItem < 1500 && !ignoreLock) {
             //流程结束时解锁
             isLocked = false
             return ActivityResultConnector.OBRTV_Engine_SoFrequent

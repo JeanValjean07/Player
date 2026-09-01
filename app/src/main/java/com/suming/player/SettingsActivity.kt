@@ -91,12 +91,16 @@ class SettingsActivity: AppCompatActivity(){
             //显示版本
             lifecycleScope.launch(Dispatchers.IO) {
                 delay(500)
+                //获取App版本号
                 if (AppVersion == null){
                     AppVersion = packageManager.getPackageInfo(packageName, 0).versionName
                 }
+                //获取是不是debug版
+                val isDebug = isDebugVersion()
+                //显示
                 withContext(Dispatchers.Main) {
                     val versionText = findViewById<TextView>(R.id.version)
-                    versionText.text = "版本: $AppVersion"
+                    versionText.text = "版本: $AppVersion" + if (isDebug) " (Debug)" else ""
                 }
                 //consoleLog("当前版本: $AppVersion")
             }
@@ -1425,7 +1429,7 @@ class SettingsActivity: AppCompatActivity(){
         AppBarSpacer = findViewById(R.id.AppBarSpacer)
         AppBarTitle = findViewById(R.id.AppBarTitle)
         //获取状态栏高度
-        if (DeviceInfo.statusBarHeight != 0){
+        if (DeviceInfo.statusBarHeight == 0){
             ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
 
                 DeviceInfo.statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
@@ -1433,6 +1437,8 @@ class SettingsActivity: AppCompatActivity(){
 
                 insets
             }
+        }else{
+            onStatusBarHeightGet(DeviceInfo.statusBarHeight)
         }
 
     }
@@ -1473,18 +1479,17 @@ class SettingsActivity: AppCompatActivity(){
         }
         return false
     }
-    //测试版可用性检查
-    private fun allowUseTestPlayer(): Boolean{
+
+    //检测当前是release版还是debug版
+    private fun isDebugVersion(): Boolean{
+        //获取签名信息
         val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
         val signingInfo = packageInfo.signingInfo
-
+        //
         if (signingInfo == null) {
-            showCustomToast("签名错误", 3)
             return false
         }
-
         if (signingInfo.hasMultipleSigners()) {
-            showCustomToast("签名错误", 3)
             return false
         }
 
@@ -1496,15 +1501,14 @@ class SettingsActivity: AppCompatActivity(){
             val c = cf.generateCertificate(input) as X509Certificate
             val name = c.subjectDN.name
             if (name.contains("Android Debug")) {
-                showCustomToast("当前程序可使用测试版界面", 3)
                 return true
             }else{
-                showCustomToast("非Debug版本不能使用测试版页面", 3)
                 return false
             }
         }
         return true
     }
+
 
     //日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {
