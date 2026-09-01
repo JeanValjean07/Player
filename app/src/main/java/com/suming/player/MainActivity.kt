@@ -396,10 +396,7 @@ class MainActivity: AppCompatActivity() {
                     if (savedInstanceState == null) {
                         //首次启动
 
-                        //测试用
-                        val delayMillis = SettingsRequestCenter.GET_PRF_onStartDelayMillis(context)
-                        delay(delayMillis)
-
+                        delay(200)
 
                         //检查启动来源是否EntranceActivity委托
                         val action = intent.action ?: Undefined
@@ -1232,21 +1229,26 @@ class MainActivity: AppCompatActivity() {
         PlayerSingleton.addPlayerStateListener()
 
         //确认设置新媒体项
-        val result = PlayerSingleton.setMediaItem(URI_UP  = MediaInfo_MediaUri,playWhenReady = playWhenReady,ignoreLock = ignoreLock)
-        when(result){
-            ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
-                showCustomToast("文件似乎已经不存在",3)
-            }
-            ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
-                showCustomToast("设置过于频繁",3)
-            }
-            ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
-                showCustomToast("不支持的格式",3)
-            }
-            ActivityResultConnector.OBRTV_Engine_Locked -> {
-                showCustomToast("播放器处于锁定窗口期", 3)
+        lifecycleScope.launch (Dispatchers.IO){
+            val result = PlayerSingleton.setMediaItem(URI_UP  = MediaInfo_MediaUri,playWhenReady = playWhenReady,ignoreLock = ignoreLock)
+            withContext(Dispatchers.Main){
+                when(result){
+                    ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
+                        showCustomToast("文件似乎已经不存在",3)
+                    }
+                    ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
+                        showCustomToast("设置过于频繁",3)
+                    }
+                    ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
+                        showCustomToast("不支持的格式",3)
+                    }
+                    ActivityResultConnector.OBRTV_Engine_Locked -> {
+                        showCustomToast("播放器处于锁定窗口期", 3)
+                    }
+                }
             }
         }
+
     }
     //从选单发起后台播放
     private fun startMiniViewPlay(uri: Uri){

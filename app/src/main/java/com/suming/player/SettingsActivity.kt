@@ -523,7 +523,7 @@ class SettingsActivity: AppCompatActivity(){
             val ButtonCard_onStartDelayMillis = findViewById<CardView>(R.id.ButtonCard_onStartDelayMillis)
             val ButtonText_onStartDelayMillis = findViewById<TextView>(R.id.ButtonText_onStartDelayMillis)
             fun updateOnStartDelayMillisText(){
-                val delayMillis = SettingsRequestCenter.GET_PRF_onStartDelayMillis(context)
+                val delayMillis = SettingsRequestCenter.GET_PRF_forTestDelayMillis(context)
                 ButtonText_onStartDelayMillis.text = "${delayMillis}ms"
             }
             updateOnStartDelayMillisText()
@@ -540,7 +540,7 @@ class SettingsActivity: AppCompatActivity(){
                 val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
                 val Button: Button = dialogView.findViewById(R.id.dialog_button)
 
-                title.text = "自定义开局延迟时长"
+                title.text = "自定义测试延迟数值"
                 Description.text = "仅供测试 Ms"
                 EditText.hint = "以毫秒为单位"
                 Button.text = "确定"
@@ -560,7 +560,7 @@ class SettingsActivity: AppCompatActivity(){
                         return@setOnClickListener
                     }
                     else {
-                        SettingsRequestCenter.SET_PRF_onStartDelayMillis(context,gapInput)
+                        SettingsRequestCenter.SET_PRF_forTestDelayMillis(context,gapInput)
                         //界面刷新
                         updateOnStartDelayMillisText()
                         dialog.dismiss()

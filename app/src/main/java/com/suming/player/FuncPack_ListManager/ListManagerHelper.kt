@@ -344,6 +344,9 @@ object ListManagerHelper {
     private var clickMillis_MediaSession_switchCall: Long = 0
 
     @OptIn(UnstableApi::class)
+    private var coroutine_set = CoroutineScope(Dispatchers.IO)
+
+    @OptIn(UnstableApi::class)
     fun MediaSessionCall_switchNextMedia(){
         //点击频率限制
         if (System.currentTimeMillis() - clickMillis_MediaSession_switchCall < 2000) {
@@ -359,7 +362,9 @@ object ListManagerHelper {
         consoleLog("MediaSessionCall_switchPreviousMedia target_URI_S_FP = $target_URI_S_FP")
 
         //发起播放
-        PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+        coroutine_set.launch {
+            PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+        }
 
 
     }
@@ -378,7 +383,9 @@ object ListManagerHelper {
         consoleLog("MediaSessionCall_switchPreviousMedia target_URI_S_FP = $target_URI_S_FP")
 
         //发起播放
-        PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+        coroutine_set.launch {
+            PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+        }
 
 
     }
@@ -391,7 +398,10 @@ object ListManagerHelper {
         consoleLog("MediaSessionCall_switchPreviousMedia target_URI_S_FP = $target_URI_S_FP")
 
         //发起播放
-        PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+        coroutine_set.launch {
+            PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+        }
+
 
     }
     @OptIn(UnstableApi::class)
@@ -402,7 +412,9 @@ object ListManagerHelper {
         consoleLog("MediaSessionCall_switchPreviousMedia target_URI_S_FP = $target_URI_S_FP")
 
         //发起播放
-        PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+        coroutine_set.launch {
+            PlayerSingleton.setMediaItem(target_URI_S_FP.toUri(),Undefined,true)
+        }
 
 
     }

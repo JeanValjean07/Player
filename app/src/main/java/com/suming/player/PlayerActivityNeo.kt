@@ -246,7 +246,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                         continuePlay()
                     }else{
                         //设置新的媒体项
-                        setNewMediaItem(URI,file_path)
+                        lifecycleScope.launch(Dispatchers.IO){
+                            setNewMediaItem(URI,file_path)
+                        }
                     }
                 }
                 //系统面板：选择其他应用打开
@@ -259,7 +261,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                         continuePlay()
                     }else{
                         //设置新的媒体项
-                        setNewMediaItem(URI,file_path)
+                        //设置新的媒体项
+                        lifecycleScope.launch(Dispatchers.IO){
+                            setNewMediaItem(URI,file_path)
+                        }
                     }
                 }
                 //常规重复调用(来自EntranceActivity)
@@ -274,7 +279,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                         continuePlay()
                     }else{
                         //设置新的媒体项
-                        setNewMediaItem(URI,file_path)
+                        lifecycleScope.launch(Dispatchers.IO){
+                            setNewMediaItem(URI,file_path)
+                        }
                     }
                 }
             }
@@ -1105,7 +1112,9 @@ class PlayerActivityNeo: AppCompatActivity(){
     //开启播放新媒体项
     private fun startPlayNewMedia(URI_UP: Uri, file_path: String){
         //设置新媒体项
-        setNewMediaItem(URI_UP,file_path)
+        lifecycleScope.launch(Dispatchers.IO){
+            setNewMediaItem(URI_UP,file_path)
+        }
 
     }
     //连接正在播放的媒体
@@ -1290,7 +1299,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         player?.removeListener(PlayerStateListener)
     }
     //设置新媒体项
-    private fun setNewMediaItem(URI_U_FP: Uri,file_path_o: String): Boolean{
+    private suspend fun setNewMediaItem(URI_U_FP: Uri,file_path_o: String): Boolean{
+        if (state_setting_media) return false
+        state_setting_media = true
         //缓存URI为字符串
         val URI_S_FP = URI_U_FP.toString()
         //检查文件是否存在(字节流方案,不再依赖文件路径)
@@ -1305,18 +1316,22 @@ class PlayerActivityNeo: AppCompatActivity(){
         if (file_path == Undefined){
             val can_read = MediaInfoRetriever.isUriReadable(context, URI_S_FP)
             if (!can_read){
-                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                if (ongoing){
-                    showCustomToast("文件不可读")
-                    //链接当前播放项
-                    connectCurrentMedia()
-                }else{
-                    //当前正在播放,提示用户
-                    showErrorCover("文件不可读")
+                withContext(Dispatchers.Main){
+                    //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    if (ongoing){
+                        showCustomToast("文件不可读")
+                        //链接当前播放项
+                        connectCurrentMedia()
+                    }else{
+                        //当前正在播放,提示用户
+                        showErrorCover("文件不可读")
 
+                    }
                 }
             }
+
+            state_setting_media = false
             //文件不可读,结束设置流程
             return false
         }else{
@@ -1326,17 +1341,21 @@ class PlayerActivityNeo: AppCompatActivity(){
             if (!exist){
                 consoleLog("setNewMediaItem: 失败-文件已不存在")
                 //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                if (ongoing){
-                    showCustomToast("文件已不存在")
-                    //链接当前播放项
-                    connectCurrentMedia()
-                }else{
-                    //当前正在播放,提示用户
-                    showErrorCover("文件不存在")
+                withContext(Dispatchers.Main){
+                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    if (ongoing){
+                        showCustomToast("文件已不存在")
+                        //链接当前播放项
+                        connectCurrentMedia()
+                    }else{
+                        //当前正在播放,提示用户
+                        showErrorCover("文件不存在")
+
+                    }
 
                 }
 
+                state_setting_media = false
                 //文件不存在,结束设置流程
                 return false
             }
@@ -1344,101 +1363,130 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
         //确保已启动播放器
-        connectToExoPlayer()
+        withContext(Dispatchers.Main){ connectToExoPlayer() }
 
         //写入本次Ready来源
         Mark_playerReadyFrom = Mark_playerReadyFrom_setNewItem
 
         //确认设置新媒体项
         val result = PlayerSingleton.setMediaItem(URI_U_FP, file_path,true)
-        when(result){
+        when(result) {
             ActivityResultConnector.OBRTV_Engine_SetItemSuccess -> {
                 //设置成功
                 //consoleLog("setNewMediaItem: 设置成功")
 
-                bindPlayerView()
+                withContext(Dispatchers.Main){ bindPlayerView() }
 
+                state_setting_media = false
                 //返回成功信息
                 return true
             }
+
             ActivityResultConnector.OBRTV_Engine_AlreadyPlayingTargetItem -> {
                 //设置失败-目标项已在播放
 
                 //链接当前播放项
-                connectCurrentMedia()
+                withContext(Dispatchers.Main){ connectCurrentMedia() }
 
+                state_setting_media = false
                 return false
 
             }
-            ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
-                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                if (ongoing){
-                    showCustomToast("媒体解码失败")
-                    //链接当前播放项
-                    connectCurrentMedia()
-                }else{
-                    //设置失败-无法获取目标项信息
-                    showErrorCover("媒体解码失败")
 
+            ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
+                withContext(Dispatchers.Main){
+                    //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    if (ongoing) {
+                        showCustomToast("媒体解码失败")
+                        //链接当前播放项
+                        connectCurrentMedia()
+                    } else {
+                        //设置失败-无法获取目标项信息
+                        showErrorCover("媒体解码失败")
+
+                    }
                 }
+
+                state_setting_media = false
                 //媒体解码失败,结束设置流程
                 return false
             }
-            ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
-                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                if (ongoing){
-                    showCustomToast("不支持的媒体类型")
-                    //链接当前播放项
-                    connectCurrentMedia()
-                }else{
-                    //设置失败-媒体类型不支持
-                    showErrorCover("不支持的媒体类型")
 
+            ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
+                withContext(Dispatchers.Main){
+                    //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    if (ongoing) {
+                        showCustomToast("不支持的媒体类型")
+                        //链接当前播放项
+                        connectCurrentMedia()
+                    } else {
+                        //设置失败-媒体类型不支持
+                        showErrorCover("不支持的媒体类型")
+
+                    }
                 }
+
+                state_setting_media = false
                 //不支持的媒体类型,结束设置流程
                 return false
             }
-            ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
-                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                if (ongoing){
-                    showCustomToast("设置过于频繁")
-                    //链接当前播放项
-                    connectCurrentMedia()
-                }else{
-                    //设置失败-过于频繁
-                    showErrorCover("设置过于频繁")
 
+            ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
+                withContext(Dispatchers.Main){
+                    //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    if (ongoing) {
+                        showCustomToast("设置过于频繁")
+                        //链接当前播放项
+                        connectCurrentMedia()
+                    } else {
+                        //设置失败-过于频繁
+                        showErrorCover("设置过于频繁")
+
+                    }
                 }
+
+                state_setting_media = false
                 //设置过于频繁,结束设置流程
                 return false
             }
-            ActivityResultConnector.OBRTV_Engine_Locked -> {
-                showCustomToast("播放器处于锁定窗口期", 3)
-                finish()
 
-                return false
-            }
-            else -> {
-                //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                if (ongoing){
-                    showCustomToast("未知错误")
-                    //链接当前播放项
-                    connectCurrentMedia()
-                }else{
-                    //未知错误
-                    showErrorCover("未知错误")
+            ActivityResultConnector.OBRTV_Engine_Locked -> {
+                withContext(Dispatchers.Main){
+                    showCustomToast("播放器处于锁定窗口期", 3)
+                    finish()
 
                 }
+
+                state_setting_media = false
+                return false
+            }
+
+            else -> {
+                withContext(Dispatchers.Main){
+                    //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
+                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    if (ongoing) {
+                        showCustomToast("未知错误")
+                        //链接当前播放项
+                        connectCurrentMedia()
+                    } else {
+                        //未知错误
+                        showErrorCover("未知错误")
+
+                    }
+                }
+
+                state_setting_media = false
                 //未知错误,结束设置流程
                 return false
             }
         }
 
     }
+    private var state_setting_media = false
     //媒体项变更回调(需升级为观察者观察统一状态)
     private fun onMediaItemChanged(mediaItem: MediaItem?){
         //consoleLog("onMediaItemChanged: $mediaItem")
@@ -1449,6 +1497,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //隐藏错误面板
         closeErrorCover()
+        closeCover()
 
         //非视频时主动退出页面
         if (PlayerInfoCenter.GET_Media_SPECIFIC_TYPE() != MediaType.Video){
@@ -1482,8 +1531,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         //刷新屏幕常亮状态
         updateKeepScreenOn()
 
-
-        showErrorCover("播放项被清除了，可在播放列表面板中启动播放")
+        if (state_setting_media) {
+            showCover()
+        }else{
+            showErrorCover("播放项被清除了，可在播放列表面板中启动播放")
+        }
 
     }
 

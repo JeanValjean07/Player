@@ -50,6 +50,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -362,7 +363,7 @@ object PlayerSingleton {
     //Long Process Functions
     //设置新媒体项的外部接口(以后可以加些过滤)(返回ActivityResultConnector内的状态码)(file_path作用:??//TODO)
     private var clickMillis_setMediaItem = 0L
-    fun setMediaItem(URI_UP:Uri,file_path:String=Undefined,playWhenReady:Boolean,ignoreLock:Boolean=false): String {
+    suspend fun setMediaItem(URI_UP:Uri,file_path:String=Undefined,playWhenReady:Boolean,ignoreLock:Boolean=false): String {
         //检查是否已被锁定+进入流程后加锁
         if (isLocked && !ignoreLock){
             return ActivityResultConnector.OBRTV_Engine_Locked
@@ -392,12 +393,13 @@ object PlayerSingleton {
     }
     var isLocked = false
     //设置/变更媒体(设置新媒体项) URI_UP = URI URI for Play
-    private fun setMediaItemCore(URI_UP: Uri, file_path: String = Undefined,playWhenReady: Boolean): String {
+    private suspend fun setMediaItemCore(URI_UP: Uri, file_path: String = Undefined,playWhenReady: Boolean): String {
         //consoleLog("setMediaItemCore -设置新媒体项:$uri")
         //缓存成字符串
         val URI_S_FP = URI_UP.toString()
+
         //先判断是否是正在播放的媒体
-        if (isthisUriOngoing(URI_UP)) {
+        if (withContext(Dispatchers.Main) { isthisUriOngoing(URI_UP) }) {
             //consoleLog("setMediaItemCore -设置新媒体项:$URI_UP 已在播放")
             return ActivityResultConnector.OBRTV_Engine_AlreadyPlayingTargetItem
         }
@@ -405,63 +407,82 @@ object PlayerSingleton {
         //保存上个媒体的需要保存的东西
 
 
+        //移除上个媒体(不移除缓存)
+        withContext(Dispatchers.Main) { clearMediaItem(false) }
+
         //解码新媒体信息
         //检查是否需要解码
-        val current_item_URI_SP = PlayerInfoCenter.GET_Media_URI_S_FP()
-        //获取媒体信息
-        val (result,MediaItemForPlay_Cache,_) = MediaInfoRetriever.retrieveMediaInfo(
-            context,
-            URI_UP.toString(),
-            file_path,
-            Undefined,
-            URI_S_FP,
-        )
-        //检查解码结果
-        when(result){
-            ActivityResultConnector.retriever_error -> {
+        var MediaItemForPlay = MediaItemForPlay()
+        val current_item_URI_SP = withContext(Dispatchers.Main) { PlayerInfoCenter.GET_Media_URI_S_FP() }
+        if (current_item_URI_SP == URI_S_FP){
+            //无需再次解码
+            MediaItemForPlay = PlayerInfoCenter.GET_Media_FullMediaInfoPack() ?: MediaItemForPlay()
+        }else{
+            //需要解码
+            //获取媒体信息
+            val (result,MediaItemForPlay_Cache,_) = MediaInfoRetriever.retrieveMediaInfo(
+                context,
+                URI_UP.toString(),
+                file_path,
+                Undefined,
+                URI_S_FP,
+            )
+            //检查解码结果
+            when(result){
+                ActivityResultConnector.retriever_error -> {
 
-                return ActivityResultConnector.OBRTV_Engine_RetrieveFailed
-            }
-            ActivityResultConnector.retriever_type_not_support -> {
-                return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
+                    return ActivityResultConnector.OBRTV_Engine_RetrieveFailed
+                }
+                ActivityResultConnector.retriever_type_not_support -> {
+                    return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
+                }
+                ActivityResultConnector.retriever_complete -> {
+                    MediaItemForPlay = MediaItemForPlay_Cache
+                }
             }
         }
+
         //检查媒体格式是否支持
-        val format = MediaItemForPlay_Cache.media_format
+        val format = MediaItemForPlay.media_format
         if (!SupportFormat.isFormatSupported(format)){
 
             return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
         }
 
         //将MediaItemForPlay缓存到PlayerInfoCenter
-        PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay_Cache)
+        PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay)
 
         //重置单个媒体状态
         clearItemState()
 
-
-        //设置播放状态
-        _player?.playWhenReady = playWhenReady
-
         //合成并设置媒体项
         val cover_img_uri = getArtworkFrameUri(context,URI_UP)
 
+        val delayMillis = SettingsRequestCenter.GET_PRF_forTestDelayMillis(context)
+        delay(delayMillis)
 
-        //开始构建mediaItem
-        val mediaItem = MediaItem.Builder()
+        withContext(Dispatchers.Main) {
+            //设置播放状态
+            _player?.playWhenReady = playWhenReady
+
+            //开始构建mediaItem
+            val mediaItem = MediaItem.Builder()
                 .setUri(URI_UP)
                 .setMediaMetadata(
                     MediaMetadata.Builder()
-                        .setTitle(MediaItemForPlay_Cache.file_name)
-                        .setArtist(MediaItemForPlay_Cache.media_artist)
+                        .setTitle(MediaItemForPlay.file_name)
+                        .setArtist(MediaItemForPlay.media_artist)
                         .setArtworkUri(cover_img_uri)
                         .build())
                 .build()
 
-        //设置给播放器
-        _player?.setMediaItem(mediaItem)
+            //设置给播放器
+            _player?.setMediaItem(mediaItem)
+
+        }
 
         return ActivityResultConnector.OBRTV_Engine_SetItemSuccess
+
     }
     //完成媒体项变更的后续操作
     private fun onMediaItemChanged(mediaItem: MediaItem?){

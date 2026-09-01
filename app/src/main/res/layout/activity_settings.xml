@@ -1411,7 +1411,7 @@
                         android:text="测试"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp" />
-                    <!--  选单：开局延迟时长  -->
+                    <!--  测试数值  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -1425,7 +1425,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:gravity="center"
-                                android:text="开局延迟时长"
+                                android:text="测试数值"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View

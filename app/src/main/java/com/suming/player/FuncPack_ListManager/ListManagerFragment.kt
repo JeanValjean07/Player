@@ -552,18 +552,23 @@ class ListManagerFragment: DialogFragment(){
                 //确保播放器已经启动
                 PlayerSingleton.getInitPlayer()
                 //设置播放项
-                val result = PlayerSingleton.setMediaItem(URI_UP = URI_S_FP.toUri(),playWhenReady = true)
-                when(result){
-                    ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
-                        context.showCustomToast("文件似乎已经不存在",3)
-                    }
-                    ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
-                        context.showCustomToast("设置过于频繁",3)
-                    }
-                    ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
-                        context.showCustomToast("不支持的格式",3)
+                lifecycleScope.launch (Dispatchers.IO){
+                    val result = PlayerSingleton.setMediaItem(URI_UP = URI_S_FP.toUri(),playWhenReady = true)
+                    withContext(Dispatchers.Main){
+                        when(result){
+                            ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
+                                context.showCustomToast("文件似乎已经不存在",3)
+                            }
+                            ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
+                                context.showCustomToast("设置过于频繁",3)
+                            }
+                            ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
+                                context.showCustomToast("不支持的格式",3)
+                            }
+                        }
                     }
                 }
+
             }
         }else{
             context.showCustomToast("文件似乎已经不存在",3)
