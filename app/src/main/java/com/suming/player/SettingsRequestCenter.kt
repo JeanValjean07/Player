@@ -300,9 +300,9 @@ object SettingsRequestCenter {
             PRF_forTestDelayMillis = Pandora_MainPage!!.getLong(PRF_forTestDelayMillis_Name, 0L)
             //如果配置单内无该项,写入默认值
             if (PRF_forTestDelayMillis == 0L) {
-                //默认设为200
-                PRF_forTestDelayMillis = 200L
-                Pandora_MainPage!!.edit { putLong(PRF_forTestDelayMillis_Name, 200L) }
+                //默认设为50
+                PRF_forTestDelayMillis = 50L
+                Pandora_MainPage!!.edit { putLong(PRF_forTestDelayMillis_Name, 50L) }
             }
         }
         //返回结果
@@ -460,7 +460,7 @@ object SettingsRequestCenter {
                         }
                     }
                     "samsung" -> PREFS_DisableMediaArtWork = 0
-                    else -> PREFS_DisableMediaArtWork = 0
+                    else -> PREFS_DisableMediaArtWork = 1
 
                 }
                 //写入配置项

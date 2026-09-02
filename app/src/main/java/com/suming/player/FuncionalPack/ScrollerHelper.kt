@@ -10,11 +10,9 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.get
-import androidx.core.net.toUri
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
-import java.io.FileInputStream
 import kotlin.random.Random
 
 object ScrollerHelper {
@@ -78,16 +76,24 @@ object ScrollerHelper {
 
 
     //删除进度条截图
-    fun deleteScrollerFrame(context: Context, NUM_ID: Long){
+    fun deleteScrollerFrame(context: Context, NUM_ID: Long): Boolean{
         //找到scroller_frame_folder_parent下名为NUM_ID的文件夹
         val parentFolder = File(context.filesDir, scroller_frame_folder_parent)
         val targetFolder = File(parentFolder, NUM_ID.toString())
         if (targetFolder.exists()){
 
+
+            //仅删除下级文件，但保留所有文件夹
+            targetFolder.listFiles()?.forEach { file ->
+                if (file.isFile) file.delete()
+            }
+
             consoleLog("deleteScrollerFrame: 删除进度条截图文件夹 $targetFolder")
+            return true
         }else{
 
             consoleLog("deleteScrollerFrame: 未找到进度条截图文件夹 $targetFolder")
+            return false
         }
 
     }
@@ -282,7 +288,7 @@ object ScrollerHelper {
 
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "ScrollerHelper: $msg")
         }

@@ -2178,7 +2178,15 @@ class PlayerActivityNeo: AppCompatActivity(){
         //获取当前视频ID
         val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
         //删除进度条截图
-        ScrollerHelper.deleteScrollerFrame(this, NUM_ID)
+        val success = ScrollerHelper.deleteScrollerFrame(this, NUM_ID)
+        //显示反馈
+        if (success){
+            showCustomToast("删除成功", 3)
+            //删除成功时清除scroller adapter内的缓存
+            scrollerAdapter?.clearBitmapCache()
+        }else{
+            showCustomToast("删除失败", 3)
+        }
     }
     //视频区域抬高动画
     private var isPlayView_Up = false

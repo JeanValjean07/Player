@@ -172,6 +172,12 @@ class PlayerScrollerAdapter(
     }
 
 
+    //清除缓存池
+    fun clearBitmapCache(){
+        BitmapCache.evictAll()
+    }
+
+
     //日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {

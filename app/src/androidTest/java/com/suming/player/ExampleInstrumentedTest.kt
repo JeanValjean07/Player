@@ -1,4 +1,4 @@
-package com.suming.speedspy
+package com.suming.player
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
