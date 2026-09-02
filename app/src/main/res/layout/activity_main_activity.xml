@@ -521,7 +521,7 @@
                         android:id="@+id/PlayingCard_Artwork"
                         android:layout_width="65dp"
                         android:layout_height="65dp"
-                        android:layout_marginStart="10dp"
+                        android:layout_marginStart="14dp"
                         android:backgroundTint="@color/AlbumSquare_Background_Themed"
                         app:cardElevation="10dp"
                         app:cardCornerRadius="10dp"

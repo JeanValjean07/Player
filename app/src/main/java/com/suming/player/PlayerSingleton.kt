@@ -468,6 +468,9 @@ object PlayerSingleton {
             return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
         }
 
+        //暂停播放
+        withContext(Dispatchers.Main) { pausePlay() }
+
         //将MediaItemForPlay缓存到PlayerInfoCenter
         PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay)
 
