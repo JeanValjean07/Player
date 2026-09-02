@@ -107,7 +107,9 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
             pageSettingButton.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-
+                //
+                recyclerView.stopScroll()
+                //
                 startPageSettingMenu(pageSettingButton)
             }
 
@@ -118,7 +120,9 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             updateCurrentListStateText()
             ButtonSetAsCurrentList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-
+                //
+                recyclerView.stopScroll()
+                //
                 setAs_currentPlayingList()
             }
 
@@ -126,6 +130,8 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
             ButtonItemCount.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+                //
+                recyclerView.stopScroll()
                 //未加载完成前拒绝访问
                 if (!state_adapter_load_complete) return@setOnClickListener
                 //显示列表中项数
@@ -142,17 +148,10 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
             val ButtonForceRefresh = view.findViewById<CardView>(R.id.ButtonForceRefresh)
             ButtonForceRefresh.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+                //
+                recyclerView.stopScroll()
                 //发起重读数据库
-                lifecycleScope.launch(Dispatchers.IO){
-                    val videoReader = VideoSysApiQuerier(context, context.contentResolver)
-                    videoReader.readAndSaveAllVideos()
-
-                    withContext(Dispatchers.Main){
-                        //延迟200Ms自动回顶部
-                        delay(200)
-                        recyclerView.smoothScrollToPosition(0)
-                    }
-                }
+                startLoadBySystem()
 
             }
 
@@ -261,6 +260,20 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
         parentFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_video_reverse, result)
     }
 
+    //发起数据库重读本机
+    private fun startLoadBySystem(){
+        lifecycleScope.launch(Dispatchers.IO){
+            val videoReader = VideoSysApiQuerier(context, context.contentResolver)
+            videoReader.readAndSaveAllVideos()
+
+            withContext(Dispatchers.Main){
+                //延迟200Ms自动回顶部
+                //delay(200)
+                //recyclerView.smoothScrollToPosition(0)
+            }
+        }
+    }
+
 
     //播放状态变更
     private fun onMediaStateUpdate(){
@@ -333,7 +346,7 @@ class InnerFragment_Video :Fragment(R.layout.fragment_play_list_live_page){
 
 
     }
-    //播放视频
+    //发起播放视频
     private fun onPlayItemClick(item: MediaItemFullForVideo){
         //传回 父Fragment 统一处理
         val URI_S_FP = item.URI_S_FP

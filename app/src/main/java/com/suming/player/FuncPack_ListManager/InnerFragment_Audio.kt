@@ -108,7 +108,9 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
             pageSettingButton.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
-
+                //
+                recyclerView.stopScroll()
+                //
                 startPageSettingMenu(pageSettingButton)
             }
 
@@ -120,6 +122,9 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             updateCurrentListStateText()
             ButtonSetAsCurrentList.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+                //
+                recyclerView.stopScroll()
+                //
                 setAs_currentPlayingList()
             }
 
@@ -128,6 +133,8 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
             ButtonItemCount.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+                //
+                recyclerView.stopScroll()
                 //未加载完成前拒绝访问
                 if (!state_adapter_load_complete) return@setOnClickListener
                 //显示列表中项数
@@ -145,17 +152,10 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             val ButtonForceRefresh = view.findViewById<CardView>(R.id.ButtonForceRefresh)
             ButtonForceRefresh.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
+                //
+                recyclerView.stopScroll()
                 //发起重读数据库
-                lifecycleScope.launch(Dispatchers.IO){
-                    val musicReader = AudioSysApiQuerier(context, context.contentResolver)
-                    musicReader.readAndSaveAllMusics()
-
-                    withContext(Dispatchers.Main){
-                        //延迟200Ms自动回顶部
-                        delay(200)
-                        recyclerView.smoothScrollToPosition(0)
-                    }
-                }
+                startLoadBySystem()
             }
 
         }
@@ -225,6 +225,21 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             recyclerView
         )
 
+    }
+
+    //发起数据库重读本机
+    private fun startLoadBySystem(){
+        lifecycleScope.launch(Dispatchers.IO){
+            val musicReader = AudioSysApiQuerier(context, context.contentResolver)
+            musicReader.readAndSaveAllMusics()
+
+            //延迟200Ms自动回顶部
+            withContext(Dispatchers.Main){
+                //延迟200Ms自动回顶部
+                //delay(200)
+                //recyclerView.smoothScrollToPosition(0)
+            }
+        }
     }
 
 

@@ -50,6 +50,7 @@ import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
+import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
@@ -495,6 +496,12 @@ class ListManagerFragment: DialogFragment(){
         ListManagerHelper.ListMark_Video to 2,
         ListManagerHelper.ListMark_Audio to 3,
     )
+    private val viewPager_PageMarkMap_MediaType = mapOf(
+        0 to Undefined,
+        1 to Undefined,
+        2 to MediaType.Video,
+        3 to MediaType.Audio,
+    )
 
 
 
@@ -529,7 +536,7 @@ class ListManagerFragment: DialogFragment(){
         }
     }
 
-    //播放请求
+    //播放请求统一处理
     private fun onPlayNewItemRequest(URI_S_FP: String){
         //consoleLog("收到请求播放新的媒体项: $URI_S_FP")
         //检查文件是否存在可读
@@ -566,6 +573,8 @@ class ListManagerFragment: DialogFragment(){
             }
         }else{
             context.showCustomToast("文件似乎已经不存在",3)
+            //触发主动刷新
+            startLoadBySystem()
         }
     }
 
@@ -1020,6 +1029,35 @@ class ListManagerFragment: DialogFragment(){
         //consoleLog("targetListString: $targetListString")
 
         ListManagerHelper.TURNTO_List(targetListString)
+    }
+
+    //发起数据库重读本机
+    private fun startLoadBySystem(target_o:String=Undefined){
+        lifecycleScope.launch(Dispatchers.IO){
+            val target = if (target_o == Undefined){
+                val current_index = ViewPager.currentItem
+                viewPager_PageMarkMap_MediaType[current_index]
+
+            }else{
+                target_o
+            }
+
+            when(target){
+                MediaType.Video -> {
+                    val videoReader = VideoSysApiQuerier(context, context.contentResolver)
+                    videoReader.readAndSaveAllVideos()
+
+                }
+
+                MediaType.Audio -> {
+                    val musicReader = AudioSysApiQuerier(context, context.contentResolver)
+                    musicReader.readAndSaveAllMusics()
+
+                }
+
+            }
+
+        }
     }
 
 
