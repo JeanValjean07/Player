@@ -2645,7 +2645,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
 
-    //seekParameters管理 ()
+    //seekParameters管理
     private var seekParameter_useSync = -1 //是否使用同步帧
     private fun setSeekParameter_useSync(target: Int){
         if (seekParameter_useSync == -1){
@@ -3110,7 +3110,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                 }
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    //consoleLog("onScrolled")
+                    //consoleLog("onScrolled: dx=$dx dy=$dy")
                     if (!scrollerDesire_Active) {
                         //未主动操作时也偶尔触发,故基于scrollerDesire_Active过滤
                         return
@@ -3119,7 +3119,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     //修改seek参数(慢速滚动时切到精确帧,快速滚动时切到关键帧)
                     if (scrollerTouchState_ACTION_DOWN){
                         //修改视频seek参数
-                        if (dx == 1 || dx == -1){
+                        if (dx in -2..2){
                             //进入低速滑动阶段
                             //consoleLog("onScrolled 进入低速滑动阶段")
 

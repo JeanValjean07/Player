@@ -225,7 +225,7 @@
                         android:text="通用"
                         android:textColor="@color/HeadText"
                         android:textSize="17sp" />
-                    <!--  开关：启用首页MiniView  -->
+                    <!--  开关：启用视频跨页面播放  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -239,7 +239,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:gravity="center"
-                                android:text="启用首页MiniView"
+                                android:text="启用视频跨页面播放"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
@@ -257,7 +257,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="关闭后，媒体仅能在播放页内播放，退出时立即停止，且播放列表将无法在主页快捷访问。"
+                            android:text="关闭后，媒体仅能在播放页内播放，不会出现在首页MiniView中，除非手动选择“在MiniView播放”。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：首页卡片不使用视频  -->
