@@ -8,88 +8,87 @@ import androidx.room.Query
 
 @Dao
 interface MediaItemDao {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOrUpdate(item: MediaItemSetting)
+    suspend fun insertOrUpdate(item: MediaItemDataClass)
 
     @Delete
-    suspend fun delete(item: MediaItemSetting)
+    suspend fun delete(item: MediaItemDataClass)
 
-    @Query("SELECT * FROM MediaItemSetting WHERE MARK_UniqueID = :path LIMIT 1")
-    suspend operator fun get(path: String): MediaItemSetting?
+    @Query("SELECT * FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :path LIMIT 1")
+    suspend operator fun get(path: String): MediaItemDataClass?
 
-    //媒体类型
-    @Query("UPDATE MediaItemSetting SET INFO_MediaType = :newValue WHERE MARK_UniqueID = :videoId")
-    suspend fun update_INFO_MediaType(videoId: String,newValue: String)
-    @Query("SELECT INFO_MediaType FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_INFO_MediaType(videoId: String): String
+    //检查数据库中是否有键值为uniqueID_URI_S_FP的项
+    @Query("SELECT EXISTS(SELECT 1 FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :uniqueID_URI_S_FP)")
+    suspend fun checkExist(uniqueID_URI_S_FP: String): Boolean
+    //创建项
+    suspend fun createMediaItem(uniqueID_URI_S_FP: String) = insertOrUpdate(MediaItemDataClass(uniqueID_URI_S_FP))
+
+
+
+    //媒体类型(暂时不知道有什么用,先留着)
+    @Query("UPDATE MediaItemSetting SET INFO_MediaType = :newValue WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_INFO_MediaType(media_id: String,newValue: String)
+    @Query("SELECT INFO_MediaType FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_INFO_MediaType(media_id: String): String
+
 
     //后台播放
-    @Query("UPDATE MediaItemSetting SET PREFS_BackgroundPlay = :newValue1 WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_BackgroundPlay(videoId: String,newValue1: Boolean)
-    @Query("SELECT PREFS_BackgroundPlay FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_BackgroundPlay(videoId: String): Boolean
-    //循环播放
-    @Query("UPDATE MediaItemSetting SET PREFS_LoopPlay = :newValue1 WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_LoopPlay(videoId: String,newValue1: Boolean)
-    @Query("SELECT PREFS_LoopPlay FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_LoopPlay(videoId: String): Boolean
+    @Query("UPDATE MediaItemSetting SET PREFS_BackgroundPlay = :newValue1 WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_PREFS_BackgroundPlay(media_id: String,newValue1: Boolean)
+    @Query("SELECT PREFS_BackgroundPlay FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_PREFS_BackgroundPlay(media_id: String): Boolean
 
 
     //AlwaysSeek
-    @Query("UPDATE MediaItemSetting SET PREFS_AlwaysSeek = :newValue1 WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_AlwaysSeek(videoId: String,newValue1: Boolean)
-    @Query("SELECT PREFS_AlwaysSeek FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_AlwaysSeek(videoId: String): Boolean
+    @Query("UPDATE MediaItemSetting SET PREFS_AlwaysSeek = :newValue1 WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_PREFS_AlwaysSeek(media_id: String,newValue1: Boolean)
+    @Query("SELECT PREFS_AlwaysSeek FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_PREFS_AlwaysSeek(media_id: String): Boolean
     //LinkScroll
-    @Query("UPDATE MediaItemSetting SET PREFS_LinkScroll = :newValue1 WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_LinkScroll(videoId: String,newValue1: Boolean)
-    @Query("SELECT PREFS_LinkScroll FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_LinkScroll(videoId: String): Boolean
+    @Query("UPDATE MediaItemSetting SET PREFS_LinkScroll = :newValue1 WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_PREFS_LinkScroll(media_id: String,newValue1: Boolean)
+    @Query("SELECT PREFS_LinkScroll FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_PREFS_LinkScroll(media_id: String): Boolean
     //TapJump
-    @Query("UPDATE MediaItemSetting SET PREFS_TapJump = :newValue1 WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_TapJump(videoId: String,newValue1: Boolean)
-    @Query("SELECT PREFS_TapJump FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_TapJump(videoId: String): Boolean
+    @Query("UPDATE MediaItemSetting SET PREFS_TapJump = :newValue1 WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_PREFS_TapJump(media_id: String,newValue1: Boolean)
+    @Query("SELECT PREFS_TapJump FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_PREFS_TapJump(media_id: String): Boolean
 
     //仅播视频
-    @Query("UPDATE MediaItemSetting SET PREFS_VideoOnly = :newValue1 WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_VideoOnly(videoId: String,newValue1: Boolean)
-    @Query("SELECT PREFS_VideoOnly FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_VideoOnly(videoId: String): Boolean
+    @Query("UPDATE MediaItemSetting SET PREFS_VideoOnly = :newValue1 WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_PREFS_VideoOnly(media_id: String,newValue1: Boolean)
+    @Query("SELECT PREFS_VideoOnly FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_PREFS_VideoOnly(media_id: String): Boolean
     //仅播音频
-    @Query("UPDATE MediaItemSetting SET PREFS_SoundOnly = :newValue1 WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_SoundOnly(videoId: String,newValue1: Boolean)
-    @Query("SELECT PREFS_SoundOnly FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_SoundOnly(videoId: String): Boolean
+    @Query("UPDATE MediaItemSetting SET PREFS_SoundOnly = :newValue1 WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_PREFS_SoundOnly(media_id: String,newValue1: Boolean)
+    @Query("SELECT PREFS_SoundOnly FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_PREFS_SoundOnly(media_id: String): Boolean
 
     //保存播放进度
-    @Query("UPDATE MediaItemSetting SET PREFS_SaveProgress = :newValue WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_saveLastPosition(videoId: String,newValue: Boolean)
-    @Query("SELECT PREFS_SaveProgress FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_saveLastPosition(videoId: String): Boolean
+    @Query("UPDATE MediaItemSetting SET PREFS_SaveProgress = :newValue WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_PREFS_saveLastPosition(media_id: String,newValue: Boolean)
+    @Query("SELECT PREFS_SaveProgress FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_PREFS_saveLastPosition(media_id: String): Boolean
     //具体进度值
-    @Query("UPDATE MediaItemSetting SET State_LastPosition = :newValue WHERE MARK_UniqueID = :videoId")
-    suspend fun update_value_LastPosition(videoId: String,newValue: Long)
-    @Query("SELECT State_LastPosition FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_value_LastPosition(videoId: String): Long
+    @Query("UPDATE MediaItemSetting SET State_LastPosition = :newValue WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_value_LastPosition(media_id: String,newValue: Long)
+    @Query("SELECT State_LastPosition FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_value_LastPosition(media_id: String): Long
 
     //播放速度
-    @Query("UPDATE MediaItemSetting SET PREFS_PlaySpeed = :newValue WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_PlaySpeed(videoId: String,newValue: Float)
-    @Query("SELECT PREFS_PlaySpeed FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_PlaySpeed(videoId: String): Float
+    @Query("UPDATE MediaItemSetting SET PREFS_PlaySpeed = :newValue WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_PREFS_PlaySpeed(media_id: String,newValue: Float)
+    @Query("SELECT PREFS_PlaySpeed FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_PREFS_PlaySpeed(media_id: String): Float
 
-    //隐藏媒体
-    @Query("UPDATE MediaItemSetting SET PREFS_Hide = :newValue WHERE MARK_UniqueID = :videoId")
-    suspend fun update_PREFS_Hide(videoId: String,newValue: Boolean)
-    @Query("SELECT PREFS_Hide FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun get_PREFS_Hide(videoId: String): Boolean
 
     //一次性全部读取
-    @Query("SELECT * FROM MediaItemSetting WHERE MARK_UniqueID = :videoId LIMIT 1")
-    suspend fun getMediaItemPack(videoId: String): MediaItemSetting?
+    @Query("SELECT * FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun getMediaItemPack(media_id: String): MediaItemDataClass?
 
-    //快速预写所有字段为默认空值
 
 
 

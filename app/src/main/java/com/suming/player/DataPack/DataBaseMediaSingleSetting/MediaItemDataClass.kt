@@ -4,14 +4,13 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "MediaItemSetting")
-data class MediaItemSetting(
+data class MediaItemDataClass(
     @PrimaryKey
-    //唯一ID使用 type + uriNumOnly 承担
-    val MARK_UniqueID: String,
+    //唯一ID使用 URI_S_FP 承担
+    val uniqueID_URI_S_FP: String,
     //单个媒体的可独立设置项
     val INFO_MediaType: String = "",
     val PREFS_BackgroundPlay: Boolean = false,
-    val PREFS_LoopPlay: Boolean = false,
     val PREFS_TapJump : Boolean = false,
     val PREFS_LinkScroll : Boolean = true,
     val PREFS_AlwaysSeek : Boolean = true,
@@ -25,11 +24,10 @@ data class MediaItemSetting(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as  MediaItemSetting
-        return MARK_UniqueID == other.MARK_UniqueID &&
+        other as  MediaItemDataClass
+        return uniqueID_URI_S_FP == other.uniqueID_URI_S_FP &&
                 INFO_MediaType == other.INFO_MediaType &&
                 PREFS_BackgroundPlay == other.PREFS_BackgroundPlay &&
-                PREFS_LoopPlay == other.PREFS_LoopPlay &&
                 PREFS_TapJump == other.PREFS_TapJump &&
                 PREFS_LinkScroll == other.PREFS_LinkScroll &&
                 PREFS_AlwaysSeek == other.PREFS_AlwaysSeek &&
@@ -42,7 +40,7 @@ data class MediaItemSetting(
     }
 
     override fun hashCode(): Int {
-        return MARK_UniqueID.hashCode()
+        return uniqueID_URI_S_FP.hashCode()
     }
 
 }

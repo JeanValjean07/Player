@@ -108,9 +108,9 @@ object ListManagerHelper {
             PRFR_AcquiesceShowingPage = Paradox_List?.getString(PRFR_KEYNAME_AcquiesceShowingPage_Key, ListMark_Null) ?: ListMark_Null
             //检查并置入默认值
             if (PRFR_AcquiesceShowingPage == ListMark_Null){
-                //设置useLast页签为默认值
-                Paradox_List?.edit { putString(PRFR_KEYNAME_AcquiesceShowingPage_Key, ListMark_UseLast) }
-                PRFR_AcquiesceShowingPage = ListMark_UseLast
+                //设置Video页签为默认值
+                Paradox_List?.edit { putString(PRFR_KEYNAME_AcquiesceShowingPage_Key, ListMark_Video) }
+                PRFR_AcquiesceShowingPage = ListMark_Video
             }
         }
 

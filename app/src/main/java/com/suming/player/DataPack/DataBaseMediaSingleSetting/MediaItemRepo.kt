@@ -11,12 +11,21 @@ class MediaItemRepo private constructor(context: Context) {
                 MediaItemRepo(context.applicationContext).also { INSTANCE = it }
             }
     }
+
+
     //数据库操作
     private val dao = MediaItemDataBase.get(context).mediaItemDao()
     //保存设置
-    suspend fun saveSetting(item: MediaItemSetting) = dao.insertOrUpdate(item)
+    suspend fun saveSetting(item: MediaItemDataClass) = dao.insertOrUpdate(item)
     //获取设置
-    suspend fun getSetting(path: String): MediaItemSetting? = dao[path]
+    suspend fun getSetting(path: String): MediaItemDataClass? = dao[path]
+
+
+    //检查数据库中是否有键值为uniqueID_URI_S_FP的项
+    suspend fun checkExist(uniqueID_URI_S_FP: String): Boolean = dao.checkExist(uniqueID_URI_S_FP)
+
+    //创建项
+    suspend fun createMediaItem(uniqueID_URI_S_FP: String) = dao.createMediaItem(uniqueID_URI_S_FP)
 
 
     //媒体类型
@@ -27,9 +36,6 @@ class MediaItemRepo private constructor(context: Context) {
     suspend fun update_PREFS_BackgroundPlay(id: String, flag_need_background_play: Boolean) = dao.update_PREFS_BackgroundPlay(id,flag_need_background_play)
     suspend fun get_PREFS_BackgroundPlay(id: String): Boolean = dao.get_PREFS_BackgroundPlay(id)
 
-    //循环播放
-    suspend fun update_PREFS_LoopPlay(id: String, flag_need_loop_play: Boolean) = dao.update_PREFS_LoopPlay(id,flag_need_loop_play)
-    suspend fun get_PREFS_LoopPlay(id: String): Boolean = dao.get_PREFS_LoopPlay(id)
 
     //AlwaysSeek
     suspend fun update_PREFS_AlwaysSeek(id: String, flag_need_always_seek: Boolean) = dao.update_PREFS_AlwaysSeek(id,flag_need_always_seek)
@@ -64,14 +70,10 @@ class MediaItemRepo private constructor(context: Context) {
     suspend fun update_PREFS_PlaySpeed(id: String, playback_speed: Float) = dao.update_PREFS_PlaySpeed(id,playback_speed)
     suspend fun get_PREFS_PlaySpeed(id: String): Float = dao.get_PREFS_PlaySpeed(id)
 
-    //隐藏媒体
-    suspend fun update_PREFS_Hide(id: String, flag_hide_video: Boolean) = dao.update_PREFS_Hide(id,flag_hide_video)
-    suspend fun get_PREFS_Hide(id: String): Boolean = dao.get_PREFS_Hide(id)
-
 
 
     //获取该媒体的一行全部数据
-    suspend fun getMediaItemPack(id: String): MediaItemSetting? = dao.getMediaItemPack(id)
+    suspend fun getMediaItemPack(id: String): MediaItemDataClass? = dao.getMediaItemPack(id)
 
 
 

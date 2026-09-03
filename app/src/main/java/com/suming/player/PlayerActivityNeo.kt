@@ -1455,6 +1455,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         update_S_Area_Adapter()
         //刷新按钮
         updateButtonState()
+        //关闭面板
+        closeAllDialogFragments()
 
     }
 
@@ -1467,8 +1469,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         show_s_area_type(S_Area_Helper.S_AreaType_UNDEFINED)
         //刷新屏幕常亮状态
         updateKeepScreenOn()
+        //关闭面板
+        closeAllDialogFragments()
 
-        consoleLog("onMediaItemCleared:state_setting_media $state_setting_media")
+
+
         if (!state_setting_media){
             consoleLog("onMediaItemCleared: 失败-媒体项被清除除了")
             showErrorCover("播放项被清除了，可在播放列表面板中启动播放")

@@ -29,7 +29,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.suming.player.ActivityComponent.PlayerService.PlayerService
-import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
+import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemDataClass
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataClassForPlay.MediaItemForPlay
@@ -523,6 +523,10 @@ object PlayerSingleton {
         //读取单个媒体播放设置(由MediaDataBaseMaster读取并传回)
 
 
+        //恢复倍速
+        setPlaySpeed(1f)
+
+
         //启动监听器(仅在播放时申请焦点)
         val focus = _player?.isPlaying ?: false
         PlayerListener.startListener(focus = focus)
@@ -746,7 +750,7 @@ object PlayerSingleton {
         //保险操作
         //1.重置倍速
         if (_player != null && _player?.playbackParameters?.speed != Para_OriginalPlaySpeed){
-            _player?.setPlaybackSpeed(Para_OriginalPlaySpeed)
+            setPlaySpeed(Para_OriginalPlaySpeed)
         }
 
         //写入可观察信息
@@ -815,10 +819,13 @@ object PlayerSingleton {
     private fun playState_End(){
         //若开启了本次播放完成后关闭功能
         if (timerState_autoShut_Reach){
+            timerState_autoShut_Reach = false
+            //清除项
+            clearMediaItem()
+            //关闭播放器
+            stopPlayEngineBundle()
             //关闭倒计时(含清除状态)
             timer_DisableAutoShut()
-            //让播放暂停
-            pausePlay()
         }
 
         //检查循环模式
@@ -881,9 +888,9 @@ object PlayerSingleton {
     private fun ApplyParametersCore(lastPosition: Long){
         _player?.seekTo(lastPosition)
     }
-    private var itemParaPack: MediaItemSetting? = null
+    private var itemParaPack: MediaItemDataClass? = null
     //接收MediaDataBaseMaster发回的完整参数包
-    fun receiveParameters(itemPara: MediaItemSetting){
+    fun receiveParameters(itemPara: MediaItemDataClass){
         itemParaPack = itemPara
 
         ApplyParameters()
@@ -943,9 +950,6 @@ object PlayerSingleton {
     fun setPlaySpeed(speed: Float){
         _player?.setPlaybackSpeed(speed)
         Para_OriginalPlaySpeed = speed
-    }
-    fun setPlaySpeedByLongPress(speed: Float){
-        _player?.setPlaybackSpeed(speed)
     }
     fun getPlaySpeed(): Pair<Float, Float>{
         return Pair(_player?.playbackParameters?.speed ?: 1.0f, Para_OriginalPlaySpeed)
@@ -1018,7 +1022,33 @@ object PlayerSingleton {
         timer_autoShut?.cancel()
         timer_autoShut = object : CountDownTimer(countDownDuration_Ms.toLong(), 1000000L) {
             override fun onTick( millisUntilFinished: Long) {}
-            override fun onFinish() { timerState_autoShut_Reach = true }
+            override fun onFinish() {
+                //检查需要进行的操作:立即停止或播放完本集才停止
+                val wait = SettingsRequestCenter.get_PREFS_OnlyStopUnMediaEnd(context)
+                //等待当前媒体结束后关闭
+                if (wait){
+                    if (playState_playEnd){
+                        //清除项
+                        clearMediaItem()
+                        //直接关闭
+                        stopPlayEngineBundle()
+                        //关闭倒计时(含清除状态)
+                        timer_DisableAutoShut()
+                    }else{
+                        timerState_autoShut_Reach = true
+                    }
+
+                }else{
+                    //清除项
+                    clearMediaItem()
+                    //直接关闭
+                    stopPlayEngineBundle()
+                    //关闭倒计时(含清除状态)
+                    timer_DisableAutoShut()
+                }
+
+
+            }
         }.start()
     }
     private fun timer_autoShut_Reach(context: Context) {
@@ -1040,9 +1070,14 @@ object PlayerSingleton {
         }
     }
     fun set_timer_autoShut(CountDownDuration_Min: Int){
+        consoleLog("set_timer_autoShut $CountDownDuration_Min")
         //传入0即为关闭
         if (CountDownDuration_Min == 0){
+            //关闭倒计时(含清除状态)
             timer_DisableAutoShut()
+            //关闭播放器
+            stopPlayEngineBundle()
+
             return
         }
         //记录倒计时时长,单位：毫秒
@@ -1061,5 +1096,5 @@ object PlayerSingleton {
     }
 
 
-//object END
+
 }

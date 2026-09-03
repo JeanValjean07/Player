@@ -7,7 +7,7 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemRepo
-import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemSetting
+import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemDataClass
 import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +23,8 @@ object MediaDataBaseMaster {
             Log.d("SuMing", "MediaDataBaseMaster: $msg")
         }
     }
+    //空字段
+    const val Undefined = ""
 
 
 
@@ -35,17 +37,20 @@ object MediaDataBaseMaster {
 
 
 
-    //读取单个媒体的所有设置并传回播放器 Long Tread
-    private var mediaItemSettingLocal: MediaItemSetting? = null
-    private var currentItemDataBaseID: String = ""
+    //读取单个媒体的所有设置并传回播放器
+    private var mediaItemSettingLocal: MediaItemDataClass? = null
+    //本地ID缓存
+    private var cache_uniqueID_URI_S_FP: String = Undefined
+    //协程
     private val coroutine_fetch = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    //取出单个媒体的设置包
     @OptIn(UnstableApi::class)
-    fun fetchMediaItemPack(itemID: String,context: Context){
+    fun fetchMediaItemPack(uniqueID_URI_S_FP: String,context: Context){
         coroutine_fetch.launch {
-            currentItemDataBaseID = itemID
+            cache_uniqueID_URI_S_FP = uniqueID_URI_S_FP
             //读取该媒体的一行全部数据
-            val mediaItemSetting = MediaItemRepo.get(context).getMediaItemPack(itemID)
+            val mediaItemSetting = MediaItemRepo.get(context).getMediaItemPack(uniqueID_URI_S_FP)
             mediaItemSettingLocal = mediaItemSetting
 
             //发回播放器
@@ -61,29 +66,42 @@ object MediaDataBaseMaster {
                 stopSaveProgressHandler()
             }
         }
-
     }
 
     //获取单项配置(目前仅开放保存播放进度这一项配置作为单项可调)
     //该媒体是否需要保存播放进度
     private var Para_saveProgress = false
-    fun get_PREFS_saveProgress(itemID: String = "",context: Context): Boolean{
-        if (currentItemDataBaseID != itemID){
-            coroutine_fetch.launch {
-                Para_saveProgress = MediaItemRepo.get(context).get_PREFS_saveLastPosition(itemID)
-                //ID发生变更
-                fetchMediaItemPack(itemID,context)
-            }
-        }
+    suspend fun get_PREFS_saveProgress(uniqueID_URI_S_FP: String,context: Context): Boolean{
+        if (uniqueID_URI_S_FP == Undefined) return false
 
-        return Para_saveProgress
+        //检查数据库中是否有键值为uniqueID_URI_S_FP的项,没有时直接返回false
+        val exist = MediaItemRepo.get(context).checkExist(uniqueID_URI_S_FP)
+        if (exist){
+            //存在时,拿到值
+            Para_saveProgress = MediaItemRepo.get(context).get_PREFS_saveLastPosition(uniqueID_URI_S_FP)
+            //ID发生变更
+            fetchMediaItemPack(uniqueID_URI_S_FP,context)
+
+            return Para_saveProgress
+
+        }else{
+            Para_saveProgress = false
+
+            return false
+        }
     }
-    fun set_PREFS_saveProgress(itemID: String = "", boolean: Boolean, context: Context){
+    fun set_PREFS_saveProgress(uniqueID_URI_S_FP: String = Undefined, boolean: Boolean, context: Context){
         Para_saveProgress = boolean
 
         //保存到数据库
         coroutine_save.launch {
-            MediaItemRepo.get(context).update_PREFS_saveLastPosition(itemID,boolean)
+            //先检查数据库中有没有该项,没有时新建
+            if (!MediaItemRepo.get(context).checkExist(uniqueID_URI_S_FP)){
+                MediaItemRepo.get(context).createMediaItem(uniqueID_URI_S_FP)
+            }
+
+            //写入设置
+            MediaItemRepo.get(context).update_PREFS_saveLastPosition(uniqueID_URI_S_FP,boolean)
         }
 
         //开启保存进度循环
@@ -96,27 +114,27 @@ object MediaDataBaseMaster {
     }
     //上次保存的播放进度
     private var Para_LastPosition = 0L
-    fun get_State_LastPosition(itemID: String,context: Context): Long{
-        if (currentItemDataBaseID != itemID){
+    fun get_State_LastPosition(uniqueID_URI_S_FP: String,context: Context): Long{
+        if (uniqueID_URI_S_FP != cache_uniqueID_URI_S_FP){
             coroutine_fetch.launch {
-                Para_LastPosition = MediaItemRepo.get(context).get_value_LastPosition(itemID)
+                Para_LastPosition = MediaItemRepo.get(context).get_value_LastPosition(uniqueID_URI_S_FP)
                 //ID发生变更
-                fetchMediaItemPack(itemID,context)
+                fetchMediaItemPack(uniqueID_URI_S_FP,context)
             }
         }
 
         return Para_LastPosition
     }
-    fun saveProgress(itemID: String, currentPosition:Long,duration: Long ,context: Context){
+    fun saveProgress(uniqueID_URI_S_FP: String, currentPosition:Long,duration: Long ,context: Context){
         coroutine_save.launch {
             //检查该媒体是否开启了保存进度选项
-            val save = MediaItemRepo.get(context).get_PREFS_saveLastPosition(itemID)
+            val save = MediaItemRepo.get(context).get_PREFS_saveLastPosition(uniqueID_URI_S_FP)
             if (save) {
                 //检查当前进度是否有效(大于0且小于总时长)
                 if (currentPosition !in 0..duration) return@launch
 
                 //保存进度
-                MediaItemRepo.get(context).update_value_LastPosition(itemID,currentPosition)
+                MediaItemRepo.get(context).update_value_LastPosition(uniqueID_URI_S_FP,currentPosition)
             }
         }
     }
@@ -132,7 +150,7 @@ object MediaDataBaseMaster {
             val SPECIFIC_ID = PlayerInfoCenter.GET_Media_SPECIFIC_ID()
             //
             if (duration <= 0) return
-            if (SPECIFIC_ID == "" || SPECIFIC_ID != currentItemDataBaseID) return
+            if (SPECIFIC_ID == Undefined || SPECIFIC_ID != cache_uniqueID_URI_S_FP) return
 
             if (currentPosition in 0..duration){
                 //saveProgress(currentItemDataBaseID, currentPosition, duration,context)

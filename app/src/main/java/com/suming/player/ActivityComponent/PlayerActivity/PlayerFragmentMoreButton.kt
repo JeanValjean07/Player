@@ -252,6 +252,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
 
 
+    private val URI_S_FP = PlayerInfoCenter.GET_Media_URI_S_FP()
 
     //Main Thread Functions
     @SuppressLint("ClickableViewAccessibility")
@@ -454,16 +455,15 @@ class PlayerFragmentMoreButton: DialogFragment(){
             }
             //保存播放进度
             val switch_saveLastPosition = view.findViewById<SwitchCompat>(R.id.Switch_SavePositionWhenExit)
-            switch_saveLastPosition.isChecked = MediaDataBaseMaster.get_PREFS_saveProgress("",requireContext())
+            switch_saveLastPosition.isChecked = MediaDataBaseMaster.get_PREFS_saveProgress(URI_S_FP,requireContext())
             switch_saveLastPosition.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
 
-
-
                 //修改设置
                 val isChecked = switch_saveLastPosition.isChecked
-                MediaDataBaseMaster.set_PREFS_saveProgress("",isChecked,requireContext())
+                val URI_S_FP = PlayerInfoCenter.GET_Media_URI_S_FP()
+                MediaDataBaseMaster.set_PREFS_saveProgress(URI_S_FP,isChecked,requireContext())
 
                 //不发回结果
                 customDismiss()
@@ -1216,16 +1216,15 @@ class PlayerFragmentMoreButton: DialogFragment(){
                 dialog.dismiss()
                 return@setOnClickListener
             }
+            //立即关闭时需要显示前台提示
             if (hour == 0 && minute == 0){
-                requireContext().showCustomToast("即将关闭", 3)
-                lifecycleScope.launch {
-                    delay(2000)
-                    //关闭播放器
-                    PlayerSingleton.pausePlay()
-                    //发回信息让播放页关闭
-                    returnFragment(FragmentConnector.fragment_more_button_exit_right_now)
-                }
-                return@setOnClickListener
+
+                //显示立即关闭提示
+                requireContext().showCustomToast("立即关闭", 3)
+
+                //发回信息让播放页关闭
+                returnFragment(FragmentConnector.fragment_more_button_exit_right_now)
+
             }
             //输入数值合规：转为分钟传入
             val totalMinutes = hour * 60 + minute
