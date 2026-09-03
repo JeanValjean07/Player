@@ -55,7 +55,7 @@
             android:theme="@style/THEME_BASIC"
             android:hardwareAccelerated="true"
             android:label="播放器"
-            android:launchMode="singleTask"
+            android:launchMode="singleTop"
             android:exported="true"
             android:enableOnBackInvokedCallback="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">

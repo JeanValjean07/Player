@@ -1315,7 +1315,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 withContext(Dispatchers.Main){ bindPlayerView() }
 
                 state_setting_media = false
-                consoleLog("ActivityResultConnector.OBRTV_Engine_SetItemSuccess $state_setting_media")
+
                 //返回成功信息
                 return true
             }
@@ -1947,6 +1947,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var useSlideOutAnim = true
     override fun finish() {
         super.finish()
+        //consoleLog("finish")
         //判断是否使用收起动画
         if (useSlideOutAnim){
             //使用收起动画

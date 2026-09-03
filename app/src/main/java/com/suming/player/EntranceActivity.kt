@@ -597,6 +597,7 @@ class EntranceActivity : AppCompatActivity(){
                 action = IntentRepo.ACTION_ENTRANCE_REQUEST
             }
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
         //启动
         startActivity(intent)

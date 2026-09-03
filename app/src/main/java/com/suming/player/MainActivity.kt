@@ -133,10 +133,10 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
-    //处理新intent(需要singleTask模式)
+    //处理新intent(已废弃)
     override fun onNewIntent(newIntent: Intent?) {
         super.onNewIntent(newIntent)
-        consoleLog("onNewIntent")
+        //consoleLog("onNewIntent")
         if (newIntent?.action != null){
             when (newIntent.action) {
                 //由于已使用EntranceActivity作为统一入口,其余活动不会再直接收到ACTION_SEND和ACTION_VIEW
