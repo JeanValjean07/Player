@@ -112,7 +112,7 @@ class GuidanceActivity: AppCompatActivity() {
 
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S){
             ifWarning = true
-            warningText += "安卓12及以下版本在设置新媒体项时有概率出现播放器核心崩溃的问题，安卓10及以下概率较高。\n\n"
+            warningText += "安卓12及以下版本在设置新媒体项时有概率出现MediaCodeC错误，但不是致命错误，稍等几秒即可主动跳出。\n\n"
         }
 
         when (Build.BRAND.lowercase()) {

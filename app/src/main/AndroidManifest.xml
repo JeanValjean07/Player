@@ -156,7 +156,7 @@
         <!-- 设置 -->
         <activity android:name=".SettingsActivity"
             android:theme="@style/THEME_FULL_SCREEN"
-            android:screenOrientation="portrait"
+            android:screenOrientation="unspecified"
             android:label="设置"
             android:enableOnBackInvokedCallback="true"
             android:exported="true"
@@ -164,7 +164,7 @@
         <!-- 指南和帮助 -->
         <activity android:name=".GuidanceActivity"
             android:theme="@style/THEME_BASIC"
-            android:screenOrientation="portrait"
+            android:screenOrientation="unspecified"
             android:label="指南和帮助"
             android:enableOnBackInvokedCallback="true"
             android:exported="true"
@@ -172,7 +172,7 @@
         <!-- 设备信息 -->
         <activity android:name=".DeviceInfoActivity"
             android:theme="@style/THEME_BASIC"
-            android:screenOrientation="portrait"
+            android:screenOrientation="unspecified"
             android:label="设备信息"
             android:enableOnBackInvokedCallback="true"
             android:exported="true"

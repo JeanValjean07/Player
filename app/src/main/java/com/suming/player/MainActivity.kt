@@ -1820,7 +1820,7 @@ class MainActivity: AppCompatActivity() {
                 ConstraintSet.BOTTOM,
                 0
             )
-            constraintSet.constrainWidth(level_controllers.id, (display_screen_width_pixels * 0.5f).toInt())
+            constraintSet.constrainWidth(level_controllers.id, (display_screen_width_pixels * 0.4f).toInt())
             constraintSet.applyTo(level_root)
 
             val constraintSetList = ConstraintSet()
@@ -1834,7 +1834,7 @@ class MainActivity: AppCompatActivity() {
                 0
             )
 
-            constraintSetList.constrainWidth(level_list.id, (display_screen_width_pixels * 0.5f).toInt())
+            constraintSetList.constrainWidth(level_list.id, (display_screen_width_pixels * 0.6f).toInt())
             constraintSetList.applyTo(level_root)
 
             val level_controller_rightLine = findViewById<View>(R.id.level_controller_rightLine)

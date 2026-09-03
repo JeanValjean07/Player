@@ -35,7 +35,7 @@ class PlayerScrollerAdapter(
     private val coroutine_capture = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val coroutine_save = CoroutineScope(Dispatchers.IO + SupervisorJob())
     //缩略图内存缓存
-    private val BitmapCache = LruCache<Int, Bitmap>(10 * 1024 * 1024)
+    private val BitmapCache = LruCache<Int, Bitmap>(30)
     //占位图
     private var BitmapHolder : Bitmap? = null
 
@@ -44,6 +44,10 @@ class PlayerScrollerAdapter(
         var itemFrame_Job_capture: Job? = null
         var itemFrame_Job_load: Job? = null
         val itemFrame: ImageView = itemView.findViewById(R.id.iv_thumbnail)
+
+        fun set_holder_frame(bitmap: Bitmap){
+            itemFrame.setImageBitmap(bitmap)
+        }
     }
 
 
@@ -92,8 +96,8 @@ class PlayerScrollerAdapter(
                         withContext(Dispatchers.Main) {
                             //首次设置时通知更新可见项
                             recyclerView.post {
-                                for (position in 0 until ScrollerHelper.halfScreenEndIndex) {
-                                    notifyItemChanged(position)
+                                for (i in 0 until getItemCount()){
+                                    notifyItemChanged(i, payload_event_set_cache_this_item)
                                 }
                             }
                         }
@@ -121,8 +125,8 @@ class PlayerScrollerAdapter(
                 BitmapHolder = frame
                 //首次设置时通知更新可见项
                 recyclerView.post {
-                    for (position in 0 until ScrollerHelper.halfScreenEndIndex) {
-                        notifyItemChanged(position)
+                    for (i in 0 until getItemCount()){
+                        notifyItemChanged(i, payload_event_set_cache_this_item)
                     }
                 }
 
@@ -132,6 +136,20 @@ class PlayerScrollerAdapter(
 
     }
 
+    override fun onBindViewHolder(holder: scrollerViewHolder, position: Int, payloads: MutableList<Any>) {
+        if (payloads.isNotEmpty()) {
+            when (payloads.firstOrNull()) {
+                //设为缓存图
+                payload_event_set_cache_this_item -> {
+                    if (BitmapCache.get(position) == null){
+                        holder.set_holder_frame(BitmapHolder ?: return)
+                    }
+                }
+            }
+        }else{
+            super.onBindViewHolder(holder, position, payloads)
+        }
+    }
 
 
 
@@ -176,6 +194,9 @@ class PlayerScrollerAdapter(
     fun clearBitmapCache(){
         BitmapCache.evictAll()
     }
+
+
+    private val payload_event_set_cache_this_item = "set_cache_this_item"
 
 
     //日志控制
