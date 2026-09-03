@@ -432,8 +432,9 @@ object PlayerSingleton {
 
         //解码新媒体信息(包含检查是否需要解码:对比当前数据包的URI键是否和新URI一致,无需解码时直接拿到数据包)
         var MediaItemForPlay = MediaItemForPlay()
-        val current_item_URI_SP = withContext(Dispatchers.Main) { PlayerInfoCenter.GET_Media_URI_S_FP() }
-        if (current_item_URI_SP == URI_S_FP){
+        val current_item_URI_SP = PlayerInfoCenter.GET_Media_URI_S_FP()
+        val current_item_isCache = PlayerInfoCenter.GET_Media_isCache()
+        if (current_item_URI_SP == URI_S_FP && !current_item_isCache){
             //无需再次解码
             MediaItemForPlay = PlayerInfoCenter.GET_Media_FullMediaInfoPack() ?: MediaItemForPlay()
         }else{
