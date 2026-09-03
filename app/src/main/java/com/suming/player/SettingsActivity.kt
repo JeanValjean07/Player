@@ -738,7 +738,7 @@ class SettingsActivity: AppCompatActivity(){
                 updatePlayPageTypeText()
             }
             SettingsRequestCenter.PlayPageType_Test -> {
-                SettingsRequestCenter.SET_PRF_PlayPageType(this,playPageType)
+                //SettingsRequestCenter.SET_PRF_PlayPageType(this,playPageType)
                 showCustomToast("当前包中未包含测试版界面", 3)
             }
         }
