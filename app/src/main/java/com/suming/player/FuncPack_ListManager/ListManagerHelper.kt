@@ -175,25 +175,32 @@ object ListManagerHelper {
     //从数据库获取音乐列表
     private val coroutine_load = CoroutineScope(Dispatchers.IO)
     fun GET_AudioList_fromDataBase(){
+        if (ListContent_AudioList.isNotEmpty()) return
         coroutine_load.launch{
             ListContent_AudioList.clear()
             ListContent_AudioList.addAll(AudioRepo(context).getAllMusics())
 
         }
-
+    }
+    fun SET_AudioList_fromReader(list: List<AudioDataClass>){
+        ListContent_AudioList.clear()
+        ListContent_AudioList.addAll(list)
     }
 
     //视频列表
     var ListContent_VideoList = mutableListOf<VideoDataClass>()
     //从数据库获取视频列表
     fun GET_VideoList_fromDataBase(){
+        if (ListContent_VideoList.isNotEmpty()) return
         coroutine_load.launch{
             ListContent_VideoList.clear()
             ListContent_VideoList.addAll(VideoRepo(context).getAllVideoItems())
 
         }
-
-
+    }
+    fun SET_VideoList_fromReader(list: List<VideoDataClass>){
+        ListContent_VideoList.clear()
+        ListContent_VideoList.addAll(list)
     }
 
     //从音乐列表中获取上一个或下一个音乐 (返回 URI_S_O )

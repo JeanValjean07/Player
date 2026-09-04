@@ -1231,6 +1231,7 @@
                                 android:layout_height="wrap_content"
                                 android:minHeight="40dp"
                                 android:orientation="horizontal"
+                                android:visibility="gone"
                                 tools:ignore="UselessParent">
                                 <ImageView
                                     android:layout_width="19dp"

@@ -168,12 +168,12 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
                         android:orientation="vertical">
                         <TextView
                             android:id="@+id/Button_GoTo_GithubRepo"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
                             android:padding="5dp"
                             android:text="前往仓库"
                             android:textSize="11sp" />
@@ -181,6 +181,7 @@
                             android:id="@+id/Button_GoTo_GithubRelease"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
                             android:padding="5dp"
                             android:text="前往Release页面（手动查看是否有新版本）"
                             android:textSize="11sp" />
@@ -188,14 +189,62 @@
                             android:id="@+id/ButtonAutoUpdate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
                             android:padding="5dp"
                             android:text="自动检查更新（测试中）"
                             android:textSize="11sp" />
 
+                        <!-- 下载进度区 -->
+                        <LinearLayout
+                            android:id="@+id/downloadProgressLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:visibility="gone"
+                            android:orientation="vertical">
+                            <ProgressBar
+                                android:id="@+id/downloadProgressBar"
+                                style="?android:attr/progressBarStyleHorizontal"
+                                android:layout_width="match_parent"
+                                android:layout_height="5dp"
+                                android:layout_marginStart="15dp"
+                                android:layout_marginEnd="15dp"
+                                android:layout_marginTop="5dp"
+                                android:layout_marginBottom="5dp"
+                                android:max="100"
+                                android:progress="10"
+                                android:progressTint="@color/ThemeColor_Purple_Heavy" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="25dp"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:id="@+id/downloadProgressText"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="15dp"
+                                    android:textSize="10sp"
+                                    android:text="0%"
+                                    android:textAlignment="center" />
+
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="1dp"
+                                    android:layout_weight="1" />
+
+                                <TextView
+                                    android:id="@+id/progressButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="15dp"
+                                    android:textSize="10sp"
+                                    android:text="取消"
+                                    android:textAlignment="center" />
+
+                            </LinearLayout>
+                        </LinearLayout>
+
 
                     </LinearLayout>
-                    <!-- 结果区 -->
-
 
 
                 </LinearLayout>

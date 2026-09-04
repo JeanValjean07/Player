@@ -643,13 +643,19 @@ class PlayerFragmentMoreButton: DialogFragment(){
                 if (ongoing){
 
                     AlertDialog.Builder(requireContext())
-                        .setTitle("媒体详情获取失败")
-                        .setMessage("媒体文件可能存在于非公开目录，无法获取开启此选项所需的必要信息，滑动至底部查看原因说明。")
-                        .setPositiveButton("了解") { dialog, which ->
+                        .setTitle("确定删除自定义封面吗?")
+                        .setMessage("")
+                        .setPositiveButton("确认") { dialog, which ->
                             ToolVibrate().vibrate(requireContext())
+
+                            returnFragment(FragmentConnector.fragment_more_button_delete_custom_cover)
 
                             customDismiss()
 
+                            dialog.dismiss()
+                        }
+                        .setNegativeButton("取消") { dialog, which ->
+                            ToolVibrate().vibrate(requireContext())
                             dialog.dismiss()
                         }
                         .setCancelable(true)
@@ -858,8 +864,11 @@ class PlayerFragmentMoreButton: DialogFragment(){
                 CardScrollerStuff.visibility = View.GONE
             }
 
+
+
+
             //未显示进度条
-            if (SettingsRequestCenter.GET_PRF_PlayPageType(requireContext()) == SettingsRequestCenter.PlayPageType_Neo){
+            if (SettingsRequestCenter.GET_PRF_PlayPageType(context) == SettingsRequestCenter.PlayPageType_Neo && viewModel.state_s_area_type != S_Area_Helper.S_AreaType_SCROLLER){
 
 
                     val text = "未显示进度条：" +
@@ -893,7 +902,11 @@ class PlayerFragmentMoreButton: DialogFragment(){
                     }
 
             }
+
+
+
             //信息残缺
+            /*
             if (PlayerInfoCenter.GET_Media_FilePath() == Undefined){
                 val LinearLayout_whyInformationLame = view.findViewById<LinearLayout>(R.id.LinearLayout_whyInformationLame)
                 val TextView_whyInformationLame = view.findViewById<TextView>(R.id.Button_whyInformationLame)
@@ -922,6 +935,8 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
                 }
             }
+
+             */
 
 
 

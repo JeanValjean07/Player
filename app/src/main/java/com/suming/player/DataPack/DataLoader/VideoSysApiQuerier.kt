@@ -9,6 +9,7 @@ import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoDataClass
 import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
+import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.SettingsRequestCenter
@@ -26,9 +27,22 @@ class VideoSysApiQuerier(
 
 
 
+    //调用入口
+    suspend fun readAndSaveAllVideos(): List<MediaItemFullForVideo> {
+        //读取所有视频文件
+        val videos = readAllVideos()
+        //保存到数据库
+        saveVideosToDatabase(videos)
+        //保存到播放列表(需要转为VideoDataClass)
+        ListManagerHelper.SET_VideoList_fromReader(videos.map { it.toVideoDataClass() })
+
+        return videos
+    }
+
+
+
 
     suspend fun readAllVideos(): List<MediaItemFullForVideo> {
-
         return withContext(Dispatchers.IO) {
 
             //通知状态变更(开始加载)(二合一项和视频独占项都更新)
@@ -154,7 +168,6 @@ class VideoSysApiQuerier(
                 list
             } ?: emptyList()
         }
-
     }
 
     //保存到数据库
@@ -193,15 +206,31 @@ class VideoSysApiQuerier(
         }
     }
 
-    //读取所有视频并保存到数据库
-    suspend fun readAndSaveAllVideos(): List<MediaItemFullForVideo> {
-        val videos = readAllVideos()
 
-        saveVideosToDatabase(videos)
 
-        return videos
+    //转换格式
+    private fun MediaItemFullForVideo.toVideoDataClass(): VideoDataClass {
+        return VideoDataClass(
+            media_api_SPECIFIC_ID = media_api_SPECIFIC_ID,
+            media_api_NUM_ID = media_api_NUM_ID,
+            media_api_dateAdded = media_api_dateAdded,
+            media_SPECIFIC_MediaType = media_SPECIFIC_MediaType,
+            URI_S_FP = URI_S_FP,
+            file_path = file_path,
+            file_name = file_name,
+            file_size = file_size,
+            media_title = media_title,
+            media_artist = media_artist,
+            media_durationMs = media_durationMs,
+            media_format = media_format,
+
+            media_video_resolution = media_video_resolution,
+
+            media_video_bitrate = media_video_bitrate,
+
+
+        )
     }
-
 
 
     //存在检查

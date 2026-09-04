@@ -7,8 +7,11 @@ import android.provider.MediaStore
 import android.util.Log
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioDataClass
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoDataClass
 import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
+import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.SettingsRequestCenter
@@ -198,11 +201,43 @@ class AudioSysApiQuerier(
     }
     //类功能主入口：读取所有音乐并保存到数据库
     suspend fun readAndSaveAllMusics(): List<MediaItemFullForAudio> {
+        //读取所有音乐文件
         val musics = readAllMusics()
+        //保存到数据库
         saveMusicsToDatabase(musics)
+        //保存到播放列表(需要转为AudioDataClass)
+        ListManagerHelper.SET_AudioList_fromReader(musics.map { it.toAudioDataClass() })
 
         return musics
     }
+    //转换格式
+    private fun MediaItemFullForAudio.toAudioDataClass(): AudioDataClass {
+        return AudioDataClass(
+            media_api_SPECIFIC_ID = media_api_SPECIFIC_ID,
+            media_api_NUM_ID = media_api_NUM_ID,
+            media_api_dateAdded = media_api_dateAdded,
+            media_SPECIFIC_MediaType = media_SPECIFIC_MediaType,
+            URI_S_FP = URI_S_FP,
+            file_path = file_path,
+            file_name = file_name,
+            file_size = file_size,
+            media_title = media_title,
+            media_artist = media_artist,
+            media_durationMs = media_durationMs,
+            media_format = media_format,
+
+            media_audio_bitrate = media_audio_bitrate,
+
+            media_audio_album = media_audio_album,
+            media_audio_albumId = media_audio_albumId,
+
+
+            )
+    }
+
+
+
+
     //存在检查
     private fun isFileExist(path: String): Boolean {
         return try {

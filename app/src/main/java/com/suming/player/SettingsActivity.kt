@@ -1,11 +1,16 @@
 package com.suming.player
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,10 +18,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.Space
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -26,6 +33,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
+import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
@@ -40,17 +48,20 @@ import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.ReleaseInfo
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.DeviceInfo
+import com.suming.player.FuncionalPack.DownloadManager
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import kotlin.system.exitProcess
@@ -80,11 +91,22 @@ class SettingsActivity: AppCompatActivity(){
 
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        //取消下载
+        //downloadJob?.cancel()
+    }
+
     private fun init(){
         display()
 
+        progressLayout = findViewById(R.id.downloadProgressLayout)
+        progressBar = findViewById(R.id.downloadProgressBar)
+        progressText = findViewById(R.id.downloadProgressText)
 
     }
+
+
 
     private fun register(){
         lifecycleScope.launch(Dispatchers.Main) {
@@ -600,7 +622,22 @@ class SettingsActivity: AppCompatActivity(){
             if (latestRelease != null) {
                 consoleLog("检查更新：当前最新版本为: ${latestRelease.version}, 下载链接: ${latestRelease.downloadUrl}")
                 withContext(Dispatchers.Main) {
-                    showCustomToast("检查更新成功: 最新发布版本为 ${latestRelease.version}, 下载链接: ${latestRelease.downloadUrl}")
+                    //showCustomToast("检查更新成功: 最新发布版本为 ${latestRelease.version}, 下载链接: ${latestRelease.downloadUrl}")
+                    //询问是否下载
+                    AlertDialog.Builder(context)
+                        .setTitle("发现新版本 ${latestRelease.version}")
+                        .setMessage("是否下载最新版本？")
+                        .setPositiveButton("确定") { _, _ ->
+                            //展开下载进度区域
+                            expandDownloadProgress()
+                            //下载最新版本
+                            downloadLatestVersion(latestRelease)
+                        }
+                        .setNegativeButton("取消") { dialog, _ ->
+
+                            dialog.dismiss()
+                        }
+                        .show()
                 }
             }else{
                 consoleLog("检查更新：失败")
@@ -611,8 +648,6 @@ class SettingsActivity: AppCompatActivity(){
         }
 
     }
-
-
     //检查更新
     suspend fun FindLatestRelease(): ReleaseInfo? {
         return withContext(Dispatchers.IO) {
@@ -678,6 +713,147 @@ class SettingsActivity: AppCompatActivity(){
             }
         }
     }
+    //展开下载进度区域
+    private fun expandDownloadProgress(){
+
+        //将区域高度设为0并使用动画展开到当前高度
+        progressLayout.expand()
+
+    }
+    fun View.expand(duration: Long = 300) {
+        // 先设置为可见
+        visibility = View.VISIBLE
+
+        // 测量目标高度
+        measure(
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val targetHeight = measuredHeight
+
+        // 如果还没测量好，延迟执行
+        if (targetHeight == 0) {
+            post { expand(duration) }
+            return
+        }
+
+        // 设置初始高度为0
+        layoutParams.height = 0
+        requestLayout()
+
+        // 执行动画
+        ValueAnimator.ofInt(0, targetHeight).apply {
+            this.duration = duration
+            interpolator = AccelerateDecelerateInterpolator()
+
+            addUpdateListener {
+                layoutParams.height = it.animatedValue as Int
+                requestLayout()
+            }
+
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                    requestLayout()
+                }
+            })
+        }.start()
+    }
+    //下载最新版本
+    private lateinit var progressLayout: LinearLayout
+    private lateinit var progressBar: ProgressBar
+    private lateinit var progressText: TextView
+    private var downloadJob: Job? = null
+    private fun downloadLatestVersion(releaseInfo: ReleaseInfo){
+        val downloadUrl = releaseInfo.downloadUrl
+        val version = releaseInfo.version
+        //consoleLog("下载最新版本：$version  $downloadUrl")
+
+        downloadJob = lifecycleScope.launch(Dispatchers.Main) {
+            try {
+
+                //更新进度条
+                val result = DownloadManager.downloadApk(context = context, url = downloadUrl,version = version){ progress ->
+
+                    val percent = (progress * 100).toInt()
+                    progressBar.progress = percent
+                    progressText.text = "下载中：$percent%"
+
+                }
+
+                //下载结果
+                result.onSuccess { file ->
+                    progressText.text = "下载完成"
+
+                    delay(500)
+                    //发起安装
+                    installApk(file)
+                }.onFailure { error ->
+                    progressText.text = "下载失败"
+                    consoleLog("下载失败：${error.message}")
+
+                    //显示错误对话框
+                    AlertDialog.Builder(context)
+                        .setTitle("下载失败")
+                        .setMessage("请检查网络后重试")
+                        .setPositiveButton("重试") { _, _ ->
+                            downloadLatestVersion(releaseInfo)
+                        }
+                        .setNegativeButton("取消", null)
+                        .show()
+                }
+            }catch(e: Exception){
+                consoleLog("下载异常:${e.message}")
+                progressText.text = "下载异常"
+            }
+        }
+    }
+
+    //发起安装Apk
+    private fun installApk(file: File) {
+        if (!file.exists()){
+            showCustomToast("文件竟然不见了")
+            consoleLog("installApk -文件不存在 -路径:${file.absolutePath}")
+            return
+        }
+
+        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            // Android 7+ 使用 FileProvider
+            val apkUri = FileProvider.getUriForFile(
+                this,
+                "${packageName}.fileprovider",
+                file
+            )
+            consoleLog("使用 FileProvider URI: $apkUri")
+            apkUri
+        } else {
+            val apkUri = Uri.fromFile(file)
+            consoleLog("使用 File URI: $apkUri")
+            apkUri
+        }
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        }
+
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            consoleLog("启动安装失败：${e.message}")
+            // 如果 FileProvider 配置有问题，降级到旧方式
+            val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(fallbackIntent)
+        }
+    }
+
+
 
 
     //取消隐私政策同意

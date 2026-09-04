@@ -403,20 +403,32 @@ object SettingsRequestCenter {
     private var PREFS_video_sortOrientation = sort_orientation_DESC
     const val sort_orientation_video = "sort_orientation_video"
     fun set_PREFS_video_sortOrientation(context: Context, orientation: String){
+        OpenPandora_MediaStore(context)
+
         PREFS_video_sortOrientation = orientation
         Pandora_MediaStore!!.edit { putString(sort_orientation_video, orientation) }
     }
     fun get_PREFS_video_sortOrientation(context: Context): String{
+        OpenPandora_MediaStore(context)
+
+        PREFS_video_sortOrientation = Pandora_MediaStore!!.getString(sort_orientation_video, sort_orientation_DESC) ?: sort_orientation_DESC
+
         return PREFS_video_sortOrientation
     }
     //升序和降序-音频
     private var PREFS_audio_sortOrientation = sort_orientation_DESC
     const val sort_orientation_audio = "sort_orientation_audio"
     fun set_PREFS_audio_sortOrientation(context: Context, orientation: String){
+        OpenPandora_MediaStore(context)
+
         PREFS_audio_sortOrientation = orientation
         Pandora_MediaStore!!.edit { putString(sort_orientation_audio, orientation) }
     }
     fun get_PREFS_audio_sortOrientation(context: Context): String{
+        OpenPandora_MediaStore(context)
+
+        PREFS_audio_sortOrientation = Pandora_MediaStore!!.getString(sort_orientation_audio, sort_orientation_DESC) ?: sort_orientation_DESC
+
         return PREFS_audio_sortOrientation
     }
 

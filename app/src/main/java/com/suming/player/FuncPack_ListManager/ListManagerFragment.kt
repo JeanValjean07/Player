@@ -732,10 +732,15 @@ class ListManagerFragment: DialogFragment(){
                 R.id.opt_next_media -> {
                     ToolVibrate().vibrate(requireContext())
 
+                    ListManagerHelper.MediaSessionCall_switchNextMedia()
+
                     true
+
                 }
                 R.id.opt_previous_media -> {
                     ToolVibrate().vibrate(requireContext())
+
+                    ListManagerHelper.MediaSessionCall_switchPreviousMedia()
 
                     true
                 }
