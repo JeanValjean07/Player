@@ -18,7 +18,7 @@ object DownloadManager {
     //日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "DownLoadUtil: $msg")
+            Log.d("SuMing", "DownloadManager: $msg")
         }
     }
 
@@ -56,7 +56,10 @@ object DownloadManager {
                 downloadDir.mkdirs()
             }
 
-            val fileName = "${context.packageName}_${version}.apk"
+            //获取App名称
+            val applicationInfo = context.packageManager.getApplicationInfo(context.packageName, 0)
+            val appName = context.packageManager.getApplicationLabel(applicationInfo)
+            val fileName = "${appName}_${version}.apk"
             val destFile = File(downloadDir, fileName)
             destFile.parentFile?.mkdirs()
 

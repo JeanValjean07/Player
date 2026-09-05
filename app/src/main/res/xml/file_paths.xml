@@ -6,6 +6,10 @@
 
     <files-path name="files" path="." />
 
+    <!-- /storage/emulated/0/Android/data/com.xxx/files/downloads/ -->
     <external-files-path name="downloads" path="downloads/" />
+
+    <!-- /storage/emulated/0/Download/ -->
+    <external-path name="external_download" path="Download/" />
 
 </paths>

@@ -626,7 +626,7 @@ class SettingsActivity: AppCompatActivity(){
                     //询问是否下载
                     AlertDialog.Builder(context)
                         .setTitle("发现新版本 ${latestRelease.version}")
-                        .setMessage("是否下载最新版本？")
+                        .setMessage("是否下载最新版本? (将下载至Download文件夹)")
                         .setPositiveButton("确定") { _, _ ->
                             //展开下载进度区域
                             expandDownloadProgress()
@@ -640,7 +640,6 @@ class SettingsActivity: AppCompatActivity(){
                         .show()
                 }
             }else{
-                consoleLog("检查更新：失败")
                 withContext(Dispatchers.Main) {
                     showCustomToast("检查更新失败")
                 }
@@ -786,8 +785,10 @@ class SettingsActivity: AppCompatActivity(){
                     progressText.text = "下载完成"
 
                     delay(500)
+
                     //发起安装
                     installApk(file)
+
                 }.onFailure { error ->
                     progressText.text = "下载失败"
                     consoleLog("下载失败：${error.message}")
@@ -802,6 +803,7 @@ class SettingsActivity: AppCompatActivity(){
                         .setNegativeButton("取消", null)
                         .show()
                 }
+
             }catch(e: Exception){
                 consoleLog("下载异常:${e.message}")
                 progressText.text = "下载异常"
@@ -817,27 +819,17 @@ class SettingsActivity: AppCompatActivity(){
             return
         }
 
-        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            // Android 7+ 使用 FileProvider
-            val apkUri = FileProvider.getUriForFile(
+        val uri = FileProvider.getUriForFile(
                 this,
                 "${packageName}.fileprovider",
                 file
             )
-            consoleLog("使用 FileProvider URI: $apkUri")
-            apkUri
-        } else {
-            val apkUri = Uri.fromFile(file)
-            consoleLog("使用 File URI: $apkUri")
-            apkUri
-        }
+
 
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
         try {

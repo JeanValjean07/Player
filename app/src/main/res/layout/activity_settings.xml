@@ -211,7 +211,7 @@
                                 android:layout_marginTop="5dp"
                                 android:layout_marginBottom="5dp"
                                 android:max="100"
-                                android:progress="10"
+                                android:progress="1"
                                 android:progressTint="@color/ThemeColor_Purple_Heavy" />
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -223,8 +223,9 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginStart="15dp"
                                     android:textSize="10sp"
-                                    android:text="0%"
-                                    android:textAlignment="center" />
+                                    android:text="加载中"
+                                    android:textAlignment="center"
+                                    tools:ignore="SmallSp" />
 
                                 <View
                                     android:layout_width="0dp"
