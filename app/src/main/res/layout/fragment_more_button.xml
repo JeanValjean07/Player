@@ -111,9 +111,10 @@
                                 android:layout_width="35dp"
                                 android:layout_height="35dp"
                                 android:layout_gravity="center"
+                                android:padding="10dp"
                                 android:backgroundTint="@android:color/transparent"
                                 android:scaleType="centerCrop"
-                                android:src="@drawable/ic_more_button_list"
+                                android:src="@drawable/ic_fp_list_music_list"
                                 tools:ignore="ContentDescription" />
                             <!-- 按钮：截图 -->
                             <ImageButton

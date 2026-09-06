@@ -2,10 +2,12 @@ package com.suming.player
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -13,7 +15,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -31,6 +35,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -72,6 +77,9 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
+import com.suming.player.FuncionalPack.SearchHelper
+import com.suming.player.ViewWidget.CircleButton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -292,10 +300,8 @@ class MainActivity: AppCompatActivity() {
             delay(300)
 
             //按钮：指南
-            val ButtonGuidance = findViewById<Button>(R.id.buttonGuidance)
-            ButtonGuidance.setOnClickListener {
-                ToolVibrate().vibrate(this@MainActivity)
-
+            val Button_Guidance = findViewById<CircleButton>(R.id.Button_Guidance)
+            Button_Guidance.setOnClickListener {
 
                 ListRecyclerView_Video.stopScroll()
                 ListRecyclerView_Music.stopScroll()
@@ -305,21 +311,25 @@ class MainActivity: AppCompatActivity() {
                 startActivity(intent)
 
             }
-            /*
-            ButtonGuidance.visibility = View.VISIBLE
-            ButtonGuidance.alpha = 0f
-            ButtonGuidance.animate().alpha(1f).setDuration(300).start()
-
-             */
             //按钮：设置
-            val ButtonSettings= findViewById<Button>(R.id.buttonSetting)
-            ButtonSettings.setOnClickListener {
-                ToolVibrate().vibrate(this@MainActivity)
+            val Button_Options= findViewById<CircleButton>(R.id.Button_Options)
+            Button_Options.setOnClickListener {
+
                 ListRecyclerView_Video.stopScroll()
                 ListRecyclerView_Music.stopScroll()
 
                 val intent = Intent(this@MainActivity, SettingsActivity::class.java)
                 startActivity(intent)
+            }
+            //按钮：搜索
+            val Button_Search= findViewById<CircleButton>(R.id.Button_Search)
+            Button_Search.setOnClickListener {
+
+                ListRecyclerView_Video.stopScroll()
+                ListRecyclerView_Music.stopScroll()
+
+                startSearchQueryBox()
+
             }
             //提示卡点击时关闭
             val NoticeCard = findViewById<CardView>(R.id.noticeCard)
@@ -754,6 +764,83 @@ class MainActivity: AppCompatActivity() {
         }
     }
 
+
+    //搜索功能demo
+    @SuppressLint("InflateParams")
+    private fun startSearchQueryBox(){
+        //创建对话框
+        val dialog = Dialog(context).apply {
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_string, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+        //读取当前所在页签
+        val list_mark = mainViewModel.state_current_tab
+        val list_video = SettingsRequestCenter.tab_mark_video
+        val list_audio = SettingsRequestCenter.tab_mark_music
+
+        if (list_mark != list_video && list_mark != list_audio){
+            showCustomToast("无法进行搜索")
+
+            dialog.dismiss()
+            return
+        }
+
+        title.text = if (list_mark == list_video){
+            "在视频列表中搜索"
+        }else{
+            "在音乐列表中搜索"
+        }
+        Description.text = "输入要搜索的字段"
+        EditText.hint = if (list_mark == list_video){
+            SearchHelper.search_string_video
+        }else{
+            SearchHelper.search_string_audio
+        }
+        Button.text = "确定"
+
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val input = EditText.text.toString()
+
+
+            postSearch(input)
+
+            dialog.dismiss()
+        }
+        dialog.show()
+        //自动弹出键盘程序
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(200)
+            EditText.requestFocus()
+            @Suppress("DEPRECATION")
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+    private fun postSearch(input: String){
+        //读取当前所在页签
+        val list_mark = mainViewModel.state_current_tab
+        val list_video = SettingsRequestCenter.tab_mark_video
+        val list_audio = SettingsRequestCenter.tab_mark_music
+
+        if (list_mark == list_video){
+            SearchHelper.search_string_video = input
+            //刷新视频列表
+            main_video_list_adapter.refresh()
+        }else if (list_mark == list_audio){
+            SearchHelper.search_string_audio = input
+            //刷新音频列表
+            main_music_list_adapter.refresh()
+        }else{
+            showCustomToast("搜索失败")
+        }
+
+    }
 
 
     //获取上次播放记录
@@ -1325,7 +1412,6 @@ class MainActivity: AppCompatActivity() {
     }
     //页签视图
     private lateinit var AppBarTitle: TextView
-    private lateinit var AppBarNoticeText: TextView
     private lateinit var ButtonCardMusic: CardView
     private lateinit var ButtonCardVideo: CardView
     private lateinit var ButtonCardGallery: CardView
@@ -1481,21 +1567,22 @@ class MainActivity: AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 DataBaseStateConnector.state_queryDisk.collect { state ->
                     if (state == DataBaseStateConnector.state_queryDisk_idle) return@collect
-                    //读取完成
                     when (state) {
+                        //读取完成
                         DataBaseStateConnector.state_queryDisk_success -> {
-                            //刷新列表
-                            setLoadingText("读取完成", true, 2000)
+                            //显示完成提示
+                            //context.showCustomToast("读取完成",3)
+                            notice("读取完成",1000)
                             //刷新列表
                             refreshList()
 
                         }
+                        //发起读取
                         DataBaseStateConnector.state_queryDisk_start -> {
-                            //刷新列表
-                            setLoadingText("正在读取本地媒体", false, 0)
+                            //显示开始读取提示
+                            notice("开始读取",1000)
 
                         }
-
                     }
                 }
             }
@@ -1682,7 +1769,6 @@ class MainActivity: AppCompatActivity() {
         //获取主要列表视图
         ListRecyclerView_Video = findViewById(R.id.recyclerview_video_list)
         ListRecyclerView_Music = findViewById(R.id.recyclerview_music_list)
-        AppBarNoticeText = findViewById(R.id.AppBarNoticeText)
         AppBarTitle = findViewById(R.id.AppBarTitle)
         ButtonCardMusic = findViewById(R.id.ButtonCardMusic)
         ButtonCardVideo = findViewById(R.id.ButtonCardVideo)
@@ -1890,24 +1976,6 @@ class MainActivity: AppCompatActivity() {
         return (this * Resources.getSystem().displayMetrics.density).toInt()
     }
 
-    //显示加载提示
-    private var setLoadingTextJob: Job? = null
-    private fun setLoadingText(text: String,delay_then_close: Boolean, delay_value_ms: Long){
-        AppBarNoticeText.text = text
-        AppBarNoticeText.visibility = View.VISIBLE
-        //延迟关闭
-        setLoadingTextJob?.cancel()
-        if (delay_then_close){
-            setLoadingTextJob = lifecycleScope.launch(Dispatchers.Main) {
-                delay(delay_value_ms)
-                removeLoadingText()
-            }
-        }
-    }
-    private fun removeLoadingText(){
-        AppBarNoticeText.text = ""
-        AppBarNoticeText.visibility = View.GONE
-    }
     //显示短胶囊通知
     private var showNoticeJob: Job? = null
     private fun showNoticeJob(text: String, duration: Long) {

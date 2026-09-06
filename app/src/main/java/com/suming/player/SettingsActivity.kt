@@ -107,7 +107,7 @@ class SettingsActivity: AppCompatActivity(){
     }
 
 
-
+    //注册
     private fun register(){
         lifecycleScope.launch(Dispatchers.Main) {
             //显示版本
@@ -238,7 +238,7 @@ class SettingsActivity: AppCompatActivity(){
 
         }
     }
-
+    //注册设置项
     private fun registerSettings(){
         lifecycleScope.launch(Dispatchers.Main) {
             //媒体会话不使用封面图片
@@ -541,7 +541,7 @@ class SettingsActivity: AppCompatActivity(){
                 chooseDeleteDB(ButtonManageDB)
             }
 
-            //
+            //测试数值
             val ButtonCard_onStartDelayMillis = findViewById<CardView>(R.id.ButtonCard_onStartDelayMillis)
             val ButtonText_onStartDelayMillis = findViewById<TextView>(R.id.ButtonText_onStartDelayMillis)
             fun updateOnStartDelayMillisText(){

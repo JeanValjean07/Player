@@ -6,6 +6,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
+import com.suming.player.FuncionalPack.SearchHelper
 import com.suming.player.SettingsRequestCenter
 
 class VideoDataBaseLoader(private val context: Context) : PagingSource<Int, MediaItemFullForVideo>() {
@@ -34,7 +35,7 @@ class VideoDataBaseLoader(private val context: Context) : PagingSource<Int, Medi
             val mediaStoreSettings = mediaStoreRepo.getVideosPagedByOrder(page, limit, sortMethod)
 
             //合成MediaItem
-            val mediaItems = mediaStoreSettings.map { setting ->
+            var mediaItems = mediaStoreSettings.map { setting ->
                     MediaItemFullForVideo(
                         media_api_SPECIFIC_ID = setting.media_api_SPECIFIC_ID,
                         media_api_NUM_ID = setting.media_api_NUM_ID,
@@ -51,6 +52,12 @@ class VideoDataBaseLoader(private val context: Context) : PagingSource<Int, Medi
                         media_video_bitrate = setting.media_video_bitrate,
                     )
                 }
+
+            //支持搜索(仅在search_string不是空字段时进行过滤)
+            val searchQuery = SearchHelper.search_string_video
+            if (searchQuery.isNotEmpty()){
+                mediaItems = mediaItems.filter { it.file_name.contains(searchQuery, true) }
+            }
 
 
             //计算下页键
@@ -69,7 +76,7 @@ class VideoDataBaseLoader(private val context: Context) : PagingSource<Int, Medi
 
 
     //日志
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "VideoDataBaseLoader: $msg")
         }

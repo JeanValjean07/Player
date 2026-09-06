@@ -6,6 +6,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
+import com.suming.player.FuncionalPack.SearchHelper
 import com.suming.player.SettingsRequestCenter
 
 class AudioDataBaseLoader(
@@ -36,7 +37,7 @@ class AudioDataBaseLoader(
             val musicStoreSettings = musicStoreRepo.getMusicsPagedByOrder(page, limit, sortMethod)
 
             //合成MediaItem
-            val musicItems = musicStoreSettings.map { setting ->
+            var musicItems = musicStoreSettings.map { setting ->
                 //consoleLog("load: ${setting.file_name} ${setting.content_uriString}")
                     MediaItemFullForAudio(
                         media_api_SPECIFIC_ID = setting.media_api_SPECIFIC_ID,
@@ -55,6 +56,12 @@ class AudioDataBaseLoader(
                         media_audio_bitrate = setting.media_audio_bitrate,
                     )
                 }
+
+            //支持搜索(仅在search_string不是空字段时进行过滤)
+            val searchQuery = SearchHelper.search_string_audio
+            if (searchQuery.isNotEmpty()){
+                musicItems = musicItems.filter { it.file_name.contains(searchQuery, true) }
+            }
 
 
             //计算下页键

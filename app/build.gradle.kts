@@ -32,8 +32,8 @@ android {
         maxSdk = 37
         //noinspection OldTargetApi
         targetSdk = 36
-        versionCode = 1
-        versionName = "3.7.1"
+        versionCode = 26090601
+        versionName = "3.7.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
