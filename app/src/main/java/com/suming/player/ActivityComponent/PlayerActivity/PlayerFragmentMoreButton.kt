@@ -1126,7 +1126,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
         dialog.show()
         //自动弹出键盘
         CoroutineScope(Dispatchers.Main).launch {
-            delay(50)
+            delay(300)
             EditText.requestFocus()
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
         }
@@ -1254,7 +1254,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
         dialog.show()
         //自动弹出键盘
         CoroutineScope(Dispatchers.Main).launch {
-            delay(50)
+            delay(300)
             EditTextHour.requestFocus()
             imm.showSoftInput(EditTextHour, InputMethodManager.SHOW_IMPLICIT)
         }

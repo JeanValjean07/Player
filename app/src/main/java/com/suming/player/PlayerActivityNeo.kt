@@ -21,6 +21,7 @@ import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.Editable
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Display
 import android.view.GestureDetector
@@ -1096,7 +1097,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
         //自动弹出键盘
         CoroutineScope(Dispatchers.Main).launch {
-            delay(50)
+            delay(300)
             EditText.setSelection(Editable.length)
             EditText.requestFocus()
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
@@ -3330,46 +3331,29 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //进度条内边距设置
+    @Suppress("DEPRECATION")
     private fun setScrollerPadding(){
-        //计算边距
-        sidePadding = display_screen_width_pixels / 2
-
         //根据横竖屏做不同设置
         if (isLandscape){
-            //横屏
-            var scrollerMarginType: Int
-            //华为
-            when (Build.BRAND) {
-                "huawei", "HUAWEI", "HONOR", "honor" -> {
-                    scrollerMarginType = 2
-                    scroller.setPadding(
-                        sidePadding + DeviceInfo.statusBarHeight / 2,
-                        0,
-                        sidePadding + DeviceInfo.statusBarHeight / 2 - 1,
-                        0
-                    )
-                }
-                //三星
-                "samsung" -> {
-                    scrollerMarginType = 1
-                    scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-                }
-                //其他机型
-                else -> {
-                    scrollerMarginType = 1
-                    scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-                }
+
+            //读取屏幕宽度(需要包含状态栏)
+            val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            val displayMetrics = DisplayMetrics()
+            windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+
+            val screenWidth = displayMetrics.widthPixels
+            val sidePadding = screenWidth / 2
+
+
+            if (SettingsRequestCenter.get_PREFS_UseCompatScroller(context)) {
+                scroller.setPadding(sidePadding + DeviceInfo.statusBarHeight / 2, 0, sidePadding + DeviceInfo.statusBarHeight / 2 - 1, 0)
+            }else{
+                scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
             }
-            //使用兼容模式时,仅对原计算结果取反
-            if (SettingsRequestCenter.get_PREFS_UseCompatScroller(this@PlayerActivityNeo)) {
-                if (scrollerMarginType == 2) {
-                    scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
-                }
-                else {
-                    scroller.setPadding(sidePadding + DeviceInfo.statusBarHeight / 2, 0, sidePadding + DeviceInfo.statusBarHeight / 2 - 1, 0)
-                }
-            }
+
         }else{
+            //计算边距
+            sidePadding = display_screen_width_pixels / 2
             //竖屏
             scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)
         }

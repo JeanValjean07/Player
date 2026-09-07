@@ -816,7 +816,7 @@ class MainActivity: AppCompatActivity() {
         dialog.show()
         //自动弹出键盘程序
         CoroutineScope(Dispatchers.Main).launch {
-            delay(200)
+            delay(300)
             EditText.requestFocus()
             @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)

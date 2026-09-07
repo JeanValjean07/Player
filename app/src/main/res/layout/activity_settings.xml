@@ -378,7 +378,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="每次启动App时可快速继续播放上一次的媒体，但不会自动开播，需要您再手动点击播放。"
+                            android:text="每次启动App时可快速继续播放上一次的媒体，但不会自动开播，需要您手动点击播放。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：继续播放时直接启动播放器核心  -->
@@ -413,7 +413,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="开启后，启动App时，续播媒体自动出现在系统播控中心。未开启时，续播媒体仅为显示占位，需在App内手动启动播放。该选项目的是减少老机型的压力，若您的设备性能强悍，可考虑开启。"
+                            android:text="开启后，启动App时，续播媒体自动出现在系统播控中心。未开启时，续播媒体仅为显示占位，需在App内手动启动播放。该选项目的是减少部分设备的压力。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：后台划卡时关闭播放器  -->
@@ -448,7 +448,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="开启后，划掉后台卡片时将停止播放并关闭播放器。关闭后，可以在后台无卡片的情况下纯净播放，不打扰您的前台工作。此选项受系统电源配置的限制，且仅支持华为，三星和其他类原生系统。"
+                            android:text="开启时，划掉后台卡片将停止播放并关闭播放器。未开启时，可以在后台无卡片的情况下纯净播放，不打扰您的前台工作。此选项受系统电源配置的限制，且仅支持华为，荣耀，三星等品牌设备。"
                             android:textSize="12sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -600,7 +600,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="在部分系统上，设置预览图会导致系统界面崩溃(突然黑屏,软重启等)，此选项仅在通过检测的设备上默认开启。仅在触发播放器媒体变更时生效。"
+                            android:text="部分老系统的媒体会话样式非常绚丽，建议保持使用预览图。在部分系统上，设置预览图会导致系统界面崩溃(突然黑屏,软重启等)，谨慎修改此选项。"
                             android:textSize="12sp" />
                     </LinearLayout>
 
@@ -660,7 +660,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="若移动过程出现卡顿可考虑关闭。"
+                            android:text="开启时，在播放页内打开选项或列表面板时，播放区域将跟随移动以保持可见。若移动过程压力过大可考虑关闭。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:关闭卡片下滑手势  -->
@@ -669,11 +669,6 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
                         android:orientation="vertical">
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="在部分机型上存在界面合成问题，导致含播放器的页面掉帧卡顿。如果确认您的设备开次此选项后没有问题，可选择开启。"
-                            android:textSize="12sp" />
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="25dp"
@@ -773,7 +768,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="向系统申请使用高刷新率，不保证一定有效。若发现您的播放页被锁60HZ，可尝试开启此选项。"
+                            android:text="向系统申请使用高刷新率，不保证一定有效。若发现您的播放页被锁60Hz，可尝试开启此选项。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:后台播放时关闭视频轨道  -->
@@ -1005,43 +1000,6 @@
                             android:layout_marginStart="10dp"
                             android:textColor="@color/Text2" />
                     </LinearLayout>
-                    <!--  开关：使用超长进度条  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="0dp"
-                        android:orientation="vertical">
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="25dp"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_weight="0"
-                                android:text="使用超长进度条"
-                                android:textColor="@color/HeadText"
-                                android:textSize="14sp" />
-                            <View
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1" />
-                            <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/UseSuperLongScroller"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
-                        </LinearLayout>
-                        <!--  提示信息  -->
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="暂时废弃，回炉重造。"
-                            android:textSize="12sp" />
-                    </LinearLayout>
                     <!--  开关：进度条绘制使用兼容模式  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
@@ -1076,45 +1034,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="横屏时，若您的进度条两端无法与中央竖线对齐，请打开兼容模式，本质是取反分支。"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                    <!--  开关：进度条缩略图截取时使用就近关键帧  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="vertical">
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="25dp"
-                            android:orientation="horizontal"
-                            tools:ignore="TooManyViews">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_weight="0"
-                                android:text="截取进度条缩略图时使用就近关键帧"
-                                android:textColor="@color/HeadText"
-                                android:textSize="14sp" />
-                            <View
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1" />
-                            <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/UseSyncFrameInScroller"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
-                        </LinearLayout>
-                        <!--  提示信息  -->
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="此选项已废弃，强制使用关键帧。"
+                            android:text="仅在横屏时进度条显示异常时才可考虑开启，否则会导致大量问题。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：寻帧时一律使用关键帧  -->
@@ -1216,7 +1136,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="仅控制拖动进度条时的时间戳刷新间隔。由于系统优化问题，部分系统在此更新间隔过短时出现掉帧。请根据设备情况适当调整。正常播放时的时间刷新间隔为1000毫秒，不提供修改。"
+                            android:text="仅控制进度条被拖动时的时间窗口数值刷新间隔。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  选单：进度条位置更新间隔  -->
@@ -1343,7 +1263,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="拖动进度条时，播放器的寻帧间隔可自行设定。对于骁龙芯片设备，由于播放核心状态切换导致的开销，直接关闭寻帧间隔反而可能获得更流畅的体验，但负载较高。对于华为麒麟芯片设备，播放器状态切换已做优化，可自由降低寻帧间隔来减少开销，节省电量。实际情况需根据厂商在该场景的具体调度来判断。"
+                            android:text="控制拖动进度条时，播放器的寻帧间隔。此选项开性能销较大，带来发热和耗电，降低间隔需谨慎。"
                             android:textSize="12sp" />
                     </LinearLayout>
 
