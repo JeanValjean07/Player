@@ -443,6 +443,9 @@ class MainActivity: AppCompatActivity() {
 
                         //由媒体项观察者完成
 
+                        //关闭锁定
+                        PlayerSingleton.isLocked = false
+
                     }
 
                     //关闭锁定

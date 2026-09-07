@@ -330,6 +330,9 @@ object PlayerSingleton {
         //关闭服务
         stopServices(context)
 
+        //关闭锁定
+        isLocked = false
+
     }
 
 
