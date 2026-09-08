@@ -54,7 +54,7 @@ class EntranceActivity : AppCompatActivity(){
         //持久化URI权限到Activity上下文
         val URI_U_O = intent.data ?: Uri.EMPTY
         //consoleLog("URI_U_O = $URI_U_O")
-        //尝试持久化URI权限到Activity上下文 //TODO 测试别的播放器能不能放
+        //尝试持久化URI权限到Activity上下文
         try{
             context.grantUriPermission(packageName, URI_U_O, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
         }catch(e: Exception){
@@ -79,11 +79,12 @@ class EntranceActivity : AppCompatActivity(){
 
 
     //主业务
+    @OptIn(UnstableApi::class)
     private fun mainBusiness(){
         //提取URI  URI_U_O = URI_Original
         val (URI_U_O,SOURCE) = detectOriginalInfo_fromIntent(intent)
         val URI_S_O = URI_U_O.toString()   //URI_S_O = URI_String_Original
-        consoleLog("URI_S_O = $URI_S_O, SOURCE = $SOURCE")
+        //consoleLog("URI_S_O = $URI_S_O, SOURCE = $SOURCE")
 
 
         //根据 SOURCE_CODE 处理
@@ -98,7 +99,9 @@ class EntranceActivity : AppCompatActivity(){
                 }
                 //未知来源
                 else -> {
-                    fail("页面打开失败(启动来源未知)")
+                    fail("页面打开失败")
+                    //关闭播放器?
+                    PlayerSingleton.stopPlayEngineBundle()
                 }
             }
 
@@ -239,6 +242,7 @@ class EntranceActivity : AppCompatActivity(){
             }
             else -> {
                 //按理说不会出现不支持的媒体类型,因为播放前就有一道检查,如果出现非预期情况,关闭播放器作为保底
+
                 //关闭播放器
                 PlayerSingleton.stopPlayEngineBundle()
 

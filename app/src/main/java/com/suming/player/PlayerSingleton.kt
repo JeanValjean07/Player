@@ -304,14 +304,19 @@ object PlayerSingleton {
 
     //通知服务和媒体会话被系统侧销毁(系统侧销毁等于stop()了player让其进入idle,并带有一次主动暂停,可调用prepare()重新上线)
     fun notify_session_service_release(){
+        /*
         //关闭播放器端的媒体会话(已包含关闭服务)
         stopMediaSession(context)
-
         //关闭监听器
         PlayerListener.stopListener()
-
         //调用prepare()让播放器重新上线
         core_exoplayer_prepare()
+
+         */
+
+        //全部关闭
+        stopPlayEngineBundle()
+
     }
 
 
@@ -326,9 +331,9 @@ object PlayerSingleton {
         //关闭监听器
         PlayerListener.stopListener()
         //关闭本侧的媒体会话
-        stopMediaSession(context)
+        stopMediaSession()
         //关闭服务
-        stopServices(context)
+        stopServices()
 
         //关闭锁定
         isLocked = false
@@ -530,12 +535,20 @@ object PlayerSingleton {
         setPlaySpeed(1f)
 
 
-        //启动监听器(仅在播放时申请焦点)
-        val focus = _player?.isPlaying ?: false
-        PlayerListener.startListener(focus = focus)
+        //请求音频焦点和启动监听器(仅在触发自动播放时进行)
+        if (_player?.playWhenReady ?: false){
+            consoleLog("onMediaItemChanged -触发自动播放")
 
-        //请求音频焦点
-        PlayerListener.requestAudioFocus(context, force_request = false)
+            //启动监听器(仅在播放时申请焦点)
+            val focus = _player?.isPlaying ?: false
+            PlayerListener.startListener(focus = focus)
+
+            //请求音频焦点
+            PlayerListener.requestAudioFocus(context, force_request = false)
+        }else{
+            consoleLog("onMediaItemChanged -未触发自动播放")
+
+        }
 
 
     }
@@ -671,14 +684,14 @@ object PlayerSingleton {
         controller = null
         sessionState_MediaSession_connected = false
     }
-    private fun stopServices(context: Context){
+    private fun stopServices(){
         context.stopService(Intent(context, PlayerService::class.java))
         sessionState_MediaSession_connected = false
     }
     //完整清除媒体会话
-    fun stopMediaSession(context: Context){
+    fun stopMediaSession(){
         stopMediaSessionController()
-        stopServices(context)
+        stopServices()
         sessionState_MediaSession_connected = false
     }
 
@@ -745,13 +758,17 @@ object PlayerSingleton {
         forcePause = false
         manualPause = false
 
+
         //请求音频焦点
-        if (requestFocus){
-            PlayerListener.requestAudioFocus(context,requestFocus)
-        }
+        if (requestFocus) PlayerListener.requestAudioFocus(context,requestFocus)
+
+        //启动监听器
+        PlayerListener.startListener()
+
+
 
         //保险操作
-        //1.重置倍速
+        //重置倍速
         if (_player != null && _player?.playbackParameters?.speed != Para_OriginalPlaySpeed){
             setPlaySpeed(Para_OriginalPlaySpeed)
         }

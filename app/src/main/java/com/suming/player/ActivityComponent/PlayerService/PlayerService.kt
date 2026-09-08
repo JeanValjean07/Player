@@ -1,16 +1,11 @@
 package com.suming.player.ActivityComponent.PlayerService
 
 import android.Manifest
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.util.Log
-import android.widget.RemoteViews
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresPermission
-import androidx.core.app.NotificationCompat
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaSession
@@ -21,13 +16,7 @@ import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.FuncionalPack.SOURCE_CODE
 import com.suming.player.PlayerSingleton
-import com.suming.player.R
 import com.suming.player.SettingsRequestCenter
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 @UnstableApi
 @Suppress("/unused")
@@ -41,7 +30,7 @@ class PlayerService: MediaSessionService() {
     private var mediaSession: MediaSession? = null
 
     //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = false) {
+    private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "PlayerService: $msg")
         }
@@ -52,15 +41,9 @@ class PlayerService: MediaSessionService() {
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        consoleLog("触发 onCreate")
-        //从serviceLinker获取信息丨按理说媒体会话还无需用到这些信息,供以后添加自定义通知使用
-        val (uriString, fileName, mediaArtist) = ServiceConnector.getMediaBasicInfo()
-        MediaInfo_MediaUriString = uriString
-        MediaInfo_FileName = fileName
-        MediaInfo_Artist = mediaArtist
+        //consoleLog("onCreate")
 
-
-        //获取播放器
+        //获取播放器引用
         val player = PlayerSingleton.init_player_get_ref()
 
         //指定通知,包含设置自定义控制按钮和播控中心小图标
@@ -73,7 +56,7 @@ class PlayerService: MediaSessionService() {
         mediaSession = MediaSession.Builder(this, wrapper)
             .setCallback(object : MediaSession.Callback {
                 override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
-                    consoleLog("触发 onConnect")
+                    //consoleLog("触发 onConnect")
 
                     return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
                         .setAvailableSessionCommands(MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS)
@@ -85,31 +68,31 @@ class PlayerService: MediaSessionService() {
                 }
                 override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
                     super.onPostConnect(session, controller)
-                    consoleLog("触发 onPostConnect")
+                    //consoleLog("触发 onPostConnect")
                 }
                 override fun onPlayerInteractionFinished( session: MediaSession,
                     controllerInfo: MediaSession.ControllerInfo,
                     playerCommands: Player.Commands ) {
                     super.onPlayerInteractionFinished(session, controllerInfo, playerCommands)
-                    consoleLog("触发 onPlayerInteractionFinished")
+                    //consoleLog("触发 onPlayerInteractionFinished")
                     //播放/暂停
                     if (playerCommands.contains(Player.COMMAND_PLAY_PAUSE)) {
-                        consoleLog("播放/暂停")
+                        //consoleLog("播放/暂停")
                         //播放或暂停
                         pauseOrContinue()
 
                     }
                     //下一曲
                     if (playerCommands.contains(Player.COMMAND_SEEK_TO_NEXT)) {
-                        consoleLog("下一曲")
+                        //consoleLog("下一曲")
                     }
                     //上一曲
                     if (playerCommands.contains(Player.COMMAND_SEEK_TO_PREVIOUS)) {
-                        consoleLog("上一曲")
+                        //consoleLog("上一曲")
                     }
                     //停止播放(划掉音频播控卡片)(划掉后播放器会被停止,调用prepare()使其重新上线)
                     if (playerCommands.contains(Player.COMMAND_STOP)) {
-                        consoleLog("停止")
+                        //consoleLog("停止")
                         //关掉播放引擎和监听器
                         stopPlayBundle()
 
@@ -146,40 +129,42 @@ class PlayerService: MediaSessionService() {
     //接收Intent额外信息
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        //consoleLog("触发 onStartCommand, intent: $intent, intent.action: ${intent?.action}, flags: $flags, startId: $startId")
         super.onStartCommand(intent, flags, startId)
+        //consoleLog("触发 onStartCommand, intent: $intent, intent.action: ${intent?.action}, flags: $flags, startId: $startId")
         //取出intent的数据
         //getMediaInfo(intent)
-
-
 
 
         return START_REDELIVER_INTENT
     }
     //获取媒体会话
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
-        consoleLog("触发 onGetSession")
+        //consoleLog("onGetSession")
 
         return mediaSession
     }
 
-    override fun onDestroy() {
+    override fun onDestroy(){
         super.onDestroy()
-        consoleLog("触发 onDestroy")
+        consoleLog("onDestroy")
 
         stopLocalAll()
 
     }
     //仅在后台划卡时触发,而且前提是系统不执行强行停止
     override fun onTaskRemoved(rootIntent: Intent?) {
-        consoleLog("触发 onTaskRemoved")
+        consoleLog("onTaskRemoved")
 
         val needStopEngine = SettingsRequestCenter.get_PREFS_StopPlayerWhenTaskRemoved(this@PlayerService) ||
                                        !SettingsRequestCenter.GET_PRF_EnableMiniView(this@PlayerService)
 
 
-        if (needStopEngine) stopPlayBundle()
-
+        if (needStopEngine){
+            //关闭播放引擎
+            PlayerSingleton.stopPlayEngineBundle()
+            //关闭本地的媒体会话和服务
+            stopLocalAll()
+        }
 
 
     }
@@ -189,7 +174,7 @@ class PlayerService: MediaSessionService() {
 
     //External Operation Functions
     //销毁播放器和媒体会话
-    private fun stopPlayBundle() {
+    private fun stopPlayBundle(){
         //通知播放器服务和媒体会话销毁
         PlayerSingleton.notify_session_service_release()
         //关闭本地的媒体会话和服务
@@ -200,7 +185,6 @@ class PlayerService: MediaSessionService() {
     private fun pauseOrContinue() {
         //先检查目前是不是在播放(读取到的是父类修改后的状态,原本的播放状态应取反)
         val isPlaying = !PlayerSingleton.GET_STE_isNowPlaying()
-        consoleLog("pauseOrContinue() 操作之前是否在播放 isPlaying: $isPlaying")
 
         //切换state_perception_on
         if (isPlaying){
@@ -255,7 +239,41 @@ class PlayerService: MediaSessionService() {
 
 
     //Functions
-    //媒体信息 从intent获取媒体信息工具函数
+
+    //拉起活动意图
+    //直接拉起管理器,管理器自动判断到底拉起哪个页面
+    private fun createPendingIntentManager(): PendingIntent {
+        val intent = Intent(this, EntranceActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+            .putExtra(IntentRepo.SOURCE, SOURCE_CODE.SOURCE_Pending)
+
+        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+
+
+    //基于广播的播放指令(已废弃)
+    /*
+    //基于广播的播放指令(暂未使用)
+    private fun BroadcastPlay(): PendingIntent {
+        val intent = Intent(this, PlayerActionReceiver::class.java)
+        //加入action
+        intent.apply { action = BroadcastActions.broadcast_action_play }
+
+
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+    private fun BroadcastPause(): PendingIntent {
+        val intent = Intent(this, PlayerActionReceiver::class.java)
+        //加入action
+        intent.apply { action = BroadcastActions.broadcast_action_pause }
+
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+
+     */
+    //从intent获取媒体信息
+    /*
     private var MediaInfo_MediaUriString = ""
     private var MediaInfo_FileName = ""
     private var MediaInfo_Artist = ""
@@ -267,7 +285,9 @@ class PlayerService: MediaSessionService() {
         }
     }
 
+     */
     //构建自定义通知(自定标题+横排文本按钮)
+    /*
     private fun BuildCustomizeNotification(): Notification {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
@@ -339,50 +359,6 @@ class PlayerService: MediaSessionService() {
         nm.createNotificationChannel(channel)
     }
 
-
-    //通过观察者动态更改拉起活动意图(未启用)
-    private var Job_observe: Job? = null
-    private var coroutine_observe = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private fun startObserve_PendingIntent(){
-        Job_observe?.cancel()
-        Job_observe = coroutine_observe.launch {
-            ServiceConnector.MediaType.collect { mediaType ->
-
-            }
-        }
-    }
-    //拉起活动意图(暂未使用)
-    //直接拉起管理器,管理器自动判断到底拉起哪个页面
-    private fun createPendingIntentManager(): PendingIntent {
-        val intent = Intent(this, EntranceActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-            .putExtra(IntentRepo.SOURCE, SOURCE_CODE.SOURCE_Pending)
-
-        return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
-
-    //基于广播的播放指令(已废弃)
-    /*
-    //基于广播的播放指令(暂未使用)
-    private fun BroadcastPlay(): PendingIntent {
-        val intent = Intent(this, PlayerActionReceiver::class.java)
-        //加入action
-        intent.apply { action = BroadcastActions.broadcast_action_play }
-
-
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
-    private fun BroadcastPause(): PendingIntent {
-        val intent = Intent(this, PlayerActionReceiver::class.java)
-        //加入action
-        intent.apply { action = BroadcastActions.broadcast_action_pause }
-
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    }
-
      */
-
-
 
 }
