@@ -28,7 +28,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-//@Suppress("unused")
+@Suppress("/unused")
 class RecyclerAdapterMusic(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
@@ -123,7 +123,8 @@ class RecyclerAdapterMusic(
                 //推到ImageView
                 withContext(Dispatchers.Main) {
                     if (holder.itemFrame.tag == imageTag) {
-                        submitToImageView(holder,Bitmap)
+                        //submitToImageView(holder,Bitmap)
+                        submitToImageViewNoAnim(holder,Bitmap)
                     }else{ Bitmap.recycle() }
                 }
             }else{

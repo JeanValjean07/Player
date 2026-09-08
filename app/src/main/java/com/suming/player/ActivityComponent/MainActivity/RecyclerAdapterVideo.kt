@@ -31,7 +31,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-//@Suppress("unused")
+@Suppress("/unused")
 @RequiresApi(Build.VERSION_CODES.Q)
 class RecyclerAdapterVideo(
     private val context: Context,
@@ -173,7 +173,7 @@ class RecyclerAdapterVideo(
             if (Frame != null){
                 //推送到图片ImageView
                 if (holder.tvFrame.tag == imageTag) {
-                    withContext(Dispatchers.Main){ submitToImageView(holder,Frame) }
+                    withContext(Dispatchers.Main){ submitToImageViewNoAnim(holder,Frame) }
                 }else{ Frame.recycle() }
 
             }else{
