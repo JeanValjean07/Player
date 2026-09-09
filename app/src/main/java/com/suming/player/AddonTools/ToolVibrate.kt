@@ -9,7 +9,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.edit
 
 @RequiresApi(Build.VERSION_CODES.Q)
-class ToolVibrate() {
+class ToolVibrate {
     //振动配置
     private var state_SDK_version = 0
     private var PREFS_VibrateMode = -1
@@ -27,7 +27,7 @@ class ToolVibrate() {
     fun vibrate(context: Context) {
         //检查sdk版本,低版本时不振动
         if (state_SDK_version == 0){ state_SDK_version = Build.VERSION.SDK_INT }
-        if (state_SDK_version < Build.VERSION_CODES.Q){ return }
+        if (state_SDK_version < Build.VERSION_CODES.Q) return
 
         //确保振动配置已初始化
         if (PREFS_VibrateMode == -1) { loadVibrateSetting(context) }

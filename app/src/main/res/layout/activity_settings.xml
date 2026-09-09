@@ -1357,6 +1357,41 @@
                             android:text="根据您的设备马达配置选择合适的振动时长，以获得更好的振动体验。如果您的系统对振动效果进行了优化，建议选择跟随系统。振动仅支持安卓10及以上版本。"
                             android:textSize="12sp" />
                     </LinearLayout>
+                    <!--  开关：使用全屏面板  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:text="使用全屏面板"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/SC_UseFullScreenFragment"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                app:thumbTint="@color/switchThumbColor"
+                                app:trackTint="@color/switchTrackColor" />
+                        </LinearLayout>
+                        <!-- 提示文本 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="将所有弹出式面板显示为全屏，适合小屏幕设备使用。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>

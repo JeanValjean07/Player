@@ -177,7 +177,7 @@
         android:layout_marginStart="25dp"
         android:layout_marginEnd="25dp"
         app:cardElevation="10dp"
-        app:cardCornerRadius="50dp"
+        app:cardCornerRadius="15dp"
         android:visibility="gone">
         <TextView
             android:id="@+id/notice"

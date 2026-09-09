@@ -33,6 +33,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:orientation="vertical"
+                android:clickable="true"
                 android:translationZ="1dp">
 
                 <!-- 标题区域背景 -->

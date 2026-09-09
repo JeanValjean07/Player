@@ -560,6 +560,22 @@ class SettingsActivity: AppCompatActivity(){
                 chooseDeleteDB(ButtonManageDB)
             }
 
+            //全屏Fragment
+            val SC_UseFullScreenFragment = findViewById<SwitchCompat>(R.id.SC_UseFullScreenFragment)
+            SC_UseFullScreenFragment.isChecked = SettingsRequestCenter.GET_PRF_UseFullScreenFragment(context)
+            SC_UseFullScreenFragment.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+
+                SettingsRequestCenter.SET_PRF_UseFullScreenFragment(context, isChecked)
+
+                //如果设为开启,联动关闭 播放区域跟随移动
+                if (isChecked){
+                    SettingsRequestCenter.set_PREFS_EnablePlayAreaMoveAnim(false)
+                    switch_EnablePlayAreaMoveAnim.isChecked = SettingsRequestCenter.get_PREFS_EnablePlayAreaMoveAnim(context)
+                }
+
+            }
+
             //测试数值
             val ButtonCard_onStartDelayMillis = findViewById<CardView>(R.id.ButtonCard_onStartDelayMillis)
             val ButtonText_onStartDelayMillis = findViewById<TextView>(R.id.ButtonText_onStartDelayMillis)

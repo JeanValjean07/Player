@@ -1124,5 +1124,43 @@ object SettingsRequestCenter {
     }
 
 
+    //👝 Pandora_Other 其他设置 -------------------------------------------------------------
+    private var Pandora_Other: SharedPreferences? = null
+    const val Pandora_Other_Name = "Pandora_Other"
+    private fun OpenPandora_Other(context: Context){
+        if (Pandora_Other == null){
+            Pandora_Other = context.getSharedPreferences(Pandora_Other_Name, 0)
+        }
+    }
+    //使用全屏面板
+    private var PRF_UseFullScreenFragment = -1
+    const val PRF_UseFullScreenFragment_Name = "PRF_UseFullScreenFragment"
+    fun GET_PRF_UseFullScreenFragment(context: Context): Boolean{
+        OpenPandora_Other(context)
+
+        if (PRF_UseFullScreenFragment == -1){
+            PRF_UseFullScreenFragment = Pandora_Other!!.getInt(PRF_UseFullScreenFragment_Name, -1)
+
+            if (PRF_UseFullScreenFragment == -1){
+                PRF_UseFullScreenFragment = 0
+            }
+            Pandora_Other!!.edit { putInt(PRF_UseFullScreenFragment_Name, PRF_UseFullScreenFragment) }
+        }
+
+
+        return PRF_UseFullScreenFragment == 1
+    }
+    fun SET_PRF_UseFullScreenFragment(context: Context, enable: Boolean) {
+        OpenPandora_Other(context)
+
+        val targetValue = if (enable) 1 else 0
+
+        PRF_UseFullScreenFragment = targetValue
+        Pandora_Other!!.edit { putInt(PRF_UseFullScreenFragment_Name, targetValue) }
+
+
+    }
+
+
 
 }

@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center|top"
         app:cardElevation="10dp"
-        app:cardCornerRadius="50dp"
+        app:cardCornerRadius="15dp"
         android:visibility="gone"
         android:layout_marginTop="100dp"
         app:layout_constraintTop_toTopOf="parent"
