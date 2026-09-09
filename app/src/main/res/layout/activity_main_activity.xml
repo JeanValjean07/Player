@@ -251,7 +251,8 @@
                             android:layout_marginStart="12dp"
                             android:text="列表"
                             android:textColor="@color/HeadText"
-                            android:textSize="24sp" />
+                            android:textSize="24sp"
+                            />
 
                         <!-- 占位 -->
                         <View

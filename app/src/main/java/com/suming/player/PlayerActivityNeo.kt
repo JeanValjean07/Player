@@ -158,10 +158,17 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
 
 
-
+    override fun attachBaseContext(newBase: Context?) {
+        //在onCreate之前切换颜色模式,可避免活动重建
+        if (SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(this)) {
+            delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
+        }
+        super.attachBaseContext(newBase)
+    }
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        consoleLog("onCreate")
         //初始化
         init()
 
@@ -288,7 +295,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
         }
     }
-
+    //初始化
     private fun init(){
         //显示配置
         enableEdgeToEdge()
@@ -314,8 +321,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         playerView = findViewById(R.id.playerView)
 
         //主线程设置项
-        //是否开启了强制深色主题
-        if (SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(context)) delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
+
         //是否开启强制高刷
         if (SettingsRequestCenter.get_PREFS_LockRefreshRate(context)) requestHighRefreshRate()
 
@@ -347,6 +353,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         volumeDetect()
 
     }
+
 
 
 
@@ -977,6 +984,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //设置媒体项决策程序 savedInstanceState == null 仅在首次启动时决定是否播放
         if (savedInstanceState == null){
+            consoleLog("mainBusiness: savedInstanceState == null")
             //
             if (URI_S_O == Undefined && ongoing_URI == Uri.EMPTY ){
                 //分支描述:未传入播放链接,也没有正在播放的项,弹窗主动输入(彩蛋分支)
@@ -1011,6 +1019,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         //consoleLog("传入链接,但与当前播放项不同,播放新项")
 
                         //发起播放新项
+                        consoleLog("mainBusiness: 传入链接,发起播放新项")
                         startPlayNewMedia(URI_U_O,file_path)
 
                     }else{
@@ -1026,6 +1035,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
         }else{
+            consoleLog("mainBusiness: savedInstanceState != null")
             if (ongoing_URI == Uri.EMPTY){
                 showErrorCover("当前没有正在播放的项")
             }else{
@@ -1296,6 +1306,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private suspend fun setNewMediaItem(URI_U_FP: Uri,file_path:String): Boolean{
         if (state_setting_media) return false
         state_setting_media = true
+        consoleLog("setNewMediaItem")
 
         //缓存URI为字符串
         val URI_S_FP = URI_U_FP.toString()
@@ -2129,7 +2140,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         volumeChangeGap = 750/maxVolume
         if (originalVolume == 0 && !playerViewModel.NOTICED_VolumeIsZero) {
             playerViewModel.NOTICED_VolumeIsZero = true
-            notice("当前音量为0", 3000)
+            notice("当前未开启声音", 1000)
         }
     }
     private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }

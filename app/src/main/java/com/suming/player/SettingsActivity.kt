@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -27,6 +28,7 @@ import android.widget.Space
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
@@ -1628,7 +1630,18 @@ class SettingsActivity: AppCompatActivity(){
 
 
     //检测当前是release版还是debug版
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun isDebugVersion(): Boolean{
+        //获取安卓版本
+        if (DeviceInfo.AndroidVersion == 0){
+            DeviceInfo.AndroidVersion = Build.VERSION.SDK_INT
+        }
+        //仅支持安卓9及以上版本
+        if (DeviceInfo.AndroidVersion < Build.VERSION_CODES.P){
+            return false
+        }
+
+
         //获取签名信息
         val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
         val signingInfo = packageInfo.signingInfo

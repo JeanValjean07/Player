@@ -73,6 +73,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling")
     implementation(libs.androidx.compose.remote.creation.core)
+    implementation(libs.androidx.compose.foundation.foundation.layout)
 
     //Room
     implementation("androidx.room:room-runtime:2.8.4")
@@ -80,7 +81,6 @@ dependencies {
     implementation(libs.androidx.library)
     implementation(libs.foundation.layout)
     implementation(libs.androidx.datastore.core)
-    implementation(libs.androidx.compose.foundation.foundation.layout)
     implementation(libs.androidx.core.animation)
 
     //ksp

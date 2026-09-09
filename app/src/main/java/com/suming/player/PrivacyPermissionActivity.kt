@@ -4,21 +4,18 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
-import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AppCompatActivity
-import androidx.cardview.widget.CardView
-import com.suming.player.FuncionalPack.PrivacyPermissionHelper
-import com.suming.player.ViewWidget.CircleButton
-import android.provider.Settings
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
@@ -27,6 +24,8 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.DeviceInfo
+import com.suming.player.FuncionalPack.PrivacyPermissionHelper
+import com.suming.player.ViewWidget.CircleButton
 
 @SuppressLint("NewApi")
 class PrivacyPermissionActivity: AppCompatActivity() {
@@ -254,7 +253,7 @@ class PrivacyPermissionActivity: AppCompatActivity() {
 
 
     }
-    val permission_prompt_text_tiramisu = "在安卓13及以上版本，需要同时开启视频和音频的访问权限。开启“所有文件访问权限”可获得最高自由度。也可选择不开启任何权限，选择文件播放。"
+    val permission_prompt_text_tiramisu = "在安卓13及以上版本，需要同时开启视频和音频的访问权限。开启“所有文件访问权限”可获得最高自由度。"
     val permission_prompt_text_snow_cone = "在安卓12及以下版本，需要开启储存权限。开启“所有文件访问权限”可获得最高自由度。"
     val permission_prompt_safe_mode = "\n\n也可选择不开启任何权限，选择文件播放。"
     val permission_prompt_all_file_access = "\n\n如果您需要访问非公有文件夹和被.nomedia标记的文件夹内的媒体，则必须开启“所有文件访问权限”。"
@@ -282,13 +281,10 @@ class PrivacyPermissionActivity: AppCompatActivity() {
                         Manifest.permission.READ_MEDIA_VIDEO,
                         Manifest.permission.READ_MEDIA_AUDIO
                     )
-
                 val ungrantedPermissions = permissionsToRequest.filter {
                     ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
                 }.toTypedArray()
-
                 permissionLauncher.launch(ungrantedPermissions)
-
             }
             else -> {
                 val permissionsToRequest = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
