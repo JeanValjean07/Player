@@ -18,35 +18,49 @@
         app:cardBackgroundColor="@color/SecondaryColorPack_SurfaceBackground"
         app:cardElevation="10dp"
         android:clickable="true">
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:orientation="vertical" >
 
-            <com.google.android.material.appbar.AppBarLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <!-- 标题容器 -->
+            <FrameLayout
+                android:id="@+id/AppBar_Container"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
                 android:background="@android:color/transparent"
-                android:outlineSpotShadowColor="@color/HeadText"
-                app:liftOnScrollColor="@color/HeadBackground"
-                android:outlineAmbientShadowColor="@color/HeadText"
-                tools:targetApi="28">
-                <!-- 标题：更多选项 -->
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:orientation="vertical"
+                android:translationZ="1dp">
+
+                <!-- 标题区域背景 -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    android:id="@+id/AppBar_Blur"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@color/Transparent_Head_Background"
                     android:orientation="horizontal">
+
+
+                </LinearLayout>
+
+                <!-- 标题核心 -->
+                <LinearLayout
+                    android:id="@+id/AppBar_Core"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@android:color/transparent"
+                    android:orientation="horizontal">
+
                     <!-- 按钮：退出 -->
                     <ImageButton
                         android:id="@+id/buttonExit"
-                        android:layout_width="41dp"
-                        android:layout_height="41dp"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginTop="5dp"
-                        android:gravity="start"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginStart="5dp"
+                        android:padding="10dp"
                         android:backgroundTint="@android:color/transparent"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_main_fragment_music_icon"
@@ -55,15 +69,18 @@
                     <!-- 标题文本：设置 -->
                     <TextView
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
                         android:text="音乐库选项"
                         android:textColor="@color/HeadText"
                         android:textSize="20sp" />
+
+                    <!-- 占位 -->
                     <View
                         android:layout_width="0dp"
-                        android:layout_height="0dp"
+                        android:layout_height="50dp"
                         android:layout_weight="1"/>
+
                     <!-- 按钮：页面锁定 -->
                     <ImageButton
                         android:id="@+id/buttonLock"
@@ -75,17 +92,43 @@
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_more_button_lock_off"
                         tools:ignore="ContentDescription" />
-                </LinearLayout>
-            </com.google.android.material.appbar.AppBarLayout>
 
+                </LinearLayout>
+
+
+                <!-- 底部分隔线 -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="0.5dp"
+                    android:layout_gravity="bottom"
+                    android:background="@color/SecondaryColorPack_LineColor"
+                    />
+
+            </FrameLayout>
+
+
+            <!-- 滚动区域 -->
             <androidx.core.widget.NestedScrollView
                 android:id="@+id/NestedScrollView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
                     android:orientation="vertical">
+
+                    <!-- 顶部占位 -->
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        />
+
+
+
                     <!-- 重读媒体库 -->
                     <androidx.cardview.widget.CardView
                         android:id="@+id/ButtonReLoadFromMediaStore"
@@ -93,6 +136,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
+                        android:layout_marginTop="10dp"
                         android:layout_marginBottom="10dp"
                         app:cardBackgroundColor="@color/Background4"
                         app:cardCornerRadius="10dp"
@@ -564,6 +608,6 @@
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -247,6 +247,10 @@ class PlayerFragmentMoreButton: DialogFragment(){
     private fun init(view: View){
         //设置卡片
         display(view)
+        //初始化视图
+        //顶部区域-滚动区域联动
+        NestedScrollView = view.findViewById(R.id.NestedScrollView)
+
 
     }
 
@@ -303,10 +307,9 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //点击顶部区域回顶
             val TopBarArea = view.findViewById<View>(R.id.TopBarArea)
             TopBarArea.setOnClickListener {
-                val NestedScrollView = view.findViewById<NestedScrollView>(R.id.NestedScrollView)
-                if (NestedScrollView.scrollY == 0) { return@setOnClickListener }
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate().vibrate(context)
                 //回到顶部
+                NestedScrollView.stopNestedScroll()
                 NestedScrollView.smoothScrollTo(0, 0)
             }
             //面板下滑关闭
@@ -1302,6 +1305,9 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
         }
     }
+
+    //顶部区域-滚动区域联动
+    private lateinit var NestedScrollView: NestedScrollView
 
     //自定义退出逻辑
     private var lockPage = false

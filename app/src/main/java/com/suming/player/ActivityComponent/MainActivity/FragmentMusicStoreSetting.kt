@@ -2,28 +2,25 @@ package com.suming.player.ActivityComponent.MainActivity
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.os.Build
 import android.os.Bundle
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
-import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
-import androidx.core.content.edit
+
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -32,15 +29,13 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
-import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.FragmentConnector
+import com.suming.player.R
 import com.suming.player.SettingsRequestCenter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @UnstableApi
 @Suppress("unused")
@@ -203,6 +198,8 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
         register(view)
 
+        //启动高级效果
+        startAddonEffect(view)
 
     }
 
@@ -462,6 +459,19 @@ class FragmentMusicStoreSetting: DialogFragment() {
     }
 
 
+    //启动高级效果
+    private lateinit var AppBar_Blur : LinearLayout
+    private lateinit var AppBar_Container : FrameLayout
+    private fun startAddonEffect(view: View){
+        AppBar_Blur = view.findViewById(R.id.AppBar_Blur)
+        AppBar_Container = view.findViewById(R.id.AppBar_Container)
+
+        val blurEffect = RenderEffect.createBlurEffect(15f, 15f, Shader.TileMode.CLAMP);
+
+        //AppBar_Blur.setRenderEffect(blurEffect)
+
+
+    }
 
 
     //Functions

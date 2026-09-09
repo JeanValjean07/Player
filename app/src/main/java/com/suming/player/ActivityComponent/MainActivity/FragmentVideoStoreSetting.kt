@@ -23,6 +23,7 @@ import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
@@ -206,7 +207,10 @@ class FragmentVideoStoreSetting: DialogFragment() {
         SortOrientationText = view.findViewById(R.id.current_sort_orientation)
 
         //默认播放行为文本
-        ButtonChangeDefaultPlayMode = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultPlayMode)
+        ButtonChangeDefaultPlayMode = view.findViewById(R.id.ButtonTextChangeDefaultPlayMode)
+
+
+        NestedScrollView = view.findViewById(R.id.NestedScrollView)
 
         //设置显示重组
         display(view)
@@ -266,6 +270,14 @@ class FragmentVideoStoreSetting: DialogFragment() {
                 setFragmentResult(FragmentConnector.fragment_media_store_setting_require_mediastore_api_refresh)
 
                 customDismiss()
+            }
+            //点击顶部回顶
+            val AppBarContainer = view.findViewById<View>(R.id.AppBarContainer)
+            AppBarContainer.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //滚动区域回顶
+                NestedScrollView.stopNestedScroll()
+                NestedScrollView.smoothScrollTo(0, 0)
             }
             //默认页签
             val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
@@ -627,6 +639,9 @@ class FragmentVideoStoreSetting: DialogFragment() {
             }
         }
     }
+
+    //顶部区域-滚动区域联动
+    private lateinit var NestedScrollView : NestedScrollView
 
     //存档函数
     //监听返回手势(dialog fragment)

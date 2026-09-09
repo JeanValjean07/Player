@@ -130,6 +130,10 @@
     <color name="ThemeColor_Purple_Heavy">#FFE1BEE7</color>
     <color name="ThemeColor_Purple_Light">#FFF3E5F5</color>
 
+    <!-- 透明/模糊区域 -->
+    <color name="Transparent_Head_Background">#EEFFFFFF</color>
+
+
     <!-- 工具颜色 -->
     <color name="White">#FFFFFFFF</color>
     <color name="Black">#FF000000</color>
