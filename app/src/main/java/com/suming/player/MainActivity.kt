@@ -739,7 +739,7 @@ class MainActivity: AppCompatActivity() {
                 ToolVibrate().vibrate(this@MainActivity)
                 startMusicPlayer(uri)
             },
-            onOptionsClick = { item, view ->
+            onOptionsClick = { _, _ ->
                 ToolVibrate().vibrate(this@MainActivity)
 
             },
