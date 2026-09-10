@@ -125,7 +125,6 @@ class FragmentMusicStoreSetting: DialogFragment() {
             //按钮：点击空白区域退出
             val topArea = view.findViewById<View>(R.id.out_area)
             topArea.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
                 dismiss()
             }
             //按钮：锁定页面
@@ -446,7 +445,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
         }else{
             //计算目标高度
             val targetHeightPx = if (useFullScreenFragment){
-                screenHeightPx
+                screenHeightPx - DeviceInfo.statusBarHeight
             }else{
                 (screenHeightPx * 0.7).toInt()
             }

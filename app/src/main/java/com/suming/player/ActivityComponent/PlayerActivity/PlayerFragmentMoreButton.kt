@@ -1179,7 +1179,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
         }else{
             //计算目标高度
             val targetHeightPx = if (useFullScreenFragment){
-                screenHeightPx
+                screenHeightPx - DeviceInfo.statusBarHeight
             }else{
                 (screenHeightPx * 0.7).toInt()
             }
