@@ -38,13 +38,20 @@
 
                 <!-- 标题区域背景 -->
                 <LinearLayout
-                    android:id="@+id/AppBar_Blur"
+                    android:id="@+id/AppBar_Background"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:background="@color/Transparent_Head_Background"
+                    android:visibility="gone"
                     android:orientation="horizontal">
 
-
+                    <!-- 底部分隔线 -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.5dp"
+                        android:layout_gravity="bottom"
+                        android:background="@color/SecondaryColorPack_LineColor"
+                        />
                 </LinearLayout>
 
                 <!-- 标题核心 -->
@@ -56,21 +63,26 @@
                     android:orientation="horizontal">
 
                     <!-- 按钮：退出 -->
-                    <ImageButton
+                    <com.suming.player.ViewWidget.CircleButton
                         android:id="@+id/buttonExit"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:layout_marginStart="5dp"
-                        android:padding="10dp"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_main_fragment_music_icon"
-                        android:contentDescription="关闭本页面"
-                        android:tooltipText="关闭本页面" />
+                        android:src="@drawable/ic_frag_list_delete_item"
+                        android:layout_gravity="center"
+                        app:buttonSize="50dp"
+                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
+                        app:shadowOffset="4dp"
+                        app:circlePadding="100dp"
+                        app:iconPadding="120dp"
+                        app:shadowRadius="8dp"
+                        app:shadowColor="#33000000"
+                        />
                     <!-- 标题文本：设置 -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
+                        android:layout_marginStart="5dp"
                         android:gravity="center"
                         android:text="音乐库选项"
                         android:textColor="@color/HeadText"
@@ -83,27 +95,24 @@
                         android:layout_weight="1"/>
 
                     <!-- 按钮：页面锁定 -->
-                    <ImageButton
+                    <com.suming.player.ViewWidget.CircleButton
                         android:id="@+id/buttonLock"
-                        android:layout_width="41dp"
-                        android:layout_height="41dp"
-                        android:layout_marginEnd="10dp"
-                        android:layout_gravity="center"
-                        android:backgroundTint="@android:color/transparent"
-                        android:scaleType="centerCrop"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginEnd="5dp"
                         android:src="@drawable/ic_more_button_lock_off"
-                        tools:ignore="ContentDescription" />
+                        android:layout_gravity="center"
+                        app:iconPadding="120dp"
+                        app:circlePadding="100dp"
+                        app:buttonSize="50dp"
+                        app:mainColor="@color/SecondaryColorPack_CardButtonBackground"
+                        app:shadowOffset="4dp"
+                        app:shadowRadius="8dp"
+                        app:shadowColor="#33000000"
+                        />
 
                 </LinearLayout>
 
-
-                <!-- 底部分隔线 -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0.5dp"
-                    android:layout_gravity="bottom"
-                    android:background="@color/SecondaryColorPack_LineColor"
-                    />
 
             </FrameLayout>
 

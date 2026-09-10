@@ -541,7 +541,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
                     interactionSource = remember { MutableInteractionSource() },
                     indication = ripple(
                         bounded = true,
-                        color = androidx.compose.ui.graphics.Color.Gray
+                        color = Color.Gray
                     )
                 ) { onClick() },
             contentAlignment = Alignment.Center,
@@ -648,7 +648,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
     @Suppress("DEPRECATION")
     fun Modifier.uniformShadow(
         blurRadius: Float = 15f,
-        shadowColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.1f)
+        shadowColor: Color = Color.Black.copy(alpha = 0.1f)
     ) = this.drawBehind {
         drawIntoCanvas { canvas ->
             val paint = Paint().apply {
@@ -738,7 +738,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             //计算目标宽度
             val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
             val targetScreenHeightDp = (screenHeightPx / density).toInt()
-
+            //post执行设置
             mainCard.post {
                 if (targetScreenHeightDp < 50){
                     mainCard.layoutParams.width = screenWidthPx
@@ -752,16 +752,14 @@ class PlayerFragmentMediaInfo: DialogFragment() {
 
                 mainCard.requestLayout()
             }
-
         }else{
             //计算目标高度
             val targetHeightPx = if (useFullScreenFragment){
-                screenHeightPx - DeviceInfo.statusBarHeight
+                screenHeightPx - 2 * DeviceInfo.statusBarHeight
             }else{
                 (screenHeightPx * 0.7).toInt()
             }
-
-
+            //post执行设置
             mainCard.post {
 
                 mainCard.layoutParams.height = targetHeightPx

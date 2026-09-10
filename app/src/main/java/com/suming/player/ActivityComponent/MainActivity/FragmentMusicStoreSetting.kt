@@ -20,11 +20,13 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
@@ -35,6 +37,7 @@ import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.R
 import com.suming.player.SettingsRequestCenter
+import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -79,7 +82,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
         register(view)
 
         //启动高级效果
-        startAddonEffect(view)
+        setupScrollContentListener(view)
 
     }
 
@@ -87,6 +90,8 @@ class FragmentMusicStoreSetting: DialogFragment() {
         //初始化常用视图
         SortMethodText = view.findViewById(R.id.current_sort)
         SortOrientationText = view.findViewById(R.id.current_sort_orientation)
+
+        AppBar_Background = view.findViewById(R.id.AppBar_Background)
 
         //设置卡片高度
         display(view)
@@ -117,9 +122,8 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
 
             //按钮：退出
-            val ButtonExit = view.findViewById<ImageButton>(R.id.buttonExit)
+            val ButtonExit = view.findViewById<CircleButton>(R.id.buttonExit)
             ButtonExit.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
                 dismiss()
             }
             //按钮：点击空白区域退出
@@ -128,15 +132,14 @@ class FragmentMusicStoreSetting: DialogFragment() {
                 dismiss()
             }
             //按钮：锁定页面
-            val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
+            val ButtonLock = view.findViewById<CircleButton>(R.id.buttonLock)
             ButtonLock.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
                 lockPage = !lockPage
                 if (lockPage){
-                    ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
+                    ButtonLock.setIconDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_more_button_lock_on))
                 }
                 else{
-                    ButtonLock.setImageResource(R.drawable.ic_more_button_lock_off)
+                    ButtonLock.setIconDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_more_button_lock_off))
                 }
             }
             //按钮：重读媒体库
@@ -293,23 +296,6 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
 
 
-    //启动高级效果
-    private lateinit var AppBar_Blur : LinearLayout
-    private lateinit var AppBar_Container : FrameLayout
-    private fun startAddonEffect(view: View){
-        //安卓12以前返回
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
-
-        AppBar_Blur = view.findViewById(R.id.AppBar_Blur)
-        AppBar_Container = view.findViewById(R.id.AppBar_Container)
-
-        val blurEffect = RenderEffect.createBlurEffect(15f, 15f, Shader.TileMode.CLAMP);
-
-        //AppBar_Blur.setRenderEffect(blurEffect)
-
-
-    }
-
 
     //Functions
     //发送Fragment返回值
@@ -408,6 +394,64 @@ class FragmentMusicStoreSetting: DialogFragment() {
         }
     }
 
+
+    //顶栏效果
+    private lateinit var AppBar_Background : LinearLayout
+    //顶栏效果
+    private var isTopBarVisible = false
+    private fun topBarEffect_Fade_In(){
+        if (!isTopBarVisible) return
+        isTopBarVisible = false
+
+        AppBar_Background.animate()
+            .alpha(0f)
+            .setDuration(animDuration)
+            .withEndAction { AppBar_Background.visibility = View.GONE }
+            .start()
+
+    }
+    private fun topBarEffect_Fade_Out(){
+        if (isTopBarVisible) return
+        isTopBarVisible = true
+
+        AppBar_Background.visibility = View.VISIBLE
+        AppBar_Background.alpha = 0f
+        AppBar_Background.animate()
+            .alpha(1f)
+            .setDuration(animDuration)
+            .start()
+    }
+    private var animDuration: Long = 100
+    //滚动区域监听
+    private var scrollArea: NestedScrollView? = null
+    private fun setupScrollContentListener(view: View){
+        if (scrollArea == null){
+            scrollArea = view.findViewById(R.id.NestedScrollView)
+        }
+        scrollArea?.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+            //未在顶部时隐藏顶部栏文字区
+            if (scrollY == 0){
+                topBarEffect_Fade_In()
+            }
+            else{
+                topBarEffect_Fade_Out()
+            }
+        }
+    }
+    //模糊效果
+    private fun startAddonEffect(view: View){
+        //安卓12以前返回
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+
+        AppBar_Background = view.findViewById(R.id.AppBar_Background)
+
+
+        val blurEffect = RenderEffect.createBlurEffect(15f, 15f, Shader.TileMode.CLAMP);
+
+
+    }
+
+
     //设置面板细节
     private fun display(view: View){
         //获取当前屏幕方向
@@ -427,7 +471,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
             //计算目标宽度
             val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
             val targetScreenHeightDp = (screenHeightPx / density).toInt()
-
+            //post执行设置
             mainCard.post {
                 if (targetScreenHeightDp < 50){
                     mainCard.layoutParams.width = screenWidthPx
@@ -441,16 +485,14 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
                 mainCard.requestLayout()
             }
-
         }else{
             //计算目标高度
             val targetHeightPx = if (useFullScreenFragment){
-                screenHeightPx - DeviceInfo.statusBarHeight
+                screenHeightPx - 2 * DeviceInfo.statusBarHeight
             }else{
                 (screenHeightPx * 0.7).toInt()
             }
-
-
+            //post执行设置
             mainCard.post {
 
                 mainCard.layoutParams.height = targetHeightPx

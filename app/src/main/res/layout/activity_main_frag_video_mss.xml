@@ -33,18 +33,17 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 android:clickable="true"
                 android:translationZ="5dp">
-                <!-- BrushArea -->
+                <!-- 标题 背景 (brush) -->
                 <View
                     android:id="@+id/gradientMask"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
                     android:alpha="100"
                     android:background="@drawable/vec_brush_area_v2_smooth" />
-                <!-- 标题：更多选项 -->
+                <!-- 标题 核心 -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="start"
+                    android:layout_height="50dp"
                     android:background="@android:color/transparent"
                     android:clickable="false"
                     android:orientation="horizontal">
@@ -73,10 +72,12 @@
                         android:textColor="@color/HeadText"
                         android:textSize="20sp" />
 
+                    <!-- 占位 -->
                     <View
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1"/>
+
                     <!-- 按钮：页面锁定 -->
                     <com.suming.player.ViewWidget.CircleButton
                         android:id="@+id/buttonLock"

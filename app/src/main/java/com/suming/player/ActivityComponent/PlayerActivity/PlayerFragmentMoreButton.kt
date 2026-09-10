@@ -1161,7 +1161,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //计算目标宽度
             val targetScreenWidthPx = (screenWidthPx * 0.4).toInt()
             val targetScreenHeightDp = (screenHeightPx / density).toInt()
-
+            //post执行设置
             mainCard.post {
                 if (targetScreenHeightDp < 50){
                     mainCard.layoutParams.width = screenWidthPx
@@ -1175,16 +1175,14 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
                 mainCard.requestLayout()
             }
-
         }else{
             //计算目标高度
             val targetHeightPx = if (useFullScreenFragment){
-                screenHeightPx - DeviceInfo.statusBarHeight
+                screenHeightPx - 2 * DeviceInfo.statusBarHeight
             }else{
                 (screenHeightPx * 0.7).toInt()
             }
-
-
+            //post执行设置
             mainCard.post {
 
                 mainCard.layoutParams.height = targetHeightPx
