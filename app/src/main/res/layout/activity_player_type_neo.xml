@@ -184,7 +184,7 @@
                         />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-            <!-- 你再看看你的后面呢 (错误遮罩因未知原因，恢复正常时没自己关闭,给个手动关闭的选项) -->
+            <!-- 已在播放?? -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/layer_error_close"
                 android:layout_width="wrap_content"
@@ -213,7 +213,7 @@
                         android:layout_marginEnd="10dp"
                         android:layout_marginTop="5dp"
                         android:layout_marginBottom="5dp"
-                        android:text="你再看看你的后面呢"
+                        android:text="已在播放??"
                         android:textColor="@color/HeadText"
                         android:textSize="11sp"
                         />
@@ -290,6 +290,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:orientation="vertical">
+
             <!-- 缩略图上方按钮区 -->
             <LinearLayout
                 android:id="@+id/controller_bottom_bar"
@@ -422,7 +423,6 @@
                 android:visibility="visible"
                 android:clickable="true">
 
-
                 <!-- scroller区域 -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/controller_s_area_scroller"
@@ -432,7 +432,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     android:background="@color/MainColorPack_SurfaceBackground"
-                    android:visibility="visible"
+                    android:visibility="gone"
                     android:clickable="true">
                     <!-- 缩略图区顶部分隔线 -->
                     <View
@@ -493,38 +493,38 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:visibility="gone">
-                    <androidx.cardview.widget.CardView
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
+                        android:layout_height="60dp"
                         android:layout_gravity="center"
-                        app:cardCornerRadius="50dp"
-                        app:cardElevation="3dp"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginEnd="10dp"
                         android:layout_marginTop="2dp"
                         android:layout_marginBottom="20dp"
                         android:backgroundTint="@color/MainColorPack_ContentCardBackground">
+                        <!-- BrushArea -->
+                        <View
+                            android:id="@+id/AppBarGradientMask"
+                            android:layout_width="match_parent"
+                            android:layout_height="60dp"
+                            android:alpha="100"
+                            android:background="@drawable/vec_brush_area_v3_rev_color"
+                            />
+                        <!-- SeekBar -->
                         <SeekBar
                             android:id="@+id/controller_seekbar"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="5dp"
-                            android:layout_marginEnd="5dp"
+                            android:layout_height="60dp"
                             android:max="1000"
-                            android:progress="0"
+                            android:progress="100"
                             android:secondaryProgress="0"
-                            android:thumbTint="@color/HeadText"
-                            android:progressBackgroundTint="@color/Text2"
-                            android:progressTint="@color/HeadText"
                             android:thumbOffset="7dp"
-                            android:backgroundTint="@android:color/transparent"
+                            android:progressTint="@color/Text_Level_3"
+                            android:thumbTint="@color/Text_Level_3"
                             />
-                    </androidx.cardview.widget.CardView>
+                    </FrameLayout>
 
                 </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
-
 
         </LinearLayout>
 

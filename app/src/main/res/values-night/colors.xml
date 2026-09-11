@@ -128,6 +128,12 @@
     <!-- 透明/模糊区域 -->
     <color name="Transparent_Head_Background">#FD161616</color>
 
+    <!-- 渐变区域 -->
+    <color name="BrushArea_Null">#00000000</color>
+    <color name="BrushArea_v1_Spot_Heavy">#BB000000</color>
+    <color name="BrushArea_v1_Spot_Light">#CC000000</color>
+    <color name="BrushArea_v1_Spot_Middle">#CC000000</color>
+
 
     <!-- 工具颜色 -->
     <color name="White">#FFFFFFFF</color>

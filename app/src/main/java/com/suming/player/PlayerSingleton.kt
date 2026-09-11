@@ -255,8 +255,12 @@ object PlayerSingleton {
 
 
     }
-    //清除当前媒体项
-    fun clearMediaItem(clear_info_center: Boolean = true){
+    //清除当前媒体项(因切换媒体而清除时,real_clear需要传入false)
+    var state_real_clear = false
+    fun clearMediaItem(clear_info_center:Boolean = true,real_clear: Boolean=true){
+        //写入状态
+        state_real_clear = real_clear
+        //执行清除
         core_exoplayer_clearMediaItem()
         //清除媒体项信息缓存
         if (clear_info_center){
@@ -339,48 +343,6 @@ object PlayerSingleton {
         isLocked = false
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //阶段事件回环
-    private var engine_phase = 0
-
-    const val engine_phase_offline = 1   //未启动
-    const val engine_phase_build_start = 2   //启动(创建)中
-    const val engine_phase_build_success = 2
-    const val engine_phase_build_fail = 2
-    const val engine_phase_online = 3   //上线(启动完成)
-    const val engine_phase_set_item_start = 4   //开始进入媒体设置流程
-    const val engine_phase_set_item_success = 5   //设置完成
-    const val engine_phase_item_ready = 6  //
-    const val engine_phase_clear_item_start = 6  //开始清除项
-    const val engine_phase_clear_item_success = 7   //清除完成
-    const val engine_phase_error_occur = 21  //错误
-    const val engine_phase_idle = 22   //空闲
-    const val engine_phase_release_start = 8   //销毁
-    const val engine_phase_release_complete = 8   //销毁
 
 
 
@@ -478,7 +440,10 @@ object PlayerSingleton {
         }
 
         //暂停播放
-        withContext(Dispatchers.Main) { pausePlay() }
+        withContext(Dispatchers.Main){
+            pausePlay()
+            clearMediaItem(real_clear = false)
+        }
 
         //将MediaItemForPlay缓存到PlayerInfoCenter
         PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay)
@@ -489,9 +454,12 @@ object PlayerSingleton {
         //合成并设置媒体项
         val cover_img_uri = getArtworkFrameUri(context,URI_UP)
 
+        //延迟后再设置
         val delayMillis = SettingsRequestCenter.GET_PRF_forTestDelayMillis(context)
         delay(delayMillis)
 
+
+        //执行设置新项
         withContext(Dispatchers.Main) {
             //设置播放状态
             _player?.playWhenReady = playWhenReady
@@ -537,7 +505,6 @@ object PlayerSingleton {
 
         //请求音频焦点和启动监听器(仅在触发自动播放时进行)
         if (_player?.playWhenReady ?: false){
-            consoleLog("onMediaItemChanged -触发自动播放")
 
             //启动监听器(仅在播放时申请焦点)
             val focus = _player?.isPlaying ?: false
@@ -545,11 +512,7 @@ object PlayerSingleton {
 
             //请求音频焦点
             PlayerListener.requestAudioFocus(context, force_request = false)
-        }else{
-            consoleLog("onMediaItemChanged -未触发自动播放")
-
         }
-
 
     }
 

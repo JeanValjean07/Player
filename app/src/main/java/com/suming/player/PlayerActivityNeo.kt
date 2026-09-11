@@ -158,6 +158,8 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
 
 
+
+
     override fun attachBaseContext(newBase: Context?) {
         //在onCreate之前切换颜色模式,可避免活动重建
         if (SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(this)) {
@@ -319,6 +321,10 @@ class PlayerActivityNeo: AppCompatActivity(){
         controller_timer_total = findViewById(R.id.controller_timer_total)
         noticeCapsule = findViewById(R.id.noticeCapsule)
         playerView = findViewById(R.id.playerView)
+
+        layer_error = findViewById(R.id.player_core_layer_error)
+        layer_error_text = findViewById(R.id.layer_error_text)
+
 
         //主线程设置项
 
@@ -675,7 +681,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             playerTouchPad.setOnTouchListener { _, event ->
                 when (event.actionMasked){
                     MotionEvent.ACTION_DOWN -> {
-                        //变更状态标记
+                        //清除双指状态
                         ACTION_POINTER_DOWN = false
                         touchState_two_fingers = false
                         //重置部分状态
@@ -684,15 +690,17 @@ class PlayerActivityNeo: AppCompatActivity(){
                         touchState_left_noticed = false
                         touchState_right_noticed = false
                         touchState_scroll_vibrated = false
+
                         //记录1指初始坐标
                         finger1x = event.x
                         finger1y = event.y
+
                         //屏蔽纵向误触区域
-                        if (finger1y < display_screen_height_pixels * 0.2
-                            || finger1y > display_screen_height_pixels * 0.95){
+                        if (finger1y < display_screen_height_pixels * 0.2 || finger1y > display_screen_height_pixels * 0.95){
                             return@setOnTouchListener false
                         }
-                        //分割横向功能区:初步信息获取
+
+                        //判断点击区域
                         if (finger1x < display_screen_width_pixels * 0.2) {
                             touchLeft = true
                         }
@@ -705,6 +713,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                             touchCenterDistance = 0f
                         }
 
+                        //传递
                         gestureDetectorPlayArea.onTouchEvent(event)
                     }
                     MotionEvent.ACTION_UP -> {
@@ -740,7 +749,9 @@ class PlayerActivityNeo: AppCompatActivity(){
                     MotionEvent.ACTION_POINTER_DOWN -> {
                         //记录手指2的坐标
                         ACTION_POINTER_DOWN = true
+
                         val ptrIndex = event.actionIndex
+
                         finger2x = event.getX(ptrIndex)
                         finger2y = event.getY(ptrIndex)
                         if (event.pointerCount == 2){
@@ -918,7 +929,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         onFragmentOpen()
                     }
                     //重新绑定播放器视图
-                    FragmentConnector.fragment_more_button_bind_play_view -> bindPlayerView()
+                    FragmentConnector.fragment_more_button_bind_play_view -> reBindPlayerView()
                     //删除自定义封面图
                     FragmentConnector.fragment_more_button_delete_custom_cover -> deleteCustomCover()
                     //立即退出
@@ -984,7 +995,6 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //设置媒体项决策程序 savedInstanceState == null 仅在首次启动时决定是否播放
         if (savedInstanceState == null){
-            consoleLog("mainBusiness: savedInstanceState == null")
             //
             if (URI_S_O == Undefined && ongoing_URI == Uri.EMPTY ){
                 //分支描述:未传入播放链接,也没有正在播放的项,弹窗主动输入(彩蛋分支)
@@ -1035,7 +1045,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
             }
         }else{
-            consoleLog("mainBusiness: savedInstanceState != null")
+            //
             if (ongoing_URI == Uri.EMPTY){
                 showErrorCover("当前没有正在播放的项")
             }else{
@@ -1449,8 +1459,11 @@ class PlayerActivityNeo: AppCompatActivity(){
         closeErrorCover()
 
         //非视频时主动退出页面
-        if (PlayerInfoCenter.GET_Media_SPECIFIC_TYPE() != MediaType.Video){
-            consoleLog("onMediaItemChanged: 失败-非视频项")
+        val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+        if (mediaType != MediaType.Video){
+            //
+            if (mediaType == MediaType.Audio) showCustomToast("已切换到音乐",3)
+            //
             finish()
             return
         }
@@ -1482,10 +1495,10 @@ class PlayerActivityNeo: AppCompatActivity(){
         updateKeepScreenOn()
 
 
-
-        if (!state_setting_media){
-            consoleLog("onMediaItemCleared: 失败-媒体项被清除除了")
-            showErrorCover("播放项被清除了，可在播放列表面板中启动播放")
+        if (PlayerSingleton.state_real_clear){
+            showErrorCover("未在播放")
+        }else{
+            showErrorCover("加载中",hide_buttons = true)
         }
 
     }
@@ -1555,8 +1568,29 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
 
 
+    //重新绑定播放器视图+重置位置
+    private fun reBindPlayerView(){
+        //
+        bindPlayerView()
+        //
+        playerView.scaleX = 1f
+        playerView.scaleY = 1f
 
+        playerView.pivotX = 0f
+        playerView.pivotY = 0f
 
+        center0pivoted = false
+
+        center0x = 0f
+        center0y = 0f
+        center1x = 0f
+        center1y = 0f
+        center2x = 0f
+        center2y = 0f
+
+        distanceGap = 0f
+
+    }
 
 
 
@@ -2651,9 +2685,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
         //恢复播放状态
-        if (playState_scroller_wasPlaying){
-                continuePlay()
-            }
+        if (playState_scroller_wasPlaying) continuePlay()
+
 
         //重置为寻找关键帧
         setSeekParameter_useSync(1)
@@ -3238,12 +3271,24 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
                 //触摸立即触发
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                    //consoleLog("onStartTrackingTouch")
+                    //暂停被动控制
                     stop_S_Area_PassiveControl()
+                    //记录暂停状态
+                    recordScrollerWasPlayingState()
                 }
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                    //consoleLog("onStopTrackingTouch")
-                    start_S_Area_PassiveControl()
+                    //检查松手时是否有seek指令还在运行
+                    if (isSeekReady){
+                        //恢复播放状态
+                        if (playState_scroller_wasPlaying) continuePlay()
+                        //
+                        clearScrollerState()
+
+                    }else{
+                        Mark_playerReadyFrom = Mark_playerReadyFrom_TailSeek
+                    }
+
+
                 }
             })
 
@@ -3251,7 +3296,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             if (player?.isPlaying == true){
                 start_S_Area_PassiveControl()
             }else{
-                syncScrollTask_Core_Compute()
+                syncSeekBarPosition_Core()
             }
         }
     }
@@ -3610,6 +3655,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //无播放项遮罩
+    private lateinit var layer_error: LinearLayout
+    private lateinit var layer_error_text: TextView
     private fun closeErrorCover(){
         val cover = findViewById<LinearLayout>(R.id.player_core_layer_error)
         val errorText = findViewById<TextView>(R.id.layer_error_text)
@@ -3618,36 +3665,43 @@ class PlayerActivityNeo: AppCompatActivity(){
         cover.visibility = View.GONE
 
     }
-    private fun showErrorCover(text: String){
-        val cover = findViewById<LinearLayout>(R.id.player_core_layer_error)
-        val errorText = findViewById<TextView>(R.id.layer_error_text)
+    private fun showErrorCover(text: String,hide_buttons: Boolean=false){
+        //修改提示文本
+        layer_error_text.text = text
+        layer_error.visibility = View.VISIBLE
 
-        errorText.text = text
-
-        cover.visibility = View.VISIBLE
-
-        //设置点击事件
         val exitButton = findViewById<CardView>(R.id.layer_error_exit)
-        exitButton.setOnClickListener {
-            ToolVibrate().vibrate(this)
-
-            finish()
-        }
         val openListButton = findViewById<CardView>(R.id.layer_error_open_list)
-        openListButton.setOnClickListener {
-            ToolVibrate().vibrate(this)
-
-            startPlayListFragment()
-        }
         val closeButton = findViewById<CardView>(R.id.layer_error_close)
-        closeButton.setOnClickListener {
-            ToolVibrate().vibrate(this)
-            //检查播放器是否已经正常恢复
-            val (current_media_ongoing, current_media_uri) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-            if (!current_media_ongoing || current_media_uri == Uri.EMPTY){
-                showCustomToast("再次检查发现,目前确实没有媒体在播放", 3)
-            }else{
-                closeErrorCover()
+        //隐藏或设置点击
+        if (hide_buttons){
+            exitButton.visibility = View.GONE
+            openListButton.visibility = View.GONE
+            closeButton.visibility = View.GONE
+        }else{
+            exitButton.visibility = View.VISIBLE
+            openListButton.visibility = View.VISIBLE
+            closeButton.visibility = View.VISIBLE
+            //设置点击事件
+            exitButton.setOnClickListener {
+                ToolVibrate().vibrate(this)
+
+                finish()
+            }
+            openListButton.setOnClickListener {
+                ToolVibrate().vibrate(this)
+
+                startPlayListFragment()
+            }
+            closeButton.setOnClickListener {
+                ToolVibrate().vibrate(this)
+                //检查播放器是否已经正常恢复
+                val (current_media_ongoing, current_media_uri) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                if (!current_media_ongoing || current_media_uri == Uri.EMPTY){
+                    showCustomToast("再次检查发现,目前确实没有媒体在播放", 3)
+                }else{
+                    closeErrorCover()
+                }
             }
         }
 
@@ -3858,18 +3912,20 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var task_syncScrollerPosition_Running = false
     //Runnable-1.1:根据视频时间更新seekbar位置
     private val task_syncSeekBarPosition_Handler = Handler(Looper.getMainLooper())
+    private fun syncSeekBarPosition_Core(){
+        val duration = player?.duration ?: -1L
+        val currentPosition = player?.currentPosition ?: -1L
+        if (duration == -1L || currentPosition == -1L) return
+        //计算视频进度比例
+        val progressRatio = currentPosition / duration.toFloat()
+        //consoleLog("progressRatio = $progressRatio")
+        //设定进度条位置(步进1000)
+        seekbar.progress = (progressRatio * 1000).toInt()
+    }
     private val task_syncSeekBarPosition_Runnable = object : Runnable {
         override fun run(){
-            //consoleLog("task_syncSeekBarPosition_Runnable")
 
-            val duration = player?.duration ?: -1L
-            val currentPosition = player?.currentPosition ?: -1L
-            if (duration == -1L || currentPosition == -1L) return
-            //计算视频进度比例
-            val progressRatio = currentPosition / duration.toFloat()
-            //consoleLog("progressRatio = $progressRatio")
-            //设定进度条位置(步进1000)
-            seekbar.progress = (progressRatio * 1000).toInt()
+            syncSeekBarPosition_Core()
 
             //进入下一次循环
             task_syncSeekBarPosition_Handler.postDelayed(this,value_syncSeekBar_runnableGapMs )  //value_syncSeekBar_runnableGapMs
@@ -4132,7 +4188,6 @@ class PlayerActivityNeo: AppCompatActivity(){
             ButtonChangeOrientation("long")
         }
     }
-
 
     //播放区域点击事件
     //<editor-fold desc="点击事件变量">

@@ -455,9 +455,8 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!--  卡片：播放页样式和对应设置  -->
+            <!--  卡片：播放引擎设置  -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/contentCard_playPage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
@@ -471,13 +470,145 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="14dp">
-                    <!--  卡片标题：播放页面设置  -->
-                    <TextView
+                    <!-- 卡片标题：播放器引擎设置 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
+                        android:layout_height="30dp"
+                        android:gravity="center|start"
+                        android:layout_marginBottom="10dp"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_setting_shipwheel"
+                            tools:ignore="ContentDescription" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="播放器引擎设置"
+                            android:textSize="16sp"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="9dp"
+                            android:textColor="@color/Text2" />
+                    </LinearLayout>
+
+                    <!--  开关:禁用媒体会话插入预览图  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="播放页面设置"
-                        android:textColor="@color/HeadText"
-                        android:textSize="17sp" />
+                        android:layout_marginTop="0dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:layout_weight="0"
+                                android:text="禁用媒体会话预览图"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/DisableMediaArtWork"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="0"
+                                app:thumbTint="@color/switchThumbColor"
+                                app:trackTint="@color/switchTrackColor"
+                                tools:ignore="TooManyViews" />
+                        </LinearLayout>
+                        <!--  提示信息  -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="部分老系统的媒体会话样式非常绚丽，建议保持使用预览图。在部分系统上，设置预览图会导致系统界面崩溃(突然黑屏,软重启等)，谨慎修改此选项。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                    <!--  开关:后台播放时关闭视频轨道  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:layout_weight="0"
+                                android:text="后台播放时关闭视频轨道"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/DisableVideoTrackOnBack"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="0"
+                                app:thumbTint="@color/switchThumbColor"
+                                app:trackTint="@color/switchTrackColor"
+                                tools:ignore="TooManyViews" />
+                        </LinearLayout>
+                        <!--  提示信息  -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="即使开启此选项，关闭视频轨道操作也只会在退到后台一分钟后进行。在安卓12及以下系统，操作轨道偶尔会导致播放器崩溃，建议关闭。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            <!--  卡片：视频播放页 样式和对应设置  -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/MainColorPack_ContentCardBackground"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="10dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+                    <!--  卡片标题：视频 播放页面设置  -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="30dp"
+                        android:gravity="center|start"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_main_fragment_video_icon"
+                            tools:ignore="ContentDescription" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="视频播放页面设置"
+                            android:textColor="@color/HeadText"
+                            android:textSize="17sp" />
+                    </LinearLayout>
 
                     <!--  选单：播放页样式  -->
                     <LinearLayout
@@ -542,68 +673,6 @@
                         </androidx.cardview.widget.CardView>
                     </LinearLayout>
 
-                    <!-- 段落 -->
-                    <!-- 段落标题：播放器核心设置 -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:minHeight="40dp"
-                        android:orientation="horizontal">
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/ic_setting_shipwheel"
-                            tools:ignore="ContentDescription" />
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="播放器引擎设置"
-                            android:textSize="16sp"
-                            android:layout_gravity="center"
-                            android:layout_marginStart="9dp"
-                            android:textColor="@color/Text2" />
-                    </LinearLayout>
-                    <!--  开关:禁用媒体会话插入预览图  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="0dp"
-                        android:orientation="vertical">
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="25dp"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_weight="0"
-                                android:text="禁用媒体会话预览图"
-                                android:textColor="@color/HeadText"
-                                android:textSize="14sp" />
-                            <View
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1" />
-                            <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/DisableMediaArtWork"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor"
-                                tools:ignore="TooManyViews" />
-                        </LinearLayout>
-                        <!--  提示信息  -->
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="部分老系统的媒体会话样式非常绚丽，建议保持使用预览图。在部分系统上，设置预览图会导致系统界面崩溃(突然黑屏,软重启等)，谨慎修改此选项。"
-                            android:textSize="12sp" />
-                    </LinearLayout>
 
                     <!-- 标题：通用播放页设置 -->
                     <LinearLayout
@@ -770,44 +839,6 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="向系统申请使用高刷新率，不保证一定有效。若发现您的播放页被锁60Hz，可尝试开启此选项。"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                    <!--  开关:后台播放时关闭视频轨道  -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="vertical">
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="25dp"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="center"
-                                android:layout_weight="0"
-                                android:text="后台播放时关闭视频轨道"
-                                android:textColor="@color/HeadText"
-                                android:textSize="14sp" />
-                            <View
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1" />
-                            <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/DisableVideoTrackOnBack"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor"
-                                tools:ignore="TooManyViews" />
-                        </LinearLayout>
-                        <!--  提示信息  -->
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="即使开启此选项，关闭视频轨道操作也只会在退到后台一分钟后进行。在安卓12及以下系统，操作轨道偶尔会导致播放器崩溃，建议关闭。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关：退出时先转为竖屏  -->
@@ -1267,6 +1298,184 @@
                             android:text="控制拖动进度条时，播放器的寻帧间隔。此选项开性能销较大，带来发热和耗电，降低间隔需谨慎。"
                             android:textSize="12sp" />
                     </LinearLayout>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            <!--  卡片：音频播放页 样式和对应设置  -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/MainColorPack_ContentCardBackground"
+                app:cardCornerRadius="15dp"
+                app:cardElevation="10dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+                    <!--  卡片标题：音乐 播放页面设置  -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="30dp"
+                        android:gravity="center|start"
+                        android:orientation="horizontal">
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_main_fragment_music_icon"
+                            tools:ignore="ContentDescription" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="音乐播放页面设置"
+                            android:textColor="@color/HeadText"
+                            android:textSize="17sp" />
+                    </LinearLayout>
+
+                    <!--  开关:显示专辑封面  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:layout_weight="0"
+                                android:text="显示专辑封面"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/SC_Audio_DontShowAlbumFrame"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="0"
+                                app:thumbTint="@color/switchThumbColor"
+                                app:trackTint="@color/switchTrackColor" />
+                        </LinearLayout>
+                        <!-- 提示文本 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="如果有些封面不适合展示，可选择关闭。也可长按关闭。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                    <!--  开关:使用文件名作为标题  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:layout_weight="0"
+                                android:text="使用文件名作为标题"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/SC_Audio_UseFileNameAsTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="0"
+                                app:thumbTint="@color/switchThumbColor"
+                                app:trackTint="@color/switchTrackColor" />
+                        </LinearLayout>
+                        <!-- 提示文本 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="部分媒体可能未写入标题元数据，可选择显示文件名，也可点击切换。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!--  选单：SeekBar位置更新间隔  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:layout_weight="0"
+                                android:text="进度条位置刷新间隔"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/CB_Audio_SyncSeekBar_Millis"
+                                android:layout_width="wrap_content"
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="2dp"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                android:layout_gravity="center"
+                                app:cardElevation="1dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="match_parent"
+                                        android:layout_marginStart="5dp"
+                                        android:gravity="center"
+                                        android:text="加载中"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp"
+                                        />
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:padding="2dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_setting_arrow_down"
+                                        tools:ignore="ContentDescription" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
+                        </LinearLayout>
+                        <!--  提示信息  -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="播放时的进度条位置刷新间隔。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
