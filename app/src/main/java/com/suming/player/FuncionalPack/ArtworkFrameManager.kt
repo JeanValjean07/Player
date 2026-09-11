@@ -47,7 +47,7 @@ object ArtworkFrameManager {
 
 
 
-    //获取Artwork图片Bitmap(如果存在自定义图就返回自定义的)
+    //获取 Artwork Bitmap (如果存在自定义图就返回自定义的)
     fun GET_ArtworkFrame_Bitmap(context: Context, type: String, artwork_media_api_id: Long): Bitmap? {
         //确保文件路径存在
         initFile(context)
@@ -104,7 +104,7 @@ object ArtworkFrameManager {
         }
     }
 
-    //获取Artwork图片uri
+    //获取 Artwork URI
     fun GET_ArtworkFrame_Uri(context: Context, type: String, artwork_media_api_id: Long): Uri {
         when(type){
             MediaType.Video -> {
@@ -147,6 +147,29 @@ object ArtworkFrameManager {
         }
     }
 
+    //获取音乐专辑大图 Bitmap
+    fun GET_ArtworkFrame_Audio_Album(context: Context, artwork_media_api_id: Long): Bitmap? {
+        //确保文件路径存在
+        initFile(context)
+
+        //合成目标文件对象
+        val artwork_Frame_File = File(artwork_File_path_audio, "${artwork_media_api_id}_full.webp")
+
+        //检查目标图是否存在
+        if (artwork_Frame_File.exists()){
+            //取出图片
+            val artwork_Frame_Bitmap = BitmapFactory.decodeFile(artwork_Frame_File.absolutePath)
+
+            //在本地直接保存了
+            CORE_saveFile_Bitmap(artwork_File_path_audio!!, "${artwork_media_api_id}_full.webp", artwork_Frame_Bitmap)
+
+            return artwork_Frame_Bitmap
+        }else{
+            return null
+        }
+
+
+    }
 
 
 
@@ -163,7 +186,6 @@ object ArtworkFrameManager {
             }
             MediaType.Audio -> {
                 if (artwork_File_path_audio == null) initFile(context)
-
 
                 CORE_saveFile_Bitmap(artwork_File_path_audio!!, "${artwork_media_api_id}.webp", artwork_Frame_Bitmap)
             }

@@ -116,7 +116,6 @@
 
             </FrameLayout>
 
-
             <!-- 滚动区域 -->
             <androidx.core.widget.NestedScrollView
                 android:id="@+id/NestedScrollView"
@@ -130,14 +129,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="vertical">
-
                     <!-- 顶部占位 -->
                     <Space
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         />
-
-
 
                     <!-- 重读媒体库 -->
                     <androidx.cardview.widget.CardView
@@ -148,9 +144,9 @@
                         android:layout_marginEnd="10dp"
                         android:layout_marginTop="10dp"
                         android:layout_marginBottom="10dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="10dp"
-                        app:cardElevation="3dp">
+                        app:cardElevation="5dp">
                         <TextView
                             android:id="@+id/ButtonTextReLoadFromMediaStore"
                             android:layout_width="match_parent"
@@ -170,9 +166,9 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
                         android:layout_marginBottom="10dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -233,6 +229,7 @@
                                 android:id="@+id/sort_type_area"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:layout_marginStart="30dp"
                                 android:orientation="vertical">
                                 <!-- 正序或倒序 -->
                                 <LinearLayout
@@ -341,9 +338,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -385,9 +382,9 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginTop="10dp"
                         android:layout_marginEnd="10dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp">
+                        app:cardElevation="5dp">
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -535,6 +532,87 @@
                             </LinearLayout>
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
+                    <!-- 卡片：更多设置(音乐独立设置) -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="10dp"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
+                        app:cardCornerRadius="15dp"
+                        app:cardElevation="5dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_marginBottom="5dp"
+                            android:layout_marginStart="5dp"
+                            android:orientation="vertical">
+                            <!-- 标题：更多设置 -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_general_camara"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="更多设置"
+                                    android:textSize="16sp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:textColor="@color/Text2" />
+                            </LinearLayout>
+                            <!-- 列表选项：默认播放方式(播放时弹出播放页) -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:minHeight="40dp"
+                                android:orientation="horizontal">
+                                <ImageView
+                                    android:layout_width="19dp"
+                                    android:layout_height="19dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:layout_marginTop="1dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_main_fragment_tab"
+                                    tools:ignore="ContentDescription" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center"
+                                    android:layout_marginStart="10dp"
+                                    android:text="自动弹出播放页"
+                                    android:textColor="@color/Text2"
+                                    android:textSize="16sp" />
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="0dp"
+                                    android:layout_weight="1" />
+                                <androidx.appcompat.widget.SwitchCompat
+                                    android:id="@+id/SC_startFullPage_whenSwitch"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="20dp"
+                                    android:layout_gravity="center"
+                                    android:layout_marginEnd="5dp"
+                                    app:thumbTint="@color/switchThumbColor"
+                                    app:trackTint="@color/switchTrackColor"
+                                    tools:ignore="InefficientWeight" />
+                            </LinearLayout>
+
+                        </LinearLayout>
+                    </androidx.cardview.widget.CardView>
                     <!-- 媒体储存提示 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
@@ -542,10 +620,10 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
                         android:layout_marginTop="10dp"
-                        android:layout_marginBottom="400dp"
-                        app:cardBackgroundColor="@color/Background4"
+                        android:layout_marginBottom="100dp"
+                        app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
-                        app:cardElevation="0dp"
+                        app:cardElevation="5dp"
                         tools:ignore="SmallSp" >
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -576,23 +654,6 @@
                                     android:textSize="16sp"
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
-                                    android:textColor="@color/Text2" />
-                            </LinearLayout>
-                            <!-- 文本区域：权限提示 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:minHeight="20dp"
-                                android:layout_marginBottom="15dp"
-                                android:orientation="horizontal">
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="如果您的系统版本达到安卓13及以上，请务必开启管理所有文件权限，否则无法读取部分目录下的音频文件，无法解码除.mp3外的音频文件媒体信息。安卓12及以下只需开启基本“仅媒体”权限即可。"
-                                    android:textSize="10sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginEnd="10dp"
                                     android:textColor="@color/Text2" />
                             </LinearLayout>
                             <!-- 文本区域：媒体储存提示 -->

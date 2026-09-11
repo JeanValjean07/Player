@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -70,6 +71,12 @@ class PlayerFragmentMoreButton: DialogFragment(){
         }
     }
 
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "PlayerFragmentMoreButton: $msg")
+        }
+    }
     //连接到共享ViewModel
     private val viewModel: PlayerViewModel by activityViewModels()
     //空字段
@@ -186,10 +193,14 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //点击顶部区域回顶
             val TopBarArea = view.findViewById<View>(R.id.TopBarArea)
             TopBarArea.setOnClickListener {
-                ToolVibrate().vibrate(context)
-                //回到顶部
-                NestedScrollView.stopNestedScroll()
-                NestedScrollView.smoothScrollTo(0, 0)
+                if (NestedScrollView.canScrollVertically(-1)){
+                    ToolVibrate().vibrate(requireContext())
+                    //滚动区域回顶
+                    NestedScrollView.stopNestedScroll()
+                    NestedScrollView.smoothScrollTo(0, 0)
+                }else{
+                    NestedScrollView.stopNestedScroll()
+                }
             }
             //面板下滑关闭
             if (!SettingsRequestCenter.get_PREFS_DisableFragmentGesture(requireContext())){
@@ -302,6 +313,30 @@ class PlayerFragmentMoreButton: DialogFragment(){
                         return@setOnTouchListener false
                     }
                 }
+            }
+
+
+
+            //测试：给main_card注册点击事件监听
+            val RootCard = view.findViewById<CardView>(R.id.main_card)
+            RootCard.setOnClickListener {
+
+
+                consoleLog("main card click")
+            }
+            RootCard.setOnTouchListener { view, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        consoleLog("main card ACTION_DOWN")
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        consoleLog("main card ACTION_MOVE")
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        consoleLog("main card ACTION_UP")
+                    }
+                }
+                return@setOnTouchListener false
             }
 
             //开启方向监听器

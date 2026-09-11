@@ -195,14 +195,16 @@ class SettingsActivity: AppCompatActivity(){
                 //检查更新
                 checkNewVersion()
             }
-
-            //顶部区域-滚动区域联动
+            //点击顶部区域
             AppBarCore.setOnClickListener {
-                ToolVibrate().vibrate(context)
-                //滚动区域回顶
-                scrollArea?.stopNestedScroll()
-                scrollArea?.smoothScrollTo(0, 0)
-
+                if (scrollArea?.canScrollVertically(-1) == true){
+                    ToolVibrate().vibrate(context)
+                    //滚动区域回顶
+                    scrollArea?.stopNestedScroll()
+                    scrollArea?.smoothScrollTo(0, 0)
+                }else{
+                    scrollArea?.stopNestedScroll()
+                }
             }
 
 

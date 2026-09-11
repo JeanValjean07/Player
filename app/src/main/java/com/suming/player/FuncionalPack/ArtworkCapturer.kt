@@ -22,6 +22,14 @@ import kotlin.random.Random
 @Suppress("unused")
 object ArtworkCapturer {
 
+    //日志控制
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", msg)
+        }
+    }
+
+
     //视频---------------------------------------------------------------
     //注意：对于视频,需要获取的内容是各个时间戳的截图
     //截取策略
@@ -34,8 +42,7 @@ object ArtworkCapturer {
     private var current_video_uriString = ""
     //串行截取
     private val mutex_video = Mutex()
-
-    //retriever初始化
+    //初始化 retriever
     fun initRetrieverVideo(context: Context, uri: Uri){
         //检查是否是同一个数据源
         if (uri.toString() == current_video_uriString){
@@ -47,6 +54,7 @@ object ArtworkCapturer {
         }
 
     }
+
 
     // timeUs: Long 微秒时间 / option: 截取策略 / needCheckDark: 是否检查黑屏 / needCompress: 是否需要压缩优化图片
     suspend fun captureFrameInVideo( context: Context,
@@ -187,12 +195,7 @@ object ArtworkCapturer {
     private var current_music_uriString = ""
     //串行截取
     private val mutex_music = Mutex()
-
-
-
-
-
-    //retriever初始化
+    //初始化 retriever
     fun initRetrieverMusic(context: Context, uri: Uri){
         //检查是否是同一个数据源
         if (uri.toString() == current_music_uriString){
@@ -205,10 +208,9 @@ object ArtworkCapturer {
 
     }
 
-    // needCompress: 是否需要压缩优化图片
-    suspend fun captureAlbumInMusic( context: Context,
-                                     uri: Uri,
-                                     needCompress: Boolean = false ): Bitmap? {
+
+    //获取专辑封面 (可选是否压缩)
+    suspend fun captureAlbumInMusic(context:Context,uri:Uri,needCompress:Boolean=false):Bitmap? {
         return mutex_music.withLock {
             try {
                 //检查是否需要替换数据源
@@ -237,16 +239,9 @@ object ArtworkCapturer {
                             oldBitmap.recycle()
                         }
                     }
-                    /*
-                    if (Bitmap == null) {
-                        consoleLog("ArtworkCapturerForMusic: 压缩后图片失效,需检查压缩算法")
-                        return@withLock null
-                    }
-
-                     */
 
                     return@withLock Bitmap
-                } else {
+                }else{
                     consoleLog("ArtworkCapturerForMusic: 初次获取专辑失败了")
                     return@withLock null
                 }
@@ -300,14 +295,6 @@ object ArtworkCapturer {
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)
         return bitmap
-    }
-
-
-    //日志控制
-    private fun consoleLog(msg: String, mark: Boolean = true) {
-        if (mark) {
-            Log.d("SuMing", msg)
-        }
     }
 
 }

@@ -140,8 +140,7 @@ object PlayerInfoCenter {
 
         return MediaInfo_MediaUriStandard
     }
-
-    //获取媒体是视频还是音乐
+    //获取媒体类型
     fun GET_Media_SPECIFIC_TYPE(): String {
         //尝试获取类型
         val MediaInfo_MediaType = CURRENT_MediaItemPackage?.media_SPECIFIC_MediaType ?: Undefined
@@ -162,6 +161,12 @@ object PlayerInfoCenter {
     //获取当前媒体的艺术家
     fun GET_Media_Artist(): String {
         val MediaInfo_MediaArtist = CURRENT_MediaItemPackage?.media_artist ?: Undefined
+
+        return MediaInfo_MediaArtist
+    }
+    //获取当前媒体的标题
+    fun GET_Media_Title(): String {
+        val MediaInfo_MediaArtist = CURRENT_MediaItemPackage?.media_title ?: Undefined
 
         return MediaInfo_MediaArtist
     }

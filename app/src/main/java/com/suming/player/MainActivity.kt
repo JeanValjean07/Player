@@ -736,8 +736,9 @@ class MainActivity: AppCompatActivity() {
         main_music_list_adapter = RecyclerAdapterMusic(
             context = this,
             onItemClick = { uri ->
-                ToolVibrate().vibrate(this@MainActivity)
-                startMusicPlayer(uri)
+                ToolVibrate().vibrate(context)
+                //
+                onAudioItemClick(uri)
             },
             onOptionsClick = { _, _ ->
                 ToolVibrate().vibrate(this@MainActivity)
@@ -1638,7 +1639,22 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
+    //点击列表音乐项
+    private fun onAudioItemClick(uri: Uri){
+        //consoleLog("onAudioItemClick: uri = $uri")
+        //防止快速发起
+        if (System.currentTimeMillis() - lock_clickMillisLock_second < 800) return
+        lock_clickMillisLock_second = System.currentTimeMillis()
 
+        //检查启动方式
+        val show_page = SettingsRequestCenter.GET_PRF_StartFullPage(context)
+        if (show_page) {
+            startMusicPlayer(uri)
+        }else{
+            startMiniViewPlay(uri)
+        }
+
+    }
 
 
     //启动播放器
@@ -1688,56 +1704,37 @@ class MainActivity: AppCompatActivity() {
         if (System.currentTimeMillis() - lock_clickMillisLock < 800) return
         lock_clickMillisLock = System.currentTimeMillis()
 
-        //暂时仅设置音乐
-        setMediaItem(uri, true)
 
-        //使用其他播放器播放
-        /*
-        try {
+        //构建intent
+        val intent = Intent(this, MusicPlayerActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            .putExtra(IntentRepo.URI, uri)
+            .putExtra(IntentRepo.SOURCE, 3)
 
-            val playIntent = Intent().apply {
-                action = Intent.ACTION_VIEW
-                setDataAndType(uri, "audio/*")  // 关键：设置类型为audio/*
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-            }
 
-            val packageManager = this.packageManager
-            if (playIntent.resolveActivity(packageManager) != null) {
-                this.startActivity(playIntent)
-            }else{
-                Toast.makeText(this, "未找到可用的音乐播放器", Toast.LENGTH_SHORT).show()
-            }
-        }
-        catch (e: ActivityNotFoundException) {
-            Log.e("SuMing", "未找到可用的播放器应用", e)
-            Toast.makeText(this, "无法播放：未找到播放器应用", Toast.LENGTH_SHORT).show()
-        }
-        catch (e: SecurityException) {
-            Log.e("SuMing", "权限不足，无法播放", e)
-            Toast.makeText(this, "权限不足，无法访问此文件", Toast.LENGTH_SHORT).show()
-        }
-        catch (e: Exception) {
-            Log.e("SuMing", "播放失败", e)
-            Toast.makeText(this, "播放失败：${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-        }
+        //构建可选参数
+        val options = ActivityOptionsCompat.makeCustomAnimation(
+                    this,
+                    R.anim.slide_in_vertical,
+                    R.anim.slide_dont_move
+                )
 
-       */*/
+        //启动活动
+        startActivity(intent, options.toBundle())
 
-         */
+        //setMediaItem(uri, true)
+
     }
     private fun startPlayerFromMiniView(uri: Uri, file_path: String){
         val MediaInfo_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
-
+        //
         when (MediaInfo_MediaType) {
             MediaType.Video -> {
                 startVideoPlayer(uri, file_path)
             }
             MediaType.Audio -> {
-                showCustomToast("暂不支持打开音乐播放页面",3)
-                //startMusicPlayer(uri)
-            }
-            else -> {
-                showCustomToast("失败",3)
+                startMusicPlayer(uri)
             }
         }
 

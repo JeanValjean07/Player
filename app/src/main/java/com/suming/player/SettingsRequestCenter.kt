@@ -186,7 +186,7 @@ object SettingsRequestCenter {
         return PRF_ContinuePlay_withEngin == 1
     }
 
-    //默认播放行为
+    //视频的默认播放行为
     const val action_just_in_mini_view = "action_just_in_mini_view"
     const val action_use_whole_play_page = "action_use_whole_play_page"
     private var PRF_DefaultPlayBehavior = ""
@@ -217,6 +217,37 @@ object SettingsRequestCenter {
         //返回结果
         return PRF_DefaultPlayBehavior
     }
+    //音频的默认播放行为
+    private var PRF_StartFullPage = -1
+    const val PRF_StartFullPage_Name = "PRF_StartFullPage_Name"
+    fun SET_PRF_StartFullPage(context: Context, enable: Boolean){
+        OpenPandora_MainPage(context)
+
+        val target = if(enable)1 else 0
+        //写入本地缓存
+        PRF_StartFullPage = target
+        //写入配置单
+        Pandora_MainPage!!.edit { putInt(PRF_StartFullPage_Name, target) }
+    }
+    fun GET_PRF_StartFullPage(context: Context): Boolean {
+        OpenPandora_MainPage(context)
+
+        //仅在无缓存时读取
+        if (PRF_StartFullPage == -1) {
+            //从配置单读取
+            PRF_StartFullPage = Pandora_MainPage!!.getInt(PRF_StartFullPage_Name, -1) ?: -1
+            //如果配置单内无该项,写入默认值
+            if (PRF_StartFullPage == -1) {
+                //默认设为使用完整播放页
+                PRF_StartFullPage = 0
+                Pandora_MainPage!!.edit { putInt(PRF_StartFullPage_Name,0 ) }
+            }
+        }
+
+        //返回结果
+        return PRF_StartFullPage == 1
+    }
+
 
     //默认显示页签
     const val tab_mark_video = "acquiesce_tab_video"

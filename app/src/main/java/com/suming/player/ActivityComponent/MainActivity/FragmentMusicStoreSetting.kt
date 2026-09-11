@@ -2,6 +2,7 @@ package com.suming.player.ActivityComponent.MainActivity
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
@@ -33,6 +34,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncionalPack.Animations
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.R
@@ -49,7 +51,10 @@ class FragmentMusicStoreSetting: DialogFragment() {
         fun newInstance(): FragmentMusicStoreSetting = FragmentMusicStoreSetting().apply { arguments = bundleOf() }
     }
 
-
+    //空字段
+    private val Undefined = ""
+    //
+    private lateinit var context : Context
 
 
 
@@ -62,6 +67,8 @@ class FragmentMusicStoreSetting: DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
+        //
+        context = requireContext()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?):View{
@@ -76,10 +83,11 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
     @SuppressLint("UseGetLayoutInflater", "InflateParams", "SetTextI18n", "ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        //初始化
-        init(view)
 
+        //注册
         register(view)
+        registerSortSettings(view)
+        registerSettings(view)
 
         //启动高级效果
         setupScrollContentListener(view)
@@ -101,26 +109,9 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
 
 
-    //Main Thread Functions
+    //注册基础控件
     private fun register(view: View){
         lifecycleScope.launch(Dispatchers.Main){
-            //开关实例初始化
-            val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
-            val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
-            //开关置位
-            switch_EnableFileExistCheck.isChecked = SettingsRequestCenter.get_PREFS_EnableFileExistCheck( requireContext())
-            switch_QueryNewVideoOnStart.isChecked = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart( requireContext())
-            //开关点击事件
-            switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
-                SettingsRequestCenter.set_PREFS_EnableFileExistCheck(requireContext(), isChecked)
-            }
-            switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
-                SettingsRequestCenter.set_PREFS_QueryNewMediaOnStart(requireContext(), isChecked)
-            }
-
-
             //按钮：退出
             val ButtonExit = view.findViewById<CircleButton>(R.id.buttonExit)
             ButtonExit.setOnClickListener {
@@ -212,7 +203,26 @@ class FragmentMusicStoreSetting: DialogFragment() {
                 ToolVibrate().vibrate(requireContext())
                 requireContext().showCustomToast("这些设置会在音乐库和视频库之间同步",  3)
             }
+            //点击顶部区域回顶
+            val AppBar_Container = view.findViewById<FrameLayout>(R.id.AppBar_Container)
+            AppBar_Container.setOnClickListener {
+                if (scrollArea?.canScrollVertically(-1) == true){
+                    ToolVibrate().vibrate(requireContext())
+                    //滚动区域回顶
+                    scrollArea?.stopNestedScroll()
+                    scrollArea?.smoothScrollTo(0, 0)
+                }else{
+                    scrollArea?.stopNestedScroll()
+                }
+            }
 
+
+
+        }
+    }
+    //注册列表设置项
+    private fun registerSortSettings(view: View){
+        lifecycleScope.launch(Dispatchers.Main){
             //排序方法读取
             updateSortMethodText()
             updateSortOrientationText()
@@ -290,8 +300,38 @@ class FragmentMusicStoreSetting: DialogFragment() {
                 SettingsRequestCenter.set_PREFS_audio_sortMethod(requireContext(), SettingsRequestCenter.sort_method_mime_type)
                 updateSortMethodText(SettingsRequestCenter.sort_method_mime_type)
             }
+        }
+    }
+    //注册基本设置项
+    private fun registerSettings(view: View){
+        lifecycleScope.launch(Dispatchers.Main){
+            //检查文件有效性
+            val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
+            switch_EnableFileExistCheck.isChecked = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
+            switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(requireContext())
+                SettingsRequestCenter.set_PREFS_EnableFileExistCheck(requireContext(), isChecked)
+            }
+            //每次启动都读取
+            val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
+            switch_QueryNewVideoOnStart.isChecked = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(context)
+            switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(requireContext())
+                SettingsRequestCenter.set_PREFS_QueryNewMediaOnStart(requireContext(), isChecked)
+            }
+            //自动弹出播放页
+            val switch_startFullPage = view.findViewById<SwitchCompat>(R.id.SC_startFullPage_whenSwitch)
+            switch_startFullPage.isChecked = SettingsRequestCenter.GET_PRF_StartFullPage(context)
+            switch_startFullPage.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(requireContext())
+                SettingsRequestCenter.SET_PRF_StartFullPage(context,isChecked)
+            }
+
+
+
 
         }
+
     }
 
 
@@ -405,7 +445,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
 
         AppBar_Background.animate()
             .alpha(0f)
-            .setDuration(animDuration)
+            .setDuration(Animations.topBar_Effect_Square_Duration)
             .withEndAction { AppBar_Background.visibility = View.GONE }
             .start()
 
@@ -418,10 +458,9 @@ class FragmentMusicStoreSetting: DialogFragment() {
         AppBar_Background.alpha = 0f
         AppBar_Background.animate()
             .alpha(1f)
-            .setDuration(animDuration)
+            .setDuration(Animations.topBar_Effect_Square_Duration)
             .start()
     }
-    private var animDuration: Long = 100
     //滚动区域监听
     private var scrollArea: NestedScrollView? = null
     private fun setupScrollContentListener(view: View){

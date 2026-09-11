@@ -418,7 +418,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 if (player?.isPlaying == true) {
                     scroller.stopScroll()
                     pausePlay()
-                    stop_S_Area_PassiveControl(5289)
+                    stop_S_Area_PassiveControl()
                     notice("暂停", 1000)
                     updateButtonState()
                 }else{
@@ -484,7 +484,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                         //控制播放
                         if (player?.isPlaying == true) {
                             pausePlay()
-                            stop_S_Area_PassiveControl(4528)
+                            stop_S_Area_PassiveControl()
                             notice("暂停播放", 1000)
                             updateButtonState()
                         } else {
@@ -817,13 +817,13 @@ class PlayerActivityNeo: AppCompatActivity(){
                     //开启/退出事件
                     FragmentConnector.fragment_event_close -> {
                         //开启被控组件
-                        start_S_Area_PassiveControl(42487)
+                        start_S_Area_PassiveControl()
                         startVideoTimeSync()
                         //播放区域移移动(暂未启用)
                     }
                     FragmentConnector.fragment_event_open -> {
                         //关闭被控组件
-                        stop_S_Area_PassiveControl(2846)
+                        stop_S_Area_PassiveControl()
                         stopVideoTimeSync()
                         //播放区域移移动(暂未启用)
 
@@ -843,7 +843,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                     FragmentConnector.fragment_more_button_back_to_start -> {
                         player?.seekTo(0)
                         player?.play()
-                        start_S_Area_PassiveControl(41896)
+                        start_S_Area_PassiveControl()
                         notice("回到视频起始", 3000)
                     }
                     //打开播放列表
@@ -1505,10 +1505,10 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun updateLoopFunctionState(){
         val isPlaying = PlayerSingleton.GET_STE_isNowPlaying()
         if (isPlaying){
-            start_S_Area_PassiveControl(73486)
+            start_S_Area_PassiveControl()
             startVideoTimeSync()
         }else{
-            stop_S_Area_PassiveControl(7987)
+            stop_S_Area_PassiveControl()
             stopVideoTimeSync()
         }
 
@@ -1786,7 +1786,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         stopVideoSeek()
         stopVideoSmartScroll()
         stopVideoTimeSync()
-        stop_S_Area_PassiveControl(45876)
+        stop_S_Area_PassiveControl()
         //关闭旋转监听器
         stopOrientationListener()
 
@@ -1878,7 +1878,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         scroller.stopScroll()
         stopVideoSmartScroll()
         stopVideoSeek()
-        stop_S_Area_PassiveControl(34564)
+        stop_S_Area_PassiveControl()
         stopVideoTimeSync()
 
         //关闭小窗
@@ -2057,7 +2057,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //仅在数量为0时才执行
         if (fragment_count > 0){
             //关闭被控组件
-            stop_S_Area_PassiveControl(356809)
+            stop_S_Area_PassiveControl()
             stopVideoTimeSync()
             //播放区域移移动
             moveArea_playView_Up()
@@ -2073,7 +2073,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //consoleLog("计数减少。当前Fragment计数：$fragment_count")
         if (fragment_count <= 0){
             //开启被控组件
-            start_S_Area_PassiveControl(52487)
+            start_S_Area_PassiveControl()
             startVideoTimeSync()
             //播放区域移移动
             moveArea_playView_Down()
@@ -2088,10 +2088,10 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         val isPlaying = player?.isPlaying ?: false
         if (isPlaying){
-            start_S_Area_PassiveControl(42625)
+            start_S_Area_PassiveControl()
             startVideoTimeSync()
         }else{
-            stop_S_Area_PassiveControl(42625)
+            stop_S_Area_PassiveControl()
             stopVideoTimeSync()
         }
     }
@@ -2172,9 +2172,9 @@ class PlayerActivityNeo: AppCompatActivity(){
             notice("已将进度条与视频进度同步", 3000)
         }else{
             scroller.stopScroll()
-            start_S_Area_PassiveControl(2240)
+            start_S_Area_PassiveControl()
             stopVideoSeek()
-            stop_S_Area_PassiveControl(78915)
+            stop_S_Area_PassiveControl()
             notice("已关闭链接滚动条与视频进度", 3000)
         }
     }
@@ -2591,21 +2591,21 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //刷新时间显示窗口
     private fun updateTimeStampWindow(){
+        //触发密度控制
         onScroll_currentMillis = System.currentTimeMillis()
-        if (onScroll_currentMillis - scroller_updateTimerStamp_lastMillis > value_timeStamp_updateGapMs) {
-            scroller_updateTimerStamp_lastMillis = onScroll_currentMillis
-            if (playerViewModel.PREFS_LinkScroll) {
+        if (onScroll_currentMillis - scroller_updateTimerStamp_lastMillis < value_timeStamp_updateGapMs) return
+        scroller_updateTimerStamp_lastMillis = onScroll_currentMillis
 
-                //计算对应时间戳
-                onScroll_scrollPercent = scroller.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
-                onScroll_seekToMs = (onScroll_scrollPercent * PlayerInfoCenter.GET_Media_Duration()).toLong()
+        //仅在开启链接滚动时刷新时间
+        if (playerViewModel.PREFS_LinkScroll) {
 
-                //刷新时间显示
-                controller_timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
+            //计算对应时间
+            onScroll_scrollPercent = scroller.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange()
+            onScroll_seekToMs = (onScroll_scrollPercent * PlayerInfoCenter.GET_Media_Duration()).toLong()
 
-            } else {
-                return
-            }
+            //刷新时间显示
+            controller_timer_current.text = FormatTime_onlyNum(onScroll_seekToMs)
+
         }
     }
     private var onScroll_currentMillis = 0L
@@ -2634,7 +2634,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         playState_singleTap_wasPlaying = player?.isPlaying ?: false
 
         //发送跳转命令
-        seekTo_Core(8, seekToMs, Mark_playerReadyFrom_SingleTapSeek)
+        seekTo_Core(seekToMs, Mark_playerReadyFrom_SingleTapSeek)
 
         //发布通知
         notice("跳转至${FormatTime_withChar(seekToMs)}", 1000)
@@ -2717,8 +2717,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     } //重置为未触摸过的状态
     //状态playerReady
     private fun playState_playerReady(){
-        //修改状态
-        isSeekReady = true
         //检验来源
         when(Mark_playerReadyFrom){
             Mark_playerReadyFrom_MidSectionSeek -> {
@@ -2728,39 +2726,51 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //processed_seek_count++
                 //consoleLog("processed_seek_count : $processed_seek_count")
 
+                //修改状态
+                isSeekReady = true
 
             }
             Mark_playerReadyFrom_TailSeek -> {
                 //一个滚动事件完整跑完
                 onScrollOnceComplete()
+
+                //修改状态
+                isSeekReady = true
             }
             Mark_playerReadyFrom_SingleTapSeek -> {
                 //consoleLog("Mark_playerReadyFrom_SingleTap")
 
                 syncScrollTask_Core_Compute()
                 //恢复播放状态
-                if (playState_singleTap_wasPlaying){
-                    continuePlay()
-                }
+                if (playState_singleTap_wasPlaying) continuePlay()
 
                 clearScrollerState()
+
+                //修改状态
+                isSeekReady = true
             }
             //来自新的媒体设置成功
             Mark_playerReadyFrom_setNewItem -> {
                 //开启控件显示
-                start_S_Area_PassiveControl(3654)
+                start_S_Area_PassiveControl()
 
                 //启动播放
                 continuePlay()
 
                 //隐藏遮罩
                 closeCover()
+
+                //修改状态
+                isSeekReady = true
             }
             //外部控制寻帧
             else -> {
                 //consoleLog("Mark_playerReadyFrom : OUT - $Mark_playerReadyFrom")
 
                 syncScrollTask_Core_Compute()
+
+                //修改状态
+                isSeekReady = true
             }
         }
 
@@ -2787,10 +2797,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                 notice("视频结束", 1000)
                 //停止被控控件
                 stopVideoTimeSync()
-                stop_S_Area_PassiveControl(73465)
+                stop_S_Area_PassiveControl()
                 //播放结束时让控件显示
                 setControllerVisible()
-                Handler(Looper.getMainLooper()).postDelayed({ stop_S_Area_PassiveControl(5768) }, 100)
+                Handler(Looper.getMainLooper()).postDelayed({ stop_S_Area_PassiveControl() }, 100)
                 IDLE_Timer?.cancel()
 
             }
@@ -2807,7 +2817,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //关闭本地界面更新
         stopVideoTimeSync()
-        stop_S_Area_PassiveControl(134132)
+        stop_S_Area_PassiveControl()
     }
     @Suppress("SameParameterValue")
     private fun continuePlay(need_requestFocus: Boolean = true){
@@ -2816,7 +2826,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
         //开启本地界面更新
-        start_S_Area_PassiveControl(24648)
+        start_S_Area_PassiveControl()
         startVideoTimeSync()
     }
 
@@ -2885,17 +2895,17 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //启动S_Area被动控制函数(scroller或seekbar:自动绑定视频位置)(被动控制函数必须在此调用)
-    private fun start_S_Area_PassiveControl(num_random: Int){
+    private fun start_S_Area_PassiveControl(){
         //consoleLog("start_S_Area_PassiveControl num_random-$num_random")
         //检测当前用的S_Area类型
         when(state_current_s_area){
             S_Area_Helper.S_AreaType_SCROLLER -> {
                 //启动scroller被动控制
-                startScrollerSync(num_random)
+                startScrollerSync()
             }
             S_Area_Helper.S_AreaType_SEEKBAR -> {
                 //启动seekbar被动控制
-                startSeekBarSync(num_random)
+                startSeekBarSync()
             }
             S_Area_Helper.S_AreaType_UNDEFINED -> {
 
@@ -2903,9 +2913,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
     //停止S_Area被动控制函数(scroller或seekbar:自动绑定视频位置)(被动控制函数必须在此调用)
-    private fun stop_S_Area_PassiveControl(num_random: Int){
-        //consoleLog("stop_S_Area_PassiveControl num_random-$num_random")
-        //全部停止即可
+    private fun stop_S_Area_PassiveControl(){
 
         //停止scroller被动控制
         stopScrollerSync()
@@ -2994,7 +3002,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                 //开启被控
                 if (player?.isPlaying == true){
-                    start_S_Area_PassiveControl(46346)
+                    start_S_Area_PassiveControl()
                 }else{
                     syncScrollTask_Core_Compute()
                 }
@@ -3050,12 +3058,10 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                     return false
                 }
-
                 //以下未使用
                 override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
                     gestureDetectorScroller.onTouchEvent(e)
                 }
-
                 override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
             })
             //Scroller事件 -滚动层 -onScrollStateChanged -onScrolled
@@ -3074,7 +3080,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                             //发生用户操作-停止界面组件同步
                             stopVideoTimeSync()
-                            stop_S_Area_PassiveControl(2365)
+                            stop_S_Area_PassiveControl()
 
                             //记录当前播放状态
                             recordScrollerWasPlayingState()
@@ -3125,7 +3131,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                     }
                 }
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    //consoleLog("onScrolled: dx=$dx dy=$dy")
                     if (!scrollerDesire_Active) {
                         //未主动操作时也偶尔触发,故基于scrollerDesire_Active过滤
                         return
@@ -3181,7 +3186,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
                             if (playerViewModel.PREFS_AlwaysSeek) {
                                 //跳转方式:寻帧
-                                startVideoSeek(1)
+                                startVideoSeek()
                             }else{
                                 //跳转方式:倍速滚动
                                 stopVideoSeek()
@@ -3189,7 +3194,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                             }
                         }else{
                             //反向滚动
-                            startVideoSeek(2)
+                            startVideoSeek()
 
                             stopVideoSmartScroll()
 
@@ -3220,31 +3225,31 @@ class PlayerActivityNeo: AppCompatActivity(){
             seekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     if (fromUser){
-                        //consoleLog("onProgressChanged $progress")
+
                         //读取进度条当前位置比例
                         val duration = player?.duration ?: -1L
                         if (duration <= 0) return
+                        //计算对应位置
                         val seekToPosition = (progress / 1000f * duration).toLong()
-                        //consoleLog("duration = $duration, seekToPosition = $seekToPosition")
 
-                        Mark_playerReadyFrom = Mark_playerReadyFrom_MidSectionSeek
-                        player?.seekTo(seekToPosition)
+                        //发起seek
+                        seekTo_Core(seekToPosition,Mark_playerReadyFrom_MidSectionSeek)
                     }
                 }
                 //触摸立即触发
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
                     //consoleLog("onStartTrackingTouch")
-                    stop_S_Area_PassiveControl(52486)
+                    stop_S_Area_PassiveControl()
                 }
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
                     //consoleLog("onStopTrackingTouch")
-                    start_S_Area_PassiveControl(52486)
+                    start_S_Area_PassiveControl()
                 }
             })
 
             //开启被控
             if (player?.isPlaying == true){
-                start_S_Area_PassiveControl(73465)
+                start_S_Area_PassiveControl()
             }else{
                 syncScrollTask_Core_Compute()
             }
@@ -3261,7 +3266,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //停止被控控件控制
         stopVideoTimeSync()
         //仅在新晋播放页使用
-        stop_S_Area_PassiveControl(83765)
+        stop_S_Area_PassiveControl()
         scroller.stopScroll()
         //仅在传统播放页使用
         //stopSeekBarSync()
@@ -3277,7 +3282,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //停止被控控件控制
         stopVideoTimeSync()
         //仅在新晋播放页使用
-        stop_S_Area_PassiveControl(94657)
+        stop_S_Area_PassiveControl()
         scroller.stopScroll()
         //仅在传统播放页使用
         //stopSeekBarSync()
@@ -3298,7 +3303,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //启动被控控件控制
         startVideoTimeSync()
         //仅在新晋播放页使用
-        start_S_Area_PassiveControl(7589)
+        start_S_Area_PassiveControl()
         //仅在传统播放页使用
         //startSeekBarSync()
 
@@ -3314,7 +3319,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //启动被控控件控制
         startVideoTimeSync()
         //仅在新晋播放页使用
-        start_S_Area_PassiveControl(9246)
+        start_S_Area_PassiveControl()
         //仅在传统播放页使用
         //startSeekBarSync()
 
@@ -3764,34 +3769,20 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         window.attributes.preferredRefreshRate = maxRefreshRate
     }
-    //seekTo统一入口
-    private fun seekTo_Core(num_random: Int ,pos: Long, mark: String){
-        //consoleLog("seekTo_Core num_random-$num_random |||| $pos $mark")
+    //seekTo 统一入口
+    private fun seekTo_Core(pos: Long, mark: String){
         if (isSeekReady){
             isSeekReady = false
 
-            //记录发起次数
-            //posted_seek_count++
-            //consoleLog("posted_seek_count : $posted_seek_count")
-
             //暂停播放
-            player?.pause()
+            pausePlay()
 
             //发起Seek
             Mark_playerReadyFrom = mark
             player?.seekTo(pos)
         }
-    } //num_max = 7
+    }
     private var isSeekReady = true
-    //private var posted_seek_count = 0
-    //private var processed_seek_count = 0
-    //轻量暂停和轻量继续(循环专用)
-    private fun pausePlay_Light(){
-
-    }
-    private fun continuePlay_Light(){
-
-    }
 
     //Runnable-1.0:根据视频时间更新scroller位置
     private val task_syncScrollerPosition_Handler = Handler(Looper.getMainLooper())
@@ -3841,8 +3832,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private var scrollerParamMain = 0      //进度条大分段位置参数
     private var scrollerParamOffset = 0    //进度条微调偏移量
-    private fun startScrollerSync(num_random: Int) {
-        //consoleLog("startScrollerSync $num_random")
+    private fun startScrollerSync() {
         //未开启该项设置
         if (!playerViewModel.PREFS_LinkScroll) return
         //未显示控件层
@@ -3859,7 +3849,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //scrollerLayoutManager = scroller.layoutManager as LinearLayoutManager
         //发起滚动任务
         task_syncScrollerPosition_Handler.post(task_syncScrollerPosition_Runnable)
-    }   //num_max = 11
+    }
     private fun stopScrollerSync() {
         task_syncScrollerPosition_Running = false
         task_syncScrollerPosition_Handler.removeCallbacks(task_syncScrollerPosition_Runnable)
@@ -3885,8 +3875,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             task_syncSeekBarPosition_Handler.postDelayed(this,value_syncSeekBar_runnableGapMs )  //value_syncSeekBar_runnableGapMs
         }
     }
-    private fun startSeekBarSync(num_random: Int) {
-        //consoleLog("startSeekBarSync $num_random")
+    private fun startSeekBarSync() {
         //未显示控件层
         if (!playerViewModel.state_controllerShowing) return
         //进入锁
@@ -3904,12 +3893,15 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var task_syncSeekBarPosition_Running = false
     //Runnable-2:根据视频时间更新时间窗口进度数值
     private val task_timeStampSync_Handler = Handler(Looper.getMainLooper())
+    private fun timeStampSync_Core(){
+        //获取时间
+        timeStampSync_cache_currentPosition = player?.currentPosition ?: return
+        //显示
+        controller_timer_current.text = FormatTime_onlyNum(timeStampSync_cache_currentPosition)
+    }
     private var task_timeStampSync_Runnable = object : Runnable{
         override fun run() {
-            timeStampSync_cache_currentPosition = player?.currentPosition ?: -1L
-            if (timeStampSync_cache_currentPosition == -1L) return
-
-            controller_timer_current.text = FormatTime_onlyNum(timeStampSync_cache_currentPosition)
+            timeStampSync_Core()
 
             task_timeStampSync_Handler.postDelayed(this, 1000)
         }
@@ -3971,7 +3963,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun startVideoSmartScroll() {
         return
         //关闭进度条同步任务
-        stop_S_Area_PassiveControl(654234)
+        stop_S_Area_PassiveControl()
         stopVideoTimeSync()
         //
         player?.volume = 0f
@@ -4025,7 +4017,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 setSeekParameter_useSync(0)
 
                 //发起寻帧
-                seekTo_Core(7,targetSeekToMs, Mark_playerReadyFrom_TailSeek)
+                seekTo_Core(targetSeekToMs, Mark_playerReadyFrom_TailSeek)
             }
 
         }else{
@@ -4061,12 +4053,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                             if (targetSeekToMs < currentPosition){
                                 //目标位置接近起始,直接置0快速回起始
                                 if (targetSeekToMs < 50){
-                                    if (scrollerDesire_Active) seekTo_Core(1,0, Mark_playerReadyFrom_MidSectionSeek)
+                                    if (scrollerDesire_Active) seekTo_Core(0, Mark_playerReadyFrom_MidSectionSeek)
                                 }else{
-                                    if (scrollerDesire_Active) seekTo_Core(2, targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
+                                    if (scrollerDesire_Active) seekTo_Core( targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
                                 }
                             }else{
-                                if (scrollerDesire_Active) seekTo_Core(3,targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
+                                if (scrollerDesire_Active) seekTo_Core(targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
                             }
                         }
                         //反向
@@ -4074,12 +4066,12 @@ class PlayerActivityNeo: AppCompatActivity(){
                             if (targetSeekToMs < currentPosition){
                                 //目标位置接近起始,直接置0快速回起始
                                 if (targetSeekToMs < 50){
-                                    if (scrollerDesire_Active) seekTo_Core(4, 0,Mark_playerReadyFrom_MidSectionSeek)
+                                    if (scrollerDesire_Active) seekTo_Core( 0,Mark_playerReadyFrom_MidSectionSeek)
                                 }else{
-                                    if (scrollerDesire_Active) seekTo_Core(5, targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
+                                    if (scrollerDesire_Active) seekTo_Core( targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
                                 }
                             }else{
-                                if (scrollerDesire_Active) seekTo_Core(6,targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
+                                if (scrollerDesire_Active) seekTo_Core(targetSeekToMs,Mark_playerReadyFrom_MidSectionSeek)
                             }
                         }
                     }
@@ -4089,15 +4081,13 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private var value_seekVideo_runnableGapMs = 0L
     private var task_standardSeekLoop_Running = false
-    private fun startVideoSeek(num: Int) {
-        //consoleLog("startVideoSeek:$num")
-
+    private fun startVideoSeek() {
         if (task_standardSeekLoop_Running) return
         task_standardSeekLoop_Running = true
 
         //开启循环
         task_standardSeekLoop_Handler.post(task_standardSeekLoop_Runnable)
-    }  //num_max = 2
+    }
     private fun stopVideoSeek() {
         task_standardSeekLoop_Running = false
         task_standardSeekLoop_Handler.removeCallbacks(task_standardSeekLoop_Runnable)

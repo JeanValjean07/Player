@@ -212,18 +212,18 @@ class EntranceActivity : AppCompatActivity(){
     @OptIn(UnstableApi::class)
     private fun processPending(){
         //获取正在播放的媒体链接
-        val (ongoing , uri) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-        val uriString = uri.toString()
+        val (ongoing , URI_U_FP) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+        val URI_S_FP = URI_U_FP.toString()
         //获取正在播放的媒体类型
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
         //根据媒体类型启动页面
         when(mediaType){
             MediaType.Video -> {
                 if (ongoing){
-                    if (uriString != Undefined){
+                    if (URI_S_FP != Undefined){
 
                         //打开页面
-                        startVideoPage_selfDetectStyle(uri, Undefined)
+                        startVideoPage_selfDetectStyle(URI_U_FP, Undefined)
 
                     }else{
                         //按理说不会走到这里,因为不可能正在播放空链接,如果出现非预期情况,关闭播放器作为保底
@@ -237,8 +237,7 @@ class EntranceActivity : AppCompatActivity(){
                 }
             }
             MediaType.Audio -> {
-
-                fail("打开页面失败(暂不支持音乐页面)")
+                startMusicPage(URI_U_FP)
             }
             else -> {
                 //按理说不会出现不支持的媒体类型,因为播放前就有一道检查,如果出现非预期情况,关闭播放器作为保底
@@ -541,7 +540,7 @@ class EntranceActivity : AppCompatActivity(){
             1 -> {
                 when(mediaType){
                     MediaType.Video -> startVideoPage_selfDetectStyle(uri,file_path)
-                    MediaType.Audio -> startMusicPage(uri)
+                    MediaType.Audio -> startMusicPageBeta(uri)
                     else -> fail("播放失败(不支持的媒体类型)")
                 }
             }
@@ -549,7 +548,7 @@ class EntranceActivity : AppCompatActivity(){
             2 -> {
                 when(mediaType){
                     MediaType.Video -> startVideoPage_selfDetectStyle(uri,file_path)
-                    MediaType.Audio -> startMusicPage(uri)
+                    MediaType.Audio -> startMusicPageBeta(uri)
                     else -> fail("播放失败(不支持的媒体类型)")
                 }
             }
@@ -592,10 +591,25 @@ class EntranceActivity : AppCompatActivity(){
 
     //启动音乐页面
     @OptIn(UnstableApi::class)
-    private fun startMusicPage(URI_U_FP: Uri) {
+    private fun startMusicPageBeta(URI_U_FP: Uri) {
 
         //构建intent
         val intent = Intent(context, MainActivity::class.java)
+            .apply {
+                putExtra(IntentRepo.URI, URI_U_FP.toString())
+                action = IntentRepo.ACTION_ENTRANCE_REQUEST
+            }
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+        //启动
+        startActivity(intent)
+    }
+    @OptIn(UnstableApi::class)
+    private fun startMusicPage(URI_U_FP: Uri) {
+
+        //构建intent
+        val intent = Intent(context, MusicPlayerActivity::class.java)
             .apply {
                 putExtra(IntentRepo.URI, URI_U_FP.toString())
                 action = IntentRepo.ACTION_ENTRANCE_REQUEST

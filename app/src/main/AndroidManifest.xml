@@ -105,8 +105,8 @@
         </activity>
 
 
-        <!-- 播放页Simple -->
-        <activity android:name=".PlayerActivitySimple"
+        <!-- 音乐播放页 -->
+        <activity android:name=".MusicPlayerActivity"
             android:theme="@style/THEME_Player"
             android:label="播放器Simple"
             android:screenOrientation="unspecified"

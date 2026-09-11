@@ -151,7 +151,7 @@
             <!-- 内容区域 -->
             <androidx.core.widget.NestedScrollView
                 android:id="@+id/NestedScrollView"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -164,7 +164,8 @@
                     <!-- 高度占位 -->
                     <Space
                         android:layout_width="match_parent"
-                        android:layout_height="50dp" />
+                        android:layout_height="50dp"
+                        />
                     <!-- 功能卡1：后台播放 + 循环播放 + 倍速 -->
                     <androidx.cardview.widget.CardView
                         android:layout_width="match_parent"
@@ -188,7 +189,6 @@
                                 android:layout_height="wrap_content"
                                 android:minHeight="40dp"
                                 android:orientation="horizontal">
-
                                 <ImageView
                                     android:layout_width="19dp"
                                     android:layout_height="19dp"
@@ -198,7 +198,6 @@
                                     android:scaleType="centerCrop"
                                     android:src="@drawable/ic_more_button_background_play"
                                     tools:ignore="ContentDescription" />
-
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
@@ -207,18 +206,17 @@
                                     android:text="后台播放"
                                     android:textColor="@color/Text2"
                                     android:textSize="16sp" />
-
                                 <View
                                     android:layout_width="0dp"
                                     android:layout_height="0dp"
                                     android:layout_weight="1" />
-
                                 <androidx.appcompat.widget.SwitchCompat
                                     android:id="@+id/Switch_BackgroundPlay"
                                     android:layout_width="wrap_content"
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
+                                    android:clickable="true"
                                     app:thumbTint="@color/switchThumbColor"
                                     app:trackTint="@color/switchTrackColor"
                                     tools:ignore="InefficientWeight" />
@@ -260,6 +258,7 @@
                                     app:layout_constraintTop_toTopOf="parent"
                                     app:layout_constraintBottom_toBottomOf="parent"
                                     app:layout_constraintEnd_toEndOf="parent"
+                                    android:clickable="true"
                                     app:cardElevation="1dp"
                                     app:cardCornerRadius="5dp">
                                     <LinearLayout
@@ -325,6 +324,7 @@
                                     app:layout_constraintTop_toTopOf="parent"
                                     app:layout_constraintBottom_toBottomOf="parent"
                                     app:layout_constraintEnd_toEndOf="parent"
+                                    android:clickable="true"
                                     app:cardElevation="1dp"
                                     app:cardCornerRadius="5dp">
                                     <LinearLayout
@@ -386,6 +386,7 @@
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
+                                    android:clickable="true"
                                     app:trackTint="@color/switchTrackColor"
                                     app:thumbTint="@color/switchThumbColor"
                                     tools:ignore="InefficientWeight" />
@@ -424,6 +425,7 @@
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
+                                    android:clickable="false"
                                     app:trackTint="@color/switchTrackColor"
                                     app:thumbTint="@color/switchThumbColor"
                                     tools:ignore="InefficientWeight" />

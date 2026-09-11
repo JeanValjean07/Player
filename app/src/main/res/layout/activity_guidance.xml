@@ -2,7 +2,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_guidance"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/Background"
@@ -10,62 +10,74 @@
     tools:context=".GuidanceActivity"
     tools:ignore="HardcodedText" >
 
-    <com.google.android.material.appbar.AppBarLayout
+    <!-- 标题区域 -->
+    <FrameLayout
+        android:id="@+id/frameLayout"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:background="@color/MainColorPack_SurfaceBackground"
-        android:outlineSpotShadowColor="@color/HeadText"
-        app:liftOnScrollColor="@color/HeadBackground"
-        android:outlineAmbientShadowColor="@color/HeadText"
-        tools:targetApi="28">
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar1"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:translationZ="5dp">
+        <!-- BrushArea -->
+        <View
+            android:id="@+id/AppBarGradientMask"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent"
-            app:contentInsetStart="0dp"
-            android:elevation="1dp">
-            <LinearLayout
-                android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:alpha="100"
+            android:background="@drawable/vec_brush_area_v1_color" />
+        <!-- 顶部栏核心内容 -->
+        <LinearLayout
+            android:id="@+id/AppBarCore"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:orientation="horizontal">
+            <com.suming.player.ViewWidget.CircleButton
+                android:id="@+id/AppBarButton_Exit"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="5dp"
+                android:src="@drawable/ic_general_back"
+                app:buttonSize="50dp"
+                app:circlePadding="100dp"
+                app:iconPadding="120dp"
+                app:mainColor="@color/MainColorPack_CardButtonBackground"
+                app:shadowColor="#33000000"
+                app:shadowOffset="4dp"
+                app:shadowRadius="8dp" />
+            <TextView
+                android:id="@+id/AppBarTitle"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:orientation="horizontal">
-                <com.suming.player.ViewWidget.CircleButton
-                    android:id="@+id/AppBarButton_Exit"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:src="@drawable/ic_general_back"
-                    android:layout_gravity="center"
-                    android:layout_marginStart="5dp"
-                    app:buttonSize="50dp"
-                    app:mainColor="@color/MainColorPack_CardButtonBackground"
-                    app:shadowOffset="4dp"
-                    app:circlePadding="100dp"
-                    app:iconPadding="120dp"
-                    app:shadowRadius="8dp"
-                    app:shadowColor="#33000000"
-                    />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="start|center"
-                    android:gravity="center"
-                    android:padding="5dp"
-                    android:text="指南和帮助"
-                    android:textColor="@color/HeadText"
-                    android:textSize="20sp" />
-            </LinearLayout>
-        </androidx.appcompat.widget.Toolbar>
-    </com.google.android.material.appbar.AppBarLayout>
+                android:layout_gravity="start|center"
+                android:gravity="center"
+                android:padding="5dp"
+                android:text="指南和帮助"
+                android:textColor="@color/HeadText"
+                android:textSize="20sp" />
+        </LinearLayout>
 
+    </FrameLayout>
+
+    <!-- 内容区域 -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/NestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:fitsSystemWindows="false">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
-            <!-- 反馈渠 -->
+            android:orientation="vertical"
+            android:paddingBottom="100dp">
+            <!-- 内容区域顶部占位 -->
+            <Space
+                android:id="@+id/AppBarSpacer"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                />
+
+            <!-- 反馈渠道 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -101,6 +113,7 @@
                         android:textSize="11sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
             <!-- 素材来源公益链接 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"

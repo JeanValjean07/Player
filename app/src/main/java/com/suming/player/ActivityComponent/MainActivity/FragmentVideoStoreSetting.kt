@@ -2,6 +2,7 @@ package com.suming.player.ActivityComponent.MainActivity
 
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
@@ -10,6 +11,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -49,6 +51,11 @@ class FragmentVideoStoreSetting: DialogFragment() {
         }
     }
 
+    //空字段
+    private val Undefined = ""
+    //
+    private lateinit var context : Context
+
 
 
     override fun onStart() {
@@ -60,6 +67,8 @@ class FragmentVideoStoreSetting: DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
+        //
+        context = requireContext()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?):View{
@@ -78,6 +87,8 @@ class FragmentVideoStoreSetting: DialogFragment() {
 
         //注册控件
         register(view)
+        registerSortSettings(view)
+        registerSettings(view)
 
     }
 
@@ -99,26 +110,10 @@ class FragmentVideoStoreSetting: DialogFragment() {
 
 
 
-    //Main Thread Functions
     //控件注册
+    @SuppressLint("ClickableViewAccessibility")
     private fun register(view: View){
         lifecycleScope.launch(Dispatchers.Main){
-            //开关实例初始化
-            val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
-            val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
-            //开关置位
-            switch_EnableFileExistCheck.isChecked = SettingsRequestCenter.get_PREFS_EnableFileExistCheck( requireContext())
-            switch_QueryNewVideoOnStart.isChecked = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart( requireContext())
-            //开关点击事件
-            switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
-                SettingsRequestCenter.set_PREFS_EnableFileExistCheck(requireContext(), isChecked)
-            }
-            switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
-                SettingsRequestCenter.set_PREFS_QueryNewMediaOnStart(requireContext(), isChecked)
-            }
-
 
             //按钮：退出
             val ButtonExit = view.findViewById<CircleButton>(R.id.buttonExit)
@@ -128,6 +123,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
             //按钮：点击空白区域退出
             val topArea = view.findViewById<View>(R.id.out_area)
             topArea.setOnClickListener {
+                consoleLog("topArea  dismiss()")
                 dismiss()
             }
             //按钮：锁定页面
@@ -153,74 +149,54 @@ class FragmentVideoStoreSetting: DialogFragment() {
             //点击顶部回顶
             val AppBarContainer = view.findViewById<View>(R.id.AppBarContainer)
             AppBarContainer.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
-                //滚动区域回顶
-                NestedScrollView.stopNestedScroll()
-                NestedScrollView.smoothScrollTo(0, 0)
-            }
-            //默认页签
-            val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
-            fun setAcquiesceTabText(){
-                val AcquiesceTab = SettingsRequestCenter.get_PREFS_AcquiesceTab(requireContext())
-                when(AcquiesceTab){
-                    SettingsRequestCenter.tab_mark_video -> {
-                        ButtonTextChangeDefaultTab.text = "视频"
-                    }
-                    SettingsRequestCenter.tab_mark_music -> {
-                        ButtonTextChangeDefaultTab.text = "音乐"
-                    }
-                    SettingsRequestCenter.tab_mark_last -> {
-                        ButtonTextChangeDefaultTab.text = "上一次的页面"
-                    }
-
-                }
-            }
-            setAcquiesceTabText()
-            ButtonTextChangeDefaultTab.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
-                //显示默认页签选择弹窗
-                val popupMenu = PopupMenu(requireContext(), it)
-                popupMenu.menuInflater.inflate(R.menu.activity_main_popup_default_page, popupMenu.menu)
-                popupMenu.show()
-                //默认页签选择弹窗点击事件
-                popupMenu.setOnMenuItemClickListener { item ->
+                if (NestedScrollView.canScrollVertically(-1)){
                     ToolVibrate().vibrate(requireContext())
-                    when (item.itemId) {
-                        R.id.page_video -> {
-                            SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_video)
-
-                            setAcquiesceTabText()
-
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.page_music -> {
-                            SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_music)
-
-                            setAcquiesceTabText()
-
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.page_gallery -> {
-                            requireContext().showCustomToast("暂不支持设为陈列架",  3)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.page_last -> {
-                            SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_last)
-
-                            setAcquiesceTabText()
-
-                            return@setOnMenuItemClickListener true
-                        }
-                    }
-                    false
+                    //滚动区域回顶
+                    NestedScrollView.stopNestedScroll()
+                    NestedScrollView.smoothScrollTo(0, 0)
+                }else{
+                    NestedScrollView.stopNestedScroll()
                 }
             }
+
             //通用设置提示
             val SyncSettingsCard = view.findViewById<LinearLayout>(R.id.SyncSettingsCard)
             SyncSettingsCard.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 requireContext().showCustomToast("这些设置会在音乐库和视频库之间同步",  3)
             }
+
+
+
+
+
+            //测试：给main_card注册点击事件监听
+            val RootCard = view.findViewById<CardView>(R.id.main_card)
+            RootCard.isClickable = false
+            RootCard.setOnTouchListener { view, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        consoleLog("main card ACTION_DOWN")
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        consoleLog("main card ACTION_MOVE")
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        consoleLog("main card ACTION_UP")
+                    }
+                }
+                return@setOnTouchListener true
+            }
+
+
+
+        }
+    }
+    //注册列表设置项
+    private fun registerSortSettings(view: View){
+        lifecycleScope.launch(Dispatchers.Main){
+
+
 
             //排序方法读取
             updateSortMethodText()
@@ -299,7 +275,82 @@ class FragmentVideoStoreSetting: DialogFragment() {
                 SettingsRequestCenter.set_PREFS_video_sortMethod(requireContext(), SettingsRequestCenter.sort_method_mime_type)
                 updateSortMethodText(SettingsRequestCenter.sort_method_mime_type)
             }
+        }
+    }
+    //注册基本设置项
+    private fun registerSettings(view: View){
+        lifecycleScope.launch(Dispatchers.Main){
+            //检查文件有效性
+            val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
+            switch_EnableFileExistCheck.isChecked = SettingsRequestCenter.get_PREFS_EnableFileExistCheck( requireContext())
+            switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(requireContext())
+                SettingsRequestCenter.set_PREFS_EnableFileExistCheck(requireContext(), isChecked)
+            }
+            //每次启动都读取
+            val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
+            switch_QueryNewVideoOnStart.isChecked = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart( requireContext())
+            switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(requireContext())
+                SettingsRequestCenter.set_PREFS_QueryNewMediaOnStart(requireContext(), isChecked)
+            }
+            //默认页签
+            val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
+            fun setAcquiesceTabText(){
+                val AcquiesceTab = SettingsRequestCenter.get_PREFS_AcquiesceTab(requireContext())
+                when(AcquiesceTab){
+                    SettingsRequestCenter.tab_mark_video -> {
+                        ButtonTextChangeDefaultTab.text = "视频"
+                    }
+                    SettingsRequestCenter.tab_mark_music -> {
+                        ButtonTextChangeDefaultTab.text = "音乐"
+                    }
+                    SettingsRequestCenter.tab_mark_last -> {
+                        ButtonTextChangeDefaultTab.text = "上一次的页面"
+                    }
 
+                }
+            }
+            setAcquiesceTabText()
+            ButtonTextChangeDefaultTab.setOnClickListener {
+                ToolVibrate().vibrate(requireContext())
+                //显示默认页签选择弹窗
+                val popupMenu = PopupMenu(requireContext(), it)
+                popupMenu.menuInflater.inflate(R.menu.activity_main_popup_default_page, popupMenu.menu)
+                popupMenu.show()
+                //默认页签选择弹窗点击事件
+                popupMenu.setOnMenuItemClickListener { item ->
+                    ToolVibrate().vibrate(requireContext())
+                    when (item.itemId) {
+                        R.id.page_video -> {
+                            SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_video)
+
+                            setAcquiesceTabText()
+
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.page_music -> {
+                            SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_music)
+
+                            setAcquiesceTabText()
+
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.page_gallery -> {
+                            requireContext().showCustomToast("暂不支持设为陈列架",  3)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.page_last -> {
+                            SettingsRequestCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsRequestCenter.tab_mark_last)
+
+                            setAcquiesceTabText()
+
+                            return@setOnMenuItemClickListener true
+                        }
+                    }
+                    false
+                }
+            }
             //默认播放行为
             updateText_DefaultPlayMode()
             ButtonChangeDefaultPlayMode.setOnClickListener {
@@ -308,6 +359,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
                 startMenu_DefaultPlayMode(it)
 
             }
+
         }
     }
 

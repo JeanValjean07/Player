@@ -17,6 +17,7 @@
         app:cardCornerRadius="10dp"
         app:cardBackgroundColor="@color/SecondaryColorPack_SurfaceBackground"
         app:cardElevation="10dp"
+        android:translationZ="5dp"
         android:clickable="true">
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -104,6 +105,7 @@
                 android:id="@+id/NestedScrollView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="visible"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -116,6 +118,7 @@
                     <Space
                         android:layout_width="match_parent"
                         android:layout_height="50dp" />
+
                     <!-- 重读媒体库按钮 -->
                     <androidx.cardview.widget.CardView
                         android:id="@+id/ButtonReLoadFromMediaStore"
@@ -210,6 +213,7 @@
                                 android:id="@+id/sort_type_area"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:layout_marginStart="30dp"
                                 android:orientation="vertical">
                                 <!-- 正序或倒序 -->
                                 <LinearLayout
@@ -602,7 +606,7 @@
                         android:layout_marginStart="10dp"
                         android:layout_marginEnd="10dp"
                         android:layout_marginTop="10dp"
-                        android:layout_marginBottom="250dp"
+                        android:layout_marginBottom="100dp"
                         app:cardBackgroundColor="@color/SecondaryColorPack_ContentCardBackground"
                         app:cardCornerRadius="15dp"
                         app:cardElevation="5dp">
@@ -637,24 +641,6 @@
                                     android:layout_gravity="center"
                                     android:layout_marginStart="10dp"
                                     android:textColor="@color/Text2" />
-                            </LinearLayout>
-                            <!-- 文本区域：权限提示 -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:minHeight="20dp"
-                                android:layout_marginBottom="15dp"
-                                android:orientation="horizontal">
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="如果您的系统版本达到安卓13及以上，请务必开启管理所有文件权限，否则无法读取部分目录下的视频文件，无法解码除.mp4外的视频文件媒体信息。安卓12及以下只需开启基本“仅媒体”权限即可。"
-                                    android:textSize="10sp"
-                                    android:layout_gravity="center"
-                                    android:layout_marginStart="10dp"
-                                    android:layout_marginEnd="10dp"
-                                    android:textColor="@color/Text2"
-                                    />
                             </LinearLayout>
                             <!-- 文本区域：媒体储存提示 -->
                             <LinearLayout
