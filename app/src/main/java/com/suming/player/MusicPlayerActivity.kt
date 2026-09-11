@@ -146,11 +146,22 @@ class MusicPlayerActivity : AppCompatActivity() {
         media_title.setOnClickListener {
             ToolVibrate().vibrate(context)
 
+            media_title.isSelected = true
+
             val file_name = PlayerInfoCenter.GET_Media_FileName()
 
             notice("标题:${title}\n文件名:${file_name}",6000)
 
         }
+
+        media_artist.setOnClickListener {
+            ToolVibrate().vibrate(context)
+
+            it.isSelected = true
+
+
+        }
+
     }
 
 
