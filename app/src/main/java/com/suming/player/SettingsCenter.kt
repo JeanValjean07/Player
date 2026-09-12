@@ -9,7 +9,7 @@ import com.suming.player.FuncionalPack.DeviceInfo
 import kotlin.math.sqrt
 
 @Suppress("unused")
-object SettingsRequestCenter {
+object SettingsCenter {
 
     //日志控制
     private fun consoleLog(msg: String, mark: Boolean = true) {
@@ -743,10 +743,10 @@ object SettingsRequestCenter {
         return PREFS_EnableTapJump == 1
     }
     //锁定刷新率
-    private var PREFS_LockRefreshRate = -1
+    private var PREFS_Video_LockRefreshRate = -1
     fun set_PREFS_LockRefreshRate(enable: Boolean){
-        PREFS_LockRefreshRate = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_LockRefreshRate", if (enable) 1 else 0) }
+        PREFS_Video_LockRefreshRate = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_Video_LockRefreshRate", if (enable) 1 else 0) }
     }
     fun get_PREFS_LockRefreshRate(context: Context): Boolean {
         //确保配置清单已初始化
@@ -755,26 +755,26 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_LockRefreshRate == -1) {
-            PREFS_LockRefreshRate = PREFS_PlayVideoPage.getInt("PREFS_LockRefreshRate", -1)
-            if (PREFS_LockRefreshRate == -1) {
+        if (PREFS_Video_LockRefreshRate == -1) {
+            PREFS_Video_LockRefreshRate = PREFS_PlayVideoPage.getInt("PREFS_Video_LockRefreshRate", -1)
+            if (PREFS_Video_LockRefreshRate == -1) {
                 if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
-                    PREFS_LockRefreshRate = 1
-                    PREFS_PlayVideoPage.edit { putInt("PREFS_LockRefreshRate", 1) }
+                    PREFS_Video_LockRefreshRate = 1
+                    PREFS_PlayVideoPage.edit { putInt("PREFS_Video_LockRefreshRate", 1) }
                 }else{
-                    PREFS_LockRefreshRate = 0
-                    PREFS_PlayVideoPage.edit { putInt("PREFS_LockRefreshRate", 0) }
+                    PREFS_Video_LockRefreshRate = 0
+                    PREFS_PlayVideoPage.edit { putInt("PREFS_Video_LockRefreshRate", 0) }
                 }
             }
         }
 
-        return PREFS_LockRefreshRate == 1
+        return PREFS_Video_LockRefreshRate == 1
     }
     //从其他应用启动时,播放结束自动退出
-    private var PREFS_AutoExitWhenEnd = -1
+    private var PREFS_Video_AutoExitWhenEnd = -1
     fun set_PREFS_AutoExitWhenEnd(enable: Boolean){
-        PREFS_AutoExitWhenEnd = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_AutoExitWhenEnd", if (enable) 1 else 0) }
+        PREFS_Video_AutoExitWhenEnd = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_Video_AutoExitWhenEnd", if (enable) 1 else 0) }
     }
     fun get_PREFS_AutoExitWhenEnd(context: Context): Boolean {
         //确保配置清单已初始化
@@ -783,20 +783,20 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_AutoExitWhenEnd == -1) {
-            PREFS_AutoExitWhenEnd = PREFS_PlayVideoPage.getInt("PREFS_AutoExitWhenEnd", -1)
-            if (PREFS_AutoExitWhenEnd == -1) {
-                PREFS_AutoExitWhenEnd = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_AutoExitWhenEnd", 0) }
+        if (PREFS_Video_AutoExitWhenEnd == -1) {
+            PREFS_Video_AutoExitWhenEnd = PREFS_PlayVideoPage.getInt("PREFS_Video_AutoExitWhenEnd", -1)
+            if (PREFS_Video_AutoExitWhenEnd == -1) {
+                PREFS_Video_AutoExitWhenEnd = 0
+                PREFS_PlayVideoPage.edit { putInt("PREFS_Video_AutoExitWhenEnd", 0) }
             }
         }
-        return PREFS_AutoExitWhenEnd == 1
+        return PREFS_Video_AutoExitWhenEnd == 1
     }
     //开启方向监听器
-    private var PREFS_EnableOrientationListener = -1
+    private var PREFS_Video_EnableOrientationListener = -1
     fun set_PREFS_EnableOrientationListener(enable: Boolean){
-        PREFS_EnableOrientationListener = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_EnableOrientationListener", if (enable) 1 else 0) }
+        PREFS_Video_EnableOrientationListener = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_Video_EnableOrientationListener", if (enable) 1 else 0) }
     }
     fun get_PREFS_EnableOrientationListener(context: Context): Boolean {
         //确保配置清单已初始化
@@ -805,21 +805,21 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_EnableOrientationListener == -1) {
-            PREFS_EnableOrientationListener = PREFS_PlayVideoPage.getInt("PREFS_EnableOrientationListener", -1)
-            if (PREFS_EnableOrientationListener == -1) {
-                PREFS_EnableOrientationListener = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_EnableOrientationListener", 0) }
+        if (PREFS_Video_EnableOrientationListener == -1) {
+            PREFS_Video_EnableOrientationListener = PREFS_PlayVideoPage.getInt("PREFS_Video_EnableOrientationListener", -1)
+            if (PREFS_Video_EnableOrientationListener == -1) {
+                PREFS_Video_EnableOrientationListener = 0
+                PREFS_PlayVideoPage.edit { putInt("PREFS_Video_EnableOrientationListener", 0) }
             }
         }
 
-        return PREFS_EnableOrientationListener == 1
+        return PREFS_Video_EnableOrientationListener == 1
     }
     //关闭更多操作面板下滑手势
-    private var PREFS_DisableFragmentGesture = -1
+    private var PREFS_Video_DisableFragmentGesture = -1
     fun set_PREFS_DisableFragmentGesture(enable: Boolean){
-        PREFS_DisableFragmentGesture = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_DisableFragmentGesture", if (enable) 1 else 0) }
+        PREFS_Video_DisableFragmentGesture = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_Video_DisableFragmentGesture", if (enable) 1 else 0) }
     }
     fun get_PREFS_DisableFragmentGesture(context: Context): Boolean {
         //确保配置清单已初始化
@@ -828,50 +828,50 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_DisableFragmentGesture == -1) {
-            PREFS_DisableFragmentGesture = PREFS_PlayVideoPage.getInt("PREFS_DisableFragmentGesture", -1)
-            if (PREFS_DisableFragmentGesture == -1) {
-                PREFS_DisableFragmentGesture = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_DisableFragmentGesture", 0) }
+        if (PREFS_Video_DisableFragmentGesture == -1) {
+            PREFS_Video_DisableFragmentGesture = PREFS_PlayVideoPage.getInt("PREFS_Video_DisableFragmentGesture", -1)
+            if (PREFS_Video_DisableFragmentGesture == -1) {
+                PREFS_Video_DisableFragmentGesture = 0
+                PREFS_PlayVideoPage.edit { putInt("PREFS_Video_DisableFragmentGesture", 0) }
             }
         }
-        return PREFS_DisableFragmentGesture == 1
+        return PREFS_Video_DisableFragmentGesture == 1
     }
     //退出时确保是竖屏(默认设置区分设备dpi)
-    private var PRF_SwitchPortrait_whenExit = -1
-    const val PRF_SwitchPortrait_whenExit_Name = "PRF_SwitchPortrait_whenExit"
+    private var PRF_Video_SwitchPortrait_whenExit = -1
+    const val PRF_Video_SwitchPortrait_whenExit_Name = "PRF_Video_SwitchPortrait_whenExit"
     fun SET_PRF_SwitchPortrait_whenExit(enable: Boolean){
         //写入缓存和清单
-        PRF_SwitchPortrait_whenExit = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt(PRF_SwitchPortrait_whenExit_Name, if (enable) 1 else 0) }
+        PRF_Video_SwitchPortrait_whenExit = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt(PRF_Video_SwitchPortrait_whenExit_Name, if (enable) 1 else 0) }
     }
     fun GET_PRF_SwitchPortrait_whenExit(context: Context): Boolean {
         initPlayVideoPageSetting(context)
 
         //仅在无缓存时读取
-        if (PRF_SwitchPortrait_whenExit == -1) {
-            PRF_SwitchPortrait_whenExit = PREFS_PlayVideoPage.getInt(PRF_SwitchPortrait_whenExit_Name, -1)
-            if (PRF_SwitchPortrait_whenExit == -1) {
+        if (PRF_Video_SwitchPortrait_whenExit == -1) {
+            PRF_Video_SwitchPortrait_whenExit = PREFS_PlayVideoPage.getInt(PRF_Video_SwitchPortrait_whenExit_Name, -1)
+            if (PRF_Video_SwitchPortrait_whenExit == -1) {
                 //默认不开启
-                PREFS_PlayVideoPage.edit { putInt(PRF_SwitchPortrait_whenExit_Name, 0) }
-                PRF_SwitchPortrait_whenExit = 0
+                PREFS_PlayVideoPage.edit { putInt(PRF_Video_SwitchPortrait_whenExit_Name, 0) }
+                PRF_Video_SwitchPortrait_whenExit = 0
 
                 //默认值根据是否为平板选择
                 /*
                 val isDeviceTablet = isDeviceTablet(context)
                 if (isDeviceTablet){
-                    PREFS_PlayVideoPage.edit { putInt(PRF_SwitchPortrait_whenExit_Name, 0) }
-                    PRF_SwitchPortrait_whenExit = 0
+                    PREFS_PlayVideoPage.edit { putInt(PRF_Video_SwitchPortrait_whenExit_Name, 0) }
+                    PRF_Video_SwitchPortrait_whenExit = 0
                 }else{
-                    PREFS_PlayVideoPage.edit { putInt(PRF_SwitchPortrait_whenExit_Name, 1) }
-                    PRF_SwitchPortrait_whenExit = 1
+                    PREFS_PlayVideoPage.edit { putInt(PRF_Video_SwitchPortrait_whenExit_Name, 1) }
+                    PRF_Video_SwitchPortrait_whenExit = 1
                 }
 
                  */
             }
         }
 
-        return PRF_SwitchPortrait_whenExit == 1
+        return PRF_Video_SwitchPortrait_whenExit == 1
     }
     private fun isDeviceTablet(context: Context): Boolean{
         val displayMetrics = context.resources.displayMetrics
@@ -885,10 +885,10 @@ object SettingsRequestCenter {
         return diagonalInches >= 7.0
     }
     //播放区域移动动画
-    private var PREFS_EnablePlayAreaMoveAnim = -1
+    private var PREFS_Video_EnablePlayAreaMoveAnim = -1
     fun set_PREFS_EnablePlayAreaMoveAnim(enable: Boolean){
-        PREFS_EnablePlayAreaMoveAnim = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_EnablePlayAreaMoveAnim", if (enable) 1 else 0) }
+        PREFS_Video_EnablePlayAreaMoveAnim = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_Video_EnablePlayAreaMoveAnim", if (enable) 1 else 0) }
     }
     fun get_PREFS_EnablePlayAreaMoveAnim(context: Context): Boolean {
         //确保配置清单已初始化
@@ -897,70 +897,70 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_EnablePlayAreaMoveAnim == -1) {
-            PREFS_EnablePlayAreaMoveAnim = PREFS_PlayVideoPage.getInt("PREFS_EnablePlayAreaMoveAnim", -1)
-            if (PREFS_EnablePlayAreaMoveAnim == -1) {
-                PREFS_EnablePlayAreaMoveAnim = 1
-                PREFS_PlayVideoPage.edit { putInt("PREFS_EnablePlayAreaMoveAnim", 1) }
+        if (PREFS_Video_EnablePlayAreaMoveAnim == -1) {
+            PREFS_Video_EnablePlayAreaMoveAnim = PREFS_PlayVideoPage.getInt("PREFS_Video_EnablePlayAreaMoveAnim", -1)
+            if (PREFS_Video_EnablePlayAreaMoveAnim == -1) {
+                PREFS_Video_EnablePlayAreaMoveAnim = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_Video_EnablePlayAreaMoveAnim", 1) }
             }
         }
-        return PREFS_EnablePlayAreaMoveAnim == 1
+        return PREFS_Video_EnablePlayAreaMoveAnim == 1
     }
     //保持界面常亮
-    private var PRF_KeepScreenOn = -1
-    const val PRF_KeepScreenOn_Name = "PRF_KeepScreenOn"
+    private var PRF_Video_KeepScreenOn = -1
+    const val PRF_Video_KeepScreenOn_Name = "PRF_Video_KeepScreenOn"
     fun SET_PRF_KeepScreenOn(context: Context, enable: Boolean){
         initPlayVideoPageSetting(context)
 
-        PRF_KeepScreenOn = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt(PRF_KeepScreenOn_Name, if (enable) 1 else 0) }
+        PRF_Video_KeepScreenOn = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt(PRF_Video_KeepScreenOn_Name, if (enable) 1 else 0) }
 
     }
     fun GET_PRF_KeepScreenOn(context: Context): Boolean{
         initPlayVideoPageSetting(context)
 
-        if (PRF_KeepScreenOn == -1){
-            PRF_KeepScreenOn = PREFS_PlayVideoPage.getInt(PRF_KeepScreenOn_Name, -1)
-            if (PRF_KeepScreenOn == -1){
-                PRF_KeepScreenOn = 1
-                PREFS_PlayVideoPage.edit { putInt(PRF_KeepScreenOn_Name, 1) }
+        if (PRF_Video_KeepScreenOn == -1){
+            PRF_Video_KeepScreenOn = PREFS_PlayVideoPage.getInt(PRF_Video_KeepScreenOn_Name, -1)
+            if (PRF_Video_KeepScreenOn == -1){
+                PRF_Video_KeepScreenOn = 1
+                PREFS_PlayVideoPage.edit { putInt(PRF_Video_KeepScreenOn_Name, 1) }
             }
         }
 
-        return PRF_KeepScreenOn == 1
+        return PRF_Video_KeepScreenOn == 1
     }
     //竖屏时也开启自动隐藏控件
-    private var PRF_EnableAutoHideController_whenPortrait = -1
-    const val PRF_EnableAutoHideController_whenPortrait_Name = "PRF_EnableAutoHideController_whenPortrait"
+    private var PRF_Video_EnableAutoHideController_whenPortrait = -1
+    const val PRF_Video_EnableAutoHideController_whenPortrait_Name = "PRF_Video_EnableAutoHideController_whenPortrait"
     fun SET_PRF_EnableAutoHideController_whenPortrait(context: Context, enable: Boolean) {
         initPlayVideoPageSetting(context)
 
-        PRF_EnableAutoHideController_whenPortrait = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt(PRF_EnableAutoHideController_whenPortrait_Name, if (enable) 1 else 0)}
+        PRF_Video_EnableAutoHideController_whenPortrait = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt(PRF_Video_EnableAutoHideController_whenPortrait_Name, if (enable) 1 else 0)}
 
 
     }
     fun GET_PRF_EnableAutoHideController_whenPortrait(context: Context): Boolean {
         initPlayVideoPageSetting(context)
 
-        if (PRF_EnableAutoHideController_whenPortrait == -1){
-            PRF_EnableAutoHideController_whenPortrait = PREFS_PlayVideoPage.getInt(PRF_EnableAutoHideController_whenPortrait_Name, -1)
+        if (PRF_Video_EnableAutoHideController_whenPortrait == -1){
+            PRF_Video_EnableAutoHideController_whenPortrait = PREFS_PlayVideoPage.getInt(PRF_Video_EnableAutoHideController_whenPortrait_Name, -1)
             //设置默认值为关闭
-            if (PRF_EnableAutoHideController_whenPortrait == -1){
-                PRF_EnableAutoHideController_whenPortrait = 0
-                PREFS_PlayVideoPage.edit { putInt(PRF_EnableAutoHideController_whenPortrait_Name, 0) }
+            if (PRF_Video_EnableAutoHideController_whenPortrait == -1){
+                PRF_Video_EnableAutoHideController_whenPortrait = 0
+                PREFS_PlayVideoPage.edit { putInt(PRF_Video_EnableAutoHideController_whenPortrait_Name, 0) }
             }
         }
 
 
-        return PRF_EnableAutoHideController_whenPortrait == 1
+        return PRF_Video_EnableAutoHideController_whenPortrait == 1
     }
 
     //进度条截取时使用关键帧
-    private var PREFS_UseSyncFrameInScroller = -1
+    private var PREFS_Video_UseSyncFrameInScroller = -1
     fun set_PREFS_UseSyncFrameInScroller(enable: Boolean){
-        PREFS_UseSyncFrameInScroller = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_UseSyncFrameInScroller", if (enable) 1 else 0) }
+        PREFS_Video_UseSyncFrameInScroller = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_Video_UseSyncFrameInScroller", if (enable) 1 else 0) }
     }
     fun get_PREFS_UseSyncFrameInScroller(context: Context): Boolean {
         //确保配置清单已初始化
@@ -969,20 +969,20 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_UseSyncFrameInScroller == -1) {
-            PREFS_UseSyncFrameInScroller = PREFS_PlayVideoPage.getInt("PREFS_UseSyncFrameInScroller", -1)
-            if (PREFS_UseSyncFrameInScroller == -1) {
-                PREFS_UseSyncFrameInScroller = 1
-                PREFS_PlayVideoPage.edit { putInt("PREFS_UseSyncFrameInScroller", 1) }
+        if (PREFS_Video_UseSyncFrameInScroller == -1) {
+            PREFS_Video_UseSyncFrameInScroller = PREFS_PlayVideoPage.getInt("PREFS_Video_UseSyncFrameInScroller", -1)
+            if (PREFS_Video_UseSyncFrameInScroller == -1) {
+                PREFS_Video_UseSyncFrameInScroller = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_Video_UseSyncFrameInScroller", 1) }
             }
         }
-        return PREFS_UseSyncFrameInScroller == 1
+        return PREFS_Video_UseSyncFrameInScroller == 1
     }
     //使用超长进度条
-    private var PREFS_UseSuperLongScroller = -1
+    private var PREFS_Video_UseSuperLongScroller = -1
     fun set_PREFS_UseSuperLongScroller(enable: Boolean){
-        PREFS_UseSuperLongScroller = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_UseSuperLongScroller", if (enable) 1 else 0) }
+        PREFS_Video_UseSuperLongScroller = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_Video_UseSuperLongScroller", if (enable) 1 else 0) }
     }
     fun get_PREFS_UseSuperLongScroller(context: Context): Boolean {
         //确保配置清单已初始化
@@ -991,20 +991,20 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_UseSuperLongScroller == -1) {
-            PREFS_UseSuperLongScroller = PREFS_PlayVideoPage.getInt("PREFS_UseSuperLongScroller", -1)
-            if (PREFS_UseSuperLongScroller == -1) {
-                PREFS_UseSuperLongScroller = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_UseSuperLongScroller", 0) }
+        if (PREFS_Video_UseSuperLongScroller == -1) {
+            PREFS_Video_UseSuperLongScroller = PREFS_PlayVideoPage.getInt("PREFS_Video_UseSuperLongScroller", -1)
+            if (PREFS_Video_UseSuperLongScroller == -1) {
+                PREFS_Video_UseSuperLongScroller = 0
+                PREFS_PlayVideoPage.edit { putInt("PREFS_Video_UseSuperLongScroller", 0) }
             }
         }
-        return PREFS_UseSuperLongScroller == 1
+        return PREFS_Video_UseSuperLongScroller == 1
     }
     //进度条端点绘制采用兼容模式
-    private var PREFS_UseCompatScroller = -1
+    private var PREFS_Video_UseCompatScroller = -1
     fun set_PREFS_UseCompatScroller(enable: Boolean){
-        PREFS_UseCompatScroller = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_UseCompatScroller", if (enable) 1 else 0) }
+        PREFS_Video_UseCompatScroller = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_Video_UseCompatScroller", if (enable) 1 else 0) }
     }
     fun get_PREFS_UseCompatScroller(context: Context): Boolean {
         //确保配置清单已初始化
@@ -1013,20 +1013,20 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_UseCompatScroller == -1) {
-            PREFS_UseCompatScroller = PREFS_PlayVideoPage.getInt("PREFS_UseCompatScroller", -1)
-            if (PREFS_UseCompatScroller == -1) {
-                PREFS_UseCompatScroller = 0
-                PREFS_PlayVideoPage.edit { putInt("PREFS_UseCompatScroller", 0) }
+        if (PREFS_Video_UseCompatScroller == -1) {
+            PREFS_Video_UseCompatScroller = PREFS_PlayVideoPage.getInt("PREFS_Video_UseCompatScroller", -1)
+            if (PREFS_Video_UseCompatScroller == -1) {
+                PREFS_Video_UseCompatScroller = 0
+                PREFS_PlayVideoPage.edit { putInt("PREFS_Video_UseCompatScroller", 0) }
             }
         }
-        return PREFS_UseCompatScroller == 1
+        return PREFS_Video_UseCompatScroller == 1
     }
     //寻帧时一律使用关键帧
-    private var PREFS_UseOnlySyncFrameWhenSeek = -1
+    private var PREFS_Video_UseOnlySyncFrameWhenSeek = -1
     fun set_PREFS_UseOnlySyncFrameWhenSeek(enable: Boolean){
-        PREFS_UseOnlySyncFrameWhenSeek = if (enable) 1 else 0
-        PREFS_PlayVideoPage.edit { putInt("PREFS_UseOnlySyncFrameWhenSeek", if (enable) 1 else 0) }
+        PREFS_Video_UseOnlySyncFrameWhenSeek = if (enable) 1 else 0
+        PREFS_PlayVideoPage.edit { putInt("PREFS_Video_UseOnlySyncFrameWhenSeek", if (enable) 1 else 0) }
     }
     fun get_PREFS_UseOnlySyncFrameWhenSeek(context: Context): Boolean {
         //确保配置清单已初始化
@@ -1035,83 +1035,83 @@ object SettingsRequestCenter {
             state_PREFS_PlayVideoPage_initialized = true
         }
         //确保配置项已被读取过
-        if (PREFS_UseSyncFrameInScroller == -1) {
-            PREFS_UseOnlySyncFrameWhenSeek = PREFS_PlayVideoPage.getInt("PREFS_UseOnlySyncFrameWhenSeek", -1)
-            if (PREFS_UseOnlySyncFrameWhenSeek == -1) {
-                PREFS_UseOnlySyncFrameWhenSeek = 1
-                PREFS_PlayVideoPage.edit { putInt("PREFS_UseOnlySyncFrameWhenSeek", 1) }
+        if (PREFS_Video_UseSyncFrameInScroller == -1) {
+            PREFS_Video_UseOnlySyncFrameWhenSeek = PREFS_PlayVideoPage.getInt("PREFS_Video_UseOnlySyncFrameWhenSeek", -1)
+            if (PREFS_Video_UseOnlySyncFrameWhenSeek == -1) {
+                PREFS_Video_UseOnlySyncFrameWhenSeek = 1
+                PREFS_PlayVideoPage.edit { putInt("PREFS_Video_UseOnlySyncFrameWhenSeek", 1) }
             }
         }
 
-        return PREFS_UseOnlySyncFrameWhenSeek == 1
+        return PREFS_Video_UseOnlySyncFrameWhenSeek == 1
     }
 
     //连续寻帧间隔(默认值66ms/15Hz)
-    private var value_seekVideo_runnableGapMs = -1L
-    const val value_seekVideo_runnableGapMs_Name = "value_seekVideo_runnableGapMs"
+    private var value_video_seekVideo_runnableGapMs = -1L
+    const val value_video_seekVideo_runnableGapMs_Name = "value_video_seekVideo_runnableGapMs"
     fun set_value_seekVideo_runnableGapMs(context: Context, gap: Long){
         initPlayVideoPageSetting(context)
 
         //刷新缓存并写入本地
-        value_seekVideo_runnableGapMs = gap
-        PREFS_PlayVideoPage.edit { putLong(value_seekVideo_runnableGapMs_Name, gap) }
+        value_video_seekVideo_runnableGapMs = gap
+        PREFS_PlayVideoPage.edit { putLong(value_video_seekVideo_runnableGapMs_Name, gap) }
     }
     fun get_value_seekVideo_runnableGapMs(context: Context): Long {
         initPlayVideoPageSetting(context)
 
         //仅在无缓存时读盘
-        if (value_seekVideo_runnableGapMs == -1L) {
-            value_seekVideo_runnableGapMs = PREFS_PlayVideoPage.getLong(value_seekVideo_runnableGapMs_Name, -1L)
+        if (value_video_seekVideo_runnableGapMs == -1L) {
+            value_video_seekVideo_runnableGapMs = PREFS_PlayVideoPage.getLong(value_video_seekVideo_runnableGapMs_Name, -1L)
             //设置默认值(设为66ms/15Hz)
-            if (value_seekVideo_runnableGapMs == -1L) {
-                value_seekVideo_runnableGapMs = 66L
-                PREFS_PlayVideoPage.edit { putLong(value_seekVideo_runnableGapMs_Name, 66L) }
+            if (value_video_seekVideo_runnableGapMs == -1L) {
+                value_video_seekVideo_runnableGapMs = 66L
+                PREFS_PlayVideoPage.edit { putLong(value_video_seekVideo_runnableGapMs_Name, 66L) }
             }
         }
-        return value_seekVideo_runnableGapMs
+        return value_video_seekVideo_runnableGapMs
     }
     //时间戳(被动)刷新间隔(默认值66ms/15Hz)
-    private var value_timeStamp_updateGapMs = -1L
-    const val value_timeStamp_updateGapMs_Name = "value_timeStamp_updateGapMs"
+    private var value_video_timeStamp_updateGapMs = -1L
+    const val value_video_timeStamp_updateGapMs_Name = "value_video_timeStamp_updateGapMs"
     fun set_value_timeStamp_updateGapMs(context: Context, gap: Long){
         initPlayVideoPageSetting(context)
 
         //刷新缓存并写入本地
-        value_timeStamp_updateGapMs = gap
-        PREFS_PlayVideoPage.edit { putLong(value_timeStamp_updateGapMs_Name, gap) }
+        value_video_timeStamp_updateGapMs = gap
+        PREFS_PlayVideoPage.edit { putLong(value_video_timeStamp_updateGapMs_Name, gap) }
     }
     fun get_value_timeStamp_updateGapMs(context: Context): Long {
         initPlayVideoPageSetting(context)
 
         //仅在无缓存时读盘
-        if (value_timeStamp_updateGapMs == -1L) {
-            value_timeStamp_updateGapMs = PREFS_PlayVideoPage.getLong(value_timeStamp_updateGapMs_Name, -1L)
+        if (value_video_timeStamp_updateGapMs == -1L) {
+            value_video_timeStamp_updateGapMs = PREFS_PlayVideoPage.getLong(value_video_timeStamp_updateGapMs_Name, -1L)
             //设置默认值(设为66ms/15Hz)
-            if (value_timeStamp_updateGapMs == -1L) {
-                value_timeStamp_updateGapMs = 66L
-                PREFS_PlayVideoPage.edit { putLong(value_timeStamp_updateGapMs_Name, 66L) }
+            if (value_video_timeStamp_updateGapMs == -1L) {
+                value_video_timeStamp_updateGapMs = 66L
+                PREFS_PlayVideoPage.edit { putLong(value_video_timeStamp_updateGapMs_Name, 66L) }
             }
         }
 
-        return value_timeStamp_updateGapMs
+        return value_video_timeStamp_updateGapMs
     }
     //进度条(被动)刷新间隔(默认值66ms/15Hz)
-    private var value_syncScroller_runnableGapMs = -1L
-    const val value_syncScroller_runnableGapMs_Name = "value_syncScroller_runnableGapMs"
+    private var value_video_syncScroller_runnableGapMs = -1L
+    const val value_video_syncScroller_runnableGapMs_Name = "value_video_syncScroller_runnableGapMs"
     fun get_value_syncScroller_runnableGapMs(context: Context):Long{
         initPlayVideoPageSetting(context)
 
         //仅在无缓存时读盘
-        if (value_syncScroller_runnableGapMs == -1L) {
-            value_syncScroller_runnableGapMs = PREFS_PlayVideoPage.getLong(value_syncScroller_runnableGapMs_Name, -1L)
+        if (value_video_syncScroller_runnableGapMs == -1L) {
+            value_video_syncScroller_runnableGapMs = PREFS_PlayVideoPage.getLong(value_video_syncScroller_runnableGapMs_Name, -1L)
             //设置默认值(设为66ms/15Hz)
-            if (value_syncScroller_runnableGapMs == -1L) {
-                value_syncScroller_runnableGapMs = 33L
-                PREFS_PlayVideoPage.edit { putLong(value_syncScroller_runnableGapMs_Name, 33L) }
+            if (value_video_syncScroller_runnableGapMs == -1L) {
+                value_video_syncScroller_runnableGapMs = 33L
+                PREFS_PlayVideoPage.edit { putLong(value_video_syncScroller_runnableGapMs_Name, 33L) }
             }
         }
 
-        return value_syncScroller_runnableGapMs
+        return value_video_syncScroller_runnableGapMs
     }
     fun set_value_syncScroller_runnableGapMs(context: Context, targetValue: Long){
         initPlayVideoPageSetting(context)
@@ -1120,37 +1120,124 @@ object SettingsRequestCenter {
         if (targetValue !in 0L..1000L) return
 
         //刷新缓存并写入本地
-        value_syncScroller_runnableGapMs = targetValue
-        PREFS_PlayVideoPage.edit { putLong(value_syncScroller_runnableGapMs_Name, targetValue) }
+        value_video_syncScroller_runnableGapMs = targetValue
+        PREFS_PlayVideoPage.edit { putLong(value_video_syncScroller_runnableGapMs_Name, targetValue) }
 
     }
     //SeekBar(被动)刷新间隔(默认值66ms/15Hz)
-    private var value_syncSeekbar_runnableGapMs = -1L
-    const val value_syncSeekbar_runnableGapMs_Name = "value_syncSeekbar_runnableGapMs"
+    private var value_video_syncSeekbar_runnableGapMs = -1L
+    var value_syncSeekbar_runnableGapMs_Adapt = 3001L
+    const val value_video_syncSeekbar_runnableGapMs_Name = "value_video_syncSeekbar_runnableGapMs"
     fun get_value_syncSeekbar_runnableGapMs(context: Context):Long{
         initPlayVideoPageSetting(context)
 
         //仅在无缓存时读盘
-        if (value_syncSeekbar_runnableGapMs == -1L) {
-            value_syncSeekbar_runnableGapMs = PREFS_PlayVideoPage.getLong(value_syncSeekbar_runnableGapMs_Name, -1L)
+        if (value_video_syncSeekbar_runnableGapMs == -1L) {
+            value_video_syncSeekbar_runnableGapMs = PREFS_PlayVideoPage.getLong(value_video_syncSeekbar_runnableGapMs_Name, -1L)
             //设置默认值(设为1s)
-            if (value_syncSeekbar_runnableGapMs == -1L) {
-                value_syncSeekbar_runnableGapMs = 1000L
-                PREFS_PlayVideoPage.edit { putLong(value_syncSeekbar_runnableGapMs_Name, 1000L) }
+            if (value_video_syncSeekbar_runnableGapMs == -1L) {
+                value_video_syncSeekbar_runnableGapMs = 1000L
+                PREFS_PlayVideoPage.edit { putLong(value_video_syncSeekbar_runnableGapMs_Name, 1000L) }
             }
         }
 
-        return value_syncSeekbar_runnableGapMs
+        return value_video_syncSeekbar_runnableGapMs
     }
     fun set_value_syncSeekbar_runnableGapMs(context: Context, targetValue: Long){
         initPlayVideoPageSetting(context)
 
         //检查数值合法性
-        if (targetValue !in 0L..3000L) return
+        if (targetValue !in 0L..3100L) return
 
         //刷新缓存并写入本地
-        value_syncSeekbar_runnableGapMs = targetValue
-        PREFS_PlayVideoPage.edit { putLong(value_syncSeekbar_runnableGapMs_Name, targetValue) }
+        value_video_syncSeekbar_runnableGapMs = targetValue
+        PREFS_PlayVideoPage.edit { putLong(value_video_syncSeekbar_runnableGapMs_Name, targetValue) }
+
+    }
+
+
+    //PREFS in PREFS_MusicPage -------------------------------------------------------------
+    private var Pandora_PlayAudioPage: SharedPreferences? = null
+    const val Pandora_PlayAudioPage_Name = "Pandora_PlayAudioPage"
+    private fun OpenPandora_PlayAudioPage(context: Context){
+        if (Pandora_PlayAudioPage == null) {
+            Pandora_PlayAudioPage = context.getSharedPreferences( Pandora_PlayAudioPage_Name, 0)
+        }
+    }
+    //SeekBar(被动)刷新间隔(默认值66ms/15Hz)
+    private var value_audio_syncSeekbar_runnableGapMs = -1L
+    var value_audio_syncSeekbar_runnableGapMs_Adapt = 3001L
+    const val value_audio_syncSeekbar_runnableGapMs_Name = "value_audio_syncSeekbar_runnableGapMs"
+    fun get_value_audio_syncSeekbar_runnableGapMs(context: Context):Long{
+        OpenPandora_PlayAudioPage(context)
+
+        //仅在无缓存时读盘
+        if (value_audio_syncSeekbar_runnableGapMs == -1L) {
+            value_audio_syncSeekbar_runnableGapMs = Pandora_PlayAudioPage?.getLong(value_audio_syncSeekbar_runnableGapMs_Name, -1L) ?: -1L
+            //设置默认值(设为1s)
+            if (value_audio_syncSeekbar_runnableGapMs == -1L) {
+                value_audio_syncSeekbar_runnableGapMs = 1000L
+                Pandora_PlayAudioPage?.edit { putLong(value_audio_syncSeekbar_runnableGapMs_Name, 1000L) }
+            }
+        }
+
+        return value_audio_syncSeekbar_runnableGapMs
+    }
+    fun set_value_audio_syncSeekbar_runnableGapMs(context: Context, targetValue: Long){
+        OpenPandora_PlayAudioPage(context)
+
+        //检查数值合法性
+        if (targetValue !in 0L..3100L) return
+
+        //刷新缓存并写入本地
+        value_audio_syncSeekbar_runnableGapMs = targetValue
+        Pandora_PlayAudioPage?.edit { putLong(value_audio_syncSeekbar_runnableGapMs_Name, targetValue) }
+
+    }
+    //不使用专辑封面
+    private var PRF_Audio_DontShowAlbumFrame = -1
+    const val PRF_Audio_DontShowAlbumFrame_Name = "PRF_Audio_DontShowAlbumFrame"
+    fun GET_PRF_Audio_DontShowAlbumFrame(context: Context): Boolean{
+        OpenPandora_PlayAudioPage(context)
+
+        if (PRF_Audio_DontShowAlbumFrame == -1){
+            PRF_Audio_DontShowAlbumFrame = Pandora_PlayAudioPage?.getInt(PRF_Audio_DontShowAlbumFrame_Name, -1) ?: -1
+            if (PRF_Audio_DontShowAlbumFrame == -1){
+                Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_DontShowAlbumFrame_Name, 0) }
+            }
+
+        }
+
+        return PRF_Audio_DontShowAlbumFrame == 1
+    }
+    fun SET_PRF_Audio_DontShowAlbumFrame(context: Context, enable: Boolean){
+        OpenPandora_PlayAudioPage(context)
+
+        PRF_Audio_DontShowAlbumFrame = if (enable) 1 else 0
+        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_DontShowAlbumFrame_Name, 0) }
+
+    }
+    //使用文件名作为标题
+    private var PRF_Audio_UseFileNameAsTitle = -1
+    const val PRF_Audio_UseFileNameAsTitle_Name = "PRF_Audio_UseFileNameAsTitle"
+    fun GET_PRF_Audio_UseFileNameAsTitle(context: Context): Boolean{
+        OpenPandora_PlayAudioPage(context)
+
+        if (PRF_Audio_UseFileNameAsTitle == -1){
+            PRF_Audio_UseFileNameAsTitle = Pandora_PlayAudioPage?.getInt(PRF_Audio_UseFileNameAsTitle_Name, -1) ?: -1
+            if (PRF_Audio_UseFileNameAsTitle == -1){
+                Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseFileNameAsTitle_Name, 0) }
+            }
+
+        }
+
+        return PRF_Audio_UseFileNameAsTitle == 1
+    }
+    fun SET_PRF_Audio_UseFileNameAsTitle(context: Context, enable: Boolean){
+        OpenPandora_PlayAudioPage(context)
+
+        PRF_Audio_UseFileNameAsTitle = if (enable) 1 else 0
+        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseFileNameAsTitle_Name, 0) }
 
     }
 
@@ -1164,29 +1251,29 @@ object SettingsRequestCenter {
         }
     }
     //使用全屏面板
-    private var PRF_UseFullScreenFragment = -1
-    const val PRF_UseFullScreenFragment_Name = "PRF_UseFullScreenFragment"
+    private var PRF_Other_UseFullScreenFragment = -1
+    const val PRF_UseFullScreenFragment_Name = "PRF_Other_UseFullScreenFragment"
     fun GET_PRF_UseFullScreenFragment(context: Context): Boolean{
         OpenPandora_Other(context)
 
-        if (PRF_UseFullScreenFragment == -1){
-            PRF_UseFullScreenFragment = Pandora_Other!!.getInt(PRF_UseFullScreenFragment_Name, -1)
+        if (PRF_Other_UseFullScreenFragment == -1){
+            PRF_Other_UseFullScreenFragment = Pandora_Other!!.getInt(PRF_UseFullScreenFragment_Name, -1)
 
-            if (PRF_UseFullScreenFragment == -1){
-                PRF_UseFullScreenFragment = 0
+            if (PRF_Other_UseFullScreenFragment == -1){
+                PRF_Other_UseFullScreenFragment = 0
             }
-            Pandora_Other!!.edit { putInt(PRF_UseFullScreenFragment_Name, PRF_UseFullScreenFragment) }
+            Pandora_Other!!.edit { putInt(PRF_UseFullScreenFragment_Name, PRF_Other_UseFullScreenFragment) }
         }
 
 
-        return PRF_UseFullScreenFragment == 1
+        return PRF_Other_UseFullScreenFragment == 1
     }
     fun SET_PRF_UseFullScreenFragment(context: Context, enable: Boolean) {
         OpenPandora_Other(context)
 
         val targetValue = if (enable) 1 else 0
 
-        PRF_UseFullScreenFragment = targetValue
+        PRF_Other_UseFullScreenFragment = targetValue
         Pandora_Other!!.edit { putInt(PRF_UseFullScreenFragment_Name, targetValue) }
 
 

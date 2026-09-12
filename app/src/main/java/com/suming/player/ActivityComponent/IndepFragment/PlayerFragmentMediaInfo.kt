@@ -79,7 +79,7 @@ import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.R
-import com.suming.player.SettingsRequestCenter
+import com.suming.player.SettingsCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -731,7 +731,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
         val density = resources.displayMetrics.density
 
         //读取是否启用全屏Fragment
-        val useFullScreenFragment = SettingsRequestCenter.GET_PRF_UseFullScreenFragment(requireContext())
+        val useFullScreenFragment = SettingsCenter.GET_PRF_UseFullScreenFragment(requireContext())
 
         //执行设置
         if (isLandscape){

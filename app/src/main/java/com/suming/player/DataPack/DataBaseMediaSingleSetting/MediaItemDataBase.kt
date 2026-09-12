@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase
     entities = [
         MediaItemDataClass::class
                ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class MediaItemDataBase : RoomDatabase() {

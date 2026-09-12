@@ -3,21 +3,21 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     tools:ignore="HardcodedText">
     <item
+        android:id="@+id/menu_item_10ms"
+        android:title="10 毫秒" />
+    <item
         android:id="@+id/menu_item_100ms"
         android:title="100 毫秒" />
     <item
-        android:id="@+id/menu_item_250ms"
-        android:title="250 毫秒" />
-    <item
         android:id="@+id/menu_item_500ms"
         android:title="500 毫秒" />
-    <item
-        android:id="@+id/menu_item_750ms"
-        android:title="750 毫秒" />
     <item
         android:id="@+id/menu_item_1000ms"
         android:title="1 秒" />
     <item
         android:id="@+id/menu_item_Input"
         android:title="自定义" />
+    <item
+        android:id="@+id/menu_item_Adapt"
+        android:title="自适应" />
 </menu>

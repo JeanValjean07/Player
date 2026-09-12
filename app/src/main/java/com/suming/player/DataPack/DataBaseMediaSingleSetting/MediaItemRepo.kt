@@ -28,9 +28,6 @@ class MediaItemRepo private constructor(context: Context) {
     suspend fun createMediaItem(uniqueID_URI_S_FP: String) = dao.createMediaItem(uniqueID_URI_S_FP)
 
 
-    //媒体类型
-    suspend fun update_INFO_MediaType(id: String, media_type: String) = dao.update_INFO_MediaType(id,media_type)
-    suspend fun get_INFO_MediaType(id: String): String = dao.get_INFO_MediaType(id)
 
     //后台播放
     suspend fun update_PREFS_BackgroundPlay(id: String, flag_need_background_play: Boolean) = dao.update_PREFS_BackgroundPlay(id,flag_need_background_play)
@@ -70,6 +67,11 @@ class MediaItemRepo private constructor(context: Context) {
     suspend fun update_PREFS_PlaySpeed(id: String, playback_speed: Float) = dao.update_PREFS_PlaySpeed(id,playback_speed)
     suspend fun get_PREFS_PlaySpeed(id: String): Float = dao.get_PREFS_PlaySpeed(id)
 
+
+    //音乐专属设置
+    //显示专辑封面
+    suspend fun update_PREFS_ShowAlbumFrame(id: String, flag_show_album_frame: Boolean) = dao.update_PREFS_ShowAlbumFrame(id,flag_show_album_frame)
+    suspend fun get_PREFS_ShowAlbumFrame(id: String): Boolean = dao.get_PREFS_ShowAlbumFrame(id)
 
 
     //获取该媒体的一行全部数据

@@ -965,7 +965,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.cardview.widget.CardView
-                                android:id="@+id/ButtonCard_seekbarUpdateGap"
+                                android:id="@+id/ButtonCard_VideoSeekBar_updateMs"
                                 android:layout_width="wrap_content"
                                 android:layout_height="20dp"
                                 android:layout_marginEnd="2dp"
@@ -1338,7 +1338,7 @@
                             android:textSize="17sp" />
                     </LinearLayout>
 
-                    <!--  开关:显示专辑封面  -->
+                    <!--  开关:不显示专辑封面  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -1352,7 +1352,7 @@
                                 android:layout_height="match_parent"
                                 android:gravity="center"
                                 android:layout_weight="0"
-                                android:text="显示专辑封面"
+                                android:text="不显示专辑封面"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
@@ -1435,7 +1435,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.cardview.widget.CardView
-                                android:id="@+id/CB_Audio_SyncSeekBar_Millis"
+                                android:id="@+id/ButtonCard_AudioSeekBar_updateMs"
                                 android:layout_width="wrap_content"
                                 android:layout_height="20dp"
                                 android:layout_marginEnd="2dp"
@@ -1448,6 +1448,7 @@
                                     android:layout_height="match_parent"
                                     android:orientation="horizontal">
                                     <TextView
+                                        android:id="@+id/ButtonText_audioSeekBar_updateMs"
                                         android:layout_width="wrap_content"
                                         android:layout_height="match_parent"
                                         android:layout_marginStart="5dp"

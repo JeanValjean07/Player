@@ -143,6 +143,15 @@
                     app:layout_constraintDimensionRatio="1:1"
                     android:scaleType="centerCrop"
                     />
+                <!-- 点击层 -->
+                <View
+                    android:id="@+id/media_artwork_click_layer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:background="@android:color/transparent"
+                    android:translationZ="5dp"
+                    />
             </androidx.cardview.widget.CardView>
 
 

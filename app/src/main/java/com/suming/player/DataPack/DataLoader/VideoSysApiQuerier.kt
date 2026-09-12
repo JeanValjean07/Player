@@ -12,7 +12,7 @@ import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
-import com.suming.player.SettingsRequestCenter
+import com.suming.player.SettingsCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -50,7 +50,7 @@ class VideoSysApiQuerier(
             DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
 
             //初始化设置项
-            val PRF_EnableFileExistCheck = SettingsRequestCenter.get_PREFS_EnableFileExistCheck(context)
+            val PRF_EnableFileExistCheck = SettingsCenter.get_PREFS_EnableFileExistCheck(context)
 
             //初始化列表
             val list = mutableListOf<MediaItemFullForVideo>()

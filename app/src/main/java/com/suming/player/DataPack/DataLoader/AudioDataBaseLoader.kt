@@ -7,7 +7,7 @@ import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.SearchHelper
-import com.suming.player.SettingsRequestCenter
+import com.suming.player.SettingsCenter
 
 class AudioDataBaseLoader(
     private val context: Context,
@@ -29,8 +29,8 @@ class AudioDataBaseLoader(
             val musicStoreRepo = AudioRepo.get(context)
             val totalCount = musicStoreRepo.getTotalMusicCount()
             //排序字段合成
-            val sortOrder = SettingsRequestCenter.get_PREFS_audio_sortMethod(context)
-            val sortOrientation = SettingsRequestCenter.get_PREFS_audio_sortOrientation(context)
+            val sortOrder = SettingsCenter.get_PREFS_audio_sortMethod(context)
+            val sortOrientation = SettingsCenter.get_PREFS_audio_sortOrientation(context)
             val sortMethod = "$sortOrder $sortOrientation"
 
             //按页获取数据

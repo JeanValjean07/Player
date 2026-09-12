@@ -561,11 +561,11 @@ class EntranceActivity : AppCompatActivity(){
     @OptIn(UnstableApi::class)
     private fun startVideoPage_selfDetectStyle(uri: Uri,file_path: String) {
         //读取页面样式
-        val playPageType = SettingsRequestCenter.GET_PRF_PlayPageType(this)
+        val playPageType = SettingsCenter.GET_PRF_PlayPageType(this)
         //根据页面样式启动页面
         when{
-            (playPageType == SettingsRequestCenter.PlayPageType_Oro || playPageType == SettingsRequestCenter.PlayPageType_Neo) -> startVideoNeoPage(uri,file_path)
-            playPageType == SettingsRequestCenter.PlayPageType_Test -> {
+            (playPageType == SettingsCenter.PlayPageType_Oro || playPageType == SettingsCenter.PlayPageType_Neo) -> startVideoNeoPage(uri,file_path)
+            playPageType == SettingsCenter.PlayPageType_Test -> {
 
             }
         }

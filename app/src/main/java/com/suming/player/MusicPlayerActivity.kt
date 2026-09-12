@@ -25,6 +25,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.cardview.widget.CardView
@@ -38,11 +39,12 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.suming.player.ActivityComponent.MusicPlayerActivity.MusicPlayerViewModel
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.DataPack.DataBaseMediaSingleSetting.MediaItemRepo
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ActivityResultConnector
@@ -61,7 +63,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.math.RoundingMode
+import kotlin.getValue
 import kotlin.math.hypot
 import kotlin.math.pow
 
@@ -72,11 +74,14 @@ class MusicPlayerActivity : AppCompatActivity() {
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "PlayerActivitySimple: $msg")
+            Log.d("SuMing", "MusicPlayerActivity: $msg")
         }
     }
     //ctx
     private val context = this@MusicPlayerActivity
+    //连接到viewModel
+    private val viewModel: MusicPlayerViewModel by viewModels()
+
     //播放器引用
     private var player: ExoPlayer ?= null
     //空字段
@@ -131,6 +136,8 @@ class MusicPlayerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         //显示初始化
         init_display()
+        //
+        init()
 
 
         mainBusiness(savedInstanceState)
@@ -195,6 +202,11 @@ class MusicPlayerActivity : AppCompatActivity() {
         init_view()
 
 
+    }
+    private fun init(){
+
+        //
+        volumeDetect()
     }
 
     private fun mainBusiness(savedInstanceState: Bundle?){
@@ -582,6 +594,12 @@ class MusicPlayerActivity : AppCompatActivity() {
 
         }
 
+        //获取专属数据
+        if (mediaType == MediaType.Audio){
+
+
+        }
+
         //更新音乐时长
         updateMediaDuration()
         //开始刷新时间
@@ -626,7 +644,6 @@ class MusicPlayerActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.Main){
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableIsIdle.collect { state ->
-                    //consoleLog("observableIsIdle: $state")
                     when(state){
                         -1L -> {
                             //播放器从未启动过,不操作
@@ -721,9 +738,9 @@ class MusicPlayerActivity : AppCompatActivity() {
     }
     private fun switchToVideoPage(){
         //检查使用的页面类型
-        val playPageType = SettingsRequestCenter.GET_PRF_PlayPageType(context)
+        val playPageType = SettingsCenter.GET_PRF_PlayPageType(context)
         when{
-            (playPageType == SettingsRequestCenter.PlayPageType_Oro || playPageType == SettingsRequestCenter.PlayPageType_Neo) -> {
+            (playPageType == SettingsCenter.PlayPageType_Oro || playPageType == SettingsCenter.PlayPageType_Neo) -> {
                 //构建intent
                 val intent = Intent(this, PlayerActivityNeo::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -753,6 +770,14 @@ class MusicPlayerActivity : AppCompatActivity() {
     private fun startPlayListFragment(){
 
         ListManagerFragment.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+    }
+
+    //播放/暂停音乐
+    private fun pausePlay(){
+        player?.pause()
+    }
+    private fun continuePlay(){
+        player?.play()
     }
 
 
@@ -785,11 +810,18 @@ class MusicPlayerActivity : AppCompatActivity() {
     private lateinit var media_title : TextView
     private lateinit var media_artist : TextView
     private lateinit var level_controllers_info : LinearLayout
-    private var PRF_UseFileNameAsTitle = false
     private fun updateMediaTitleArtist(){
         val title = PlayerInfoCenter.GET_Media_Title()
         val artist = PlayerInfoCenter.GET_Media_Artist()
         val file_name = PlayerInfoCenter.GET_Media_FileName()
+
+        val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+        var PRF_UseFileNameAsTitle = if (mediaType == MediaType.Audio){
+            SettingsCenter.GET_PRF_Audio_UseFileNameAsTitle(context)
+        }else{
+            true
+        }
+
 
         //显示内容
         fun updateContent(){
@@ -822,14 +854,21 @@ class MusicPlayerActivity : AppCompatActivity() {
             ToolVibrate().vibrate(context)
 
             //切换使用的标题
-            PRF_UseFileNameAsTitle = !PRF_UseFileNameAsTitle
-            updateContent()
-            //显示提示
-            if (PRF_UseFileNameAsTitle){
-                notice("已切换为使用文件名",3000)
+            if (mediaType == MediaType.Audio){
+                PRF_UseFileNameAsTitle = !PRF_UseFileNameAsTitle
+
+                //显示提示
+                if (PRF_UseFileNameAsTitle){
+                    notice("已切换为使用文件名",3000)
+                }else{
+                    notice("已切换为使用元数据标题",3000)
+                }
             }else{
-                notice("已切换为使用元数据标题",3000)
+                PRF_UseFileNameAsTitle = true
             }
+
+            updateContent()
+
         }
 
     }
@@ -847,48 +886,301 @@ class MusicPlayerActivity : AppCompatActivity() {
     //艺术图 ARTWORK
     private lateinit var media_artwork : ImageView
     private fun updateMediaArtwork(){
-        //获取当前媒体类型(可以把视频当音乐播放)
-        val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
-        if (mediaType != MediaType.Audio) {
-            //使用默认
-            clearMediaArtWork()
+        //检查是否显示专辑图片(不显示也要注册点击事件)
+        var dont_show_album = SettingsCenter.GET_PRF_Audio_DontShowAlbumFrame(context)
 
-            return
-        }
-        //获取媒体ID
-        val media_NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
-        //获取封面图片
-        val artwork = ArtworkFrameManager.GET_ArtworkFrame_Audio_Album(context,media_NUM_ID)
-        if (artwork == null) {
-            lifecycleScope.launch (Dispatchers.IO){
-                //获取当前媒体 URI
-                val URI_U = PlayerInfoCenter.GET_Media_URI_S_FP().toUri()
+        val URI = PlayerInfoCenter.GET_Media_URI_S_FP()
 
-                //截取大图
-                val bitmap = ArtworkCapturer.captureAlbumInMusic(context, URI_U ,needCompress = false)
-                if (bitmap != null){
-                    //显示
-                    withContext(Dispatchers.Main){ media_artwork.setImageBitmap(bitmap) }
-                }else{
-                    //使用默认
-                    withContext(Dispatchers.Main){ clearMediaArtWork() }
+        //检查是否显示专辑图片
+        if (dont_show_album) return
+        //检查独立设置是否允许显示专辑图片
+        lifecycleScope.launch (Dispatchers.IO){
 
-                    return@launch
+            //先检查数据库中有没有该项,没有时新建
+            if (!MediaItemRepo.get(context).checkExist(URI)){
+                MediaItemRepo.get(context).createMediaItem(URI)
+                //将此项设置设为true(默认显示，注意这里数据库跟prefs项的意思是反的)
+                MediaItemRepo.get(context).update_PREFS_ShowAlbumFrame(URI,true)
+                dont_show_album = false
+            }else{
+                //检查是否显示专辑图片
+                dont_show_album = !MediaItemRepo.get(context).get_PREFS_ShowAlbumFrame(URI)
+            }
+            //检查是否显示专辑图片
+            if (dont_show_album) {
+
+                withContext(Dispatchers.Main){
+                    clearMediaArtWork()
                 }
+
+                return@launch
+            }
+
+            //执行显示
+            withContext(Dispatchers.Main){
+
+                //获取当前媒体类型(可以把视频当音乐播放)
+                val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+                if (mediaType != MediaType.Audio) {
+                    //使用默认
+                    clearMediaArtWork()
+
+                    return@withContext
+                }
+                //获取媒体ID
+                val media_NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
+                //获取封面图片
+                val artwork = ArtworkFrameManager.GET_ArtworkFrame_Audio_Album(context,media_NUM_ID)
+                if (artwork == null) {
+                    lifecycleScope.launch (Dispatchers.IO){
+                        //获取当前媒体 URI
+                        val URI_U = PlayerInfoCenter.GET_Media_URI_S_FP().toUri()
+
+                        //截取大图
+                        val bitmap = ArtworkCapturer.captureAlbumInMusic(context, URI_U ,needCompress = false)
+                        if (bitmap != null){
+                            //显示
+                            withContext(Dispatchers.Main){ media_artwork.setImageBitmap(bitmap) }
+                        }else{
+                            //使用默认
+                            withContext(Dispatchers.Main){ clearMediaArtWork() }
+
+                            return@launch
+                        }
+
+                    }
+
+                    return@withContext
+                }
+                //图片上屏
+                media_artwork.setImageBitmap(artwork)
+
 
             }
 
 
-            return
         }
-        //图片上屏
-        media_artwork.setImageBitmap(artwork)
 
+        //注册点击事件
+        registerMediaArtworkClickEvent(URI)
 
     }
     private fun clearMediaArtWork(){
         //清除当前专辑图
         media_artwork.setImageBitmap(null)
+    }
+    //为专辑图设置点击事件
+    @SuppressLint("ClickableViewAccessibility")
+    private fun registerMediaArtworkClickEvent(URI_S:String){
+        //为专辑图设置点击事件
+        val media_artwork_click_layer = findViewById<View>(R.id.media_artwork_click_layer)
+        media_artwork_click_layer.post{
+            //初始化点击变量
+            var touchArea = 0  //点击区域: 1 = left, 2 = right, 3 = middle
+            var finger1x = 0f  //手指1的横轴坐标
+            //未整理
+            var scrollDistance = 0
+            var touchCenterDistance = 0f
+            var touchState_need_exit = false
+            var touchState_need_exit_vibrated = false
+            var touchState_scroll_vibrated = false
+            var longPress = false
+
+            //获取点击层宽度
+            val artwork_width_pixels = media_artwork_click_layer.width
+
+            //注册gestureDetector
+            val gestureDetectorPlayArea = GestureDetector(this,object:GestureDetector.SimpleOnGestureListener() {
+                override fun onDoubleTap(e: MotionEvent): Boolean {
+                    //控制播放状态
+                    if (player?.isPlaying == true) {
+                        pausePlay()
+
+                        notice("暂停播放", 1000)
+                    }else{
+
+                        continuePlay()
+                        notice("继续播放", 1000)
+
+                    }
+
+                    return true
+                }
+                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+
+                    //触发控件显示变更
+                    //changeBackgroundColor()
+
+                    return true
+                }
+                override fun onLongPress(e: MotionEvent) {
+                    ToolVibrate().vibrate(context)
+
+                    //切换专辑单项数据库中的显示专辑封面状态
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        //取反设置显示专辑封面状态
+                        MediaItemRepo.get(context).update_PREFS_ShowAlbumFrame(URI_S,!MediaItemRepo.get(context).get_PREFS_ShowAlbumFrame(URI_S))
+
+                        withContext(Dispatchers.Main){
+                            updateMediaArtwork()
+                        }
+                    }
+
+
+
+                    super.onLongPress(e)
+                }
+                override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float):Boolean {
+                    when(touchArea){
+                        1 -> {
+                            //原本是调整亮度,但此处不提供此功能
+                        }
+                        2 -> {
+                            //累积滑动距离
+                            scrollDistance += distanceY.toInt()
+                            //快速下滑紧急静音
+                            if (scrollDistance < -150) {
+                                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+                            }
+                            //普通音量修改
+                            if (scrollDistance > volumeChangeGap) {
+                                var currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                                currentVolume += 1
+                                if (currentVolume <= maxVolume) {
+                                    if (state_HeadSetInserted) {
+                                        if (currentVolume <= (maxVolume * 0.6).toInt()) {
+                                            audioManager.setStreamVolume(
+                                                AudioManager.STREAM_MUSIC,
+                                                currentVolume,
+                                                0
+                                            )
+                                            notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
+                                        } else {
+                                            if (!touchState_scroll_vibrated) {
+                                                touchState_scroll_vibrated = true
+                                                ToolVibrate().vibrate(this@MusicPlayerActivity)
+                                            }
+                                            notice(
+                                                "佩戴耳机时,音量不能超过${(maxVolume * 0.6).toInt()},除非使用音量键调整",
+                                                1000
+                                            )
+                                        }
+                                    } else {
+                                        audioManager.setStreamVolume(
+                                            AudioManager.STREAM_MUSIC,
+                                            currentVolume,
+                                            0
+                                        )
+                                        notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
+                                    }
+                                } else {
+                                    if (!touchState_scroll_vibrated) {
+                                        touchState_scroll_vibrated = true
+                                        ToolVibrate().vibrate(this@MusicPlayerActivity)
+                                    }
+                                    notice("音量已到最高", 1000)
+                                }
+                            } else if (scrollDistance < -volumeChangeGap) {
+                                var currentVolume =
+                                    audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                                currentVolume -= 1
+                                if (currentVolume >= 0) {
+                                    audioManager.setStreamVolume(
+                                        AudioManager.STREAM_MUSIC,
+                                        currentVolume,
+                                        0
+                                    )
+                                    notice("音量 -1 ($currentVolume/$maxVolume)", 1000)
+                                } else {
+                                    if (!touchState_scroll_vibrated) {
+                                        touchState_scroll_vibrated = true
+                                        ToolVibrate().vibrate(this@MusicPlayerActivity)
+                                    }
+                                    notice("音量已到最低", 1000)
+                                }
+                            }
+                            //数值越界置位
+                            if (scrollDistance > 50 || scrollDistance < -50) {
+                                scrollDistance = 0
+                            }
+                        }
+                        3 -> {
+                            touchCenterDistance += distanceY
+                            if (touchCenterDistance < -viewModel.value_scrollDownExitDistance) {
+                                touchState_need_exit = true
+                                //振动:仅一次
+                                if (!touchState_need_exit_vibrated) {
+                                    touchState_need_exit_vibrated = true
+                                    ToolVibrate().vibrate(this@MusicPlayerActivity)
+                                }
+                            }else{
+                                touchState_need_exit = false
+                            }
+                        }
+                    }
+
+                    return super.onScroll(e1, e2, distanceX, distanceY)
+                }
+            })
+            //注册基本触摸事件
+            media_artwork_click_layer.setOnTouchListener { _, event ->
+                when (event.actionMasked){
+                    MotionEvent.ACTION_DOWN -> {
+                        //重置部分状态
+                        touchState_need_exit_vibrated = false
+                        touchState_need_exit = false
+                        touchState_scroll_vibrated = false
+
+                        //记录手指1的初始横轴位置
+                        finger1x = event.x
+
+                        //判断点击区域并记录
+                        when{
+                            finger1x < artwork_width_pixels * 0.2 -> {
+                                touchArea = 2 //映射到2上做音量控制
+                            }
+                            finger1x > artwork_width_pixels * 0.8 -> {
+                                state_HeadSetInserted = PlayerListener.getState_isHeadsetPlugged(this@MusicPlayerActivity)
+                                touchArea = 2
+                            }
+                            else -> {
+                                touchArea = 3
+                                touchCenterDistance = 0f
+                            }
+                        }
+
+                        //传递
+                        gestureDetectorPlayArea.onTouchEvent(event)
+                    }
+                    MotionEvent.ACTION_UP -> {
+
+                        //重置部分状态
+                        touchArea = 0
+                        //重置部分数值
+                        scrollDistance = 0
+
+                        //事件处理:长按
+                        longPress = false
+
+
+                        //事件处理:下滑退出
+                        if (touchState_need_exit) finish()
+
+
+                        //传递
+                        gestureDetectorPlayArea.onTouchEvent(event)
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+
+                        //传递
+                        gestureDetectorPlayArea.onTouchEvent(event)
+                    }
+
+                }
+
+                onTouchEvent(event)
+            }
+        }
     }
 
 
@@ -1054,6 +1346,23 @@ class MusicPlayerActivity : AppCompatActivity() {
 
 
 
+    //音量管理与提示
+    private fun volumeDetect(){
+        maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        volumeChangeGap = 750/maxVolume
+        if (originalVolume == 0 && !viewModel.NOTICED_VolumeIsZero) {
+            viewModel.NOTICED_VolumeIsZero = true
+            notice("当前未开启声音", 1000)
+        }
+    }
+    private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
+    private var maxVolume = 0
+    private var currentVolume = 0
+    private var originalVolume = 0
+    private var volumeChangeGap = 1   //音量变化步长
+    private var state_HeadSetInserted = false
 
     //格式化时间戳显示
     @SuppressLint("DefaultLocale")

@@ -455,7 +455,7 @@ object PlayerSingleton {
         val cover_img_uri = getArtworkFrameUri(context,URI_UP)
 
         //延迟后再设置
-        val delayMillis = SettingsRequestCenter.GET_PRF_forTestDelayMillis(context)
+        val delayMillis = SettingsCenter.GET_PRF_forTestDelayMillis(context)
         delay(delayMillis)
 
 
@@ -603,7 +603,7 @@ object PlayerSingleton {
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
 
         var cover_img_uri = Uri.EMPTY
-        if (SettingsRequestCenter.GET_PREFS_DisableMediaArtWork(context)){
+        if (SettingsCenter.GET_PREFS_DisableMediaArtWork(context)){
             return Uri.EMPTY
         }else{
             //从ArtworkFrameManager获取即可
@@ -944,7 +944,7 @@ object PlayerSingleton {
     //开始后台播放-操作合集
     fun startBackgroundPlay(){
         //检查是否开启后台播放功能
-        if (SettingsRequestCenter.get_PREFS_BackgroundPlay(context)){
+        if (SettingsCenter.get_PREFS_BackgroundPlay(context)){
 
         }else{
             pausePlay()
@@ -953,7 +953,7 @@ object PlayerSingleton {
     //回到前台播放-操作合集
     fun stopBackgroundPlay(){
         //检查是否开启后台播放功能
-        if (SettingsRequestCenter.get_PREFS_BackgroundPlay(context)){
+        if (SettingsCenter.get_PREFS_BackgroundPlay(context)){
 
         }else{
             //关闭后台播放功能：开始继续播放
@@ -1007,7 +1007,7 @@ object PlayerSingleton {
             override fun onTick( millisUntilFinished: Long) {}
             override fun onFinish() {
                 //检查需要进行的操作:立即停止或播放完本集才停止
-                val wait = SettingsRequestCenter.get_PREFS_OnlyStopUnMediaEnd(context)
+                val wait = SettingsCenter.get_PREFS_OnlyStopUnMediaEnd(context)
                 //等待当前媒体结束后关闭
                 if (wait){
                     if (playState_playEnd){
@@ -1036,7 +1036,7 @@ object PlayerSingleton {
     }
     private fun timer_autoShut_Reach(context: Context) {
         //需等待当前媒体结束后关闭
-        if (SettingsRequestCenter.get_PREFS_OnlyStopUnMediaEnd(context)) {
+        if (SettingsCenter.get_PREFS_OnlyStopUnMediaEnd(context)) {
             countDownDuration_Ms = 0
             shutDownMoment = "shutdown_when_end"
             timerState_autoShut_Reach = true

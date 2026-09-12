@@ -345,10 +345,10 @@ class MainActivity: AppCompatActivity() {
                 ListRecyclerView_Music.stopScroll()
                 //
                 when(mainViewModel.state_current_tab){
-                    SettingsRequestCenter.tab_mark_video -> {
+                    SettingsCenter.tab_mark_video -> {
                         startFragment_VSS()
                     }
-                    SettingsRequestCenter.tab_mark_music -> {
+                    SettingsCenter.tab_mark_music -> {
                         startFragment_MSS()
                     }
                 }
@@ -425,7 +425,7 @@ class MainActivity: AppCompatActivity() {
                             val isAnyMediaOngoing = withContext(Dispatchers.Main) { isAnyMediaOngoing().first }
                             if (!isAnyMediaOngoing){
                                 //无播放时,检查是否启用继续播放功能
-                                if (SettingsRequestCenter.get_PREFS_EnableContinuePlay(context)) {
+                                if (SettingsCenter.get_PREFS_EnableContinuePlay(context)) {
                                     //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
                                     val MediaRecordPack = getLastMediaRecord()
                                     if (MediaRecordPack != null) {
@@ -532,33 +532,33 @@ class MainActivity: AppCompatActivity() {
                 //显示列表
                 var targetList = ""
                 targetList = if (savedInstanceState == null){
-                    SettingsRequestCenter.get_PREFS_AcquiesceTab(this@MainActivity)
+                    SettingsCenter.get_PREFS_AcquiesceTab(this@MainActivity)
                 }else{
                     mainViewModel.state_current_tab
                 }
                 //根据设置项显示列表
                 withContext(Dispatchers.Main){
                     when(targetList){
-                        SettingsRequestCenter.tab_mark_video -> {
+                        SettingsCenter.tab_mark_video -> {
                             showVideoList()
                         }
-                        SettingsRequestCenter.tab_mark_music -> {
+                        SettingsCenter.tab_mark_music -> {
                             showMusicList()
                         }
-                        SettingsRequestCenter.tab_mark_gallery -> {
+                        SettingsCenter.tab_mark_gallery -> {
                             //暂未开放,重定向到视频页
                             showVideoList()
                         }
-                        SettingsRequestCenter.tab_mark_last -> {
+                        SettingsCenter.tab_mark_last -> {
                             val State_LastStayTab = readLastPageThenShow()
                             when (State_LastStayTab) {
-                                SettingsRequestCenter.tab_mark_video -> {
+                                SettingsCenter.tab_mark_video -> {
                                     showVideoList()
                                 }
-                                SettingsRequestCenter.tab_mark_music -> {
+                                SettingsCenter.tab_mark_music -> {
                                     showMusicList()
                                 }
-                                SettingsRequestCenter.tab_mark_gallery -> {
+                                SettingsCenter.tab_mark_gallery -> {
                                     //暂未开放,重定向到视频页
                                     showVideoList()
                                 }
@@ -572,7 +572,7 @@ class MainActivity: AppCompatActivity() {
 
     //读取上一次的页面
     private fun readLastPageThenShow(): String{
-        val State_LastStayTab = SettingsRequestCenter.get_State_LastStayTab(this@MainActivity)
+        val State_LastStayTab = SettingsCenter.get_State_LastStayTab(this@MainActivity)
         //consoleLog("showMediaList : State_LastStayTab = $State_LastStayTab")
 
         return State_LastStayTab
@@ -581,7 +581,7 @@ class MainActivity: AppCompatActivity() {
     private fun showVideoList(){
         lifecycleScope.launch(Dispatchers.IO) {
             //页面标识防重复
-            if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_video && state_VideoRecyclerView_started){
+            if (mainViewModel.state_current_tab == SettingsCenter.tab_mark_video && state_VideoRecyclerView_started){
                 withContext(Dispatchers.Main){
                     if (ListRecyclerView_Video.canScrollVertically(-1)){
                         setListToTop()
@@ -591,18 +591,18 @@ class MainActivity: AppCompatActivity() {
                 }
                 return@launch
             }
-            mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_video
+            mainViewModel.state_current_tab = SettingsCenter.tab_mark_video
 
             //发起切换
             withContext(Dispatchers.Main){
                 //界面切换
-                setList(SettingsRequestCenter.tab_mark_video)
+                setList(SettingsCenter.tab_mark_video)
                 //加载事务
                 showVideoListCore()
             }
 
             //记录状态
-            SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_video)
+            SettingsCenter.set_State_LastStayTab(this@MainActivity, SettingsCenter.tab_mark_video)
 
         }
     }
@@ -610,7 +610,7 @@ class MainActivity: AppCompatActivity() {
     private fun showMusicList(){
         lifecycleScope.launch(Dispatchers.IO) {
             //页面标识防重复
-            if (mainViewModel.state_current_tab == SettingsRequestCenter.tab_mark_music && state_MusicRecyclerView_started){
+            if (mainViewModel.state_current_tab == SettingsCenter.tab_mark_music && state_MusicRecyclerView_started){
                 withContext(Dispatchers.Main){
                     if (ListRecyclerView_Music.canScrollVertically(-1)){
                         setListToTop()
@@ -620,18 +620,18 @@ class MainActivity: AppCompatActivity() {
                 }
                 return@launch
             }
-            mainViewModel.state_current_tab = SettingsRequestCenter.tab_mark_music
+            mainViewModel.state_current_tab = SettingsCenter.tab_mark_music
 
             //发起切换
             withContext(Dispatchers.Main){
                 //界面切换
-                setList(SettingsRequestCenter.tab_mark_music)
+                setList(SettingsCenter.tab_mark_music)
                 //加载事务
                 showMusicListCore()
             }
 
             //记录状态
-            SettingsRequestCenter.set_State_LastStayTab(this@MainActivity, SettingsRequestCenter.tab_mark_music)
+            SettingsCenter.set_State_LastStayTab(this@MainActivity, SettingsCenter.tab_mark_music)
 
         }
     }
@@ -643,7 +643,7 @@ class MainActivity: AppCompatActivity() {
         //检查是否需要读取系统视频
         lifecycleScope.launch(Dispatchers.IO) {
             //获取强制每次读取标识
-            val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
+            val queryNew = SettingsCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
             //检查本地数据库是否已有视频数据
             if (VideoRepo(this@MainActivity).isEmpty() || queryNew){
                 //consoleLog("showVideoListCore: 本地数据库视频数据为空 触发读取媒体库视频")
@@ -716,7 +716,7 @@ class MainActivity: AppCompatActivity() {
         startMusicRecyclerView()
         //检查本地数据库是否已有音乐数据
         lifecycleScope.launch(Dispatchers.IO) {
-            val queryNew = SettingsRequestCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
+            val queryNew = SettingsCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
             if (AudioRepo(this@MainActivity).isEmpty() || queryNew){
                 //consoleLog("showMusicList数据库音乐数据为空,触发读取媒体库音乐")
                 //从系统读取音乐
@@ -785,8 +785,8 @@ class MainActivity: AppCompatActivity() {
 
         //读取当前所在页签
         val list_mark = mainViewModel.state_current_tab
-        val list_video = SettingsRequestCenter.tab_mark_video
-        val list_audio = SettingsRequestCenter.tab_mark_music
+        val list_video = SettingsCenter.tab_mark_video
+        val list_audio = SettingsCenter.tab_mark_music
 
         if (list_mark != list_video && list_mark != list_audio){
             showCustomToast("无法进行搜索")
@@ -829,8 +829,8 @@ class MainActivity: AppCompatActivity() {
     private fun postSearch(input: String){
         //读取当前所在页签
         val list_mark = mainViewModel.state_current_tab
-        val list_video = SettingsRequestCenter.tab_mark_video
-        val list_audio = SettingsRequestCenter.tab_mark_music
+        val list_video = SettingsCenter.tab_mark_video
+        val list_audio = SettingsCenter.tab_mark_music
 
         if (list_mark == list_video){
             SearchHelper.search_string_video = input
@@ -939,7 +939,7 @@ class MainActivity: AppCompatActivity() {
             consoleLog("showMiniViewByRecord-字符串拆分出错: $e")
         }
 
-        if (SettingsRequestCenter.GET_PRF_ContinuePlay_withEngin(this@MainActivity)){
+        if (SettingsCenter.GET_PRF_ContinuePlay_withEngin(this@MainActivity)){
             //直接启动播放器
             setMediaItem(URI_S_FP.toUri(),false,true)
 
@@ -1062,7 +1062,7 @@ class MainActivity: AppCompatActivity() {
     }
     private fun updateMiniViewArtwork(type: String,NUM_ID: Long){
         //consoleLog("updateMiniViewArtwork()")
-        val useImage = SettingsRequestCenter.GET_PRF_AlwaysUseImageInMiniView(this@MainActivity)
+        val useImage = SettingsCenter.GET_PRF_AlwaysUseImageInMiniView(this@MainActivity)
         if (useImage){
             updateMiniViewArtwork_Image(NUM_ID, type)
         }else{
@@ -1365,13 +1365,13 @@ class MainActivity: AppCompatActivity() {
         var titleText = "列表"
         var targetButtonView : CardView? = null
         val targetListView = when(target) {
-            SettingsRequestCenter.tab_mark_music -> {
+            SettingsCenter.tab_mark_music -> {
                 titleText = "音乐"
                 targetButtonView = ButtonCardMusic
 
                 ListRecyclerView_Music
             }
-            SettingsRequestCenter.tab_mark_video -> {
+            SettingsCenter.tab_mark_video -> {
                 titleText = "视频"
                 targetButtonView = ButtonCardVideo
 
@@ -1446,10 +1446,10 @@ class MainActivity: AppCompatActivity() {
     //为列表应用位置监控
     private fun setScrollListenerForList(target: String){
         val targetListView = when(target) {
-            SettingsRequestCenter.tab_mark_music -> {
+            SettingsCenter.tab_mark_music -> {
                 ListRecyclerView_Music
             }
-            SettingsRequestCenter.tab_mark_video -> {
+            SettingsCenter.tab_mark_video -> {
                 ListRecyclerView_Video
             }
             else -> {
@@ -1505,14 +1505,14 @@ class MainActivity: AppCompatActivity() {
     //页面回到顶部
     private fun setListToTop(){
         when (mainViewModel.state_current_tab) {
-            SettingsRequestCenter.tab_mark_music -> {
+            SettingsCenter.tab_mark_music -> {
                 if (!state_MusicRecyclerView_started) return
 
                 main_music_list_adapter.refresh()
 
                 ListRecyclerView_Music.smoothScrollToPosition(0)
             }
-            SettingsRequestCenter.tab_mark_video -> {
+            SettingsCenter.tab_mark_video -> {
                 if (!state_VideoRecyclerView_started) return
 
                 main_video_list_adapter.refresh()
@@ -1526,13 +1526,13 @@ class MainActivity: AppCompatActivity() {
     private fun refreshList(){
         //检查当前所在列表
         when (mainViewModel.state_current_tab) {
-            SettingsRequestCenter.tab_mark_music -> {
+            SettingsCenter.tab_mark_music -> {
                 if (!state_MusicRecyclerView_started) return
 
                 main_music_list_adapter.refresh()
 
             }
-            SettingsRequestCenter.tab_mark_video -> {
+            SettingsCenter.tab_mark_video -> {
                 if (!state_VideoRecyclerView_started) return
 
                 main_video_list_adapter.refresh()
@@ -1623,16 +1623,16 @@ class MainActivity: AppCompatActivity() {
         lock_clickMillisLock_second = System.currentTimeMillis()
 
         //检查启动方式
-        val defaultPlayBehavior = SettingsRequestCenter.GET_PRF_DefaultPlayBehavior(this@MainActivity)
+        val defaultPlayBehavior = SettingsCenter.GET_PRF_DefaultPlayBehavior(this@MainActivity)
         //consoleLog("defaultPlayBehavior: $defaultPlayBehavior")
         when (defaultPlayBehavior) {
             //仅在MiniView中播放
-            SettingsRequestCenter.action_just_in_mini_view -> {
+            SettingsCenter.action_just_in_mini_view -> {
 
                 startMiniViewPlay(uri)
             }
             //弹出完整播放页面
-            SettingsRequestCenter.action_use_whole_play_page -> {
+            SettingsCenter.action_use_whole_play_page -> {
 
                 startVideoPlayer(uri, file_path)
             }
@@ -1647,7 +1647,7 @@ class MainActivity: AppCompatActivity() {
         lock_clickMillisLock_second = System.currentTimeMillis()
 
         //检查启动方式
-        val show_page = SettingsRequestCenter.GET_PRF_StartFullPage(context)
+        val show_page = SettingsCenter.GET_PRF_StartFullPage(context)
         if (show_page) {
             startMusicPlayer(uri)
         }else{
@@ -1664,9 +1664,9 @@ class MainActivity: AppCompatActivity() {
         lock_clickMillisLock = System.currentTimeMillis()
 
         //检查使用的页面类型
-        val playPageType = SettingsRequestCenter.GET_PRF_PlayPageType(this@MainActivity)
+        val playPageType = SettingsCenter.GET_PRF_PlayPageType(this@MainActivity)
         when{
-            (playPageType == SettingsRequestCenter.PlayPageType_Oro || playPageType == SettingsRequestCenter.PlayPageType_Neo) -> {
+            (playPageType == SettingsCenter.PlayPageType_Oro || playPageType == SettingsCenter.PlayPageType_Neo) -> {
                 //构建intent
                 val intent = Intent(this, PlayerActivityNeo::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -1676,7 +1676,7 @@ class MainActivity: AppCompatActivity() {
                     .putExtra(IntentRepo.SOURCE, 3)
 
                 //是否使用进入动画
-                val useSlideInAnim = SettingsRequestCenter.GET_PRF_EnableMiniView(this@MainActivity)
+                val useSlideInAnim = SettingsCenter.GET_PRF_EnableMiniView(this@MainActivity)
                 if (useSlideInAnim){
                     //构建可选参数
                     val options = ActivityOptionsCompat.makeCustomAnimation(
@@ -1693,7 +1693,7 @@ class MainActivity: AppCompatActivity() {
 
                 }
             }
-            playPageType == SettingsRequestCenter.PlayPageType_Test -> {
+            playPageType == SettingsCenter.PlayPageType_Test -> {
 
             }
         }

@@ -103,7 +103,6 @@ import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.FuncionalPack.ScrollerHelper
-import com.suming.player.FuncionalPack.TestHelper
 import com.suming.player.IndepService.FloatingWindowService
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
@@ -162,7 +161,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     override fun attachBaseContext(newBase: Context?) {
         //在onCreate之前切换颜色模式,可避免活动重建
-        if (SettingsRequestCenter.get_PREFS_AlwaysUseDarkTheme(this)) {
+        if (SettingsCenter.get_PREFS_AlwaysUseDarkTheme(this)) {
             delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
         }
         super.attachBaseContext(newBase)
@@ -170,7 +169,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        consoleLog("onCreate")
         //初始化
         init()
 
@@ -189,7 +187,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //缓存需要频繁取用的变量+数值计算
         lifecycleScope.launch(Dispatchers.IO) {
             //播放区域移动动画
-            playerViewModel.PRF_Cache_EnablePlayAreaMove = SettingsRequestCenter.get_PREFS_EnablePlayAreaMoveAnim(context)
+            playerViewModel.PRF_Cache_EnablePlayAreaMove = SettingsCenter.get_PREFS_EnablePlayAreaMoveAnim(context)
             //播放区域移动动画距离计算(或许可以更持久化储存)
             if (playerViewModel.PRF_Cache_EnablePlayAreaMove){
                 if (playerViewModel.PRF_Cache_EnablePlayAreaMove_Distance == 0f){
@@ -210,26 +208,26 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
 
             //寻帧时一律使用关键帧
-            playerViewModel.PRF_Cache_UseSyncFrame_whenSeek = SettingsRequestCenter.get_PREFS_UseOnlySyncFrameWhenSeek(context)
+            playerViewModel.PRF_Cache_UseSyncFrame_whenSeek = SettingsCenter.get_PREFS_UseOnlySyncFrameWhenSeek(context)
             //竖屏时也开启自动隐藏控件
-            playerViewModel.PRF_Cache_EnableAutoHideController_whenPortrait = SettingsRequestCenter.GET_PRF_EnableAutoHideController_whenPortrait(context)
+            playerViewModel.PRF_Cache_EnableAutoHideController_whenPortrait = SettingsCenter.GET_PRF_EnableAutoHideController_whenPortrait(context)
 
             //读取进度条配置(已不再支持为每个视频单独配置,但暂未从数据库移除数据)
-            playerViewModel.PREFS_AlwaysSeek = SettingsRequestCenter.get_PREFS_EnableAlwaysSeek(context)
-            playerViewModel.PREFS_LinkScroll = SettingsRequestCenter.get_PREFS_EnableLinkScroll(context)
-            playerViewModel.PREFS_TapJump = SettingsRequestCenter.get_PREFS_EnableTapJump(context)
+            playerViewModel.PREFS_AlwaysSeek = SettingsCenter.get_PREFS_EnableAlwaysSeek(context)
+            playerViewModel.PREFS_LinkScroll = SettingsCenter.get_PREFS_EnableLinkScroll(context)
+            playerViewModel.PREFS_TapJump = SettingsCenter.get_PREFS_EnableTapJump(context)
 
             //下滑距离(50dp转px)
             playerViewModel.value_scrollDownExitDistance = dp2px(50f)
 
             //视频寻帧间隔
-            value_seekVideo_runnableGapMs = SettingsRequestCenter.get_value_seekVideo_runnableGapMs(context)
+            value_seekVideo_runnableGapMs = SettingsCenter.get_value_seekVideo_runnableGapMs(context)
             //进度条更新间隔
-            value_syncScroller_runnableGapMs = SettingsRequestCenter.get_value_syncScroller_runnableGapMs(context)
+            value_syncScroller_runnableGapMs = SettingsCenter.get_value_syncScroller_runnableGapMs(context)
             //时间戳更新间隔
-            value_timeStamp_updateGapMs = SettingsRequestCenter.get_value_timeStamp_updateGapMs(context)
+            value_timeStamp_updateGapMs = SettingsCenter.get_value_timeStamp_updateGapMs(context)
             //SeekBar更新间隔
-            value_syncSeekBar_runnableGapMs = SettingsRequestCenter.get_value_syncSeekbar_runnableGapMs(context)
+            value_syncSeekBar_runnableGapMs = SettingsCenter.get_value_syncSeekbar_runnableGapMs(context)
 
         }
 
@@ -329,7 +327,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //主线程设置项
 
         //是否开启强制高刷
-        if (SettingsRequestCenter.get_PREFS_LockRefreshRate(context)) requestHighRefreshRate()
+        if (SettingsCenter.get_PREFS_LockRefreshRate(context)) requestHighRefreshRate()
 
         //读取并缓存当前颜色模式
         isDarkTheme = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -1602,7 +1600,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun exitActivity_recOrientation(){
         //退出前是否先转为竖屏
-        val switchPortrait = SettingsRequestCenter.GET_PRF_SwitchPortrait_whenExit(this@PlayerActivityNeo)
+        val switchPortrait = SettingsCenter.GET_PRF_SwitchPortrait_whenExit(this@PlayerActivityNeo)
         if (switchPortrait){
             val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             if (isLandscape){
@@ -1647,7 +1645,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun exitActivity_ensure(){
         scroller.stopScroll()
 
-        val needCloseEngin = !SettingsRequestCenter.GET_PRF_EnableMiniView(this@PlayerActivityNeo)
+        val needCloseEngin = !SettingsCenter.GET_PRF_EnableMiniView(this@PlayerActivityNeo)
         if (needCloseEngin){
             //consoleLog("关闭MiniView useSlideOutAnim = false")
             useSlideOutAnim = false
@@ -1779,7 +1777,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var state_orientationListenerEnabled = false
     private fun startOrientationListener(){
         //未开启旋转监听器
-        if (!SettingsRequestCenter.get_PREFS_EnableOrientationListener(this)) return
+        if (!SettingsCenter.get_PREFS_EnableOrientationListener(this)) return
         //已有一例监听器
         if (state_orientationListenerEnabled) return
         //确保监听器已注册
@@ -2012,7 +2010,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //更新屏幕常亮状态
     private fun updateKeepScreenOn(){
-        val keepOn = SettingsRequestCenter.GET_PRF_KeepScreenOn(context)
+        val keepOn = SettingsCenter.GET_PRF_KeepScreenOn(context)
         if (keepOn){
             rootConstraint.keepScreenOn = PlayerSingleton.GET_STE_isNowPlaying()
         }else{
@@ -2072,7 +2070,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //修改方向监听器状态
     private fun updateOrientationListener(){
         //读取设置
-        val enable = SettingsRequestCenter.get_PREFS_EnableOrientationListener(this)
+        val enable = SettingsCenter.get_PREFS_EnableOrientationListener(this)
         //开启或关闭
         if (enable){
             startOrientationListener()
@@ -2966,7 +2964,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun update_S_Area_Adapter(){
         lifecycleScope.launch(Dispatchers.IO) {
-            val useSeekBar = SettingsRequestCenter.GET_PRF_PlayPageType(context) == S_Area_Helper.S_AreaType_SEEKBAR
+            val useSeekBar = SettingsCenter.GET_PRF_PlayPageType(context) == S_Area_Helper.S_AreaType_SEEKBAR
             if (useSeekBar){
                 //consoleLog("updateScrollerAdapter 使用 SEEKBAR")
                 withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) }
@@ -3406,7 +3404,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             val sidePadding = screenWidth / 2
 
 
-            if (SettingsRequestCenter.get_PREFS_UseCompatScroller(context)) {
+            if (SettingsCenter.get_PREFS_UseCompatScroller(context)) {
                 scroller.setPadding(sidePadding + DeviceInfo.statusBarHeight / 2, 0, sidePadding + DeviceInfo.statusBarHeight / 2 - 1, 0)
             }else{
                 scroller.setPadding(sidePadding, 0, sidePadding - 1, 0)

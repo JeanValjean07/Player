@@ -26,12 +26,6 @@ interface MediaItemDao {
 
 
 
-    //媒体类型(暂时不知道有什么用,先留着)
-    @Query("UPDATE MediaItemSetting SET INFO_MediaType = :newValue WHERE uniqueID_URI_S_FP = :media_id")
-    suspend fun update_INFO_MediaType(media_id: String,newValue: String)
-    @Query("SELECT INFO_MediaType FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
-    suspend fun get_INFO_MediaType(media_id: String): String
-
 
     //后台播放
     @Query("UPDATE MediaItemSetting SET PREFS_BackgroundPlay = :newValue1 WHERE uniqueID_URI_S_FP = :media_id")
@@ -83,6 +77,14 @@ interface MediaItemDao {
     suspend fun update_PREFS_PlaySpeed(media_id: String,newValue: Float)
     @Query("SELECT PREFS_PlaySpeed FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
     suspend fun get_PREFS_PlaySpeed(media_id: String): Float
+
+
+    //音乐专属设置
+    //显示专辑封面
+    @Query("UPDATE MediaItemSetting SET PREFS_Audio_ShowAlbumFrame = :newValue WHERE uniqueID_URI_S_FP = :media_id")
+    suspend fun update_PREFS_ShowAlbumFrame(media_id: String,newValue: Boolean)
+    @Query("SELECT PREFS_Audio_ShowAlbumFrame FROM MediaItemSetting WHERE uniqueID_URI_S_FP = :media_id LIMIT 1")
+    suspend fun get_PREFS_ShowAlbumFrame(media_id: String): Boolean
 
 
     //一次性全部读取

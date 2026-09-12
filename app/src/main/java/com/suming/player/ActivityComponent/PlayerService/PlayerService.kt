@@ -16,7 +16,7 @@ import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.FuncionalPack.SOURCE_CODE
 import com.suming.player.PlayerSingleton
-import com.suming.player.SettingsRequestCenter
+import com.suming.player.SettingsCenter
 
 @UnstableApi
 @Suppress("/unused")
@@ -155,8 +155,8 @@ class PlayerService: MediaSessionService() {
     override fun onTaskRemoved(rootIntent: Intent?) {
         consoleLog("onTaskRemoved")
 
-        val needStopEngine = SettingsRequestCenter.get_PREFS_StopPlayerWhenTaskRemoved(this@PlayerService) ||
-                                       !SettingsRequestCenter.GET_PRF_EnableMiniView(this@PlayerService)
+        val needStopEngine = SettingsCenter.get_PREFS_StopPlayerWhenTaskRemoved(this@PlayerService) ||
+                                       !SettingsCenter.GET_PRF_EnableMiniView(this@PlayerService)
 
 
         if (needStopEngine){
