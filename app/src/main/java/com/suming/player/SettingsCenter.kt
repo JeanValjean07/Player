@@ -8,7 +8,7 @@ import androidx.core.content.edit
 import com.suming.player.FuncionalPack.DeviceInfo
 import kotlin.math.sqrt
 
-@Suppress("unused")
+@Suppress("/unused")
 object SettingsCenter {
 
     //日志控制
@@ -18,20 +18,10 @@ object SettingsCenter {
         }
     }
 
-    //设置清单
-    private lateinit var PREFS_PlayMusicPage: SharedPreferences
-    private lateinit var PREFS_DataBase: SharedPreferences
-    private lateinit var PREFS_PlayList: SharedPreferences
-
-    //设置清单标记
-    private var state_PREFS_PlayMusicPage_initialized = false
-    private var state_PREFS_PlayList_initialized = false
-
-
-
 
 
     //👝 Pandora_MainPage 首页相关配置 -------------------------------------------------------------
+    //<editor-fold desc="////首页相关配置">
     private var Pandora_MainPage: SharedPreferences? = null
     const val Pandora_MainPage_Name = "Pandora_MainPage"
     private fun OpenPandora_MainPage(context: Context){
@@ -339,11 +329,11 @@ object SettingsCenter {
         //返回结果
         return PRF_forTestDelayMillis
     }
-
-
+    //</editor-fold>
 
 
     //👝 Pandora_MediaStore 媒体库相关配置 -------------------------------------------------------------
+    //<editor-fold desc="////媒体库相关配置">
     private var Pandora_MediaStore: SharedPreferences? = null
     const val Pandora_MediaStore_Name = "Pandora_MediaStore"
     private fun OpenPandora_MediaStore(context: Context){
@@ -462,11 +452,11 @@ object SettingsCenter {
 
         return PREFS_audio_sortOrientation
     }
-
-
+    //</editor-fold>
 
 
     //PREFS in PREFS_PlayEngin -------------------------------------------------------------
+    //<editor-fold desc="////播放引擎相关配置">
     private lateinit var PREFS_PlayEngin: SharedPreferences
     private var state_PREFS_PlayEngin_initialized = false
     const val PREFS_PlayEngin_Name = "PREFS_PlayEngin"
@@ -588,9 +578,11 @@ object SettingsCenter {
 
         return PREFS_StopPlayerWhenTaskRemoved == 1
     }
+    //</editor-fold>
 
 
     //PREFS in PREFS_PlayVideoPage -------------------------------------------------------------
+    //<editor-fold desc="////播放页相关配置">
     private lateinit var PREFS_PlayVideoPage: SharedPreferences
     private var state_PREFS_PlayVideoPage_initialized = false
     const val PREFS_PlayVideoPage_Name = "PREFS_PlayVideoPage"
@@ -1154,9 +1146,11 @@ object SettingsCenter {
         PREFS_PlayVideoPage.edit { putLong(value_video_syncSeekbar_runnableGapMs_Name, targetValue) }
 
     }
+    //</editor-fold>
 
 
-    //PREFS in PREFS_MusicPage -------------------------------------------------------------
+    //👝 PREFS in PREFS_MusicPage -------------------------------------------------------------
+    //<editor-fold desc="////音乐页相关配置">
     private var Pandora_PlayAudioPage: SharedPreferences? = null
     const val Pandora_PlayAudioPage_Name = "Pandora_PlayAudioPage"
     private fun OpenPandora_PlayAudioPage(context: Context){
@@ -1240,9 +1234,35 @@ object SettingsCenter {
         Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseFileNameAsTitle_Name, 0) }
 
     }
+    //使用专辑图手势
+    private var PRF_Audio_UseArtworkGesture = -1
+    const val PRF_Audio_UseArtworkGesture_Name = "PRF_Audio_UseArtworkGesture"
+    fun GET_PRF_Audio_UseArtworkGesture(context: Context): Boolean{
+        OpenPandora_PlayAudioPage(context)
+
+        if (PRF_Audio_UseArtworkGesture == -1){
+            PRF_Audio_UseArtworkGesture = Pandora_PlayAudioPage?.getInt(PRF_Audio_UseArtworkGesture_Name, -1) ?: -1
+            if (PRF_Audio_UseArtworkGesture == -1){
+                Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseArtworkGesture_Name, 0) }
+            }
+
+        }
+
+        return PRF_Audio_UseArtworkGesture == 1
+    }
+    fun SET_PRF_Audio_UseArtworkGesture(context: Context, enable: Boolean){
+        OpenPandora_PlayAudioPage(context)
+
+        PRF_Audio_UseArtworkGesture = if (enable) 1 else 0
+        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseArtworkGesture_Name, 0) }
+
+    }
+    //</editor-fold>
+
 
 
     //👝 Pandora_Other 其他设置 -------------------------------------------------------------
+    //<editor-fold desc="////其他设置相关配置">
     private var Pandora_Other: SharedPreferences? = null
     const val Pandora_Other_Name = "Pandora_Other"
     private fun OpenPandora_Other(context: Context){
@@ -1278,6 +1298,7 @@ object SettingsCenter {
 
 
     }
+    //</editor-fold>
 
 
 

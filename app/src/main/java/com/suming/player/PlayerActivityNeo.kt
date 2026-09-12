@@ -323,6 +323,8 @@ class PlayerActivityNeo: AppCompatActivity(){
         layer_error = findViewById(R.id.player_core_layer_error)
         layer_error_text = findViewById(R.id.layer_error_text)
 
+        cover = findViewById(R.id.cover)
+
 
         //主线程设置项
 
@@ -439,6 +441,15 @@ class PlayerActivityNeo: AppCompatActivity(){
                 }
                 //确保播放区域在普通位置
                 ensure_moveArea_place()
+            }
+            //遮罩层点击时检查并关闭
+            cover.setOnClickListener {
+                ToolVibrate().vibrate(context)
+                if (shouldCloseCover()){
+                    cover.visibility = View.GONE
+                }else{
+                    showCustomToast("???", 3)
+                }
             }
             //切换横屏
             val ButtonLandscapeButton = findViewById<CircleButton>(R.id.ButtonLandscape)
@@ -2128,41 +2139,6 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
     }
 
-    //测试函数-跳转任意位置
-    @SuppressLint("InflateParams")
-    private fun setCustomParams(){
-        val dialog = Dialog(this).apply {
-            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-        }
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_input_box_double, null)
-        dialog.setContentView(dialogView)
-        val EditTextHour: EditText = dialogView.findViewById(R.id.dialog_input_hour)
-        val EditTextMinute: EditText = dialogView.findViewById(R.id.dialog_input_minute)
-        val Button: Button = dialogView.findViewById(R.id.dialog_button)
-        //修改提示文本
-        EditTextHour.hint = ""
-        EditTextMinute.hint = ""
-        Button.text = "确定"
-        //设置点击事件
-        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        Button.setOnClickListener {
-            var param1 = EditTextHour.text.toString().toIntOrNull()
-            var param2 = EditTextMinute.text.toString().toIntOrNull()
-
-            if (param1 == null) param1 = 0
-            if (param2 == null) param2 = 0
-
-
-
-            syncScrollTask_Core_Execute(param1, param2)
-
-
-
-            //关闭对话框
-            dialog.dismiss()
-        }
-        dialog.show()
-    }
 
     //音量管理与提示
     private fun volumeDetect(){
@@ -2789,7 +2765,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 continuePlay()
 
                 //隐藏遮罩
-                closeCover()
+                closeCover(delay = true)
 
                 //修改状态
                 isSeekReady = true
@@ -2854,7 +2830,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun continuePlay(need_requestFocus: Boolean = true){
         //调用继续播放(确保活动内唯一调用)
         PlayerSingleton.continuePlay(need_requestFocus)
-
 
         //开启本地界面更新
         start_S_Area_PassiveControl()
@@ -3537,14 +3512,14 @@ class PlayerActivityNeo: AppCompatActivity(){
         val ButtonLandscape = findViewById<CircleButton>(R.id.ButtonLandscape)
         //动态切换颜色和Icon的TintColor
         if (isLandscape) {
-            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.MainColorPack_CardButtonBackground_state_ON))
+            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.VideoPlayerColorPack_CardBackground_State_ON))
             if(isDarkTheme){
                 ButtonLandscape.setIconTintColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.Black))
             }else{
                 ButtonLandscape.setIconTintColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.Black))
             }
         }else{
-            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.MainColorPack_CardButtonBackground_state_OFF))
+            ButtonLandscape.setMainColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.VideoPlayerColorPack_CardBackground_State_OFF))
             if(isDarkTheme){
                 ButtonLandscape.setIconTintColor(ContextCompat.getColor(this@PlayerActivityNeo, R.color.White))
             }else{
@@ -3636,38 +3611,46 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     }
     //关闭遮罩
-    private fun closeCover(anim: Boolean = false, animDuration: Long = 250){
-        val cover = findViewById<LinearLayout>(R.id.cover)
-        if(anim){
-            cover.animate().alpha(0f).setDuration(animDuration).withEndAction { cover.visibility = View.GONE }
-        }else{
+    private lateinit var cover: LinearLayout
+    private fun closeCover(anim: Boolean = false,delay: Boolean = false){
+        //直接隐藏
+        fun just_hide(){
             cover.visibility = View.GONE
         }
-    }
-    private fun showCover(anim: Boolean = false, animDuration: Long = 250){
-        val cover = findViewById<LinearLayout>(R.id.cover)
-        if(anim){
-            cover.animate().alpha(1f).setDuration(animDuration).withEndAction { cover.visibility = View.VISIBLE }
+        //带动画隐藏
+        fun hide_with_anim(){
+            cover.animate().alpha(0f).setDuration(25).withEndAction { cover.visibility = View.GONE }
+        }
+        if (delay){
+            Handler(mainLooper).postDelayed({
+                hide_with_anim()
+            }, 0) //疑似低性能机型上会有延时导致黑屏闪过,有的话拉大延时
+
         }else{
-            cover.visibility = View.VISIBLE
+            if(anim){
+                hide_with_anim()
+            }else{
+                just_hide()
+            }
         }
     }
     //无播放项遮罩
     private lateinit var layer_error: LinearLayout
     private lateinit var layer_error_text: TextView
     private fun closeErrorCover(){
-        val cover = findViewById<LinearLayout>(R.id.player_core_layer_error)
-        val errorText = findViewById<TextView>(R.id.layer_error_text)
-        errorText.text = ""
-
-        cover.visibility = View.GONE
-
+        //隐藏错误面板
+        layer_error_text.text = ""
+        layer_error.visibility = View.GONE
     }
     private fun showErrorCover(text: String,hide_buttons: Boolean=false){
         //修改提示文本
         layer_error_text.text = text
         layer_error.visibility = View.VISIBLE
 
+        //让控件显示
+        setControllerVisible()
+
+        //控制按钮显示状态
         val exitButton = findViewById<CardView>(R.id.layer_error_exit)
         val openListButton = findViewById<CardView>(R.id.layer_error_open_list)
         val closeButton = findViewById<CardView>(R.id.layer_error_close)
@@ -3693,18 +3676,29 @@ class PlayerActivityNeo: AppCompatActivity(){
             }
             closeButton.setOnClickListener {
                 ToolVibrate().vibrate(this)
-                //检查播放器是否已经正常恢复
-                val (current_media_ongoing, current_media_uri) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
-                if (!current_media_ongoing || current_media_uri == Uri.EMPTY){
-                    showCustomToast("再次检查发现,目前确实没有媒体在播放", 3)
-                }else{
+                if (shouldCloseCover()){
                     closeErrorCover()
+                }else{
+                    showCustomToast("再次检查发现,目前确实没有媒体在播放", 3)
                 }
             }
         }
 
-        //把加载中遮罩关掉保险
-        closeCover()
+    }
+    //检查并返回是否应当关闭遮罩
+    private fun shouldCloseCover(): Boolean{
+        //检查播放器是否已经正常恢复
+        val (current_media_ongoing, current_media_uri) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+        if (!current_media_ongoing || current_media_uri == Uri.EMPTY){
+
+
+            return false
+        }else{
+            closeErrorCover()
+
+            return true
+        }
+
     }
 
     //格式化时间戳显示

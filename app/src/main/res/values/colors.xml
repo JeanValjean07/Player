@@ -94,6 +94,16 @@
     <color name="CircleButton_Background">#FFFFFFFF</color>
 
 
+    <!-- 视频播放页独立颜色合集 -->
+    <color name="VideoPlayerColorPack_SurfaceBackground">#FFFFFFFF</color>
+    <color name="VideoPlayerColorPack_BottomArea_Top_Line">#FFF6F6F6</color>
+    <color name="VideoPlayerColorPack_BottomArea_Scroller_Center_Line">#FF212121</color>
+    <color name="VideoPlayerColorPack_BottomArea_Background">#FFFFFFFF</color>
+    <color name="VideoPlayerColorPack_CardBackground">#FFFFFFFF</color>
+    <color name="VideoPlayerColorPack_CardBackground_Keep_Theme">#FFB39DDB</color>
+    <color name="VideoPlayerColorPack_CardBackground_State_ON">#FFB39DDB</color>
+    <color name="VideoPlayerColorPack_CardBackground_State_OFF">#FFFFFFFF</color>
+
 
 
     <!-- 一级页面颜色配置 -->
@@ -121,6 +131,10 @@
 
     <!-- 首页专辑区域 -->
     <color name="AlbumSquare_Background_Themed">#FFB39DDB</color>
+
+    <!-- toast -->
+    <color name="Toast_AlwaysLight_Background">#FFFFFFFF</color>
+    <color name="Toast_AlwaysLight_Text">#FF212121</color>
 
     <!-- 文字 -->
     <color name="ColorPack_PrimaryTextColor">#FFFFFFFF</color>

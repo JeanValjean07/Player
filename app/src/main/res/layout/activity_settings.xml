@@ -1371,7 +1371,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="如果有些封面不适合展示，可选择关闭。也可长按关闭。"
+                            android:text="如果有些封面不适合展示，可在播放页面长按专辑图关闭，并且只关联单个音乐项。若关闭此处，所有专辑封面都将不显示。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:使用文件名作为标题  -->
@@ -1409,6 +1409,43 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="部分媒体可能未写入标题元数据，可选择显示文件名，也可点击切换。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                    <!--  开关:使用专辑图手势  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:layout_weight="0"
+                                android:text="使用专辑图区域调整音量"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/SC_Audio_UseArtworkGesture"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="0"
+                                app:thumbTint="@color/switchThumbColor"
+                                app:trackTint="@color/switchTrackColor" />
+                        </LinearLayout>
+                        <!-- 提示文本 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="在专辑图左右两侧滑动可调节音量，中部下滑可退出页面。"
                             android:textSize="12sp" />
                     </LinearLayout>
 

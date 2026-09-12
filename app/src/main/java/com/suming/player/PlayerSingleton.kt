@@ -490,6 +490,9 @@ object PlayerSingleton {
         //解锁一次
         isLocked = false
 
+        //取消playEnd状态
+        playState_playEnd = false
+
         //启动服务和媒体会话
         startSessionService(context)
 

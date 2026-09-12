@@ -813,7 +813,7 @@ class MusicPlayerActivity : AppCompatActivity() {
     private fun updateMediaTitleArtist(){
         val title = PlayerInfoCenter.GET_Media_Title()
         val artist = PlayerInfoCenter.GET_Media_Artist()
-        val file_name = PlayerInfoCenter.GET_Media_FileName()
+        val file_name = PlayerInfoCenter.GET_Media_FileName().substringBeforeLast(".")
 
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
         var PRF_UseFileNameAsTitle = if (mediaType == MediaType.Audio){
@@ -888,8 +888,11 @@ class MusicPlayerActivity : AppCompatActivity() {
     private fun updateMediaArtwork(){
         //检查是否显示专辑图片(不显示也要注册点击事件)
         var dont_show_album = SettingsCenter.GET_PRF_Audio_DontShowAlbumFrame(context)
-
+        //获取缓存URI
         val URI = PlayerInfoCenter.GET_Media_URI_S_FP()
+
+        //注册点击事件
+        registerMediaArtworkClickEvent(URI)
 
         //检查是否显示专辑图片
         if (dont_show_album) return
@@ -961,8 +964,6 @@ class MusicPlayerActivity : AppCompatActivity() {
 
         }
 
-        //注册点击事件
-        registerMediaArtworkClickEvent(URI)
 
     }
     private fun clearMediaArtWork(){
@@ -972,6 +973,8 @@ class MusicPlayerActivity : AppCompatActivity() {
     //为专辑图设置点击事件
     @SuppressLint("ClickableViewAccessibility")
     private fun registerMediaArtworkClickEvent(URI_S:String){
+        //获取设置
+        val useVolumeGesture = SettingsCenter.GET_PRF_Audio_UseArtworkGesture(context)
         //为专辑图设置点击事件
         val media_artwork_click_layer = findViewById<View>(R.id.media_artwork_click_layer)
         media_artwork_click_layer.post{
@@ -1135,19 +1138,24 @@ class MusicPlayerActivity : AppCompatActivity() {
                         finger1x = event.x
 
                         //判断点击区域并记录
-                        when{
-                            finger1x < artwork_width_pixels * 0.2 -> {
-                                touchArea = 2 //映射到2上做音量控制
+                        if (useVolumeGesture){
+                            when{
+                                finger1x < artwork_width_pixels * 0.2 -> {
+                                    touchArea = 2 //映射到2上做音量控制
+                                }
+                                finger1x > artwork_width_pixels * 0.8 -> {
+                                    state_HeadSetInserted = PlayerListener.getState_isHeadsetPlugged(this@MusicPlayerActivity)
+                                    touchArea = 2
+                                }
+                                else -> {
+                                    touchArea = 3
+                                    touchCenterDistance = 0f
+                                }
                             }
-                            finger1x > artwork_width_pixels * 0.8 -> {
-                                state_HeadSetInserted = PlayerListener.getState_isHeadsetPlugged(this@MusicPlayerActivity)
-                                touchArea = 2
-                            }
-                            else -> {
-                                touchArea = 3
-                                touchCenterDistance = 0f
-                            }
+                        }else{
+                            touchArea = 3
                         }
+
 
                         //传递
                         gestureDetectorPlayArea.onTouchEvent(event)

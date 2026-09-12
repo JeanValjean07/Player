@@ -252,19 +252,22 @@ class SettingsActivity: AppCompatActivity(){
     //注册设置项
     private fun registerSettings(){
         lifecycleScope.launch(Dispatchers.Main) {
-            //媒体会话不使用封面图片
-            val switch_DisableMediaArtWork = findViewById<SwitchCompat>(R.id.DisableMediaArtWork)
-            switch_DisableMediaArtWork.isChecked = SettingsCenter.GET_PREFS_DisableMediaArtWork(context)
-            switch_DisableMediaArtWork.setOnCheckedChangeListener { _, isChecked ->
+
+            //🥯通用设置
+            //<editor-fold desc="////🥯通用设置">
+            //启用视频跨页播放/启用首页MiniView
+            val SC_EnableMiniView = findViewById<SwitchCompat>(R.id.SC_EnableMiniView)
+            SC_EnableMiniView.isChecked = SettingsCenter.GET_PRF_EnableMiniView(context)
+            SC_EnableMiniView.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
-                SettingsCenter.SET_PREFS_DisableMediaArtWork(context,isChecked)
+                SettingsCenter.SET_PRF_EnableMiniView(context, isChecked)
             }
-            //始终使用深色播放页面
-            val switch_AlwaysUseDarkTheme = findViewById<SwitchCompat>(R.id.AlwaysUseDarkTheme)
-            switch_AlwaysUseDarkTheme.isChecked = SettingsCenter.get_PREFS_AlwaysUseDarkTheme(context)
-            switch_AlwaysUseDarkTheme.setOnCheckedChangeListener { _, isChecked ->
+            //首页播放卡片用缩略图代替视频
+            val switch_DisableMainPageSmallPlayer = findViewById<SwitchCompat>(R.id.DisableMainPageSmallPlayer)
+            switch_DisableMainPageSmallPlayer.isChecked = SettingsCenter.GET_PRF_AlwaysUseImageInMiniView(context)
+            switch_DisableMainPageSmallPlayer.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
-                SettingsCenter.set_PREFS_AlwaysUseDarkTheme(isChecked)
+                SettingsCenter.SET_PRF_AlwaysUseImageInMiniView(context, isChecked)
             }
             //启动时继续上次的媒体
             val switch_EnableContinuePlay = findViewById<SwitchCompat>(R.id.EnableContinuePlay)
@@ -287,95 +290,17 @@ class SettingsActivity: AppCompatActivity(){
                 ToolVibrate().vibrate(context)
                 SettingsCenter.set_PREFS_StopPlayerWhenTaskRemoved(isChecked)
             }
-            //使用高刷新率
-            val switch_EnableHighRefreshRate = findViewById<SwitchCompat>(R.id.EnableHighRefreshRate)
-            switch_EnableHighRefreshRate.isChecked = SettingsCenter.get_PREFS_LockRefreshRate(context)
-            switch_EnableHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-                SettingsCenter.set_PREFS_LockRefreshRate(isChecked)
-            }
-            //启用首页MiniView
-            val SC_EnableMiniView = findViewById<SwitchCompat>(R.id.SC_EnableMiniView)
-            SC_EnableMiniView.isChecked = SettingsCenter.GET_PRF_EnableMiniView(context)
-            SC_EnableMiniView.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-                SettingsCenter.SET_PRF_EnableMiniView(context, isChecked)
-            }
-            //禁用更多操作面板下滑手势
-            val switch_DisableFragmentGesture = findViewById<SwitchCompat>(R.id.DisableFragmentGesture)
-            switch_DisableFragmentGesture.isChecked = SettingsCenter.get_PREFS_DisableFragmentGesture(context)
-            switch_DisableFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-                SettingsCenter.set_PREFS_DisableFragmentGesture(isChecked)
-            }
-            //退出播放页时确保竖屏
-            val SC_SwitchPortrait_whenExit = findViewById<SwitchCompat>(R.id.EnsurePortraitWhenExit)
-            SC_SwitchPortrait_whenExit.isChecked = SettingsCenter.GET_PRF_SwitchPortrait_whenExit(context)
-            SC_SwitchPortrait_whenExit.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-
-                SettingsCenter.SET_PRF_SwitchPortrait_whenExit(isChecked)
-            }
-            //竖屏时也开启自动隐藏控件
-            val SC_EnableAutoHideController_whenPortrait = findViewById<SwitchCompat>(R.id.SC_EnableAutoHideController_whenPortrait)
-            SC_EnableAutoHideController_whenPortrait.isChecked = SettingsCenter.GET_PRF_EnableAutoHideController_whenPortrait(context)
-            SC_EnableAutoHideController_whenPortrait.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-                SettingsCenter.SET_PRF_EnableAutoHideController_whenPortrait(context, isChecked)
-            }
+            //</editor-fold>
 
 
-            //启用播放区域移动动画
-            val switch_EnablePlayAreaMoveAnim = findViewById<SwitchCompat>(R.id.EnablePlayAreaMoveAnim)
-            switch_EnablePlayAreaMoveAnim.isChecked = SettingsCenter.get_PREFS_EnablePlayAreaMoveAnim(context)
-            switch_EnablePlayAreaMoveAnim.setOnCheckedChangeListener { _, isChecked ->
+            //🍔播放器引擎设置
+            //<editor-fold desc="////🍔播放器引擎设置">
+            //媒体会话不使用封面图片
+            val switch_DisableMediaArtWork = findViewById<SwitchCompat>(R.id.DisableMediaArtWork)
+            switch_DisableMediaArtWork.isChecked = SettingsCenter.GET_PREFS_DisableMediaArtWork(context)
+            switch_DisableMediaArtWork.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
-                SettingsCenter.set_PREFS_EnablePlayAreaMoveAnim(isChecked)
-            }
-            //寻帧时一律使用关键帧
-            val switch_UseOnlySyncFrameWhenSeek = findViewById<SwitchCompat>(R.id.UseOnlySyncFrameWhenSeek)
-            switch_UseOnlySyncFrameWhenSeek.isChecked = SettingsCenter.get_PREFS_UseOnlySyncFrameWhenSeek(context)
-            switch_UseOnlySyncFrameWhenSeek.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-                SettingsCenter.set_PREFS_UseOnlySyncFrameWhenSeek(isChecked)
-            }
-            //禁用主页面小播放器
-            val switch_DisableMainPageSmallPlayer = findViewById<SwitchCompat>(R.id.DisableMainPageSmallPlayer)
-            switch_DisableMainPageSmallPlayer.isChecked = SettingsCenter.GET_PRF_AlwaysUseImageInMiniView(context)
-            switch_DisableMainPageSmallPlayer.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-                SettingsCenter.SET_PRF_AlwaysUseImageInMiniView(context, isChecked)
-            }
-
-            //进度条绘制使用兼容模式
-            val switch_UseCompatScroller = findViewById<SwitchCompat>(R.id.UseCompatScroller)
-            switch_UseCompatScroller.isChecked = SettingsCenter.get_PREFS_UseCompatScroller(context)
-            switch_UseCompatScroller.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-
-                if (isChecked){
-                    AlertDialog.Builder(context)
-                        .setTitle("提示")
-                        .setMessage("仅当横屏时的进度条两端无法与中央竖线对齐时才能开启此开关，否则将导致进度条无法正常工作，请确认后再开启")
-                        .setPositiveButton("我已确认并开启") { dialog, _ ->
-                            ToolVibrate().vibrate(context)
-
-                            SettingsCenter.set_PREFS_UseCompatScroller(true)
-
-                            dialog.dismiss()
-                        }
-                        .setNegativeButton("取消") { dialog, _ ->
-                            ToolVibrate().vibrate(context)
-
-                            switch_UseCompatScroller.isChecked = false
-
-                                dialog.dismiss()
-                        }
-                        .setCancelable(true)
-                        .show()
-                }else{
-                    SettingsCenter.set_PREFS_UseCompatScroller(false)
-                }
+                SettingsCenter.SET_PREFS_DisableMediaArtWork(context,isChecked)
             }
             //后台播放时关闭视频轨道
             val switch_DisableVideoTrackOnBack = findViewById<SwitchCompat>(R.id.DisableVideoTrackOnBack)
@@ -384,7 +309,11 @@ class SettingsActivity: AppCompatActivity(){
                 ToolVibrate().vibrate(context)
                 SettingsCenter.set_PREFS_DisableVideoTrackOnBack(isChecked)
             }
+            //</editor-fold>
 
+
+            //🤣视频播放页设置
+            //<editor-fold desc="////🤣视频播放页设置">
             //播放页样式
             val ButtonPlayerType = findViewById<CardView>(R.id.ButtonPlayerType)
             updatePlayPageTypeText()
@@ -409,44 +338,95 @@ class SettingsActivity: AppCompatActivity(){
                 }
                 popup.show()
             }
-
-            //寻帧间隔
-            val ButtonCardSeekHandlerGap = findViewById<CardView>(R.id.ButtonCardSeekHandlerGap)
-            updateSeekHandlerGapText()
-            ButtonCardSeekHandlerGap.setOnClickListener {
+            //通用视频页面设置
+            //启用播放区域随面板移动
+            val switch_EnablePlayAreaMoveAnim = findViewById<SwitchCompat>(R.id.EnablePlayAreaMoveAnim)
+            switch_EnablePlayAreaMoveAnim.isChecked = SettingsCenter.get_PREFS_EnablePlayAreaMoveAnim(context)
+            switch_EnablePlayAreaMoveAnim.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
-                //使用弹出菜单选择
-                val popup = PopupMenu(context, ButtonCardSeekHandlerGap)
-                popup.menuInflater.inflate(
-                    R.menu.popup_menu_gap_seek_loop,
-                    popup.menu
-                )
-                popup.setOnMenuItemClickListener { item ->
-                    when (item.itemId) {
-                        R.id.menu_item_NoGap -> {
-                            chooseSeekHandlerGap(0); true
-                        }
+                SettingsCenter.set_PREFS_EnablePlayAreaMoveAnim(isChecked)
+            }
+            //禁用更多操作面板下滑手势
+            val switch_DisableFragmentGesture = findViewById<SwitchCompat>(R.id.DisableFragmentGesture)
+            switch_DisableFragmentGesture.isChecked = SettingsCenter.get_PREFS_DisableFragmentGesture(context)
+            switch_DisableFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+                SettingsCenter.set_PREFS_DisableFragmentGesture(isChecked)
+            }
+            //始终使用深色播放页面
+            val switch_AlwaysUseDarkTheme = findViewById<SwitchCompat>(R.id.AlwaysUseDarkTheme)
+            switch_AlwaysUseDarkTheme.isChecked = SettingsCenter.get_PREFS_AlwaysUseDarkTheme(context)
+            switch_AlwaysUseDarkTheme.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+                SettingsCenter.set_PREFS_AlwaysUseDarkTheme(isChecked)
+            }
+            //使用高刷新率
+            val switch_EnableHighRefreshRate = findViewById<SwitchCompat>(R.id.EnableHighRefreshRate)
+            switch_EnableHighRefreshRate.isChecked = SettingsCenter.get_PREFS_LockRefreshRate(context)
+            switch_EnableHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+                SettingsCenter.set_PREFS_LockRefreshRate(isChecked)
+            }
+            //退出播放页时确保竖屏
+            val SC_SwitchPortrait_whenExit = findViewById<SwitchCompat>(R.id.EnsurePortraitWhenExit)
+            SC_SwitchPortrait_whenExit.isChecked = SettingsCenter.GET_PRF_SwitchPortrait_whenExit(context)
+            SC_SwitchPortrait_whenExit.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
 
-                        R.id.menu_item_60hz -> {
-                            chooseSeekHandlerGap(16); true
-                        }
+                SettingsCenter.SET_PRF_SwitchPortrait_whenExit(isChecked)
+            }
+            //竖屏时也开启自动隐藏控件
+            val SC_EnableAutoHideController_whenPortrait = findViewById<SwitchCompat>(R.id.SC_EnableAutoHideController_whenPortrait)
+            SC_EnableAutoHideController_whenPortrait.isChecked = SettingsCenter.GET_PRF_EnableAutoHideController_whenPortrait(context)
+            SC_EnableAutoHideController_whenPortrait.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+                SettingsCenter.SET_PRF_EnableAutoHideController_whenPortrait(context, isChecked)
+            }
+            //🥙经典播放页设置
+            //视频页seekBar刷新间隔
+            val ButtonCard_VideoSeekBar_updateMs = findViewById<CardView>(R.id.ButtonCard_VideoSeekBar_updateMs)
+            update_video_syncSeekBar_updateMS_Text()
+            ButtonCard_VideoSeekBar_updateMs.setOnClickListener {
+                ToolVibrate().vibrate(context)
+                choose_video_syncSeekBar_updateMs(it)
+            }
+            //🥙新晋播放页设置
+            //进度条绘制使用兼容模式
+            val switch_UseCompatScroller = findViewById<SwitchCompat>(R.id.UseCompatScroller)
+            switch_UseCompatScroller.isChecked = SettingsCenter.get_PREFS_UseCompatScroller(context)
+            switch_UseCompatScroller.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
 
-                        R.id.menu_item_30hz -> {
-                            chooseSeekHandlerGap(33); true
-                        }
+                if (isChecked){
+                    AlertDialog.Builder(context)
+                        .setTitle("提示")
+                        .setMessage("仅当横屏时的进度条两端无法与中央竖线对齐时才能开启此开关，否则将导致进度条无法正常工作，请确认后再开启")
+                        .setPositiveButton("我已确认并开启") { dialog, _ ->
+                            ToolVibrate().vibrate(context)
 
-                        R.id.menu_item_15hz -> {
-                            chooseSeekHandlerGap(66); true
-                        }
+                            SettingsCenter.set_PREFS_UseCompatScroller(true)
 
-                        R.id.menu_item_Input -> {
-                            setSeekHandlerGapByInput(); true
+                            dialog.dismiss()
                         }
+                        .setNegativeButton("取消") { dialog, _ ->
+                            ToolVibrate().vibrate(context)
 
-                        else -> true
-                    }
+                            switch_UseCompatScroller.isChecked = false
+
+                            dialog.dismiss()
+                        }
+                        .setCancelable(true)
+                        .show()
+                }else{
+                    SettingsCenter.set_PREFS_UseCompatScroller(false)
                 }
-                popup.show()
+            }
+            //寻帧时一律使用关键帧
+            val switch_UseOnlySyncFrameWhenSeek = findViewById<SwitchCompat>(R.id.UseOnlySyncFrameWhenSeek)
+            switch_UseOnlySyncFrameWhenSeek.isChecked = SettingsCenter.get_PREFS_UseOnlySyncFrameWhenSeek(context)
+            switch_UseOnlySyncFrameWhenSeek.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+                SettingsCenter.set_PREFS_UseOnlySyncFrameWhenSeek(isChecked)
             }
             //时间戳刷新间隔
             val ButtonCardTimerUpdateGap = findViewById<CardView>(R.id.ButtonCardTimerUpdateGap)
@@ -491,6 +471,44 @@ class SettingsActivity: AppCompatActivity(){
                 popup.show()
 
             }
+            //播放器寻帧间隔
+            val ButtonCardSeekHandlerGap = findViewById<CardView>(R.id.ButtonCardSeekHandlerGap)
+            updateSeekHandlerGapText()
+            ButtonCardSeekHandlerGap.setOnClickListener {
+                ToolVibrate().vibrate(context)
+                //使用弹出菜单选择
+                val popup = PopupMenu(context, ButtonCardSeekHandlerGap)
+                popup.menuInflater.inflate(
+                    R.menu.popup_menu_gap_seek_loop,
+                    popup.menu
+                )
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.menu_item_NoGap -> {
+                            chooseSeekHandlerGap(0); true
+                        }
+
+                        R.id.menu_item_60hz -> {
+                            chooseSeekHandlerGap(16); true
+                        }
+
+                        R.id.menu_item_30hz -> {
+                            chooseSeekHandlerGap(33); true
+                        }
+
+                        R.id.menu_item_15hz -> {
+                            chooseSeekHandlerGap(66); true
+                        }
+
+                        R.id.menu_item_Input -> {
+                            setSeekHandlerGapByInput(); true
+                        }
+
+                        else -> true
+                    }
+                }
+                popup.show()
+            }
             //进度条刷新间隔
             val ButtonCardScrollerUpdateGap = findViewById<CardView>(R.id.ButtonCard_scrollerUpdateGap)
             updateScrollerUpdateGapText()
@@ -498,7 +516,51 @@ class SettingsActivity: AppCompatActivity(){
                 ToolVibrate().vibrate(context)
                 chooseScrollerUpdateGap(ButtonCardScrollerUpdateGap)
             }
-            //振动模式
+            //</editor-fold>
+
+
+
+            //🥡音乐播放页设置
+            //<editor-fold desc="////🥡音乐播放页设置">
+            //不使用专辑封面
+            val SC_Audio_DontShowAlbumFrame = findViewById<SwitchCompat>(R.id.SC_Audio_DontShowAlbumFrame)
+            SC_Audio_DontShowAlbumFrame.isChecked = SettingsCenter.GET_PRF_Audio_DontShowAlbumFrame(context)
+            SC_Audio_DontShowAlbumFrame.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+
+                SettingsCenter.SET_PRF_Audio_DontShowAlbumFrame(context,isChecked)
+            }
+            //使用文件名作为标题
+            val SC_Audio_UseFileNameAsTitle = findViewById<SwitchCompat>(R.id.SC_Audio_UseFileNameAsTitle)
+            SC_Audio_UseFileNameAsTitle.isChecked = SettingsCenter.GET_PRF_Audio_UseFileNameAsTitle(context)
+            SC_Audio_UseFileNameAsTitle.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+
+                SettingsCenter.SET_PRF_Audio_UseFileNameAsTitle(context,isChecked)
+            }
+            //使用专辑图手势
+            val SC_Audio_UseArtworkGesture = findViewById<SwitchCompat>(R.id.SC_Audio_UseArtworkGesture)
+            SC_Audio_UseArtworkGesture.isChecked = SettingsCenter.GET_PRF_Audio_UseArtworkGesture(context)
+            SC_Audio_UseArtworkGesture.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+
+                SettingsCenter.SET_PRF_Audio_UseArtworkGesture(context,isChecked)
+            }
+            //音乐页seekBar刷新间隔
+            val ButtonCard_AudioSeekBar_updateMs = findViewById<CardView>(R.id.ButtonCard_AudioSeekBar_updateMs)
+            update_audio_syncSeekBar_updateMS_Text()
+            ButtonCard_AudioSeekBar_updateMs.setOnClickListener {
+                ToolVibrate().vibrate(context)
+                choose_audio_syncSeekBar_updateMs(it)
+            }
+            //</editor-fold>
+
+
+
+            //🌮交互设置
+            //<editor-fold desc="////🌮交互设置">
+            //🌯交互设置
+            //播放器振动模式
             val ButtonCardVibrateMode = findViewById<CardView>(R.id.ButtonCardVibrateMode)
             updateVibrateModeText()
             ButtonCardVibrateMode.setOnClickListener {
@@ -537,57 +599,6 @@ class SettingsActivity: AppCompatActivity(){
                 }
                 popup.show()
             }
-
-            //视频页seekBar刷新间隔
-            val ButtonCard_VideoSeekBar_updateMs = findViewById<CardView>(R.id.ButtonCard_VideoSeekBar_updateMs)
-            update_video_syncSeekBar_updateMS_Text()
-            ButtonCard_VideoSeekBar_updateMs.setOnClickListener {
-                ToolVibrate().vibrate(context)
-                choose_video_syncSeekBar_updateMs(it)
-            }
-            //音乐页seekBar刷新间隔
-            val ButtonCard_AudioSeekBar_updateMs = findViewById<CardView>(R.id.ButtonCard_AudioSeekBar_updateMs)
-            update_audio_syncSeekBar_updateMS_Text()
-            ButtonCard_AudioSeekBar_updateMs.setOnClickListener {
-                ToolVibrate().vibrate(context)
-                choose_audio_syncSeekBar_updateMs(it)
-            }
-
-
-            //音乐播放页设置
-            //不使用专辑封面
-            val SC_Audio_DontShowAlbumFrame = findViewById<SwitchCompat>(R.id.SC_Audio_DontShowAlbumFrame)
-            SC_Audio_DontShowAlbumFrame.isChecked = SettingsCenter.GET_PRF_Audio_DontShowAlbumFrame(context)
-            SC_Audio_DontShowAlbumFrame.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-
-                SettingsCenter.SET_PRF_Audio_DontShowAlbumFrame(context,isChecked)
-            }
-            //使用文件名作为标题
-            val SC_Audio_UseFileNameAsTitle = findViewById<SwitchCompat>(R.id.SC_Audio_UseFileNameAsTitle)
-            SC_Audio_UseFileNameAsTitle.isChecked = SettingsCenter.GET_PRF_Audio_UseFileNameAsTitle(context)
-            SC_Audio_UseFileNameAsTitle.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
-
-                SettingsCenter.SET_PRF_Audio_UseFileNameAsTitle(context,isChecked)
-            }
-
-            //封面缩略图管理
-            val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
-            ButtonRemoveAllThumbPath.setOnClickListener {
-                ToolVibrate().vibrate(context)
-
-                chooseDeleteFrameItem(ButtonRemoveAllThumbPath)
-
-            }
-            //数据库缓存管理
-            val ButtonManageDB = findViewById<TextView>(R.id.TextButton_DBManage)
-            ButtonManageDB.setOnClickListener {
-                ToolVibrate().vibrate(context)
-
-                chooseDeleteDB(ButtonManageDB)
-            }
-
             //全屏Fragment
             val SC_UseFullScreenFragment = findViewById<SwitchCompat>(R.id.SC_UseFullScreenFragment)
             SC_UseFullScreenFragment.isChecked = SettingsCenter.GET_PRF_UseFullScreenFragment(context)
@@ -603,7 +614,12 @@ class SettingsActivity: AppCompatActivity(){
                 }
 
             }
+            //</editor-fold>
 
+
+
+            //🍖测试设置
+            //<editor-fold desc="////🍖测试设置">
             //测试数值
             val ButtonCard_onStartDelayMillis = findViewById<CardView>(R.id.ButtonCard_onStartDelayMillis)
             val ButtonText_onStartDelayMillis = findViewById<TextView>(R.id.ButtonText_onStartDelayMillis)
@@ -660,6 +676,28 @@ class SettingsActivity: AppCompatActivity(){
                     imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
                 }
             }
+            //</editor-fold>
+
+
+            //🥓重置设置
+            //<editor-fold desc="////🥓重置设置">
+            //封面缩略图管理
+            val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
+            ButtonRemoveAllThumbPath.setOnClickListener {
+                ToolVibrate().vibrate(context)
+
+                chooseDeleteFrameItem(ButtonRemoveAllThumbPath)
+
+            }
+            //数据库缓存管理
+            val ButtonManageDB = findViewById<TextView>(R.id.TextButton_DBManage)
+            ButtonManageDB.setOnClickListener {
+                ToolVibrate().vibrate(context)
+
+                chooseDeleteDB(ButtonManageDB)
+            }
+            //</editor-fold>
+
 
         }
     }
