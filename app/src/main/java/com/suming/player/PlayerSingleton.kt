@@ -306,6 +306,19 @@ object PlayerSingleton {
         }
     }
 
+    //重置单个媒体播放状态
+    private fun clearState_forSingleItem(){
+        //错误次数
+        singleItemState_errorCount = 0
+        //首次Ready
+        singleItemState_firstReady_reached = false
+        //参数是否已经应用
+        singleItemState_singleParamsApplied = false
+        //自动播放是否已执行
+        singleItemState_autoPlayExecuted = false
+
+    }
+
     //播放器错误处理(发生错误后应该是会自动进入idle状态)
     private fun on_EngineErrorOccur(error: PlaybackException){
 
@@ -518,6 +531,9 @@ object PlayerSingleton {
         withContext(Dispatchers.Main) {
             //设置播放状态
             _player?.playWhenReady = playWhenReady
+            //设置自动播放执行状态
+            singleItemState_autoPlayExecuted = playWhenReady
+
 
             //开始构建mediaItem
             val mediaItem = MediaItem.Builder()
@@ -840,20 +856,12 @@ object PlayerSingleton {
     }
 
     //播放状态
-    private var singleItemState_readyOnce = false            //视频是否首次Ready
-    private var singleItemState_notApply = false             //单个媒体参数是否已经应用
-    //重置单个媒体播放状态
-    private fun clearState_forSingleItem(){
-        //错误次数
-        singleItemState_errorCount = 0
-
-        singleItemState_readyOnce = false
-        singleItemState_notApply = false
-        mark_needApplyPara = false
-    }
+    private var singleItemState_firstReady_reached = false            //视频是否首次Ready
+    private var singleItemState_singleParamsApplied = false             //单个媒体参数是否已经应用
+    var singleItemState_autoPlayExecuted = true             //自动播放是否已执行(仅在playWhenReady为false时开启此项)
     //播放状态-已准备好
     private fun playState_Ready(){
-        singleItemState_readyOnce = true
+        singleItemState_firstReady_reached = true
         //本次是否需要应用独立的项参数
         if (mark_needApplyPara){ ApplyParameters()}
 
@@ -912,7 +920,7 @@ object PlayerSingleton {
     //应用播放参数
     private fun ApplyParameters(){
         //视频已经Ready,立即应用参数
-        if (singleItemState_readyOnce){
+        if (singleItemState_firstReady_reached){
             //执行后关闭标记
             mark_needApplyPara = false
             //先解包

@@ -444,7 +444,9 @@ class MusicPlayerActivity : AppCompatActivity() {
                     }else{
                         //有正在播放的项
                         if (ongoing_MediaType == MediaType.Audio){
-                            //正在播放的是视频,直接绑定
+                            //确保已启动播放器
+                            connectToExoPlayer()
+                            //连接到当前媒体
                             connectToCurrentMedia()
                         }else{
                             finish()
@@ -464,7 +466,9 @@ class MusicPlayerActivity : AppCompatActivity() {
                         //传入链接,但与当前播放项相同,直接绑定,但是要先判断是不是视频
                         //consoleLog("传入链接,但与当前播放项相同,直接绑定,但是要先判断是不是视频")
                         if (ongoing_MediaType == MediaType.Audio){
-                            //正在播放的是视频,直接绑定
+                            //确保已启动播放器
+                            connectToExoPlayer()
+                            //连接到当前媒体
                             connectToCurrentMedia()
                         }else{
                             finish()
@@ -475,6 +479,9 @@ class MusicPlayerActivity : AppCompatActivity() {
         }else{
             //
             if (ongoing_URI != Uri.EMPTY){
+                //确保已启动播放器
+                connectToExoPlayer()
+                //连接到当前媒体
                 connectToCurrentMedia()
             }
         }
@@ -769,6 +776,9 @@ class MusicPlayerActivity : AppCompatActivity() {
     }
     //连接到当前媒体
     private fun connectToCurrentMedia(){
+        consoleLog("connectToCurrentMedia")
+
+
         //更新音乐时长
         updateMediaDuration()
         //开始刷新时间
@@ -784,9 +794,17 @@ class MusicPlayerActivity : AppCompatActivity() {
         startSeekBarSync()
         startVideoTimeSync()
 
+        //检查自动播放执行情况
+        if (!PlayerSingleton.singleItemState_autoPlayExecuted){
+            PlayerSingleton.singleItemState_autoPlayExecuted = true
+            //自动播放
+            continuePlay()
+        }
+
     }
     //媒体项变更
     private fun onMediaItemChanged(){
+        consoleLog("onMediaItemChanged")
 
         //非音频时主动退出页面
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
@@ -796,11 +814,6 @@ class MusicPlayerActivity : AppCompatActivity() {
 
         }
 
-        //获取专属数据
-        if (mediaType == MediaType.Audio){
-
-
-        }
 
         //更新音乐时长
         updateMediaDuration()

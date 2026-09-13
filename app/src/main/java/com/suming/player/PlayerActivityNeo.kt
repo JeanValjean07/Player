@@ -864,6 +864,10 @@ class PlayerActivityNeo: AppCompatActivity(){
                     FragmentConnector.fragment_more_button_back_to_start -> {
                         player?.seekTo(0)
                         player?.play()
+
+                        //平滑滚动到进度条起始位置
+                        syncScrollTask_Core_smoothSlowly_Compute(0, true)
+
                         start_S_Area_PassiveControl()
                         notice("回到视频起始", 3000)
                     }
@@ -1168,6 +1172,13 @@ class PlayerActivityNeo: AppCompatActivity(){
         updateTimerWindow()
         //刷新控制按钮
         updateButtonState()
+
+        //检查自动播放执行情况
+        if (!PlayerSingleton.singleItemState_autoPlayExecuted){
+            PlayerSingleton.singleItemState_autoPlayExecuted = true
+            //自动播放
+            continuePlay(true)
+        }
 
     }
 
@@ -1985,15 +1996,22 @@ class PlayerActivityNeo: AppCompatActivity(){
         when(newConfig.orientation){
             //切换至横屏
             Configuration.ORIENTATION_LANDSCAPE -> {
+                //修改横屏状态缓存
                 isLandscape = true
+                //更新屏幕参数
                 updateScreenParameters()
-
+                //同步滚动位置
+                syncScrollTask_Core_smoothSlowly_Compute(-1L,true)
 
             }
             //切换至竖屏
             Configuration.ORIENTATION_PORTRAIT -> {
+                //修改横屏状态缓存
                 isLandscape = false
+                //更新屏幕参数
                 updateScreenParameters()
+                //同步滚动位置
+                syncScrollTask_Core_smoothSlowly_Compute(-1L,true)
 
             }
         }
@@ -2619,7 +2637,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private var onScroll_seekToMs = 0L
     //单次点击位置计算
     private fun postSingleTapSeek(e_x: Float){
-        //根据百分比计算具体跳转时间点
+        //根据百分比计算具体跳转视频时间点
         val duration = player?.duration ?: -1L
         if (duration <= 0) return
 
@@ -2641,6 +2659,8 @@ class PlayerActivityNeo: AppCompatActivity(){
 
         //发送跳转命令
         seekTo_Core(seekToMs, Mark_playerReadyFrom_SingleTapSeek)
+        //平滑滚动到目标位置
+        syncScrollTask_Core_smoothSlowly_Compute(seekToMs, true)
 
         //发布通知
         notice("跳转至${FormatTime_withChar(seekToMs)}", 1000)
@@ -2787,12 +2807,15 @@ class PlayerActivityNeo: AppCompatActivity(){
     private val Mark_playerReadyFrom_setNewItem = "Mark_playerReadyFrom_setNewItem"
     //状态playEnd
     private fun playState_playEnd(){
+        //已移除媒体项时不触发
         if (!PlayerSingleton.GET_STE_currentMediaItem_Uri().first) return
-
+        //根据循环模式执行操作
         val loopMode = ListManagerHelper.getLoopMode()
         when (loopMode) {
             ListManagerHelper.LOOP_MODE_ONE -> {
                 notice("单集循环", 3000)
+                //平滑滚动进度条到起始位置
+                syncScrollTask_Core_smoothSlowly_Compute(0,true)
             }
             ListManagerHelper.LOOP_MODE_ALL -> {
 
@@ -3860,17 +3883,13 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun syncScrollTask_Core_Compute(){
         if (ScrollerHelper.singleFrame_durationMs <= 0L) return
+        if (state_scrollSmoothSlowly_Running) return
 
         val currentPosition = player?.currentPosition ?: -1L
         if (currentPosition == -1L) return
 
         scrollerParamMain = ( currentPosition / ScrollerHelper.singleFrame_durationMs ).toInt()
         scrollerParamOffset = (( currentPosition - scrollerParamMain * ScrollerHelper.singleFrame_durationMs ) * ScrollerHelper.singleFrame_WidthPx / ScrollerHelper.singleFrame_durationMs ).toInt()
-        //consoleLog("scrollerParamMain = $scrollerParamMain, scrollerParamOffset = $scrollerParamOffset")
-
-
-        //设定进度条位置(旧版)
-        //scrollerLayoutManager.scrollToPositionWithOffset(scrollerParamMain, -scrollerParamOffset)
 
         //设定进度条位置(新版)
         syncScrollTask_Core_Execute(scrollerParamMain, scrollerParamOffset)
@@ -3882,6 +3901,51 @@ class PlayerActivityNeo: AppCompatActivity(){
         smoothScroller.targetPosition = p1
 
         scrollerLayoutManager?.startSmoothScroll(smoothScroller)
+    }
+    private var state_scrollSmoothSlowly_Running = false
+    private val scrollSmoothSlowly_Millis = 500L
+    private fun syncScrollTask_Core_smoothSlowly_Compute(targetVideoPos_o: Long, force: Boolean = false){
+        if (ScrollerHelper.singleFrame_durationMs <= 0L) return
+        if (state_scrollSmoothSlowly_Running && !force) return
+        if (!playerViewModel.state_controllerShowing) return
+
+        val targetVideoPos = if (targetVideoPos_o == -1L) {
+            player?.currentPosition ?: -1L
+        }else{
+            targetVideoPos_o
+        }
+        if (targetVideoPos < 0L) return
+
+        scrollerParamMain = ( targetVideoPos / ScrollerHelper.singleFrame_durationMs ).toInt()
+        scrollerParamOffset = (( targetVideoPos - scrollerParamMain * ScrollerHelper.singleFrame_durationMs ) * ScrollerHelper.singleFrame_WidthPx / ScrollerHelper.singleFrame_durationMs ).toInt()
+
+        //发起滚动任务
+        syncScrollTask_Core_smoothSlowly_Execute(scrollerParamMain, scrollerParamOffset, force)
+
+    }
+    private fun syncScrollTask_Core_smoothSlowly_Execute(p1: Int, p2: Int,force: Boolean = false){
+        if (state_scrollSmoothSlowly_Running && !force) return
+        state_scrollSmoothSlowly_Running = true
+        val smoothScroller = SmoothScroller(this,p2,scrollSmoothSlowly_Millis)
+        smoothScroller.targetPosition = p1
+
+        //倒计时需要可取消
+        smoothSlowly_Execute_Delay()
+
+        scroller.stopScroll()
+        scrollerLayoutManager?.startSmoothScroll(smoothScroller)
+    }
+    private var smoothSlowly_Execute_Delay_Job: Job? = null
+    private fun smoothSlowly_Execute_Delay() {
+        smoothSlowly_Execute_Delay_Job?.cancel()
+        smoothSlowly_Execute_Delay_Job = lifecycleScope.launch {
+            delay(scrollSmoothSlowly_Millis)
+
+            state_scrollSmoothSlowly_Running = false
+
+            smoothSlowly_Execute_Delay_Job?.cancel()
+
+        }
     }
     private var scrollerParamMain = 0      //进度条大分段位置参数
     private var scrollerParamOffset = 0    //进度条微调偏移量
