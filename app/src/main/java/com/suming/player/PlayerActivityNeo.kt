@@ -1025,7 +1025,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                             //正在播放的是视频,直接绑定
                             connectCurrentMedia()
                         }else{
-                            consoleLog("传入链接,但与当前播放项相同,直接绑定,但当前播放的不是视频,已自动退出")
                             finish()
                         }
                     }
@@ -1038,7 +1037,6 @@ class PlayerActivityNeo: AppCompatActivity(){
                         //consoleLog("传入链接,但与当前播放项不同,播放新项")
 
                         //发起播放新项
-                        consoleLog("mainBusiness: 传入链接,发起播放新项")
                         startPlayNewMedia(URI_U_O,file_path)
 
                     }else{
@@ -1325,7 +1323,6 @@ class PlayerActivityNeo: AppCompatActivity(){
     private suspend fun setNewMediaItem(URI_U_FP: Uri,file_path:String): Boolean{
         if (state_setting_media) return false
         state_setting_media = true
-        consoleLog("setNewMediaItem")
 
         //缓存URI为字符串
         val URI_S_FP = URI_U_FP.toString()

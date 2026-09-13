@@ -3,6 +3,8 @@ package com.suming.player
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Intent
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.graphics.Color
 import android.media.AudioManager
 import android.net.Uri
@@ -11,6 +13,7 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.util.Log
+import android.util.TypedValue
 import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -29,10 +32,14 @@ import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.cardview.widget.CardView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.IntentCompat
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -50,6 +57,7 @@ import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
+import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.MediaInfoRetriever
@@ -64,8 +72,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.getValue
-import kotlin.math.hypot
-import kotlin.math.pow
+import kotlin.math.min
 
 @OptIn(UnstableApi::class)
 @Suppress("NewApi","/unused")
@@ -180,29 +187,212 @@ class MusicPlayerActivity : AppCompatActivity() {
             )
     }
 
+    //显示参数
+    private var screen_height_px = 0
+    private var screen_width_px = 0
+    private var screen_density = 0f
+    private var isLandscape = false
+    private var isDarkTheme = false
+    //视图重组
+    private lateinit var structure_top_bar : LinearLayout
+    private lateinit var structure_scrolleable : ConstraintLayout
+    private lateinit var structure_seekbar_with_time : LinearLayout
+    private lateinit var structure_three_big_button : LinearLayout
+    private lateinit var structure_bottom_padding : View
+    private lateinit var inner_structure_artwork : LinearLayout
+    private lateinit var inner_structure_media_info : LinearLayout
+    private lateinit var inner_structure_common_opts : LinearLayout
     private fun init_display(){
         enableEdgeToEdge()
         setContentView(R.layout.activity_music_player)
         //初始化视图
         fun init_view(){
             seekbar = findViewById(R.id.seekBar)
-
+            //核心视图
             time_stamp_current = findViewById(R.id.time_stamp_current)
             time_stamp_duration = findViewById(R.id.time_stamp_duration)
-
             media_artwork = findViewById(R.id.media_artwork)
-
             media_title = findViewById(R.id.media_title)
             media_artist = findViewById(R.id.media_artist)
-            level_controllers_info = findViewById(R.id.level_controllers_info)
-
             Button_Play_or_Pause = findViewById(R.id.Button_Play_or_Pause)
+
+            //重组视图
+            structure_top_bar = findViewById(R.id.structure_top_bar)
+            structure_scrolleable = findViewById(R.id.structure_scrolleable)
+            structure_seekbar_with_time = findViewById(R.id.structure_seekbar_with_time)
+            structure_three_big_button  = findViewById(R.id.structure_three_big_button)
+            structure_bottom_padding = findViewById(R.id.structure_bottom_padding)
+            inner_structure_artwork = findViewById(R.id.inner_structure_artwork)
+            inner_structure_media_info  = findViewById(R.id.inner_structure_media_info)
+            inner_structure_common_opts  = findViewById(R.id.inner_structure_common_opts)
 
         }
         init_view()
 
 
+        //读取并缓存当前颜色模式
+        isDarkTheme = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        //读取当前屏幕方向
+        isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+
+        //获取屏幕参数
+        if (DeviceInfo.statusBarHeight == 0){
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+                DeviceInfo.statusBarHeight = systemBars.top
+
+                insets
+            }
+        }else{
+
+        }
+        //获取屏幕宽高和密度
+        val DisplayMetrics = resources.displayMetrics
+        screen_height_px = DisplayMetrics.heightPixels
+        screen_width_px = DisplayMetrics.widthPixels
+        screen_density = DisplayMetrics.density
+
+
+        //显示重组
+        var count = 0   //target = 8
+        fun startCompose(){
+            count++
+            if (count == 8){
+                compose()
+            }
+        }
+
+
+        structure_top_bar.post{
+            startCompose()
+        }
+        structure_scrolleable.post{
+            startCompose()
+        }
+        structure_seekbar_with_time.post{
+            startCompose()
+        }
+        structure_three_big_button.post{
+            startCompose()
+        }
+        structure_bottom_padding.post{
+            startCompose()
+        }
+        inner_structure_artwork.post{
+            startCompose()
+        }
+        inner_structure_media_info.post{
+            startCompose()
+        }
+        inner_structure_common_opts.post{
+            startCompose()
+        }
+
+
+
     }
+    private fun compose(){
+        //计算非滚动区域总高度
+        val total_structure_height_exp_scrolleable = structure_top_bar.height + structure_seekbar_with_time.height +
+                structure_three_big_button.height + structure_bottom_padding.height
+        //计算滚动区域目标高度
+        val scrolleableArea_target_height = screen_width_px + inner_structure_media_info.height + inner_structure_common_opts.height
+        //计算当前滚动区域可用高度
+        val scrolleableArea_canOccupy_height = screen_height_px - total_structure_height_exp_scrolleable
+        //计算滚动区域高度差值
+        val scrolleableArea_gap = scrolleableArea_target_height - scrolleableArea_canOccupy_height
+
+
+        //可干预定值
+        val non_scrollArea_can_aba_height_Dp = 50
+        val non_scrollArea_can_aba_height_Px = non_scrollArea_can_aba_height_Dp.dpToPx()
+
+        //值为正时,需要干预
+        if (scrolleableArea_gap > 0){
+            //小于50 Dp时可以减去底部padding
+            if (scrolleableArea_gap <= non_scrollArea_can_aba_height_Px){
+                structure_bottom_padding.updateLayoutParams {
+                    height = scrolleableArea_gap
+                }
+                return
+            }
+            //大于 50 Dp 时全部让出
+            structure_bottom_padding.updateLayoutParams {
+                height = 0
+            }
+
+            //变更artwork显示情况(旧方案)
+            /*
+            //计算scrolleable区域当前高速
+            val scrolleableArea_height = structure_scrolleable.height
+            //计算内部固定区域占用的高度
+            val scrolleableArea_height_exp_artwork = inner_structure_media_info.height + inner_structure_common_opts.height
+            //计算artwork当前可用高度
+            val scrolleableArea_artwork_canOccupy_height = scrolleableArea_height - scrolleableArea_height_exp_artwork
+            //计算artwork当前目标高度
+            val scrolleableArea_artwork_target_height = screen_width_px
+
+
+
+            if (scrolleableArea_artwork_canOccupy_height <= 60.dpToPx()){
+                inner_structure_artwork.visibility = View.GONE
+            }else{
+                if (scrolleableArea_artwork_canOccupy_height < scrolleableArea_artwork_target_height){
+                    val inner_structure_artwork_card = findViewById<CardView>(R.id.inner_structure_artwork_card)
+                    inner_structure_artwork_card.layoutParams = inner_structure_artwork_card.layoutParams.apply {
+                        width = scrolleableArea_artwork_canOccupy_height
+                        height = scrolleableArea_artwork_canOccupy_height
+                    }
+
+                    val new_radius = TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_DIP,
+                        5f,
+                        resources.displayMetrics
+                    )
+                    inner_structure_artwork_card.radius = new_radius
+
+
+                }
+            }
+
+             */
+
+
+        }
+
+        //变更artwork显示情况
+        val inner_structure_artwork_card = findViewById<CardView>(R.id.inner_structure_artwork_card)
+        inner_structure_artwork_card.post {
+            val card_height = inner_structure_artwork_card.height
+            val card_width = inner_structure_artwork_card.width
+
+            //取小值作为目标宽高值
+            val target = min(card_height,card_width)
+
+            if (target < 50.dpToPx()){
+                inner_structure_artwork.visibility = View.GONE
+            }else{
+                inner_structure_artwork_card.layoutParams = inner_structure_artwork_card.layoutParams.apply {
+                    width = target
+                    height = target
+                }
+                if (target < 100.dpToPx()){
+                    val new_radius = TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_DIP,
+                        5f,
+                        resources.displayMetrics
+                    )
+                    inner_structure_artwork_card.radius = new_radius
+                }
+
+            }
+        }
+
+    }
+
+
     private fun init(){
 
         //
@@ -282,7 +472,6 @@ class MusicPlayerActivity : AppCompatActivity() {
     private suspend fun setNewMediaItem(URI_U_FP: Uri): Boolean{
         if (state_setting_media) return false
         state_setting_media = true
-        consoleLog("setNewMediaItem")
 
         //缓存URI为字符串
         val URI_S_FP = URI_U_FP.toString()
@@ -809,7 +998,6 @@ class MusicPlayerActivity : AppCompatActivity() {
     //标题和艺术家
     private lateinit var media_title : TextView
     private lateinit var media_artist : TextView
-    private lateinit var level_controllers_info : LinearLayout
     private fun updateMediaTitleArtist(){
         val title = PlayerInfoCenter.GET_Media_Title()
         val artist = PlayerInfoCenter.GET_Media_Artist()
@@ -850,7 +1038,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                 media_title.isSelected = true
             }
         }
-        level_controllers_info.setOnClickListener {
+        inner_structure_media_info.setOnClickListener {
             ToolVibrate().vibrate(context)
 
             //切换使用的标题
@@ -1353,6 +1541,10 @@ class MusicPlayerActivity : AppCompatActivity() {
     private var task_syncSeekBarPosition_Running = false
 
 
+    @Suppress("unused")
+    private fun Int.dpToPx(): Int {
+        return (this * Resources.getSystem().displayMetrics.density).toInt()
+    }
 
     //音量管理与提示
     private fun volumeDetect(){

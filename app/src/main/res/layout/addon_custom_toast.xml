@@ -7,12 +7,12 @@
     android:layout_height="wrap_content"
     android:minWidth="50dp"
     android:padding="12dp"
-    android:backgroundTint="@color/Background"
+    android:backgroundTint="@color/Toast_AlwaysLight_Background"
     app:cardCornerRadius="15dp"
     app:cardElevation="4dp">
     <TextView
         android:id="@+id/ToastText"
-        android:textColor="@color/HeadText"
+        android:textColor="@color/Toast_AlwaysLight_Text"
         android:textSize="14sp"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="5dp"

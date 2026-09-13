@@ -614,6 +614,18 @@ class SettingsActivity: AppCompatActivity(){
                 }
 
             }
+            //设置MiniView底部抬高高度
+            val TB_SetMiniViewBottomPadding = findViewById<TextView>(R.id.TextButton_SetMiniViewBottomPadding)
+            TB_SetMiniViewBottomPadding.setOnClickListener {
+                ToolVibrate().vibrate(context)
+                //
+                setMiniViewBottomPadding()
+
+            }
+
+
+
+
             //</editor-fold>
 
 
@@ -992,6 +1004,65 @@ class SettingsActivity: AppCompatActivity(){
         }, 500)
     }
 
+
+    //MiniView底部抬高高度设置
+    private fun setMiniViewBottomPadding(){
+        ToolVibrate().vibrate(context)
+
+        val dialog = Dialog(context).apply { window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable()) }
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
+        dialog.setContentView(dialogView)
+
+        val current_height = SettingsCenter.get_value_MiniView_BottomPadding_Dp(context)
+
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val Button: Button = dialogView.findViewById(R.id.dialog_button)
+        title.text = "设置MiniView底部抬高高度"
+        Description.text = "以Dp为单位"
+        EditText.hint = "当前为 ${current_height}"
+        Button.text = "确定"
+
+        val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        Button.setOnClickListener {
+            val input_value = EditText.text.toString().toIntOrNull()
+            //未输入时拒绝
+            if (input_value == null) {
+                showCustomToast("未输入内容", 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            //负值时拒绝
+            if (input_value < 0) {
+                showCustomToast("不支持此高度值", 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+            //大于100时拒绝
+            if (input_value > 100) {
+                showCustomToast("不支持高于100 Dp", 3)
+                dialog.dismiss()
+                return@setOnClickListener
+            }
+
+
+            //执行设置写入
+            SettingsCenter.set_value_MiniView_BottomPadding_Dp(context,input_value)
+
+
+            dialog.dismiss()
+
+        }
+        dialog.show()
+        //自动弹出键盘程序
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(300)
+            EditText.requestFocus()
+            @Suppress("DEPRECATION")
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
 
     //播放页样式
     private fun choosePlayPageType(playPageType: Int){

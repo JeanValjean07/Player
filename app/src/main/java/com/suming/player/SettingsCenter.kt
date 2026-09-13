@@ -277,17 +277,14 @@ object SettingsCenter {
     private var State_LastStayTab = tab_mark_null
     const val State_LastStayTab_Name = "State_LastStayTab"
     fun set_State_LastStayTab(context: Context, target: String){
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        //设置时转为int写入本地缓存
+
         State_LastStayTab = target
-        //写入配置单
         Pandora_MainPage!!.edit { putString(State_LastStayTab_Name, target) }
     }
     fun get_State_LastStayTab(context: Context): String {
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        //仅在未读取过时才读取(也就是值为""时)
+
         if (State_LastStayTab == tab_mark_null) {
             //从配置单读取
             State_LastStayTab = Pandora_MainPage!!.getString(State_LastStayTab_Name, tab_mark_null) ?: tab_mark_null
@@ -299,9 +296,34 @@ object SettingsCenter {
             }
 
         }
-        //返回结果
+
         return State_LastStayTab
     }
+
+    //MiniView底部抬高高度
+    private var value_MiniView_BottomPadding_Dp = -1
+    const val value_MiniView_BottomPadding_Dp_Name = "value_MiniView_BottomPadding_Dp"
+    fun set_value_MiniView_BottomPadding_Dp(context: Context,targetValue:Int){
+        OpenPandora_MainPage(context)
+
+        value_MiniView_BottomPadding_Dp = targetValue
+        Pandora_MainPage?.edit { putInt(value_MiniView_BottomPadding_Dp_Name, targetValue) }
+    }
+    fun get_value_MiniView_BottomPadding_Dp(context: Context): Int{
+        OpenPandora_MainPage(context)
+
+        if (value_MiniView_BottomPadding_Dp == -1){
+            value_MiniView_BottomPadding_Dp = Pandora_MainPage?.getInt(value_MiniView_BottomPadding_Dp_Name, -1) ?: -1
+            if (value_MiniView_BottomPadding_Dp == -1){
+                value_MiniView_BottomPadding_Dp = 0
+                Pandora_MainPage?.edit { putInt(value_MiniView_BottomPadding_Dp_Name, 0) }
+            }
+        }
+
+
+        return value_MiniView_BottomPadding_Dp
+    }
+
 
     //测试时长
     const val PRF_forTestDelayMillis_Name = "PRF_forTestDelayMillis"

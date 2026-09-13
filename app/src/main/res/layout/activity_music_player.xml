@@ -1,6 +1,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/SecondaryColorPack_SurfaceBackground"
@@ -51,7 +52,7 @@
 
         <!-- 顶部横排按钮区 -->
         <LinearLayout
-            android:id="@+id/level_controllers_top_bar"
+            android:id="@+id/structure_top_bar"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:orientation="horizontal"
@@ -99,80 +100,81 @@
 
         <!-- 封面区,标题和艺术家区,常用按钮区 可做到viewpager内 -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/controller_scrolleable"
+            android:id="@+id/structure_scrolleable"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:orientation="vertical"
             android:gravity="bottom"
-            app:layout_constraintTop_toBottomOf="@+id/level_controllers_top_bar"
-            app:layout_constraintBottom_toTopOf="@+id/level_controllers_middle_padding"
+            app:layout_constraintTop_toBottomOf="@+id/structure_top_bar"
+            app:layout_constraintBottom_toTopOf="@+id/structure_seekbar_with_time"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             >
             <!-- 专辑图片区域 -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/controller_artwork"
+            <LinearLayout
+                android:id="@+id/inner_structure_artwork"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                app:layout_constraintDimensionRatio="1:1"
-                android:scaleType="centerCrop"
-                android:layout_margin="20dp"
-                app:cardCornerRadius="25dp"
-                app:cardElevation="10dp"
                 app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/inner_structure_media_info"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                android:layout_gravity="center|start"
                 >
-                <!-- 默认底图 -->
-                <ImageView
-                    android:layout_width="match_parent"
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/inner_structure_artwork_card"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:contentDescription="底图"
-                    app:layout_constraintDimensionRatio="1:1"
-                    android:src="@drawable/ic_main_null_album"
                     android:scaleType="centerCrop"
-                    android:padding="50dp"
-                    android:background="@color/AlbumSquare_Background_Themed"
-                    app:tint="@color/Text_Level_2" />
-                <!-- 动态切换 -->
-                <ImageView
-                    android:id="@+id/media_artwork"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:contentDescription="封面图片"
-                    android:background="@android:color/transparent"
-                    app:layout_constraintDimensionRatio="1:1"
-                    android:scaleType="centerCrop"
-                    />
-                <!-- 点击层 -->
-                <View
-                    android:id="@+id/media_artwork_click_layer"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:clickable="true"
-                    android:background="@android:color/transparent"
-                    android:translationZ="5dp"
-                    />
-            </androidx.cardview.widget.CardView>
-
+                    android:layout_margin="20dp"
+                    app:cardCornerRadius="25dp"
+                    app:cardElevation="10dp"
+                    >
+                    <!-- 默认底图 -->
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="底图"
+                        app:layout_constraintDimensionRatio="1:1"
+                        android:src="@drawable/ic_main_null_album"
+                        android:scaleType="centerCrop"
+                        android:padding="50dp"
+                        android:background="@color/AlbumSquare_Background_Themed"
+                        app:tint="@color/Text_Level_2" />
+                    <!-- 动态切换 -->
+                    <ImageView
+                        android:id="@+id/media_artwork"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="封面图片"
+                        android:background="@android:color/transparent"
+                        app:layout_constraintDimensionRatio="1:1"
+                        android:scaleType="centerCrop"
+                        />
+                    <!-- 点击层 -->
+                    <View
+                        android:id="@+id/media_artwork_click_layer"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clickable="true"
+                        android:background="@android:color/transparent"
+                        android:translationZ="5dp"
+                        />
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
 
 
             <!-- 歌曲标题和作者区域 -->
             <LinearLayout
-                android:id="@+id/level_controllers_info"
+                android:id="@+id/inner_structure_media_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:layout_constraintBottom_toTopOf="@+id/level_controllers_common_opts"
+                app:layout_constraintBottom_toTopOf="@+id/inner_structure_common_opts"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginBottom="5dp"
+                android:elevation="10dp"
                 android:orientation="vertical">
-
-                <!-- 占位 -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="30dp"
-                    />
-
                 <!-- 歌曲标题 -->
                 <TextView
                     android:id="@+id/media_title"
@@ -190,13 +192,11 @@
                     android:textSize="18sp"
                     android:textStyle="bold"
                     />
-
                 <!-- 占位 -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="10dp"
                     />
-
                 <!-- 歌手名 -->
                 <TextView
                     android:id="@+id/media_artist"
@@ -213,23 +213,16 @@
                     android:textColor="@color/Text_Level_2"
                     android:textSize="14sp"
                     />
-
-                <!-- 占位 -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="30dp"
-                    />
-
             </LinearLayout>
-
             <!-- 常用按钮区 -->
             <LinearLayout
-                android:id="@+id/level_controllers_common_opts"
+                android:id="@+id/inner_structure_common_opts"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="70dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
+                android:elevation="10dp"
                 android:gravity="center"
                 android:orientation="horizontal"
                 >
@@ -311,92 +304,82 @@
                     />
 
             </LinearLayout>
-
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
 
-
-        <!-- 中部占位 -->
-        <View
-            android:id="@+id/level_controllers_middle_padding"
-            android:layout_width="match_parent"
-            android:layout_height="20dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/level_controllers_seekbar"
-            />
-        <!-- 进度条区 -->
+        <!-- 进度条和时间戳区 -->
         <LinearLayout
-            android:id="@+id/level_controllers_seekbar"
-            android:layout_width="match_parent"
-            android:layout_height="20dp"
+            android:id="@+id/structure_seekbar_with_time"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/level_controllers_time_stamp"
+            app:layout_constraintBottom_toTopOf="@+id/structure_three_big_button"
             android:gravity="center"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             >
             <!-- 进度条 SeekBar -->
             <SeekBar
                 android:id="@+id/seekBar"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="20dp"
                 android:layout_marginHorizontal="17dp"
                 android:max="1000"
                 android:progress="1"
                 android:progressTint="@color/Text_Level_3"
                 android:thumbTint="@color/Text_Level_3"
                 />
+            <!-- 时间戳区 -->
+            <LinearLayout
+                android:id="@+id/level_controllers_time_stamp"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/structure_three_big_button"
+                android:gravity="center"
+                android:orientation="horizontal"
+                >
+                <!-- 当前进度 -->
+                <TextView
+                    android:id="@+id/time_stamp_current"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="32dp"
+                    android:text="00:00"
+                    android:textColor="@color/Text_Level_3"
+                    android:textSize="12sp"
+                    />
+                <!-- 占位 -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    />
+                <!-- 总长度 -->
+                <TextView
+                    android:id="@+id/time_stamp_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="32dp"
+                    android:text="00:00"
+                    android:textColor="@color/Text_Level_3"
+                    android:textSize="12sp"
+                    />
+            </LinearLayout>
 
         </LinearLayout>
-        <!-- 时间戳区 -->
-        <LinearLayout
-            android:id="@+id/level_controllers_time_stamp"
-            android:layout_width="match_parent"
-            android:layout_height="20dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/level_controllers_three_big_guy"
-            android:gravity="center"
-            android:orientation="horizontal"
-            >
-            <!-- 当前进度 -->
-            <TextView
-                android:id="@+id/time_stamp_current"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="32dp"
-                android:text="00:00"
-                android:textColor="@color/Text_Level_3"
-                android:textSize="12sp"
-                />
-            <!-- 占位 -->
-            <View
-                android:layout_width="1dp"
-                android:layout_height="1dp"
-               android:layout_weight="1"
-                />
-            <!-- 总长度 -->
-            <TextView
-                android:id="@+id/time_stamp_duration"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="32dp"
-                android:text="00:00"
-                android:textColor="@color/Text_Level_3"
-                android:textSize="12sp"
-                />
-        </LinearLayout>
+
 
         <!-- 底部三大金刚键区域(播放/暂停 上一曲 下一曲) -->
         <LinearLayout
-            android:id="@+id/level_controllers_three_big_guy"
-            android:layout_width="match_parent"
+            android:id="@+id/structure_three_big_button"
+            android:layout_width="0dp"
             android:layout_height="100dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@+id/level_controllers_bottom_padding"
+            app:layout_constraintBottom_toTopOf="@+id/structure_bottom_padding"
             android:gravity="center"
             android:orientation="horizontal"
             >
@@ -436,8 +419,8 @@
 
         <!-- 底部占位 -->
         <View
-            android:id="@+id/level_controllers_bottom_padding"
-            android:layout_width="match_parent"
+            android:id="@+id/structure_bottom_padding"
+            android:layout_width="0dp"
             android:layout_height="50dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

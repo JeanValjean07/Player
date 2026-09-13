@@ -40,6 +40,7 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.iterator
+import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -1750,8 +1751,9 @@ class MainActivity: AppCompatActivity() {
     private lateinit var level_topBar : CardView
     private lateinit var level_list : LinearLayout
     private lateinit var level_openFile : LinearLayout
-    private lateinit var level_controllers : LinearLayout
+    private lateinit var level_controllers : ConstraintLayout
     private lateinit var level_miniView : ConstraintLayout
+    private lateinit var miniView_bottom_padding : View
     private var isLandscape : Boolean = false
     private fun initDisplay(){
         window.attributes = window.attributes.apply {
@@ -1766,6 +1768,7 @@ class MainActivity: AppCompatActivity() {
         level_openFile = findViewById(R.id.level_openFile)
         level_controllers = findViewById(R.id.level_controllers)
         level_miniView = findViewById(R.id.level_miniView)
+        miniView_bottom_padding = findViewById(R.id.miniView_bottom_padding)
         //获取主要列表视图
         ListRecyclerView_Video = findViewById(R.id.recyclerview_video_list)
         ListRecyclerView_Music = findViewById(R.id.recyclerview_music_list)
@@ -1779,6 +1782,33 @@ class MainActivity: AppCompatActivity() {
         isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         //获取屏幕信息
         getDisplayInfo()
+        //设置底部抬高高度
+        miniView_bottom_padding.post{
+            //获取目标高度
+            val target_height_Dp = SettingsCenter.get_value_MiniView_BottomPadding_Dp(context)
+            var target_height_Px = target_height_Dp.dpToPx()
+
+            //目标高度为0时跳过
+            if (target_height_Px == 0) return@post
+
+            //检查数值范围
+            if (target_height_Dp !in 1..101){
+                target_height_Px = 5.dpToPx()
+            }
+
+            //应用高度
+            /*
+            val params_miniView_bottom_padding = miniView_bottom_padding.layoutParams
+            params_miniView_bottom_padding.height = target_height_Px
+            miniView_bottom_padding.layoutParams = params_miniView_bottom_padding
+            miniView_bottom_padding.requestLayout()
+
+             */
+            miniView_bottom_padding.updateLayoutParams {
+                height = target_height_Px
+            }
+        }
+
 
     }
     private var display_screen_height_pixels: Int = 0
@@ -1930,8 +1960,8 @@ class MainActivity: AppCompatActivity() {
 
 
             //设置列表内边距
-            ListRecyclerView_Video.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 300)
-            ListRecyclerView_Music.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 300)
+            ListRecyclerView_Video.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 600)
+            ListRecyclerView_Music.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 600)
             ListRecyclerView_Video.requestLayout()
             ListRecyclerView_Music.requestLayout()
 
@@ -1960,8 +1990,8 @@ class MainActivity: AppCompatActivity() {
                 //consoleLog(" 界面重组 compose: targetTopPadding:$targetTopPadding,  statusBarHeight:${DeviceInfo.statusBarHeight}  ")
 
                 //设置列表内边距
-                ListRecyclerView_Video.setPadding(0, targetTopPadding, 0, 300)
-                ListRecyclerView_Music.setPadding(0, targetTopPadding, 0, 300)
+                ListRecyclerView_Video.setPadding(0, targetTopPadding, 0, 600)
+                ListRecyclerView_Music.setPadding(0, targetTopPadding, 0, 600)
                 ListRecyclerView_Video.requestLayout()
                 ListRecyclerView_Music.requestLayout()
 

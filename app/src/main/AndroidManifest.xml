@@ -87,10 +87,10 @@
                 android:value="true"/>
         </activity>
 
-        <!-- 播放页Neo -->
+        <!-- 视频播放页NEO  android:configChanges="orientation|screenSize|screenLayout" -->
         <activity android:name=".PlayerActivityNeo"
             android:theme="@style/THEME_Player"
-            android:label="播放器Neo"
+            android:label="视频播放页NEO"
             android:screenOrientation="unspecified"
             android:hardwareAccelerated="true"
             android:configChanges="orientation|screenSize|screenLayout"
@@ -104,20 +104,19 @@
                 />
         </activity>
 
-
-        <!-- 音乐播放页 -->
+        <!-- 音乐播放页  android:configChanges="orientation|screenSize|screenLayout"  -->
         <activity android:name=".MusicPlayerActivity"
             android:theme="@style/THEME_Player"
-            android:label="播放器Simple"
-            android:screenOrientation="unspecified"
-            android:configChanges="orientation|screenSize|screenLayout"
+            android:label="音乐播放页"
+            android:screenOrientation="portrait"
             android:launchMode="singleTask"
             android:enableOnBackInvokedCallback="false"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity">
             <meta-data
                 android:name="android.notch_support"
-                android:value="true"/>
+                android:value="true"
+                />
         </activity>
 
 
@@ -174,6 +173,7 @@
             android:enableOnBackInvokedCallback="true"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
+
         <!-- 设备信息 -->
         <activity android:name=".DeviceInfoActivity"
             android:theme="@style/THEME_BASIC"
