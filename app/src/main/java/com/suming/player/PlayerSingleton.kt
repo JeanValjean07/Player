@@ -12,16 +12,19 @@ import android.os.CountDownTimer
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.C
+import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.SeekParameters
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.mediacodec.MediaCodecAdapter
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaController
@@ -146,7 +149,8 @@ object PlayerSingleton {
     private fun get_RendererFactory(context: Context): RenderersFactory =
         _rendererFactory ?: synchronized(this) {
             _rendererFactory ?: DefaultRenderersFactory(context)
-                //.setEnableDecoderFallback(true)
+                //允许解码器回退
+                .setEnableDecoderFallback(true)
                 .also { _rendererFactory = it }
         }
     private fun release_trackSelector(){
@@ -159,6 +163,34 @@ object PlayerSingleton {
     private fun create_customCodecFactory(): MediaCodecAdapter.Factory {
         @Suppress("DEPRECATION")
         return MediaCodecAdapter.Factory.DEFAULT
+    }
+
+    //测试
+    private val decoderListener = object : AnalyticsListener {
+        //视频解码器初始化
+        override fun onVideoDecoderInitialized(eventTime:AnalyticsListener.EventTime,decoderName:String,initializedTimestampMs:Long,initializationDurationMs:Long) {
+
+            consoleLog("Video decoder initialized: $decoderName")
+        }
+
+        //视频输入格式变化
+        override fun onVideoInputFormatChanged(eventTime:AnalyticsListener.EventTime,format:Format,decoderReuseEvaluation:DecoderReuseEvaluation?) {
+
+            consoleLog("Video format changed: $format")
+        }
+        //音频解码器初始化
+        override fun onAudioDecoderInitialized(
+            eventTime: AnalyticsListener.EventTime,
+            decoderName: String,
+            initializedTimestampMs: Long,
+            initializationDurationMs: Long
+        ) {
+            consoleLog("Audio decoder initialized: $decoderName")
+        }
+        override fun onAudioInputFormatChanged(eventTime:AnalyticsListener.EventTime,format:Format,decoderReuseEvaluation:DecoderReuseEvaluation?) {
+            consoleLog("Audio format changed: $format")
+        }
+
     }
 
     //播放器回调监听器
@@ -208,6 +240,7 @@ object PlayerSingleton {
 
         //执行监听器添加
         _player?.addListener(PlayerStateListener)
+        _player?.addAnalyticsListener(decoderListener)
 
     }
     private fun removePlayerStateListener(){
@@ -216,6 +249,7 @@ object PlayerSingleton {
 
         //执行移除
         _player?.removeListener(PlayerStateListener)
+        _player?.removeAnalyticsListener(decoderListener)
     }
 
     //新的播放器实例上线

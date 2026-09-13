@@ -88,11 +88,11 @@ object ScrollerHelper {
                 if (file.isFile) file.delete()
             }
 
-            consoleLog("deleteScrollerFrame: 删除进度条截图文件夹 $targetFolder")
+            //consoleLog("deleteScrollerFrame: 删除进度条截图文件夹 $targetFolder")
             return true
         }else{
 
-            consoleLog("deleteScrollerFrame: 未找到进度条截图文件夹 $targetFolder")
+            //consoleLog("deleteScrollerFrame: 未找到进度条截图文件夹 $targetFolder")
             return false
         }
 
@@ -135,7 +135,7 @@ object ScrollerHelper {
         }catch (e: Exception){
             release_retriever()
 
-            consoleLog("setup_retriever:e:$e,message:${e.message}")
+            consoleLog("初始化解码器错误：e:$e,message:${e.message}")
 
             return false
         }
@@ -176,11 +176,11 @@ object ScrollerHelper {
                     //检查黑屏
                     if (needCheckDark && isDarkFrame(bitmap)) {
                         val randomTime = (videoDurationUs * (0.2f + 0.6f * Random.nextFloat())).toLong()
-                        consoleLog("ScrollerHelper: 重新截取一次,本次随机得到的时间为(从微秒转为秒为): ${randomTime / 1_000_000}")
+                        //consoleLog("ScrollerHelper: 重新截取一次,本次随机得到的时间为(从微秒转为秒为): ${randomTime / 1_000_000}")
                         bitmap = retriever?.getFrameAtTime(randomTime, option)
                     }
                     if (bitmap == null) {
-                        consoleLog("ScrollerHelper: 图片失效：可能因黑屏而再次截取,但再次截取失败了")
+                        //consoleLog("ScrollerHelper: 图片失效：可能因黑屏而再次截取,但再次截取失败了")
                         return@withLock null
                     }
 
@@ -201,8 +201,8 @@ object ScrollerHelper {
                      */
 
                     return@withLock bitmap
-                } else {
-                    consoleLog("ScrollerHelper: 图片无效：初次截取失败了")
+                }else{
+                    //consoleLog("ScrollerHelper: 图片无效：初次截取失败了")
                     return@withLock null
                 }
             }catch(e: Exception){
@@ -272,7 +272,7 @@ object ScrollerHelper {
     //落盘保存
     fun saveBitmapToDisk(bitmap: Bitmap,position: Int, context: Context) {
         if (current_uriNumOnly == 0L) {
-            consoleLog("ScrollerHelper: 未配置视频唯一标识,无法保存帧")
+           // consoleLog("ScrollerHelper: 未配置视频唯一标识,无法保存帧")
             return
         }
         val frame_folder = File(context.filesDir, scroller_frame_folder)
