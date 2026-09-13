@@ -12,6 +12,7 @@ import kotlin.math.sqrt
 object SettingsCenter {
 
     //日志控制
+    @Suppress("unused")
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "SettingsRequestCenter: $msg")
@@ -36,115 +37,90 @@ object SettingsCenter {
         OpenPandora_MainPage(context)
 
         PRF_EnableMiniView = if (enable) 1 else 0
-        Pandora_MainPage!!.edit { putInt(PRF_EnableMiniView_Name, PRF_EnableMiniView) }
+        Pandora_MainPage?.edit { putInt(PRF_EnableMiniView_Name, PRF_EnableMiniView) }
     }
     fun GET_PRF_EnableMiniView(context: Context): Boolean {
         OpenPandora_MainPage(context)
 
-        //确保配置项已被读取过
         if (PRF_EnableMiniView == -1) {
-            PRF_EnableMiniView = Pandora_MainPage!!.getInt(PRF_EnableMiniView_Name, -1)
+            PRF_EnableMiniView = Pandora_MainPage?.getInt(PRF_EnableMiniView_Name, -1) ?: -1
             if (PRF_EnableMiniView == -1) {
                 PRF_EnableMiniView = 1
-                Pandora_MainPage!!.edit { putInt(PRF_EnableMiniView_Name, 1) }
+                Pandora_MainPage?.edit { putInt(PRF_EnableMiniView_Name, 1) }
             }
         }
+
         return PRF_EnableMiniView == 1
     }
     //始终在MiniView中使用图片
     private var PRF_AlwaysUseImageInMiniView = -1
     const val PRF_AlwaysUseImageInMiniView_Name = "PRF_AlwaysUseImageInMiniView"
     fun SET_PRF_AlwaysUseImageInMiniView(context: Context, enable: Boolean){
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        //设置时转为int写入本地缓存
+
         PRF_AlwaysUseImageInMiniView = if (enable) 1 else 0
-        //写入配置单
-        Pandora_MainPage!!.edit { putInt(PRF_AlwaysUseImageInMiniView_Name, if (enable) 1 else 0) }
+        Pandora_MainPage?.edit { putInt(PRF_AlwaysUseImageInMiniView_Name, PRF_AlwaysUseImageInMiniView) }
     }
     fun GET_PRF_AlwaysUseImageInMiniView(context: Context): Boolean {
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        //仅在未读取过时才读取(也就是值为-1时)
+
         if (PRF_AlwaysUseImageInMiniView == -1) {
             //从配置单读取
-            PRF_AlwaysUseImageInMiniView = Pandora_MainPage!!.getInt(PRF_AlwaysUseImageInMiniView_Name, -1)
-            //如果配置单内无该项,写入默认值
+            PRF_AlwaysUseImageInMiniView = Pandora_MainPage?.getInt(PRF_AlwaysUseImageInMiniView_Name, -1) ?: -1
             if (PRF_AlwaysUseImageInMiniView == -1) {
-                //默认设为开启
+                //写入默认值为关闭
                 PRF_AlwaysUseImageInMiniView = 0
-                Pandora_MainPage!!.edit { putInt(PRF_AlwaysUseImageInMiniView_Name, 0) }
-
-                /*
-                //按机型判断
-                if (Build.BRAND.equals("huawei",ignoreCase = true) || Build.BRAND.equals("honor",ignoreCase = true)){
-                    PREFS_DisableMainPageSmallPlayer = 1
-                    Pandora_MainPage!!.edit { putInt(PREFS_DisableMainPageSmallPlayer_Name, 1) }
-                }else{
-                    PREFS_DisableMainPageSmallPlayer = 0
-                    Pandora_MainPage!!.edit { putInt(PREFS_DisableMainPageSmallPlayer_Name, 0) }
-                }
-
-                 */
+                Pandora_MainPage?.edit { putInt(PRF_AlwaysUseImageInMiniView_Name, 0) }
             }
         }
-        //返回结果
+
         return PRF_AlwaysUseImageInMiniView == 1
     }
     //每次启动时都重新读取媒体
     private var PREFS_QueryNewMediaOnStart = -1
     const val PREFS_QueryNewMediaOnStart_Name = "PREFS_QueryNewMediaOnStart"
     fun set_PREFS_QueryNewMediaOnStart(context: Context, enable: Boolean){
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        //设置时转为int写入本地缓存
+
         PREFS_QueryNewMediaOnStart = if (enable) 1 else 0
-        //写入配置单
-        Pandora_MainPage!!.edit { putInt(PREFS_QueryNewMediaOnStart_Name, if (enable) 1 else 0) }
+        Pandora_MainPage?.edit { putInt(PREFS_QueryNewMediaOnStart_Name, PREFS_QueryNewMediaOnStart) }
     }
     fun get_PREFS_QueryNewMediaOnStart(context: Context): Boolean {
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        //仅在未读取过时才读取(也就是值为-1时)
+
         if (PREFS_QueryNewMediaOnStart == -1) {
-            //从配置单读取
-            PREFS_QueryNewMediaOnStart = Pandora_MainPage!!.getInt(PREFS_QueryNewMediaOnStart_Name, -1)
-            //如果配置单内无该项,写入默认值
+            PREFS_QueryNewMediaOnStart = Pandora_MainPage?.getInt(PREFS_QueryNewMediaOnStart_Name, -1) ?: -1
             if (PREFS_QueryNewMediaOnStart == -1) {
-                //默认设为关闭
+                //写入默认值为关闭
                 PREFS_QueryNewMediaOnStart = 0
-                Pandora_MainPage!!.edit { putInt(PREFS_QueryNewMediaOnStart_Name, 0) }
+                Pandora_MainPage?.edit { putInt(PREFS_QueryNewMediaOnStart_Name, 0) }
             }
         }
-        //返回结果
+
         return PREFS_QueryNewMediaOnStart == 1
     }
     //每次启动时继续上次的媒体
     private var PREFS_EnableContinuePlay = -1
     const val PREFS_EnableContinuePlay_Name = "PREFS_EnableContinuePlay"
     fun set_PREFS_EnableContinuePlay(context: Context, enable: Boolean){
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        //设置时转为int写入本地缓存
+
         PREFS_EnableContinuePlay = if (enable) 1 else 0
-        //写入配置单
-        Pandora_MainPage!!.edit { putInt(PREFS_EnableContinuePlay_Name, if (enable) 1 else 0) }
+        Pandora_MainPage?.edit { putInt(PREFS_EnableContinuePlay_Name, PREFS_EnableContinuePlay) }
     }
     fun get_PREFS_EnableContinuePlay(context: Context): Boolean {
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        //仅在未读取过时才读取(也就是值为-1时)
+
         if (PREFS_EnableContinuePlay == -1) {
             //从配置单读取
-            PREFS_EnableContinuePlay = Pandora_MainPage!!.getInt(PREFS_EnableContinuePlay_Name, -1)
-            //如果配置单内无该项,写入默认值
+            PREFS_EnableContinuePlay = Pandora_MainPage?.getInt(PREFS_EnableContinuePlay_Name, -1) ?: -1
             if (PREFS_EnableContinuePlay == -1) {
                 //默认设为开启
                 PREFS_EnableContinuePlay = 1
-                Pandora_MainPage!!.edit { putInt(PREFS_EnableContinuePlay_Name, 1) }
+                Pandora_MainPage?.edit { putInt(PREFS_EnableContinuePlay_Name, 1) }
             }
         }
-        //返回结果
+
         return PREFS_EnableContinuePlay == 1
     }
     //继续播放上次的媒体时直接启动播放器
@@ -153,26 +129,22 @@ object SettingsCenter {
     fun SET_PRF_ContinuePlay_withEngin(context: Context, enable: Boolean){
         OpenPandora_MainPage(context)
 
-        //设置时转为int写入本地缓存
         PRF_ContinuePlay_withEngin = if (enable) 1 else 0
-        //写入配置单
-        Pandora_MainPage!!.edit { putInt(PRF_ContinuePlay_withEngin_Name, if (enable) 1 else 0) }
+        Pandora_MainPage?.edit { putInt(PRF_ContinuePlay_withEngin_Name, PRF_ContinuePlay_withEngin) }
     }
     fun GET_PRF_ContinuePlay_withEngin(context: Context): Boolean {
         OpenPandora_MainPage(context)
 
-        //仅在未读取过时才读取(也就是值为-1时)
         if (PRF_ContinuePlay_withEngin == -1) {
             //从配置单读取
-            PRF_ContinuePlay_withEngin = Pandora_MainPage!!.getInt(PRF_ContinuePlay_withEngin_Name, -1)
-            //如果配置单内无该项,写入默认值
+            PRF_ContinuePlay_withEngin = Pandora_MainPage?.getInt(PRF_ContinuePlay_withEngin_Name, -1) ?: -1
             if (PRF_ContinuePlay_withEngin == -1) {
                 //默认设为开启
                 PRF_ContinuePlay_withEngin = 1
-                Pandora_MainPage!!.edit { putInt(PRF_ContinuePlay_withEngin_Name, 1) }
+                Pandora_MainPage?.edit { putInt(PRF_ContinuePlay_withEngin_Name, 1) }
             }
         }
-        //返回结果
+
         return PRF_ContinuePlay_withEngin == 1
     }
 
@@ -184,27 +156,22 @@ object SettingsCenter {
     fun SET_PRF_DefaultPlayBehavior(context: Context, target: String){
         OpenPandora_MainPage(context)
 
-        //写入本地缓存
         PRF_DefaultPlayBehavior = target
-        //写入配置单
-        Pandora_MainPage!!.edit { putString(PRF_DefaultPlayBehavior_Name, target) }
+        Pandora_MainPage?.edit { putString(PRF_DefaultPlayBehavior_Name, target) }
     }
     fun GET_PRF_DefaultPlayBehavior(context: Context): String {
         OpenPandora_MainPage(context)
 
-        //仅在未读取过时才读取(也就是值为空时)
         if (PRF_DefaultPlayBehavior == "") {
             //从配置单读取
-            PRF_DefaultPlayBehavior = Pandora_MainPage!!.getString(PRF_DefaultPlayBehavior_Name, "") ?: ""
-            //如果配置单内无该项,写入默认值
+            PRF_DefaultPlayBehavior = Pandora_MainPage?.getString(PRF_DefaultPlayBehavior_Name, "") ?: ""
             if (PRF_DefaultPlayBehavior == "") {
                 //默认设为使用完整播放页
                 PRF_DefaultPlayBehavior = action_use_whole_play_page
-                Pandora_MainPage!!.edit { putString(PRF_DefaultPlayBehavior_Name,action_use_whole_play_page ) }
+                Pandora_MainPage?.edit { putString(PRF_DefaultPlayBehavior_Name,action_use_whole_play_page ) }
             }
         }
 
-        //返回结果
         return PRF_DefaultPlayBehavior
     }
     //音频的默认播放行为
@@ -213,28 +180,23 @@ object SettingsCenter {
     fun SET_PRF_StartFullPage(context: Context, enable: Boolean){
         OpenPandora_MainPage(context)
 
-        val target = if(enable)1 else 0
-        //写入本地缓存
-        PRF_StartFullPage = target
-        //写入配置单
-        Pandora_MainPage!!.edit { putInt(PRF_StartFullPage_Name, target) }
+        PRF_StartFullPage = if (enable) 1 else 0
+        Pandora_MainPage?.edit { putInt(PRF_StartFullPage_Name, PRF_StartFullPage) }
     }
     fun GET_PRF_StartFullPage(context: Context): Boolean {
         OpenPandora_MainPage(context)
 
-        //仅在无缓存时读取
         if (PRF_StartFullPage == -1) {
             //从配置单读取
-            PRF_StartFullPage = Pandora_MainPage!!.getInt(PRF_StartFullPage_Name, -1) ?: -1
+            PRF_StartFullPage = Pandora_MainPage?.getInt(PRF_StartFullPage_Name, -1) ?: -1
             //如果配置单内无该项,写入默认值
             if (PRF_StartFullPage == -1) {
                 //默认设为使用完整播放页
                 PRF_StartFullPage = 0
-                Pandora_MainPage!!.edit { putInt(PRF_StartFullPage_Name,0 ) }
+                Pandora_MainPage?.edit { putInt(PRF_StartFullPage_Name,0 ) }
             }
         }
 
-        //返回结果
         return PRF_StartFullPage == 1
     }
 
@@ -248,29 +210,25 @@ object SettingsCenter {
     const val PREFS_AcquiesceTab_Name = "PREFS_AcquiesceTab"
     private var PREFS_AcquiesceTab = tab_mark_null
     fun set_PREFS_AcquiesceTab(context: Context, target: String){
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        consoleLog("set_PREFS_AcquiesceTab: $target")
-        //写入本地缓存
+
         PREFS_AcquiesceTab = target
-        //写入配置单
-        Pandora_MainPage!!.edit { putString(PREFS_AcquiesceTab_Name, target) }
+        Pandora_MainPage?.edit { putString(PREFS_AcquiesceTab_Name, target) }
     }
     fun get_PREFS_AcquiesceTab(context: Context): String {
-        //确保配置单已初始化
         OpenPandora_MainPage(context)
-        //仅在未读取过时才读取(也就是值为时)
+
         if (PREFS_AcquiesceTab == tab_mark_null) {
             //从配置单读取
-            PREFS_AcquiesceTab = Pandora_MainPage!!.getString(PREFS_AcquiesceTab_Name, tab_mark_null) ?: tab_mark_null
+            PREFS_AcquiesceTab = Pandora_MainPage?.getString(PREFS_AcquiesceTab_Name, tab_mark_null) ?: tab_mark_null
             //如果配置单内无该项,写入默认值
             if (PREFS_AcquiesceTab == tab_mark_null) {
                 //默认设为跟随上次停留的页签
                 PREFS_AcquiesceTab = tab_mark_last
-                Pandora_MainPage!!.edit { putString(PREFS_AcquiesceTab_Name,tab_mark_last ) }
+                Pandora_MainPage?.edit { putString(PREFS_AcquiesceTab_Name,tab_mark_last ) }
             }
         }
-        //返回结果
+
         return PREFS_AcquiesceTab
     }
     //State 上次停留的页签
@@ -280,17 +238,14 @@ object SettingsCenter {
         OpenPandora_MainPage(context)
 
         State_LastStayTab = target
-        Pandora_MainPage!!.edit { putString(State_LastStayTab_Name, target) }
+        Pandora_MainPage?.edit { putString(State_LastStayTab_Name, target) }
     }
     fun get_State_LastStayTab(context: Context): String {
         OpenPandora_MainPage(context)
 
         if (State_LastStayTab == tab_mark_null) {
             //从配置单读取
-            State_LastStayTab = Pandora_MainPage!!.getString(State_LastStayTab_Name, tab_mark_null) ?: tab_mark_null
-
-            //默认保持为空
-            //为空时返回保底视频,但不写入
+            State_LastStayTab = Pandora_MainPage?.getString(State_LastStayTab_Name, tab_mark_null) ?: tab_mark_null
             if (State_LastStayTab == tab_mark_null){
                 State_LastStayTab = tab_mark_video
             }
@@ -502,7 +457,7 @@ object SettingsCenter {
         open_Pandora_Engine(context)
 
         PRF_DisableVideoTrack_whenBackground = if (disable) 1 else 0
-        Pandora_Engine?.edit { putInt("PRF_DisableVideoTrack_whenBackground", if (disable) 1 else 0) }
+        Pandora_Engine?.edit { putInt(PRF_DisableVideoTrack_whenBackground_Name, if (disable) 1 else 0) }
     }
     fun get_PREFS_DisableVideoTrackOnBack(context: Context): Boolean{
         open_Pandora_Engine(context)
@@ -567,25 +522,25 @@ object SettingsCenter {
         return PRF_stopEngine_whenTaskRemoved == 1
     }
     //媒体变更冷却时长
-    private var value_onMediaChange_delayMillis = 0L
+    private var value_onMediaChange_delayMillis = -1L
     const val value_onMediaChange_delayMillis_Name = "value_onMediaChange_delayMillis"
     fun set_value_onMediaChange_delayMillis(context: Context, target: Long){
         open_Pandora_Engine(context)
 
         value_onMediaChange_delayMillis = target
-        Pandora_MainPage!!.edit { putLong(value_onMediaChange_delayMillis_Name, target) }
+        Pandora_Engine?.edit { putLong(value_onMediaChange_delayMillis_Name, target) }
     }
     fun get_value_onMediaChange_delayMillis(context: Context): Long {
         open_Pandora_Engine(context)
 
-        if (value_onMediaChange_delayMillis == 0L) {
+        if (value_onMediaChange_delayMillis == -1L) {
             //从配置单读取
-            value_onMediaChange_delayMillis = Pandora_MainPage!!.getLong(value_onMediaChange_delayMillis_Name, 0L)
+            value_onMediaChange_delayMillis = Pandora_Engine?.getLong(value_onMediaChange_delayMillis_Name, -1L) ?: -1L
             //如果配置单内无该项,写入默认值
-            if (value_onMediaChange_delayMillis == 0L) {
+            if (value_onMediaChange_delayMillis == -1L) {
                 //默认设为50
                 value_onMediaChange_delayMillis = 50L
-                Pandora_MainPage!!.edit { putLong(value_onMediaChange_delayMillis_Name, 50L) }
+                Pandora_Engine?.edit { putLong(value_onMediaChange_delayMillis_Name, 50L) }
             }
         }
 
@@ -594,7 +549,7 @@ object SettingsCenter {
     //</editor-fold>
 
 
-    //PREFS in PREFS_PlayVideoPage
+    //# PREFS in PREFS_PlayVideoPage
     //<editor-fold desc="////视频播放页 设置项">
     private lateinit var PREFS_PlayVideoPage: SharedPreferences
     private var state_PREFS_PlayVideoPage_initialized = false
@@ -1162,7 +1117,7 @@ object SettingsCenter {
     //</editor-fold>
 
 
-    //Pandora_PlayAudioPage 音乐页 设置项
+    //# Pandora_PlayAudioPage 音乐页 设置项
     //<editor-fold desc="////音乐页 设置项">
     private var Pandora_PlayAudioPage: SharedPreferences? = null
     const val Pandora_PlayAudioPage_Name = "Pandora_PlayAudioPage"
@@ -1221,7 +1176,7 @@ object SettingsCenter {
         OpenPandora_PlayAudioPage(context)
 
         PRF_Audio_DontShowAlbumFrame = if (enable) 1 else 0
-        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_DontShowAlbumFrame_Name, 0) }
+        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_DontShowAlbumFrame_Name, PRF_Audio_DontShowAlbumFrame) }
 
     }
     //使用文件名作为标题
@@ -1244,7 +1199,7 @@ object SettingsCenter {
         OpenPandora_PlayAudioPage(context)
 
         PRF_Audio_UseFileNameAsTitle = if (enable) 1 else 0
-        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseFileNameAsTitle_Name, 0) }
+        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseFileNameAsTitle_Name, PRF_Audio_UseFileNameAsTitle) }
 
     }
     //使用专辑图手势
@@ -1267,7 +1222,7 @@ object SettingsCenter {
         OpenPandora_PlayAudioPage(context)
 
         PRF_Audio_UseArtworkGesture = if (enable) 1 else 0
-        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseArtworkGesture_Name, 0) }
+        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseArtworkGesture_Name, PRF_Audio_UseArtworkGesture) }
 
     }
     //自动缩放专辑封面
@@ -1290,14 +1245,14 @@ object SettingsCenter {
         OpenPandora_PlayAudioPage(context)
 
         PRF_Audio_AutoZoomArtwork = if (enable) 1 else 0
-        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_AutoZoomArtwork_Name, 0) }
+        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_AutoZoomArtwork_Name, PRF_Audio_AutoZoomArtwork) }
 
     }
     //</editor-fold>
 
 
 
-    //👝 Pandora_Other 其他设置
+    //# Pandora_Other 其他设置
     //<editor-fold desc="////其他设置相关配置">
     private var Pandora_Other: SharedPreferences? = null
     const val Pandora_Other_Name = "Pandora_Other"
@@ -1313,12 +1268,12 @@ object SettingsCenter {
         OpenPandora_Other(context)
 
         if (PRF_Other_UseFullScreenFragment == -1){
-            PRF_Other_UseFullScreenFragment = Pandora_Other!!.getInt(PRF_UseFullScreenFragment_Name, -1)
+            PRF_Other_UseFullScreenFragment = Pandora_Other?.getInt(PRF_UseFullScreenFragment_Name, -1) ?: -1
 
             if (PRF_Other_UseFullScreenFragment == -1){
                 PRF_Other_UseFullScreenFragment = 0
             }
-            Pandora_Other!!.edit { putInt(PRF_UseFullScreenFragment_Name, PRF_Other_UseFullScreenFragment) }
+            Pandora_Other?.edit { putInt(PRF_UseFullScreenFragment_Name, PRF_Other_UseFullScreenFragment) }
         }
 
 
@@ -1327,12 +1282,8 @@ object SettingsCenter {
     fun SET_PRF_UseFullScreenFragment(context: Context, enable: Boolean) {
         OpenPandora_Other(context)
 
-        val targetValue = if (enable) 1 else 0
-
-        PRF_Other_UseFullScreenFragment = targetValue
-        Pandora_Other!!.edit { putInt(PRF_UseFullScreenFragment_Name, targetValue) }
-
-
+        PRF_Other_UseFullScreenFragment = if (enable) 1 else 0
+        Pandora_Other?.edit { putInt(PRF_UseFullScreenFragment_Name, PRF_Other_UseFullScreenFragment) }
     }
     //</editor-fold>
 

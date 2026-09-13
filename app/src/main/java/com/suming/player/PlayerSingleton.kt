@@ -37,6 +37,7 @@ import com.suming.player.DataPack.MediaRecordPack
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
+import com.suming.player.FuncionalPack.ErrorRecovery
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
@@ -262,6 +263,9 @@ object PlayerSingleton {
         state_real_clear = real_clear
         //执行清除
         core_exoplayer_clearMediaItem()
+        //清除绑定单个媒体项的状态信息
+        clearState_forSingleItem()
+
         //清除媒体项信息缓存
         if (clear_info_center){
             PlayerInfoCenter.CLEAR_CurrentMediaInfo()
@@ -270,38 +274,55 @@ object PlayerSingleton {
 
     //播放器错误处理(发生错误后应该是会自动进入idle状态)
     private fun on_EngineErrorOccur(error: PlaybackException){
-        //ErrorOccur之后虽然同样进入idle状态,但只有在error导致的idle之后才尝试恢复播放
 
         //收集可用于恢复播放的信息
         val current_media_progress = _player?.currentPosition ?: 0L
-
         //仅在信息有效时开启onError标志
         if (current_media_progress > 0L) onError = true
-
-
         //解锁一次作为保底
         isLocked = false
+        //记录报错
+        ErrorInfo = error
 
-        consoleLog(
-            "EngineErrorOccur:ERROR:${error},MESSAGE:${error.message},CAUSE:${error.cause},ECN:${error.errorCodeName}\n" +
-            "收集需要恢复的信息:"
-        )
-
-        //如果来自 Source Error,必须先清除媒体,再调prepare()，否之一直循环报错
-        if (error.message == "Source error") clearMediaItem()
-
+        //打印报错信息
+        consoleLog("ERROR:${error},MESSAGE:${error.message},CAUSE:${error.cause},ECN:${error.errorCodeName}\n")
 
     }
     private var onError = false
+    //错误次数
+    private var singleItemState_errorCount = 0
+    private var ErrorInfo : PlaybackException? = null
     //播放器进入空闲状态
     fun on_EngineIdle(){
-        consoleLog("EngineIdle:是否来自报错onError:${onError}")
 
-        //进行操作
+        //缓存一份报错信息
+        val cache_ErrorInfo = ErrorInfo
+        ErrorInfo = null
+
+        //ErrorRecovery进行错误解读并决定是否清除媒体项和重新上线
+        if (cache_ErrorInfo != null){
+            //检查报错信息获得执行码
+            val (clear_media_item,prepare) = ErrorRecovery.recover(cache_ErrorInfo)
+
+            //执行清除媒体项
+            if (clear_media_item) clearMediaItem()
+            //执行重新上线
+            if (prepare) {
+                //错误次数增加
+                singleItemState_errorCount++
+                if (singleItemState_errorCount >= 3) {
+                    //执行清除媒体项
+                    clearMediaItem()
+
+                    //不再尝试重新上线,直接返回
+                    return
+                }
+                //调用prepare()让播放器重新上线
+                core_exoplayer_prepare()
+            }
 
 
-        //使用prepare()使播放器重新上线
-        core_exoplayer_prepare()
+        }
 
     }
 
@@ -449,7 +470,7 @@ object PlayerSingleton {
         PlayerInfoCenter.SET_MediaItemForPlay_Pack(MediaItemForPlay)
 
         //重置单个媒体状态
-        clearItemState()
+        clearState_forSingleItem()
 
         //合成并设置媒体项
         val cover_img_uri = getArtworkFrameUri(context,URI_UP)
@@ -788,7 +809,10 @@ object PlayerSingleton {
     private var singleItemState_readyOnce = false            //视频是否首次Ready
     private var singleItemState_notApply = false             //单个媒体参数是否已经应用
     //重置单个媒体播放状态
-    private fun clearItemState(){
+    private fun clearState_forSingleItem(){
+        //错误次数
+        singleItemState_errorCount = 0
+
         singleItemState_readyOnce = false
         singleItemState_notApply = false
         mark_needApplyPara = false

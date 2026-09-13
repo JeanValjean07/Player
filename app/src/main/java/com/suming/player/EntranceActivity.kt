@@ -245,7 +245,7 @@ class EntranceActivity : AppCompatActivity(){
                 //关闭播放器
                 PlayerSingleton.stopPlayEngineBundle()
 
-                fail("打开页面失败(不支持的媒体类型)")
+                fail("媒体已失效,请手动划掉此通知")
             }
         }
 

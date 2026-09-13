@@ -1217,7 +1217,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
 
-            showCustomToast("播放错误: ${error.message}", 3)
+            //showCustomToast("播放错误: ${error.message}", 3)
         }
     }
     private var state_PlayerListenerAdded: Boolean = false
