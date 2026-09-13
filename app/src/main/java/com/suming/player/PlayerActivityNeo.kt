@@ -63,6 +63,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.animation.PathInterpolatorCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
@@ -2861,6 +2862,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             S_Area_Helper.S_AreaType_SEEKBAR -> {
                 s_area_scroller.visibility = View.GONE
                 s_area_seekbar.visibility = View.VISIBLE
+
                 //写入标识
                 state_current_s_area = S_Area_Helper.S_AreaType_SEEKBAR
                 //写入viewModel
@@ -2875,6 +2877,11 @@ class PlayerActivityNeo: AppCompatActivity(){
             S_Area_Helper.S_AreaType_SCROLLER -> {
                 s_area_seekbar.visibility = View.GONE
                 s_area_scroller.visibility = View.VISIBLE
+                s_area_scroller.alpha = 0f
+                s_area_scroller.animate().alpha(1f).setDuration(200)
+                    .setInterpolator(AccelerateDecelerateInterpolator())
+                    .start()
+
                 //写入标识
                 state_current_s_area = S_Area_Helper.S_AreaType_SCROLLER
                 //写入viewModel
@@ -3338,7 +3345,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         //仅在传统播放页使用
         //startSeekBarSync()
 
-        //隐藏控件并设置背景为有色
+        //显示控件并设置背景为有色
         setBackgroundVisible()
         controllerLayer.visibility = View.VISIBLE
         controllerLayer.animate().alpha(1f).setDuration(300)
@@ -3640,6 +3647,9 @@ class PlayerActivityNeo: AppCompatActivity(){
         layer_error.visibility = View.GONE
     }
     private fun showErrorCover(text: String,hide_buttons: Boolean=false){
+        if (cover.isVisible) return
+
+
         //修改提示文本
         layer_error_text.text = text
         layer_error.visibility = View.VISIBLE

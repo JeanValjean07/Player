@@ -20,8 +20,8 @@ object SettingsCenter {
 
 
 
-    //👝 Pandora_MainPage 首页相关配置 -------------------------------------------------------------
-    //<editor-fold desc="////首页相关配置">
+    //# Pandora_MainPage 首页 设置项
+    //<editor-fold desc="////首页 设置项">
     private var Pandora_MainPage: SharedPreferences? = null
     const val Pandora_MainPage_Name = "Pandora_MainPage"
     private fun OpenPandora_MainPage(context: Context){
@@ -324,38 +324,11 @@ object SettingsCenter {
         return value_MiniView_BottomPadding_Dp
     }
 
-
-    //测试时长
-    const val PRF_forTestDelayMillis_Name = "PRF_forTestDelayMillis"
-    private var PRF_forTestDelayMillis = 0L
-    fun SET_PRF_forTestDelayMillis(context: Context, target: Long){
-        OpenPandora_MainPage(context)
-        //写入本地缓存
-        PRF_forTestDelayMillis = target
-        //写入配置单
-        Pandora_MainPage!!.edit { putLong(PRF_forTestDelayMillis_Name, target) }
-    }
-    fun GET_PRF_forTestDelayMillis(context: Context): Long {
-        OpenPandora_MainPage(context)
-        //仅在未读取过时才读取(也就是值为0时)
-        if (PRF_forTestDelayMillis == 0L) {
-            //从配置单读取
-            PRF_forTestDelayMillis = Pandora_MainPage!!.getLong(PRF_forTestDelayMillis_Name, 0L)
-            //如果配置单内无该项,写入默认值
-            if (PRF_forTestDelayMillis == 0L) {
-                //默认设为50
-                PRF_forTestDelayMillis = 50L
-                Pandora_MainPage!!.edit { putLong(PRF_forTestDelayMillis_Name, 50L) }
-            }
-        }
-        //返回结果
-        return PRF_forTestDelayMillis
-    }
     //</editor-fold>
 
 
-    //👝 Pandora_MediaStore 媒体库相关配置 -------------------------------------------------------------
-    //<editor-fold desc="////媒体库相关配置">
+    //# Pandora_MediaStore 媒体库 设置项
+    //<editor-fold desc="////媒体库 设置项">
     private var Pandora_MediaStore: SharedPreferences? = null
     const val Pandora_MediaStore_Name = "Pandora_MediaStore"
     private fun OpenPandora_MediaStore(context: Context){
@@ -477,134 +450,152 @@ object SettingsCenter {
     //</editor-fold>
 
 
-    //PREFS in PREFS_PlayEngin -------------------------------------------------------------
-    //<editor-fold desc="////播放引擎相关配置">
-    private lateinit var PREFS_PlayEngin: SharedPreferences
-    private var state_PREFS_PlayEngin_initialized = false
-    const val PREFS_PlayEngin_Name = "PREFS_PlayEngin"
-    private fun init_PREFS_PlayEngin(context: Context){
-        if (!state_PREFS_PlayEngin_initialized){
-            PREFS_PlayEngin = context.getSharedPreferences(PREFS_PlayEngin_Name, 0)
-            state_PREFS_PlayEngin_initialized = true
+    //# Pandora_Engine 播放引擎 设置项
+    //<editor-fold desc="////播放引擎 设置项">
+    private var Pandora_Engine: SharedPreferences ?= null
+    const val Pandora_Engine_Name = "Pandora_Engine"
+    private fun open_Pandora_Engine(context: Context){
+        if (Pandora_Engine == null){
+            Pandora_Engine = context.getSharedPreferences(Pandora_Engine_Name, 0)
         }
     }
     //禁用媒体会话插入预览图
-    private var PREFS_DisableMediaArtWork = -1
-    const val PREFS_DisableMediaArtWork_Name = "PREFS_DisableMediaArtWork"
-    fun SET_PREFS_DisableMediaArtWork(context: Context, disable: Boolean){
-        init_PREFS_PlayEngin(context)
+    private var PRF_DisableMediaArtWork = -1
+    const val PRF_DisableMediaArtWork_Name = "PRF_DisableMediaArtWork"
+    fun SET_PRF_DisableMediaArtWork(context: Context, disable: Boolean) {
+        open_Pandora_Engine(context)
 
-        PREFS_DisableMediaArtWork = if (disable) 1 else 0
-        PREFS_PlayEngin.edit { putInt(PREFS_DisableMediaArtWork_Name, if (disable) 1 else 0) }
+        PRF_DisableMediaArtWork = if (disable) 1 else 0
+        Pandora_Engine?.edit { putInt(PRF_DisableMediaArtWork_Name, PRF_DisableMediaArtWork) }
     }
-    fun GET_PREFS_DisableMediaArtWork(context: Context): Boolean{
-        init_PREFS_PlayEngin(context)
+    fun GET_PRF_DisableMediaArtWork(context: Context): Boolean {
+        open_Pandora_Engine(context)
 
-        //仅在无缓存时读取
-        if (PREFS_DisableMediaArtWork == -1){
-            PREFS_DisableMediaArtWork = PREFS_PlayEngin.getInt(PREFS_DisableMediaArtWork_Name, -1)
+        if (PRF_DisableMediaArtWork == -1){
+            PRF_DisableMediaArtWork = Pandora_Engine?.getInt(PRF_DisableVideoTrack_whenBackground_Name, -1) ?: -1
             //配置默认值(仅在已过测的设备上关闭禁用预览图,即开启预览图)
-            if (PREFS_DisableMediaArtWork == -1){
+            if (PRF_DisableMediaArtWork == -1){
                 val BRAND = DeviceInfo.GET_BRAND()
                 val ANDROID_VERSION = DeviceInfo.GET_AndroidVersion()
                 when (BRAND){
                     "huawei","honor" ->{
                         when (ANDROID_VERSION){
-                            29 -> PREFS_DisableMediaArtWork = 0
-                            else -> PREFS_DisableMediaArtWork = 1
+                            29 -> PRF_DisableMediaArtWork = 0
+                            else -> PRF_DisableMediaArtWork = 1
                         }
                     }
-                    "samsung" -> PREFS_DisableMediaArtWork = 0
-                    else -> PREFS_DisableMediaArtWork = 1
+                    "samsung" -> PRF_DisableMediaArtWork = 0
+                    else -> PRF_DisableMediaArtWork = 1
 
                 }
                 //写入配置项
-                PREFS_PlayEngin.edit { putInt(PREFS_DisableMediaArtWork_Name, PREFS_DisableMediaArtWork) }
+                Pandora_Engine?.edit { putInt(PRF_DisableVideoTrack_whenBackground_Name, PRF_DisableMediaArtWork) }
             }
         }
 
-        return PREFS_DisableMediaArtWork == 1
+        return PRF_DisableMediaArtWork == 1
     }
     //后台播放时关闭视频轨道(默认设置区分安卓版本)
-    private var PREFS_DisableVideoTrackOnBack = -1
-    fun set_PREFS_DisableVideoTrackOnBack(disable: Boolean){
-        PREFS_DisableVideoTrackOnBack = if (disable) 1 else 0
-        PREFS_PlayEngin.edit { putInt("PREFS_DisableVideoTrackOnBack", if (disable) 1 else 0) }
+    private var PRF_DisableVideoTrack_whenBackground = -1
+    const val PRF_DisableVideoTrack_whenBackground_Name = "PRF_DisableVideoTrack_whenBackground"
+    fun set_PREFS_DisableVideoTrackOnBack(context: Context,disable: Boolean){
+        open_Pandora_Engine(context)
+
+        PRF_DisableVideoTrack_whenBackground = if (disable) 1 else 0
+        Pandora_Engine?.edit { putInt("PRF_DisableVideoTrack_whenBackground", if (disable) 1 else 0) }
     }
     fun get_PREFS_DisableVideoTrackOnBack(context: Context): Boolean{
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayEngin_initialized){
-            PREFS_PlayEngin = context.getSharedPreferences("PREFS_PlayEngin", 0)
-            state_PREFS_PlayEngin_initialized = true
-        }
-        //确保配置项已被读取过
-        if (PREFS_DisableVideoTrackOnBack == -1){
-            PREFS_DisableVideoTrackOnBack = PREFS_PlayEngin.getInt("PREFS_DisableVideoTrackOnBack", -1)
-            if (PREFS_DisableVideoTrackOnBack == -1){
+        open_Pandora_Engine(context)
+
+        if (PRF_DisableVideoTrack_whenBackground == -1){
+            PRF_DisableVideoTrack_whenBackground = Pandora_Engine?.getInt(PRF_DisableVideoTrack_whenBackground_Name, -1) ?: -1
+            if (PRF_DisableVideoTrack_whenBackground == -1){
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-                    PREFS_DisableVideoTrackOnBack = 1
-                    PREFS_PlayEngin.edit { putInt("PREFS_DisableVideoTrackOnBack", 1) }
+                    PRF_DisableVideoTrack_whenBackground = 1
+                    Pandora_Engine?.edit { putInt(PRF_DisableVideoTrack_whenBackground_Name, 1) }
                 }else{
-                    PREFS_DisableVideoTrackOnBack = 0
-                    PREFS_PlayEngin.edit { putInt("PREFS_DisableVideoTrackOnBack", 0) }
+                    PRF_DisableVideoTrack_whenBackground = 0
+                    Pandora_Engine?.edit { putInt(PRF_DisableVideoTrack_whenBackground_Name, 0) }
                 }
             }
         }
 
-        return PREFS_DisableVideoTrackOnBack == 1
+        return PRF_DisableVideoTrack_whenBackground == 1
     }
     //仅在播放完成后退出
-    private var PREFS_OnlyStopUnMediaEnd = -1
-    fun set_PREFS_OnlyStopUnMediaEnd(onlyStopUnMediaEnd: Boolean){
-        PREFS_OnlyStopUnMediaEnd = if (onlyStopUnMediaEnd) 1 else 0
-        PREFS_PlayEngin.edit { putInt("PREFS_OnlyStopUnMediaEnd", if (onlyStopUnMediaEnd) 1 else 0) }
+    private var PRF_OnlyAutoStop_whenMediaEnd = -1
+    const val PRF_OnlyAutoStop_whenMediaEnd_Name = "PRF_OnlyAutoStop_whenMediaEnd"
+    fun SET_PRF_OnlyAutoStop_whenMediaEnd(context: Context,enable: Boolean){
+        open_Pandora_Engine(context)
+
+        PRF_OnlyAutoStop_whenMediaEnd = if (enable) 1 else 0
+        Pandora_Engine?.edit { putInt(PRF_OnlyAutoStop_whenMediaEnd_Name, PRF_OnlyAutoStop_whenMediaEnd) }
     }
-    fun get_PREFS_OnlyStopUnMediaEnd(context: Context): Boolean{
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayEngin_initialized){
-            PREFS_PlayEngin = context.getSharedPreferences("PREFS_PlayEngin", 0)
-            state_PREFS_PlayEngin_initialized = true
-        }
-        //确保配置项已被读取过
-        if (PREFS_OnlyStopUnMediaEnd == -1){
-            PREFS_OnlyStopUnMediaEnd = PREFS_PlayEngin.getInt("PREFS_OnlyStopUnMediaEnd", -1)
-            if (PREFS_OnlyStopUnMediaEnd == -1){
-                PREFS_OnlyStopUnMediaEnd = 0
-                PREFS_PlayEngin.edit { putInt("PREFS_OnlyStopUnMediaEnd", 0) }
+    fun GET_PRF_OnlyAutoStop_whenMediaEnd(context: Context): Boolean {
+        open_Pandora_Engine(context)
+
+        if (PRF_OnlyAutoStop_whenMediaEnd == -1){
+            PRF_OnlyAutoStop_whenMediaEnd = Pandora_Engine?.getInt(PRF_OnlyAutoStop_whenMediaEnd_Name, -1) ?: -1
+            if (PRF_OnlyAutoStop_whenMediaEnd == -1){
+                PRF_OnlyAutoStop_whenMediaEnd = 0
+                Pandora_Engine?.edit { putInt(PRF_OnlyAutoStop_whenMediaEnd_Name, 0) }
             }
         }
 
-        return PREFS_OnlyStopUnMediaEnd == 1
+        return PRF_OnlyAutoStop_whenMediaEnd == 1
     }
     //后台划卡时关闭播放器
-    private var PREFS_StopPlayerWhenTaskRemoved = -1
-    const val PREFS_StopPlayerWhenTaskRemoved_Name = "PREFS_StopPlayerWhenTaskRemoved"
-    fun set_PREFS_StopPlayerWhenTaskRemoved(stopPlayerWhenTaskRemoved: Boolean){
-        PREFS_StopPlayerWhenTaskRemoved = if (stopPlayerWhenTaskRemoved) 1 else 0
-        PREFS_PlayEngin.edit { putInt(PREFS_StopPlayerWhenTaskRemoved_Name, if (stopPlayerWhenTaskRemoved) 1 else 0) }
+    private var PRF_stopEngine_whenTaskRemoved = -1
+    const val PRF_stopEngine_whenTaskRemoved_Name = "PRF_stopEngine_whenTaskRemoved"
+    fun SET_PRF_stopEngine_whenTaskRemoved(context: Context,enable: Boolean){
+        open_Pandora_Engine(context)
+
+        PRF_stopEngine_whenTaskRemoved = if (enable) 1 else 0
+        Pandora_Engine?.edit { putInt(PRF_stopEngine_whenTaskRemoved_Name, PRF_stopEngine_whenTaskRemoved) }
     }
-    fun get_PREFS_StopPlayerWhenTaskRemoved(context: Context): Boolean{
-        //确保配置清单已初始化
-        if (!state_PREFS_PlayEngin_initialized){
-            PREFS_PlayEngin = context.getSharedPreferences("PREFS_PlayEngin", 0)
-            state_PREFS_PlayEngin_initialized = true
-        }
-        //确保配置项已被读取过
-        if (PREFS_StopPlayerWhenTaskRemoved == -1){
-            PREFS_StopPlayerWhenTaskRemoved = PREFS_PlayEngin.getInt(PREFS_StopPlayerWhenTaskRemoved_Name, -1)
-            if (PREFS_StopPlayerWhenTaskRemoved == -1){
-                PREFS_StopPlayerWhenTaskRemoved = 1
-                PREFS_PlayEngin.edit { putInt(PREFS_StopPlayerWhenTaskRemoved_Name, 1) }
+    fun GET_PRF_stopEngine_whenTaskRemoved(context: Context): Boolean{
+        open_Pandora_Engine(context)
+
+        if (PRF_stopEngine_whenTaskRemoved == -1){
+            PRF_stopEngine_whenTaskRemoved = Pandora_Engine?.getInt(PRF_stopEngine_whenTaskRemoved_Name, -1) ?: -1
+            if (PRF_stopEngine_whenTaskRemoved == -1){
+                PRF_stopEngine_whenTaskRemoved = 1
+                Pandora_Engine?.edit { putInt(PRF_stopEngine_whenTaskRemoved_Name, 1) }
             }
         }
 
-        return PREFS_StopPlayerWhenTaskRemoved == 1
+        return PRF_stopEngine_whenTaskRemoved == 1
+    }
+    //媒体变更冷却时长
+    private var value_onMediaChange_delayMillis = 0L
+    const val value_onMediaChange_delayMillis_Name = "value_onMediaChange_delayMillis"
+    fun set_value_onMediaChange_delayMillis(context: Context, target: Long){
+        open_Pandora_Engine(context)
+
+        value_onMediaChange_delayMillis = target
+        Pandora_MainPage!!.edit { putLong(value_onMediaChange_delayMillis_Name, target) }
+    }
+    fun get_value_onMediaChange_delayMillis(context: Context): Long {
+        open_Pandora_Engine(context)
+
+        if (value_onMediaChange_delayMillis == 0L) {
+            //从配置单读取
+            value_onMediaChange_delayMillis = Pandora_MainPage!!.getLong(value_onMediaChange_delayMillis_Name, 0L)
+            //如果配置单内无该项,写入默认值
+            if (value_onMediaChange_delayMillis == 0L) {
+                //默认设为50
+                value_onMediaChange_delayMillis = 50L
+                Pandora_MainPage!!.edit { putLong(value_onMediaChange_delayMillis_Name, 50L) }
+            }
+        }
+
+        return value_onMediaChange_delayMillis
     }
     //</editor-fold>
 
 
-    //PREFS in PREFS_PlayVideoPage -------------------------------------------------------------
-    //<editor-fold desc="////播放页相关配置">
+    //PREFS in PREFS_PlayVideoPage
+    //<editor-fold desc="////视频播放页 设置项">
     private lateinit var PREFS_PlayVideoPage: SharedPreferences
     private var state_PREFS_PlayVideoPage_initialized = false
     const val PREFS_PlayVideoPage_Name = "PREFS_PlayVideoPage"
@@ -1171,8 +1162,8 @@ object SettingsCenter {
     //</editor-fold>
 
 
-    //👝 PREFS in PREFS_MusicPage -------------------------------------------------------------
-    //<editor-fold desc="////音乐页相关配置">
+    //Pandora_PlayAudioPage 音乐页 设置项
+    //<editor-fold desc="////音乐页 设置项">
     private var Pandora_PlayAudioPage: SharedPreferences? = null
     const val Pandora_PlayAudioPage_Name = "Pandora_PlayAudioPage"
     private fun OpenPandora_PlayAudioPage(context: Context){
@@ -1279,11 +1270,34 @@ object SettingsCenter {
         Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_UseArtworkGesture_Name, 0) }
 
     }
+    //自动缩放专辑封面
+    private var PRF_Audio_AutoZoomArtwork = -1
+    const val PRF_Audio_AutoZoomArtwork_Name = "PRF_Audio_AutoZoomArtwork"
+    fun GET_PRF_Audio_AutoZoomArtwork(context: Context): Boolean{
+        OpenPandora_PlayAudioPage(context)
+
+        if (PRF_Audio_AutoZoomArtwork == -1){
+            PRF_Audio_AutoZoomArtwork = Pandora_PlayAudioPage?.getInt(PRF_Audio_AutoZoomArtwork_Name, -1) ?: -1
+            if (PRF_Audio_AutoZoomArtwork == -1){
+                Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_AutoZoomArtwork_Name, 0) }
+            }
+
+        }
+
+        return PRF_Audio_AutoZoomArtwork == 1
+    }
+    fun SET_PRF_Audio_AutoZoomArtwork(context: Context, enable: Boolean){
+        OpenPandora_PlayAudioPage(context)
+
+        PRF_Audio_AutoZoomArtwork = if (enable) 1 else 0
+        Pandora_PlayAudioPage?.edit { putInt(PRF_Audio_AutoZoomArtwork_Name, 0) }
+
+    }
     //</editor-fold>
 
 
 
-    //👝 Pandora_Other 其他设置 -------------------------------------------------------------
+    //👝 Pandora_Other 其他设置
     //<editor-fold desc="////其他设置相关配置">
     private var Pandora_Other: SharedPreferences? = null
     const val Pandora_Other_Name = "Pandora_Other"

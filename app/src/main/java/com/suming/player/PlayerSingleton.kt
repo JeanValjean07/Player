@@ -454,8 +454,8 @@ object PlayerSingleton {
         //合成并设置媒体项
         val cover_img_uri = getArtworkFrameUri(context,URI_UP)
 
-        //延迟后再设置
-        val delayMillis = SettingsCenter.GET_PRF_forTestDelayMillis(context)
+        ////媒体变更冷却时长
+        val delayMillis = SettingsCenter.get_value_onMediaChange_delayMillis(context)
         delay(delayMillis)
 
 
@@ -606,7 +606,7 @@ object PlayerSingleton {
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
 
         var cover_img_uri = Uri.EMPTY
-        if (SettingsCenter.GET_PREFS_DisableMediaArtWork(context)){
+        if (SettingsCenter.GET_PRF_DisableMediaArtWork(context)){
             return Uri.EMPTY
         }else{
             //从ArtworkFrameManager获取即可
@@ -1010,7 +1010,7 @@ object PlayerSingleton {
             override fun onTick( millisUntilFinished: Long) {}
             override fun onFinish() {
                 //检查需要进行的操作:立即停止或播放完本集才停止
-                val wait = SettingsCenter.get_PREFS_OnlyStopUnMediaEnd(context)
+                val wait = SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd(context)
                 //等待当前媒体结束后关闭
                 if (wait){
                     if (playState_playEnd){
@@ -1039,7 +1039,7 @@ object PlayerSingleton {
     }
     private fun timer_autoShut_Reach(context: Context) {
         //需等待当前媒体结束后关闭
-        if (SettingsCenter.get_PREFS_OnlyStopUnMediaEnd(context)) {
+        if (SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd(context)) {
             countDownDuration_Ms = 0
             shutDownMoment = "shutdown_when_end"
             timerState_autoShut_Reach = true

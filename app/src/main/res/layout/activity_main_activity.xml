@@ -532,7 +532,7 @@
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
                     android:backgroundTint="@color/AlbumSquare_Background_Themed"
-                    app:cardElevation="10dp"
+                    app:cardElevation="5dp"
                     app:cardCornerRadius="10dp"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -599,7 +599,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:background="@color/AlbumSquare_Background_Themed"
+                android:background="@color/MainColorPack_ContentCardBackground"
                 />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -612,7 +612,6 @@
             android:layout_height="match_parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:background="@color/strokeLine"
             android:visibility="gone"

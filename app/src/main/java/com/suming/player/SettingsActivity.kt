@@ -285,10 +285,10 @@ class SettingsActivity: AppCompatActivity(){
             }
             //后台划卡时关闭播放器
             val switch_StopPlayerWhenTaskRemoved = findViewById<SwitchCompat>(R.id.StopPlayerWhenTaskRemoved)
-            switch_StopPlayerWhenTaskRemoved.isChecked = SettingsCenter.get_PREFS_StopPlayerWhenTaskRemoved(context)
+            switch_StopPlayerWhenTaskRemoved.isChecked = SettingsCenter.GET_PRF_stopEngine_whenTaskRemoved(context)
             switch_StopPlayerWhenTaskRemoved.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
-                SettingsCenter.set_PREFS_StopPlayerWhenTaskRemoved(isChecked)
+                SettingsCenter.SET_PRF_stopEngine_whenTaskRemoved(context,isChecked)
             }
             //</editor-fold>
 
@@ -297,17 +297,74 @@ class SettingsActivity: AppCompatActivity(){
             //<editor-fold desc="////🍔播放器引擎设置">
             //媒体会话不使用封面图片
             val switch_DisableMediaArtWork = findViewById<SwitchCompat>(R.id.DisableMediaArtWork)
-            switch_DisableMediaArtWork.isChecked = SettingsCenter.GET_PREFS_DisableMediaArtWork(context)
+            switch_DisableMediaArtWork.isChecked = SettingsCenter.GET_PRF_DisableMediaArtWork(context)
             switch_DisableMediaArtWork.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
-                SettingsCenter.SET_PREFS_DisableMediaArtWork(context,isChecked)
+                SettingsCenter.SET_PRF_DisableMediaArtWork(context,isChecked)
             }
             //后台播放时关闭视频轨道
             val switch_DisableVideoTrackOnBack = findViewById<SwitchCompat>(R.id.DisableVideoTrackOnBack)
             switch_DisableVideoTrackOnBack.isChecked = SettingsCenter.get_PREFS_DisableVideoTrackOnBack(context)
             switch_DisableVideoTrackOnBack.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
-                SettingsCenter.set_PREFS_DisableVideoTrackOnBack(isChecked)
+                SettingsCenter.set_PREFS_DisableVideoTrackOnBack(context,isChecked)
+            }
+            //媒体变更冷却时长
+            val ButtonCard_onMediaChangeMillis = findViewById<CardView>(R.id.ButtonCard_onMediaChangeMillis)
+            val ButtonText_onMediaChangeMillis = findViewById<TextView>(R.id.ButtonText_onMediaChangeMillis)
+            fun updateOnMediaChangeMillisText(){
+                val delayMillis = SettingsCenter.get_value_onMediaChange_delayMillis(context)
+                ButtonText_onMediaChangeMillis.text = "${delayMillis}ms"
+            }
+            updateOnMediaChangeMillisText()
+            ButtonCard_onMediaChangeMillis.setOnClickListener {
+                ToolVibrate().vibrate(context)
+                //创建对话框
+                val dialog = Dialog(context).apply {
+                    window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+                }
+                val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
+                dialog.setContentView(dialogView)
+                val title: TextView = dialogView.findViewById(R.id.dialog_title)
+                val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+                val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+                val Button: Button = dialogView.findViewById(R.id.dialog_button)
+
+                title.text = "设置媒体变更冷却时长"
+                Description.text = "以毫秒为单位"
+                EditText.hint = ""
+                Button.text = "确定"
+
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                Button.setOnClickListener {
+                    val input = EditText.text.toString().toLongOrNull()
+                    if (input == null) {
+                        showCustomToast("未输入内容", 3)
+
+                        return@setOnClickListener
+                    }
+                    if (input > 3000) {
+                        showCustomToast("不支持超过3秒", 3)
+
+                        return@setOnClickListener
+                    }
+
+                    //执行设置
+                    SettingsCenter.set_value_onMediaChange_delayMillis(context,input)
+                    //界面刷新
+                    updateOnMediaChangeMillisText()
+
+                    dialog.dismiss()
+
+                }
+                dialog.show()
+                //自动弹出键盘程序
+                CoroutineScope(Dispatchers.Main).launch {
+                    delay(300)
+                    EditText.requestFocus()
+                    @Suppress("DEPRECATION")
+                    imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+                }
             }
             //</editor-fold>
 
@@ -553,6 +610,14 @@ class SettingsActivity: AppCompatActivity(){
                 ToolVibrate().vibrate(context)
                 choose_audio_syncSeekBar_updateMs(it)
             }
+            //自动缩放专辑封面
+            val SC_Audio_AutoZoomArtwork = findViewById<SwitchCompat>(R.id.SC_Audio_AutoZoomArtwork)
+            SC_Audio_AutoZoomArtwork.isChecked = SettingsCenter.GET_PRF_Audio_AutoZoomArtwork(context)
+            SC_Audio_AutoZoomArtwork.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate().vibrate(context)
+
+                SettingsCenter.SET_PRF_Audio_AutoZoomArtwork(context,isChecked)
+            }
             //</editor-fold>
 
 
@@ -626,68 +691,6 @@ class SettingsActivity: AppCompatActivity(){
 
 
 
-            //</editor-fold>
-
-
-
-            //🍖测试设置
-            //<editor-fold desc="////🍖测试设置">
-            //测试数值
-            val ButtonCard_onStartDelayMillis = findViewById<CardView>(R.id.ButtonCard_onStartDelayMillis)
-            val ButtonText_onStartDelayMillis = findViewById<TextView>(R.id.ButtonText_onStartDelayMillis)
-            fun updateOnStartDelayMillisText(){
-                val delayMillis = SettingsCenter.GET_PRF_forTestDelayMillis(context)
-                ButtonText_onStartDelayMillis.text = "${delayMillis}ms"
-            }
-            updateOnStartDelayMillisText()
-            ButtonCard_onStartDelayMillis.setOnClickListener {
-                ToolVibrate().vibrate(context)
-                //创建对话框
-                val dialog = Dialog(context).apply {
-                    window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-                }
-                val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
-                dialog.setContentView(dialogView)
-                val title: TextView = dialogView.findViewById(R.id.dialog_title)
-                val Description: TextView = dialogView.findViewById(R.id.dialog_description)
-                val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-                val Button: Button = dialogView.findViewById(R.id.dialog_button)
-
-                title.text = "自定义测试延迟数值"
-                Description.text = "仅供测试 Ms"
-                EditText.hint = "以毫秒为单位"
-                Button.text = "确定"
-
-                val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-                Button.setOnClickListener {
-                    val gapInput = EditText.text.toString().toLongOrNull()
-                    if (gapInput == null || gapInput == 0L) {
-                        showCustomToast("未输入内容", 3)
-                        dialog.dismiss()
-                        return@setOnClickListener
-
-                    }
-                    else if (gapInput > 10000) {
-                        showCustomToast("开局延迟时长不能大于10秒", 3)
-                        dialog.dismiss()
-                        return@setOnClickListener
-                    }
-                    else {
-                        SettingsCenter.SET_PRF_forTestDelayMillis(context,gapInput)
-                        //界面刷新
-                        updateOnStartDelayMillisText()
-                        dialog.dismiss()
-                    }
-                }
-                dialog.show()
-                //自动弹出键盘程序
-                CoroutineScope(Dispatchers.Main).launch {
-                    delay(300)
-                    EditText.requestFocus()
-                    @Suppress("DEPRECATION")
-                    imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-                }
-            }
             //</editor-fold>
 
 

@@ -358,11 +358,11 @@ class PlayerFragmentMoreButton: DialogFragment(){
             }
             //仅在播放完成后退出
             val switch_ExitWhenMediaEnd = view.findViewById<SwitchCompat>(R.id.Switch_ExitWhenMediaEnd)
-            switch_ExitWhenMediaEnd.isChecked = SettingsCenter.get_PREFS_OnlyStopUnMediaEnd(requireContext())
+            switch_ExitWhenMediaEnd.isChecked = SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd(requireContext())
             switch_ExitWhenMediaEnd.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //仅修改设置即可
-                SettingsCenter.set_PREFS_OnlyStopUnMediaEnd(switch_ExitWhenMediaEnd.isChecked)
+                SettingsCenter.SET_PRF_OnlyAutoStop_whenMediaEnd(context,switch_ExitWhenMediaEnd.isChecked)
 
                 customDismiss()
             }

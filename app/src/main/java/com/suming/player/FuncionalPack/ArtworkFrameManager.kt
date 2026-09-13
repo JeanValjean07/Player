@@ -104,25 +104,48 @@ object ArtworkFrameManager {
         }
     }
 
-    //获取 Artwork URI
+    //获取 Artwork URI (如果存在自定义图就返回自定义的)
     fun GET_ArtworkFrame_Uri(context: Context, type: String, artwork_media_api_id: Long): Uri {
+        //确保文件路径存在
+        initFile(context)
+        //根据类型获取
         when(type){
             MediaType.Video -> {
-                //拿到保存路径
-                if (artwork_File_path_video == null) initFile(context)
+                //先找是否存在名为artwork_media_api_id的子文件夹
+                val customFrameFolder = File(artwork_File_path_video, "$artwork_media_api_id")
+                if (customFrameFolder.exists()){
+                    //找是否存在名为artwork_media_api_id的图片
+                    val customFrame_File = File(customFrameFolder, "${artwork_media_api_id}.webp")
+                    //尝试拿到文件 URI
+                    if (customFrame_File.exists()){
+                        return try {
+                            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", customFrame_File)
+                        }catch (e: Exception){
+                            Uri.EMPTY
+                        }
+                    }else{
+                        return Uri.EMPTY
+                    }
+                }
 
-                //合成目标文件对象
+                //如果没有自定义图，就返回统一生成的图片 URI
                 val artwork_Frame_File = File(artwork_File_path_video, "${artwork_media_api_id}.webp")
-                //尝试拿到文件uri
-                if(artwork_Frame_File.exists()){
-                    return try {
-                        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", artwork_Frame_File)
-                    }catch (e: Exception){
-                        Uri.EMPTY
+                if (artwork_Frame_File.exists()){
+                    //取出图片
+                    val artwork_Frame_Bitmap = BitmapFactory.decodeFile(artwork_Frame_File.absolutePath)
+                    if (artwork_Frame_Bitmap != null){
+                        return try {
+                            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", artwork_Frame_File)
+                        }catch (e: Exception){
+                            Uri.EMPTY
+                        }
+                    }else{
+                        return Uri.EMPTY
                     }
                 }else{
                     return Uri.EMPTY
                 }
+
             }
             MediaType.Audio -> {
                 //拿到保存路径

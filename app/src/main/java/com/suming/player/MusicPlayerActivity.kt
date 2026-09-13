@@ -374,18 +374,31 @@ class MusicPlayerActivity : AppCompatActivity() {
             if (target < 50.dpToPx()){
                 inner_structure_artwork.visibility = View.GONE
             }else{
-                inner_structure_artwork_card.layoutParams = inner_structure_artwork_card.layoutParams.apply {
-                    width = target
-                    height = target
+                fun zoom(){
+                    inner_structure_artwork_card.layoutParams = inner_structure_artwork_card.layoutParams.apply {
+                        width = target
+                        height = target
+                    }
+                    if (target < 100.dpToPx()){
+                        val new_radius = TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP,
+                            5f,
+                            resources.displayMetrics
+                        )
+                        inner_structure_artwork_card.radius = new_radius
+                    }
                 }
-                if (target < 100.dpToPx()){
-                    val new_radius = TypedValue.applyDimension(
-                        TypedValue.COMPLEX_UNIT_DIP,
-                        5f,
-                        resources.displayMetrics
-                    )
-                    inner_structure_artwork_card.radius = new_radius
+                //
+                val zoom = SettingsCenter.GET_PRF_Audio_AutoZoomArtwork(context)
+                //
+                if (card_height > card_width){
+                    zoom()
+                }else{
+                    if (zoom){
+                        zoom()
+                    }
                 }
+
 
             }
         }

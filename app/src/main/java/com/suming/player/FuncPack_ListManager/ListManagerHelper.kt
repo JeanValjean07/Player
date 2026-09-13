@@ -109,8 +109,8 @@ object ListManagerHelper {
             //检查并置入默认值
             if (PRFR_AcquiesceShowingPage == ListMark_Null){
                 //设置Video页签为默认值
-                Paradox_List?.edit { putString(PRFR_KEYNAME_AcquiesceShowingPage_Key, ListMark_Video) }
-                PRFR_AcquiesceShowingPage = ListMark_Video
+                Paradox_List?.edit { putString(PRFR_KEYNAME_AcquiesceShowingPage_Key, ListMark_UseLast) }
+                PRFR_AcquiesceShowingPage = ListMark_UseLast
             }
         }
 
@@ -137,16 +137,14 @@ object ListManagerHelper {
     fun GET_STE_LastShowingListMark(): String{
         initListSetting()
 
-        //仅在无缓存时读取
         if (state_LastShowingListMark == ListMark_Null){
 
             state_LastShowingListMark = Paradox_List?.getString(state_LastShowingListMark_KeyName, ListMark_Null) ?: ListMark_Null
-            //检查并置入默认值
             if (state_LastShowingListMark == ListMark_Null){
 
-                //设置useLast页签为默认值
-                Paradox_List?.edit { putString(state_LastShowingListMark_KeyName, ListMark_UseLast) }
-                state_LastShowingListMark = ListMark_UseLast
+                //设置视频页签为最初的上次列表
+                Paradox_List?.edit { putString(state_LastShowingListMark_KeyName, ListMark_Video) }
+                state_LastShowingListMark = ListMark_Video
             }
         }
 

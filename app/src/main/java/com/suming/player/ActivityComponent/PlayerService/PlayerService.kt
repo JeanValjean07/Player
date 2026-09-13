@@ -155,7 +155,7 @@ class PlayerService: MediaSessionService() {
     override fun onTaskRemoved(rootIntent: Intent?) {
         consoleLog("onTaskRemoved")
 
-        val needStopEngine = SettingsCenter.get_PREFS_StopPlayerWhenTaskRemoved(this@PlayerService) ||
+        val needStopEngine = SettingsCenter.GET_PRF_stopEngine_whenTaskRemoved(this@PlayerService) ||
                                        !SettingsCenter.GET_PRF_EnableMiniView(this@PlayerService)
 
 
