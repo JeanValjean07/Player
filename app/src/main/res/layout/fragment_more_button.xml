@@ -217,8 +217,8 @@
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
                                     android:clickable="true"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    app:trackTint="@color/switchTrackColor"
+                                    app:thumbTint="@color/SC_ThumbColor"
+                                    app:trackTint="@color/SC_TrackColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
                             <!-- 菜单：循环播放 -->
@@ -387,8 +387,8 @@
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
                                     android:clickable="true"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
+                                    app:trackTint="@color/SC_TrackColor"
+                                    app:thumbTint="@color/SC_ThumbColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
                             <!-- 开关：保存播放进度 -->
@@ -426,8 +426,8 @@
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
                                     android:clickable="false"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
+                                    app:trackTint="@color/SC_TrackColor"
+                                    app:thumbTint="@color/SC_ThumbColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
                         </LinearLayout>
@@ -755,8 +755,8 @@
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
-                                    app:trackTint="@color/switchTrackColor"
-                                    app:thumbTint="@color/switchThumbColor"
+                                    app:trackTint="@color/SC_TrackColor"
+                                    app:thumbTint="@color/SC_ThumbColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
                             <!-- 按钮：开启小窗 -->
@@ -833,8 +833,8 @@
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    app:trackTint="@color/switchTrackColor"
+                                    app:thumbTint="@color/SC_ThumbColor"
+                                    app:trackTint="@color/SC_TrackColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
                         </LinearLayout>

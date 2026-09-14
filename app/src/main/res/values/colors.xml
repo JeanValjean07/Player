@@ -28,8 +28,7 @@
     <color name="CardViewRV">#FAFAFA</color>
     <color name="WarningText">#FF5252</color>
     <color name="CardViewBottom">#FFFFFF</color>
-    <color name="switchTrackColor">#FF9E9E9E</color>
-    <color name="switchThumbColor">#FF000000</color>
+
 
     <color name="BlackGrey">#101010</color>
 
@@ -131,10 +130,12 @@
 
     <!-- 首页专辑区域 -->
     <color name="AlbumSquare_Background_Themed">#FFB39DDB</color>
-
     <!-- toast -->
     <color name="Toast_AlwaysLight_Background">#FFFFFFFF</color>
     <color name="Toast_AlwaysLight_Text">#FF212121</color>
+    <!-- 开关SwitchCompat -->
+    <color name="SC_TrackColor">#FF9E9E9E</color>
+    <color name="SC_ThumbColor">#FF000000</color>
 
     <!-- 文字 -->
     <color name="ColorPack_PrimaryTextColor">#FFFFFFFF</color>

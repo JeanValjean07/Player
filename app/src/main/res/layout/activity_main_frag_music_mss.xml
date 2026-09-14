@@ -489,8 +489,8 @@
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    app:trackTint="@color/switchTrackColor"
+                                    app:thumbTint="@color/SC_ThumbColor"
+                                    app:trackTint="@color/SC_TrackColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
                             <!--  开关：每次启动时都读取新视频  -->
@@ -526,8 +526,8 @@
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    app:trackTint="@color/switchTrackColor"
+                                    app:thumbTint="@color/SC_ThumbColor"
+                                    app:trackTint="@color/SC_TrackColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
                         </LinearLayout>
@@ -606,8 +606,8 @@
                                     android:layout_height="20dp"
                                     android:layout_gravity="center"
                                     android:layout_marginEnd="5dp"
-                                    app:thumbTint="@color/switchThumbColor"
-                                    app:trackTint="@color/switchTrackColor"
+                                    app:thumbTint="@color/SC_ThumbColor"
+                                    app:trackTint="@color/SC_TrackColor"
                                     tools:ignore="InefficientWeight" />
                             </LinearLayout>
 

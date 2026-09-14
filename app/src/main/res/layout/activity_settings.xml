@@ -302,8 +302,9 @@
                                 android:id="@+id/SC_EnableMiniView"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor"
+                                />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -337,8 +338,8 @@
                                 android:id="@+id/DisableMainPageSmallPlayer"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -372,8 +373,8 @@
                                 android:id="@+id/EnableContinuePlay"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -407,8 +408,8 @@
                                 android:id="@+id/SC_ContinuePlay_withEngin"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -442,8 +443,8 @@
                                 android:id="@+id/StopPlayerWhenTaskRemoved"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -521,8 +522,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor"
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor"
                                 tools:ignore="TooManyViews" />
                         </LinearLayout>
                         <!--  提示信息  -->
@@ -559,8 +560,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor"
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor"
                                 tools:ignore="TooManyViews" />
                         </LinearLayout>
                         <!--  提示信息  -->
@@ -786,8 +787,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -823,8 +824,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -861,8 +862,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                     </LinearLayout>
                     <!--  开关:强制使用高刷新率  -->
@@ -893,8 +894,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor"
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor"
                                 tools:ignore="TooManyViews" />
                         </LinearLayout>
                         <!--  提示信息  -->
@@ -932,8 +933,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!--  提示信息  -->
                         <TextView
@@ -970,8 +971,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!--  提示信息  -->
                         <TextView
@@ -1122,8 +1123,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!--  提示信息  -->
                         <TextView
@@ -1160,8 +1161,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!--  提示信息  -->
                         <TextView
@@ -1427,8 +1428,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -1464,8 +1465,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -1501,8 +1502,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -1538,8 +1539,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
@@ -1729,8 +1730,8 @@
                                 android:id="@+id/SC_UseFullScreenFragment"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                app:thumbTint="@color/switchThumbColor"
-                                app:trackTint="@color/switchTrackColor" />
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
                         </LinearLayout>
                         <!-- 提示文本 -->
                         <TextView
