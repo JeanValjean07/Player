@@ -143,45 +143,6 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
-    //处理新intent(已废弃)
-    override fun onNewIntent(newIntent: Intent?) {
-        super.onNewIntent(newIntent)
-        //consoleLog("onNewIntent")
-        if (newIntent?.action != null){
-            when (newIntent.action) {
-                //由于已使用EntranceActivity作为统一入口,其余活动不会再直接收到ACTION_SEND和ACTION_VIEW
-                /*
-                //系统面板：分享
-                Intent.ACTION_SEND -> {
-
-                }
-                //系统面板：选择其他应用打开
-                Intent.ACTION_VIEW -> {
-
-                }
-
-                 */
-                //常规重复调用(来自EntranceActivity)
-                IntentRepo.ACTION_ENTRANCE_REQUEST -> {
-                    //收到EntranceActivity委托的新 intent
-                    val URI_S_FP = newIntent.getStringExtra(IntentRepo.URI) ?: Undefined
-                    if (URI_S_FP != Undefined) {
-                        //启动播放(检查是否已在播放此媒体项)
-                        val ongoing_URI_S_FP = PlayerSingleton.GET_STE_currentMediaItem_Uri().second.toString()
-                        if (ongoing_URI_S_FP != URI_S_FP) {
-                            //设置媒体项
-                            setMediaItem(URI_S_FP.toUri(), true)
-                        } else {
-                            //继续播放
-                            PlayerSingleton.continuePlay()
-                        }
-
-                    }
-
-                }
-            }
-        }
-    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -1666,9 +1627,9 @@ class MainActivity: AppCompatActivity() {
         lock_clickMillisLock = System.currentTimeMillis()
 
         //检查使用的页面类型
-        val playPageType = SettingsCenter.GET_PRF_VideoPlayPage_Type()
+        val playPageType = SettingsCenter.GET_PRF_Video_Screening_Type()
         when{
-            (playPageType == SettingsCenter.PlayPageType_Oro || playPageType == SettingsCenter.PlayPageType_Neo) -> {
+            (playPageType == SettingsCenter.screening_type_ORO || playPageType == SettingsCenter.screening_type_NEO) -> {
                 //构建intent
                 val intent = Intent(this, PlayerActivityNeo::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -1695,7 +1656,7 @@ class MainActivity: AppCompatActivity() {
 
                 }
             }
-            playPageType == SettingsCenter.PlayPageType_Test -> {
+            playPageType == SettingsCenter.screening_type_TEST -> {
 
             }
         }

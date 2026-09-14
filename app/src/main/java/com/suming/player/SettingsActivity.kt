@@ -490,7 +490,7 @@ class SettingsActivity: AppCompatActivity(){
             //<editor-fold desc="////🤣视频播放页设置">
             //播放页样式
             val ButtonPlayerType = findViewById<CardView>(R.id.ButtonPlayerType)
-            updatePlayPageTypeText()
+            update_screening_type_Text()
             ButtonPlayerType.setOnClickListener {
                 ToolVibrate().vibrate(context)
                 //使用弹出菜单选择
@@ -499,13 +499,13 @@ class SettingsActivity: AppCompatActivity(){
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         R.id.type_oro -> {
-                            choosePlayPageType(SettingsCenter.PlayPageType_Oro); true
+                            choose_screening_type(SettingsCenter.screening_type_ORO); true
                         }
                         R.id.type_neo -> {
-                            choosePlayPageType(SettingsCenter.PlayPageType_Neo); true
+                            choose_screening_type(SettingsCenter.screening_type_NEO); true
                         }
                         R.id.type_test -> {
-                            choosePlayPageType(SettingsCenter.PlayPageType_Test); true
+                            choose_screening_type(SettingsCenter.screening_type_TEST); true
                         }
                         else -> true
                     }
@@ -1064,52 +1064,56 @@ class SettingsActivity: AppCompatActivity(){
 
 
     //高发热提示词
-    val msg_heat = "间隔数值过低时，存在性能劣化和设备发热风险。" +
-            "\n\n对于搭载高发热soc或者调度激进的设备，这会带来主板损坏风险，强烈建议取消，除非您知道自己在做什么，并做好了设备随时黑屏且无法开机的准备" +
-            "\n\n以下骁龙soc为高风险：骁龙865 骁龙888 骁龙8 Gen1 骁龙8 Gen2 骁龙8 Gen3" +
-            "\n\n以下骁龙soc为低风险：骁龙835 骁龙845 骁龙855 骁龙8 Elite 骁龙8 Elite Gen5" +
-            "\n\n骁龙soc普遍高风险的原因是调度激进和没有优化，哪怕部分soc能效很好，但峰值功耗高，调度滥用超大核跑高频，于是过于频繁地撞击高温，制造剧烈温度波动，带来极高虚焊风险，高温锡也扛不住。部分系统可能对此有优化，请结合实际判断" +
-            "\n\n以下麒麟soc为高风险：麒麟970 麒麟980" +
-            "\n\n以下麒麟soc为低风险：麒麟990 麒麟9000 麒麟9000S 麒麟9010 麒麟9020" +
-            "\n\n麒麟soc普遍低风险的原因是有调度优化(仅限于EMUI/HarmonyOS)，运行时温度很低，仅需排除常规易虚焊型号，其余可放心选择无间隔" +
-            "\n\n您可以监控CPU核心温度并判断适用于当前设备的档位：" +
-            "\n\n下载任意可监控CPU核心温度的App，开启温度悬浮窗，关闭此选项上方的“一律使用关键帧”开关，播放任意视频，缓慢拖动进度条，观察连续寻帧时的CPU核心温度峰值。" +
-            "不超过65度为低风险，65度-75度为中等风险，75度以上为高风险，90度以上为极高风险" +
-            "\n\n如果发现在默认的 15 Hz下的温度也很高，建议自定义到 100 Ms"
+    private fun get_notice_message_heat(): String{
+        val msg_heat = "间隔数值过低时，存在性能劣化和设备发热风险。" +
+                "\n\n对于搭载高发热soc或者调度激进的设备，这会带来主板损坏风险，强烈建议取消，除非您知道自己在做什么，并做好了设备随时黑屏且无法开机的准备" +
+                "\n\n以下骁龙soc为高风险：骁龙865 骁龙888 骁龙8 Gen1 骁龙8 Gen2 骁龙8 Gen3" +
+                "\n\n以下骁龙soc为低风险：骁龙835 骁龙845 骁龙855 骁龙8 Elite 骁龙8 Elite Gen5" +
+                "\n\n骁龙soc普遍高风险的原因是调度激进和没有优化，哪怕部分soc能效很好，但峰值功耗高，调度滥用超大核跑高频，于是过于频繁地撞击高温，制造剧烈温度波动，带来极高虚焊风险，高温锡也扛不住。部分系统可能对此有优化，请结合实际判断" +
+                "\n\n以下麒麟soc为高风险：麒麟970 麒麟980" +
+                "\n\n以下麒麟soc为低风险：麒麟990 麒麟9000 麒麟9000S 麒麟9010 麒麟9020" +
+                "\n\n麒麟soc普遍低风险的原因是有调度优化(仅限于EMUI/HarmonyOS)，运行时温度很低，仅需排除常规易虚焊型号，其余可放心选择无间隔" +
+                "\n\n您可以监控CPU核心温度并判断适用于当前设备的档位：" +
+                "\n\n下载任意可监控CPU核心温度的App，开启温度悬浮窗，关闭此选项上方的“一律使用关键帧”开关，播放任意视频，缓慢拖动进度条，观察连续寻帧时的CPU核心温度峰值。" +
+                "不超过65度为低风险，65度-75度为中等风险，75度以上为高风险，90度以上为极高风险" +
+                "\n\n如果发现在默认的 15 Hz下的温度也很高，建议自定义到 100 Ms"
+
+        return msg_heat
+    }
+
 
 
     //视频播放页
     //<editor-fold desc="////视频播放页设置函数">
-    //播放页样式 Type string
-    private fun choosePlayPageType(playPageType: Int){
-        when(playPageType){
-            SettingsCenter.PlayPageType_Oro -> {
-                SettingsCenter.SET_PRF_VideoPlayPage_Type(playPageType)
+    //播放页样式 Type string  screening_type_ORO
+    private fun choose_screening_type(screening_type: Int){
+        when(screening_type){
+            SettingsCenter.screening_type_ORO -> {
+                SettingsCenter.SET_PRF_Video_Screening_Type(screening_type)
                 showCustomToast("成功设置播放页样式为经典版本", 3)
-                updatePlayPageTypeText()
+                update_screening_type_Text()
             }
-            SettingsCenter.PlayPageType_Neo -> {
-                SettingsCenter.SET_PRF_VideoPlayPage_Type(playPageType)
+            SettingsCenter.screening_type_NEO -> {
+                SettingsCenter.SET_PRF_Video_Screening_Type(screening_type)
                 showCustomToast("成功设置播放页样式为新晋版本", 3)
-                updatePlayPageTypeText()
+                update_screening_type_Text()
             }
-            SettingsCenter.PlayPageType_Test -> {
-                //SettingsRequestCenter.SET_PRF_PlayPageType(context,playPageType)
-                showCustomToast("当前包中未包含测试版界面", 3)
+            SettingsCenter.screening_type_TEST -> {
+                showCustomToast("不支持", 3)
             }
         }
     }
-    private fun updatePlayPageTypeText(){
+    private fun update_screening_type_Text(){
         val ButtonPlayerTypeText = findViewById<TextView>(R.id.ButtonPlayerTypeText)
-        val PlayPageType = SettingsCenter.GET_PRF_VideoPlayPage_Type()
+        val PlayPageType = SettingsCenter.GET_PRF_Video_Screening_Type()
         when(PlayPageType){
-            SettingsCenter.PlayPageType_Oro -> ButtonPlayerTypeText.text = "经典"
-            SettingsCenter.PlayPageType_Neo -> ButtonPlayerTypeText.text = "新晋"
-            SettingsCenter.PlayPageType_Test -> ButtonPlayerTypeText.text = "测试"
+            SettingsCenter.screening_type_ORO -> ButtonPlayerTypeText.text = "经典"
+            SettingsCenter.screening_type_NEO -> ButtonPlayerTypeText.text = "新晋"
+            SettingsCenter.screening_type_TEST -> ButtonPlayerTypeText.text = "测试"
         }
     }
     //视频播放页 连续寻帧间隔 value
-    private fun choose_Video_generalSeek_updateMs_Menu(anchor:View){
+    private fun choose_Video_generalSeek_updateMs_Menu(anchor:View) {
         val popup = PopupMenu(context, anchor)
         popup.menuInflater.inflate(
             R.menu.popup_menu_video_general_seek_millis,
@@ -1162,7 +1166,7 @@ class SettingsActivity: AppCompatActivity(){
             //构建自定义alert_view
             val view = layoutInflater.inflate(R.layout.customized_alert_dialog, null)
             view.findViewById<TextView>(R.id.alert_dialog_title).text = "数值过低，请查看提示"
-            view.findViewById<TextView>(R.id.alert_dialog_message).text = msg_heat
+            view.findViewById<TextView>(R.id.alert_dialog_message).text = get_notice_message_heat()
             AlertDialog.Builder(context)
                 .setView(view)
                 .setPositiveButton("我知道自己在做什么") { dialog, _ ->
@@ -1175,6 +1179,12 @@ class SettingsActivity: AppCompatActivity(){
                 }
                 .setNegativeButton("取消") { dialog, _ ->
                     ToolVibrate().vibrate(context)
+
+                    //取消时检查是否需要重置当前值
+                    val current = SettingsCenter.get_value_seekVideo_runnableGapMs()
+                    if (current <= 65L){
+                        choose_Video_generalSeek_updateMs_Core(66)
+                    }
 
                     dialog.dismiss()
                 }
@@ -1218,14 +1228,14 @@ class SettingsActivity: AppCompatActivity(){
 
                 return@setOnClickListener
             }
-            if (input > 1000) {
+            if (input > 2000) {
                 showCustomToast("连续寻帧间隔不能大于2秒", 3)
 
                 return@setOnClickListener
             }
 
             //写入寻帧间隔
-            SettingsCenter.set_value_seekVideo_runnableGapMs(input)
+            choose_Video_generalSeek_updateMs_Core(input)
 
 
             dialog.dismiss()
@@ -1243,7 +1253,8 @@ class SettingsActivity: AppCompatActivity(){
     }
     private fun update_video_generalSeek_updateMs_Text() {
         val ButtonTextSeekHandlerGap = findViewById<TextView>(R.id.ButtonTextSeekHandlerGap)
-        when(val seekHandlerGap = SettingsCenter.get_value_seekVideo_runnableGapMs()){
+        val seekHandlerGap = SettingsCenter.get_value_seekVideo_runnableGapMs()
+        when(seekHandlerGap){
             0L -> ButtonTextSeekHandlerGap.text = "无间隔"
             16L -> ButtonTextSeekHandlerGap.text = "60 Hz"
             12L -> ButtonTextSeekHandlerGap.text = "90 Hz"
@@ -1296,11 +1307,36 @@ class SettingsActivity: AppCompatActivity(){
         }
         popup.show()
     }
-    private fun choose_Video_timeStamp_updateMs_Core(gap: Long) {
-        //写入设置
-        SettingsCenter.set_value_timeStamp_updateGapMs(gap)
-        //刷新显示
-        update_video_timerStamp_updateMs_Text()
+    private fun choose_Video_timeStamp_updateMs_Core(value: Long) {
+        fun execute(){
+            //写入设置
+            SettingsCenter.set_value_timeStamp_updateGapMs(value)
+            //刷新显示
+            update_video_timerStamp_updateMs_Text()
+        }
+
+        if (value < 32L){
+            AlertDialog.Builder(context)
+                .setTitle("提示")
+                .setMessage("此值过低时，若同时寻帧间隔也过低，可能导致界面轻微卡顿。是否继续?")
+                .setPositiveButton("确认") { dialog, _ ->
+                    ToolVibrate().vibrate(context)
+
+                   execute()
+
+                    dialog.dismiss()
+                }
+                .setNegativeButton("取消") { dialog, _ ->
+                    ToolVibrate().vibrate(context)
+
+                    dialog.dismiss()
+                }
+                .setCancelable(true)
+                .show()
+        }else{
+            execute()
+        }
+
     }
     private fun set_video_timerStamp_updateMs_input() {
         val dialog = Dialog(context).apply {
@@ -1394,10 +1430,15 @@ class SettingsActivity: AppCompatActivity(){
 
     }
     private fun choose_Video_scroller_updateMs_Core(gap: Long) {
-        //写入设置
-        SettingsCenter.set_value_syncScroller_runnableGapMs(gap)
-        //刷新显示
-        update_video_scroller_updateMs_Text()
+        fun execute(){
+            //写入设置
+            SettingsCenter.set_value_syncScroller_runnableGapMs(gap)
+            //刷新显示
+            update_video_scroller_updateMs_Text()
+        }
+
+        execute()
+
     }
     private fun set_video_scroller_updateMs_input() {
         val dialog = Dialog(context).apply {
@@ -1511,10 +1552,15 @@ class SettingsActivity: AppCompatActivity(){
 
     }
     private fun choose_video_syncSeekBar_updateMs_Core(gap: Long) {
-        //写入设置
-        SettingsCenter.set_value_syncSeekbar_runnableGapMs(gap)
-        //刷新显示
-        update_video_syncSeekBar_updateMS_Text()
+        fun execute(){
+            //写入设置
+            SettingsCenter.set_value_syncSeekbar_runnableGapMs(gap)
+            //刷新显示
+            update_video_syncSeekBar_updateMS_Text()
+        }
+
+        execute()
+
     }
     private fun set_video_syncSeekBar_updateMs_input() {
         val dialog = Dialog(context).apply {
@@ -1628,10 +1674,15 @@ class SettingsActivity: AppCompatActivity(){
 
     }
     private fun choose_audio_syncSeekBar_updateMs_Core(gap: Long) {
-        //写入设置
-        SettingsCenter.set_value_audio_syncSeekbar_runnableGapMs(gap)
-        //刷新显示
-        update_audio_syncSeekBar_updateMS_Text()
+        fun execute(){
+            //写入设置
+            SettingsCenter.set_value_audio_syncSeekbar_runnableGapMs(gap)
+            //刷新显示
+            update_audio_syncSeekBar_updateMS_Text()
+        }
+
+        execute()
+
     }
     private fun set_audio_syncSeekBar_updateMs_input() {
         val dialog = Dialog(context).apply {

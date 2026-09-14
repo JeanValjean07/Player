@@ -781,7 +781,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
 
             //未显示进度条
-            if (SettingsCenter.GET_PRF_VideoPlayPage_Type() == SettingsCenter.PlayPageType_Neo && viewModel.state_s_area_type != S_Area_Helper.S_AreaType_SCROLLER){
+            if (SettingsCenter.GET_PRF_Video_Screening_Type() == SettingsCenter.screening_type_NEO && viewModel.state_s_area_type != S_Area_Helper.S_AreaType_SCROLLER){
 
 
                     val text = "未显示进度条：" +

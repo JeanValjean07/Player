@@ -2967,7 +2967,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     }
     private fun update_S_Area_Adapter(){
         lifecycleScope.launch(Dispatchers.IO) {
-            val useSeekBar = SettingsCenter.GET_PRF_VideoPlayPage_Type() == S_Area_Helper.S_AreaType_SEEKBAR
+            val useSeekBar = SettingsCenter.GET_PRF_Video_Screening_Type() == S_Area_Helper.S_AreaType_SEEKBAR
             if (useSeekBar){
                 //consoleLog("updateScrollerAdapter 使用 SEEKBAR")
                 withContext(Dispatchers.Main){ show_s_area_type(S_Area_Helper.S_AreaType_SEEKBAR) }

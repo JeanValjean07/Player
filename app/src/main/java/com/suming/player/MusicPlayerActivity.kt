@@ -954,9 +954,9 @@ class MusicPlayerActivity : AppCompatActivity() {
     }
     private fun switchToVideoPage(){
         //检查使用的页面类型
-        val playPageType = SettingsCenter.GET_PRF_VideoPlayPage_Type()
+        val playPageType = SettingsCenter.GET_PRF_Video_Screening_Type()
         when{
-            (playPageType == SettingsCenter.PlayPageType_Oro || playPageType == SettingsCenter.PlayPageType_Neo) -> {
+            (playPageType == SettingsCenter.screening_type_ORO || playPageType == SettingsCenter.screening_type_NEO) -> {
                 //构建intent
                 val intent = Intent(this, PlayerActivityNeo::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)

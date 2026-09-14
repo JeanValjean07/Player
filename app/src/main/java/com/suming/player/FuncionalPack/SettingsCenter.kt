@@ -563,32 +563,32 @@ object SettingsCenter {
             Pandora_PlayVideoPage = context.getSharedPreferences( Pandora_PlayVideoPage_Name, 0)
         }
     }
-    //播放页样式
-    const val PlayPageType_Oro = 0
-    const val PlayPageType_Neo = 1
-    const val PlayPageType_Test = 2
-    private var PRF_PlayPageType = -1
-    const val PRF_PlayPageType_Name = "PRF_PlayPageType_Name"
-    fun SET_PRF_VideoPlayPage_Type(targetType: Int){
+    //播放页样式 screening_type_ORO
+    const val screening_type_ORO = 0
+    const val screening_type_NEO = 1
+    const val screening_type_TEST = 2
+    private var PRF_Video_Screening_Type = -1
+    const val PRF_Video_Screening_Type_Name = "PRF_Video_Screening_Type"
+    fun SET_PRF_Video_Screening_Type(targetType: Int){
         OpenPandora_PlayVideoPage()
 
-        PRF_PlayPageType = targetType
-        Pandora_PlayVideoPage?.edit { putInt(PRF_PlayPageType_Name, targetType) }
+        PRF_Video_Screening_Type = targetType
+        Pandora_PlayVideoPage?.edit { putInt(PRF_Video_Screening_Type_Name, targetType) }
     }
-    fun GET_PRF_VideoPlayPage_Type(): Int{
+    fun GET_PRF_Video_Screening_Type(): Int{
         OpenPandora_PlayVideoPage()
 
         //无缓存时读取
-        if (PRF_PlayPageType == -1) {
-            PRF_PlayPageType = Pandora_PlayVideoPage?.getInt(PRF_PlayPageType_Name, -1) ?: -1
+        if (PRF_Video_Screening_Type == -1) {
+            PRF_Video_Screening_Type = Pandora_PlayVideoPage?.getInt(PRF_Video_Screening_Type_Name, -1) ?: -1
             //未写入时写入默认值
-            if (PRF_PlayPageType == -1) {
-                PRF_PlayPageType = PlayPageType_Neo
-                Pandora_PlayVideoPage?.edit { putInt(PRF_PlayPageType_Name, PlayPageType_Neo) }
+            if (PRF_Video_Screening_Type == -1) {
+                PRF_Video_Screening_Type = screening_type_NEO
+                Pandora_PlayVideoPage?.edit { putInt(PRF_Video_Screening_Type_Name, screening_type_NEO) }
             }
         }
 
-        return PRF_PlayPageType
+        return PRF_Video_Screening_Type
     }
     //后台播放
     private var PREFS_BackgroundPlay = -1
@@ -1015,6 +1015,7 @@ object SettingsCenter {
                 Pandora_PlayVideoPage?.edit { putLong(value_video_seekVideo_runnableGapMs_Name, 66L) }
             }
         }
+
         return value_video_seekVideo_runnableGapMs
     }
     //时间戳(被动)刷新间隔(默认值66ms/15Hz)
