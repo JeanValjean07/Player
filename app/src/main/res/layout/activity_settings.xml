@@ -494,7 +494,7 @@
                             android:textColor="@color/Text2" />
                     </LinearLayout>
 
-                    <!--  开关:禁用媒体会话插入预览图  -->
+                    <!--  开关:启用媒体会话艺术图  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -509,7 +509,7 @@
                                 android:layout_height="match_parent"
                                 android:gravity="center"
                                 android:layout_weight="0"
-                                android:text="禁用媒体会话预览图"
+                                android:text="启用媒体会话艺术图"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
@@ -517,7 +517,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/DisableMediaArtWork"
+                                android:id="@+id/SC_EnableMediaSessionArtWork"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -529,7 +529,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="部分老系统的媒体会话样式非常绚丽，建议保持使用预览图。在部分系统上，设置预览图会导致系统界面崩溃(突然黑屏,软重启等)，谨慎修改此选项。"
+                            android:text="在部分系统上，设置预览图会导致系统界面崩溃(突然黑屏,软重启等)，谨慎修改此选项。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:后台播放时关闭视频轨道  -->

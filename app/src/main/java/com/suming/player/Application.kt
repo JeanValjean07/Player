@@ -6,6 +6,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.PlayerListener
+import com.suming.player.FuncionalPack.SettingsCenter
 
 class Application : Application() {
 
@@ -18,6 +19,7 @@ class Application : Application() {
         PlayerSingleton.setContext(this)
         ListManagerHelper.setContext(this)
         PlayerListener.setContext(this)
+        SettingsCenter.setContext(this)
 
 
     }

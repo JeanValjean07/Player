@@ -23,6 +23,7 @@ import com.suming.player.FuncionalPack.MediaUriManager
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SOURCE_CODE
+import com.suming.player.FuncionalPack.SettingsCenter
 import java.io.File
 import java.net.URLDecoder
 import kotlin.math.absoluteValue
@@ -561,7 +562,7 @@ class EntranceActivity : AppCompatActivity(){
     @OptIn(UnstableApi::class)
     private fun startVideoPage_selfDetectStyle(uri: Uri,file_path: String) {
         //读取页面样式
-        val playPageType = SettingsCenter.GET_PRF_PlayPageType(this)
+        val playPageType = SettingsCenter.GET_PRF_VideoPlayPage_Type()
         //根据页面样式启动页面
         when{
             (playPageType == SettingsCenter.PlayPageType_Oro || playPageType == SettingsCenter.PlayPageType_Neo) -> startVideoNeoPage(uri,file_path)

@@ -42,7 +42,7 @@ import com.google.android.material.button.MaterialButton
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.PlayerSingleton
 import com.suming.player.R
-import com.suming.player.SettingsCenter
+import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.DeviceInfo
@@ -199,7 +199,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                 }
             }
             //面板下滑关闭
-            if (!SettingsCenter.get_PREFS_DisableFragmentGesture(requireContext())){
+            if (!SettingsCenter.GET_PREFS_DisableFragmentGesture()){
                 if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT){
                     var down_y = 0f
                     var deltaY = 0f
@@ -337,32 +337,32 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
             //开启方向监听器
             val switch_EnableOriListener = view.findViewById<SwitchCompat>(R.id.EnableOriListener)
-            switch_EnableOriListener.isChecked = SettingsCenter.get_PREFS_EnableOrientationListener(requireContext())
+            switch_EnableOriListener.isChecked = SettingsCenter.GET_PREFS_EnableOrientationListener()
             switch_EnableOriListener.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //读取目标状态并修改设置
-                SettingsCenter.set_PREFS_EnableOrientationListener(switch_EnableOriListener.isChecked)
+                SettingsCenter.SET_PREFS_EnableOrientationListener(switch_EnableOriListener.isChecked)
                 //发回结果(仅告知设置变更,不返回值,自行读取)
                 returnFragment(FragmentConnector.fragment_more_button_switch_ori_listener)
                 customDismiss()
             }
             //后台播放
             val switch_BackgroundPlay = view.findViewById<SwitchCompat>(R.id.Switch_BackgroundPlay)
-            switch_BackgroundPlay.isChecked = SettingsCenter.get_PREFS_BackgroundPlay(requireContext())
+            switch_BackgroundPlay.isChecked = SettingsCenter.GET_PREFS_BackgroundPlay()
             switch_BackgroundPlay.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //仅修改设置即可
-                SettingsCenter.set_PREFS_BackgroundPlay(switch_BackgroundPlay.isChecked)
+                SettingsCenter.SET_PREFS_BackgroundPlay(switch_BackgroundPlay.isChecked)
 
                 customDismiss()
             }
             //仅在播放完成后退出
             val switch_ExitWhenMediaEnd = view.findViewById<SwitchCompat>(R.id.Switch_ExitWhenMediaEnd)
-            switch_ExitWhenMediaEnd.isChecked = SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd(requireContext())
+            switch_ExitWhenMediaEnd.isChecked = SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd()
             switch_ExitWhenMediaEnd.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //仅修改设置即可
-                SettingsCenter.SET_PRF_OnlyAutoStop_whenMediaEnd(context,switch_ExitWhenMediaEnd.isChecked)
+                SettingsCenter.SET_PRF_OnlyAutoStop_whenMediaEnd(switch_ExitWhenMediaEnd.isChecked)
 
                 customDismiss()
             }
@@ -459,12 +459,12 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
             //保持屏幕常亮
             val SC_KeepScreenOn = view.findViewById<SwitchCompat>(R.id.SC_KeepScreenOn)
-            SC_KeepScreenOn.isChecked = SettingsCenter.GET_PRF_KeepScreenOn(requireContext())
+            SC_KeepScreenOn.isChecked = SettingsCenter.GET_PRF_KeepScreenOn()
             SC_KeepScreenOn.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
 
                 //修改设置
-                SettingsCenter.SET_PRF_KeepScreenOn(requireContext(), SC_KeepScreenOn.isChecked)
+                SettingsCenter.SET_PRF_KeepScreenOn(SC_KeepScreenOn.isChecked)
                 //发回刷新消息
                 returnFragment(FragmentConnector.fragment_more_button_update_keep_screen_on)
 
@@ -653,7 +653,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                 fun update_BTT_SeekMode(){
                     val BTT_SeekMode = view.findViewById<TextView>(R.id.ButtonText_SeekMode)
                     //转换自AlwaysSeek Boolean
-                    val AlwaysSeek = SettingsCenter.get_PREFS_EnableAlwaysSeek(context)
+                    val AlwaysSeek = SettingsCenter.GET_PREFS_EnableAlwaysSeek()
 
                     if (AlwaysSeek){
                         BTT_SeekMode.text = "常规寻帧"
@@ -665,7 +665,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                 //弹出菜单选择
                 fun popupMenu_SeekMode(anchor: View){
                     val popup = PopupMenu(requireContext(), anchor)
-                    popup.menuInflater.inflate(R.menu.popup_menu_seek_mode, popup.menu)
+                    popup.menuInflater.inflate(R.menu.popup_menu_video_seek_mode, popup.menu)
                     popup.setOnMenuItemClickListener { item ->
                         when (item.itemId) {
                             R.id.enable_always_seek -> {
@@ -673,7 +673,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                                 //修改viewModel的值
                                 viewModel.PREFS_AlwaysSeek = true
                                 //写入设置
-                                SettingsCenter.set_PREFS_EnableAlwaysSeek(true)
+                                SettingsCenter.SET_PREFS_EnableAlwaysSeek(true)
                                 //刷新显示文字
                                 update_BTT_SeekMode()
 
@@ -688,7 +688,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                                 //修改viewModel的值
                                 viewModel.PREFS_AlwaysSeek = false
                                 //写入设置
-                                SettingsCenter.set_PREFS_EnableAlwaysSeek(false)
+                                SettingsCenter.SET_PREFS_EnableAlwaysSeek(false)
                                 //刷新显示文字
                                 update_BTT_SeekMode()
 
@@ -733,7 +733,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                     viewModel.PREFS_LinkScroll = !viewModel.PREFS_LinkScroll
 
                     //写入设置
-                    SettingsCenter.set_PREFS_EnableLinkScroll(viewModel.PREFS_LinkScroll)
+                    SettingsCenter.SET_PREFS_EnableLinkScroll(viewModel.PREFS_LinkScroll)
                     //按钮改为目标颜色
                     updateButtonLinkScrollColor()
 
@@ -763,7 +763,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                     viewModel.PREFS_TapJump = !viewModel.PREFS_TapJump
 
                     //写入设置
-                    SettingsCenter.set_PREFS_EnableTapJump(viewModel.PREFS_TapJump)
+                    SettingsCenter.SET_PREFS_EnableTapJump(viewModel.PREFS_TapJump)
                     //按钮改为目标颜色
                     updateButtonTapJumpColor()
 
@@ -781,7 +781,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
 
             //未显示进度条
-            if (SettingsCenter.GET_PRF_PlayPageType(context) == SettingsCenter.PlayPageType_Neo && viewModel.state_s_area_type != S_Area_Helper.S_AreaType_SCROLLER){
+            if (SettingsCenter.GET_PRF_VideoPlayPage_Type() == SettingsCenter.PlayPageType_Neo && viewModel.state_s_area_type != S_Area_Helper.S_AreaType_SCROLLER){
 
 
                     val text = "未显示进度条：" +
@@ -1185,7 +1185,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
         val density = resources.displayMetrics.density
 
         //读取是否启用全屏Fragment
-        val useFullScreenFragment = SettingsCenter.GET_PRF_UseFullScreenFragment(requireContext())
+        val useFullScreenFragment = SettingsCenter.GET_PRF_UseFullScreenFragment()
 
         //执行设置
         if (isLandscape){

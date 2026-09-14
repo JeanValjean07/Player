@@ -34,7 +34,7 @@ import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.R
-import com.suming.player.SettingsCenter
+import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -226,14 +226,14 @@ class FragmentVideoStoreSetting: DialogFragment() {
             ButtonChangeSortOrientation.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //读取当前升降序配置
-                val PREFS_video_sortOrientation = SettingsCenter.get_PREFS_video_sortOrientation(requireContext())
+                val PREFS_video_sortOrientation = SettingsCenter.get_PREFS_video_sortOrientation()
                 //取反并保存
                 if (PREFS_video_sortOrientation == SettingsCenter.sort_orientation_ASC){
-                    SettingsCenter.set_PREFS_video_sortOrientation(requireContext(), SettingsCenter.sort_orientation_DESC)
+                    SettingsCenter.set_PREFS_video_sortOrientation(SettingsCenter.sort_orientation_DESC)
                     updateSortOrientationText(SettingsCenter.sort_orientation_DESC)
                 }
                 else if (PREFS_video_sortOrientation == SettingsCenter.sort_orientation_DESC){
-                    SettingsCenter.set_PREFS_video_sortOrientation(requireContext(), SettingsCenter.sort_orientation_ASC)
+                    SettingsCenter.set_PREFS_video_sortOrientation(SettingsCenter.sort_orientation_ASC)
                     updateSortOrientationText(SettingsCenter.sort_orientation_ASC)
                 }
             }
@@ -247,31 +247,31 @@ class FragmentVideoStoreSetting: DialogFragment() {
             sort_method_filename.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_video_sortMethod(requireContext(), SettingsCenter.sort_method_filename)
+                SettingsCenter.set_PREFS_video_sortMethod(SettingsCenter.sort_method_filename)
                 updateSortMethodText(SettingsCenter.sort_method_filename)
             }
             sort_method_duration.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_video_sortMethod(requireContext(), SettingsCenter.sort_method_duration)
+                SettingsCenter.set_PREFS_video_sortMethod(SettingsCenter.sort_method_duration)
                 updateSortMethodText(SettingsCenter.sort_method_duration)
             }
             sort_method_date_added.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_video_sortMethod(requireContext(), SettingsCenter.sort_method_date_added)
+                SettingsCenter.set_PREFS_video_sortMethod(SettingsCenter.sort_method_date_added)
                 updateSortMethodText(SettingsCenter.sort_method_date_added)
             }
             sort_method_file_size.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_video_sortMethod(requireContext(), SettingsCenter.sort_method_file_size)
+                SettingsCenter.set_PREFS_video_sortMethod(SettingsCenter.sort_method_file_size)
                 updateSortMethodText(SettingsCenter.sort_method_file_size)
             }
             sort_method_mime_type.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_video_sortMethod(requireContext(), SettingsCenter.sort_method_mime_type)
+                SettingsCenter.set_PREFS_video_sortMethod(SettingsCenter.sort_method_mime_type)
                 updateSortMethodText(SettingsCenter.sort_method_mime_type)
             }
         }
@@ -281,22 +281,22 @@ class FragmentVideoStoreSetting: DialogFragment() {
         lifecycleScope.launch(Dispatchers.Main){
             //检查文件有效性
             val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
-            switch_EnableFileExistCheck.isChecked = SettingsCenter.get_PREFS_EnableFileExistCheck( requireContext())
+            switch_EnableFileExistCheck.isChecked = SettingsCenter.get_PREFS_EnableFileExistCheck()
             switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(requireContext())
-                SettingsCenter.set_PREFS_EnableFileExistCheck(requireContext(), isChecked)
+                SettingsCenter.set_PREFS_EnableFileExistCheck(isChecked)
             }
             //每次启动都读取
             val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
-            switch_QueryNewVideoOnStart.isChecked = SettingsCenter.get_PREFS_QueryNewMediaOnStart( requireContext())
+            switch_QueryNewVideoOnStart.isChecked = SettingsCenter.get_PREFS_QueryNewMediaOnStart()
             switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(requireContext())
-                SettingsCenter.set_PREFS_QueryNewMediaOnStart(requireContext(), isChecked)
+                SettingsCenter.set_PREFS_QueryNewMediaOnStart(isChecked)
             }
             //默认页签
             val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
             fun setAcquiesceTabText(){
-                val AcquiesceTab = SettingsCenter.get_PREFS_AcquiesceTab(requireContext())
+                val AcquiesceTab = SettingsCenter.get_PREFS_AcquiesceTab()
                 when(AcquiesceTab){
                     SettingsCenter.tab_mark_video -> {
                         ButtonTextChangeDefaultTab.text = "视频"
@@ -322,14 +322,14 @@ class FragmentVideoStoreSetting: DialogFragment() {
                     ToolVibrate().vibrate(requireContext())
                     when (item.itemId) {
                         R.id.page_video -> {
-                            SettingsCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsCenter.tab_mark_video)
+                            SettingsCenter.set_PREFS_AcquiesceTab(SettingsCenter.tab_mark_video)
 
                             setAcquiesceTabText()
 
                             return@setOnMenuItemClickListener true
                         }
                         R.id.page_music -> {
-                            SettingsCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsCenter.tab_mark_music)
+                            SettingsCenter.set_PREFS_AcquiesceTab(SettingsCenter.tab_mark_music)
 
                             setAcquiesceTabText()
 
@@ -340,7 +340,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
                             return@setOnMenuItemClickListener true
                         }
                         R.id.page_last -> {
-                            SettingsCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsCenter.tab_mark_last)
+                            SettingsCenter.set_PREFS_AcquiesceTab(SettingsCenter.tab_mark_last)
 
                             setAcquiesceTabText()
 
@@ -376,7 +376,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
                     ToolVibrate().vibrate(requireContext())
 
                     //设置默认播放行为
-                    SettingsCenter.SET_PRF_DefaultPlayBehavior(requireContext(), SettingsCenter.action_just_in_mini_view)
+                    SettingsCenter.SET_PRF_DefaultPlayBehavior(SettingsCenter.action_just_in_mini_view)
                     //更新默认播放行为文本
                     updateText_DefaultPlayMode()
 
@@ -387,7 +387,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
                     ToolVibrate().vibrate(requireContext())
 
                     //设置默认播放行为
-                    SettingsCenter.SET_PRF_DefaultPlayBehavior(requireContext(), SettingsCenter.action_use_whole_play_page)
+                    SettingsCenter.SET_PRF_DefaultPlayBehavior(SettingsCenter.action_use_whole_play_page)
                     //更新默认播放行为文本
                     updateText_DefaultPlayMode()
 
@@ -401,7 +401,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
     @SuppressLint("SetTextI18n")
     private fun updateText_DefaultPlayMode(){
         //读取当前默认播放行为
-        val defaultPlayBehavior = SettingsCenter.GET_PRF_DefaultPlayBehavior(requireContext())
+        val defaultPlayBehavior = SettingsCenter.GET_PRF_DefaultPlayBehavior()
         when (defaultPlayBehavior) {
             SettingsCenter.action_just_in_mini_view -> {
                 ButtonChangeDefaultPlayMode.text = "仅在MiniView中播放"
@@ -454,7 +454,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
     private fun updateSortMethodText(sortMethod: String = ""){
         //读取当前排序方法
         val targetSortMethod = if (sortMethod == "") {
-            SettingsCenter.get_PREFS_video_sortMethod(requireContext())
+            SettingsCenter.get_PREFS_video_sortMethod()
         }else{
             sortMethod
         }
@@ -485,7 +485,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
     private fun updateSortOrientationText(sortOrientation: String = ""){
         //读取当前排序方向
         val targetSortOrientation = if (sortOrientation == "") {
-            SettingsCenter.get_PREFS_video_sortOrientation(requireContext())
+            SettingsCenter.get_PREFS_video_sortOrientation()
         }else{
             sortOrientation
         }
@@ -530,7 +530,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
         val density = resources.displayMetrics.density
 
         //读取是否启用全屏Fragment
-        val useFullScreenFragment = SettingsCenter.GET_PRF_UseFullScreenFragment(requireContext())
+        val useFullScreenFragment = SettingsCenter.GET_PRF_UseFullScreenFragment()
 
         //执行设置
         if (isLandscape){

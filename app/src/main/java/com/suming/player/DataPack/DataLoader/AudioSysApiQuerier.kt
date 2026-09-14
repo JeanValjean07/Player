@@ -12,7 +12,7 @@ import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
-import com.suming.player.SettingsCenter
+import com.suming.player.FuncionalPack.SettingsCenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -33,7 +33,7 @@ class AudioSysApiQuerier(
         DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
 
         //读取设置
-        val PRF_EnableFileExistCheck = SettingsCenter.get_PREFS_EnableFileExistCheck(context)
+        val PRF_EnableFileExistCheck = SettingsCenter.get_PREFS_EnableFileExistCheck()
 
         //初始化列表
         val list = mutableListOf<MediaItemFullForAudio>()

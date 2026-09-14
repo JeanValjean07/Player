@@ -13,7 +13,7 @@
         android:title="30 Hz" />
     <item
         android:id="@+id/menu_item_15hz"
-        android:title="15 Hz" />
+        android:title="15 Hz  (66 Ms)" />
     <item
         android:id="@+id/menu_item_Input"
         android:title="自定义" />

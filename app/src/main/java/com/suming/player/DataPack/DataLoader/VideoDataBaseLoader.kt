@@ -7,7 +7,7 @@ import androidx.paging.PagingState
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 import com.suming.player.FuncionalPack.SearchHelper
-import com.suming.player.SettingsCenter
+import com.suming.player.FuncionalPack.SettingsCenter
 
 class VideoDataBaseLoader(private val context: Context) : PagingSource<Int, MediaItemFullForVideo>() {
 
@@ -27,8 +27,8 @@ class VideoDataBaseLoader(private val context: Context) : PagingSource<Int, Medi
             val mediaStoreRepo = VideoRepo.get(context)
             val totalCount = mediaStoreRepo.getTotalCount()
             //排序字段合成
-            val sortOrder = SettingsCenter.get_PREFS_video_sortMethod(context)
-            val sortOrientation = SettingsCenter.get_PREFS_video_sortOrientation(context)
+            val sortOrder = SettingsCenter.get_PREFS_video_sortMethod()
+            val sortOrientation = SettingsCenter.get_PREFS_video_sortOrientation()
             val sortMethod = "$sortOrder $sortOrientation"
 
             //按页获取数据

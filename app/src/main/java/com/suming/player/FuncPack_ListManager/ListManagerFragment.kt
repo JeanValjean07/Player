@@ -51,7 +51,7 @@ import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
-import com.suming.player.SettingsCenter
+import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -1079,7 +1079,7 @@ class ListManagerFragment: DialogFragment(){
         val density = resources.displayMetrics.density
 
         //读取是否启用全屏Fragment
-        val useFullScreenFragment = SettingsCenter.GET_PRF_UseFullScreenFragment(requireContext())
+        val useFullScreenFragment = SettingsCenter.GET_PRF_UseFullScreenFragment()
 
         //执行设置
         if (isLandscape){

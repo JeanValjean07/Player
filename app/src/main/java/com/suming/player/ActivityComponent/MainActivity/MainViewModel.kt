@@ -3,7 +3,7 @@ package com.suming.player.ActivityComponent.MainActivity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.util.UnstableApi
-import com.suming.player.SettingsCenter
+import com.suming.player.FuncionalPack.SettingsCenter
 
 @UnstableApi
 class MainViewModel(application: Application) : AndroidViewModel(application) {

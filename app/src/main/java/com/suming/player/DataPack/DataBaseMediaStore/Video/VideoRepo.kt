@@ -3,7 +3,7 @@ package com.suming.player.DataPack.DataBaseMediaStore.Video
 import android.content.Context
 import androidx.sqlite.db.SimpleSQLiteQuery
 import com.suming.player.DataPack.DataBaseMediaStore.MediaStoreDataBase
-import com.suming.player.SettingsCenter
+import com.suming.player.FuncionalPack.SettingsCenter
 
 class VideoRepo(context: Context) {
     companion object {

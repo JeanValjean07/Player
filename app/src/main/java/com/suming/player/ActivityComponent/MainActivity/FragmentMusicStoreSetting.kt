@@ -36,7 +36,7 @@ import com.suming.player.FuncionalPack.Animations
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.R
-import com.suming.player.SettingsCenter
+import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -141,7 +141,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
             //默认页签
             val ButtonTextChangeDefaultTab = view.findViewById<TextView>(R.id.ButtonTextChangeDefaultTab)
             fun setAcquiesceTabText(){
-                val AcquiesceTab = SettingsCenter.get_PREFS_AcquiesceTab(requireContext())
+                val AcquiesceTab = SettingsCenter.get_PREFS_AcquiesceTab()
                 when(AcquiesceTab){
                     SettingsCenter.tab_mark_video -> {
                         ButtonTextChangeDefaultTab.text = "视频"
@@ -167,14 +167,14 @@ class FragmentMusicStoreSetting: DialogFragment() {
                     ToolVibrate().vibrate(requireContext())
                     when (item.itemId) {
                         R.id.page_video -> {
-                            SettingsCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsCenter.tab_mark_video)
+                            SettingsCenter.set_PREFS_AcquiesceTab(SettingsCenter.tab_mark_video)
 
                             setAcquiesceTabText()
 
                             return@setOnMenuItemClickListener true
                         }
                         R.id.page_music -> {
-                            SettingsCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsCenter.tab_mark_music)
+                            SettingsCenter.set_PREFS_AcquiesceTab(SettingsCenter.tab_mark_music)
 
                             setAcquiesceTabText()
 
@@ -185,7 +185,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
                             return@setOnMenuItemClickListener true
                         }
                         R.id.page_last -> {
-                            SettingsCenter.set_PREFS_AcquiesceTab(requireContext(), SettingsCenter.tab_mark_last)
+                            SettingsCenter.set_PREFS_AcquiesceTab(SettingsCenter.tab_mark_last)
 
                             setAcquiesceTabText()
 
@@ -250,14 +250,14 @@ class FragmentMusicStoreSetting: DialogFragment() {
             ButtonChangeSortOrientation.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //读取当前升降序配置
-                val PREFS_audio_sortOrientation = SettingsCenter.get_PREFS_audio_sortOrientation(requireContext())
+                val PREFS_audio_sortOrientation = SettingsCenter.get_PREFS_audio_sortOrientation()
                 //取反并保存
                 if (PREFS_audio_sortOrientation == SettingsCenter.sort_orientation_ASC){
-                    SettingsCenter.set_PREFS_audio_sortOrientation(requireContext(), SettingsCenter.sort_orientation_DESC)
+                    SettingsCenter.set_PREFS_audio_sortOrientation(SettingsCenter.sort_orientation_DESC)
                     updateSortOrientationText(SettingsCenter.sort_orientation_DESC)
                 }
                 else if (PREFS_audio_sortOrientation == SettingsCenter.sort_orientation_DESC){
-                    SettingsCenter.set_PREFS_audio_sortOrientation(requireContext(), SettingsCenter.sort_orientation_ASC)
+                    SettingsCenter.set_PREFS_audio_sortOrientation(SettingsCenter.sort_orientation_ASC)
                     updateSortOrientationText(SettingsCenter.sort_orientation_ASC)
                 }
             }
@@ -271,31 +271,31 @@ class FragmentMusicStoreSetting: DialogFragment() {
             sort_method_filename.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_audio_sortMethod(requireContext(), SettingsCenter.sort_method_filename)
+                SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_filename)
                 updateSortMethodText(SettingsCenter.sort_method_filename)
             }
             sort_method_duration.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_audio_sortMethod(requireContext(), SettingsCenter.sort_method_duration)
+                SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_duration)
                 updateSortMethodText(SettingsCenter.sort_method_duration)
             }
             sort_method_date_added.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_audio_sortMethod(requireContext(), SettingsCenter.sort_method_date_added)
+                SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_date_added)
                 updateSortMethodText(SettingsCenter.sort_method_date_added)
             }
             sort_method_file_size.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_audio_sortMethod(requireContext(), SettingsCenter.sort_method_file_size)
+                SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_file_size)
                 updateSortMethodText(SettingsCenter.sort_method_file_size)
             }
             sort_method_mime_type.setOnClickListener {
                 ToolVibrate().vibrate(requireContext())
                 //设置排序方法
-                SettingsCenter.set_PREFS_audio_sortMethod(requireContext(), SettingsCenter.sort_method_mime_type)
+                SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_mime_type)
                 updateSortMethodText(SettingsCenter.sort_method_mime_type)
             }
         }
@@ -305,24 +305,24 @@ class FragmentMusicStoreSetting: DialogFragment() {
         lifecycleScope.launch(Dispatchers.Main){
             //检查文件有效性
             val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
-            switch_EnableFileExistCheck.isChecked = SettingsCenter.get_PREFS_EnableFileExistCheck(context)
+            switch_EnableFileExistCheck.isChecked = SettingsCenter.get_PREFS_EnableFileExistCheck()
             switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(requireContext())
-                SettingsCenter.set_PREFS_EnableFileExistCheck(requireContext(), isChecked)
+                SettingsCenter.set_PREFS_EnableFileExistCheck(isChecked)
             }
             //每次启动都读取
             val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
-            switch_QueryNewVideoOnStart.isChecked = SettingsCenter.get_PREFS_QueryNewMediaOnStart(context)
+            switch_QueryNewVideoOnStart.isChecked = SettingsCenter.get_PREFS_QueryNewMediaOnStart()
             switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(requireContext())
-                SettingsCenter.set_PREFS_QueryNewMediaOnStart(requireContext(), isChecked)
+                SettingsCenter.set_PREFS_QueryNewMediaOnStart(isChecked)
             }
             //自动弹出播放页
             val switch_startFullPage = view.findViewById<SwitchCompat>(R.id.SC_startFullPage_whenSwitch)
-            switch_startFullPage.isChecked = SettingsCenter.GET_PRF_StartFullPage(context)
+            switch_startFullPage.isChecked = SettingsCenter.GET_PRF_StartFullPage()
             switch_startFullPage.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(requireContext())
-                SettingsCenter.SET_PRF_StartFullPage(context,isChecked)
+                SettingsCenter.SET_PRF_StartFullPage(isChecked)
             }
 
 
@@ -375,7 +375,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
     private fun updateSortMethodText(sortMethod: String = ""){
         //读取当前排序方法
         val targetSortMethod = if (sortMethod == "") {
-            SettingsCenter.get_PREFS_audio_sortMethod(requireContext())
+            SettingsCenter.get_PREFS_audio_sortMethod()
         }else{
             sortMethod
         }
@@ -406,7 +406,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
     private fun updateSortOrientationText(sortOrientation: String = ""){
         //读取当前排序方向
         val targetSortOrientation = if (sortOrientation == "") {
-            SettingsCenter.get_PREFS_audio_sortOrientation(requireContext())
+            SettingsCenter.get_PREFS_audio_sortOrientation()
         }else{
             sortOrientation
         }
@@ -501,7 +501,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
         val density = resources.displayMetrics.density
 
         //读取是否启用全屏Fragment
-        val useFullScreenFragment = SettingsCenter.GET_PRF_UseFullScreenFragment(requireContext())
+        val useFullScreenFragment = SettingsCenter.GET_PRF_UseFullScreenFragment()
 
         //执行设置
         if (isLandscape){

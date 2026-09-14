@@ -64,6 +64,7 @@ import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
+import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -389,7 +390,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                     }
                 }
                 //
-                val zoom = SettingsCenter.GET_PRF_Audio_AutoZoomArtwork(context)
+                val zoom = SettingsCenter.GET_PRF_Audio_AutoZoomArtwork()
                 //
                 if (card_height > card_width){
                     zoom()
@@ -953,7 +954,7 @@ class MusicPlayerActivity : AppCompatActivity() {
     }
     private fun switchToVideoPage(){
         //检查使用的页面类型
-        val playPageType = SettingsCenter.GET_PRF_PlayPageType(context)
+        val playPageType = SettingsCenter.GET_PRF_VideoPlayPage_Type()
         when{
             (playPageType == SettingsCenter.PlayPageType_Oro || playPageType == SettingsCenter.PlayPageType_Neo) -> {
                 //构建intent
@@ -1031,7 +1032,7 @@ class MusicPlayerActivity : AppCompatActivity() {
 
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
         var PRF_UseFileNameAsTitle = if (mediaType == MediaType.Audio){
-            SettingsCenter.GET_PRF_Audio_UseFileNameAsTitle(context)
+            SettingsCenter.GET_PRF_Audio_UseFileNameAsTitle()
         }else{
             true
         }
@@ -1101,7 +1102,7 @@ class MusicPlayerActivity : AppCompatActivity() {
     private lateinit var media_artwork : ImageView
     private fun updateMediaArtwork(){
         //检查是否显示专辑图片(不显示也要注册点击事件)
-        var dont_show_album = SettingsCenter.GET_PRF_Audio_DontShowAlbumFrame(context)
+        var dont_show_album = SettingsCenter.GET_PRF_Audio_DontShowAlbumFrame()
         //获取缓存URI
         val URI = PlayerInfoCenter.GET_Media_URI_S_FP()
 
@@ -1188,7 +1189,7 @@ class MusicPlayerActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     private fun registerMediaArtworkClickEvent(URI_S:String){
         //获取设置
-        val useVolumeGesture = SettingsCenter.GET_PRF_Audio_UseArtworkGesture(context)
+        val useVolumeGesture = SettingsCenter.GET_PRF_Audio_UseArtworkGesture()
         //为专辑图设置点击事件
         val media_artwork_click_layer = findViewById<View>(R.id.media_artwork_click_layer)
         media_artwork_click_layer.post{

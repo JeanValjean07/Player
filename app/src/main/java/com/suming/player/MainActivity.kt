@@ -79,6 +79,7 @@ import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SearchHelper
+import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -426,7 +427,7 @@ class MainActivity: AppCompatActivity() {
                             val isAnyMediaOngoing = withContext(Dispatchers.Main) { isAnyMediaOngoing().first }
                             if (!isAnyMediaOngoing){
                                 //无播放时,检查是否启用继续播放功能
-                                if (SettingsCenter.get_PREFS_EnableContinuePlay(context)) {
+                                if (SettingsCenter.get_PREFS_EnableContinuePlay()) {
                                     //没有媒体正在播放,从记录中获取上次停留的媒体信息(已检查是否有效)
                                     val MediaRecordPack = getLastMediaRecord()
                                     if (MediaRecordPack != null) {
@@ -533,7 +534,7 @@ class MainActivity: AppCompatActivity() {
                 //显示列表
                 var targetList = ""
                 targetList = if (savedInstanceState == null){
-                    SettingsCenter.get_PREFS_AcquiesceTab(this@MainActivity)
+                    SettingsCenter.get_PREFS_AcquiesceTab()
                 }else{
                     mainViewModel.state_current_tab
                 }
@@ -573,7 +574,7 @@ class MainActivity: AppCompatActivity() {
 
     //读取上一次的页面
     private fun readLastPageThenShow(): String{
-        val State_LastStayTab = SettingsCenter.get_State_LastStayTab(this@MainActivity)
+        val State_LastStayTab = SettingsCenter.get_State_LastStayTab()
         //consoleLog("showMediaList : State_LastStayTab = $State_LastStayTab")
 
         return State_LastStayTab
@@ -603,7 +604,7 @@ class MainActivity: AppCompatActivity() {
             }
 
             //记录状态
-            SettingsCenter.set_State_LastStayTab(this@MainActivity, SettingsCenter.tab_mark_video)
+            SettingsCenter.set_State_LastStayTab(SettingsCenter.tab_mark_video)
 
         }
     }
@@ -632,7 +633,7 @@ class MainActivity: AppCompatActivity() {
             }
 
             //记录状态
-            SettingsCenter.set_State_LastStayTab(this@MainActivity, SettingsCenter.tab_mark_music)
+            SettingsCenter.set_State_LastStayTab(SettingsCenter.tab_mark_music)
 
         }
     }
@@ -644,7 +645,7 @@ class MainActivity: AppCompatActivity() {
         //检查是否需要读取系统视频
         lifecycleScope.launch(Dispatchers.IO) {
             //获取强制每次读取标识
-            val queryNew = SettingsCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
+            val queryNew = SettingsCenter.get_PREFS_QueryNewMediaOnStart()
             //检查本地数据库是否已有视频数据
             if (VideoRepo(this@MainActivity).isEmpty() || queryNew){
                 //consoleLog("showVideoListCore: 本地数据库视频数据为空 触发读取媒体库视频")
@@ -717,7 +718,7 @@ class MainActivity: AppCompatActivity() {
         startMusicRecyclerView()
         //检查本地数据库是否已有音乐数据
         lifecycleScope.launch(Dispatchers.IO) {
-            val queryNew = SettingsCenter.get_PREFS_QueryNewMediaOnStart(this@MainActivity)
+            val queryNew = SettingsCenter.get_PREFS_QueryNewMediaOnStart()
             if (AudioRepo(this@MainActivity).isEmpty() || queryNew){
                 //consoleLog("showMusicList数据库音乐数据为空,触发读取媒体库音乐")
                 //从系统读取音乐
@@ -940,7 +941,7 @@ class MainActivity: AppCompatActivity() {
             consoleLog("showMiniViewByRecord-字符串拆分出错: $e")
         }
 
-        if (SettingsCenter.GET_PRF_ContinuePlay_withEngin(this@MainActivity)){
+        if (SettingsCenter.GET_PRF_ContinuePlay_withEngin()){
             //直接启动播放器
             setMediaItem(URI_S_FP.toUri(),false,true)
 
@@ -1063,7 +1064,7 @@ class MainActivity: AppCompatActivity() {
     }
     private fun updateMiniViewArtwork(type: String,NUM_ID: Long){
         //consoleLog("updateMiniViewArtwork()")
-        val useImage = SettingsCenter.GET_PRF_AlwaysUseImageInMiniView(this@MainActivity)
+        val useImage = SettingsCenter.GET_PRF_AlwaysUseImageInMiniView()
         if (useImage){
             updateMiniViewArtwork_Image(NUM_ID, type)
         }else{
@@ -1624,7 +1625,7 @@ class MainActivity: AppCompatActivity() {
         lock_clickMillisLock_second = System.currentTimeMillis()
 
         //检查启动方式
-        val defaultPlayBehavior = SettingsCenter.GET_PRF_DefaultPlayBehavior(this@MainActivity)
+        val defaultPlayBehavior = SettingsCenter.GET_PRF_DefaultPlayBehavior()
         //consoleLog("defaultPlayBehavior: $defaultPlayBehavior")
         when (defaultPlayBehavior) {
             //仅在MiniView中播放
@@ -1648,7 +1649,7 @@ class MainActivity: AppCompatActivity() {
         lock_clickMillisLock_second = System.currentTimeMillis()
 
         //检查启动方式
-        val show_page = SettingsCenter.GET_PRF_StartFullPage(context)
+        val show_page = SettingsCenter.GET_PRF_StartFullPage()
         if (show_page) {
             startMusicPlayer(uri)
         }else{
@@ -1665,7 +1666,7 @@ class MainActivity: AppCompatActivity() {
         lock_clickMillisLock = System.currentTimeMillis()
 
         //检查使用的页面类型
-        val playPageType = SettingsCenter.GET_PRF_PlayPageType(this@MainActivity)
+        val playPageType = SettingsCenter.GET_PRF_VideoPlayPage_Type()
         when{
             (playPageType == SettingsCenter.PlayPageType_Oro || playPageType == SettingsCenter.PlayPageType_Neo) -> {
                 //构建intent
@@ -1677,7 +1678,7 @@ class MainActivity: AppCompatActivity() {
                     .putExtra(IntentRepo.SOURCE, 3)
 
                 //是否使用进入动画
-                val useSlideInAnim = SettingsCenter.GET_PRF_EnableMiniView(this@MainActivity)
+                val useSlideInAnim = SettingsCenter.GET_PRF_EnableMiniView()
                 if (useSlideInAnim){
                     //构建可选参数
                     val options = ActivityOptionsCompat.makeCustomAnimation(
@@ -1785,7 +1786,7 @@ class MainActivity: AppCompatActivity() {
         //设置底部抬高高度
         miniView_bottom_padding.post{
             //获取目标高度
-            val target_height_Dp = SettingsCenter.get_value_MiniView_BottomPadding_Dp(context)
+            val target_height_Dp = SettingsCenter.get_value_MiniView_BottomPadding_Dp()
             var target_height_Px = target_height_Dp.dpToPx()
 
             //目标高度为0时跳过

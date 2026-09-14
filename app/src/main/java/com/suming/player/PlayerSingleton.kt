@@ -46,6 +46,7 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PlayerListener
+import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.FuncionalPack.SupportFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -523,7 +524,7 @@ object PlayerSingleton {
         val cover_img_uri = getArtworkFrameUri(context,URI_UP)
 
         ////媒体变更冷却时长
-        val delayMillis = SettingsCenter.get_value_onMediaChange_delayMillis(context)
+        val delayMillis = SettingsCenter.get_value_onMediaChange_delayMillis()
         delay(delayMillis)
 
 
@@ -666,24 +667,20 @@ object PlayerSingleton {
         }
     }
     //获取艺术图链接
-    private fun getArtworkFrameUri(context: Context, uri: Uri): Uri{
-        if (uri.toString() != PlayerInfoCenter.GET_Media_URI_S_FP()){
-            //consoleLog("发生了严重错误 getArtworkFrameUri")
-            return Uri.EMPTY
-        }
+    private fun getArtworkFrameUri(context: Context, URI_U: Uri): Uri{
+        //禁入条件
+        if (!SettingsCenter.GET_PRF_EnableMediaSessionArtWork()) return Uri.EMPTY
+        val URI_S = URI_U.toString()
+        if (URI_S != PlayerInfoCenter.GET_Media_URI_S_FP()) return Uri.EMPTY
 
         //
         val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
 
-        var cover_img_uri = Uri.EMPTY
-        if (SettingsCenter.GET_PRF_DisableMediaArtWork(context)){
-            return Uri.EMPTY
-        }else{
-            //从ArtworkFrameManager获取即可
-            cover_img_uri = ArtworkFrameManager.GET_ArtworkFrame_Uri(context, mediaType, NUM_ID)
 
-        }
+        //从ArtworkFrameManager获取即可
+        val cover_img_uri = ArtworkFrameManager.GET_ArtworkFrame_Uri(context, mediaType, NUM_ID)
+
 
         return if(cover_img_uri != Uri.EMPTY){
             cover_img_uri
@@ -1013,7 +1010,7 @@ object PlayerSingleton {
     //开始后台播放-操作合集
     fun startBackgroundPlay(){
         //检查是否开启后台播放功能
-        if (SettingsCenter.get_PREFS_BackgroundPlay(context)){
+        if (SettingsCenter.GET_PREFS_BackgroundPlay()){
 
         }else{
             pausePlay()
@@ -1022,7 +1019,7 @@ object PlayerSingleton {
     //回到前台播放-操作合集
     fun stopBackgroundPlay(){
         //检查是否开启后台播放功能
-        if (SettingsCenter.get_PREFS_BackgroundPlay(context)){
+        if (SettingsCenter.GET_PREFS_BackgroundPlay()){
 
         }else{
             //关闭后台播放功能：开始继续播放
@@ -1076,7 +1073,7 @@ object PlayerSingleton {
             override fun onTick( millisUntilFinished: Long) {}
             override fun onFinish() {
                 //检查需要进行的操作:立即停止或播放完本集才停止
-                val wait = SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd(context)
+                val wait = SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd()
                 //等待当前媒体结束后关闭
                 if (wait){
                     if (playState_playEnd){
@@ -1105,7 +1102,7 @@ object PlayerSingleton {
     }
     private fun timer_autoShut_Reach(context: Context) {
         //需等待当前媒体结束后关闭
-        if (SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd(context)) {
+        if (SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd()) {
             countDownDuration_Ms = 0
             shutDownMoment = "shutdown_when_end"
             timerState_autoShut_Reach = true

@@ -21,7 +21,6 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.media3.common.util.UnstableApi
@@ -283,7 +282,7 @@ class GuidanceActivity: AppCompatActivity() {
     //弹出反馈菜单
     private fun showReportMenu(button:TextView){
         val popup = PopupMenu(this@GuidanceActivity, button)
-        popup.menuInflater.inflate(R.menu.popup_menu_report_platform, popup.menu)
+        popup.menuInflater.inflate(R.menu.popup_menu_settings_report_platform, popup.menu)
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.platform_coolapk -> {
