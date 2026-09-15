@@ -195,8 +195,6 @@ class FragmentVideoStoreSetting: DialogFragment() {
     private fun registerSortSettings(view: View){
         lifecycleScope.launch(Dispatchers.Main){
 
-
-
             //排序方法读取
             updateSortMethodText()
             updateSortOrientationText()

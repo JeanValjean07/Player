@@ -24,6 +24,7 @@ import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SOURCE_CODE
 import com.suming.player.FuncionalPack.SettingsCenter
+import com.suming.player.PlayerSingleton
 import java.io.File
 import java.net.URLDecoder
 import kotlin.math.absoluteValue
@@ -213,7 +214,7 @@ class EntranceActivity : AppCompatActivity(){
     @OptIn(UnstableApi::class)
     private fun processPending(){
         //获取正在播放的媒体链接
-        val (ongoing , URI_U_FP) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+        val (ongoing , URI_U_FP) = PlayerSingleton.get_engine_ongoing_URI()
         val URI_S_FP = URI_U_FP.toString()
         //获取正在播放的媒体类型
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()

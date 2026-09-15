@@ -157,6 +157,24 @@
         </activity>
 
 
+        <!-- 测试版视频播放页 -->
+        <activity android:name=".PlayerActivityPro"
+            android:theme="@style/THEME_Player"
+            android:label="测试版视频播放页"
+            android:screenOrientation="unspecified"
+            android:hardwareAccelerated="true"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:enableOnBackInvokedCallback="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity">
+            <meta-data
+                android:name="android.notch_support"
+                android:value="true"
+                />
+        </activity>
+
+
+
         <!-- 设置 -->
         <activity android:name=".SettingsActivity"
             android:theme="@style/THEME_FULL_SCREEN"

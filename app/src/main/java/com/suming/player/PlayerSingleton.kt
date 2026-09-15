@@ -20,7 +20,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DecoderReuseEvaluation
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.SeekParameters
@@ -45,9 +44,10 @@ import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
-import com.suming.player.FuncionalPack.PlayerListener
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.FuncionalPack.SupportFormat
+import com.suming.player.FuncionalPack.SystemListener
+import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -141,15 +141,13 @@ object PlayerSingleton {
     @SuppressLint("StaticFieldLeak")
     private var _trackSelector: DefaultTrackSelector? = null
     private var _rendererFactory: RenderersFactory? = null
-    private fun get_trackSelector(context: Context): DefaultTrackSelector =
-        _trackSelector ?: synchronized(this) {
+    private fun get_trackSelector(context: Context): DefaultTrackSelector = _trackSelector ?: synchronized(this) {
             _trackSelector ?: DefaultTrackSelector(context)
                 .also { _trackSelector = it }
 
         }
-    private fun get_RendererFactory(context: Context): RenderersFactory =
-        _rendererFactory ?: synchronized(this) {
-            _rendererFactory ?: DefaultRenderersFactory(context)
+    private fun get_RendererFactory(context: Context): RenderersFactory = _rendererFactory ?: synchronized(this) {
+            _rendererFactory ?: NextRenderersFactory(context)
                 //允许解码器回退
                 .setEnableDecoderFallback(true)
                 .also { _rendererFactory = it }
@@ -169,15 +167,15 @@ object PlayerSingleton {
     //测试
     private val decoderListener = object : AnalyticsListener {
         //视频解码器初始化
-        override fun onVideoDecoderInitialized(eventTime:AnalyticsListener.EventTime,decoderName:String,initializedTimestampMs:Long,initializationDurationMs:Long) {
+        override fun onVideoDecoderInitialized(eventTime: AnalyticsListener.EventTime, decoderName:String, initializedTimestampMs:Long, initializationDurationMs:Long) {
 
-            consoleLog("Video decoder initialized: $decoderName")
+            //consoleLog("Video decoder initialized: $decoderName")
         }
 
         //视频输入格式变化
-        override fun onVideoInputFormatChanged(eventTime:AnalyticsListener.EventTime,format:Format,decoderReuseEvaluation:DecoderReuseEvaluation?) {
+        override fun onVideoInputFormatChanged(eventTime: AnalyticsListener.EventTime, format: Format, decoderReuseEvaluation: DecoderReuseEvaluation?) {
 
-            consoleLog("Video format changed: $format")
+            //consoleLog("Video format changed: $format")
         }
         //音频解码器初始化
         override fun onAudioDecoderInitialized(
@@ -186,10 +184,10 @@ object PlayerSingleton {
             initializedTimestampMs: Long,
             initializationDurationMs: Long
         ) {
-            consoleLog("Audio decoder initialized: $decoderName")
+           // consoleLog("Audio decoder initialized: $decoderName")
         }
-        override fun onAudioInputFormatChanged(eventTime:AnalyticsListener.EventTime,format:Format,decoderReuseEvaluation:DecoderReuseEvaluation?) {
-            consoleLog("Audio format changed: $format")
+        override fun onAudioInputFormatChanged(eventTime: AnalyticsListener.EventTime, format: Format, decoderReuseEvaluation: DecoderReuseEvaluation?) {
+           // consoleLog("Audio format changed: $format")
         }
 
     }
@@ -325,8 +323,8 @@ object PlayerSingleton {
 
         //收集可用于恢复播放的信息
         val current_media_progress = _player?.currentPosition ?: 0L
-        //仅在信息有效时开启onError标志
-        if (current_media_progress > 0L) onError = true
+
+
         //解锁一次作为保底
         isLocked = false
         //记录报错
@@ -336,7 +334,6 @@ object PlayerSingleton {
         consoleLog("ERROR:${error},MESSAGE:${error.message},CAUSE:${error.cause},ECN:${error.errorCodeName}\n")
 
     }
-    private var onError = false
     //错误次数
     private var singleItemState_errorCount = 0
     private var ErrorInfo : PlaybackException? = null
@@ -350,12 +347,13 @@ object PlayerSingleton {
         //ErrorRecovery进行错误解读并决定是否清除媒体项和重新上线
         if (cache_ErrorInfo != null){
             //检查报错信息获得执行码
-            val (clear_media_item,prepare) = ErrorRecovery.recover(cache_ErrorInfo)
+            val (is_known_error,clear_media_item,start_other) = ErrorRecovery.recover(cache_ErrorInfo)
 
-            //执行清除媒体项
-            if (clear_media_item) clearMediaItem()
+
             //执行重新上线
-            if (prepare) {
+            if (is_known_error) {
+                //执行清除媒体项
+                if (clear_media_item) clearMediaItem()
                 //错误次数增加
                 singleItemState_errorCount++
                 if (singleItemState_errorCount >= 3) {
@@ -367,9 +365,22 @@ object PlayerSingleton {
                 }
                 //调用prepare()让播放器重新上线
                 core_exoplayer_prepare()
+            }else{
+                //错误未知时，强制清除媒体
+                //执行清除媒体项
+                clearMediaItem()
+
+                //重新上线
+                core_exoplayer_prepare()
             }
 
+        }else{
+            //错误未知时，强制清除媒体
+            //执行清除媒体项
+            clearMediaItem()
 
+            //重新上线
+            core_exoplayer_prepare()
         }
 
     }
@@ -402,7 +413,7 @@ object PlayerSingleton {
         //销毁播放器
         releasePlayer()
         //关闭监听器
-        PlayerListener.stopListener()
+        SystemListener.stopListener()
         //关闭本侧的媒体会话
         stopMediaSession()
         //关闭服务
@@ -420,7 +431,7 @@ object PlayerSingleton {
     //Long Process Functions
     //设置新媒体项的外部接口(以后可以加些过滤)(返回ActivityResultConnector内的结果码)
     private var clickMillis_setMediaItem = 0L
-    suspend fun setMediaItem(URI_UP:Uri,file_path:String=Undefined,playWhenReady:Boolean,ignoreLock:Boolean=false): String {
+    suspend fun setMediaItem(URI_UP: Uri, file_path:String=Undefined, playWhenReady:Boolean, ignoreLock:Boolean=false): String {
         //检查是否已被锁定+进入流程后加锁
         if (isLocked && !ignoreLock){
             return ActivityResultConnector.OBRTV_Engine_Locked
@@ -505,11 +516,13 @@ object PlayerSingleton {
         val format = MediaItemForPlay.media_format
         if (!SupportFormat.isFormatSupported(format)){
 
+            consoleLog("setMediaItemCore -设置新媒体项:$format 不支持")
+
             return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
         }
 
         //暂停播放
-        withContext(Dispatchers.Main){
+        withContext(Dispatchers.Main) {
             pausePlay()
             clearMediaItem(real_clear = false)
         }
@@ -544,7 +557,8 @@ object PlayerSingleton {
                         .setTitle(MediaItemForPlay.file_name)
                         .setArtist(MediaItemForPlay.media_artist)
                         .setArtworkUri(cover_img_uri)
-                        .build())
+                        .build()
+                )
                 .build()
 
             //设置给播放器
@@ -583,10 +597,10 @@ object PlayerSingleton {
 
             //启动监听器(仅在播放时申请焦点)
             val focus = _player?.isPlaying ?: false
-            PlayerListener.startListener(focus = focus)
+            SystemListener.startListener(focus = focus)
 
             //请求音频焦点
-            PlayerListener.requestAudioFocus(context, force_request = false)
+            SystemListener.requestAudioFocus(context, force_request = false)
         }
 
     }
@@ -628,7 +642,7 @@ object PlayerSingleton {
             //只有已缓存在列表的媒体才能写入记录
             val (mediaType,mediaNUMID) = MediaInfoRetriever.split_SPECIFIC_ID(SPECIFIC_ID)
             if (mediaType == MediaType.Video){
-                val videoRepo = VideoRepo.get(context)
+                val videoRepo = VideoRepo.Companion.get(context)
                 //检查是否存在NUM_ID为目标的项
                 if (!videoRepo.existsByNUM_ID(mediaNUMID)){
                     //拒绝保存
@@ -636,7 +650,7 @@ object PlayerSingleton {
                 }
 
             }else if (mediaType == MediaType.Audio){
-                val audioRepo = AudioRepo.get(context)
+                val audioRepo = AudioRepo.Companion.get(context)
                 //检查是否存在NUM_ID为目标的项
                 if (!audioRepo.existsByNUM_ID(mediaNUMID)){
                     //拒绝保存
@@ -667,7 +681,7 @@ object PlayerSingleton {
         }
     }
     //获取艺术图链接
-    private fun getArtworkFrameUri(context: Context, URI_U: Uri): Uri{
+    private fun getArtworkFrameUri(context: Context, URI_U: Uri): Uri {
         //禁入条件
         if (!SettingsCenter.GET_PRF_EnableMediaSessionArtWork()) return Uri.EMPTY
         val URI_S = URI_U.toString()
@@ -704,7 +718,8 @@ object PlayerSingleton {
     private fun connectToMediaSession(context: Context){
         if (sessionState_MediaSession_connected) return
         sessionState_MediaSession_connected = true
-        val SessionToken = SessionToken(context as Application, ComponentName(context, PlayerService::class.java))
+        val SessionToken =
+            SessionToken(context as Application, ComponentName(context, PlayerService::class.java))
         MediaSessionController = MediaController.Builder(context, SessionToken).buildAsync()
         MediaSessionController?.addListener({
             controller = MediaSessionController?.get()
@@ -733,7 +748,7 @@ object PlayerSingleton {
 
 
     //获取当前在播放的媒体项的链接(来自播放核心)(也可在PlayerInFoCenter获取缓存)
-    fun GET_STE_currentMediaItem_Uri(): Pair<Boolean, Uri> {
+    fun get_engine_ongoing_URI(): Pair<Boolean, Uri> {
         if (_player == null) {
             return Pair(false, Uri.EMPTY)
         }
@@ -755,23 +770,23 @@ object PlayerSingleton {
         }
     }
     //是否正在播放
-    fun GET_STE_isNowPlaying(): Boolean {
+    fun get_engine_is_playing(): Boolean {
         if (_player == null) return false
 
         return _player?.isPlaying ?: false
     }
     //获取当前媒体项完整数据包
-    fun getState_currentMediaItem_Pack(): MediaItem? {
+    fun get_engine_ongoing_MediaItem(): MediaItem? {
         val currentMediaItem = _player?.currentMediaItem
 
         return currentMediaItem
     }
     //获取当前播放进度
-    fun getState_currentPosition(): Long {
+    fun get_ongoing_current_position(): Long {
         return _player?.currentPosition ?: 0L
     }
     //获取是否播放结束
-    fun GET_STE_playEnd(): Boolean {
+    fun get_state_is_playEnd(): Boolean {
 
         return playState_playEnd
     }
@@ -794,10 +809,10 @@ object PlayerSingleton {
 
 
         //请求音频焦点
-        if (requestFocus) PlayerListener.requestAudioFocus(context,requestFocus)
+        if (requestFocus) SystemListener.requestAudioFocus(context,requestFocus)
 
         //启动监听器
-        PlayerListener.startListener()
+        SystemListener.startListener()
 
 
 
@@ -1113,7 +1128,7 @@ object PlayerSingleton {
             //关闭倒计时(含清除状态)
             timer_DisableAutoShut()
             //关闭监听器
-            PlayerListener.stopListener()
+            SystemListener.stopListener()
             //关闭播放器
             core_exoplayer_stop()
         }

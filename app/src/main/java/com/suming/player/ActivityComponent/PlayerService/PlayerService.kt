@@ -13,7 +13,7 @@ import androidx.media3.session.MediaSessionService
 import com.suming.player.ActivityComponent.PlayerActivity.ToolPlayerWrapper
 import com.suming.player.EntranceActivity
 import com.suming.player.FuncionalPack.IntentRepo
-import com.suming.player.FuncionalPack.PlayerListener
+import com.suming.player.FuncionalPack.SystemListener
 import com.suming.player.FuncionalPack.SOURCE_CODE
 import com.suming.player.PlayerSingleton
 import com.suming.player.FuncionalPack.SettingsCenter
@@ -21,10 +21,6 @@ import com.suming.player.FuncionalPack.SettingsCenter
 @UnstableApi
 @Suppress("/unused")
 class PlayerService: MediaSessionService() {
-    companion object {
-        const val NOTIF_ID = 1
-        const val CHANNEL_ID = "playback"
-    }
 
     //媒体会话
     private var mediaSession: MediaSession? = null
@@ -146,14 +142,14 @@ class PlayerService: MediaSessionService() {
 
     override fun onDestroy(){
         super.onDestroy()
-        consoleLog("onDestroy")
+        //consoleLog("onDestroy")
 
         stopLocalAll()
 
     }
     //仅在后台划卡时触发,而且前提是系统不执行强行停止
     override fun onTaskRemoved(rootIntent: Intent?) {
-        consoleLog("onTaskRemoved")
+        //consoleLog("onTaskRemoved")
 
         val needStopEngine = SettingsCenter.GET_PRF_stopEngine_whenTaskRemoved() || !SettingsCenter.GET_PRF_EnableMiniView()
 
@@ -183,29 +179,29 @@ class PlayerService: MediaSessionService() {
     //播放或暂停
     private fun pauseOrContinue() {
         //先检查目前是不是在播放(读取到的是父类修改后的状态,原本的播放状态应取反)
-        val isPlaying = !PlayerSingleton.GET_STE_isNowPlaying()
+        val isPlaying = !PlayerSingleton.get_engine_is_playing()
 
         //切换state_perception_on
         if (isPlaying){
             //执行了暂停操作
 
 
-            if (!PlayerListener.isFocus){
+            if (!SystemListener.isFocus){
                 //在无焦点的状态下暂停,意味着再次失去焦点时期望自动暂停
-                PlayerListener.state_perception_on = true
+                SystemListener.state_perception_on = true
             }else{
-                PlayerListener.state_perception_on = false
+                SystemListener.state_perception_on = false
             }
 
         }else{
             //执行了继续播放操作
-            if (!PlayerListener.isFocus){
+            if (!SystemListener.isFocus){
 
                 //在无焦点的状态下继续播放,意味着再次失去焦点时不期望自动暂停
-                PlayerListener.state_perception_on = false
+                SystemListener.state_perception_on = false
 
             }else{
-                PlayerListener.state_perception_on = true
+                SystemListener.state_perception_on = true
             }
 
 

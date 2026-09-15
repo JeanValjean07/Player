@@ -63,6 +63,9 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.transformer)
+    //Exoplayer ffmpeg
+    implementation("io.github.anilbeesetti:nextlib-media3ext:1.10.0-0.12.1")
+
 
 
     //Compose

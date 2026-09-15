@@ -127,12 +127,16 @@
 
     <!-- 首页专辑区域 -->
     <color name="AlbumSquare_Background_Themed">#FF331848</color>
-    <!-- toast -->
+    <!-- 自定义 Toast 和 胶囊通知 -->
     <color name="Toast_AlwaysLight_Background">#FFFFFFFF</color>
     <color name="Toast_AlwaysLight_Text">#FF212121</color>
-    <!-- 开关SwitchCompat -->
+    <!-- 开关 SwitchCompat -->
     <color name="SC_TrackColor">#FF626262</color>
     <color name="SC_ThumbColor">#FFEEEEEE</color>
+    <!-- 自定义 Alert Dialog -->
+    <color name="AlertDialog_Text">#FFFFFFFF</color>
+    <color name="AlertDialog_DividerLine">#FF616161</color>
+
 
     <!-- 文字 -->
     <color name="ColorPack_PrimaryTextColor">#FF000000</color>

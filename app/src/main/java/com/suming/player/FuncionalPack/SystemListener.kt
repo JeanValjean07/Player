@@ -13,7 +13,7 @@ import androidx.media3.common.util.UnstableApi
 import com.suming.player.PlayerSingleton
 
 @Suppress("unused")
-object PlayerListener {
+object SystemListener {
 
     //应用引用
     private lateinit var context: Application
@@ -170,7 +170,7 @@ object PlayerListener {
                 //强制暂停时不继续
                 if (PlayerSingleton.getState_forcePause()) return
                 //播放结束时不继续
-                if (PlayerSingleton.GET_STE_playEnd()) return
+                if (PlayerSingleton.get_state_is_playEnd()) return
 
                 //检查是否需要继续播放
                 if (state_perception_on){

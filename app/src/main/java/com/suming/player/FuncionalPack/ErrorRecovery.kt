@@ -13,7 +13,7 @@ object ErrorRecovery {
 
 
 
-    //返回值1：是否清除媒体  返回值2：是否重新上线  返回3：调用其他
+    //返回值1：是否已知明确的错误原因  返回值2：是否清除媒体   返回3：是否调用其他
     fun recover(error: PlaybackException): Triple<Boolean, Boolean, Boolean>{
         when(error.message){
             ERROR_SOURCE_ERROR -> {
@@ -21,11 +21,11 @@ object ErrorRecovery {
 
                 when{
                     cause.contains(ERROR_SOURCE_ERROR_C_INVALID_NAL_LENGTH) -> {
-                        return Triple(true, false, true)
+                        return Triple(true, true, true)
                     }
 
                     else -> {
-                        return Triple(true, false, false)
+                        return Triple(false, false, false)
                     }
                 }
             }
@@ -38,12 +38,12 @@ object ErrorRecovery {
                 val ECN = error.errorCodeName
                 when(ECN){
                     ECN_ERROR_CODE_DECODER_INIT_FAILED -> {
-                        return Triple(true, false, false)
+                        return Triple(true, true, false)
                     }
 
 
                     else -> {
-                        return Triple(true, false, false)
+                        return Triple(false, true, false)
                     }
                 }
 
@@ -73,6 +73,15 @@ object ErrorRecovery {
         MESSAGE:MediaCodecVideoRenderer error, index=0, format=Format(1, null, video/mp4, video/avc, avc1.640028, 226298, und, [1280, 674, 25.0, ColorInfo(BT709, Limited range, SDR SMPTE 170M, false, 8bit Luma, 8bit Chroma)], [-1, -1, -1]), format_supported=YES,
         CAUSE:androidx.media3.exoplayer.mediacodec.MediaCodecRenderer$DecoderInitializationException: Decoder init failed: OMX.IMG.MSVDX.Decoder.AVC, Format(1, null, video/mp4, video/avc, avc1.640028, 226298, und, [1280, 674, 25.0, ColorInfo(BT709, Limited range, SDR SMPTE 170M, false, 8bit Luma, 8bit Chroma)], [-1, -1, -1]),
         ECN:ERROR_CODE_DECODER_INIT_FAILED
+
+        ERROR 4
+        ERROR:androidx.media3.exoplayer.ExoPlaybackException: Source error,
+        MESSAGE:Source error,
+        CAUSE:androidx.media3.datasource.ContentDataSource$ContentDataSourceException: java.io.FileNotFoundException: java.io.FileNotFoundException: No item at content://media/external/video/media/368,
+        ECN:ERROR_CODE_IO_FILE_NOT_FOUND
+
+
+
 
 
 

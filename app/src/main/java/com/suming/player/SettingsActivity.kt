@@ -54,6 +54,7 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.FuncionalPack.SettingsHelper
+import com.suming.player.PlayerSingleton
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -251,6 +252,15 @@ class SettingsActivity: AppCompatActivity(){
 
         }
     }
+
+    //设置监控辅助
+    private var set_switch_from_process = false
+    private fun cancel(): Boolean{
+        //确保状态清空
+        set_switch_from_process = false
+
+        return true
+    }
     //注册设置项
     private fun registerSettings(){
         lifecycleScope.launch(Dispatchers.Main) {
@@ -302,127 +312,156 @@ class SettingsActivity: AppCompatActivity(){
             //启用媒体会话艺术图
             val SC_EnableMediaSessionArtWork = findViewById<SwitchCompat>(R.id.SC_EnableMediaSessionArtWork)
             SC_EnableMediaSessionArtWork.isChecked = SettingsCenter.GET_PRF_EnableMediaSessionArtWork()
-            SC_EnableMediaSessionArtWork.setOnClickListener {
+            SC_EnableMediaSessionArtWork.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
 
-                val isChecked = SC_EnableMediaSessionArtWork.isChecked
+                fun set_isChecked_byProcess_include_write_setting(target_isChecked: Boolean){
+                    val current_isChecked = SC_EnableMediaSessionArtWork.isChecked
+                    if (target_isChecked != current_isChecked){
+                        set_switch_from_process = true
+                        SC_EnableMediaSessionArtWork.isChecked = target_isChecked
+                    }else{
+                        set_switch_from_process = false
+                    }
+                    //写入设置
+                    SettingsCenter.SET_PRF_EnableMediaSessionArtWork(target_isChecked)
+                }
+
                 if (isChecked){
-                    //检查是否可以开启
-                    val result = SettingsHelper.spySupport_EnableMediaSessionArtWork()
-                    when(result){
-                        1 -> {
-                            //允许打开
-                            SettingsCenter.SET_PRF_EnableMediaSessionArtWork(true)
-                        }
-                        2 -> {
-                            //禁止打开
-                            SC_EnableMediaSessionArtWork.isChecked = false
-                            SettingsCenter.SET_PRF_EnableMediaSessionArtWork(false)
-                            //显示提示
-                            AlertDialog.Builder(context)
-                                .setTitle("禁止启用此选项")
-                                .setMessage("已确认在当前设备上存在兼容性问题，不能启用此选项")
-                                .setPositiveButton("了解") { dialog, _ ->
-                                    ToolVibrate().vibrate(context)
+                    if (set_switch_from_process){
+                        set_switch_from_process = false
+                        set_isChecked_byProcess_include_write_setting(true)
+                    }else{
+                        //检查是否可以开启
+                        val result = SettingsHelper.spySupport_EnableMediaSessionArtWork()
+                        when(result){
+                            1 -> {
+                                //允许打开
+                                set_isChecked_byProcess_include_write_setting(true)
+                            }
+                            2 -> {
+                                //禁止打开,主动置为关闭
+                                set_isChecked_byProcess_include_write_setting(false)
+                                //显示提示
+                                AlertDialog.Builder(context)
+                                    .setTitle("禁止启用此选项")
+                                    .setMessage("已确认在当前设备上存在兼容性问题，不能启用此选项")
+                                    .setPositiveButton("了解") { dialog, _ ->
+                                        ToolVibrate().vibrate(context)
 
-                                    dialog.dismiss()
-                                }
-                                .setCancelable(true)
-                                .show()
-                        }
-                        3 -> {
-                            //允许打开
-                            SettingsCenter.SET_PRF_EnableMediaSessionArtWork(true)
-                            //显示提示
-                            AlertDialog.Builder(context)
-                                .setTitle("未测试兼容性")
-                                .setMessage("如果后续遇到异常，请关闭此选项")
-                                .setPositiveButton("了解") { dialog, _ ->
-                                    ToolVibrate().vibrate(context)
+                                        dialog.dismiss()
+                                    }
+                                    .setCancelable(cancel())
+                                    .show()
+                            }
+                            3 -> {
+                                //允许打开
+                                set_isChecked_byProcess_include_write_setting(true)
+                                //显示提示
+                                AlertDialog.Builder(context)
+                                    .setTitle("未测试兼容性")
+                                    .setMessage("如果后续遇到异常，请关闭此选项")
+                                    .setPositiveButton("了解") { dialog, _ ->
+                                        ToolVibrate().vibrate(context)
 
-                                    dialog.dismiss()
-                                }
-                                .setCancelable(true)
-                                .show()
-                        }
-                        else -> {
-                            //强制关闭
-                            SC_EnableMediaSessionArtWork.isChecked = false
-                            SettingsCenter.SET_PRF_EnableMediaSessionArtWork(false)
-                            //显示提示
-                            AlertDialog.Builder(context)
-                                .setTitle("无法开启此选项")
-                                .setMessage("未知错误")
-                                .setPositiveButton("了解") { dialog, _ ->
-                                    ToolVibrate().vibrate(context)
+                                        dialog.dismiss()
+                                    }
+                                    .setCancelable(cancel())
+                                    .show()
+                            }
+                            else -> {
+                                //强制关闭
+                                set_isChecked_byProcess_include_write_setting(false)
+                                //显示提示
+                                AlertDialog.Builder(context)
+                                    .setTitle("无法开启此选项")
+                                    .setMessage("未知错误")
+                                    .setPositiveButton("了解") { dialog, _ ->
+                                        ToolVibrate().vibrate(context)
 
-                                    dialog.dismiss()
-                                }
-                                .setCancelable(true)
-                                .show()
+                                        dialog.dismiss()
+                                    }
+                                    .setCancelable(cancel())
+                                    .show()
+                            }
                         }
                     }
+
                 }else{
-                    SettingsCenter.SET_PRF_EnableMediaSessionArtWork(false)
+                    set_switch_from_process = false
+                    set_isChecked_byProcess_include_write_setting(false)
                 }
 
             }
             //后台播放时关闭视频轨道
             val switch_DisableVideoTrackOnBack = findViewById<SwitchCompat>(R.id.DisableVideoTrackOnBack)
             switch_DisableVideoTrackOnBack.isChecked = SettingsCenter.GET_PREFS_DisableVideoTrack_whenBackground()
-            switch_DisableVideoTrackOnBack.setOnClickListener {
+            switch_DisableVideoTrackOnBack.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
 
-                val isChecked = switch_DisableVideoTrackOnBack.isChecked
-                if (isChecked){
-                    val AndroidVersion = DeviceInfo.GET_AndroidVersion()
-                    if (AndroidVersion >= Build.VERSION_CODES.TIRAMISU){
-                        //先关闭
-                        switch_DisableVideoTrackOnBack.isChecked = false
-                        SettingsCenter.SET_PREFS_DisableVideoTrack_whenBackground(false)
-                        //显示提示
-                        AlertDialog.Builder(context)
-                            .setTitle("提示")
-                            .setMessage("开启此选项后，切换轨道时会短暂停止播放，影响播放体验。其次，即使是持续解码视频的消耗也非常低，非常不建议开启此选项。")
-                            .setPositiveButton("仍要开启") { dialog, _ ->
-                                ToolVibrate().vibrate(context)
-                                //仍要开启
-                                switch_DisableVideoTrackOnBack.isChecked = true
-                                SettingsCenter.SET_PREFS_DisableVideoTrack_whenBackground(true)
-
-                                dialog.dismiss()
-                            }
-                            .setNegativeButton("不开启了") { dialog, _ ->
-                                ToolVibrate().vibrate(context)
-                                //
-                                switch_DisableVideoTrackOnBack.isChecked = false
-                                SettingsCenter.SET_PREFS_DisableVideoTrack_whenBackground(false)
-
-                                dialog.dismiss()
-                            }
-                            .setCancelable(true)
-                            .show()
+                fun set_isChecked_byProcess_include_write_setting(target_isChecked: Boolean){
+                    val current_isChecked = switch_DisableVideoTrackOnBack.isChecked
+                    if (target_isChecked != current_isChecked){
+                        set_switch_from_process = true
+                        switch_DisableVideoTrackOnBack.isChecked = target_isChecked
                     }else{
-                        //置为关闭
-                        switch_DisableVideoTrackOnBack.isChecked = false
-                        SettingsCenter.SET_PREFS_DisableVideoTrack_whenBackground(false)
-                        //显示提示
-                        AlertDialog.Builder(context)
-                            .setTitle("无法启用")
-                            .setMessage("受稳定性限制，安卓12及以下系统禁止开启此选项")
-                            .setPositiveButton("知道了") { dialog, _ ->
-                                ToolVibrate().vibrate(context)
-                                //
-                                switch_DisableVideoTrackOnBack.isChecked = false
+                        set_switch_from_process = false
+                    }
+                    //写入设置
+                    SettingsCenter.SET_PREFS_DisableVideoTrack_whenBackground(target_isChecked)
+                }
 
-                                dialog.dismiss()
-                            }
-                            .setCancelable(true)
-                            .show()
+                if (isChecked){
+                    if (set_switch_from_process){
+                        set_isChecked_byProcess_include_write_setting(true)
+                    }else{
+                        val AndroidVersion = DeviceInfo.GET_AndroidVersion()
+                        if (AndroidVersion >= Build.VERSION_CODES.TIRAMISU){
+                            //先程序化关闭
+                            set_isChecked_byProcess_include_write_setting(false)
+
+                            //显示提示
+                            AlertDialog.Builder(context)
+                                .setTitle("提示")
+                                .setMessage("开启此选项后，切换轨道时会短暂停止播放，影响播放体验。其次，即使是持续解码视频的消耗也非常低，非常不建议开启此选项。")
+                                .setPositiveButton("仍要开启") { dialog, _ ->
+                                    ToolVibrate().vibrate(context)
+                                    //仍要开启
+                                    set_isChecked_byProcess_include_write_setting(true)
+
+                                    dialog.dismiss()
+                                }
+                                .setNegativeButton("不开启了") { dialog, _ ->
+                                    ToolVibrate().vibrate(context)
+                                    //
+                                    set_isChecked_byProcess_include_write_setting(false)
+
+                                    dialog.dismiss()
+                                }
+                                .setCancelable(cancel())
+                                .show()
+                        }else{
+                            //先程序化关闭
+                            set_isChecked_byProcess_include_write_setting(false)
+                            //显示提示
+                            AlertDialog.Builder(context)
+                                .setTitle("无法启用")
+                                .setMessage("受稳定性限制，安卓12及以下系统禁止开启此选项")
+                                .setPositiveButton("知道了") { dialog, _ ->
+                                    ToolVibrate().vibrate(context)
+
+                                    dialog.dismiss()
+                                }
+                                .setCancelable(cancel())
+                                .show()
+                        }
+
                     }
 
+
                 }else{
-                    SettingsCenter.SET_PREFS_DisableVideoTrack_whenBackground(false)
+                    set_switch_from_process = false
+                    set_isChecked_byProcess_include_write_setting(false)
                 }
 
             }
@@ -489,12 +528,12 @@ class SettingsActivity: AppCompatActivity(){
             //🤣视频播放页设置
             //<editor-fold desc="////🤣视频播放页设置">
             //播放页样式
-            val ButtonPlayerType = findViewById<CardView>(R.id.ButtonPlayerType)
+            val Button_Video_Screening_Type = findViewById<CardView>(R.id.ButtonPlayerType)
             update_screening_type_Text()
-            ButtonPlayerType.setOnClickListener {
+            Button_Video_Screening_Type.setOnClickListener {
                 ToolVibrate().vibrate(context)
                 //使用弹出菜单选择
-                val popup = PopupMenu(context, ButtonPlayerType)
+                val popup = PopupMenu(context, it)
                 popup.menuInflater.inflate(R.menu.activity_settings_popup_player_type, popup.menu)
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
@@ -571,28 +610,55 @@ class SettingsActivity: AppCompatActivity(){
             switch_UseCompatScroller.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(context)
 
+
+                fun set_isChecked_byProcess_include_write_setting(target_isChecked: Boolean){
+                    val current_isChecked = switch_UseCompatScroller.isChecked
+                    if (target_isChecked != current_isChecked){
+                        set_switch_from_process = true
+                        switch_UseCompatScroller.isChecked = target_isChecked
+                    }else{
+                        set_switch_from_process = false
+                    }
+                    //写入设置
+                    SettingsCenter.SET_PREFS_UseCompatScroller(target_isChecked)
+                }
+
+
                 if (isChecked){
-                    AlertDialog.Builder(context)
-                        .setTitle("提示")
-                        .setMessage("仅当横屏时的进度条两端无法与中央竖线对齐时才能开启此开关，否则将导致进度条无法正常工作，请确认后再开启")
-                        .setPositiveButton("我已确认并开启") { dialog, _ ->
-                            ToolVibrate().vibrate(context)
+                    if (set_switch_from_process){
+                        set_switch_from_process = false
+                        SettingsCenter.SET_PREFS_UseCompatScroller(true)
+                    }else{
+                        //先程序化关闭
+                        set_isChecked_byProcess_include_write_setting(false)
 
-                            SettingsCenter.SET_PREFS_UseCompatScroller(true)
+                        //显示确认提示
+                        AlertDialog.Builder(context)
+                            .setTitle("提示")
+                            .setMessage("仅当横屏时的进度条两端无法与中央竖线对齐时才能开启此开关，否则将导致进度条无法正常工作，请确认后再开启")
+                            .setPositiveButton("我已确认并开启") { dialog, _ ->
+                                ToolVibrate().vibrate(context)
 
-                            dialog.dismiss()
-                        }
-                        .setNegativeButton("取消") { dialog, _ ->
-                            ToolVibrate().vibrate(context)
+                                set_isChecked_byProcess_include_write_setting(true)
 
-                            switch_UseCompatScroller.isChecked = false
+                                dialog.dismiss()
+                            }
+                            .setNegativeButton("取消") { dialog, _ ->
+                                ToolVibrate().vibrate(context)
 
-                            dialog.dismiss()
-                        }
-                        .setCancelable(true)
-                        .show()
+                                set_isChecked_byProcess_include_write_setting(false)
+
+                                dialog.dismiss()
+                            }
+                            .setCancelable(cancel())
+                            .show()
+                    }
+
                 }else{
-                    SettingsCenter.SET_PREFS_UseCompatScroller(false)
+                    //确保状态清空
+                    if (set_switch_from_process) set_switch_from_process = false
+
+                    set_isChecked_byProcess_include_write_setting(false)
                 }
             }
             //寻帧时一律使用关键帧
@@ -1066,13 +1132,13 @@ class SettingsActivity: AppCompatActivity(){
     //高发热提示词
     private fun get_notice_message_heat(): String{
         val msg_heat = "间隔数值过低时，存在性能劣化和设备发热风险。" +
-                "\n\n对于搭载高发热soc或者调度激进的设备，这会带来主板损坏风险，强烈建议取消，除非您知道自己在做什么，并做好了设备随时黑屏且无法开机的准备" +
+                "\n\n对于搭载高发热soc或者调度激进的设备，这会带来主板损坏风险，请谨慎操作" +
                 "\n\n以下骁龙soc为高风险：骁龙865 骁龙888 骁龙8 Gen1 骁龙8 Gen2 骁龙8 Gen3" +
                 "\n\n以下骁龙soc为低风险：骁龙835 骁龙845 骁龙855 骁龙8 Elite 骁龙8 Elite Gen5" +
-                "\n\n骁龙soc普遍高风险的原因是调度激进和没有优化，哪怕部分soc能效很好，但峰值功耗高，调度滥用超大核跑高频，于是过于频繁地撞击高温，制造剧烈温度波动，带来极高虚焊风险，高温锡也扛不住。部分系统可能对此有优化，请结合实际判断" +
+                "\n\n骁龙soc普遍高风险的原因是下游厂商调度激进或优化不到位。哪怕部分soc能效很好，但调度滥用超大核跑高频，于是过于频繁地撞击高温又回落，制造剧烈温度波动，带来高虚焊风险，高温锡也扛不住。部分系统可能对此有优化，请结合实际判断" +
                 "\n\n以下麒麟soc为高风险：麒麟970 麒麟980" +
                 "\n\n以下麒麟soc为低风险：麒麟990 麒麟9000 麒麟9000S 麒麟9010 麒麟9020" +
-                "\n\n麒麟soc普遍低风险的原因是有调度优化(仅限于EMUI/HarmonyOS)，运行时温度很低，仅需排除常规易虚焊型号，其余可放心选择无间隔" +
+                "\n\n麒麟soc普遍低风险的原因是有调度优化(仅限于EMUI/HarmonyOS)，风险相对较低" +
                 "\n\n您可以监控CPU核心温度并判断适用于当前设备的档位：" +
                 "\n\n下载任意可监控CPU核心温度的App，开启温度悬浮窗，关闭此选项上方的“一律使用关键帧”开关，播放任意视频，缓慢拖动进度条，观察连续寻帧时的CPU核心温度峰值。" +
                 "不超过65度为低风险，65度-75度为中等风险，75度以上为高风险，90度以上为极高风险" +
@@ -1099,7 +1165,9 @@ class SettingsActivity: AppCompatActivity(){
                 update_screening_type_Text()
             }
             SettingsCenter.screening_type_TEST -> {
-                showCustomToast("不支持", 3)
+                SettingsCenter.SET_PRF_Video_Screening_Type(screening_type)
+                showCustomToast("成功设置播放页样式为测试版本", 3)
+                update_screening_type_Text()
             }
         }
     }
@@ -1165,11 +1233,11 @@ class SettingsActivity: AppCompatActivity(){
         if (value < 66L){
             //构建自定义alert_view
             val view = layoutInflater.inflate(R.layout.customized_alert_dialog, null)
-            view.findViewById<TextView>(R.id.alert_dialog_title).text = "数值过低，请查看提示"
+            view.findViewById<TextView>(R.id.alert_dialog_title).text = "关于设备安全的重要提示"
             view.findViewById<TextView>(R.id.alert_dialog_message).text = get_notice_message_heat()
             AlertDialog.Builder(context)
                 .setView(view)
-                .setPositiveButton("我知道自己在做什么") { dialog, _ ->
+                .setPositiveButton("已了解风险并确认") { dialog, _ ->
                     ToolVibrate().vibrate(context)
 
                     //执行

@@ -184,6 +184,32 @@ class MainActivity: AppCompatActivity() {
 
     }
 
+    override fun onNewIntent(newIntent: Intent?) {
+        super.onNewIntent(newIntent)
+        if (newIntent?.action != null){
+            when (newIntent.action) {
+                //常规重复调用(来自EntranceActivity)
+                IntentRepo.ACTION_ENTRANCE_REQUEST -> {
+                    //收到EntranceActivity委托的新 intent
+                    val URI_S_FP = newIntent.getStringExtra(IntentRepo.URI) ?: Undefined
+                    if (URI_S_FP != Undefined) {
+                        //启动播放(检查是否已在播放此媒体项)
+                        val ongoing_URI_S_FP = PlayerSingleton.get_engine_ongoing_URI().second.toString()
+                        if (ongoing_URI_S_FP != URI_S_FP) {
+                            //设置媒体项
+                            setMediaItem(URI_S_FP.toUri(), true)
+                        } else {
+                            //继续播放
+                            PlayerSingleton.continuePlay()
+                        }
+
+                    }
+
+                }
+            }
+        }
+    }
+
     private fun init(){
         //获取MiniView视图
         initMiniView()
@@ -371,7 +397,7 @@ class MainActivity: AppCompatActivity() {
                             if (URI_S_FP != Undefined){
                                 //启动播放(检查是否已在播放此媒体项)
                                 withContext(Dispatchers.Main){
-                                    val ongoing_URI_S_FP = PlayerSingleton.GET_STE_currentMediaItem_Uri().second.toString()
+                                    val ongoing_URI_S_FP = PlayerSingleton.get_engine_ongoing_URI().second.toString()
                                     if (ongoing_URI_S_FP != URI_S_FP){
                                         //设置媒体项
                                         setMediaItem(URI_S_FP.toUri(),true,true)
@@ -939,7 +965,7 @@ class MainActivity: AppCompatActivity() {
             PlayingCard_TextMediaArtist.isSelected = true
 
             //检查是否有媒体在线
-            val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+            val (ongoing, _) = PlayerSingleton.get_engine_ongoing_URI()
             if (!ongoing){
                 if (PlayerInfoCenter.GET_Media_isCache()){
                     val uri = PlayerInfoCenter.GET_Media_URI_S_FP().toUri()
@@ -954,7 +980,7 @@ class MainActivity: AppCompatActivity() {
             }
 
             //选择执行播放或暂停
-            if (PlayerSingleton.GET_STE_isNowPlaying()){
+            if (PlayerSingleton.get_engine_is_playing()){
                 PlayerSingleton.pausePlay()
             }else{
                 PlayerSingleton.continuePlay(true)
@@ -994,7 +1020,7 @@ class MainActivity: AppCompatActivity() {
         ListRecyclerView_Video.stopScroll()
         ListRecyclerView_Music.stopScroll()
         //获取到链接时启动播放页
-        val URI = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
+        val URI = PlayerSingleton.get_engine_ongoing_URI().second
         val file_path = PlayerInfoCenter.GET_Media_FilePath()
         if (URI != Uri.EMPTY){
             //唤起播放页
@@ -1255,7 +1281,7 @@ class MainActivity: AppCompatActivity() {
     //检查是否有媒体正在在播放并获取链接
     private fun isAnyMediaOngoing(): Pair<Boolean, String>{
         //从播放器获取当前媒体状态
-        val (ongoing,currentMediaItem) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+        val (ongoing,currentMediaItem) = PlayerSingleton.get_engine_ongoing_URI()
 
         return if (ongoing){
             val currentMediaUriString = currentMediaItem.toString()
@@ -1519,6 +1545,8 @@ class MainActivity: AppCompatActivity() {
             }else{
                 //文件不存在
                 PlayerSingleton.clearMediaItem()
+                //关闭播放器
+                PlayerSingleton.stopPlayEngineBundle(true)
 
                 showCustomToast("媒体已失效")
             }
@@ -1627,9 +1655,10 @@ class MainActivity: AppCompatActivity() {
         lock_clickMillisLock = System.currentTimeMillis()
 
         //检查使用的页面类型
-        val playPageType = SettingsCenter.GET_PRF_Video_Screening_Type()
+        val screening_type = SettingsCenter.GET_PRF_Video_Screening_Type()
         when{
-            (playPageType == SettingsCenter.screening_type_ORO || playPageType == SettingsCenter.screening_type_NEO) -> {
+            //ORO或NEO
+            (screening_type == SettingsCenter.screening_type_ORO || screening_type == SettingsCenter.screening_type_NEO) -> {
                 //构建intent
                 val intent = Intent(this, PlayerActivityNeo::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -1656,8 +1685,31 @@ class MainActivity: AppCompatActivity() {
 
                 }
             }
-            playPageType == SettingsCenter.screening_type_TEST -> {
+            //测试版本
+            screening_type == SettingsCenter.screening_type_TEST -> {
+                //构建intent
+                val intent = Intent(this, PlayerActivityPro::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                    .putExtra(IntentRepo.URI, uri)
 
+                //是否使用进入动画
+                val useSlideInAnim = SettingsCenter.GET_PRF_EnableMiniView()
+                if (useSlideInAnim){
+                    //构建可选参数
+                    val options = ActivityOptionsCompat.makeCustomAnimation(
+                        this,
+                        R.anim.slide_in_vertical,
+                        R.anim.slide_dont_move
+                    )
+
+                    //启动活动
+                    startActivity(intent, options.toBundle())
+                }else{
+                    //启动活动
+                    startActivity(intent)
+
+                }
             }
         }
 

@@ -11,7 +11,6 @@ import android.widget.TextView
 import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
-import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -25,15 +24,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
-import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataLoader.VideoDataBaseLoader
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
-import com.suming.player.FuncionalPack.FragmentConnector
-import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
-import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

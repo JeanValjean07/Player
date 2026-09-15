@@ -145,7 +145,7 @@ object MediaDataBaseMaster {
         @OptIn(UnstableApi::class)
         override fun run() {
             //从播放器拿当前进度和duration
-            val currentPosition = PlayerSingleton.getState_currentPosition()
+            val currentPosition = PlayerSingleton.get_ongoing_current_position()
             val duration = PlayerInfoCenter.GET_Media_Duration()
             val SPECIFIC_ID = PlayerInfoCenter.GET_Media_SPECIFIC_ID()
             //

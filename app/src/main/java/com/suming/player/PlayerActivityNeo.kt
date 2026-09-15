@@ -102,10 +102,11 @@ import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
-import com.suming.player.FuncionalPack.PlayerListener
+import com.suming.player.FuncionalPack.SystemListener
 import com.suming.player.FuncionalPack.ScrollerHelper
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.IndepService.FloatingWindowService
+import com.suming.player.PlayerSingleton
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -124,7 +125,7 @@ import kotlin.math.pow
 
 @UnstableApi
 @Suppress("NewApi","/unused")
-class PlayerActivityNeo: AppCompatActivity(){
+class PlayerActivityNeo: AppCompatActivity() {
     //变量初始化
     //<editor-fold desc="变量初始化">
     //方向回调
@@ -250,7 +251,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 Intent.ACTION_SEND -> {
                     //获取原始链接
                     val (URI, file_path) = detectOriginalInfo_fromIntent(newIntent)
-                    val currentUri = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
+                    val currentUri = PlayerSingleton.get_engine_ongoing_URI().second
                     //判断是否是同一个视频
                     if (URI == currentUri){
                         continuePlay()
@@ -264,7 +265,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 //系统面板：选择其他应用打开
                 Intent.ACTION_VIEW -> {
                     val (URI, file_path) = detectOriginalInfo_fromIntent(newIntent)
-                    val currentUri = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    val currentUri = PlayerSingleton.get_engine_ongoing_URI()
                     consoleLog("currentUri: $currentUri, URI: $URI")
                     //判断是否是同一个视频
                     if (URI == currentUri){
@@ -281,7 +282,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                 IntentRepo.ACTION_NEW_INTENT -> {
                     consoleLog("onNewIntent ACTION_NEW_INTENT")
                     val (URI, file_path) = detectOriginalInfo_fromIntent(newIntent)
-                    val ongoing_URI = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
+                    val ongoing_URI = PlayerSingleton.get_engine_ongoing_URI().second
                     consoleLog("onNewIntent -新的数据: URI:$URI, ongoing_URI:$ongoing_URI")
                     //判断是否是同一个视频
                     if (URI == ongoing_URI){
@@ -716,7 +717,7 @@ class PlayerActivityNeo: AppCompatActivity(){
                             touchLeft = true
                         }
                         else if(finger1x > display_screen_width_pixels * 0.8){
-                            state_HeadSetInserted = PlayerListener.getState_isHeadsetPlugged(this@PlayerActivityNeo)
+                            state_HeadSetInserted = SystemListener.getState_isHeadsetPlugged(this@PlayerActivityNeo)
                             touchRight = true
                         }
                         else{
@@ -1002,7 +1003,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
 
         //获取正在播放信息
-        val ongoing_URI = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
+        val ongoing_URI = PlayerSingleton.get_engine_ongoing_URI().second
         val ongoing_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
 
         //日志-获取到的信息
@@ -1228,8 +1229,7 @@ class PlayerActivityNeo: AppCompatActivity(){
         }
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-
-            //showCustomToast("播放错误: ${error.message}", 3)
+            showCustomToast("出错了:${error.message}", 3)
         }
     }
     private var state_PlayerListenerAdded: Boolean = false
@@ -1292,7 +1292,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             //consoleLog("onPlayEnginRestart: 成功拿到播放器引用")
 
             //主动检查正在播放的项
-            val (ongoing,ongoing_URI) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+            val (ongoing,ongoing_URI) = PlayerSingleton.get_engine_ongoing_URI()
             //consoleLog("onPlayEnginRestart: 正在播放项:ongoing:${ongoing}, ongoing_URI:$ongoing_URI")
             if (ongoing){
                 connectCurrentMedia()
@@ -1375,7 +1375,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
                 withContext(Dispatchers.Main){
                     //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    val (ongoing, _) = PlayerSingleton.get_engine_ongoing_URI()
                     if (ongoing) {
                         showCustomToast("媒体解码失败")
                         //链接当前播放项
@@ -1395,7 +1395,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
                 withContext(Dispatchers.Main){
                     //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    val (ongoing, _) = PlayerSingleton.get_engine_ongoing_URI()
                     if (ongoing) {
                         showCustomToast("不支持的媒体类型")
                         //链接当前播放项
@@ -1415,7 +1415,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
                 withContext(Dispatchers.Main){
                     //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    val (ongoing, _) = PlayerSingleton.get_engine_ongoing_URI()
                     if (ongoing) {
                         showCustomToast("设置过于频繁")
                         //链接当前播放项
@@ -1446,7 +1446,7 @@ class PlayerActivityNeo: AppCompatActivity(){
             else -> {
                 withContext(Dispatchers.Main){
                     //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    val (ongoing, _) = PlayerSingleton.get_engine_ongoing_URI()
                     if (ongoing) {
                         showCustomToast("未知错误")
                         //链接当前播放项
@@ -1535,7 +1535,7 @@ class PlayerActivityNeo: AppCompatActivity(){
 
     //更新循环函数状态
     private fun updateLoopFunctionState(){
-        val isPlaying = PlayerSingleton.GET_STE_isNowPlaying()
+        val isPlaying = PlayerSingleton.get_engine_is_playing()
         if (isPlaying){
             start_S_Area_PassiveControl()
             startVideoTimeSync()
@@ -1576,7 +1576,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //检查是否有媒体正在在播放并获取链接
     private fun isAnyMediaOngoing(): Pair<Boolean, String>{
         //从播放器获取当前媒体状态
-        val (ongoing,currentMediaItem) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+        val (ongoing,currentMediaItem) = PlayerSingleton.get_engine_ongoing_URI()
 
         return if (ongoing){
             val currentMediaUriString = currentMediaItem.toString()
@@ -2040,7 +2040,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     private fun updateKeepScreenOn(){
         val keepOn = SettingsCenter.GET_PRF_KeepScreenOn()
         if (keepOn){
-            rootConstraint.keepScreenOn = PlayerSingleton.GET_STE_isNowPlaying()
+            rootConstraint.keepScreenOn = PlayerSingleton.get_engine_is_playing()
         }else{
             rootConstraint.keepScreenOn = false
         }
@@ -2809,7 +2809,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //状态playEnd
     private fun playState_playEnd(){
         //已移除媒体项时不触发
-        if (!PlayerSingleton.GET_STE_currentMediaItem_Uri().first) return
+        if (!PlayerSingleton.get_engine_ongoing_URI().first) return
         //根据循环模式执行操作
         val loopMode = ListManagerHelper.getLoopMode()
         when (loopMode) {
@@ -3719,7 +3719,7 @@ class PlayerActivityNeo: AppCompatActivity(){
     //检查并返回是否应当关闭遮罩
     private fun shouldCloseCover(): Boolean{
         //检查播放器是否已经正常恢复
-        val (current_media_ongoing, current_media_uri) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+        val (current_media_ongoing, current_media_uri) = PlayerSingleton.get_engine_ongoing_URI()
         if (!current_media_ongoing || current_media_uri == Uri.EMPTY){
 
 

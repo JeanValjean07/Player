@@ -198,9 +198,8 @@ object SettingsCenter {
         if (PRF_StartFullPage == -1) {
             //从配置单读取
             PRF_StartFullPage = Pandora_MainPage?.getInt(PRF_StartFullPage_Name, -1) ?: -1
-            //如果配置单内无该项,写入默认值
+            //写入默认值
             if (PRF_StartFullPage == -1) {
-                //默认设为使用完整播放页
                 PRF_StartFullPage = 0
                 Pandora_MainPage?.edit { putInt(PRF_StartFullPage_Name,0 ) }
             }
@@ -438,11 +437,11 @@ object SettingsCenter {
 
         //触发读取
         if (PRF_EnableMediaSessionArtWork == -1){
-            PRF_EnableMediaSessionArtWork = Pandora_Engine?.getInt(PRF_DisableVideoTrack_whenBackground_Name, -1) ?: -1
+            PRF_EnableMediaSessionArtWork = Pandora_Engine?.getInt(PRF_EnableMediaSessionArtWork_Name, -1) ?: -1
             //触发写入默认值
             if (PRF_EnableMediaSessionArtWork == -1){
                 PRF_EnableMediaSessionArtWork = 0
-                Pandora_Engine?.edit { putInt(PRF_DisableVideoTrack_whenBackground_Name, PRF_EnableMediaSessionArtWork ) }
+                Pandora_Engine?.edit { putInt(PRF_EnableMediaSessionArtWork_Name, PRF_EnableMediaSessionArtWork ) }
             }
         }
 

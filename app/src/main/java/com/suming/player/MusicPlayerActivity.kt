@@ -63,8 +63,9 @@ import com.suming.player.FuncionalPack.IntentRepo
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
-import com.suming.player.FuncionalPack.PlayerListener
+import com.suming.player.FuncionalPack.SystemListener
 import com.suming.player.FuncionalPack.SettingsCenter
+import com.suming.player.PlayerSingleton
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -422,7 +423,7 @@ class MusicPlayerActivity : AppCompatActivity() {
 
 
         //获取正在播放信息
-        val ongoing_URI = PlayerSingleton.GET_STE_currentMediaItem_Uri().second
+        val ongoing_URI = PlayerSingleton.get_engine_ongoing_URI().second
         val ongoing_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
 
         //设置媒体项决策程序 savedInstanceState == null 仅在首次启动时决定是否播放
@@ -526,7 +527,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
                 withContext(Dispatchers.Main){
                     //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    val (ongoing, _) = PlayerSingleton.get_engine_ongoing_URI()
                     if (ongoing) {
                         showCustomToast("媒体解码失败")
                         //链接当前播放项
@@ -543,7 +544,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
                 withContext(Dispatchers.Main){
                     //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    val (ongoing, _) = PlayerSingleton.get_engine_ongoing_URI()
                     if (ongoing) {
                         showCustomToast("不支持的媒体类型")
                         //链接当前播放项
@@ -560,7 +561,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
                 withContext(Dispatchers.Main){
                     //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    val (ongoing, _) = PlayerSingleton.get_engine_ongoing_URI()
                     if (ongoing) {
                         showCustomToast("设置过于频繁")
                         //链接当前播放项
@@ -587,7 +588,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             else -> {
                 withContext(Dispatchers.Main){
                     //检查当前有没有在播放的项(仅在未播放时显示错误遮罩,在播放时只弹出toast提示)
-                    val (ongoing, _) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+                    val (ongoing, _) = PlayerSingleton.get_engine_ongoing_URI()
                     if (ongoing) {
                         showCustomToast("未知错误")
                         //链接当前播放项
@@ -911,7 +912,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             //consoleLog("onPlayEnginRestart: 成功拿到播放器引用")
 
             //主动检查正在播放的项
-            val (ongoing,ongoing_URI) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+            val (ongoing,ongoing_URI) = PlayerSingleton.get_engine_ongoing_URI()
             //consoleLog("onPlayEnginRestart: 正在播放项:ongoing:${ongoing}, ongoing_URI:$ongoing_URI")
             if (ongoing){
                 connectToCurrentMedia()
@@ -1359,7 +1360,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                                     touchArea = 2 //映射到2上做音量控制
                                 }
                                 finger1x > artwork_width_pixels * 0.8 -> {
-                                    state_HeadSetInserted = PlayerListener.getState_isHeadsetPlugged(this@MusicPlayerActivity)
+                                    state_HeadSetInserted = SystemListener.getState_isHeadsetPlugged(this@MusicPlayerActivity)
                                     touchArea = 2
                                 }
                                 else -> {

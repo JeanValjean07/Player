@@ -47,7 +47,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
-        <!-- playerView -->
+        <!-- Media3 强绑定 PlayerView -->
         <androidx.media3.ui.PlayerView
             android:id="@+id/playerView"
             android:layout_width="match_parent"
@@ -55,11 +55,11 @@
             android:layout_gravity="center"
             app:resize_mode="fit"
             app:use_controller="false"
-            android:background="@android:color/transparent"
+            android:backgroundTint="@android:color/transparent"
             android:translationZ="0dp"
             app:surface_type="surface_view">
         </androidx.media3.ui.PlayerView>
-        <!-- 播放器遮罩 -->
+        <!-- 加载中遮罩 -->
         <LinearLayout
             android:id="@+id/cover"
             android:layout_width="match_parent"

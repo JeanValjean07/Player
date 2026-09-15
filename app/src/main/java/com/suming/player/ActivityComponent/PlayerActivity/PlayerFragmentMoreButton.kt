@@ -49,7 +49,7 @@ import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import com.suming.player.FuncionalPack.PlayerInfoCenter
-import com.suming.player.FuncionalPack.PlayerListener
+import com.suming.player.FuncionalPack.SystemListener
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,7 +58,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 @UnstableApi
-@Suppress("unused","NewApi")
+@Suppress("/unused","NewApi")
 @SuppressLint("UseGetLayoutInflater", "InflateParams","SetTextI18n")
 class PlayerFragmentMoreButton: DialogFragment(){
     companion object {
@@ -338,10 +338,10 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //开启方向监听器
             val switch_EnableOriListener = view.findViewById<SwitchCompat>(R.id.EnableOriListener)
             switch_EnableOriListener.isChecked = SettingsCenter.GET_PREFS_EnableOrientationListener()
-            switch_EnableOriListener.setOnClickListener {
+            switch_EnableOriListener.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(requireContext())
                 //读取目标状态并修改设置
-                SettingsCenter.SET_PREFS_EnableOrientationListener(switch_EnableOriListener.isChecked)
+                SettingsCenter.SET_PREFS_EnableOrientationListener(isChecked)
                 //发回结果(仅告知设置变更,不返回值,自行读取)
                 returnFragment(FragmentConnector.fragment_more_button_switch_ori_listener)
                 customDismiss()
@@ -349,32 +349,30 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //后台播放
             val switch_BackgroundPlay = view.findViewById<SwitchCompat>(R.id.Switch_BackgroundPlay)
             switch_BackgroundPlay.isChecked = SettingsCenter.GET_PREFS_BackgroundPlay()
-            switch_BackgroundPlay.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+            switch_BackgroundPlay.setOnCheckedChangeListener { _, isChecked ->
+            ToolVibrate().vibrate(requireContext())
                 //仅修改设置即可
-                SettingsCenter.SET_PREFS_BackgroundPlay(switch_BackgroundPlay.isChecked)
+                SettingsCenter.SET_PREFS_BackgroundPlay(isChecked)
 
                 customDismiss()
             }
             //仅在播放完成后退出
             val switch_ExitWhenMediaEnd = view.findViewById<SwitchCompat>(R.id.Switch_ExitWhenMediaEnd)
             switch_ExitWhenMediaEnd.isChecked = SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd()
-            switch_ExitWhenMediaEnd.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+            switch_ExitWhenMediaEnd.setOnCheckedChangeListener { _, isChecked ->
+            ToolVibrate().vibrate(requireContext())
                 //仅修改设置即可
-                SettingsCenter.SET_PRF_OnlyAutoStop_whenMediaEnd(switch_ExitWhenMediaEnd.isChecked)
+                SettingsCenter.SET_PRF_OnlyAutoStop_whenMediaEnd(isChecked)
 
                 customDismiss()
             }
             //保存播放进度
             val switch_saveLastPosition = view.findViewById<SwitchCompat>(R.id.Switch_SavePositionWhenExit)
             switch_saveLastPosition.isChecked = MediaDataBaseMaster.get_PREFS_saveProgress(URI_S_FP,requireContext())
-            switch_saveLastPosition.setOnClickListener {
+            switch_saveLastPosition.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(requireContext())
 
-
                 //修改设置
-                val isChecked = switch_saveLastPosition.isChecked
                 val URI_S_FP = PlayerInfoCenter.GET_Media_URI_S_FP()
                 MediaDataBaseMaster.set_PREFS_saveProgress(URI_S_FP,isChecked,requireContext())
 
@@ -460,11 +458,11 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //保持屏幕常亮
             val SC_KeepScreenOn = view.findViewById<SwitchCompat>(R.id.SC_KeepScreenOn)
             SC_KeepScreenOn.isChecked = SettingsCenter.GET_PRF_KeepScreenOn()
-            SC_KeepScreenOn.setOnClickListener {
+            SC_KeepScreenOn.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate().vibrate(requireContext())
 
                 //修改设置
-                SettingsCenter.SET_PRF_KeepScreenOn(SC_KeepScreenOn.isChecked)
+                SettingsCenter.SET_PRF_KeepScreenOn(isChecked)
                 //发回刷新消息
                 returnFragment(FragmentConnector.fragment_more_button_update_keep_screen_on)
 
@@ -605,7 +603,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                     .setPositiveButton("了解") { dialog, which ->
                         ToolVibrate().vibrate(requireContext())
 
-                        PlayerListener.state_perception_on = true
+                        SystemListener.state_perception_on = true
 
                         customDismiss()
 
@@ -878,7 +876,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
     }
     //检查是否正在播放
     private fun checkOngoingMedia():Pair<Boolean,String>{
-        val (ongoing,URI_U_FP) = PlayerSingleton.GET_STE_currentMediaItem_Uri()
+        val (ongoing,URI_U_FP) = PlayerSingleton.get_engine_ongoing_URI()
         val URI_S_FP = URI_U_FP.toString()
 
         return Pair(ongoing,URI_S_FP)

@@ -11,7 +11,6 @@ import android.widget.TextView
 import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
-import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -29,9 +28,7 @@ import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataLoader.AudioDataBaseLoader
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
-import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
-import com.suming.player.PlayerSingleton
 import com.suming.player.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

@@ -422,7 +422,7 @@ class ListManagerFragment: DialogFragment(){
         val success = MediaInfoRetriever.isUriReadable(context,URI_S_FP)
         //consoleLog("isUriReadable: $success")
         if (success){
-            if (URI_S_FP == PlayerSingleton.GET_STE_currentMediaItem_Uri().second.toString()){
+            if (URI_S_FP == PlayerSingleton.get_engine_ongoing_URI().second.toString()){
                 if (PlayerInfoCenter.observableIsPlaying.value){
                     PlayerSingleton.pausePlay()
                 }else{

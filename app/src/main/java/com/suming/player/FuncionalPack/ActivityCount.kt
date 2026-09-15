@@ -1,7 +1,6 @@
 package com.suming.player.FuncionalPack
 
 import android.util.Log
-import com.suming.player.PlayerSingleton
 
 object ActivityCount {
 
