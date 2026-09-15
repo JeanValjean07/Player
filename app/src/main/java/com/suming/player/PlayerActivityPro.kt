@@ -1,9 +1,10 @@
 package com.suming.player
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.SurfaceView
+import android.widget.FrameLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.IntentCompat
@@ -19,7 +20,7 @@ class PlayerActivityPro : AppCompatActivity() {
     //获取播放器引用
     private var IPlayer: PlayerInterface? = null
 
-    //日志控制
+    //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
             Log.d("SuMing", "PlayerActivityTest: $msg")
@@ -27,36 +28,26 @@ class PlayerActivityPro : AppCompatActivity() {
     }
 
 
+    //视频视图容器
+    private lateinit var PlayerView_Container : FrameLayout
+
+    //连接ExoPlayerImpl的回调通道
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //显示配置
-        enableEdgeToEdge()
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        setContentView(R.layout.activity_player_multi_support)
+        //初始化显示
+        init_display()
 
-        //
-        consoleLog("onCreate")
-        //初始化播放器
-        consoleLog("onCreate: 初始化播放器")
+        val (URI,SOURCE) = ExtractIntent(intent)
+        //连接到播放器接口
         IPlayer = PlayerHolder.get_ins_refresh(this)
 
-        IPlayer?.prepare()
+        //
+        IPlayer?.build_player()
 
-        consoleLog("onCreate: 初始化播放器完成IPlayer :$IPlayer")
-
-        val URI = IntentCompat.getParcelableExtra(intent, IntentRepo.URI,  Uri::class.java) ?: Uri.EMPTY
-
-
-
-        val surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
-
-
-
-
-
-        consoleLog("onCreate: 设置播放 URI $URI")
-
+        //动态插入视图
+        IPlayer?.attachTextureView(this, PlayerView_Container)
 
 
         //设置播放状态
@@ -65,12 +56,12 @@ class PlayerActivityPro : AppCompatActivity() {
 
         //设置给播放器
         IPlayer?.setMediaItem(URI)
-        consoleLog("onCreate: 设置给播放器")
-
-        //设置播放状态
-        IPlayer?.play()
 
 
+
+
+        //
+        //startMainBusiness(savedInstanceState)
 
 
 
@@ -81,6 +72,59 @@ class PlayerActivityPro : AppCompatActivity() {
 
     }
 
+    //初始化显示
+    private fun init_display(){
+        //显示配置
+        enableEdgeToEdge()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        setContentView(R.layout.activity_player_type_pro)
+        //初始化全局view
+        fun init_view(){
+            PlayerView_Container = findViewById(R.id.playerContainer)
+        }
+        init_view()
+
+
+
+    }
+
+    //
+    private fun startMainBusiness(savedInstanceState: Bundle?) {
+
+        val (URI,SOURCE) = ExtractIntent(intent)
+        consoleLog( "onCreate: 设置播放 URI $URI, SOURCE $SOURCE")
+
+        if (savedInstanceState == null){
+            consoleLog( "savedInstanceState == null, IPlayer:${IPlayer}")
+
+
+            //动态插入视图
+            IPlayer?.attachTextureView(this, PlayerView_Container)
+
+
+            //设置播放状态
+            IPlayer?.setPlayWhenReady(true)
+
+
+            //设置给播放器
+            IPlayer?.setMediaItem(URI)
+
+
+
+        }else{
+            consoleLog( "savedInstanceState != null")
+        }
+
+    }
+    //提取 媒体URI 和 启动来源标记 SOURCE
+    private fun ExtractIntent(intent: Intent): Pair<Uri, String>{
+
+        val URI = IntentCompat.getParcelableExtra(intent, IntentRepo.URI,  Uri::class.java) ?: Uri.EMPTY
+        val SOURCE = intent.getStringExtra(IntentRepo.SOURCE) ?: ""
+
+
+        return Pair(URI, SOURCE)
+    }
 
 
 

@@ -1193,7 +1193,7 @@ class MainActivity: AppCompatActivity() {
             PlayingCard_Artwork_Image = null
             state_MiniViewArtwork_Image_NUM_ID = 0L
             //创建视频视图
-            PlayingCard_Artwork_Video = LayoutInflater.from(this).inflate(R.layout.piece_player_view_texture_ver, null, false) as PlayerView
+            PlayingCard_Artwork_Video = LayoutInflater.from(this).inflate(R.layout.piece_media3_player_view_texture_ver, null, false) as PlayerView
             //添加视频视图
             PlayingCard_Artwork.addView(PlayingCard_Artwork_Video)
             state_MiniViewArtwork_type = mini_view_type_video

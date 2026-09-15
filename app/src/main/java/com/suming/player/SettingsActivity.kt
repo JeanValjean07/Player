@@ -532,19 +532,28 @@ class SettingsActivity: AppCompatActivity(){
             update_screening_type_Text()
             Button_Video_Screening_Type.setOnClickListener {
                 ToolVibrate().vibrate(context)
-                //使用弹出菜单选择
+                //
                 val popup = PopupMenu(context, it)
                 popup.menuInflater.inflate(R.menu.activity_settings_popup_player_type, popup.menu)
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         R.id.type_oro -> {
-                            choose_screening_type(SettingsCenter.screening_type_ORO); true
+                            ToolVibrate().vibrate(context)
+
+                            choose_screening_type(SettingsCenter.screening_type_ORO)
+                            true
                         }
                         R.id.type_neo -> {
-                            choose_screening_type(SettingsCenter.screening_type_NEO); true
+                            ToolVibrate().vibrate(context)
+
+                            choose_screening_type(SettingsCenter.screening_type_NEO)
+                            true
                         }
                         R.id.type_test -> {
-                            choose_screening_type(SettingsCenter.screening_type_TEST); true
+                            ToolVibrate().vibrate(context)
+
+                            choose_screening_type(SettingsCenter.screening_type_TEST)
+                            true
                         }
                         else -> true
                     }

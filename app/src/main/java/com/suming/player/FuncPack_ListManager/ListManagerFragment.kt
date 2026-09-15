@@ -52,6 +52,8 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.SettingsCenter
+import com.suming.player.PlayerImplements.PlayerHolder
+import com.suming.player.PlayerImplements.PlayerInterface
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -646,8 +648,17 @@ class ListManagerFragment: DialogFragment(){
                 }
                 R.id.opt_player_closed -> {
                     ToolVibrate().vibrate(requireContext())
-
+                    //
                     closePlayer()
+
+                    true
+                }
+                R.id.opt_player_closed_pro -> {
+                    ToolVibrate().vibrate(requireContext())
+                    //
+                    val IPlayer = PlayerHolder.get_ins_refresh(requireContext())
+                    IPlayer.release()
+
 
                     true
                 }

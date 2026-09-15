@@ -52,16 +52,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:translationZ="1dp">
-        <!-- SurfaceView -->
-        <SurfaceView
-            android:id="@+id/surfaceView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:clickable="true"
-            android:backgroundTint="@color/SecondaryColorPack_SurfaceBackground"
-            android:translationZ="1dp">
-        </SurfaceView>
+
 
     </FrameLayout>
 

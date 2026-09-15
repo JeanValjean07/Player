@@ -6,6 +6,7 @@ import android.net.Uri
 import android.view.SurfaceView
 import android.view.TextureView
 import android.view.View
+import android.widget.FrameLayout
 import com.suming.player.PlayerImplements.PlayerInterface
 import com.suming.player.PlayerImplements.PlayerCallBack
 import android.media.MediaPlayer as SystemMediaPlayer
@@ -24,6 +25,17 @@ class MediaPlayerImpl(context: Context) : PlayerInterface {
 
 
     override var listener: PlayerCallBack? = null
+    override fun build_player() {
+        TODO("Not yet implemented")
+    }
+
+    override fun attach_addons() {
+        TODO("Not yet implemented")
+    }
+
+    override fun attach_more_addons() {
+        TODO("Not yet implemented")
+    }
 
 
     init {
@@ -31,7 +43,7 @@ class MediaPlayerImpl(context: Context) : PlayerInterface {
             listener?.onPrepared()
         }
         mediaPlayer.setOnCompletionListener {
-            listener?.onCompletion()
+            listener?.onMediaEnd()
         }
         mediaPlayer.setOnErrorListener { _, what, extra ->
             listener?.onError(RuntimeException("MediaPlayer error: what=$what, extra=$extra"))
@@ -65,11 +77,11 @@ class MediaPlayerImpl(context: Context) : PlayerInterface {
         listener?.onPlayingChanged(false)
     }
 
-    override fun attachSurfaceView(surfaceView: SurfaceView) {
+    override fun attachSurfaceView(context: Context, view: FrameLayout) {
         TODO("Not yet implemented")
     }
 
-    override fun attachTextureView(textureView: TextureView) {
+    override fun attachTextureView(context: Context, view: FrameLayout) {
         TODO("Not yet implemented")
     }
 

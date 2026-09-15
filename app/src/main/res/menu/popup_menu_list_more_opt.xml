@@ -17,6 +17,10 @@
     <item
         android:id="@+id/opt_player_closed"
         android:title="关闭播放器" />
+    <item
+        android:id="@+id/opt_player_closed_pro"
+        android:title="关闭测试版播放器"
+        />
 
 
 </menu>
