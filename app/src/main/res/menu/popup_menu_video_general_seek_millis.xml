@@ -3,8 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     tools:ignore="HardcodedText">
     <item
-        android:id="@+id/menu_item_NoGap"
-        android:title="无间隔" />
+        android:id="@+id/menu_item_120hz"
+        android:title="120 Hz" />
     <item
         android:id="@+id/menu_item_60hz"
         android:title="60 Hz" />

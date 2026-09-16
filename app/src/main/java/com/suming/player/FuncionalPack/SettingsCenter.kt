@@ -968,39 +968,44 @@ object SettingsCenter {
 
         return PREFS_Video_UseCompatScroller == 1
     }
-    //寻帧时一律使用关键帧
-    private var PREFS_Video_UseOnlySyncFrameWhenSeek = -1
-    const val PREFS_Video_UseOnlySyncFrameWhenSeek_Name = "PREFS_Video_UseOnlySyncFrameWhenSeek"
-    fun SET_PREFS_UseOnlySyncFrameWhenSeek(enable: Boolean){
+    //寻帧时关键帧偏好
+    private var PREFS_Video_SyncFramePrefs = ""
+    const val PREFS_Video_SyncFramePrefs_Name = "PREFS_Video_SyncFramePrefs"
+    const val SYNC_FRAME_PREFS_AlwaysSync = "SYNC_FRAME_PREFS_AlwaysSync"
+    const val SYNC_FRAME_PREFS_AlwaysExact = "SYNC_FRAME_PREFS_AlwaysExact"
+    const val SYNC_FRAME_PREFS_Dynamic = "SYNC_FRAME_PREFS_Dynamic"
+    fun SET_PREFS_Video_SyncFramePrefs(target: String){
         OpenPandora_PlayVideoPage()
 
-        PREFS_Video_UseOnlySyncFrameWhenSeek = if (enable) 1 else 0
-        Pandora_PlayVideoPage?.edit { putInt(PREFS_Video_UseOnlySyncFrameWhenSeek_Name, if (enable) 1 else 0) }
+        PREFS_Video_SyncFramePrefs = target
+        Pandora_PlayVideoPage?.edit { putString(PREFS_Video_SyncFramePrefs_Name, target) }
     }
-    fun GET_PREFS_UseOnlySyncFrameWhenSeek(): Boolean {
+    fun GET_PREFS_Video_SyncFramePrefs(): String {
         OpenPandora_PlayVideoPage()
 
         //确保配置项已被读取过
-        if (PREFS_Video_UseOnlySyncFrameWhenSeek == -1) {
-            PREFS_Video_UseOnlySyncFrameWhenSeek = Pandora_PlayVideoPage?.getInt(PREFS_Video_UseOnlySyncFrameWhenSeek_Name, -1) ?: -1
-            if (PREFS_Video_UseOnlySyncFrameWhenSeek == -1) {
-                PREFS_Video_UseOnlySyncFrameWhenSeek = 1
-                Pandora_PlayVideoPage?.edit { putInt(PREFS_Video_UseOnlySyncFrameWhenSeek_Name, 1) }
+        if (PREFS_Video_SyncFramePrefs == "") {
+            PREFS_Video_SyncFramePrefs = Pandora_PlayVideoPage?.getString(PREFS_Video_SyncFramePrefs_Name, "") ?: ""
+            if (PREFS_Video_SyncFramePrefs == "") {
+                PREFS_Video_SyncFramePrefs = SYNC_FRAME_PREFS_Dynamic
+                Pandora_PlayVideoPage?.edit { putString(PREFS_Video_SyncFramePrefs_Name, SYNC_FRAME_PREFS_Dynamic) }
             }
         }
 
-        return PREFS_Video_UseOnlySyncFrameWhenSeek == 1
+        return PREFS_Video_SyncFramePrefs
     }
 
     //连续寻帧间隔(默认值66ms/15Hz)
+    //(🔰严重警告:绝不能设为0,否则播放器内部同帧时会纳秒级给出目标帧,虽然寻帧速度确实很快,表面上看不出异常,但可以跑出一秒几千次循环!并导致soc高温,比正常寻到其他帧时要高得多,可能是其内部逻辑特性)
+    //(🔰严重警告:最小值需要限制在9ms (对应120 Hz) )
     private var value_video_seekVideo_runnableGapMs = -1L
     const val value_video_seekVideo_runnableGapMs_Name = "value_video_seekVideo_runnableGapMs"
-    fun set_value_seekVideo_runnableGapMs(gap: Long){
+    fun set_value_seekVideo_runnableGapMs(value: Long){
         OpenPandora_PlayVideoPage()
 
         //刷新缓存并写入本地
-        value_video_seekVideo_runnableGapMs = gap
-        Pandora_PlayVideoPage?.edit { putLong(value_video_seekVideo_runnableGapMs_Name, gap) }
+        value_video_seekVideo_runnableGapMs = value
+        Pandora_PlayVideoPage?.edit { putLong(value_video_seekVideo_runnableGapMs_Name, value) }
     }
     fun get_value_seekVideo_runnableGapMs(): Long {
         OpenPandora_PlayVideoPage()

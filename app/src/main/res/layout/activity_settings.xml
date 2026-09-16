@@ -80,7 +80,6 @@
                 android:layout_height="60dp"
                 />
 
-
             <!-- 版本卡片 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -252,7 +251,6 @@
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
 
             <!--  卡片：通用  -->
             <androidx.cardview.widget.CardView
@@ -637,6 +635,7 @@
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
             <!--  卡片：视频播放页 样式和对应设置  -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -736,7 +735,6 @@
                             </LinearLayout>
                         </androidx.cardview.widget.CardView>
                     </LinearLayout>
-
 
                     <!-- 标题：通用播放页设置 -->
                     <LinearLayout
@@ -1133,7 +1131,7 @@
                             android:text="仅在横屏时进度条显示异常时才可考虑开启，否则会导致大量问题。"
                             android:textSize="12sp" />
                     </LinearLayout>
-                    <!--  开关：寻帧时一律使用关键帧  -->
+                    <!--  选单：关键帧偏好  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -1149,20 +1147,47 @@
                                 android:layout_height="match_parent"
                                 android:gravity="center"
                                 android:layout_weight="0"
-                                android:text="寻帧时一律使用关键帧"
+                                android:text="关键帧偏好"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
-                            <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/UseOnlySyncFrameWhenSeek"
+                            <androidx.cardview.widget.CardView
+                                android:id="@+id/BC_SyncFramePreference"
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:layout_weight="0"
-                                app:thumbTint="@color/SC_ThumbColor"
-                                app:trackTint="@color/SC_TrackColor" />
+                                android:layout_height="20dp"
+                                android:layout_marginEnd="2dp"
+                                android:backgroundTint="@color/ButtonCard_OFF"
+                                android:layout_gravity="center"
+                                app:cardElevation="1dp"
+                                app:cardCornerRadius="5dp">
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:orientation="horizontal">
+                                    <TextView
+                                        android:id="@+id/BT_SyncFramePreference"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="match_parent"
+                                        android:layout_marginStart="5dp"
+                                        android:gravity="center"
+                                        android:text="加载中"
+                                        android:textColor="@color/HeadText"
+                                        android:textSize="11sp"
+                                        />
+                                    <ImageView
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+                                        android:layout_gravity="center"
+                                        android:padding="2dp"
+                                        android:backgroundTint="@android:color/transparent"
+                                        android:scaleType="centerCrop"
+                                        android:src="@drawable/ic_setting_arrow_down"
+                                        tools:ignore="ContentDescription" />
+                                </LinearLayout>
+                            </androidx.cardview.widget.CardView>
                         </LinearLayout>
                         <!--  提示信息  -->
                         <TextView
@@ -1365,6 +1390,7 @@
 
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
+
             <!--  卡片：音频播放页 样式和对应设置  -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -1619,7 +1645,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-
             <!--  卡片：交互  -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -1860,7 +1885,6 @@
                     </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
 
 
             <!--  超链接样式:设备信息  -->

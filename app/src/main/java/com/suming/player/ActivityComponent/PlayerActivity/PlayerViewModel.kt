@@ -99,8 +99,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //是否启用播放区域移动
     var PRF_Cache_EnablePlayAreaMove: Boolean = false
     var PRF_Cache_EnablePlayAreaMove_Distance: Float = 0f
-    //是否寻帧时一律使用关键帧
-    var PRF_Cache_UseSyncFrame_whenSeek: Boolean = true
+    //寻帧时关键帧偏好
+    var PRF_Cache_SyncFrame_Dynamic: Boolean = true
     //是否竖屏时也开启自动隐藏控件
     var PRF_Cache_EnableAutoHideController_whenPortrait: Boolean = false
 

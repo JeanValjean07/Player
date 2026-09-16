@@ -8,6 +8,7 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -34,6 +35,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SwitchCompat
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
@@ -670,12 +672,14 @@ class SettingsActivity: AppCompatActivity(){
                     set_isChecked_byProcess_include_write_setting(false)
                 }
             }
-            //寻帧时一律使用关键帧
-            val switch_UseOnlySyncFrameWhenSeek = findViewById<SwitchCompat>(R.id.UseOnlySyncFrameWhenSeek)
-            switch_UseOnlySyncFrameWhenSeek.isChecked = SettingsCenter.GET_PREFS_UseOnlySyncFrameWhenSeek()
-            switch_UseOnlySyncFrameWhenSeek.setOnCheckedChangeListener { _, isChecked ->
+            //寻帧时关键帧偏好
+            val BC_SyncFramePreference = findViewById<CardView>(R.id.BC_SyncFramePreference)
+            update_video_syncFramePrefs_Text()
+            BC_SyncFramePreference.setOnClickListener {
                 ToolVibrate().vibrate(context)
-                SettingsCenter.SET_PREFS_UseOnlySyncFrameWhenSeek(isChecked)
+                //
+                choose_video_syncFramePrefs_Menu(it)
+
             }
             //时间戳刷新间隔 value
             val ButtonCardTimerUpdateGap = findViewById<CardView>(R.id.ButtonCardTimerUpdateGap)
@@ -1138,25 +1142,6 @@ class SettingsActivity: AppCompatActivity(){
     }
 
 
-    //高发热提示词
-    private fun get_notice_message_heat(): String{
-        val msg_heat = "间隔数值过低时，存在性能劣化和设备发热风险。" +
-                "\n\n对于搭载高发热soc或者调度激进的设备，这会带来主板损坏风险，请谨慎操作" +
-                "\n\n以下骁龙soc为高风险：骁龙865 骁龙888 骁龙8 Gen1 骁龙8 Gen2 骁龙8 Gen3" +
-                "\n\n以下骁龙soc为低风险：骁龙835 骁龙845 骁龙855 骁龙8 Elite 骁龙8 Elite Gen5" +
-                "\n\n骁龙soc普遍高风险的原因是下游厂商调度激进或优化不到位。哪怕部分soc能效很好，但调度滥用超大核跑高频，于是过于频繁地撞击高温又回落，制造剧烈温度波动，带来高虚焊风险，高温锡也扛不住。部分系统可能对此有优化，请结合实际判断" +
-                "\n\n以下麒麟soc为高风险：麒麟970 麒麟980" +
-                "\n\n以下麒麟soc为低风险：麒麟990 麒麟9000 麒麟9000S 麒麟9010 麒麟9020" +
-                "\n\n麒麟soc普遍低风险的原因是有调度优化(仅限于EMUI/HarmonyOS)，风险相对较低" +
-                "\n\n您可以监控CPU核心温度并判断适用于当前设备的档位：" +
-                "\n\n下载任意可监控CPU核心温度的App，开启温度悬浮窗，关闭此选项上方的“一律使用关键帧”开关，播放任意视频，缓慢拖动进度条，观察连续寻帧时的CPU核心温度峰值。" +
-                "不超过65度为低风险，65度-75度为中等风险，75度以上为高风险，90度以上为极高风险" +
-                "\n\n如果发现在默认的 15 Hz下的温度也很高，建议自定义到 100 Ms"
-
-        return msg_heat
-    }
-
-
 
     //视频播放页
     //<editor-fold desc="////视频播放页设置函数">
@@ -1189,6 +1174,51 @@ class SettingsActivity: AppCompatActivity(){
             SettingsCenter.screening_type_TEST -> ButtonPlayerTypeText.text = "测试"
         }
     }
+    //寻帧时关键帧偏好
+    private fun choose_video_syncFramePrefs_Menu(anchor:View) {
+        val popup = PopupMenu(context, anchor)
+        popup.menuInflater.inflate(R.menu.popup_menu_sync_frame_prefs, popup.menu)
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.always_use_sync -> {
+                    ToolVibrate().vibrate(context)
+                    choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_AlwaysSync)
+                    true
+                }
+                R.id.always_use_exact -> {
+                    ToolVibrate().vibrate(context)
+                    choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_AlwaysExact)
+                    true
+                }
+                R.id.use_dynamic -> {
+                    ToolVibrate().vibrate(context)
+                    choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_Dynamic)
+                    true
+                }
+                else -> true
+            }
+        }
+        popup.show()
+
+    }
+    private fun choose_video_syncFramePrefs_Core(value: String) {
+        //写入设置
+        SettingsCenter.SET_PREFS_Video_SyncFramePrefs(value)
+        //刷新显示
+        update_video_syncFramePrefs_Text()
+
+    }
+    private fun update_video_syncFramePrefs_Text() {
+        val BT_SyncFramePrefsText = findViewById<TextView>(R.id.BT_SyncFramePreference)
+        val syncFramePrefs = SettingsCenter.GET_PREFS_Video_SyncFramePrefs()
+        //写入文字
+        when(syncFramePrefs){
+            SettingsCenter.SYNC_FRAME_PREFS_AlwaysSync -> BT_SyncFramePrefsText.text = "一律使用关键帧"
+            SettingsCenter.SYNC_FRAME_PREFS_AlwaysExact -> BT_SyncFramePrefsText.text = "一律使用精确帧"
+            SettingsCenter.SYNC_FRAME_PREFS_Dynamic -> BT_SyncFramePrefsText.text = "动态切换"
+            else -> BT_SyncFramePrefsText.text = "错误"
+        }
+    }
     //视频播放页 连续寻帧间隔 value
     private fun choose_Video_generalSeek_updateMs_Menu(anchor:View) {
         val popup = PopupMenu(context, anchor)
@@ -1198,9 +1228,9 @@ class SettingsActivity: AppCompatActivity(){
         )
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                R.id.menu_item_NoGap -> {
+                R.id.menu_item_120hz -> {
                     ToolVibrate().vibrate(context)
-                    choose_Video_generalSeek_updateMs_Core(0)
+                    choose_Video_generalSeek_updateMs_Core(8)
                     true
                 }
                 R.id.menu_item_60hz -> {
@@ -1239,11 +1269,27 @@ class SettingsActivity: AppCompatActivity(){
         }
 
         //检查数值
-        if (value < 66L){
+        if (value == 0L){
             //构建自定义alert_view
+
+            val text = "恭喜您发现了一个逆天彩蛋！" +
+                    "\n\n如果您看不懂下面的文字到底是什么意思，请务必点击取消！" +
+                    "\n\n在程序的世界里，一个循环的间隔为 1 MS，与间隔为 0 Ms，完全是两个不同的东西。" +
+                    "\n1 Ms 是「我等一下」" +
+                    "\n0 Ms 是「我不等了，CPU 你看着办」。" +
+                    "\n\n间隔为 0 时，循环会以 CPU 的极限速度疯狂运转，一秒成千上万次，下游程序会被瞬间淹没，发热、卡顿、耗电、无响应可能接踵而至" +
+                    "\n\n在当前案例中，寻帧间隔设置为0时，若发生重复寻同一帧时，由于结果返回速度过快，每秒可跑完几千次寻帧操作，导致大量soc的cpu核心温度被干到90度以上。" +
+                    "然而只需要修改为 1 Ms，立马变得正常。" +
+                    "\n\n这不是竞态，这是背压崩溃" +
+                    "\n这不是高性能，这是忙等待自焚" +
+                    "\n这不是彩蛋，这是您亲手按下的自毁按钮" +
+                    "\n\n如果您执意要体验 0 Ms 的极限快感，请确认设备散热良好、没有重要数据，并且已做好「手机变暖手宝」，甚至「主板突然烧毁」的心理准备" +
+                    "\n\n我保留设为0值的权限只是为了警告我自己，并不是让您一定要使用这个值。强烈建议取消，并改为使用120 Hz (8 Ms) \n\n"
+
+
             val view = layoutInflater.inflate(R.layout.customized_alert_dialog, null)
             view.findViewById<TextView>(R.id.alert_dialog_title).text = "关于设备安全的重要提示"
-            view.findViewById<TextView>(R.id.alert_dialog_message).text = get_notice_message_heat()
+            view.findViewById<TextView>(R.id.alert_dialog_message).text = text
             AlertDialog.Builder(context)
                 .setView(view)
                 .setPositiveButton("已了解风险并确认") { dialog, _ ->
@@ -1259,14 +1305,16 @@ class SettingsActivity: AppCompatActivity(){
 
                     //取消时检查是否需要重置当前值
                     val current = SettingsCenter.get_value_seekVideo_runnableGapMs()
-                    if (current <= 65L){
-                        choose_Video_generalSeek_updateMs_Core(66)
+                    if (current == 8L){
+                        choose_Video_generalSeek_updateMs_Core(8L)
                     }
 
                     dialog.dismiss()
                 }
                 .setCancelable(true)
                 .show()
+
+
 
             return
 
@@ -1329,15 +1377,26 @@ class SettingsActivity: AppCompatActivity(){
 
     }
     private fun update_video_generalSeek_updateMs_Text() {
-        val ButtonTextSeekHandlerGap = findViewById<TextView>(R.id.ButtonTextSeekHandlerGap)
-        val seekHandlerGap = SettingsCenter.get_value_seekVideo_runnableGapMs()
-        when(seekHandlerGap){
-            0L -> ButtonTextSeekHandlerGap.text = "无间隔"
-            16L -> ButtonTextSeekHandlerGap.text = "60 Hz"
-            12L -> ButtonTextSeekHandlerGap.text = "90 Hz"
-            33L -> ButtonTextSeekHandlerGap.text = "30 Hz"
-            66L -> ButtonTextSeekHandlerGap.text = "15 Hz"
-            else -> ButtonTextSeekHandlerGap.text = "$seekHandlerGap 毫秒"
+        val BT_SeekLoop_Millis = findViewById<TextView>(R.id.ButtonTextSeekHandlerGap)
+        val generalSeek_updateMs = SettingsCenter.get_value_seekVideo_runnableGapMs()
+        //重置文字颜色
+        BT_SeekLoop_Millis.setTextColor(
+            ContextCompat.getColor(context, R.color.Text_Level_2)
+        )
+        //写入文字
+        when(generalSeek_updateMs){
+            0L -> {
+                BT_SeekLoop_Millis.text = "无间隔 (高危)"
+                BT_SeekLoop_Millis.setTextColor(
+                    ContextCompat.getColor(context, R.color.RED)
+                )
+            }
+            8L -> BT_SeekLoop_Millis.text = "120 Hz"
+            16L -> BT_SeekLoop_Millis.text = "60 Hz"
+            12L -> BT_SeekLoop_Millis.text = "90 Hz"
+            33L -> BT_SeekLoop_Millis.text = "30 Hz"
+            66L -> BT_SeekLoop_Millis.text = "15 Hz"
+            else -> BT_SeekLoop_Millis.text = "$generalSeek_updateMs Ms"
         }
     }
     //视频页 时间戳/时间窗口 刷新间隔 value
@@ -1439,8 +1498,8 @@ class SettingsActivity: AppCompatActivity(){
 
                 return@setOnClickListener
             }
-            if (input < 0){
-                showCustomToast("更新间隔不得为负", 3)
+            if (input <= 0){
+                showCustomToast("请设置更高的值", 3)
 
                 return@setOnClickListener
             }
@@ -1701,8 +1760,6 @@ class SettingsActivity: AppCompatActivity(){
         }
     }
     //</editor-fold>
-
-
 
     //音乐播放页设置
     //<editor-fold desc="////音乐播放页设置函数">

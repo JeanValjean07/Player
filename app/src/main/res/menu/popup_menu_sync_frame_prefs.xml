@@ -1,0 +1,18 @@
+<menu
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:ignore="HardcodedText">
+    <item
+        android:id="@+id/always_use_sync"
+        android:title="一律使用关键帧"
+        />
+    <item
+        android:id="@+id/always_use_exact"
+        android:title="一律使用精确帧"
+        />
+    <item
+        android:id="@+id/use_dynamic"
+        android:title="自动切换"
+        />
+
+</menu>
