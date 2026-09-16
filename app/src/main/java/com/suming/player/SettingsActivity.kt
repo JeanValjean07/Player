@@ -75,7 +75,7 @@ import kotlin.system.exitProcess
 @Suppress("/unused","NewApi")
 @SuppressLint("InflateParams", "SetTextI18n")
 @OptIn(UnstableApi::class)
-class SettingsActivity: AppCompatActivity(){
+class SettingsActivity: AppCompatActivity() {
 
     //context
     private val context: Context = this@SettingsActivity
@@ -1271,22 +1271,7 @@ class SettingsActivity: AppCompatActivity(){
         //检查数值
         if (value == 0L){
             //构建自定义alert_view
-
-            val text = "恭喜您发现了一个逆天彩蛋！" +
-                    "\n\n如果您看不懂下面的文字到底是什么意思，请务必点击取消！" +
-                    "\n\n在程序的世界里，一个循环的间隔为 1 MS，与间隔为 0 Ms，完全是两个不同的东西。" +
-                    "\n1 Ms 是「我等一下」" +
-                    "\n0 Ms 是「我不等了，CPU 你看着办」。" +
-                    "\n\n间隔为 0 时，循环会以 CPU 的极限速度疯狂运转，一秒成千上万次，下游程序会被瞬间淹没，发热、卡顿、耗电、无响应可能接踵而至" +
-                    "\n\n在当前案例中，寻帧间隔设置为0时，若发生重复寻同一帧时，由于结果返回速度过快，每秒可跑完几千次寻帧操作，导致大量soc的cpu核心温度被干到90度以上。" +
-                    "然而只需要修改为 1 Ms，立马变得正常。" +
-                    "\n\n这不是竞态，这是背压崩溃" +
-                    "\n这不是高性能，这是忙等待自焚" +
-                    "\n这不是彩蛋，这是您亲手按下的自毁按钮" +
-                    "\n\n如果您执意要体验 0 Ms 的极限快感，请确认设备散热良好、没有重要数据，并且已做好「手机变暖手宝」，甚至「主板突然烧毁」的心理准备" +
-                    "\n\n我保留设为0值的权限只是为了警告我自己，并不是让您一定要使用这个值。强烈建议取消，并改为使用120 Hz (8 Ms) \n\n"
-
-
+            /*
             val view = layoutInflater.inflate(R.layout.customized_alert_dialog, null)
             view.findViewById<TextView>(R.id.alert_dialog_title).text = "关于设备安全的重要提示"
             view.findViewById<TextView>(R.id.alert_dialog_message).text = text
@@ -1314,6 +1299,33 @@ class SettingsActivity: AppCompatActivity(){
                 .setCancelable(true)
                 .show()
 
+             */
+
+
+            //
+            AlertDialog.Builder(context)
+                .setTitle("提示")
+                .setMessage("零值是高危数值，可带来设备损坏风险，仅用于测试与观察。正常情况下请勿设置此值为零！如果需要高频率，建议设置为 1 Ms 以使循环压力可控")
+                .setPositiveButton("仍然设为零") { dialog, _ ->
+                    ToolVibrate().vibrate(context)
+
+                    execute()
+
+                    dialog.dismiss()
+                }
+                .setNegativeButton("取消") { dialog, _ ->
+                    ToolVibrate().vibrate(context)
+
+                    //取消时检查是否需要重置当前值
+                    val current = SettingsCenter.get_value_seekVideo_runnableGapMs()
+                    if (current < 8L){
+                        choose_Video_generalSeek_updateMs_Core(8L)
+                    }
+
+                    dialog.dismiss()
+                }
+                .setCancelable(true)
+                .show()
 
 
             return
@@ -1451,7 +1463,7 @@ class SettingsActivity: AppCompatActivity(){
             update_video_timerStamp_updateMs_Text()
         }
 
-        if (value < 32L){
+        if (value < 15L){
             AlertDialog.Builder(context)
                 .setTitle("提示")
                 .setMessage("此值过低时，若同时寻帧间隔也过低，可能导致界面轻微卡顿。是否继续?")
