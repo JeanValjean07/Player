@@ -683,17 +683,39 @@ class PlayerFragmentMoreButton: DialogFragment(){
                                 true
                             }
                             R.id.disable_always_seek -> {
-                                //修改viewModel的值
-                                viewModel.PREFS_AlwaysSeek = false
-                                //写入设置
-                                SettingsCenter.SET_PREFS_EnableAlwaysSeek(false)
-                                //刷新显示文字
-                                update_BTT_SeekMode()
 
-                                //发回消息
-                                returnFragment(FragmentConnector.fragment_more_button_updated_seek_mode)
-                                //关闭面板
-                                customDismiss()
+                                val text = "此功能涉及音频连续实时变速，在低性能设备上可能出现异常" +
+                                        "\n\n为了避免问题，为音量自动恢复的时机引入了延时"
+
+                                AlertDialog.Builder(requireContext())
+                                    .setTitle("开启倍速模拟寻帧")
+                                    .setMessage(text)
+                                    .setPositiveButton("确认开启") { dialog, _ ->
+                                        ToolVibrate().vibrate(context)
+                                        //确认开启
+                                        //修改viewModel的值
+                                        viewModel.PREFS_AlwaysSeek = false
+                                        //写入设置
+                                        SettingsCenter.SET_PREFS_EnableAlwaysSeek(false)
+                                        //刷新显示文字
+                                        update_BTT_SeekMode()
+
+                                        //发回消息
+                                        returnFragment(FragmentConnector.fragment_more_button_updated_seek_mode)
+                                        //关闭面板
+                                        customDismiss()
+
+                                        dialog.dismiss()
+                                    }
+                                    .setNegativeButton("取消") { dialog, _ ->
+                                        ToolVibrate().vibrate(context)
+
+                                        customDismiss()
+
+                                        dialog.dismiss()
+                                    }
+                                    .setCancelable(true)
+                                    .show()
 
                                 true
                             }
@@ -779,13 +801,12 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
 
             //未显示进度条
-            if (SettingsCenter.GET_PRF_Video_Screening_Type() == SettingsCenter.screening_type_NEO && viewModel.state_s_area_type != S_Area_Helper.S_AreaType_SCROLLER){
-
-
+            if (SettingsCenter.GET_PRF_Video_Screening_Type() == SettingsCenter.screening_type_NEO){
+                if (viewModel.state_s_area_type != S_Area_Helper.S_AreaType_SCROLLER){
                     val text = "未显示进度条：" +
-                        "\n高版本系统可能存在权限问题，导致程序无法正常截取缩略图，此时将退回传统进度条。" +
-                        "\n\n进度条缩略图与视频不匹配：" +
-                        "\n若媒体存在于非公有文件夹或被.nomedia标记的文件夹，媒体库不会为媒体分配自增ID，程序自主算出一个ID。在极端情况下，ID可能冲突，导致一个媒体的进度条缩略图是其他媒体的。"
+                            "\n高版本系统可能存在权限问题，导致程序无法正常截取缩略图，此时将退回传统进度条。" +
+                            "\n\n进度条缩略图与视频不匹配：" +
+                            "\n若媒体存在于非公有文件夹或被.nomedia标记的文件夹，媒体库不会为媒体分配自增ID，程序自主算出一个ID。在极端情况下，ID可能冲突，导致一个媒体的进度条缩略图是其他媒体的。"
 
 
 
@@ -811,43 +832,8 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
 
                     }
-
-            }
-
-
-
-            //信息残缺
-            /*
-            if (PlayerInfoCenter.GET_Media_FilePath() == Undefined){
-                val LinearLayout_whyInformationLame = view.findViewById<LinearLayout>(R.id.LinearLayout_whyInformationLame)
-                val TextView_whyInformationLame = view.findViewById<TextView>(R.id.Button_whyInformationLame)
-                LinearLayout_whyInformationLame.visibility = View.VISIBLE
-                TextView_whyInformationLame.setOnClickListener {
-                    ToolVibrate().vibrate(requireContext())
-
-                    val text = "由于高版本系统权限收紧，程序可能无法正常获取文件路径等信息" +
-                            "\n\n此时多项检查将会失效，并且不保证此种情况下程序正常运行，可能存在崩溃风险。"
-
-
-                    AlertDialog.Builder(requireContext())
-                        .setTitle("信息残缺？")
-                        .setMessage(text)
-                        .setPositiveButton("了解") { dialog, which ->
-                            ToolVibrate().vibrate(requireContext())
-
-                            customDismiss()
-
-                            dialog.dismiss()
-                        }
-                        .setCancelable(true)
-                        .show()
-
-
-
                 }
             }
-
-             */
 
 
 

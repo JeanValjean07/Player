@@ -106,7 +106,6 @@ import com.suming.player.FuncionalPack.SystemListener
 import com.suming.player.FuncionalPack.ScrollerHelper
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.IndepService.FloatingWindowService
-import com.suming.player.PlayerSingleton
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -299,7 +298,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //初始化
-    private fun init(){
+    private fun init() {
         //显示配置
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -369,7 +368,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     //注册
     @SuppressLint("ClickableViewAccessibility")
-    private fun register(){
+    private fun register() {
         //注册控制按钮
         lifecycleScope.launch(Dispatchers.Main) {
             //退出按钮
@@ -378,29 +377,6 @@ class PlayerActivityNeo: AppCompatActivity() {
                 //scroller.stopScroll()
                 exitActivity_ensure()
             }
-            /*
-            ButtonExit.setOnTouchListener { _, event ->
-                when (event.actionMasked){
-                    MotionEvent.ACTION_DOWN -> {
-                        ToolVibrate().vibrate(this@PlayerActivityNeo)
-                        ExitJob_upMillis = 0L
-                        ExitJob_downMillis = System.currentTimeMillis()
-                        ExitJob()
-                        return@setOnTouchListener true
-                    }
-                    MotionEvent.ACTION_UP -> {
-                        ExitJob?.cancel()
-                        ExitJob_upMillis = System.currentTimeMillis()
-                        if (ExitJob_upMillis - ExitJob_downMillis < 300){
-                            exitActivity()
-                        }
-                        return@setOnTouchListener true
-                    }
-                }
-                onTouchEvent(event)
-            }
-
-             */
             //更多选项
             val TopBarArea_ButtonMoreOptions = findViewById<CircleButton>(R.id.TopBarArea_ButtonMoreOptions)
             TopBarArea_ButtonMoreOptions.setOnClickListener {
@@ -494,344 +470,211 @@ class PlayerActivityNeo: AppCompatActivity() {
                 //启动弹窗
                 startMoreButtonFragment()
             }
-            //播放区域点击事件
-            val gestureDetectorPlayArea = GestureDetector(
-                this@PlayerActivityNeo,
-                object : GestureDetector.SimpleOnGestureListener() {
-                    override fun onDoubleTap(e: MotionEvent): Boolean {
-                        //控制播放
-                        if (player?.isPlaying == true) {
-                            pausePlay()
-                            stop_S_Area_PassiveControl()
-                            notice("暂停播放", 1000)
-                            updateButtonState()
-                        } else {
-                            if (playerViewModel.playEnd) {
-                                playerViewModel.playEnd = false
-                                continuePlay()
-                                notice("开始重播", 1000)
-                            } else {
-                                continuePlay()
-                                notice("继续播放", 1000)
-                                updateButtonState()
-                            }
-                        }
-                        //确保播放区域在普通位置
-                        ensure_moveArea_place()
 
-                        return true
-                    }
-                    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                        if (ACTION_POINTER_DOWN) {
-                            return true
-                        }
-                        //触发控件显示变更
-                        changeBackgroundColor()
-                        //确保播放区域在普通位置
-                        ensure_moveArea_place()
-
-                        return true
-                    }
-                    override fun onLongPress(e: MotionEvent) {
-                        if (ACTION_POINTER_DOWN) return
-                        if (player?.isPlaying == false) {
-                            return
-                        }
-                        currentSpeed = player?.playbackParameters?.speed ?: 1.0f
-                        player?.setPlaybackSpeed(currentSpeed * 2.0f)
-                        notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
-                        setControllerInvisibleNoAnimation()
-                        longPress = true
-                        ToolVibrate().vibrate(this@PlayerActivityNeo)
-                        super.onLongPress(e)
-                    }
-                    override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float):Boolean {
-                        if (touchLeft) {
-                            //点击区域功能提示:仅一次
-                            if (!touchState_left_noticed) {
-                                //notice("继续上下滑动可调整亮度", 1000)
-                                touchState_left_noticed = true
-                            }
-                            //累积滑动距离
-                            scrollDistance += distanceY.toInt()
-                            val windowInfo = window.attributes
-                            //开始亮度修改
-                            playerViewModel.BrightnessChanged = true
-                            var newBrightness: Float
-                            //上滑
-                            if (scrollDistance > 50) {
-                                newBrightness = (playerViewModel.BrightnessValue + 0.01f).toBigDecimal()
-                                    .setScale(2, RoundingMode.HALF_UP).toFloat()
-                                if (newBrightness in 0.0..1.0) {
-                                    windowInfo.screenBrightness = newBrightness
-                                    window.attributes = windowInfo
-                                    playerViewModel.BrightnessValue = newBrightness
-                                    notice("亮度 +1 (${(newBrightness * 100).toInt()}/100)", 1000)
-                                } else {
-                                    notice("亮度已到上限", 1000)
-                                    if (!touchState_scroll_vibrated) {
-                                        touchState_scroll_vibrated = true
-                                        ToolVibrate().vibrate(this@PlayerActivityNeo)
-                                    }
-                                }
-                            }
-                            //下滑
-                            else if (scrollDistance < -50) {
-                                newBrightness = (playerViewModel.BrightnessValue - 0.01f).toBigDecimal()
-                                    .setScale(2, RoundingMode.HALF_UP).toFloat()
-                                if (newBrightness in 0.0..1.0) {
-                                    windowInfo.screenBrightness = newBrightness
-                                    window.attributes = windowInfo
-                                    playerViewModel.BrightnessValue = newBrightness
-                                    notice("亮度 -1 (${(newBrightness * 100).toInt()}/100)", 1000)
-                                } else {
-                                    if (!touchState_scroll_vibrated) {
-                                        touchState_scroll_vibrated = true
-                                        ToolVibrate().vibrate(this@PlayerActivityNeo)
-                                    }
-                                    notice("亮度已到下限", 1000)
-                                }
-                            }
-                            //数值越界重置
-                            if (scrollDistance > 50 || scrollDistance < -50) {
-                                scrollDistance = 0
-                            }
-                        }
-                        if (touchRight) {
-                            //点击区域功能提示:仅一次
-                            if (!touchState_right_noticed) {
-                                //notice("继续上下滑动可调整音量", 1000)
-                                touchState_right_noticed = true
-                            }
-                            //累积滑动距离
-                            scrollDistance += distanceY.toInt()
-                            //快速下滑紧急静音
-                            if (scrollDistance < -150) {
-                                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
-                                notice("快速静音", 2000)
-                            }
-                            //普通音量修改
-                            if (scrollDistance > volumeChangeGap) {
-                                var currentVolume =
-                                    audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                                currentVolume += 1
-                                if (currentVolume <= maxVolume) {
-                                    if (state_HeadSetInserted) {
-                                        if (currentVolume <= (maxVolume * 0.6).toInt()) {
-                                            audioManager.setStreamVolume(
-                                                AudioManager.STREAM_MUSIC,
-                                                currentVolume,
-                                                0
-                                            )
-                                            notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
-                                        } else {
-                                            if (!touchState_scroll_vibrated) {
-                                                touchState_scroll_vibrated = true
-                                                ToolVibrate().vibrate(this@PlayerActivityNeo)
-                                            }
-                                            notice(
-                                                "佩戴耳机时,音量不能超过${(maxVolume * 0.6).toInt()},除非使用音量键调整",
-                                                1000
-                                            )
-                                        }
-                                    } else {
-                                        audioManager.setStreamVolume(
-                                            AudioManager.STREAM_MUSIC,
-                                            currentVolume,
-                                            0
-                                        )
-                                        notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
-                                    }
-                                } else {
-                                    if (!touchState_scroll_vibrated) {
-                                        touchState_scroll_vibrated = true
-                                        ToolVibrate().vibrate(this@PlayerActivityNeo)
-                                    }
-                                    notice("音量已到最高", 1000)
-                                }
-                            } else if (scrollDistance < -volumeChangeGap) {
-                                var currentVolume =
-                                    audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                                currentVolume -= 1
-                                if (currentVolume >= 0) {
-                                    audioManager.setStreamVolume(
-                                        AudioManager.STREAM_MUSIC,
-                                        currentVolume,
-                                        0
-                                    )
-                                    notice("音量 -1 ($currentVolume/$maxVolume)", 1000)
-                                } else {
-                                    if (!touchState_scroll_vibrated) {
-                                        touchState_scroll_vibrated = true
-                                        ToolVibrate().vibrate(this@PlayerActivityNeo)
-                                    }
-                                    notice("音量已到最低", 1000)
-                                }
-                            }
-                            //数值越界置位
-                            if (scrollDistance > 50 || scrollDistance < -50) {
-                                scrollDistance = 0
-                            }
-                        }
-                        if (touchCenter) {
-                            touchCenterDistance += distanceY
-                            if (touchCenterDistance < -playerViewModel.value_scrollDownExitDistance) {
-                                touchState_need_exit = true
-                                //振动:仅一次
-                                if (!touchState_need_exit_vibrated) {
-                                    touchState_need_exit_vibrated = true
-                                    ToolVibrate().vibrate(this@PlayerActivityNeo)
-                                }
-                            } else {
-                                touchState_need_exit = false
-                            }
-                        }
-                        return super.onScroll(e1, e2, distanceX, distanceY)
-                    }
-                })
-            val playerTouchPad = findViewById<View>(R.id.playerTouchPad)
-            playerTouchPad.setOnTouchListener { _, event ->
-                when (event.actionMasked){
-                    MotionEvent.ACTION_DOWN -> {
-                        //清除双指状态
-                        ACTION_POINTER_DOWN = false
-                        touchState_two_fingers = false
-                        //重置部分状态
-                        touchState_need_exit_vibrated = false
-                        touchState_need_exit = false
-                        touchState_left_noticed = false
-                        touchState_right_noticed = false
-                        touchState_scroll_vibrated = false
-
-                        //记录1指初始坐标
-                        finger1x = event.x
-                        finger1y = event.y
-
-                        //屏蔽纵向误触区域
-                        if (finger1y < display_screen_height_pixels * 0.2 || finger1y > display_screen_height_pixels * 0.95){
-                            return@setOnTouchListener false
-                        }
-
-                        //判断点击区域
-                        if (finger1x < display_screen_width_pixels * 0.2) {
-                            touchLeft = true
-                        }
-                        else if(finger1x > display_screen_width_pixels * 0.8){
-                            state_HeadSetInserted = SystemListener.getState_isHeadsetPlugged(this@PlayerActivityNeo)
-                            touchRight = true
-                        }
-                        else{
-                            touchCenter = true
-                            touchCenterDistance = 0f
-                        }
-
-                        //传递
-                        gestureDetectorPlayArea.onTouchEvent(event)
-                    }
-                    MotionEvent.ACTION_UP -> {
-                        //重置部分状态
-                        touchState_two_fingers = false
-                        touchLeft = false
-                        touchRight = false
-                        touchCenter = false
-                        //重置部分数值
-                        scrollDistance = 0
-                        center0x = playerView.pivotX
-                        center0y = playerView.pivotY
-                        playerView.pivotX = center0x
-                        playerView.pivotY = center0y
-                        originalScale = definiteScale
-                        //事件处理:长按
-                        if (longPress) {
-                            longPress = false
-                            player?.setPlaybackSpeed(currentSpeed)
+        }
 
 
-                            val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
-                            NoticeCard.visibility = View.GONE
-                        }
-                        //事件处理:下滑退出
-                        if (touchState_need_exit){
-                            exitActivity_ensure()
-                        }
+        //注册Fragment监听器(Fragment -> Activity 反向传递需要用带 reverse 的 request key)
+        registerFragmentResultListener()
+        //监听系统手势
+        registerOnBackPressListener()
+        //注册播放区域手势操作
+        registerGesture()
+
+    }
+    //主业务线
+    private fun mainBusiness(savedInstanceState: Bundle?) {
+
+        //获取原始链接
+        val (URI_U_O, file_path) = detectOriginalInfo_fromIntent(intent)
+        //将URI缓存为字符串
+        val URI_S_O = URI_U_O.toString()
 
 
-                        gestureDetectorPlayArea.onTouchEvent(event)
-                    }
-                    MotionEvent.ACTION_POINTER_DOWN -> {
-                        //记录手指2的坐标
-                        ACTION_POINTER_DOWN = true
+        //获取正在播放信息
+        val ongoing_URI = PlayerSingleton.get_engine_ongoing_URI().second
+        val ongoing_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
 
-                        val ptrIndex = event.actionIndex
+        //日志-获取到的信息
+        //consoleLog("intentUriStandard: $intentUriStandard, ongoing_URI: $ongoing_URI")
 
-                        finger2x = event.getX(ptrIndex)
-                        finger2y = event.getY(ptrIndex)
-                        if (event.pointerCount == 2){
-                            //notice("双指缩放可缩放播放区域", 2000)
-                            //更改标志位
-                            touchState_two_fingers = true
-                            //计算缩放中心点:只算一次
-                            if (!center0pivoted){
-                                center0x = (finger1x + finger2x) / 2
-                                center0y = (finger1y + finger2y) / 2
-                                playerView.pivotX = center0x
-                                playerView.pivotY = center0y
-                                center0pivoted = true
-                            }
-                            center1x = (finger1x + finger2x) / 2
-                            center1y = (finger1y + finger2y) / 2
-                            //计算初始双指距离
-                            originalDistance = hypot(finger1x - finger2x, finger1y - finger2y)
+        //设置媒体项决策程序 savedInstanceState == null 仅在首次启动时决定是否播放
+        if (savedInstanceState == null){
+            //
+            if (URI_S_O == Undefined && ongoing_URI == Uri.EMPTY ){
+                //分支描述:未传入播放链接,也没有正在播放的项,弹窗主动输入(彩蛋分支)
+
+                //弹窗主动输入播放链接
+                queryManualInputUri()
+
+            }else{
+                if (URI_S_O == Undefined){
+                    //分支描述:未传入原始链接,检查正在播放的项
+
+                    //检查有没有正在播放的项
+                    if (ongoing_URI == Uri.EMPTY){
+                        //没有正在播放的项
+                        queryManualInputUri()
+                    }else{
+                        //有正在播放的项
+                        if (ongoing_MediaType == MediaType.Video){
+                            //正在播放的是视频,直接绑定
+                            connectCurrentMedia()
+                        }else{
+                            finish()
                         }
                     }
-                    MotionEvent.ACTION_POINTER_UP -> {
-                        if (event.pointerCount == 2){
-                            touchState_two_fingers = false
-                        }
-                    }
-                    MotionEvent.ACTION_MOVE -> {
-                        //双指在滑动
-                        if (touchState_two_fingers){
-                            finger1x = event.getX(0)
-                            finger1y = event.getY(0)
-                            finger2x = event.getX(1)
-                            finger2y = event.getY(1)
+                }else{
+                    //分支-传入了原始链接
 
-                            //平移
-                            center2x = (finger1x + finger2x) / 2
-                            center2y = (finger1y + finger2y) / 2
-                            val centerGapX = center2x - center1x
-                            val centerGapY = center2y - center1y
-                            if ( playerView.scaleX <= 1){
-                                playerView.pivotX = (center0x + centerGapX)
-                                playerView.pivotY = (center0y + centerGapY)
-                            }else{
-                                playerView.pivotX = (center0x - centerGapX)
-                                playerView.pivotY = (center0y - centerGapY)
-                            }
+                    //检查新项是否与当前项相同
+                    if (URI_S_O != ongoing_URI.toString()){
+                        //传入链接,但与当前播放项不同,播放新项
+                        //consoleLog("传入链接,但与当前播放项不同,播放新项")
 
+                        //发起播放新项
+                        startPlayNewMedia(URI_U_O,file_path)
 
-                            //缩放
-                            val distance = hypot(finger1x - finger2x, finger1y - finger2y)
-                            distanceGap = (distance - originalDistance)
-                            scale = 4.0.pow(distanceGap / 400.0)
-                            definiteScale =  originalScale * scale.toFloat()
-                            playerView.scaleX = definiteScale
-                            playerView.scaleY = definiteScale
-
-                        }
-                        //单指在滑动
-                        else{
-                            if (!ACTION_POINTER_DOWN){
-                                gestureDetectorPlayArea.onTouchEvent(event)
-                            }
+                    }else{
+                        //传入链接,但与当前播放项相同,直接绑定,但是要先判断是不是视频
+                        //consoleLog("传入链接,但与当前播放项相同,直接绑定,但是要先判断是不是视频")
+                        if (ongoing_MediaType == MediaType.Video){
+                            //正在播放的是视频,直接绑定
+                            connectCurrentMedia()
+                        }else{
+                            finish()
                         }
                     }
                 }
-                onTouchEvent(event)
+            }
+        }else{
+            //
+            if (ongoing_URI == Uri.EMPTY){
+                showErrorCover("当前没有正在播放的项")
+            }else{
+                connectCurrentMedia()
             }
         }
-        //注册Fragment监听器(Fragment -> Activity 反向传递需要用带 reverse 的 request key)
+
+
+    }
+
+
+
+
+    //提取原始URI信息
+    private fun detectOriginalInfo_fromIntent(intent: Intent): Pair<Uri, String> {
+        //获取原始链接中的信息
+        val Intent_URI = IntentCompat.getParcelableExtra(intent, IntentRepo.URI,  Uri::class.java) ?: Uri.EMPTY
+        val Intent_FILE_PATH = intent.getStringExtra(IntentRepo.FILE_PATH) ?: Undefined
+        //consoleLog("detectOriginalInfo_fromIntent: Intent_URI = $Intent_URI, Intent_FILE_PATH = $Intent_FILE_PATH")
+
+        return Pair(Intent_URI, Intent_FILE_PATH)
+    }
+    //手动输入链接并发起播放
+    @SuppressLint("InflateParams")
+    private fun queryManualInputUri() {
+        val dialog = Dialog(this).apply {
+            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+        }
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_input_uri, null)
+        dialog.setContentView(dialogView)
+        val title: TextView = dialogView.findViewById(R.id.dialog_title)
+        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
+        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val ButtonEnsure: Button = dialogView.findViewById(R.id.dialog_button_ensure)
+        val ButtonCancel: Button = dialogView.findViewById(R.id.dialog_button_cancel)
+        var isUriValid = false
+        //修改提示文本
+        title.text = "未能获取到媒体链接"
+        Description.text = "您可以手动输入链接"
+        val Editable = Editable.Factory.getInstance().newEditable("content://media/external/video/media/")
+        EditText.text = Editable
+        ButtonEnsure.text = "确定"
+        ButtonCancel.text = "取消并退出"
+        //设置点击事件
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        ButtonEnsure.setOnClickListener {
+            val userInput = EditText.text.toString()
+            if (userInput.isEmpty()){
+                showCustomToast("未输入内容", 3)
+            }else{
+                if (MediaInfoRetriever.isUriStringValid(this, userInput)){
+                    isUriValid = true
+                    dialog.dismiss()
+                    startPlayNewMedia(userInput.toUri(),file_path = "")
+                }else{
+                    showCustomToast("链接无效", 3)
+                }
+            }
+        }
+        ButtonCancel.setOnClickListener {
+            dialog.dismiss()
+            finish()
+        }
+        dialog.show()
+        //接管返回操作
+        dialog.setCanceledOnTouchOutside(true)
+        dialog.setOnCancelListener {
+            if (!isUriValid){ finish() }
+        }
+        //自动弹出键盘
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(300)
+            EditText.setSelection(Editable.length)
+            EditText.requestFocus()
+            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+    //开启播放新媒体项
+    private fun startPlayNewMedia(URI_UP: Uri, file_path: String) {
+        //设置新媒体项
+        lifecycleScope.launch(Dispatchers.IO){
+            setNewMediaItem(URI_UP,file_path)
+        }
+
+    }
+    //连接正在播放的媒体
+    private fun connectCurrentMedia() {
+        //检查正在播放的媒体的类型
+        val ongoing_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
+        if (ongoing_MediaType != MediaType.Video){
+            showCustomToast("当前正在播放的项不是视频,自动退出播放页", 3)
+            finish()
+            return
+        }
+
+        //绑定播放器视图
+        bindPlayerView()
+
+        //添加播放器事件监听
+        startExoPlayerListener()
+
+        //关闭遮罩
+        closeCover()
+
+        //更新屏幕常亮状态
+        updateKeepScreenOn()
+
+        //刷新进度条
+        update_S_Area_Adapter()
+
+        //更新时间戳
+        updateTimerWindow()
+        //刷新控制按钮
+        updateButtonState()
+
+        //检查自动播放执行情况
+        if (!PlayerSingleton.singleItemState_autoPlayExecuted){
+            PlayerSingleton.singleItemState_autoPlayExecuted = true
+            //自动播放
+            continuePlay(true)
+        }
+
+    }
+
+    //Fragment返回值监听
+    private fun registerFragmentResultListener() {
         lifecycleScope.launch(Dispatchers.Main) {
             //均衡器面板  Fragment -> Activity  fragment_request_key_equalizer_reverse
             supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_equalizer_reverse, context) { _, bundle ->
@@ -981,207 +824,6 @@ class PlayerActivityNeo: AppCompatActivity() {
                 }
             }
         }
-        //监听系统手势
-        lifecycleScope.launch(Dispatchers.Main) {
-            //监听系统手势返回
-            onBackPressedDispatcher.addCallback(this@PlayerActivityNeo, object: OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    //退出入口
-                    exitActivity()
-                }
-            })
-        }
-
-    }
-    //主业务线
-    private fun mainBusiness(savedInstanceState: Bundle?){
-
-        //获取原始链接
-        val (URI_U_O, file_path) = detectOriginalInfo_fromIntent(intent)
-        //将URI缓存为字符串
-        val URI_S_O = URI_U_O.toString()
-
-
-        //获取正在播放信息
-        val ongoing_URI = PlayerSingleton.get_engine_ongoing_URI().second
-        val ongoing_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
-
-        //日志-获取到的信息
-        //consoleLog("intentUriStandard: $intentUriStandard, ongoing_URI: $ongoing_URI")
-
-        //设置媒体项决策程序 savedInstanceState == null 仅在首次启动时决定是否播放
-        if (savedInstanceState == null){
-            //
-            if (URI_S_O == Undefined && ongoing_URI == Uri.EMPTY ){
-                //分支描述:未传入播放链接,也没有正在播放的项,弹窗主动输入(彩蛋分支)
-
-                //弹窗主动输入播放链接
-                queryManualInputUri()
-
-            }else{
-                if (URI_S_O == Undefined){
-                    //分支描述:未传入原始链接,检查正在播放的项
-
-                    //检查有没有正在播放的项
-                    if (ongoing_URI == Uri.EMPTY){
-                        //没有正在播放的项
-                        queryManualInputUri()
-                    }else{
-                        //有正在播放的项
-                        if (ongoing_MediaType == MediaType.Video){
-                            //正在播放的是视频,直接绑定
-                            connectCurrentMedia()
-                        }else{
-                            finish()
-                        }
-                    }
-                }else{
-                    //分支-传入了原始链接
-
-                    //检查新项是否与当前项相同
-                    if (URI_S_O != ongoing_URI.toString()){
-                        //传入链接,但与当前播放项不同,播放新项
-                        //consoleLog("传入链接,但与当前播放项不同,播放新项")
-
-                        //发起播放新项
-                        startPlayNewMedia(URI_U_O,file_path)
-
-                    }else{
-                        //传入链接,但与当前播放项相同,直接绑定,但是要先判断是不是视频
-                        //consoleLog("传入链接,但与当前播放项相同,直接绑定,但是要先判断是不是视频")
-                        if (ongoing_MediaType == MediaType.Video){
-                            //正在播放的是视频,直接绑定
-                            connectCurrentMedia()
-                        }else{
-                            finish()
-                        }
-                    }
-                }
-            }
-        }else{
-            //
-            if (ongoing_URI == Uri.EMPTY){
-                showErrorCover("当前没有正在播放的项")
-            }else{
-                connectCurrentMedia()
-            }
-        }
-
-
-    }
-
-
-
-
-    //提取原始URI信息
-    private fun detectOriginalInfo_fromIntent(intent: Intent): Pair<Uri, String> {
-        //获取原始链接中的信息
-        val Intent_URI = IntentCompat.getParcelableExtra(intent, IntentRepo.URI,  Uri::class.java) ?: Uri.EMPTY
-        val Intent_FILE_PATH = intent.getStringExtra(IntentRepo.FILE_PATH) ?: Undefined
-        //consoleLog("detectOriginalInfo_fromIntent: Intent_URI = $Intent_URI, Intent_FILE_PATH = $Intent_FILE_PATH")
-
-        return Pair(Intent_URI, Intent_FILE_PATH)
-    }
-    //手动输入链接并发起播放
-    @SuppressLint("InflateParams")
-    private fun queryManualInputUri(){
-        val dialog = Dialog(this).apply {
-            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-        }
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_input_uri, null)
-        dialog.setContentView(dialogView)
-        val title: TextView = dialogView.findViewById(R.id.dialog_title)
-        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
-        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-        val ButtonEnsure: Button = dialogView.findViewById(R.id.dialog_button_ensure)
-        val ButtonCancel: Button = dialogView.findViewById(R.id.dialog_button_cancel)
-        var isUriValid = false
-        //修改提示文本
-        title.text = "未能获取到媒体链接"
-        Description.text = "您可以手动输入链接"
-        val Editable = Editable.Factory.getInstance().newEditable("content://media/external/video/media/")
-        EditText.text = Editable
-        ButtonEnsure.text = "确定"
-        ButtonCancel.text = "取消并退出"
-        //设置点击事件
-        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        ButtonEnsure.setOnClickListener {
-            val userInput = EditText.text.toString()
-            if (userInput.isEmpty()){
-                showCustomToast("未输入内容", 3)
-            }else{
-                if (MediaInfoRetriever.isUriStringValid(this, userInput)){
-                    isUriValid = true
-                    dialog.dismiss()
-                    startPlayNewMedia(userInput.toUri(),file_path = "")
-                }else{
-                    showCustomToast("链接无效", 3)
-                }
-            }
-        }
-        ButtonCancel.setOnClickListener {
-            dialog.dismiss()
-            finish()
-        }
-        dialog.show()
-        //接管返回操作
-        dialog.setCanceledOnTouchOutside(true)
-        dialog.setOnCancelListener {
-            if (!isUriValid){ finish() }
-        }
-        //自动弹出键盘
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
-            EditText.setSelection(Editable.length)
-            EditText.requestFocus()
-            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-        }
-    }
-    //开启播放新媒体项
-    private fun startPlayNewMedia(URI_UP: Uri, file_path: String){
-        //设置新媒体项
-        lifecycleScope.launch(Dispatchers.IO){
-            setNewMediaItem(URI_UP,file_path)
-        }
-
-    }
-    //连接正在播放的媒体
-    private fun connectCurrentMedia(){
-        //检查正在播放的媒体的类型
-        val ongoing_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
-        if (ongoing_MediaType != MediaType.Video){
-            showCustomToast("当前正在播放的项不是视频,自动退出播放页", 3)
-            finish()
-            return
-        }
-
-        //绑定播放器视图
-        bindPlayerView()
-
-        //添加播放器事件监听
-        startExoPlayerListener()
-
-        //关闭遮罩
-        closeCover()
-
-        //更新屏幕常亮状态
-        updateKeepScreenOn()
-
-        //刷新进度条
-        update_S_Area_Adapter()
-
-        //更新时间戳
-        updateTimerWindow()
-        //刷新控制按钮
-        updateButtonState()
-
-        //检查自动播放执行情况
-        if (!PlayerSingleton.singleItemState_autoPlayExecuted){
-            PlayerSingleton.singleItemState_autoPlayExecuted = true
-            //自动播放
-            continuePlay(true)
-        }
-
     }
 
 
@@ -1235,7 +877,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var state_PlayerListenerAdded: Boolean = false
 
     //播放器ID观察器
-    private fun startExoPlayerIdleObserver(){
+    private fun startExoPlayerIdleObserver() {
         lifecycleScope.launch(Dispatchers.Main){
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableIsIdle.collect { state ->
@@ -1266,7 +908,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //播放器进入空闲状态
-    private fun onPlayEngineIdle(){
+    private fun onPlayEngineIdle() {
         //consoleLog("onPlayEngineIdle")
         //进行收尾工作(移除监听器,移除引用)
         removeExoPlayerListener()
@@ -1277,7 +919,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     }
     //播放器重新上线
-    private fun onPlayEnginRestart(new_ID:Long){
+    private fun onPlayEnginRestart(new_ID:Long) {
         //consoleLog("onPlayEnginRestart: $new_ID")
 
         //移除一次旧的监听器(保底)
@@ -1313,7 +955,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     //连接ExoPlayer(可发起启动)
     private var cache_player_ID = 0L
-    private fun connectToExoPlayer(){
+    private fun connectToExoPlayer() {
         //确保播放器已启动并获得引用
         player = PlayerSingleton.init_player_get_ref()
         //记入缓存
@@ -1321,19 +963,19 @@ class PlayerActivityNeo: AppCompatActivity() {
         //添加播放器事件监听
         startExoPlayerListener()
     }
-    private fun startExoPlayerListener(){
+    private fun startExoPlayerListener() {
         if (state_PlayerListenerAdded) return
         state_PlayerListenerAdded = true
         //consoleLog("startExoPlayerListener")
         player?.addListener(PlayerStateListener)
 
     }
-    private fun removeExoPlayerListener(){
+    private fun removeExoPlayerListener() {
         //consoleLog("removeExoPlayerListener")
         player?.removeListener(PlayerStateListener)
     }
     //设置新媒体项
-    private suspend fun setNewMediaItem(URI_U_FP: Uri,file_path:String): Boolean{
+    private suspend fun setNewMediaItem(URI_U_FP: Uri,file_path:String): Boolean {
         if (state_setting_media) return false
         state_setting_media = true
 
@@ -1467,7 +1109,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     private var state_setting_media = false
     //媒体项变更回调(需升级为观察者观察统一状态)
-    private fun onMediaItemChanged(mediaItem: MediaItem?){
+    private fun onMediaItemChanged(mediaItem: MediaItem?) {
         //consoleLog("onMediaItemChanged: $mediaItem")
         if (mediaItem == null){
             consoleLog("onMediaItemChanged: 失败-媒体项为空")
@@ -1504,7 +1146,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
 
     //媒体项被清除回调
-    private fun onMediaItemCleared(){
+    private fun onMediaItemCleared() {
 
         //解绑播放区域
         unbindPlayerView()
@@ -1523,7 +1165,9 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
 
     //播放状态变更回调触发
-    private fun isPlayingChanged(){
+    private fun isPlayingChanged() {
+        if (scrollerDesire_Active) return
+
         //更新按钮状态
         updateButtonState()
         //更新屏幕常亮状态
@@ -1534,7 +1178,9 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
 
     //更新循环函数状态
-    private fun updateLoopFunctionState(){
+    private fun updateLoopFunctionState() {
+        if (scrollerDesire_Active) return
+
         val isPlaying = PlayerSingleton.get_engine_is_playing()
         if (isPlaying){
             start_S_Area_PassiveControl()
@@ -1548,7 +1194,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
 
     //检查文件是否还存在
-    private fun detectFileExistState(){
+    private fun detectFileExistState() {
         //获取file_path
         val file_path = PlayerInfoCenter.GET_Media_FilePath()
         //consoleLog("isFileExist: file_path:$file_path")
@@ -1574,7 +1220,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
 
     //检查是否有媒体正在在播放并获取链接
-    private fun isAnyMediaOngoing(): Pair<Boolean, String>{
+    private fun isAnyMediaOngoing(): Pair<Boolean, String> {
         //从播放器获取当前媒体状态
         val (ongoing,currentMediaItem) = PlayerSingleton.get_engine_ongoing_URI()
 
@@ -1588,26 +1234,17 @@ class PlayerActivityNeo: AppCompatActivity() {
 
 
     //重新绑定播放器视图+重置位置
-    private fun reBindPlayerView(){
-        //
+    private fun reBindPlayerView() {
+        //重新绑定视图
         bindPlayerView()
-        //
+        //重置位置
         playerView.scaleX = 1f
         playerView.scaleY = 1f
-
         playerView.pivotX = 0f
         playerView.pivotY = 0f
 
-        center0pivoted = false
-
-        center0x = 0f
-        center0y = 0f
-        center1x = 0f
-        center1y = 0f
-        center2x = 0f
-        center2y = 0f
-
-        distanceGap = 0f
+        //重新注册手势
+        registerGesture()
 
     }
 
@@ -1616,10 +1253,10 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     //确认关闭操作(已不再承担事务清理工作,仅存一个是否保持播放的判断,若无需考虑是否保持播放可直接使用finish())
     @SuppressLint("SourceLockedOrientationActivity")
-    private fun exitActivity(){
+    private fun exitActivity() {
         exitActivity_showController()
     }
-    private fun exitActivity_recOrientation(){
+    private fun exitActivity_recOrientation() {
         //退出前是否先转为竖屏
         val switchPortrait = SettingsCenter.GET_PRF_SwitchPortrait_whenExit()
         if (switchPortrait){
@@ -1643,7 +1280,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
         }
     }
-    private fun exitActivity_showController(){
+    private fun exitActivity_showController() {
         if (!playerViewModel.state_controllerShowing){
             notice("再按一次退出",2000)
             //显示控件
@@ -1663,7 +1300,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
         }
     }
-    private fun exitActivity_ensure(){
+    private fun exitActivity_ensure() {
         scroller.stopScroll()
 
         val needCloseEngin = !SettingsCenter.GET_PRF_EnableMiniView()
@@ -1796,7 +1433,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     private var state_orientationListenerInitialized = false
     private var state_orientationListenerEnabled = false
-    private fun startOrientationListener(){
+    private fun startOrientationListener() {
         //未开启旋转监听器
         if (!SettingsCenter.GET_PREFS_EnableOrientationListener()) return
         //已有一例监听器
@@ -1807,7 +1444,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         orientationListener.enable()
         state_orientationListenerEnabled = true
     }
-    private fun stopOrientationListener(){
+    private fun stopOrientationListener() {
         if (!state_orientationListenerEnabled) return
         orientationListener.disable()
         state_orientationListenerEnabled = false
@@ -2037,7 +1674,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
 
     //更新屏幕常亮状态
-    private fun updateKeepScreenOn(){
+    private fun updateKeepScreenOn() {
         val keepOn = SettingsCenter.GET_PRF_KeepScreenOn()
         if (keepOn){
             rootConstraint.keepScreenOn = PlayerSingleton.get_engine_is_playing()
@@ -2047,31 +1684,31 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
 
     //启动更多操作面板
-    private fun startMoreButtonFragment(){
+    private fun startMoreButtonFragment() {
         onFragmentStart()
 
         PlayerFragmentMoreButton.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_more_button)
     }
     //启动均衡器面板
-    private fun startEqualizerFragment(){
+    private fun startEqualizerFragment() {
         onFragmentStart()
 
         PlayerFragmentEqualizer.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_equalizer)
     }
     //启动媒体信息面板
-    private fun startMediaIndoFragment(){
+    private fun startMediaIndoFragment() {
         onFragmentStart()
 
         PlayerFragmentMediaInfo.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_media_info)
     }
     //启动播放列表面板
-    private fun startPlayListFragment(){
+    private fun startPlayListFragment() {
         onFragmentStart()
 
         ListManagerFragment.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
     }
     //关闭所有DialogFragment
-    private fun closeAllDialogFragments(){
+    private fun closeAllDialogFragments() {
         val manager = supportFragmentManager
         val fragments = manager.fragments
         fragments.forEach { fragment ->
@@ -2081,22 +1718,22 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //面板弹出通用操作
-    private fun onFragmentStart(){
+    private fun onFragmentStart() {
         //TODO
     }
 
     //绑定播放器视图
-    private fun bindPlayerView(){
+    private fun bindPlayerView() {
         playerView.player = null
         playerView.player = player
     }
     //解绑播放器视图
-    private fun unbindPlayerView(){
+    private fun unbindPlayerView() {
         playerView.player = null
     }
 
     //修改方向监听器状态
-    private fun updateOrientationListener(){
+    private fun updateOrientationListener() {
         //读取设置
         val enable = SettingsCenter.GET_PREFS_EnableOrientationListener()
         //开启或关闭
@@ -2110,7 +1747,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     //Fragment计数器
     private var fragment_count = 0
-    private fun onFragmentOpen(){
+    private fun onFragmentOpen() {
         //增加计数
         fragment_count += 1
         //consoleLog("计数增加。当前Fragment计数：$fragment_count")
@@ -2123,7 +1760,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             moveArea_playView_Up()
         }
     }
-    private fun onFragmentClose(){
+    private fun onFragmentClose() {
         //减少计数
         if (fragment_count <= 0){
             fragment_count = 0
@@ -2141,7 +1778,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
 
     //界面更新
-    private fun updateControllers(){
+    private fun updateControllers() {
         //通用
         updateButtonState()
 
@@ -2158,7 +1795,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
 
     //音量管理与提示
-    private fun volumeDetect(){
+    private fun volumeDetect() {
         maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
@@ -2176,7 +1813,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var state_HeadSetInserted = false
 
     //设置项修改封装函数
-    private fun onSettingChange_SeekMode(){
+    private fun onSettingChange_SeekMode() {
         //读取viewModel中的最新值
         val enable = playerViewModel.PREFS_AlwaysSeek
         //执行对应操作
@@ -2188,7 +1825,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             notice("寻帧模式已设置为倍速模拟", 3000)
         }
     }
-    private fun onSettingChange_LinkScroll(){
+    private fun onSettingChange_LinkScroll() {
         //读取viewModel中的最新值
         val enable = playerViewModel.PREFS_LinkScroll
         //执行对应操作
@@ -2203,7 +1840,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             notice("已关闭链接滚动条与视频进度", 3000)
         }
     }
-    private fun onSettingChange_TapJump(){
+    private fun onSettingChange_TapJump() {
         //读取viewModel中的最新值
         val enable = playerViewModel.PREFS_TapJump
         //执行对应操作
@@ -2214,7 +1851,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //清除进度条截图
-    private fun clearScrollerFrames(){
+    private fun clearScrollerFrames() {
         //获取当前视频ID
         val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
         //删除进度条截图
@@ -2230,7 +1867,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     //视频区域抬高动画
     private var isPlayView_Up = false
-    private fun moveArea_playView_Down(){
+    private fun moveArea_playView_Down() {
         //恢复动作不需要限定在竖屏下
         //if (isLandscape) return
 
@@ -2273,7 +1910,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
 
     }
-    private fun ensure_moveArea_place(){
+    private fun ensure_moveArea_place() {
         if (isPlayView_Up){
             fragment_count = 0
             moveArea_playView_Down()
@@ -2306,7 +1943,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     //截屏(要用到视频尺寸数值)
     private var videoSizeWidth = 0
     private var videoSizeHeight = 0
-    private fun captureScreenShot(){
+    private fun captureScreenShot() {
         fun generateFileName(): String {
             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
             val current = LocalDateTime.now()
@@ -2355,7 +1992,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //更新封面
-    private fun updateCoverFrame_captureCurrentFrame(media_api_id: Long){
+    private fun updateCoverFrame_captureCurrentFrame(media_api_id: Long) {
         fun handleSuccess(bitmap: Bitmap) {
             //保存图片
             ArtworkFrameManager.SAVE_ArtworkFrame_Bitmap_Custom(
@@ -2398,7 +2035,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             )
         }
     }
-    private fun updateCoverFrame_useDefaultCover(media_api_id: Long){
+    private fun updateCoverFrame_useDefaultCover(media_api_id: Long) {
         //获取默认封面
         val bitmap = ArtworkCapturer.getDefaultVideoCoverFrame(this@PlayerActivityNeo)
         if (bitmap == null) {
@@ -2423,11 +2060,11 @@ class PlayerActivityNeo: AppCompatActivity() {
 
         showCustomToast("已完成", 3)
     }
-    private fun updateCoverFrame_publishMessage(file_path:String, media_api_id: Long){
+    private fun updateCoverFrame_publishMessage(file_path:String, media_api_id: Long) {
         ConnectCenter.setCoverFrameUpdateEvent_targetFileInfo(file_path, media_api_id)
         ConnectCenter.setState_connector(ConnectCenter.connector_event_cover_frame_update)
     }
-    private fun deleteCustomCover(){
+    private fun deleteCustomCover() {
         //获取当前视频ID
         val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
         val file_path = PlayerInfoCenter.GET_Media_FilePath()
@@ -2466,17 +2103,17 @@ class PlayerActivityNeo: AppCompatActivity() {
     //空闲定时器
     private var IDLE_Timer: CountDownTimer? = null
     private val IDLE_MS = 5_000L
-    private fun startIdleTimer(){
+    private fun startIdleTimer() {
         IDLE_Timer?.cancel()
         IDLE_Timer = object : CountDownTimer(IDLE_MS, 1000L) {
             override fun onTick(millisUntilFinished: Long) {}
             override fun onFinish() { idleTimeout() }
         }.start()
     }
-    private fun closeIdleTimer(){
+    private fun closeIdleTimer() {
         IDLE_Timer?.cancel()
     }
-    private fun idleTimeout(){
+    private fun idleTimeout() {
         if (isLandscape){
             if (!scrollerDesire_Active) setControllerInvisible()
         }else{
@@ -2533,7 +2170,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //切换横屏
-    private fun ButtonChangeOrientation(flag_short_or_long: String){
+    private fun ButtonChangeOrientation(flag_short_or_long: String) {
         //自动旋转关闭
         if (rotationSetting == 0){
             //当前为竖屏
@@ -2597,25 +2234,407 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var switchLandscape_downMillis = 0L //按下时间
     private var switchLandscape_upMillis = 0L   //抬起时间
     @SuppressLint("SourceLockedOrientationActivity")
-    private fun setOrientation_PORTRAIT(){
+    private fun setOrientation_PORTRAIT() {
         scroller.stopScroll()
         playerViewModel.onOrientationChanging = true
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
     }
-    private fun setOrientation_LANDSCAPE(){
+    private fun setOrientation_LANDSCAPE() {
         scroller.stopScroll()
         playerViewModel.onOrientationChanging = true
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
     }
-    private fun setOrientation_REVERSE_LANDSCAPE(){
+    private fun setOrientation_REVERSE_LANDSCAPE() {
         scroller.stopScroll()
         playerViewModel.onOrientationChanging = true
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
     }
+    //返回手势监听 (可升级)
+    private fun registerOnBackPressListener() {
+        lifecycleScope.launch(Dispatchers.Main) {
+            //监听系统手势返回
+            onBackPressedDispatcher.addCallback(this@PlayerActivityNeo, object: OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    //退出入口
+                    exitActivity()
+                }
+            })
+        }
+    }
+    //注册播放区域手势
+    private var singleTap = false
+    private var longPress = false
+    private fun registerGesture() {
+        //播放区域点击事件
+        //<editor-fold desc="点击事件变量">
+        var touchState_two_fingers = false
+        var ACTION_POINTER_DOWN = false
+        var originalDistance = 0f
+        var distanceGap = 0f
+        var center0x = 0f
+        var center0y = 0f
+        var center1x = 0f
+        var center1y = 0f
+        var originalScale = 1f
+        var scale = 1.0
+        var definiteScale = 1.0f
+        var center2x = 0f
+        var center2y = 0f
+        var center0pivoted = false
+        var finger1x = 0f
+        var finger1y = 0f
+        var finger2x = 0f
+        var finger2y = 0f
+        var touchState_need_exit = false
+        var touchState_left_noticed = false
+        var touchState_right_noticed = false
+        var touchState_need_exit_vibrated = false
+        var touchState_scroll_vibrated = false
+        var touchCenterDistance = 0f
+        var touchLeft = false
+        var touchRight = false
+        var touchCenter = false
+        var scrollDistance = 0
+        //</editor-fold desc="点击事件">
+        //播放区域点击事件
+        val gestureDetectorPlayArea = GestureDetector(
+            this@PlayerActivityNeo,
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDoubleTap(e: MotionEvent): Boolean {
+                    //控制播放
+                    if (player?.isPlaying == true) {
+                        pausePlay()
+                        stop_S_Area_PassiveControl()
+                        notice("暂停播放", 1000)
+                        updateButtonState()
+                    } else {
+                        if (playerViewModel.playEnd) {
+                            playerViewModel.playEnd = false
+                            continuePlay()
+                            notice("开始重播", 1000)
+                        } else {
+                            continuePlay()
+                            notice("继续播放", 1000)
+                            updateButtonState()
+                        }
+                    }
+                    //确保播放区域在普通位置
+                    ensure_moveArea_place()
+
+                    return true
+                }
+                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                    if (ACTION_POINTER_DOWN) {
+                        return true
+                    }
+                    //触发控件显示变更
+                    changeBackgroundColor()
+                    //确保播放区域在普通位置
+                    ensure_moveArea_place()
+
+                    return true
+                }
+                override fun onLongPress(e: MotionEvent) {
+                    if (ACTION_POINTER_DOWN) return
+                    if (player?.isPlaying == false) {
+                        return
+                    }
+                    currentSpeed = player?.playbackParameters?.speed ?: 1.0f
+                    player?.setPlaybackSpeed(currentSpeed * 2.0f)
+                    notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
+                    setControllerInvisibleNoAnimation()
+                    longPress = true
+                    ToolVibrate().vibrate(this@PlayerActivityNeo)
+                    super.onLongPress(e)
+                }
+                override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float):Boolean {
+                    if (touchLeft) {
+                        //点击区域功能提示:仅一次
+                        if (!touchState_left_noticed) {
+                            //notice("继续上下滑动可调整亮度", 1000)
+                            touchState_left_noticed = true
+                        }
+                        //累积滑动距离
+                        scrollDistance += distanceY.toInt()
+                        val windowInfo = window.attributes
+                        //开始亮度修改
+                        playerViewModel.BrightnessChanged = true
+                        var newBrightness: Float
+                        //上滑
+                        if (scrollDistance > 50) {
+                            newBrightness = (playerViewModel.BrightnessValue + 0.01f).toBigDecimal()
+                                .setScale(2, RoundingMode.HALF_UP).toFloat()
+                            if (newBrightness in 0.0..1.0) {
+                                windowInfo.screenBrightness = newBrightness
+                                window.attributes = windowInfo
+                                playerViewModel.BrightnessValue = newBrightness
+                                notice("亮度 +1 (${(newBrightness * 100).toInt()}/100)", 1000)
+                            } else {
+                                notice("亮度已到上限", 1000)
+                                if (!touchState_scroll_vibrated) {
+                                    touchState_scroll_vibrated = true
+                                    ToolVibrate().vibrate(this@PlayerActivityNeo)
+                                }
+                            }
+                        }
+                        //下滑
+                        else if (scrollDistance < -50) {
+                            newBrightness = (playerViewModel.BrightnessValue - 0.01f).toBigDecimal()
+                                .setScale(2, RoundingMode.HALF_UP).toFloat()
+                            if (newBrightness in 0.0..1.0) {
+                                windowInfo.screenBrightness = newBrightness
+                                window.attributes = windowInfo
+                                playerViewModel.BrightnessValue = newBrightness
+                                notice("亮度 -1 (${(newBrightness * 100).toInt()}/100)", 1000)
+                            } else {
+                                if (!touchState_scroll_vibrated) {
+                                    touchState_scroll_vibrated = true
+                                    ToolVibrate().vibrate(this@PlayerActivityNeo)
+                                }
+                                notice("亮度已到下限", 1000)
+                            }
+                        }
+                        //数值越界重置
+                        if (scrollDistance > 50 || scrollDistance < -50) {
+                            scrollDistance = 0
+                        }
+                    }
+                    if (touchRight) {
+                        //点击区域功能提示:仅一次
+                        if (!touchState_right_noticed) {
+                            //notice("继续上下滑动可调整音量", 1000)
+                            touchState_right_noticed = true
+                        }
+                        //累积滑动距离
+                        scrollDistance += distanceY.toInt()
+                        //快速下滑紧急静音
+                        if (scrollDistance < -150) {
+                            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+                            notice("快速静音", 2000)
+                        }
+                        //普通音量修改
+                        if (scrollDistance > volumeChangeGap) {
+                            var currentVolume =
+                                audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                            currentVolume += 1
+                            if (currentVolume <= maxVolume) {
+                                if (state_HeadSetInserted) {
+                                    if (currentVolume <= (maxVolume * 0.6).toInt()) {
+                                        audioManager.setStreamVolume(
+                                            AudioManager.STREAM_MUSIC,
+                                            currentVolume,
+                                            0
+                                        )
+                                        notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
+                                    } else {
+                                        if (!touchState_scroll_vibrated) {
+                                            touchState_scroll_vibrated = true
+                                            ToolVibrate().vibrate(this@PlayerActivityNeo)
+                                        }
+                                        notice(
+                                            "佩戴耳机时,音量不能超过${(maxVolume * 0.6).toInt()},除非使用音量键调整",
+                                            1000
+                                        )
+                                    }
+                                } else {
+                                    audioManager.setStreamVolume(
+                                        AudioManager.STREAM_MUSIC,
+                                        currentVolume,
+                                        0
+                                    )
+                                    notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
+                                }
+                            } else {
+                                if (!touchState_scroll_vibrated) {
+                                    touchState_scroll_vibrated = true
+                                    ToolVibrate().vibrate(this@PlayerActivityNeo)
+                                }
+                                notice("音量已到最高", 1000)
+                            }
+                        } else if (scrollDistance < -volumeChangeGap) {
+                            var currentVolume =
+                                audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                            currentVolume -= 1
+                            if (currentVolume >= 0) {
+                                audioManager.setStreamVolume(
+                                    AudioManager.STREAM_MUSIC,
+                                    currentVolume,
+                                    0
+                                )
+                                notice("音量 -1 ($currentVolume/$maxVolume)", 1000)
+                            } else {
+                                if (!touchState_scroll_vibrated) {
+                                    touchState_scroll_vibrated = true
+                                    ToolVibrate().vibrate(this@PlayerActivityNeo)
+                                }
+                                notice("音量已到最低", 1000)
+                            }
+                        }
+                        //数值越界置位
+                        if (scrollDistance > 50 || scrollDistance < -50) {
+                            scrollDistance = 0
+                        }
+                    }
+                    if (touchCenter) {
+                        touchCenterDistance += distanceY
+                        if (touchCenterDistance < -playerViewModel.value_scrollDownExitDistance) {
+                            touchState_need_exit = true
+                            //振动:仅一次
+                            if (!touchState_need_exit_vibrated) {
+                                touchState_need_exit_vibrated = true
+                                ToolVibrate().vibrate(this@PlayerActivityNeo)
+                            }
+                        } else {
+                            touchState_need_exit = false
+                        }
+                    }
+                    return super.onScroll(e1, e2, distanceX, distanceY)
+                }
+            })
+        val playerTouchPad = findViewById<View>(R.id.playerTouchPad)
+        playerTouchPad.setOnTouchListener { _, event ->
+            when (event.actionMasked){
+                MotionEvent.ACTION_DOWN -> {
+                    //清除双指状态
+                    ACTION_POINTER_DOWN = false
+                    touchState_two_fingers = false
+                    //重置部分状态
+                    touchState_need_exit_vibrated = false
+                    touchState_need_exit = false
+                    touchState_left_noticed = false
+                    touchState_right_noticed = false
+                    touchState_scroll_vibrated = false
+
+                    //记录1指初始坐标
+                    finger1x = event.x
+                    finger1y = event.y
+
+                    //屏蔽纵向误触区域
+                    if (finger1y < display_screen_height_pixels * 0.2 || finger1y > display_screen_height_pixels * 0.95){
+                        return@setOnTouchListener false
+                    }
+
+                    //判断点击区域
+                    if (finger1x < display_screen_width_pixels * 0.2) {
+                        touchLeft = true
+                    }
+                    else if(finger1x > display_screen_width_pixels * 0.8){
+                        state_HeadSetInserted = SystemListener.getState_isHeadsetPlugged(this@PlayerActivityNeo)
+                        touchRight = true
+                    }
+                    else{
+                        touchCenter = true
+                        touchCenterDistance = 0f
+                    }
+
+                    //传递
+                    gestureDetectorPlayArea.onTouchEvent(event)
+                }
+                MotionEvent.ACTION_UP -> {
+                    //重置部分状态
+                    touchState_two_fingers = false
+                    touchLeft = false
+                    touchRight = false
+                    touchCenter = false
+                    //重置部分数值
+                    scrollDistance = 0
+                    center0x = playerView.pivotX
+                    center0y = playerView.pivotY
+                    playerView.pivotX = center0x
+                    playerView.pivotY = center0y
+                    originalScale = definiteScale
+                    //事件处理:长按
+                    if (longPress) {
+                        longPress = false
+                        player?.setPlaybackSpeed(currentSpeed)
 
 
+                        val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
+                        NoticeCard.visibility = View.GONE
+                    }
+                    //事件处理:下滑退出
+                    if (touchState_need_exit){
+                        exitActivity_ensure()
+                    }
+
+
+                    gestureDetectorPlayArea.onTouchEvent(event)
+                }
+                MotionEvent.ACTION_POINTER_DOWN -> {
+                    //记录手指2的坐标
+                    ACTION_POINTER_DOWN = true
+
+                    val ptrIndex = event.actionIndex
+
+                    finger2x = event.getX(ptrIndex)
+                    finger2y = event.getY(ptrIndex)
+                    if (event.pointerCount == 2){
+                        //notice("双指缩放可缩放播放区域", 2000)
+                        //更改标志位
+                        touchState_two_fingers = true
+                        //计算缩放中心点:只算一次
+                        if (!center0pivoted){
+                            center0x = (finger1x + finger2x) / 2
+                            center0y = (finger1y + finger2y) / 2
+                            playerView.pivotX = center0x
+                            playerView.pivotY = center0y
+                            center0pivoted = true
+                        }
+                        center1x = (finger1x + finger2x) / 2
+                        center1y = (finger1y + finger2y) / 2
+                        //计算初始双指距离
+                        originalDistance = hypot(finger1x - finger2x, finger1y - finger2y)
+                    }
+                }
+                MotionEvent.ACTION_POINTER_UP -> {
+                    if (event.pointerCount == 2){
+                        touchState_two_fingers = false
+                    }
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    //双指在滑动
+                    if (touchState_two_fingers){
+                        finger1x = event.getX(0)
+                        finger1y = event.getY(0)
+                        finger2x = event.getX(1)
+                        finger2y = event.getY(1)
+
+                        //平移
+                        center2x = (finger1x + finger2x) / 2
+                        center2y = (finger1y + finger2y) / 2
+                        val centerGapX = center2x - center1x
+                        val centerGapY = center2y - center1y
+                        if ( playerView.scaleX <= 1){
+                            playerView.pivotX = (center0x + centerGapX)
+                            playerView.pivotY = (center0y + centerGapY)
+                        }else{
+                            playerView.pivotX = (center0x - centerGapX)
+                            playerView.pivotY = (center0y - centerGapY)
+                        }
+
+
+                        //缩放
+                        val distance = hypot(finger1x - finger2x, finger1y - finger2y)
+                        distanceGap = (distance - originalDistance)
+                        scale = 4.0.pow(distanceGap / 400.0)
+                        definiteScale =  originalScale * scale.toFloat()
+                        playerView.scaleX = definiteScale
+                        playerView.scaleY = definiteScale
+
+                    }
+                    //单指在滑动
+                    else{
+                        if (!ACTION_POINTER_DOWN){
+                            gestureDetectorPlayArea.onTouchEvent(event)
+                        }
+                    }
+                }
+            }
+            onTouchEvent(event)
+        }
+    }
     //刷新时间显示窗口
-    private fun updateTimeStampWindow(){
+    private fun updateTimeStampWindow() {
         //触发密度控制
         onScroll_currentMillis = System.currentTimeMillis()
         if (onScroll_currentMillis - scroller_updateTimerStamp_lastMillis < value_timeStamp_updateGapMs) return
@@ -2637,7 +2656,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var onScroll_scrollPercent = 0f
     private var onScroll_seekToMs = 0L
     //单次点击位置计算
-    private fun postSingleTapSeek(e_x: Float){
+    private fun postSingleTapSeek(e_x: Float) {
         //根据百分比计算具体跳转视频时间点
         val duration = player?.duration ?: -1L
         if (duration <= 0) return
@@ -2653,8 +2672,8 @@ class PlayerActivityNeo: AppCompatActivity() {
         if (seekToMs !in 1..<duration) return
 
 
-        //设置为寻找关键帧
-        setSeekParameter_useSync(1)
+        //设置为寻找精确帧
+        setSeekParameter_useSync(0)
         //记录原播放状态
         playState_singleTap_wasPlaying = player?.isPlaying ?: false
 
@@ -2667,7 +2686,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         notice("跳转至${FormatTime_withChar(seekToMs)}", 1000)
     }
     //跑完一个完整滚动事件
-    private fun onScrollOnceComplete(){
+    private fun onScrollOnceComplete() {
         //consoleLog("一个滚动事件完整跑完 ${System.currentTimeMillis()}", 1000)
         //清除playEnd状态
         playerViewModel.playEnd = false
@@ -2688,7 +2707,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     //seekParameters管理
     private var seekParameter_useSync = -1 //是否使用同步帧
-    private fun setSeekParameter_useSync(target: Int){
+    private fun setSeekParameter_useSync(target: Int) {
         if (seekParameter_useSync == -1){
             //从player读取当前seekParameters
             val useSync = player?.seekParameters == SeekParameters.CLOSEST_SYNC
@@ -2725,7 +2744,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var scrollerTouchState_ACTION_DOWN = false
     private var scrollerMotionState_Forward = true
     private var scrollerDesire_Active = false //主动被动状态:触摸立即进入true,直到下一次自然停止
-    private fun clearScrollerState(){
+    private fun clearScrollerState() {
         //consoleLog("clearScrollerState")
 
         scrollerState_DRAGGING = false
@@ -2742,7 +2761,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     } //重置为未触摸过的状态
     //状态playerReady
-    private fun playState_playerReady(){
+    private fun playState_playerReady() {
         //检验来源
         when(Mark_playerReadyFrom){
             Mark_playerReadyFrom_MidSectionSeek -> {
@@ -2791,7 +2810,6 @@ class PlayerActivityNeo: AppCompatActivity() {
             }
             //外部控制寻帧
             else -> {
-                //consoleLog("Mark_playerReadyFrom : OUT - $Mark_playerReadyFrom")
 
                 syncScrollTask_Core_Compute()
 
@@ -2807,7 +2825,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private val Mark_playerReadyFrom_SingleTapSeek = "Mark_playerReadyFrom_SingleTapSeek"
     private val Mark_playerReadyFrom_setNewItem = "Mark_playerReadyFrom_setNewItem"
     //状态playEnd
-    private fun playState_playEnd(){
+    private fun playState_playEnd() {
         //已移除媒体项时不触发
         if (!PlayerSingleton.get_engine_ongoing_URI().first) return
         //根据循环模式执行操作
@@ -2837,7 +2855,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     //播放与暂停
     @Suppress("SameParameterValue")
-    private fun pausePlay(){
+    private fun pausePlay() {
         //调用暂停播放(确保活动内唯一调用)
         PlayerSingleton.pausePlay()
         //设为手动暂停状态
@@ -2849,7 +2867,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         stop_S_Area_PassiveControl()
     }
     @Suppress("SameParameterValue")
-    private fun continuePlay(need_requestFocus: Boolean = true){
+    private fun continuePlay(need_requestFocus: Boolean = true) {
         //调用继续播放(确保活动内唯一调用)
         PlayerSingleton.continuePlay(need_requestFocus)
 
@@ -2868,7 +2886,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private lateinit var noticeCapsule : CardView //通知胶囊卡片
     private lateinit var playerView: PlayerView //播放区域
     //刷新视频总长度
-    private fun updateTimerWindow(){
+    private fun updateTimerWindow() {
         //设置时间戳-总时长显示位
         val mediaDuration = PlayerInfoCenter.GET_Media_Duration()
         controller_timer_total.text = FormatTime_onlyNum(mediaDuration)
@@ -2880,7 +2898,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private lateinit var s_area_scroller : ConstraintLayout
     private lateinit var s_area_seekbar : LinearLayout
     private var state_current_s_area = S_Area_Helper.S_AreaType_UNDEFINED
-    private fun show_s_area_type(target:Int){
+    private fun show_s_area_type(target:Int) {
         //consoleLog("show_s_area_type : $target")
         when(target){
             S_Area_Helper.S_AreaType_SEEKBAR -> {
@@ -2929,7 +2947,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //启动S_Area被动控制函数(scroller或seekbar:自动绑定视频位置)(被动控制函数必须在此调用)
-    private fun start_S_Area_PassiveControl(){
+    private fun start_S_Area_PassiveControl() {
         //consoleLog("start_S_Area_PassiveControl num_random-$num_random")
         //检测当前用的S_Area类型
         when(state_current_s_area){
@@ -2947,7 +2965,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //停止S_Area被动控制函数(scroller或seekbar:自动绑定视频位置)(被动控制函数必须在此调用)
-    private fun stop_S_Area_PassiveControl(){
+    private fun stop_S_Area_PassiveControl() {
 
         //停止scroller被动控制
         stopScrollerSync()
@@ -2959,13 +2977,13 @@ class PlayerActivityNeo: AppCompatActivity() {
     private lateinit var scroller : RecyclerView
     private var scrollerLayoutManager : LinearLayoutManager ?= null
     private var scrollerAdapter : PlayerScrollerAdapter ?= null
-    private fun close_scroller_components(){
+    private fun close_scroller_components() {
         //关闭scroller
         scroller.adapter = null
         scrollerAdapter = null
         scrollerLayoutManager = null
     }
-    private fun update_S_Area_Adapter(){
+    private fun update_S_Area_Adapter() {
         lifecycleScope.launch(Dispatchers.IO) {
             val useSeekBar = SettingsCenter.GET_PRF_Video_Screening_Type() == S_Area_Helper.S_AreaType_SEEKBAR
             if (useSeekBar){
@@ -3045,7 +3063,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //scroller控制器
-    private fun setupScrollerFunction(){
+    private fun setupScrollerFunction() {
         lifecycleScope.launch(Dispatchers.Main) {
             //Scroller事件 gestureDetector层 -onSingleTap -onDown
             val gestureDetectorScroller = GestureDetector(
@@ -3242,19 +3260,19 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var scroller_updateTimerStamp_lastMillis = 0L    //进度条被动刷新时的间隔
     private var scrollerWasPlayingState_recorded = false //本轮滚动是否记录过播放状态变化
     private var playState_scroller_wasPlaying = false //本轮滚动是否播放
-    private fun recordScrollerWasPlayingState(){
+    private fun recordScrollerWasPlayingState() {
         if (scrollerWasPlayingState_recorded) return
         scrollerWasPlayingState_recorded = true
         //记录当前播放状态变化
         playState_scroller_wasPlaying = player?.isPlaying ?: false
-        //consoleLog("playState_scroller_wasPlaying : $playState_scroller_wasPlaying")
+        consoleLog("playState_scroller_wasPlaying : $playState_scroller_wasPlaying")
 
     }
     private var playState_singleTap_wasPlaying = false //singleTap专用wasPlaying
     //传统seekBar区域控制
     private lateinit var seekbar : SeekBar
     //seekbar控制器
-    private fun setupSeekBarFunction(){
+    private fun setupSeekBarFunction() {
         lifecycleScope.launch(Dispatchers.Main){
             seekbar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -3377,15 +3395,15 @@ class PlayerActivityNeo: AppCompatActivity() {
             .start()
 
     }
-    private fun setBackgroundVisible(){
+    private fun setBackgroundVisible() {
         val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
         playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Background))
     }
-    private fun setBackgroundInvisible(){
+    private fun setBackgroundInvisible() {
         val playerContainer = findViewById<FrameLayout>(R.id.playerContainer)
         playerContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.Black))
     }
-    private fun changeBackgroundColor(){
+    private fun changeBackgroundColor() {
         if (playerViewModel.state_controllerShowing){
             setControllerInvisible()
         }else{
@@ -3394,7 +3412,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     //进度条内边距设置
     @Suppress("DEPRECATION")
-    private fun setScrollerPadding(){
+    private fun setScrollerPadding() {
         //根据横竖屏做不同设置
         if (isLandscape){
 
@@ -3423,7 +3441,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var sidePadding = 0
     //状态栏配置
     @Suppress("DEPRECATION")
-    private fun setStatusBarParams(){
+    private fun setStatusBarParams() {
         if (isLandscape){
             //横屏
 
@@ -3536,7 +3554,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //刷新按钮状态
-    private fun updateLandscapeButton(){
+    private fun updateLandscapeButton() {
         val ButtonLandscape = findViewById<CircleButton>(R.id.ButtonLandscape)
         //动态切换颜色和Icon的TintColor
         if (isLandscape) {
@@ -3556,7 +3574,13 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
 
     } //横屏按钮
-    private fun updateButtonState(){
+    private fun updateButtonState() {
+        //禁入条件
+        if (!isSeekReady) return
+        if (scrollerDesire_Active) return
+
+
+        //
         val pauseButton = findViewById<CircleButton>(R.id.ButtonPause)
         if (player?.isPlaying == true){
             pauseButton.setIconResource(R.drawable.ic_controller_neo_pause)
@@ -3565,7 +3589,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }   //暂停按钮
     //通知卡片位置设置
-    private fun setNoticeCardPosition(){
+    private fun setNoticeCardPosition() {
         if (isLandscape){
             //横屏
             (noticeCapsule.layoutParams as ViewGroup.MarginLayoutParams).topMargin = (dp2px(5f))
@@ -3575,7 +3599,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //调整控件位置
-    private fun setControllerPosition(){
+    private fun setControllerPosition() {
         //横屏
         if (isLandscape){
             //控件位置动态调整
@@ -3604,7 +3628,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var display_screen_height_pixels: Int = 0
     private var display_screen_width_pixels: Int = 0
     private var display_screen_density: Float = 0f
-    private fun updateScreenParameters(){
+    private fun updateScreenParameters() {
         //获取状态栏高度
         if (DeviceInfo.statusBarHeight == 0){
             ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.rootConstraint)) { _, insets ->
@@ -3640,13 +3664,13 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     //关闭遮罩
     private lateinit var cover: LinearLayout
-    private fun closeCover(anim: Boolean = false,delay: Boolean = false){
+    private fun closeCover(anim: Boolean = false,delay: Boolean = false) {
         //直接隐藏
-        fun just_hide(){
+        fun just_hide() {
             cover.visibility = View.GONE
         }
         //带动画隐藏
-        fun hide_with_anim(){
+        fun hide_with_anim() {
             cover.animate().alpha(0f).setDuration(25).withEndAction { cover.visibility = View.GONE }
         }
         if (delay){
@@ -3665,12 +3689,12 @@ class PlayerActivityNeo: AppCompatActivity() {
     //无播放项遮罩
     private lateinit var layer_error: LinearLayout
     private lateinit var layer_error_text: TextView
-    private fun closeErrorCover(){
+    private fun closeErrorCover() {
         //隐藏错误面板
         layer_error_text.text = ""
         layer_error.visibility = View.GONE
     }
-    private fun showErrorCover(text: String,hide_buttons: Boolean=false){
+    private fun showErrorCover(text: String,hide_buttons: Boolean=false) {
         if (cover.isVisible) return
 
 
@@ -3717,7 +3741,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     }
     //检查并返回是否应当关闭遮罩
-    private fun shouldCloseCover(): Boolean{
+    private fun shouldCloseCover(): Boolean {
         //检查播放器是否已经正常恢复
         val (current_media_ongoing, current_media_uri) = PlayerSingleton.get_engine_ongoing_URI()
         if (!current_media_ongoing || current_media_uri == Uri.EMPTY){
@@ -3753,7 +3777,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         return "%02d:%02d.%03d".format(min, sec, cent)
     }
     //解除亮度控制
-    private fun unlockBrightnessControl(){
+    private fun unlockBrightnessControl() {
         val windowInfo = window.attributes
 
         windowInfo.screenBrightness = -1f
@@ -3830,7 +3854,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         animator.start()
     }
     //请求使用高刷新率
-    private fun requestHighRefreshRate(){
+    private fun requestHighRefreshRate() {
         @Suppress("DEPRECATION")
         val display = windowManager.defaultDisplay
         val supportedModes = display.supportedModes
@@ -3847,7 +3871,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         window.attributes.preferredRefreshRate = maxRefreshRate
     }
     //seekTo 统一入口
-    private fun seekTo_Core(pos: Long, mark: String){
+    private fun seekTo_Core(pos: Long, mark: String) {
         if (isSeekReady){
             isSeekReady = false
 
@@ -3869,7 +3893,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             //consoleLog("task_syncScrollerPosition_Runnable")
 
             //视频是否还处于播放状态
-            if (player?.isPlaying != true){
+            if (player?.isPlaying != true || scrollerDesire_Active){
 
                 //不再进入下一轮循环
                 task_syncScrollerPosition_Running = false
@@ -3882,9 +3906,10 @@ class PlayerActivityNeo: AppCompatActivity() {
             }
         }
     }
-    private fun syncScrollTask_Core_Compute(){
+    private fun syncScrollTask_Core_Compute() {
         if (ScrollerHelper.singleFrame_durationMs <= 0L) return
         if (state_scrollSmoothSlowly_Running) return
+        if (scrollerDesire_Active) return
 
         val currentPosition = player?.currentPosition ?: -1L
         if (currentPosition == -1L) return
@@ -3905,7 +3930,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     private var state_scrollSmoothSlowly_Running = false
     private val scrollSmoothSlowly_Millis = 500L
-    private fun syncScrollTask_Core_smoothSlowly_Compute(targetVideoPos_o: Long, force: Boolean = false){
+    private fun syncScrollTask_Core_smoothSlowly_Compute(targetVideoPos_o: Long, force: Boolean = false) {
         if (ScrollerHelper.singleFrame_durationMs <= 0L) return
         if (state_scrollSmoothSlowly_Running && !force) return
         if (!playerViewModel.state_controllerShowing) return
@@ -3924,7 +3949,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         syncScrollTask_Core_smoothSlowly_Execute(scrollerParamMain, scrollerParamOffset, force)
 
     }
-    private fun syncScrollTask_Core_smoothSlowly_Execute(p1: Int, p2: Int,force: Boolean = false){
+    private fun syncScrollTask_Core_smoothSlowly_Execute(p1: Int, p2: Int,force: Boolean = false) {
         if (state_scrollSmoothSlowly_Running && !force) return
         state_scrollSmoothSlowly_Running = true
         val smoothScroller = SmoothScroller(this,p2,scrollSmoothSlowly_Millis)
@@ -3955,6 +3980,8 @@ class PlayerActivityNeo: AppCompatActivity() {
         if (!playerViewModel.PREFS_LinkScroll) return
         //未显示控件层
         if (!playerViewModel.state_controllerShowing) return
+        //操作中
+        if (scrollerDesire_Active) return
         //未在播放状态
         if (player?.isPlaying != true) return
         //
@@ -3976,7 +4003,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var task_syncScrollerPosition_Running = false
     //Runnable-1.1:根据视频时间更新seekbar位置
     private val task_syncSeekBarPosition_Handler = Handler(Looper.getMainLooper())
-    private fun syncSeekBarPosition_Core(){
+    private fun syncSeekBarPosition_Core() {
         val duration = player?.duration ?: -1L
         val currentPosition = player?.currentPosition ?: -1L
         if (duration == -1L || currentPosition == -1L) return
@@ -3996,11 +4023,16 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     private fun startSeekBarSync() {
+        //禁入条件
         //未显示控件层
         if (!playerViewModel.state_controllerShowing) return
+        //操作中
+        if (scrollerDesire_Active) return
         //进入锁
         if (task_syncSeekBarPosition_Running) return
         task_syncSeekBarPosition_Running = true
+
+
 
         //发起滚动任务
         task_syncSeekBarPosition_Handler.post(task_syncSeekBarPosition_Runnable)
@@ -4013,13 +4045,13 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var task_syncSeekBarPosition_Running = false
     //Runnable-2:根据视频时间更新时间窗口进度数值
     private val task_timeStampSync_Handler = Handler(Looper.getMainLooper())
-    private fun timeStampSync_Core(){
+    private fun timeStampSync_Core() {
         //获取时间
         timeStampSync_cache_currentPosition = player?.currentPosition ?: return
         //显示
         controller_timer_current.text = FormatTime_onlyNum(timeStampSync_cache_currentPosition)
     }
-    private var task_timeStampSync_Runnable = object : Runnable{
+    private var task_timeStampSync_Runnable = object : Runnable {
         override fun run() {
             timeStampSync_Core()
 
@@ -4035,72 +4067,140 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     private var value_timeStamp_updateGapMs = 0L //时间戳刷新间隔
     //Runnable-3:视频滚动寻帧-倍速假寻帧方案
-    private val videoSmartScrollHandler = Handler(Looper.getMainLooper())
-    private var videoSmartScroll = object : Runnable{
+    private val task_smartScrollLoop_Handler = Handler(Looper.getMainLooper())
+    private var task_smartScrollLoop_Runnable = object : Runnable {
         override fun run() {
-            /*
-            playerViewModel.allowRecord_wasPlaying = false
-            var delayGap = if (scrollerDesire_Active){ 30L } else{ 30L }
-            val videoPosition = player.currentPosition
-            val scrollerPosition = player.duration * (scroller.computeHorizontalScrollOffset().toFloat()/scroller.computeHorizontalScrollRange())
-            player.volume = 0f
-            if (scrollerState_Moving) {
-                if (player.currentPosition > scrollerPosition - 100) {
-                    player.pause()
-                }else{
-                    val positionGap = scrollerPosition - videoPosition
-                    var speed5 = (((positionGap / 100).toInt()) /10.0).toFloat()
+            //
+            var delay_millis = 50L
+            //获取视频位置
+            val currentPosition = player?.currentPosition ?: -1L
+            val duration =  player?.duration ?: -1L
+            if (currentPosition < 0 || duration < 0) return
+            //获取进度条位置对应的视频位置
+            val scrollerCorresPosition = duration * (scroller.computeHorizontalScrollOffset().toFloat() / scroller.computeHorizontalScrollRange())
 
-                    if (speed5 > lastPlaySpeed){
-                        speed5 = speed5 + 0.2f
-                    }else if(speed5 < lastPlaySpeed){
-                        speed5 = speed5 - 0.2f
+            //计算进度差值
+            val progress_gap = scrollerCorresPosition - currentPosition
+
+            if (scrollerDesire_Active) {
+                //consoleLog("滚动寻帧 -scrollerDesire_Active -进度差值：${progress_gap}")
+
+                //关闭声音
+                suppressVolume()
+
+
+                when {
+                    //距离过近,暂停播放
+                    progress_gap <= 100 -> {
+                        //暂停
+                        player?.pause()
+
+                    }
+                    //使用倍速寻帧
+                    (progress_gap in 100f..7000f) -> {
+
+                        var target_speed = (((progress_gap / 100).toInt()) /10.0).toFloat()
+
+                        if (target_speed > smartScrollLoop_last_speed){
+                            target_speed += 0.2f
+                        }else if(target_speed < smartScrollLoop_last_speed){
+                            target_speed -= 0.2f
+                        }
+
+                        //??? 似乎有的设备限制了最高只能8倍
+                        val MAX_EFFICIENT_SPEED = 20.0f
+                        target_speed = target_speed.coerceAtMost(MAX_EFFICIENT_SPEED)
+
+                        //consoleLog("滚动寻帧 -确认使用倍速：计算目标倍速：${speed5}")
+                        if (target_speed > 0f){
+
+                            player?.setPlaybackSpeed(target_speed)
+                            //确保播放
+                            player?.play()
+                        }
+                    }
+                    //距离过远,直接寻帧
+                    progress_gap > 7000f -> {
+                        //发起seek
+                        seekTo_Core(scrollerCorresPosition.toLong(),Mark_playerReadyFrom_MidSectionSeek)
+
                     }
 
-
-                    val MAX_EFFICIENT_SPEED = 20.0f
-                    speed5 = speed5.coerceAtMost(MAX_EFFICIENT_SPEED)
-
-
-                    if (speed5 > 0f){ player.setPlaybackSpeed(speed5) }
                 }
-                videoSmartScrollHandler.postDelayed(this,delayGap)
-            }
-            else{
-                player.volume = 1f
-                if (lastSeekExecuted) return
-                lastSeekExecuted = true
 
-                player.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+
+
+                task_smartScrollLoop_Handler.postDelayed(this,delay_millis)
+            }else{
+                //consoleLog("滚动寻帧 -中断")
+                //执行中断处理
+
+                //检查最终差值
+                when {
+                    //距离过近,暂停播放
+                    progress_gap <= 3000 -> {
+                        //意味着一个滚动任务完整结束
+                        onScrollOnceComplete()
+
+                    }
+                    progress_gap > 3000f -> {
+                        //发起seek
+                        seekTo_Core(scrollerCorresPosition.toLong(), Mark_playerReadyFrom_TailSeek)
+
+                    }
+
+                }
+
+
+                //恢复声音
+                recoverVolume()
+
+
+                //标记smartScroll关闭
                 smartScrollRunnableRunning = false
-                playerReadyFrom_SmartScrollLastSeek = true
-                startSmartScrollLastSeek()
+
+
             }
 
-             */
+
         }
     }
+    private var smartScrollLoop_last_speed = 0f
     private fun startVideoSmartScroll() {
-        return
+        if (smartScrollRunnableRunning) return
+        smartScrollRunnableRunning = true
+
         //关闭进度条同步任务
         stop_S_Area_PassiveControl()
         stopVideoTimeSync()
-        //
-        player?.volume = 0f
+        //关闭音量
+        suppressVolume()
+        //开始播放
         player?.play()
-        if (singleTap){
-            singleTap = false
-            return
-        }
-        if (smartScrollRunnableRunning) return
-        smartScrollRunnableRunning = true
-        videoSmartScrollHandler.post(videoSmartScroll)
+
+
+        task_smartScrollLoop_Handler.post(task_smartScrollLoop_Runnable)
     }
     private fun stopVideoSmartScroll() {
+
         smartScrollRunnableRunning = false
-        videoSmartScrollHandler.removeCallbacks(videoSmartScroll)
+        task_smartScrollLoop_Handler.removeCallbacks(task_smartScrollLoop_Runnable)
     }
     private var smartScrollRunnableRunning = false
+    private var Job_SmartScroll_recoverVolume: Job? = null  //恢复音量任务
+    private fun recoverVolume() {
+        Job_SmartScroll_recoverVolume?.cancel()
+        SwitchLandscapeJob = lifecycleScope.launch {
+            delay(1000)
+            //恢复声音
+            PlayerSingleton.rec_engine_volume()
+        }
+    }
+    private fun suppressVolume() {
+        Job_SmartScroll_recoverVolume?.cancel()
+        //压制声音
+        PlayerSingleton.disable_engine_volume()
+    }
     //Runnable-4:视频滚动寻帧-标准真寻帧方案
     private val task_standardSeekLoop_Handler = Handler(Looper.getMainLooper())
     private var task_standardSeekLoop_Runnable = object : Runnable{
@@ -4252,40 +4352,6 @@ class PlayerActivityNeo: AppCompatActivity() {
             ButtonChangeOrientation("long")
         }
     }
-
-    //播放区域点击事件
-    //<editor-fold desc="点击事件变量">
-    private var touchState_two_fingers = false
-    private var ACTION_POINTER_DOWN = false
-    private var originalDistance = 0f
-    private var distanceGap = 0f
-    private var center0x = 0f
-    private var center0y = 0f
-    private var center1x = 0f
-    private var center1y = 0f
-    private var originalScale = 1f
-    private var scale = 1.0
-    private var definiteScale = 1.0f
-    private var center2x = 0f
-    private var center2y = 0f
-    private var center0pivoted = false
-    private var finger1x = 0f
-    private var finger1y = 0f
-    private var finger2x = 0f
-    private var finger2y = 0f
-    private var singleTap = false
-    private var touchState_need_exit = false
-    private var touchState_left_noticed = false
-    private var touchState_right_noticed = false
-    private var touchState_need_exit_vibrated = false
-    private var touchState_scroll_vibrated = false
-    private var touchCenterDistance = 0f
-    private var longPress = false
-    private var touchLeft = false
-    private var touchRight = false
-    private var touchCenter = false
-    private var scrollDistance = 0
-    //</editor-fold desc="点击事件">
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

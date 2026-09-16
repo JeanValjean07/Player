@@ -31,9 +31,6 @@ import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 class ExoPlayerImpl(context: Context) : PlayerInterface {
 
 
-    //init { }
-
-
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
@@ -71,7 +68,6 @@ class ExoPlayerImpl(context: Context) : PlayerInterface {
     private fun release_RendererFactory(){
         _rendererFactory = null
     }
-    @Suppress("unused")
     private fun create_customCodecFactory(): MediaCodecAdapter.Factory {
         @Suppress("DEPRECATION")
         return MediaCodecAdapter.Factory.DEFAULT
@@ -236,12 +232,7 @@ class ExoPlayerImpl(context: Context) : PlayerInterface {
 
     //设置媒体项
     override fun setMediaItem(URI: Uri) {
-        consoleLog("setMediaItem: $URI")
-        if (_player_exo == null){
-            consoleLog("setMediaItem: 播放器未初始化")
-        }else{
-            consoleLog("setMediaItem: 播放器已状态: ${_player_exo?.playbackState}")
-        }
+
 
         _player_exo?.setMediaItem(MediaItem.fromUri(URI))
     }

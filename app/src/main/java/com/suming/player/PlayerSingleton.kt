@@ -20,6 +20,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DecoderReuseEvaluation
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.SeekParameters
@@ -147,9 +148,10 @@ object PlayerSingleton {
 
         }
     private fun get_RendererFactory(context: Context): RenderersFactory = _rendererFactory ?: synchronized(this) {
-            _rendererFactory ?: NextRenderersFactory(context)
+            _rendererFactory ?: DefaultRenderersFactory(context)
                 //允许解码器回退
                 .setEnableDecoderFallback(true)
+
                 .also { _rendererFactory = it }
         }
     private fun release_trackSelector(){
@@ -925,6 +927,18 @@ object PlayerSingleton {
 
 
 
+    //内部期望音量缓存
+    private var engine_volume = 1f
+    fun get_engine_volume(): Float{
+        return engine_volume
+    }
+    fun rec_engine_volume(){
+
+        _player?.volume = engine_volume
+    }
+    fun disable_engine_volume(){
+        _player?.volume = 0f
+    }
 
 
 
