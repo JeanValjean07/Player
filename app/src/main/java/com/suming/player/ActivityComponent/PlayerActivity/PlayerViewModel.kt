@@ -5,27 +5,20 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.media3.common.util.UnstableApi
 
 @UnstableApi
-//@Suppress("unused")
+@Suppress("/unused")
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
     //空字段
     var Undefined = ""
 
-    //屏幕旋转状态
+
+
+
+    //屏幕旋转
     var FromManualPortrait: Boolean = true
     var OrientationValue = 0
-
-
-    //手动旋转
     var Manual: Boolean = false
-
     var Auto: Boolean = false
-
-    //视频播放状态
-    var playEnd: Boolean = false
-
-
-    //屏幕旋转相关
     var currentOrientation: Int = 0
     var LastLandscapeOrientation: Int = 0
     fun setManual() {
@@ -37,12 +30,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         Manual = false
     }
 
-    //音量相关
-    var NOTICED_VolumeIsZero: Boolean = false
 
-    //亮度管理单元
+    //音量控制
+    var volumeManager_zeroVolume_noticed: Boolean = false
+    //音量变化步长(Dp)
+    var volumeManager_changeStep = 100
+
+    //亮度控制
     var brightManager_state_brightness_changed: Boolean = false
     var brightManager_current_brightness: Float = 0f
+    //亮度变化步长(Dp)
+    var brightManager_changeStep = 100
+
 
 
     var onOrientationChanging: Boolean = false
@@ -50,36 +49,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     //控件隐藏/显示状态
     var state_controllerShowing = true
-
-    //退出状态判定
-    var state_onStopDecider_Running = false
-    var state_onStop_ByReBuild = false
-    var state_onStop_ByLossFocus = false
-    var state_onStop_ByRealExit = true
-    fun set_onStop_ByReBuild(){
-        state_onStop_ByReBuild = true
-        state_onStop_ByLossFocus = false
-        state_onStop_ByRealExit = false
-    }
-    fun set_onStop_ByLossFocus(){
-        state_onStop_ByLossFocus = true
-        state_onStop_ByReBuild = false
-        state_onStop_ByRealExit = false
-    }
-    fun set_onStop_ByRealExit(){
-        state_onStop_ByRealExit = true
-        state_onStop_ByReBuild = false
-        state_onStop_ByLossFocus = false
-    }
-    fun set_onStop_all_reset(){
-        state_onStop_ByReBuild = false
-        state_onStop_ByLossFocus = false
-        state_onStop_ByRealExit = false
-    }
-
-
-
-
 
 
 
@@ -90,8 +59,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //S_AreaType
     var state_s_area_type = S_Area_Helper.S_AreaType_UNDEFINED
 
-    //下滑距离(单位需要转为px)(给个默认值200px)
-    var value_scrollDownExitDistance: Int = 200
+    //下滑距离(单位需要转为px)(给个默认值200 Dp)
+    var value_scrollDownExitDistance: Int = 1000
 
 
 

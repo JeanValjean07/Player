@@ -332,14 +332,10 @@ class PlayerActivityNeo: AppCompatActivity() {
         controller_timer_total = findViewById(R.id.controller_timer_total)
         noticeCapsule = findViewById(R.id.noticeCapsule)
         playerView = findViewById(R.id.playerView)
-
         layer_error = findViewById(R.id.player_core_layer_error)
         layer_error_text = findViewById(R.id.layer_error_text)
-
         cover = findViewById(R.id.cover)
 
-
-        //主线程设置项
 
         //是否开启强制高刷
         if (SettingsCenter.GET_PREFS_LockRefreshRate()) requestHighRefreshRate()
@@ -357,21 +353,10 @@ class PlayerActivityNeo: AppCompatActivity() {
         rotationSetting = Settings.System.getInt(contentResolver, Settings.System.ACCELEROMETER_ROTATION, 0)
 
 
-        //亮度管理器
-        val windowInfo = window.attributes
-        if (!viewModel.brightManager_state_brightness_changed) {
-            if (windowInfo.screenBrightness == -1f) {
-                viewModel.brightManager_current_brightness = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f
+        //初始化亮度控制
+        brightnessDetectCompute()
 
-            }
-        }else{
-            //重建时应用之前的亮度
-
-            windowInfo.screenBrightness = viewModel.brightManager_current_brightness
-            window.attributes = windowInfo
-        }
-
-        //音量管理与提示
+        //初始化音量控制
         volumeDetectCompute()
 
     }
@@ -422,8 +407,8 @@ class PlayerActivityNeo: AppCompatActivity() {
                     updateButtonState()
                 }else{
                     scroller.stopScroll()
-                    if (viewModel.playEnd) {
-                        viewModel.playEnd = false
+                    if (PlayerSingleton.get_state_playEnd()) {
+                        PlayerSingleton.remove_state_playEnd()
                         continuePlay()
                         notice("开始重播", 2000)
                         //平滑滚动到进度条起始位置
@@ -1735,6 +1720,17 @@ class PlayerActivityNeo: AppCompatActivity() {
             }
         }
     }
+    //检查是否有Dialog Fragment处于开启状态
+    private fun checkDialogFragmentOpen(): Boolean {
+        val manager = supportFragmentManager
+        val fragments = manager.fragments
+        for (fragment in fragments) {
+            if (fragment is DialogFragment && fragment.isVisible) {
+                return true
+            }
+        }
+        return false
+    }
     //面板弹出通用操作
     private fun onFragmentStartPrepare() {
 
@@ -1819,11 +1815,11 @@ class PlayerActivityNeo: AppCompatActivity() {
         volumeManager_maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         volumeManager_currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         //计算音量切换步长
-        volumeManager_changeStep = 750 / volumeManager_maxVolume
+        viewModel.volumeManager_changeStep = 750 / volumeManager_maxVolume
 
         //音量未开启时显示提示
-        if (volumeManager_currentVolume == 0 && !viewModel.NOTICED_VolumeIsZero) {
-            viewModel.NOTICED_VolumeIsZero = true
+        if (volumeManager_currentVolume == 0 && !viewModel.volumeManager_zeroVolume_noticed) {
+            viewModel.volumeManager_zeroVolume_noticed = true
             notice("当前未开启声音", 1000)
         }
 
@@ -1831,9 +1827,22 @@ class PlayerActivityNeo: AppCompatActivity() {
     //设备音量环境
     private var volumeManager_maxVolume = 0
     private var volumeManager_currentVolume = 0
-    //音量变化步长
-    private var volumeManager_changeStep = 100
 
+    //亮度控制 brightnessManager
+    private fun brightnessDetectCompute() {
+        val windowInfo = window.attributes
+        if (!viewModel.brightManager_state_brightness_changed) {
+            if (windowInfo.screenBrightness == -1f) {
+                viewModel.brightManager_current_brightness = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f
+
+            }
+        }else{
+            //重建时应用之前的亮度
+
+            windowInfo.screenBrightness = viewModel.brightManager_current_brightness
+            window.attributes = windowInfo
+        }
+    }
 
     //设置项修改封装函数
     private fun onSettingChange_SeekMode() {
@@ -2309,14 +2318,8 @@ class PlayerActivityNeo: AppCompatActivity() {
         var finger1y = 0f
         var finger2x = 0f
         var finger2y = 0f
-        var touchState_need_exit = false
-        var touchState_left_noticed = false
-        var touchState_right_noticed = false
-        var touchState_need_exit_vibrated = false
-        var touchState_scroll_vibrated = false
 
-        //滑动距离
-        var scrollDistance = 0
+
         //点击区域
         var touchArea = 0   //1:左区域 2:右区域 3:中心区域
         //纵向滑动阶梯起始坐标
@@ -2325,7 +2328,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         var execute_lock = false
         //</editor-fold desc="点击事件">
         //播放区域点击事件
-        val gestureDetectorPlayArea = GestureDetector(
+        val gestureDetectorPlayArea = GestureDetector (
             this@PlayerActivityNeo,
             object : GestureDetector.SimpleOnGestureListener() {
                 override fun onDoubleTap(e: MotionEvent): Boolean {
@@ -2336,8 +2339,9 @@ class PlayerActivityNeo: AppCompatActivity() {
                         notice("暂停播放", 1000)
                         updateButtonState()
                     } else {
-                        if (viewModel.playEnd) {
-                            viewModel.playEnd = false
+                        if (PlayerSingleton.get_state_playEnd()) {
+                            PlayerSingleton.remove_state_playEnd()
+
                             continuePlay()
                             notice("开始重播", 1000)
                         } else {
@@ -2433,7 +2437,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             val gap = (e2.rawY - e_y_stage)
                             //执行音量修改
                             when {
-                                gap > 50 -> {
+                                gap > viewModel.volumeManager_changeStep -> {
                                     //刷新参照值
                                     e_y_stage = e2.rawY
                                     //计算目标音量
@@ -2451,7 +2455,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                                         notice("音量已到最低", 1000)
                                     }
                                 }
-                                gap < -50 -> {
+                                gap < -viewModel.volumeManager_changeStep -> {
                                     //刷新参照值
                                     e_y_stage = e2.rawY
                                     //计算目标音量
@@ -2501,19 +2505,27 @@ class PlayerActivityNeo: AppCompatActivity() {
                             //判断操作
                             when {
                                 //下滑退出
-                                gap > 300 -> {
+                                gap > viewModel.value_scrollDownExitDistance -> {
                                     //刷新参照值
                                     e_y_stage = e2.rawY
-                                    //打开执行锁
-                                    execute_lock = true
 
-                                    //执行退出活动
+
+                                    //执行退出活动或者关闭弹出面板
                                     ToolVibrate.vibrate()
-                                    exitActivity()
+                                    if (checkDialogFragmentOpen()){
+                                        closeAllDialogFragments()
+                                        //打开执行锁
+                                        execute_lock = true
+                                    }else{
+                                        if (execute_lock) return false
+
+                                        exitActivity()
+                                    }
+
 
                                 }
                                 //上滑打开扩展面板
-                                gap < -300 -> {
+                                gap < -viewModel.value_scrollDownExitDistance -> {
                                     //判断是否需要执行
                                     if (execute_lock) return false
 
@@ -2525,6 +2537,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                                     //执行打开扩展面板
                                     ToolVibrate.vibrate()
                                     startMoreButtonFragment()
+
                                 }
                             }
 
@@ -2542,17 +2555,14 @@ class PlayerActivityNeo: AppCompatActivity() {
                     fun reset(){
                         //关闭执行锁
                         execute_lock = false
+
+                        //清除双指状态
+                        ACTION_POINTER_DOWN = false
+                        touchState_two_fingers = false
+
                     }
                     reset()
-                    //清除双指状态
-                    ACTION_POINTER_DOWN = false
-                    touchState_two_fingers = false
-                    //重置部分状态
-                    touchState_need_exit_vibrated = false
-                    touchState_need_exit = false
-                    touchState_left_noticed = false
-                    touchState_right_noticed = false
-                    touchState_scroll_vibrated = false
+
 
                     //记录1指初始坐标
                     finger1x = event.x
@@ -2569,15 +2579,17 @@ class PlayerActivityNeo: AppCompatActivity() {
 
 
                     //判断点击区域
-                    when {
+                    touchArea = when {
                         (finger1x < display_screen_width_pixels * 0.2) -> {
-                            touchArea = 1
+                            1
                         }
+
                         (finger1x > display_screen_width_pixels * 0.8) -> {
-                            touchArea = 2
+                            2
                         }
+
                         else -> {
-                            touchArea = 3
+                            3
                         }
                     }
 
@@ -2586,17 +2598,21 @@ class PlayerActivityNeo: AppCompatActivity() {
                     gestureDetectorPlayArea.onTouchEvent(event)
                 }
                 MotionEvent.ACTION_UP -> {
-                    //重置部分状态
-                    touchState_two_fingers = false
-                    touchArea = 0
-                    //重置部分数值
-                    scrollDistance = 0
-                    center0x = playerView.pivotX
-                    center0y = playerView.pivotY
-                    playerView.pivotX = center0x
-                    playerView.pivotY = center0y
-                    originalScale = definiteScale
-                    //事件处理:长按
+                    //重置所有状态
+                    fun reset(){
+                        //重置部分状态
+                        touchState_two_fingers = false
+                        touchArea = 0
+
+                        center0x = playerView.pivotX
+                        center0y = playerView.pivotY
+                        playerView.pivotX = center0x
+                        playerView.pivotY = center0y
+                        originalScale = definiteScale
+                    }
+                    reset()
+
+                    //长按
                     if (state_playView_longPress) {
                         state_playView_longPress = false
                         player?.setPlaybackSpeed(currentSpeed)
@@ -2604,10 +2620,6 @@ class PlayerActivityNeo: AppCompatActivity() {
 
                         val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
                         NoticeCard.visibility = View.GONE
-                    }
-                    //事件处理:下滑退出
-                    if (touchState_need_exit){
-                        exitActivity_ensure()
                     }
 
 
@@ -2757,8 +2769,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         //重置寻帧偏好
         setSeekParameter_useSync(1)
         //清除playEnd状态
-        viewModel.playEnd = false
-        PlayerSingleton.cancelState_PlayEnd()
+        PlayerSingleton.remove_state_playEnd()
 
 
 
@@ -2920,14 +2931,14 @@ class PlayerActivityNeo: AppCompatActivity() {
 
             }
             ListManagerHelper.LOOP_MODE_OFF -> {
-                viewModel.playEnd = true
+                //显示提示
                 notice("视频结束", 1000)
                 //停止被控控件
                 stopVideoTimeSync()
                 stop_S_Area_PassiveControl()
                 //播放结束时让控件显示
                 setControllerVisible()
-                Handler(Looper.getMainLooper()).postDelayed({ stop_S_Area_PassiveControl() }, 100)
+                //结束自动隐藏控件计时器
                 IDLE_Timer?.cancel()
 
             }

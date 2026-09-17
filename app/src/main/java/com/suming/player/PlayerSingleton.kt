@@ -49,7 +49,6 @@ import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.FuncionalPack.SupportFormat
 import com.suming.player.FuncionalPack.SystemListener
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -798,7 +797,6 @@ object PlayerSingleton {
     }
 
     //播放和暂停
-    private var playState_playEnd = false
     private var playState_wasPlaying = false
     //继续/开始播放
     fun continuePlay(requestFocus: Boolean = true) {
@@ -868,8 +866,14 @@ object PlayerSingleton {
     //手动暂停
     var manualPause = false
 
-    //重置播放结束状态
-    fun cancelState_PlayEnd(){
+    //播放结束状态
+    private var playState_playEnd = false
+    fun get_state_playEnd(): Boolean {
+
+        return playState_playEnd
+    }
+    fun remove_state_playEnd() {
+
         playState_playEnd = false
     }
 
