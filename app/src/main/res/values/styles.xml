@@ -9,7 +9,7 @@
     </style>
 
 
-     <!-- 播放页主题(背景透明) -->
+    <!-- 播放页主题(背景透明) -->
     <style name="theme_transparent_background" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:fitsSystemWindows">false</item>

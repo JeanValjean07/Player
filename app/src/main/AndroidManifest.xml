@@ -87,9 +87,9 @@
                 android:value="true"/>
         </activity>
 
-        <!-- 视频播放页NEO  android:configChanges="orientation|screenSize|screenLayout" -->
+        <!-- 视频播放页NEO  android:configChanges="orientation|screenSize|screenLayout"  android:theme="@style/theme_transparent_background" -->
         <activity android:name=".PlayerActivityNeo"
-            android:theme="@style/theme_transparent_background"
+            android:theme="@style/theme_general"
             android:label="视频播放页NEO"
             android:screenOrientation="unspecified"
             android:hardwareAccelerated="true"

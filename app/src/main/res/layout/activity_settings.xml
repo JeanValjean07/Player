@@ -308,8 +308,9 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="关闭后，媒体仅能在播放页内播放，不会出现在首页MiniView中，除非手动选择“在MiniView播放”。"
-                            android:textSize="12sp" />
+                            android:text="关闭后，媒体仅能在播放页内播放，不会出现在首页MiniView中。启动时恢复上一次的媒体和非手动选择“在MiniView播放”导致的播放仍然会出现在MiniView中。使用下拉手势时关闭播放页时，强制保持在MiniView中播放。"
+                            android:textSize="12sp"
+                            />
                     </LinearLayout>
                     <!--  开关：首页卡片不使用视频  -->
                     <LinearLayout

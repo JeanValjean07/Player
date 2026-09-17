@@ -106,8 +106,8 @@ class MainActivity: AppCompatActivity() {
     private val MediaInfoRetriever: MediaInfoRetriever = MediaInfoRetriever()
     //ctx
     private val context = this@MainActivity
-    //
-    private var onPaused = true
+    //是否有窗口焦点
+    private var isWindowFocused = false
 
 
 
@@ -126,13 +126,11 @@ class MainActivity: AppCompatActivity() {
         //注册Fragment监听器
         registerFragment()
 
+        //启动事件观察者
+        setupEventObserver()
 
         //主业务
         mainBusiness(savedInstanceState)
-
-
-        //启动事件观察者
-        setupEventObserver()
 
 
         //发起列表读取(8秒后才开始)
@@ -198,15 +196,34 @@ class MainActivity: AppCompatActivity() {
          */
     }
 
+    //
+    override fun onResume() {
+        super.onResume()
+        //
+        isWindowFocused = true
+
+
+        isFileExist()
+
+        showMiniViewLongProcess()
+
+    }
+    override fun onPause() {
+        super.onPause()
+
+        isWindowFocused = false
+
+    }
+    //透明窗口
+    /*
     override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
-        consoleLog("onTopResumedActivityChanged:isTopResumedActivity:${isTopResumedActivity}")
         if (!isTopResumedActivity) {
             //代替原onPaused回调
-            onPaused = true
+            isWindowFocused = true
 
         }else{
             //代替原onResume回调
-            onPaused = false
+            isWindowFocused = false
 
             //检查正在播放的媒体是否还存在
             isFileExist()
@@ -214,6 +231,26 @@ class MainActivity: AppCompatActivity() {
             showMiniViewLongProcess()
         }
     }
+
+     */
+    //窗口焦点
+    /*
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        //consoleLog("onWindowFocusChanged:${hasFocus}")
+        //修改焦点状态
+        isWindowFocused = hasFocus
+
+        //获得焦点时操作
+        if (hasFocus){
+            isFileExist()
+            showMiniViewLongProcess()
+        }
+
+
+    }
+
+     */
 
 
 
@@ -348,7 +385,7 @@ class MainActivity: AppCompatActivity() {
         }
     }
     //主业务
-    private fun mainBusiness(savedInstanceState: Bundle?){
+    private fun mainBusiness(savedInstanceState: Bundle?) {
         lifecycleScope.launch (Dispatchers.IO) {
             //检查隐私与权限
             val (no_privacy_permit, storage_permitted) = checkNeedStartPrivacyPermissionActivity()
@@ -847,7 +884,7 @@ class MainActivity: AppCompatActivity() {
             //观察正在播放的媒体项变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableMediaItem.collect { _ ->
-                    if (onPaused) return@collect
+                    if (!isWindowFocused) return@collect
 
                     //显示MiniView
                     showMiniViewLongProcess()
@@ -867,7 +904,7 @@ class MainActivity: AppCompatActivity() {
     }
     //显示MiniView LongProcess-把任务全部执行完,禁止扔到其他函数域
     private fun showMiniViewLongProcess() {
-        if (onPaused) return
+        if (!isWindowFocused) return
 
         //获取信息
         val (_,FileName,MediaArtist) = PlayerInfoCenter.GET_Media_MiniView_Pack()
@@ -1569,7 +1606,6 @@ class MainActivity: AppCompatActivity() {
                 }
             }
         }
-
         //杂项事件汇总
         lifecycleScope.launch {
             //观察杂项连接器变更

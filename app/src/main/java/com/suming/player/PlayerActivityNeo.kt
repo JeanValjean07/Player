@@ -231,8 +231,8 @@ class PlayerActivityNeo: AppCompatActivity() {
             viewModel.PREFS_LinkScroll = SettingsCenter.GET_PREFS_EnableLinkScroll()
             viewModel.PREFS_TapJump = SettingsCenter.GET_PREFS_EnableTapJump()
 
-            //下滑距离(dp转px)
-            viewModel.value_scrollDownExitDistance = dp2px(100f)
+            //下滑关闭距离(dp转px)
+            viewModel.value_scrollDownExitDistance = dp2px(50f)
 
             //视频寻帧间隔
             value_seekVideo_runnableGapMs = SettingsCenter.get_value_seekVideo_runnableGapMs()
@@ -328,6 +328,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             //其他
             controller_bottom_bar = findViewById(R.id.controller_bottom_bar)
             root = findViewById(R.id.root)
+            root_secondary = findViewById(R.id.root_secondary)
             controllerLayer = findViewById(R.id.controllerLayer)
             controller_top_bar = findViewById(R.id.controller_top_bar)
             controller_timer_current = findViewById(R.id.controller_timer_current)
@@ -1664,30 +1665,33 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     //重写finish()以应用动画(活动内不应主动调用finish()而是使用exitActivity()入口)
     private var useSlideOutAnim = true
+    @Suppress("DEPRECATION")
     override fun finish() {
         super.finish()
-        //consoleLog("finish")
-        /*
-        //判断是否使用收起动画
-        if (useSlideOutAnim){
-            //使用收起动画
-            @Suppress("DEPRECATION")
-            overridePendingTransition(
-                R.anim.slide_just_appear,
-                R.anim.slide_out_vertical
-            )
-        }
+        //判断是否使用活动层级自定义收起动画
 
-         */
+        //判断是否使用收起动画 if (useSlideOutAnim)
+
+        //已改为一律使用收起动画
+
+        overridePendingTransition(R.anim.slide_just_appear, R.anim.slide_out_vertical)
+
+
 
     }
-
-    private fun custom_finish(){
+    //自定义退出方式
+    private fun custom_finish() {
+        //可下拉模式
+        /*
         root.animate()
             .translationY(2500f)
             .setInterpolator(AccelerateInterpolator())
             .withEndAction { finish() }
             .duration = 200
+
+         */
+        //不可下拉模式
+        finish()
     }
 
 
@@ -1754,8 +1758,6 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     //绑定播放器视图
     private fun bindPlayerView() {
-        consoleLog("bindPlayerView")
-
         playerView.player = null
         playerView.player = player
     }
@@ -2538,8 +2540,11 @@ class PlayerActivityNeo: AppCompatActivity() {
 
                                         //关闭多余任务
                                         onScrollExitAnimStart()
+
+                                        notice("继续下拉可关闭",1000)
                                         //移动视图区域
-                                        root.translationY = gap
+                                        root_secondary.translationY = gap
+
 
                                         when {
                                             gap < viewModel.value_scrollDownExitDistance -> {
@@ -2554,6 +2559,10 @@ class PlayerActivityNeo: AppCompatActivity() {
 
                                                 //标记为需要退出
                                                 scroll_result = 1
+
+                                                //直接退出
+                                                custom_finish()
+
                                             }
                                         }
 
@@ -2668,7 +2677,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
                             }
                             2 -> {
-                                root.animate()
+                                root_secondary.animate()
                                     .translationY(0f)
                                     .setInterpolator(DecelerateInterpolator())
                                     .withEndAction { onScrollExitAnimTraceEnd() }
@@ -2750,8 +2759,8 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
 
     }
-    //
-    private fun onScrollExitAnimStart(){
+    //下拉关闭跟随
+    private fun onScrollExitAnimStart() {
         //关闭所有任务
         stopVideoTimeSync()
         stopVideoSmartScroll()
@@ -2759,7 +2768,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         stop_S_Area_PassiveControl()
         scroller.stopScroll()
     }
-    private fun onScrollExitAnimTraceEnd(){
+    private fun onScrollExitAnimTraceEnd() {
         //重开所有任务
         startVideoTimeSync()
         start_S_Area_PassiveControl()
@@ -3041,6 +3050,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     //界面控件
     private lateinit var controller_bottom_bar : LinearLayout //底部按钮区域
     private lateinit var root : CardView //根布局
+    private lateinit var root_secondary : ConstraintLayout
     private lateinit var controllerLayer : ConstraintLayout //控件层
     private lateinit var controller_top_bar : LinearLayout //顶部按钮区域
     private lateinit var controller_timer_current : TextView //当前时间
@@ -4174,7 +4184,9 @@ class PlayerActivityNeo: AppCompatActivity() {
         task_syncScrollerPosition_Handler.post(task_syncScrollerPosition_Runnable)
     }
     private fun stopScrollerSync() {
+        if (!task_syncScrollerPosition_Running) return
         task_syncScrollerPosition_Running = false
+
         task_syncScrollerPosition_Handler.removeCallbacks(task_syncScrollerPosition_Runnable)
     }
     private var value_syncScroller_runnableGapMs = 0L //进度条位置刷新间隔
@@ -4216,7 +4228,9 @@ class PlayerActivityNeo: AppCompatActivity() {
         task_syncSeekBarPosition_Handler.post(task_syncSeekBarPosition_Runnable)
     }
     private fun stopSeekBarSync() {
+        if (!task_syncSeekBarPosition_Running) return
         task_syncSeekBarPosition_Running = false
+
         task_syncSeekBarPosition_Handler.removeCallbacks(task_syncSeekBarPosition_Runnable)
     }
     private var value_syncSeekBar_runnableGapMs = 0L //seekbar位置刷新间隔
@@ -4256,6 +4270,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private val task_smartScrollLoop_Handler = Handler(Looper.getMainLooper())
     private var task_smartScrollLoop_Runnable = object : Runnable {
         override fun run() {
+            consoleLog("task_smartScrollLoop_Runnable")
             //
             var delay_millis = 50L
             //获取视频位置
@@ -4368,8 +4383,9 @@ class PlayerActivityNeo: AppCompatActivity() {
         task_smartScrollLoop_Handler.post(task_smartScrollLoop_Runnable)
     }
     private fun stopVideoSmartScroll() {
-
+        if (!smartScrollRunnableRunning) return
         smartScrollRunnableRunning = false
+
         task_smartScrollLoop_Handler.removeCallbacks(task_smartScrollLoop_Runnable)
     }
     private var smartScrollRunnableRunning = false
@@ -4470,7 +4486,9 @@ class PlayerActivityNeo: AppCompatActivity() {
         task_standardSeekLoop_Handler.post(task_standardSeekLoop_Runnable)
     }
     private fun stopVideoSeek() {
+        if (!task_standardSeekLoop_Running) return
         task_standardSeekLoop_Running = false
+
         task_standardSeekLoop_Handler.removeCallbacks(task_standardSeekLoop_Runnable)
     }
     //显示通知
