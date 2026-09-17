@@ -123,22 +123,22 @@ class RecyclerAdapterVideo(
         }
         //点击事件设定
         holder.touchLayer.setOnClickListener {
-            ToolVibrate().vibrate(context)
+            ToolVibrate.vibrate()
 
             onClickFunc_touchLayer(item)
         }
         holder.tvDuration.setOnClickListener {
-            ToolVibrate().vibrate(context)
+            ToolVibrate.vibrate()
 
             onClickFunc_tvDuration(item)
         }
         holder.tvOption.setOnClickListener {
-            ToolVibrate().vibrate(context)
+            ToolVibrate.vibrate()
             //显示菜单
             onClickFunc_tvOption(item,holder)
         }
         holder.tvFormat.setOnClickListener {
-            ToolVibrate().vibrate(context)
+            ToolVibrate.vibrate()
             //
             onClickFunc_tvFormat(item)
         }

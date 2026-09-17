@@ -91,7 +91,7 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
             //页面设置按钮
             val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
             pageSettingButton.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 startPageSettingMenu(pageSettingButton)
             }
@@ -102,7 +102,7 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
             ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
             updateCurrentListStateText()
             ButtonSetAsCurrentList.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 setAs_currentPlayingList()
             }
@@ -111,7 +111,7 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
             //按钮：全部删除
             val ButtonDeleteAllListItem = view.findViewById<View>(R.id.ButtonDeleteAllListItem)
             ButtonDeleteAllListItem.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //清空自定义列表
                 //TODO
                 //刷新适配器
@@ -120,7 +120,7 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
             //按钮：总项数
             val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
             ButtonItemCount.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //未加载完成前拒绝访问
                 if (!state_adapter_load_complete) return@setOnClickListener
                 //显示列表中项数
@@ -136,7 +136,7 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
             //按钮：立即刷新
             val ButtonUpdate = view.findViewById<CardView>(R.id.ButtonUpdate)
             ButtonUpdate.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 recyclerView_history_list_adapter?.refresh()
 
@@ -232,7 +232,7 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
             when (item.itemId) {
                 //设为当前播放列表
                 R.id.setting_set_as_current_list -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     setAs_currentPlayingList()
 
@@ -240,7 +240,7 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
                 }
                 //设置默认显示列表
                 R.id.setting_set_as_default_show_list -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     setAs_AcquiesceShowingPage()
 
@@ -256,13 +256,13 @@ class InnerFragment_HistoryList:Fragment(R.layout.fragment_play_list_custom_page
 
     //播放项
     private fun onPlayClick(uri: Uri){
-        ToolVibrate().vibrate(requireContext())
+        ToolVibrate.vibrate()
 
 
     }
     //删除项
     private fun onDeleteClick(uriNumOnly: Long){
-        ToolVibrate().vibrate(requireContext())
+        ToolVibrate.vibrate()
 
 
 

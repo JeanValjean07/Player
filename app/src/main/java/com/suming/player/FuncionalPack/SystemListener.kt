@@ -12,33 +12,27 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.PlayerSingleton
 
-@Suppress("unused")
+@Suppress("/unused")
 object SystemListener {
-
-    //应用引用
+    //context
     private lateinit var context: Application
     fun setContext(context: Context){
-        //检查是不是applicationContext
         if (context is Application) {
-            //consoleLog("PlayerListener.setContext")
             this.context = context
         }else{
             consoleLog("PlayerListener.setContext error")
         }
     }
-    fun getApplicationContext(): Context = context.applicationContext
+
 
     //音频管理器
     private var audioManager: AudioManager? = null
-    private fun initAudioManager(context: Context){
-        if (audioManager != null) return
-        audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-    }
-    private fun MakeSureAudioManagerOnline(context: Context){
-        if (audioManager == null){
-            initAudioManager(context)
+    private fun init_AudioManager(){
+        if (audioManager == null) {
+            audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         }
     }
+
 
     //音频设备监听
     private val DeviceCallback = object : AudioDeviceCallback() {
@@ -54,7 +48,7 @@ object SystemListener {
             if (relevant.isNotEmpty()) {
                 //consoleLog("PlayerListener.onAudioDevicesRemoved")
 
-                state_HeadSetInserted = false
+                state_headset_on = false
                 //暂停播放
                 PlayerSingleton.setState_forcePause()
             }
@@ -70,35 +64,37 @@ object SystemListener {
             if (relevant.isNotEmpty()) {
                 //consoleLog("PlayerListener.onAudioDevicesAdded")
 
-                state_HeadSetInserted = true
+                state_headset_on = true
                 //连接耳机时,若当前音量太高,限制一次
-                setVolumeLimitWhenHeadSetPlug()
+                check_volume_limit()
             }
         }
     }
     private fun startAudioDeviceCallback(context: Context){
-        MakeSureAudioManagerOnline(context)
+        init_AudioManager()
+
         //注册音频设备回调
         if (state_DeviceCallback_Registered) return
         state_DeviceCallback_Registered = true
         audioManager?.registerAudioDeviceCallback(DeviceCallback, null)
     }
     private fun stopAudioDeviceCallback(context: Context){
-        MakeSureAudioManagerOnline(context)
+        init_AudioManager()
+
         //注销音频设备回调
         if (!state_DeviceCallback_Registered) return
         state_DeviceCallback_Registered = false
         audioManager?.unregisterAudioDeviceCallback(DeviceCallback)
     }
     private var state_DeviceCallback_Registered = false
-    private var state_HeadSetInserted = false
+    private var state_headset_on = false
     //外部检查是否链接了耳机
-    fun getState_isHeadsetPlugged(context: Context): Boolean {
+    fun get_state_headset_on(): Boolean {
 
-        return state_HeadSetInserted
+        return state_headset_on
     }
     //插入耳机时,检查音量是否超过限制
-    fun setVolumeLimitWhenHeadSetPlug(){
+    fun check_volume_limit(){
         if (audioManager == null) return
 
         val cacheAudioManager = audioManager
@@ -182,7 +178,7 @@ object SystemListener {
     @OptIn(UnstableApi::class)
     //请求/释放音频焦点且启动/停止焦点监听
     fun requestAudioFocus(context: Context, force_request: Boolean){
-        MakeSureAudioManagerOnline(context)
+        init_AudioManager()
         MakeSureFocusServiceOnline(context)
 
         if (force_request){
@@ -200,7 +196,8 @@ object SystemListener {
         }
     }
     fun giveupAudioFocus(context: Context){
-        MakeSureAudioManagerOnline(context)
+        init_AudioManager()
+
         //既丢弃了焦点,也停止了监听
         if (focusRequest == null) return
         audioManager?.abandonAudioFocusRequest(focusRequest!!)

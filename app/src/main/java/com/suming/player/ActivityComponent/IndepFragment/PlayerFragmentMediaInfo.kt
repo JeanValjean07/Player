@@ -452,7 +452,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
                         //关闭按钮
                         CircleButton(
                             onClick = {
-                                ToolVibrate().vibrate(requireContext())
+                                ToolVibrate.vibrate()
                                 dismiss() },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),
                             size = 40.dp,
@@ -486,7 +486,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
                         //锁
                         CircleButton(
                             onClick = {
-                                ToolVibrate().vibrate(requireContext())
+                                ToolVibrate.vibrate()
 
                                  },
                             backgroundColor = ColorPack.background.copy(alpha = 0.99f),

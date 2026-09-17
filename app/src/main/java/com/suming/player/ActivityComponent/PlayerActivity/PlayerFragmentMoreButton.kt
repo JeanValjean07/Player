@@ -147,21 +147,21 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //循环模式选单
             val ButtonCardLoopMode = view.findViewById<CardView>(R.id.ButtonCardLoopMode)
             ButtonCardLoopMode.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 chooseLoopMode(ButtonCardLoopMode)
             }
             updateLoopModeText()
             //倍速管理选单
             val ButtonCardPlaySpeed = view.findViewById<CardView>(R.id.ButtonCardPlaySpeed)
             ButtonCardPlaySpeed.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 choosePlaySpeed(ButtonCardPlaySpeed)
             }
             updatePlaySpeedText()
             //定时关闭倒计时选单
             val ButtonCardAutoShut = view.findViewById<CardView>(R.id.ButtonCardAutoShut)
             ButtonCardAutoShut.setOnClickListener { _ ->
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 chooseAutoShut(ButtonCardAutoShut)
             }
             updateAutoShutText()
@@ -178,7 +178,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //锁定页面
             val ButtonLock = view.findViewById<ImageButton>(R.id.buttonLock)
             ButtonLock.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 lockPage = !lockPage
                 if (lockPage) {
                     ButtonLock.setImageResource(R.drawable.ic_more_button_lock_on)
@@ -190,7 +190,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             val TopBarArea = view.findViewById<View>(R.id.TopBarArea)
             TopBarArea.setOnClickListener {
                 if (NestedScrollView.canScrollVertically(-1)){
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
                     //滚动区域回顶
                     NestedScrollView.stopNestedScroll()
                     NestedScrollView.smoothScrollTo(0, 0)
@@ -231,7 +231,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                                 if (deltaY >= 400f){
                                     if (!deltaY_ReachPadding){
                                         deltaY_ReachPadding = true
-                                        ToolVibrate().vibrate(requireContext())
+                                        ToolVibrate.vibrate()
                                     }
                                 }
                                 RootCard.translationY = RootCardOriginY + deltaY
@@ -279,7 +279,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                                 if (deltaX >= 200f){
                                     if (!deltaX_ReachPadding){
                                         deltaX_ReachPadding = true
-                                        ToolVibrate().vibrate(requireContext())
+                                        ToolVibrate.vibrate()
                                     }
                                 }
                                 if (Y_move_ensure){
@@ -339,7 +339,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             val switch_EnableOriListener = view.findViewById<SwitchCompat>(R.id.EnableOriListener)
             switch_EnableOriListener.isChecked = SettingsCenter.GET_PREFS_EnableOrientationListener()
             switch_EnableOriListener.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //读取目标状态并修改设置
                 SettingsCenter.SET_PREFS_EnableOrientationListener(isChecked)
                 //发回结果(仅告知设置变更,不返回值,自行读取)
@@ -350,7 +350,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             val switch_BackgroundPlay = view.findViewById<SwitchCompat>(R.id.Switch_BackgroundPlay)
             switch_BackgroundPlay.isChecked = SettingsCenter.GET_PREFS_BackgroundPlay()
             switch_BackgroundPlay.setOnCheckedChangeListener { _, isChecked ->
-            ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //仅修改设置即可
                 SettingsCenter.SET_PREFS_BackgroundPlay(isChecked)
 
@@ -360,7 +360,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             val switch_ExitWhenMediaEnd = view.findViewById<SwitchCompat>(R.id.Switch_ExitWhenMediaEnd)
             switch_ExitWhenMediaEnd.isChecked = SettingsCenter.GET_PRF_OnlyAutoStop_whenMediaEnd()
             switch_ExitWhenMediaEnd.setOnCheckedChangeListener { _, isChecked ->
-            ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //仅修改设置即可
                 SettingsCenter.SET_PRF_OnlyAutoStop_whenMediaEnd(isChecked)
 
@@ -370,7 +370,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             val switch_saveLastPosition = view.findViewById<SwitchCompat>(R.id.Switch_SavePositionWhenExit)
             switch_saveLastPosition.isChecked = MediaDataBaseMaster.get_PREFS_saveProgress(URI_S_FP,requireContext())
             switch_saveLastPosition.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //修改设置
                 val URI_S_FP = PlayerInfoCenter.GET_Media_URI_S_FP()
@@ -383,7 +383,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //截屏
             val ButtonCapture = view.findViewById<ImageButton>(R.id.buttonCapture)
             ButtonCapture.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //检查是否正在播放
                 val (ongoing, _) = checkOngoingMedia()
@@ -399,14 +399,14 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //打开播放列表
             val ButtonPlayList = view.findViewById<ImageButton>(R.id.ButtonPlayList)
             ButtonPlayList.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 returnFragment(FragmentConnector.fragment_more_button_start_play_list)
                 dismiss()
             }
             //回到视频起始
             val ButtonBackToStart = view.findViewById<ImageButton>(R.id.buttonBackToStart)
             ButtonBackToStart.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //检查是否正在播放
                 val (ongoing, _) = checkOngoingMedia()
@@ -422,7 +422,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //开启小窗
             val ButtonStartPiP = view.findViewById<TextView>(R.id.ButtonStartPiP)
             ButtonStartPiP.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //检查是否正在播放
                 val (ongoing, _) = checkOngoingMedia()
@@ -437,7 +437,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //更新封面
             val ButtonUpdateCover = view.findViewById<TextView>(R.id.buttonUpdateCover)
             ButtonUpdateCover.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //检查是否正在播放
                 val (ongoing, _) = checkOngoingMedia()
@@ -451,7 +451,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //提取所有帧
             val ButtonExtractFrame = view.findViewById<ImageButton>(R.id.buttonExtractFrame)
             ButtonExtractFrame.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 requireContext().showCustomToast("暂不开放此功能", 3)
             }
 
@@ -459,7 +459,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             val SC_KeepScreenOn = view.findViewById<SwitchCompat>(R.id.SC_KeepScreenOn)
             SC_KeepScreenOn.isChecked = SettingsCenter.GET_PRF_KeepScreenOn()
             SC_KeepScreenOn.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //修改设置
                 SettingsCenter.SET_PRF_KeepScreenOn(isChecked)
@@ -472,7 +472,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //视频信息
             val ButtonVideoInfo = view.findViewById<TextView>(R.id.buttonVideoInfo)
             ButtonVideoInfo.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //检查是否正在播放
                 val (ongoing, _) = checkOngoingMedia()
@@ -487,7 +487,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //分享
             val ButtonSysShare = view.findViewById<TextView>(R.id.buttonSysShare)
             ButtonSysShare.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //检查是否正在播放
                 val (ongoing, _) = checkOngoingMedia()
@@ -504,7 +504,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //均衡器
             val ButtonEqualizer = view.findViewById<TextView>(R.id.buttonEqualizer)
             ButtonEqualizer.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 context.showCustomToast("暂不开放此功能", 3)
 
@@ -512,7 +512,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //清除当前进度条缩略图
             val ButtonClearMiniature = view.findViewById<TextView>(R.id.ButtonReCreateThumb)
             ButtonClearMiniature.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //检查是否正在播放
                 val (ongoing, _) = checkOngoingMedia()
@@ -520,8 +520,8 @@ class PlayerFragmentMoreButton: DialogFragment(){
                     AlertDialog.Builder(requireContext())
                         .setTitle("确定删除进度条缩略图吗?")
                         .setMessage("")
-                        .setPositiveButton("确认") { dialog, which ->
-                            ToolVibrate().vibrate(requireContext())
+                        .setPositiveButton("确认") { dialog, _ ->
+                            ToolVibrate.vibrate()
 
                             returnFragment(FragmentConnector.fragment_more_button_clear_miniature)
 
@@ -529,8 +529,8 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
                             dialog.dismiss()
                         }
-                        .setNegativeButton("取消") { dialog, which ->
-                            ToolVibrate().vibrate(requireContext())
+                        .setNegativeButton("取消") { dialog, _ ->
+                            ToolVibrate.vibrate()
 
                             dialog.dismiss()
                         }
@@ -547,7 +547,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //删除自定义封面图
             val ButtonDeleteCustomCover = view.findViewById<TextView>(R.id.ButtonDeleteCustomCover)
             ButtonDeleteCustomCover.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 //检查是否正在播放
                 val (ongoing, _) = checkOngoingMedia()
@@ -556,8 +556,8 @@ class PlayerFragmentMoreButton: DialogFragment(){
                     AlertDialog.Builder(requireContext())
                         .setTitle("确定删除自定义封面吗?")
                         .setMessage("")
-                        .setPositiveButton("确认") { dialog, which ->
-                            ToolVibrate().vibrate(requireContext())
+                        .setPositiveButton("确认") { dialog, _ ->
+                            ToolVibrate.vibrate()
 
                             returnFragment(FragmentConnector.fragment_more_button_delete_custom_cover)
 
@@ -565,8 +565,9 @@ class PlayerFragmentMoreButton: DialogFragment(){
 
                             dialog.dismiss()
                         }
-                        .setNegativeButton("取消") { dialog, which ->
-                            ToolVibrate().vibrate(requireContext())
+                        .setNegativeButton("取消") { dialog, _ ->
+                            ToolVibrate.vibrate()
+
                             dialog.dismiss()
                         }
                         .setCancelable(true)
@@ -581,27 +582,29 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //解除亮度控制
             val ButtonUnBindBrightness = view.findViewById<TextView>(R.id.ButtonUnBindBrightness)
             ButtonUnBindBrightness.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
+
                 returnFragment(FragmentConnector.fragment_more_button_unlock_brightness_control)
                 dismiss()
             }
             //绑定播放视图
             val ButtonBindPlayView = view.findViewById<TextView>(R.id.ButtonBindPlayView)
             ButtonBindPlayView.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
+
                 returnFragment(FragmentConnector.fragment_more_button_bind_play_view)
                 dismiss()
             }
             //重新启用播放感知
             val Button_RestartPerception = view.findViewById<TextView>(R.id.Button_RestartPerception)
             Button_RestartPerception.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("重新启用播放感知")
                     .setMessage("使用播控中心控制播放时，可能导致播放感知被无意关闭。查阅指南或发布页可了解详细逻辑。")
-                    .setPositiveButton("了解") { dialog, which ->
-                        ToolVibrate().vibrate(requireContext())
+                    .setPositiveButton("了解") { dialog, _ ->
+                        ToolVibrate.vibrate()
 
                         SystemListener.state_perception_on = true
 
@@ -616,20 +619,20 @@ class PlayerFragmentMoreButton: DialogFragment(){
             //使进度条脱离异常状态
             val Button_EscapeScrollerError = view.findViewById<TextView>(R.id.Button_EscapeScrollerError)
             Button_EscapeScrollerError.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("正在开发中")
                     .setMessage("暂未发现导致进度条异常的场景，如果遇到，先退出播放页重进")
-                    .setPositiveButton("了解") { dialog, which ->
-                        ToolVibrate().vibrate(requireContext())
+                    .setPositiveButton("了解") { dialog, _ ->
+                        ToolVibrate.vibrate()
 
                         customDismiss()
 
                         dialog.dismiss()
                     }
-                    .setNegativeButton("立即退出播放页") { dialog, which ->
-                        ToolVibrate().vibrate(requireContext())
+                    .setNegativeButton("立即退出播放页") { dialog, _ ->
+                        ToolVibrate.vibrate()
 
                         returnFragment(FragmentConnector.fragment_more_button_exit_right_now)
 
@@ -691,7 +694,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                                     .setTitle("开启倍速模拟寻帧")
                                     .setMessage(text)
                                     .setPositiveButton("确认开启") { dialog, _ ->
-                                        ToolVibrate().vibrate(context)
+                                        ToolVibrate.vibrate()
                                         //确认开启
                                         //修改viewModel的值
                                         viewModel.PREFS_AlwaysSeek = false
@@ -708,7 +711,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                                         dialog.dismiss()
                                     }
                                     .setNegativeButton("取消") { dialog, _ ->
-                                        ToolVibrate().vibrate(context)
+                                        ToolVibrate.vibrate()
 
                                         customDismiss()
 
@@ -726,7 +729,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                 }
                 //设置点击事件
                 BTC_SeekMode.setOnClickListener {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     //弹出菜单选择
                     popupMenu_SeekMode(it)
@@ -747,7 +750,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                 }
                 updateButtonLinkScrollColor()
                 ButtonLinkScroll.setOnClickListener {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     //新值无脑取反即可
                     viewModel.PREFS_LinkScroll = !viewModel.PREFS_LinkScroll
@@ -777,7 +780,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
                 }
                 updateButtonTapJumpColor()
                 ButtonTapJump.setOnClickListener {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     //新值无脑取反即可
                     viewModel.PREFS_TapJump = !viewModel.PREFS_TapJump
@@ -814,13 +817,13 @@ class PlayerFragmentMoreButton: DialogFragment(){
                     val Button_whyNotShowScroller = view.findViewById<TextView>(R.id.Button_whyNotShowScroller)
                     LinearLayout_whyNotShowScroller.visibility = View.VISIBLE
                     Button_whyNotShowScroller.setOnClickListener {
-                        ToolVibrate().vibrate(requireContext())
+                        ToolVibrate.vibrate()
 
                         AlertDialog.Builder(requireContext())
                             .setTitle("未显示进度条或进度条异常？")
                             .setMessage(text)
-                            .setPositiveButton("了解") { dialog, which ->
-                                ToolVibrate().vibrate(requireContext())
+                            .setPositiveButton("了解") { dialog, _ ->
+                                ToolVibrate.vibrate()
 
                                 customDismiss()
 
@@ -876,19 +879,19 @@ class PlayerFragmentMoreButton: DialogFragment(){
             when (item.itemId) {
                 //更新封面-截取视频当前帧
                 R.id.item_useCurrentFrame -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
                     returnFragment(FragmentConnector.fragment_more_button_update_cover_frame,FragmentConnector.update_cover_frame_use_current_frame)
                     dismiss();true
                 }
                 //更新封面-使用默认封面
                 R.id.item_useDefaultCover -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
                     returnFragment(FragmentConnector.fragment_more_button_update_cover_frame,FragmentConnector.update_cover_frame_use_default_frame)
                     dismiss();true
                 }
                 //更新封面-选择本地图片
                 R.id.item_pickFromLocal -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
                     returnFragment(FragmentConnector.fragment_more_button_update_cover_frame,FragmentConnector.update_cover_frame_pick_local_frame)
                     dismiss();true
                 }
@@ -926,7 +929,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
         popup.show()
     }
     private fun chooseLoopMode(loopMode: String){
-        ToolVibrate().vibrate(requireContext())
+        ToolVibrate.vibrate()
         //设置循环模式
         ListManagerHelper.setLoopMode(when (loopMode) {
             "ONE" -> "ONE"
@@ -974,7 +977,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
         popup.show()
     }
     private fun choosePlaySpeed(speed: Float){
-        ToolVibrate().vibrate(requireContext())
+        ToolVibrate.vibrate()
         //设置倍速
         PlayerSingleton.setPlaySpeed(speed)
 
@@ -1066,7 +1069,7 @@ class PlayerFragmentMoreButton: DialogFragment(){
         popup.show()
     }
     private fun chooseCountDownDuration(countDownDuration_Min: Int){
-        ToolVibrate().vibrate(requireContext())
+        ToolVibrate.vibrate()
         //设置自动关闭倒计时
         PlayerSingleton.set_timer_autoShut(countDownDuration_Min)
 

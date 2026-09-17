@@ -104,7 +104,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             //页面设置按钮
             val pageSettingButton = view.findViewById<View>(R.id.pageSettingButton)
             pageSettingButton.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //
                 recyclerView.stopScroll()
                 //
@@ -118,7 +118,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             ButtonSetAsCurrentListIcon = view.findViewById(R.id.ButtonSetAsCurrentListIcon)
             updateCurrentListStateText()
             ButtonSetAsCurrentList.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //
                 recyclerView.stopScroll()
                 //
@@ -129,7 +129,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             //按钮：总项数(分页下显示不全)
             val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
             ButtonItemCount.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //
                 recyclerView.stopScroll()
                 //未加载完成前拒绝访问
@@ -148,7 +148,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             //强制刷新
             val ButtonForceRefresh = view.findViewById<CardView>(R.id.ButtonForceRefresh)
             ButtonForceRefresh.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //
                 recyclerView.stopScroll()
                 //发起重读数据库
@@ -313,7 +313,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
             when (item.itemId) {
                 //设为当前播放列表
                 R.id.setting_set_as_current_list -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     setAs_currentPlayingList()
 
@@ -321,7 +321,7 @@ class InnerFragment_Audio :Fragment(R.layout.fragment_play_list_live_page){
                 }
                 //设置默认显示列表
                 R.id.setting_set_as_default_show_list -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     setAs_AcquiesceShowingPage()
 

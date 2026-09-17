@@ -141,13 +141,13 @@ class SettingsActivity: AppCompatActivity() {
             //按钮：前往项目Github仓库页
             val ButtonGoGithubRepo = findViewById<TextView>(R.id.Button_GoTo_GithubRepo)
             ButtonGoGithubRepo.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 AlertDialog.Builder(context)
                     .setTitle("将跳转至浏览器")
                     .setMessage("是否继续?")
                     .setPositiveButton("确认") { dialog, _ ->
-                        ToolVibrate().vibrate(context)
+                        ToolVibrate.vibrate()
 
                         val url = "https://github.com/JeanValjean07/Player/"
                         val intent = Intent(Intent.ACTION_VIEW, url.toUri())
@@ -156,7 +156,7 @@ class SettingsActivity: AppCompatActivity() {
                         dialog.dismiss()
                     }
                     .setNegativeButton("取消") { dialog, _ ->
-                        ToolVibrate().vibrate(context)
+                        ToolVibrate.vibrate()
 
                         dialog.dismiss()
                     }
@@ -168,13 +168,13 @@ class SettingsActivity: AppCompatActivity() {
             //按钮：前往项目Github发布页
             val ButtonGoGithubRelease = findViewById<TextView>(R.id.Button_GoTo_GithubRelease)
             ButtonGoGithubRelease.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 AlertDialog.Builder(context)
                     .setTitle("将跳转至浏览器")
                     .setMessage("是否继续?")
                     .setPositiveButton("确认") { dialog, _ ->
-                        ToolVibrate().vibrate(context)
+                        ToolVibrate.vibrate()
 
                         val url = "https://github.com/JeanValjean07/Player/releases"
                         val intent = Intent(Intent.ACTION_VIEW, url.toUri())
@@ -183,7 +183,7 @@ class SettingsActivity: AppCompatActivity() {
                         dialog.dismiss()
                     }
                     .setNegativeButton("取消") { dialog, _ ->
-                        ToolVibrate().vibrate(context)
+                        ToolVibrate.vibrate()
 
                         dialog.dismiss()
                     }
@@ -196,14 +196,14 @@ class SettingsActivity: AppCompatActivity() {
             //按钮：自动检查更新
             val ButtonCheckUpdate = findViewById<TextView>(R.id.ButtonAutoUpdate)
             ButtonCheckUpdate.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //检查更新
                 checkNewVersion()
             }
             //点击顶部区域
             AppBarCore.setOnClickListener {
                 if (scrollArea?.canScrollVertically(-1) == true){
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     //滚动区域回顶
                     scrollArea?.stopNestedScroll()
                     scrollArea?.smoothScrollTo(0, 0)
@@ -219,7 +219,7 @@ class SettingsActivity: AppCompatActivity() {
             RevokePrivacyAgreement.paint.isUnderlineText = true
             RevokePrivacyAgreement.invalidate()
             RevokePrivacyAgreement.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 //撤回隐私政策同意
                 revokePrivacyAgreementAlert()
@@ -275,35 +275,35 @@ class SettingsActivity: AppCompatActivity() {
             val SC_EnableMiniView = findViewById<SwitchCompat>(R.id.SC_EnableMiniView)
             SC_EnableMiniView.isChecked = SettingsCenter.GET_PRF_EnableMiniView()
             SC_EnableMiniView.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PRF_EnableMiniView(isChecked)
             }
             //首页播放卡片用缩略图代替视频
             val switch_DisableMainPageSmallPlayer = findViewById<SwitchCompat>(R.id.DisableMainPageSmallPlayer)
             switch_DisableMainPageSmallPlayer.isChecked = SettingsCenter.GET_PRF_AlwaysUseImageInMiniView()
             switch_DisableMainPageSmallPlayer.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PRF_AlwaysUseImageInMiniView( isChecked)
             }
             //启动时继续上次的媒体
             val switch_EnableContinuePlay = findViewById<SwitchCompat>(R.id.EnableContinuePlay)
             switch_EnableContinuePlay.isChecked = SettingsCenter.get_PREFS_EnableContinuePlay()
             switch_EnableContinuePlay.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.set_PREFS_EnableContinuePlay( isChecked)
             }
             //启动续播时启动播放器引擎
             val SC_ContinuePlay_withEngin = findViewById<SwitchCompat>(R.id.SC_ContinuePlay_withEngin)
             SC_ContinuePlay_withEngin.isChecked = SettingsCenter.GET_PRF_ContinuePlay_withEngin()
             SC_ContinuePlay_withEngin.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PRF_ContinuePlay_withEngin(isChecked)
             }
             //后台划卡时关闭播放器
             val switch_StopPlayerWhenTaskRemoved = findViewById<SwitchCompat>(R.id.StopPlayerWhenTaskRemoved)
             switch_StopPlayerWhenTaskRemoved.isChecked = SettingsCenter.GET_PRF_stopEngine_whenTaskRemoved()
             switch_StopPlayerWhenTaskRemoved.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PRF_stopEngine_whenTaskRemoved(isChecked)
             }
             //</editor-fold>
@@ -315,7 +315,7 @@ class SettingsActivity: AppCompatActivity() {
             val SC_EnableMediaSessionArtWork = findViewById<SwitchCompat>(R.id.SC_EnableMediaSessionArtWork)
             SC_EnableMediaSessionArtWork.isChecked = SettingsCenter.GET_PRF_EnableMediaSessionArtWork()
             SC_EnableMediaSessionArtWork.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 fun set_isChecked_byProcess_include_write_setting(target_isChecked: Boolean){
                     val current_isChecked = SC_EnableMediaSessionArtWork.isChecked
@@ -349,7 +349,7 @@ class SettingsActivity: AppCompatActivity() {
                                     .setTitle("禁止启用此选项")
                                     .setMessage("已确认在当前设备上存在兼容性问题，不能启用此选项")
                                     .setPositiveButton("了解") { dialog, _ ->
-                                        ToolVibrate().vibrate(context)
+                                        ToolVibrate.vibrate()
 
                                         dialog.dismiss()
                                     }
@@ -364,7 +364,7 @@ class SettingsActivity: AppCompatActivity() {
                                     .setTitle("未测试兼容性")
                                     .setMessage("如果后续遇到异常，请关闭此选项")
                                     .setPositiveButton("了解") { dialog, _ ->
-                                        ToolVibrate().vibrate(context)
+                                        ToolVibrate.vibrate()
 
                                         dialog.dismiss()
                                     }
@@ -379,7 +379,7 @@ class SettingsActivity: AppCompatActivity() {
                                     .setTitle("无法开启此选项")
                                     .setMessage("未知错误")
                                     .setPositiveButton("了解") { dialog, _ ->
-                                        ToolVibrate().vibrate(context)
+                                        ToolVibrate.vibrate()
 
                                         dialog.dismiss()
                                     }
@@ -399,7 +399,7 @@ class SettingsActivity: AppCompatActivity() {
             val switch_DisableVideoTrackOnBack = findViewById<SwitchCompat>(R.id.DisableVideoTrackOnBack)
             switch_DisableVideoTrackOnBack.isChecked = SettingsCenter.GET_PREFS_DisableVideoTrack_whenBackground()
             switch_DisableVideoTrackOnBack.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 fun set_isChecked_byProcess_include_write_setting(target_isChecked: Boolean){
                     val current_isChecked = switch_DisableVideoTrackOnBack.isChecked
@@ -427,14 +427,14 @@ class SettingsActivity: AppCompatActivity() {
                                 .setTitle("提示")
                                 .setMessage("开启此选项后，切换轨道时会短暂停止播放，影响播放体验。其次，即使是持续解码视频的消耗也非常低，非常不建议开启此选项。")
                                 .setPositiveButton("仍要开启") { dialog, _ ->
-                                    ToolVibrate().vibrate(context)
+                                    ToolVibrate.vibrate()
                                     //仍要开启
                                     set_isChecked_byProcess_include_write_setting(true)
 
                                     dialog.dismiss()
                                 }
                                 .setNegativeButton("不开启了") { dialog, _ ->
-                                    ToolVibrate().vibrate(context)
+                                    ToolVibrate.vibrate()
                                     //
                                     set_isChecked_byProcess_include_write_setting(false)
 
@@ -450,7 +450,7 @@ class SettingsActivity: AppCompatActivity() {
                                 .setTitle("无法启用")
                                 .setMessage("受稳定性限制，安卓12及以下系统禁止开启此选项")
                                 .setPositiveButton("知道了") { dialog, _ ->
-                                    ToolVibrate().vibrate(context)
+                                    ToolVibrate.vibrate()
 
                                     dialog.dismiss()
                                 }
@@ -476,7 +476,7 @@ class SettingsActivity: AppCompatActivity() {
             }
             updateOnMediaChangeMillisText()
             ButtonCard_onMediaChangeMillis.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //创建对话框
                 val dialog = Dialog(context).apply {
                     window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
@@ -533,26 +533,26 @@ class SettingsActivity: AppCompatActivity() {
             val Button_Video_Screening_Type = findViewById<CardView>(R.id.ButtonPlayerType)
             update_screening_type_Text()
             Button_Video_Screening_Type.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //
                 val popup = PopupMenu(context, it)
                 popup.menuInflater.inflate(R.menu.activity_settings_popup_player_type, popup.menu)
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         R.id.type_oro -> {
-                            ToolVibrate().vibrate(context)
+                            ToolVibrate.vibrate()
 
                             choose_screening_type(SettingsCenter.screening_type_ORO)
                             true
                         }
                         R.id.type_neo -> {
-                            ToolVibrate().vibrate(context)
+                            ToolVibrate.vibrate()
 
                             choose_screening_type(SettingsCenter.screening_type_NEO)
                             true
                         }
                         R.id.type_test -> {
-                            ToolVibrate().vibrate(context)
+                            ToolVibrate.vibrate()
 
                             choose_screening_type(SettingsCenter.screening_type_TEST)
                             true
@@ -567,35 +567,35 @@ class SettingsActivity: AppCompatActivity() {
             val switch_EnablePlayAreaMoveAnim = findViewById<SwitchCompat>(R.id.EnablePlayAreaMoveAnim)
             switch_EnablePlayAreaMoveAnim.isChecked = SettingsCenter.GET_PREFS_EnablePlayAreaMoveAnim()
             switch_EnablePlayAreaMoveAnim.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PREFS_EnablePlayAreaMoveAnim(isChecked)
             }
             //禁用更多操作面板下滑手势
             val switch_DisableFragmentGesture = findViewById<SwitchCompat>(R.id.DisableFragmentGesture)
             switch_DisableFragmentGesture.isChecked = SettingsCenter.GET_PREFS_DisableFragmentGesture()
             switch_DisableFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PREFS_DisableFragmentGesture(isChecked)
             }
             //始终使用深色播放页面
             val switch_AlwaysUseDarkTheme = findViewById<SwitchCompat>(R.id.AlwaysUseDarkTheme)
             switch_AlwaysUseDarkTheme.isChecked = SettingsCenter.GET_PREFS_AlwaysUseDarkTheme()
             switch_AlwaysUseDarkTheme.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PREFS_AlwaysUseDarkTheme(isChecked)
             }
             //使用高刷新率
             val switch_EnableHighRefreshRate = findViewById<SwitchCompat>(R.id.EnableHighRefreshRate)
             switch_EnableHighRefreshRate.isChecked = SettingsCenter.GET_PREFS_LockRefreshRate()
             switch_EnableHighRefreshRate.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PREFS_LockRefreshRate(isChecked)
             }
             //退出播放页时确保竖屏
             val SC_SwitchPortrait_whenExit = findViewById<SwitchCompat>(R.id.EnsurePortraitWhenExit)
             SC_SwitchPortrait_whenExit.isChecked = SettingsCenter.GET_PRF_SwitchPortrait_whenExit()
             SC_SwitchPortrait_whenExit.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 SettingsCenter.SET_PRF_SwitchPortrait_whenExit(isChecked)
             }
@@ -603,7 +603,7 @@ class SettingsActivity: AppCompatActivity() {
             val SC_EnableAutoHideController_whenPortrait = findViewById<SwitchCompat>(R.id.SC_EnableAutoHideController_whenPortrait)
             SC_EnableAutoHideController_whenPortrait.isChecked = SettingsCenter.GET_PRF_EnableAutoHideController_whenPortrait()
             SC_EnableAutoHideController_whenPortrait.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PRF_EnableAutoHideController_whenPortrait(isChecked)
             }
             //🥙经典播放页设置
@@ -611,7 +611,7 @@ class SettingsActivity: AppCompatActivity() {
             val ButtonCard_VideoSeekBar_updateMs = findViewById<CardView>(R.id.ButtonCard_VideoSeekBar_updateMs)
             update_video_syncSeekBar_updateMS_Text()
             ButtonCard_VideoSeekBar_updateMs.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 choose_video_syncSeekBar_updateMs_Menu(it)
             }
             //🥙新晋播放页设置
@@ -619,7 +619,7 @@ class SettingsActivity: AppCompatActivity() {
             val switch_UseCompatScroller = findViewById<SwitchCompat>(R.id.UseCompatScroller)
             switch_UseCompatScroller.isChecked = SettingsCenter.GET_PREFS_UseCompatScroller()
             switch_UseCompatScroller.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
 
                 fun set_isChecked_byProcess_include_write_setting(target_isChecked: Boolean){
@@ -648,14 +648,14 @@ class SettingsActivity: AppCompatActivity() {
                             .setTitle("提示")
                             .setMessage("仅当横屏时的进度条两端无法与中央竖线对齐时才能开启此开关，否则将导致进度条无法正常工作，请确认后再开启")
                             .setPositiveButton("我已确认并开启") { dialog, _ ->
-                                ToolVibrate().vibrate(context)
+                                ToolVibrate.vibrate()
 
                                 set_isChecked_byProcess_include_write_setting(true)
 
                                 dialog.dismiss()
                             }
                             .setNegativeButton("取消") { dialog, _ ->
-                                ToolVibrate().vibrate(context)
+                                ToolVibrate.vibrate()
 
                                 set_isChecked_byProcess_include_write_setting(false)
 
@@ -676,7 +676,7 @@ class SettingsActivity: AppCompatActivity() {
             val BC_SyncFramePreference = findViewById<CardView>(R.id.BC_SyncFramePreference)
             update_video_syncFramePrefs_Text()
             BC_SyncFramePreference.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //
                 choose_video_syncFramePrefs_Menu(it)
 
@@ -685,7 +685,7 @@ class SettingsActivity: AppCompatActivity() {
             val ButtonCardTimerUpdateGap = findViewById<CardView>(R.id.ButtonCardTimerUpdateGap)
             update_video_timerStamp_updateMs_Text()
             ButtonCardTimerUpdateGap.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //
                 choose_Video_timeStamp_updateMs_Menu(it)
 
@@ -694,7 +694,7 @@ class SettingsActivity: AppCompatActivity() {
             val ButtonCardSeekHandlerGap = findViewById<CardView>(R.id.ButtonCardSeekHandlerGap)
             update_video_generalSeek_updateMs_Text()
             ButtonCardSeekHandlerGap.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //
                 choose_Video_generalSeek_updateMs_Menu(it)
             }
@@ -702,7 +702,7 @@ class SettingsActivity: AppCompatActivity() {
             val ButtonCardScrollerUpdateGap = findViewById<CardView>(R.id.ButtonCard_scrollerUpdateGap)
             update_video_scroller_updateMs_Text()
             ButtonCardScrollerUpdateGap.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //
                 choose_Video_scroller_updateMs_Menu(it)
             }
@@ -716,7 +716,7 @@ class SettingsActivity: AppCompatActivity() {
             val SC_Audio_DontShowAlbumFrame = findViewById<SwitchCompat>(R.id.SC_Audio_DontShowAlbumFrame)
             SC_Audio_DontShowAlbumFrame.isChecked = SettingsCenter.GET_PRF_Audio_DontShowAlbumFrame()
             SC_Audio_DontShowAlbumFrame.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 SettingsCenter.SET_PRF_Audio_DontShowAlbumFrame(isChecked)
             }
@@ -724,7 +724,7 @@ class SettingsActivity: AppCompatActivity() {
             val SC_Audio_UseFileNameAsTitle = findViewById<SwitchCompat>(R.id.SC_Audio_UseFileNameAsTitle)
             SC_Audio_UseFileNameAsTitle.isChecked = SettingsCenter.GET_PRF_Audio_UseFileNameAsTitle()
             SC_Audio_UseFileNameAsTitle.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 SettingsCenter.SET_PRF_Audio_UseFileNameAsTitle(isChecked)
             }
@@ -732,7 +732,7 @@ class SettingsActivity: AppCompatActivity() {
             val SC_Audio_UseArtworkGesture = findViewById<SwitchCompat>(R.id.SC_Audio_UseArtworkGesture)
             SC_Audio_UseArtworkGesture.isChecked = SettingsCenter.GET_PRF_Audio_UseArtworkGesture()
             SC_Audio_UseArtworkGesture.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 SettingsCenter.SET_PRF_Audio_UseArtworkGesture(isChecked)
             }
@@ -740,7 +740,7 @@ class SettingsActivity: AppCompatActivity() {
             val ButtonCard_AudioSeekBar_updateMs = findViewById<CardView>(R.id.ButtonCard_AudioSeekBar_updateMs)
             update_audio_syncSeekBar_updateMS_Text()
             ButtonCard_AudioSeekBar_updateMs.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //
                 choose_audio_syncSeekBar_updateMs_Menu(it)
             }
@@ -748,7 +748,7 @@ class SettingsActivity: AppCompatActivity() {
             val SC_Audio_AutoZoomArtwork = findViewById<SwitchCompat>(R.id.SC_Audio_AutoZoomArtwork)
             SC_Audio_AutoZoomArtwork.isChecked = SettingsCenter.GET_PRF_Audio_AutoZoomArtwork()
             SC_Audio_AutoZoomArtwork.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 SettingsCenter.SET_PRF_Audio_AutoZoomArtwork(isChecked)
             }
@@ -763,7 +763,7 @@ class SettingsActivity: AppCompatActivity() {
             val ButtonCardVibrateMode = findViewById<CardView>(R.id.ButtonCardVibrateMode)
             updateVibrateModeText()
             ButtonCardVibrateMode.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //使用弹出菜单选择
                 val popup = PopupMenu(context, ButtonCardVibrateMode)
                 popup.menuInflater.inflate(R.menu.popup_menu_interactive_vibrate_mode, popup.menu)
@@ -802,7 +802,7 @@ class SettingsActivity: AppCompatActivity() {
             val SC_UseFullScreenFragment = findViewById<SwitchCompat>(R.id.SC_UseFullScreenFragment)
             SC_UseFullScreenFragment.isChecked = SettingsCenter.GET_PRF_UseFullScreenFragment()
             SC_UseFullScreenFragment.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 SettingsCenter.SET_PRF_UseFullScreenFragment(isChecked)
 
@@ -816,7 +816,7 @@ class SettingsActivity: AppCompatActivity() {
             //设置MiniView底部抬高高度
             val TB_SetMiniViewBottomPadding = findViewById<TextView>(R.id.TextButton_SetMiniViewBottomPadding)
             TB_SetMiniViewBottomPadding.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //
                 setMiniViewBottomPadding()
 
@@ -833,7 +833,7 @@ class SettingsActivity: AppCompatActivity() {
             //封面缩略图管理
             val ButtonRemoveAllThumbPath = findViewById<TextView>(R.id.RemoveAllThumbPath)
             ButtonRemoveAllThumbPath.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 chooseDeleteFrameItem(ButtonRemoveAllThumbPath)
 
@@ -841,7 +841,7 @@ class SettingsActivity: AppCompatActivity() {
             //数据库缓存管理
             val ButtonManageDB = findViewById<TextView>(R.id.TextButton_DBManage)
             ButtonManageDB.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 chooseDeleteDB(ButtonManageDB)
             }
@@ -1104,14 +1104,14 @@ class SettingsActivity: AppCompatActivity() {
             .setTitle("确定撤回同意吗?")
             .setMessage("若确认，App将自动退出")
             .setPositiveButton("确认") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 revokePrivacyAgreementCore()
 
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 dialog.dismiss()
             }
@@ -1181,17 +1181,17 @@ class SettingsActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.always_use_sync -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_AlwaysSync)
                     true
                 }
                 R.id.always_use_exact -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_AlwaysExact)
                     true
                 }
                 R.id.use_dynamic -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_Dynamic)
                     true
                 }
@@ -1229,27 +1229,27 @@ class SettingsActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.menu_item_120hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_generalSeek_updateMs_Core(8)
                     true
                 }
                 R.id.menu_item_60hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_generalSeek_updateMs_Core(16)
                     true
                 }
                 R.id.menu_item_30hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_generalSeek_updateMs_Core(33)
                     true
                 }
                 R.id.menu_item_15hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_generalSeek_updateMs_Core(66)
                     true
                 }
                 R.id.menu_item_Input -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     set_video_generalSeek_updateMs_input()
                     true
                 }
@@ -1278,7 +1278,7 @@ class SettingsActivity: AppCompatActivity() {
             AlertDialog.Builder(context)
                 .setView(view)
                 .setPositiveButton("已了解风险并确认") { dialog, _ ->
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     //执行
                     execute()
@@ -1286,7 +1286,7 @@ class SettingsActivity: AppCompatActivity() {
                     dialog.dismiss()
                 }
                 .setNegativeButton("取消") { dialog, _ ->
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     //取消时检查是否需要重置当前值
                     val current = SettingsCenter.get_value_seekVideo_runnableGapMs()
@@ -1307,14 +1307,14 @@ class SettingsActivity: AppCompatActivity() {
                 .setTitle("提示")
                 .setMessage("零值是高危数值，可带来设备损坏风险，仅用于测试与观察。正常情况下请勿设置此值为零！如果需要高频率，建议设置为 1 Ms 以使循环压力可控")
                 .setPositiveButton("仍然设为零") { dialog, _ ->
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     execute()
 
                     dialog.dismiss()
                 }
                 .setNegativeButton("取消") { dialog, _ ->
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     //取消时检查是否需要重置当前值
                     val current = SettingsCenter.get_value_seekVideo_runnableGapMs()
@@ -1421,32 +1421,32 @@ class SettingsActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.menu_item_120hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_timeStamp_updateMs_Core(8L)
                     true
                 }
                 R.id.menu_item_90hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_timeStamp_updateMs_Core(12L)
                     true
                 }
                 R.id.menu_item_60hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_timeStamp_updateMs_Core(16L)
                     true
                 }
                 R.id.menu_item_30hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_timeStamp_updateMs_Core(33L)
                     true
                 }
                 R.id.menu_item_15hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_timeStamp_updateMs_Core(66L)
                     true
                 }
                 R.id.menu_item_Input -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     set_video_timerStamp_updateMs_input()
                     true
                 }
@@ -1468,14 +1468,14 @@ class SettingsActivity: AppCompatActivity() {
                 .setTitle("提示")
                 .setMessage("此值过低时，若同时寻帧间隔也过低，可能导致界面轻微卡顿。是否继续?")
                 .setPositiveButton("确认") { dialog, _ ->
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
-                   execute()
+                    execute()
 
                     dialog.dismiss()
                 }
                 .setNegativeButton("取消") { dialog, _ ->
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     dialog.dismiss()
                 }
@@ -1557,17 +1557,17 @@ class SettingsActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.menu_item_30hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_scroller_updateMs_Core(33L)
                     true
                 }
                 R.id.menu_item_15hz -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_Video_scroller_updateMs_Core(66L)
                     true
                 }
                 R.id.menu_item_Input -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     set_video_scroller_updateMs_input()
                     true
                 }
@@ -1664,32 +1664,32 @@ class SettingsActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId){
                 R.id.menu_item_10ms -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_video_syncSeekBar_updateMs_Core(10L)
                     true
                 }
                 R.id.menu_item_100ms -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_video_syncSeekBar_updateMs_Core(100L)
                     true
                 }
                 R.id.menu_item_500ms -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_video_syncSeekBar_updateMs_Core(500L)
                     true
                 }
                 R.id.menu_item_1000ms -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_video_syncSeekBar_updateMs_Core(1000L)
                     true
                 }
                 R.id.menu_item_Input -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     set_video_syncSeekBar_updateMs_input()
                     true
                 }
                 R.id.menu_item_Adapt -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_video_syncSeekBar_updateMs_Core(3001L)
                     true
                 }
@@ -1786,30 +1786,30 @@ class SettingsActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId){
                 R.id.menu_item_10ms -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_audio_syncSeekBar_updateMs_Core(10L)
                     true
                 }
                 R.id.menu_item_100ms -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_audio_syncSeekBar_updateMs_Core(100L); true
                 }
                 R.id.menu_item_500ms -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_audio_syncSeekBar_updateMs_Core(500L); true
                 }
                 R.id.menu_item_1000ms -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_audio_syncSeekBar_updateMs_Core(1000L)
                     true
                 }
                 R.id.menu_item_Input -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     set_audio_syncSeekBar_updateMs_input()
                     true
                 }
                 R.id.menu_item_Adapt -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
                     choose_audio_syncSeekBar_updateMs_Core(3001L)
                     true
                 }
@@ -1908,16 +1908,16 @@ class SettingsActivity: AppCompatActivity() {
         // 4 = VibrationEffect.EFFECT_HEAVY_CLICK
 
 
-        ToolVibrate().setVibrateMode(context, mode)
+        ToolVibrate.SET_PREFS_VibrateMode(mode)
 
-        ToolVibrate().vibrate(context)
+        ToolVibrate.vibrate()
 
         updateVibrateModeText()
 
     }
     private fun updateVibrateModeText() {
         val ButtonTextVibrateMode = findViewById<TextView>(R.id.ButtonTextVibrateMode)
-        val vibrateMode = ToolVibrate().getVibrateMode(context)
+        val vibrateMode = ToolVibrate.GET_PREFS_VibrateMode()
         when(vibrateMode){
             0 -> ButtonTextVibrateMode.text = "无振动"
             1 -> ButtonTextVibrateMode.text = "EFFECT_CLICK"
@@ -1994,7 +1994,7 @@ class SettingsActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.delete_all -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     deleteArtworkFrameCache(
                         context = context,
@@ -2005,7 +2005,7 @@ class SettingsActivity: AppCompatActivity() {
                     true
                 }
                 R.id.delete_video -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     deleteArtworkFrameCache(
                         context = context,
@@ -2016,7 +2016,7 @@ class SettingsActivity: AppCompatActivity() {
                     true
                 }
                 R.id.delete_audio -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     deleteArtworkFrameCache(
                         context = context,
@@ -2027,7 +2027,7 @@ class SettingsActivity: AppCompatActivity() {
                     true
                 }
                 R.id.delete_video_custom -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     deleteCustomFrameCache(
                         context = context,
@@ -2038,7 +2038,7 @@ class SettingsActivity: AppCompatActivity() {
                     true
                 }
                 R.id.delete_audio_custom -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     deleteCustomFrameCache(
                         context = context,
@@ -2058,7 +2058,7 @@ class SettingsActivity: AppCompatActivity() {
             .setTitle("确定删除选中的默认封面吗?")
             .setMessage("仅删除自动生成的封面，保留自定义封面")
             .setPositiveButton("确认") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
 
                 lifecycleScope.launch(Dispatchers.IO){
@@ -2080,7 +2080,7 @@ class SettingsActivity: AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 dialog.dismiss()
             }
@@ -2092,7 +2092,7 @@ class SettingsActivity: AppCompatActivity() {
             .setTitle("确定删除选中的自定义封面吗?")
             .setMessage("更建议您在播放页删除单个媒体的自定义封面")
             .setPositiveButton("确认") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 lifecycleScope.launch(Dispatchers.IO){
                     val success = ArtworkFrameManager.delete_artwork_custom(
@@ -2113,7 +2113,7 @@ class SettingsActivity: AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 dialog.dismiss()
             }
@@ -2127,7 +2127,7 @@ class SettingsActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.delete_video -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     deleteDB(
                         context = context,
@@ -2138,7 +2138,7 @@ class SettingsActivity: AppCompatActivity() {
                     true
                 }
                 R.id.delete_audio -> {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     deleteDB(
                         context = context,
@@ -2158,7 +2158,7 @@ class SettingsActivity: AppCompatActivity() {
             .setTitle(if (deleteVideo )"确定删除视频数据缓存吗?" else "确定删除音频数据缓存吗?")
             .setMessage("回到主页后会触发再次读取,仅作为清除异常数据使用")
             .setPositiveButton("确认") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 lifecycleScope.launch(Dispatchers.IO){
                     deleteDB_Core(context,deleteVideo,deleteAudio)
@@ -2167,7 +2167,7 @@ class SettingsActivity: AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 dialog.dismiss()
             }

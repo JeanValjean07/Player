@@ -1,9 +1,12 @@
 package com.suming.player
 
 import android.app.Application
+import android.os.Build
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.annotation.RequiresApi
 import androidx.media3.common.util.UnstableApi
+import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import com.suming.player.FuncionalPack.SettingsCenter
@@ -27,6 +30,10 @@ class Application : Application() {
         SettingsCenter.setContext(this)
         //
         MediaDataBaseMaster.setContext(this)
+        //
+        @Suppress("NewApi")
+        ToolVibrate.setContext(this)
+
 
         //测试中的项
         //1.可切换引擎系统设置管理中心

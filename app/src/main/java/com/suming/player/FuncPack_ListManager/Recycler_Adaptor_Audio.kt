@@ -133,12 +133,12 @@ class Recycler_Adaptor_Audio(
         }
         //点击事件设定
         holder.ButtonAddToList.setOnClickListener {
-            ToolVibrate().vibrate(context)
+            ToolVibrate.vibrate()
 
             onAddToListClick(item)
         }
         holder.ButtonPlay.setOnClickListener {
-            ToolVibrate().vibrate(context)
+            ToolVibrate.vibrate()
 
             onPlayItemClick(item)
         }

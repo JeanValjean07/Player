@@ -62,7 +62,7 @@ import kotlinx.coroutines.withContext
 @UnstableApi
 @SuppressLint("ComposableNaming","NewApi")
 @Suppress("/unused")
-class ListManagerFragment: DialogFragment(){
+class ListManagerFragment: DialogFragment() {
     companion object {
         fun newInstance(): ListManagerFragment =
             ListManagerFragment().apply {
@@ -207,7 +207,7 @@ class ListManagerFragment: DialogFragment(){
             updateLoopModeText()
             val ButtonCardLoopMode = view.findViewById<CardView>(R.id.ButtonCardLoopMode)
             ButtonCardLoopMode.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 startLoopModeMenu(ButtonCardLoopMode)
             }
@@ -215,7 +215,7 @@ class ListManagerFragment: DialogFragment(){
             //选单-当前播放列表
             val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
             ButtonCurrentList.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
 
                 startCurrentPlayingListMenu(ButtonCurrentList)
             }
@@ -223,19 +223,19 @@ class ListManagerFragment: DialogFragment(){
 
             //横滑页签按钮
             ButtonCard_customList.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 switchToCustomPageByButton()
             }
             ButtonCard_historyList.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 switchToHistoryPageByButton()
             }
             ButtonCard_videoList.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 switchToVideoPageByButton()
             }
             ButtonCard_musicList.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 switchToAudioPageByButton()
             }
 
@@ -602,7 +602,7 @@ class ListManagerFragment: DialogFragment(){
 
 
     //显示更多操作菜单
-    private fun showMoreOptMenu(anchor: CircleButton){
+    private fun showMoreOptMenu(anchor: CircleButton) {
         val popup = PopupMenu(requireContext(), anchor)
         popup.menuInflater.inflate(
             R.menu.popup_menu_list_more_opt,
@@ -611,7 +611,7 @@ class ListManagerFragment: DialogFragment(){
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.opt_next_media -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     ListManagerHelper.MediaSessionCall_switchNextMedia()
 
@@ -619,14 +619,14 @@ class ListManagerFragment: DialogFragment(){
 
                 }
                 R.id.opt_previous_media -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     ListManagerHelper.MediaSessionCall_switchPreviousMedia()
 
                     true
                 }
                 R.id.opt_clear -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     //清除播放项
                     stopPlaying()
@@ -636,7 +636,7 @@ class ListManagerFragment: DialogFragment(){
                     true
                 }
                 R.id.opt_clear_record -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     //清除播放记录
                     stopPlaying(true)
@@ -647,14 +647,14 @@ class ListManagerFragment: DialogFragment(){
                     true
                 }
                 R.id.opt_player_closed -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
                     //
                     closePlayer()
 
                     true
                 }
                 R.id.opt_player_closed_pro -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
                     //
                     val IPlayer = PlayerHolder.get_ins_refresh(requireContext())
                     IPlayer.release()
@@ -873,7 +873,7 @@ class ListManagerFragment: DialogFragment(){
             when (item.itemId) {
                 //选择自定义列表
                 R.id.list_custom -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     setCurrentPlayingList(ListManagerHelper.ListMark_Custom)
 
@@ -881,7 +881,7 @@ class ListManagerFragment: DialogFragment(){
                 }
                 //选择历史播放列表
                 R.id.list_history -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     setCurrentPlayingList(ListManagerHelper.ListMark_History)
 
@@ -889,7 +889,7 @@ class ListManagerFragment: DialogFragment(){
                 }
                 //选择视频列表
                 R.id.list_video_live -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     setCurrentPlayingList(ListManagerHelper.ListMark_Video)
 
@@ -897,7 +897,7 @@ class ListManagerFragment: DialogFragment(){
                 }
                 //选择音乐列表
                 R.id.list_music_live -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     setCurrentPlayingList(ListManagerHelper.ListMark_Audio)
 
@@ -962,7 +962,7 @@ class ListManagerFragment: DialogFragment(){
             .setTitle("确定关闭播放器吗?")
             .setMessage("正在播放的媒体会立即停止")
             .setPositiveButton("确认") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 PlayerSingleton.stopPlayEngineBundle()
                 dialog.dismiss()
 
@@ -970,7 +970,7 @@ class ListManagerFragment: DialogFragment(){
 
             }
             .setNegativeButton("取消") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 dialog.dismiss()
             }
@@ -1020,7 +1020,7 @@ class ListManagerFragment: DialogFragment(){
             when (item.itemId) {
 
                 R.id.LoopMode_ONE -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     chooseLoopMode(ListManagerHelper.LOOP_MODE_ONE)
 
@@ -1028,7 +1028,7 @@ class ListManagerFragment: DialogFragment(){
                 }
 
                 R.id.LoopMode_ALL -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     chooseLoopMode(ListManagerHelper.LOOP_MODE_ALL)
 
@@ -1036,7 +1036,7 @@ class ListManagerFragment: DialogFragment(){
                 }
 
                 R.id.LoopMode_OFF -> {
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
 
                     chooseLoopMode(ListManagerHelper.LOOP_MODE_OFF)
 

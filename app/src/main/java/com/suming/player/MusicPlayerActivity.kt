@@ -65,7 +65,6 @@ import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.SystemListener
 import com.suming.player.FuncionalPack.SettingsCenter
-import com.suming.player.PlayerSingleton
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -694,7 +693,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             //提示卡点击时关闭
             val noticeCard = findViewById<CardView>(R.id.noticeCapsule)
             noticeCard.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 noticeCard.visibility = View.GONE
             }
@@ -702,7 +701,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             //下一曲
             val Button_Next = findViewById<ImageButton>(R.id.Button_Next)
             Button_Next.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 //通知切换下一曲
                 ListManagerHelper.MediaSessionCall_switchNextMedia()
@@ -711,7 +710,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             //上一曲
             val Button_Prev = findViewById<ImageButton>(R.id.Button_Prev)
             Button_Prev.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 //通知切换上一曲
                 ListManagerHelper.MediaSessionCall_switchPreviousMedia()
@@ -938,14 +937,14 @@ class MusicPlayerActivity : AppCompatActivity() {
             .setTitle("切换到视频页面?")
             .setMessage("当前播放项已变更为视频")
             .setPositiveButton("确认") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 switchToVideoPage()
 
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 dialog.dismiss()
             }
@@ -1049,7 +1048,7 @@ class MusicPlayerActivity : AppCompatActivity() {
 
         //设置点击事件
         media_title.setOnClickListener {
-            ToolVibrate().vibrate(context)
+            ToolVibrate.vibrate()
             //切换跑马灯状态
             if (it.isSelected){
                 media_title.isSelected = false
@@ -1058,7 +1057,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             }
         }
         media_artist.setOnClickListener {
-            ToolVibrate().vibrate(context)
+            ToolVibrate.vibrate()
             //切换跑马灯状态
             if (it.isSelected){
                 media_title.isSelected = false
@@ -1067,7 +1066,7 @@ class MusicPlayerActivity : AppCompatActivity() {
             }
         }
         inner_structure_media_info.setOnClickListener {
-            ToolVibrate().vibrate(context)
+            ToolVibrate.vibrate()
 
             //切换使用的标题
             if (mediaType == MediaType.Audio){
@@ -1233,7 +1232,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                     return true
                 }
                 override fun onLongPress(e: MotionEvent) {
-                    ToolVibrate().vibrate(context)
+                    ToolVibrate.vibrate()
 
                     //切换专辑单项数据库中的显示专辑封面状态
                     lifecycleScope.launch(Dispatchers.IO) {
@@ -1277,7 +1276,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                                         } else {
                                             if (!touchState_scroll_vibrated) {
                                                 touchState_scroll_vibrated = true
-                                                ToolVibrate().vibrate(this@MusicPlayerActivity)
+                                                ToolVibrate.vibrate()
                                             }
                                             notice(
                                                 "佩戴耳机时,音量不能超过${(maxVolume * 0.6).toInt()},除非使用音量键调整",
@@ -1295,7 +1294,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                                 } else {
                                     if (!touchState_scroll_vibrated) {
                                         touchState_scroll_vibrated = true
-                                        ToolVibrate().vibrate(this@MusicPlayerActivity)
+                                        ToolVibrate.vibrate()
                                     }
                                     notice("音量已到最高", 1000)
                                 }
@@ -1313,7 +1312,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                                 } else {
                                     if (!touchState_scroll_vibrated) {
                                         touchState_scroll_vibrated = true
-                                        ToolVibrate().vibrate(this@MusicPlayerActivity)
+                                        ToolVibrate.vibrate()
                                     }
                                     notice("音量已到最低", 1000)
                                 }
@@ -1330,7 +1329,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                                 //振动:仅一次
                                 if (!touchState_need_exit_vibrated) {
                                     touchState_need_exit_vibrated = true
-                                    ToolVibrate().vibrate(this@MusicPlayerActivity)
+                                    ToolVibrate.vibrate()
                                 }
                             }else{
                                 touchState_need_exit = false
@@ -1360,7 +1359,7 @@ class MusicPlayerActivity : AppCompatActivity() {
                                     touchArea = 2 //映射到2上做音量控制
                                 }
                                 finger1x > artwork_width_pixels * 0.8 -> {
-                                    state_HeadSetInserted = SystemListener.getState_isHeadsetPlugged(this@MusicPlayerActivity)
+                                    state_HeadSetInserted = SystemListener.get_state_headset_on()
                                     touchArea = 2
                                 }
                                 else -> {

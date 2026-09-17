@@ -134,7 +134,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
             //按钮：重读媒体库
             val ButtonReLoadFromMediaStore = view.findViewById<CardView>(R.id.ButtonReLoadFromMediaStore)
             ButtonReLoadFromMediaStore.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 setFragmentResult(FragmentConnector.fragment_media_store_setting_require_mediastore_api_refresh)
                 customDismiss()
             }
@@ -157,14 +157,14 @@ class FragmentMusicStoreSetting: DialogFragment() {
             }
             setAcquiesceTabText()
             ButtonTextChangeDefaultTab.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //显示默认页签选择弹窗
                 val popupMenu = PopupMenu(requireContext(), it)
                 popupMenu.menuInflater.inflate(R.menu.activity_main_popup_default_page, popupMenu.menu)
                 popupMenu.show()
                 //默认页签选择弹窗点击事件
                 popupMenu.setOnMenuItemClickListener { item ->
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
                     when (item.itemId) {
                         R.id.page_video -> {
                             SettingsCenter.set_PREFS_AcquiesceTab(SettingsCenter.tab_mark_video)
@@ -198,14 +198,14 @@ class FragmentMusicStoreSetting: DialogFragment() {
             //通用设置提示
             val SyncSettingsCard = view.findViewById<LinearLayout>(R.id.SyncSettingsCard)
             SyncSettingsCard.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 requireContext().showCustomToast("这些设置会在音乐库和视频库之间同步",  3)
             }
             //点击顶部区域回顶
             val AppBar_Container = view.findViewById<FrameLayout>(R.id.AppBar_Container)
             AppBar_Container.setOnClickListener {
                 if (scrollArea?.canScrollVertically(-1) == true){
-                    ToolVibrate().vibrate(requireContext())
+                    ToolVibrate.vibrate()
                     //滚动区域回顶
                     scrollArea?.stopNestedScroll()
                     scrollArea?.smoothScrollTo(0, 0)
@@ -231,7 +231,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
             //排序操作按钮(面板收起时,展开面板, 面板展开时,触发刷新)
             val ButtonChangeSortOrder = view.findViewById<TextView>(R.id.ButtonChangeSort)
             ButtonChangeSortOrder.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //不同状态不同操作
                 if (state_expanded){
 
@@ -248,7 +248,7 @@ class FragmentMusicStoreSetting: DialogFragment() {
             //降序和升序
             val ButtonChangeSortOrientation = view.findViewById<TextView>(R.id.ButtonChangeSortOrientation)
             ButtonChangeSortOrientation.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //读取当前升降序配置
                 val PREFS_audio_sortOrientation = SettingsCenter.get_PREFS_audio_sortOrientation()
                 //取反并保存
@@ -269,31 +269,31 @@ class FragmentMusicStoreSetting: DialogFragment() {
             val sort_method_file_size = view.findViewById<TextView>(R.id.sort_file_size)
             val sort_method_mime_type = view.findViewById<TextView>(R.id.sort_mime_type)
             sort_method_filename.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //设置排序方法
                 SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_filename)
                 updateSortMethodText(SettingsCenter.sort_method_filename)
             }
             sort_method_duration.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //设置排序方法
                 SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_duration)
                 updateSortMethodText(SettingsCenter.sort_method_duration)
             }
             sort_method_date_added.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //设置排序方法
                 SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_date_added)
                 updateSortMethodText(SettingsCenter.sort_method_date_added)
             }
             sort_method_file_size.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //设置排序方法
                 SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_file_size)
                 updateSortMethodText(SettingsCenter.sort_method_file_size)
             }
             sort_method_mime_type.setOnClickListener {
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 //设置排序方法
                 SettingsCenter.set_PREFS_audio_sortMethod(SettingsCenter.sort_method_mime_type)
                 updateSortMethodText(SettingsCenter.sort_method_mime_type)
@@ -307,21 +307,21 @@ class FragmentMusicStoreSetting: DialogFragment() {
             val switch_EnableFileExistCheck = view.findViewById<SwitchCompat>(R.id.switch_EnableFileExistCheck)
             switch_EnableFileExistCheck.isChecked = SettingsCenter.get_PREFS_EnableFileExistCheck()
             switch_EnableFileExistCheck.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 SettingsCenter.set_PREFS_EnableFileExistCheck(isChecked)
             }
             //每次启动都读取
             val switch_QueryNewVideoOnStart = view.findViewById<SwitchCompat>(R.id.switch_QueryNewVideoOnStart)
             switch_QueryNewVideoOnStart.isChecked = SettingsCenter.get_PREFS_QueryNewMediaOnStart()
             switch_QueryNewVideoOnStart.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 SettingsCenter.set_PREFS_QueryNewMediaOnStart(isChecked)
             }
             //自动弹出播放页
             val switch_startFullPage = view.findViewById<SwitchCompat>(R.id.SC_startFullPage_whenSwitch)
             switch_startFullPage.isChecked = SettingsCenter.GET_PRF_StartFullPage()
             switch_startFullPage.setOnCheckedChangeListener { _, isChecked ->
-                ToolVibrate().vibrate(requireContext())
+                ToolVibrate.vibrate()
                 SettingsCenter.SET_PRF_StartFullPage(isChecked)
             }
 

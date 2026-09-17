@@ -181,7 +181,7 @@ class CircleButton @JvmOverloads constructor(
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
 
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
 
                 isPressed = true
                 isClick = true
@@ -210,7 +210,7 @@ class CircleButton @JvmOverloads constructor(
 
             //长按时抬起也振动一次
             if (pressDuration >= 500) {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
             }
 
             //只有手指在区域内才触发点击事件

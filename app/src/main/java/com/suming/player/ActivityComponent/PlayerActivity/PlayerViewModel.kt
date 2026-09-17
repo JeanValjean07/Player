@@ -40,9 +40,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //音量相关
     var NOTICED_VolumeIsZero: Boolean = false
 
-    //亮度相关
-    var BrightnessChanged: Boolean = false
-    var BrightnessValue: Float = 0f
+    //亮度管理单元
+    var brightManager_state_brightness_changed: Boolean = false
+    var brightManager_current_brightness: Float = 0f
 
 
     var onOrientationChanging: Boolean = false

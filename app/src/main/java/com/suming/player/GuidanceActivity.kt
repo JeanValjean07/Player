@@ -55,7 +55,7 @@ class GuidanceActivity: AppCompatActivity() {
         //按钮：反馈
         val ButtonReport = findViewById<TextView>(R.id.TextButton_Report)
         ButtonReport.setOnClickListener {
-            ToolVibrate().vibrate(this)
+            ToolVibrate.vibrate()
 
             showReportMenu(ButtonReport)
 
@@ -64,13 +64,13 @@ class GuidanceActivity: AppCompatActivity() {
         //SvgRepo
         val buttonGoSvgRepo = findViewById<FrameLayout>(R.id.buttonGoSvgRepo)
         buttonGoSvgRepo.setOnClickListener {
-            ToolVibrate().vibrate(this)
+            ToolVibrate.vibrate()
 
             AlertDialog.Builder(this@GuidanceActivity)
                 .setTitle("确定跳转吗?")
                 .setMessage("将唤醒浏览器并打开svgrepo.com")
                 .setPositiveButton("确认") { dialog, _ ->
-                    ToolVibrate().vibrate(this)
+                    ToolVibrate.vibrate()
 
                     val url = "https://www.svgrepo.com/"
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())
@@ -79,7 +79,7 @@ class GuidanceActivity: AppCompatActivity() {
                     dialog.dismiss()
                 }
                 .setNegativeButton("取消") { dialog, _ ->
-                    ToolVibrate().vibrate(this)
+                    ToolVibrate.vibrate()
 
                     dialog.dismiss()
                 }
@@ -90,7 +90,7 @@ class GuidanceActivity: AppCompatActivity() {
         //点击顶部区域
         AppBarCore.setOnClickListener {
             if (scrollArea?.canScrollVertically(-1) == true){
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
                 //滚动区域回顶
                 scrollArea?.stopNestedScroll()
                 scrollArea?.smoothScrollTo(0, 0)
@@ -286,7 +286,7 @@ class GuidanceActivity: AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.platform_coolapk -> {
-                    ToolVibrate().vibrate(this)
+                    ToolVibrate.vibrate()
 
                     reportByCoolApk()
 
@@ -294,7 +294,7 @@ class GuidanceActivity: AppCompatActivity() {
                 }
 
                 R.id.platform_bilibili -> {
-                    ToolVibrate().vibrate(this)
+                    ToolVibrate.vibrate()
 
                     reportByBilibili()
 
@@ -302,7 +302,7 @@ class GuidanceActivity: AppCompatActivity() {
                 }
 
                 R.id.platform_github_issue -> {
-                    ToolVibrate().vibrate(this)
+                    ToolVibrate.vibrate()
 
                     reportByGithubIssue()
 
@@ -319,7 +319,7 @@ class GuidanceActivity: AppCompatActivity() {
             .setTitle("确定跳转吗?")
             .setMessage("将唤醒哔哩哔哩App或浏览器")
             .setPositiveButton("确认") { dialog, _ ->
-                ToolVibrate().vibrate(this)
+                ToolVibrate.vibrate()
 
                 val url = "https://space.bilibili.com/1206378184"
                 val intent = Intent(Intent.ACTION_VIEW, url.toUri())
@@ -329,7 +329,7 @@ class GuidanceActivity: AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
-                ToolVibrate().vibrate(this)
+                ToolVibrate.vibrate()
 
                 dialog.dismiss()
             }
@@ -342,7 +342,7 @@ class GuidanceActivity: AppCompatActivity() {
             .setTitle("确定跳转吗?")
             .setMessage("将唤醒酷安App或浏览器")
             .setPositiveButton("确认") { dialog, which ->
-                ToolVibrate().vibrate(this)
+                ToolVibrate.vibrate()
 
                 val webUrl = "https://www.coolapk.com/u/3105725"
                 val intent = Intent(Intent.ACTION_VIEW, webUrl.toUri())
@@ -354,7 +354,7 @@ class GuidanceActivity: AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
-                ToolVibrate().vibrate(this)
+                ToolVibrate.vibrate()
 
                 dialog.dismiss()
             }
@@ -368,7 +368,7 @@ class GuidanceActivity: AppCompatActivity() {
             .setTitle("确定跳转吗?")
             .setMessage("将唤醒浏览器或Github客户端")
             .setPositiveButton("确认") { dialog, _ ->
-                ToolVibrate().vibrate(this)
+                ToolVibrate.vibrate()
 
                 val url = "https://github.com/JeanValjean07/Player/issues"
                 val intent = Intent(Intent.ACTION_VIEW, url.toUri())
@@ -378,7 +378,7 @@ class GuidanceActivity: AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
-                ToolVibrate().vibrate(this)
+                ToolVibrate.vibrate()
 
                 dialog.dismiss()
             }
