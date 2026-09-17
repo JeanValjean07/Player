@@ -91,7 +91,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Suppress("NewApi","/unused")
+@Suppress("/NewApi","/unused")
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
 
@@ -107,7 +107,7 @@ class MainActivity: AppCompatActivity() {
     //ctx
     private val context = this@MainActivity
     //
-    private var onPaused = false
+    private var onPaused = true
 
 
 
@@ -149,37 +149,6 @@ class MainActivity: AppCompatActivity() {
 
         //解绑播放器视图
         PlayingCard_Artwork_Video?.player = null
-
-
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        onPaused = false
-
-        /*
-        if (PlayingCard_Artwork_Video != null){
-            val ongoing = PlayerSingleton.GET_STE_currentMediaItem_Uri().first
-            if (ongoing){
-                PlayingCard_Artwork_Video?.player = PlayerSingleton.getPlayer()
-            }
-        }
-
-         */
-
-        showMiniViewLongProcess()
-
-
-        //检查正在播放的媒体是否还存在
-        isFileExist()
-
-    }
-
-    override fun onPause() {
-        super.onPause()
-
-        onPaused = true
 
 
     }
@@ -227,6 +196,23 @@ class MainActivity: AppCompatActivity() {
         }
 
          */
+    }
+
+    override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
+        consoleLog("onTopResumedActivityChanged:isTopResumedActivity:${isTopResumedActivity}")
+        if (!isTopResumedActivity) {
+            //代替原onPaused回调
+            onPaused = true
+
+        }else{
+            //代替原onResume回调
+            onPaused = false
+
+            //检查正在播放的媒体是否还存在
+            isFileExist()
+            //刷新MiniView
+            showMiniViewLongProcess()
+        }
     }
 
 
@@ -862,7 +848,7 @@ class MainActivity: AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableMediaItem.collect { _ ->
                     if (onPaused) return@collect
-                    //consoleLog("观察到 正在播放的媒体项 发生变更")
+
                     //显示MiniView
                     showMiniViewLongProcess()
                 }
@@ -873,8 +859,6 @@ class MainActivity: AppCompatActivity() {
             //观察播放状态变更
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 PlayerInfoCenter.observableIsPlaying.collect { newState ->
-                    if (onPaused) return@collect
-                    //consoleLog("观察到 播放/暂停 发生变更")
                     //刷新操作按钮
                     updateMiniViewPauseButton(newState)
                 }
@@ -883,10 +867,13 @@ class MainActivity: AppCompatActivity() {
     }
     //显示MiniView LongProcess-把任务全部执行完,禁止扔到其他函数域
     private fun showMiniViewLongProcess() {
-        //从PlayerStateMediaInfo获取所有信息
+        if (onPaused) return
+
+        //获取信息
         val (_,FileName,MediaArtist) = PlayerInfoCenter.GET_Media_MiniView_Pack()
         val mediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
         val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
+
         //决定是否能显示MiniView(只要mediaType在就当作能显示,哪怕FileName获取不到)
         if (mediaType.isEmpty()){
             miniView_clear()
@@ -1193,7 +1180,7 @@ class MainActivity: AppCompatActivity() {
             PlayingCard_Artwork_Image = null
             state_MiniViewArtwork_Image_NUM_ID = 0L
             //创建视频视图
-            PlayingCard_Artwork_Video = LayoutInflater.from(this).inflate(R.layout.piece_media3_player_view_texture_ver, null, false) as PlayerView
+            PlayingCard_Artwork_Video = LayoutInflater.from(this).inflate(R.layout.piece_media3_player_view_texture_ver_zoom, null, false) as PlayerView
             //添加视频视图
             PlayingCard_Artwork.addView(PlayingCard_Artwork_Video)
             state_MiniViewArtwork_type = mini_view_type_video
@@ -1667,23 +1654,17 @@ class MainActivity: AppCompatActivity() {
                     .putExtra(IntentRepo.FILE_PATH, file_path)
                     .putExtra(IntentRepo.SOURCE, 3)
 
-                //是否使用进入动画
-                val useSlideInAnim = SettingsCenter.GET_PRF_EnableMiniView()
-                if (useSlideInAnim){
-                    //构建可选参数
-                    val options = ActivityOptionsCompat.makeCustomAnimation(
+
+                //构建可选参数
+                val options = ActivityOptionsCompat.makeCustomAnimation(
                         this,
                         R.anim.slide_in_vertical,
                         R.anim.slide_dont_move
                     )
 
-                    //启动活动
-                    startActivity(intent, options.toBundle())
-                }else{
-                    //启动活动
-                    startActivity(intent)
+                //启动活动
+                startActivity(intent, options.toBundle())
 
-                }
             }
             //测试版本
             screening_type == SettingsCenter.screening_type_TEST -> {

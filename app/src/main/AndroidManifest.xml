@@ -89,7 +89,7 @@
 
         <!-- 视频播放页NEO  android:configChanges="orientation|screenSize|screenLayout" -->
         <activity android:name=".PlayerActivityNeo"
-            android:theme="@style/THEME_Player"
+            android:theme="@style/theme_transparent_background"
             android:label="视频播放页NEO"
             android:screenOrientation="unspecified"
             android:hardwareAccelerated="true"
@@ -106,7 +106,7 @@
 
         <!-- 音乐播放页  android:configChanges="orientation|screenSize|screenLayout"  -->
         <activity android:name=".MusicPlayerActivity"
-            android:theme="@style/THEME_Player"
+            android:theme="@style/theme_transparent_background"
             android:label="音乐播放页"
             android:screenOrientation="portrait"
             android:launchMode="singleTask"
@@ -122,7 +122,7 @@
 
         <!-- EntranceActivity -->
         <activity android:name=".EntranceActivity"
-            android:theme="@style/THEME_Player"
+            android:theme="@style/theme_general"
             android:label="播放器"
             android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|screenLayout"
@@ -159,7 +159,7 @@
 
         <!-- 测试版视频播放页 -->
         <activity android:name=".PlayerActivityPro"
-            android:theme="@style/THEME_Player"
+            android:theme="@style/theme_transparent_background"
             android:label="测试版视频播放页"
             android:screenOrientation="unspecified"
             android:hardwareAccelerated="true"

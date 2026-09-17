@@ -13,6 +13,7 @@ import com.suming.player.PlayerSingleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -159,31 +160,44 @@ object MediaDataBaseMaster {
     private var saveProgress = object : Runnable {
         @OptIn(UnstableApi::class)
         override fun run() {
-            //从播放器拿当前进度和duration
-            val currentPosition = PlayerSingleton.get_ongoing_current_position()
-            val duration = PlayerInfoCenter.GET_Media_Duration()
-            val uniqueID_URI_S_FP = PlayerInfoCenter.GET_Media_URI_S_FP()
+            coroutine_save.launch {
+                delay(5000L)
 
-            //
-            if (duration <= 0) return
-            if (currentPosition < 0) return
+                withContext(Dispatchers.Main){
+                    //从播放器拿当前进度和duration
+                    val currentPosition = PlayerSingleton.get_ongoing_current_position()
+                    val duration = PlayerInfoCenter.GET_Media_Duration()
+                    val uniqueID_URI_S_FP = PlayerInfoCenter.GET_Media_URI_S_FP()
 
-            if (currentPosition in 0..duration){
-                saveProgress(uniqueID_URI_S_FP, currentPosition, duration,context)
+                    //
+                    if (duration <= 0) return@withContext
+                    if (currentPosition < 0) return@withContext
+
+                    if (currentPosition in 0..duration){
+                        saveProgress(uniqueID_URI_S_FP, currentPosition, duration,context)
+                    }
+
+                }
+
             }
 
 
-            saveProgressHandler.postDelayed(this, 20_000)
+            saveProgressHandler.postDelayed(this, 15_000)
         }
     }
     private fun startSaveProgressHandler() {
         if (state_saveProgress_Running) return
-        saveProgressHandler.post(saveProgress)
         state_saveProgress_Running = true
+
+        saveProgressHandler.post(saveProgress)
+
     }
     private fun stopSaveProgressHandler() {
-        saveProgressHandler.removeCallbacks(saveProgress)
+        if (!state_saveProgress_Running) return
         state_saveProgress_Running = false
+
+        saveProgressHandler.removeCallbacks(saveProgress)
+
     }
 
 

@@ -60,7 +60,7 @@ import kotlin.math.abs
 @UnstableApi
 @Suppress("/unused","NewApi")
 @SuppressLint("UseGetLayoutInflater", "InflateParams","SetTextI18n")
-class PlayerFragmentMoreButton: DialogFragment(){
+class PlayerFragmentMoreButton: DialogFragment() {
     companion object {
         fun newInstance(): PlayerFragmentMoreButton = PlayerFragmentMoreButton().apply { arguments =
             bundleOf()

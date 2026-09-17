@@ -8,8 +8,20 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
-     <!-- 播放器页面主题 -->
-    <style name="THEME_Player" parent="Theme.Material3.DayNight.NoActionBar">
+
+     <!-- 播放页主题(背景透明) -->
+    <style name="theme_transparent_background" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    <!-- 常规页面主题 -->
+    <style name="theme_general" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:fitsSystemWindows">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>

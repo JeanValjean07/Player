@@ -38,6 +38,7 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -231,7 +232,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             viewModel.PREFS_TapJump = SettingsCenter.GET_PREFS_EnableTapJump()
 
             //下滑距离(dp转px)
-            viewModel.value_scrollDownExitDistance = dp2px(50f)
+            viewModel.value_scrollDownExitDistance = dp2px(100f)
 
             //视频寻帧间隔
             value_seekVideo_runnableGapMs = SettingsCenter.get_value_seekVideo_runnableGapMs()
@@ -316,25 +317,29 @@ class PlayerActivityNeo: AppCompatActivity() {
         setContentView(R.layout.activity_player_type_neo)
 
         //视图初始化
-        //s_area
-        s_area = findViewById(R.id.controller_s_area)
-        s_area_scroller = findViewById(R.id.controller_s_area_scroller)
-        s_area_seekbar = findViewById(R.id.controller_s_area_seekbar)
-        //控制器view
-        scroller = findViewById(R.id.controller_scroller_recyclerView)
-        seekbar = findViewById(R.id.controller_seekbar)
-        //其他
-        controller_bottom_bar = findViewById(R.id.controller_bottom_bar)
-        rootConstraint = findViewById(R.id.rootConstraint)
-        controllerLayer = findViewById(R.id.controllerLayer)
-        controller_top_bar = findViewById(R.id.controller_top_bar)
-        controller_timer_current = findViewById(R.id.controller_timer_current)
-        controller_timer_total = findViewById(R.id.controller_timer_total)
-        noticeCapsule = findViewById(R.id.noticeCapsule)
-        playerView = findViewById(R.id.playerView)
-        layer_error = findViewById(R.id.player_core_layer_error)
-        layer_error_text = findViewById(R.id.layer_error_text)
-        cover = findViewById(R.id.cover)
+        fun init_view(){
+            //s_area
+            s_area = findViewById(R.id.controller_s_area)
+            s_area_scroller = findViewById(R.id.controller_s_area_scroller)
+            s_area_seekbar = findViewById(R.id.controller_s_area_seekbar)
+            //控制器view
+            scroller = findViewById(R.id.controller_scroller_recyclerView)
+            seekbar = findViewById(R.id.controller_seekbar)
+            //其他
+            controller_bottom_bar = findViewById(R.id.controller_bottom_bar)
+            root = findViewById(R.id.root)
+            controllerLayer = findViewById(R.id.controllerLayer)
+            controller_top_bar = findViewById(R.id.controller_top_bar)
+            controller_timer_current = findViewById(R.id.controller_timer_current)
+            controller_timer_total = findViewById(R.id.controller_timer_total)
+            noticeCapsule = findViewById(R.id.noticeCapsule)
+            playerView = findViewById(R.id.playerView)
+            layer_error = findViewById(R.id.player_core_layer_error)
+            layer_error_text = findViewById(R.id.layer_error_text)
+            cover = findViewById(R.id.cover)
+
+        }
+        init_view()
 
 
         //是否开启强制高刷
@@ -522,7 +527,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             //正在播放的是视频,直接绑定
                             connectCurrentMedia()
                         }else{
-                            finish()
+                            custom_finish()
                         }
                     }
                 }else{
@@ -543,7 +548,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             //正在播放的是视频,直接绑定
                             connectCurrentMedia()
                         }else{
-                            finish()
+                            custom_finish()
                         }
                     }
                 }
@@ -611,13 +616,13 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
         ButtonCancel.setOnClickListener {
             dialog.dismiss()
-            finish()
+            custom_finish()
         }
         dialog.show()
         //接管返回操作
         dialog.setCanceledOnTouchOutside(true)
         dialog.setOnCancelListener {
-            if (!isUriValid){ finish() }
+            if (!isUriValid){ custom_finish() }
         }
         //自动弹出键盘
         CoroutineScope(Dispatchers.Main).launch {
@@ -641,7 +646,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         val ongoing_MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
         if (ongoing_MediaType != MediaType.Video){
             showCustomToast("当前正在播放的项不是视频,自动退出播放页", 3)
-            finish()
+            custom_finish()
             return
         }
 
@@ -793,7 +798,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                     //删除自定义封面图
                     FragmentConnector.fragment_more_button_delete_custom_cover -> deleteCustomCover()
                     //立即退出
-                    FragmentConnector.fragment_more_button_exit_right_now -> finish()
+                    FragmentConnector.fragment_more_button_exit_right_now -> custom_finish()
                     //刷新屏幕常亮状态
                     FragmentConnector.fragment_more_button_update_keep_screen_on -> updateKeepScreenOn()
                 }
@@ -1126,7 +1131,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             //
             if (mediaType == MediaType.Audio) showCustomToast("已切换到音乐",3)
             //
-            finish()
+            custom_finish()
             return
         }
 
@@ -1317,7 +1322,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
 
         //关闭活动
-        finish()
+        custom_finish()
 
         //发回主界面ActivityResultApi
         /*
@@ -1662,6 +1667,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     override fun finish() {
         super.finish()
         //consoleLog("finish")
+        /*
         //判断是否使用收起动画
         if (useSlideOutAnim){
             //使用收起动画
@@ -1672,6 +1678,16 @@ class PlayerActivityNeo: AppCompatActivity() {
             )
         }
 
+         */
+
+    }
+
+    private fun custom_finish(){
+        root.animate()
+            .translationY(2500f)
+            .setInterpolator(AccelerateInterpolator())
+            .withEndAction { finish() }
+            .duration = 200
     }
 
 
@@ -1680,9 +1696,9 @@ class PlayerActivityNeo: AppCompatActivity() {
     private fun updateKeepScreenOn() {
         val keepOn = SettingsCenter.GET_PRF_KeepScreenOn()
         if (keepOn){
-            rootConstraint.keepScreenOn = PlayerSingleton.get_engine_is_playing()
+            root.keepScreenOn = PlayerSingleton.get_engine_is_playing()
         }else{
-            rootConstraint.keepScreenOn = false
+            root.keepScreenOn = false
         }
     }
 
@@ -1738,6 +1754,8 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     //绑定播放器视图
     private fun bindPlayerView() {
+        consoleLog("bindPlayerView")
+
         playerView.player = null
         playerView.player = player
     }
@@ -2298,172 +2316,197 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var state_playView_longPress = false
     @SuppressLint("ClickableViewAccessibility")
     private fun registerGesture() {
-        //播放区域点击事件
-        //<editor-fold desc="点击事件变量">
-        var touchState_two_fingers = false
-        var ACTION_POINTER_DOWN = false
-        var originalDistance = 0f
-        var distanceGap = 0f
-        var center0x = 0f
-        var center0y = 0f
-        var center1x = 0f
-        var center1y = 0f
-        var originalScale = 1f
-        var scale = 1.0
-        var definiteScale = 1.0f
-        var center2x = 0f
-        var center2y = 0f
-        var center0pivoted = false
-        var finger1x = 0f
-        var finger1y = 0f
-        var finger2x = 0f
-        var finger2y = 0f
+        lifecycleScope.launch(Dispatchers.Main) {
+
+            delay(500)
+
+            //播放区域点击事件
+            //<editor-fold desc="点击事件变量">
+            //手指计数
+            var touchFingerCount = 0
+
+            var originalDistance = 0f
+            var distanceGap = 0f
+            var center0x = 0f
+            var center0y = 0f
+            var center1x = 0f
+            var center1y = 0f
+            var originalScale = 1f
+            var scale = 1.0
+            var definiteScale = 1.0f
+            var center2x = 0f
+            var center2y = 0f
+            var center0pivoted = false
+            var finger1x = 0f
+            var finger1y = 0f
+            var finger2x = 0f
+            var finger2y = 0f
+
+            //滑动结果标记
+            var scroll_result = 0   // 1:退出活动 2:恢复顶部
 
 
-        //点击区域
-        var touchArea = 0   //1:左区域 2:右区域 3:中心区域
-        //纵向滑动阶梯起始坐标
-        var e_y_stage = 0f
-        //执行锁(只能执行一次的触发点使用)
-        var execute_lock = false
-        //</editor-fold desc="点击事件">
-        //播放区域点击事件
-        val gestureDetectorPlayArea = GestureDetector (
-            this@PlayerActivityNeo,
-            object : GestureDetector.SimpleOnGestureListener() {
-                override fun onDoubleTap(e: MotionEvent): Boolean {
-                    //控制播放
-                    if (player?.isPlaying == true) {
-                        pausePlay()
-                        stop_S_Area_PassiveControl()
-                        notice("暂停播放", 1000)
-                        updateButtonState()
-                    } else {
-                        if (PlayerSingleton.get_state_playEnd()) {
-                            PlayerSingleton.remove_state_playEnd()
-
-                            continuePlay()
-                            notice("开始重播", 1000)
-                        } else {
-                            continuePlay()
-                            notice("继续播放", 1000)
+            //点击区域
+            var touchArea = 0   //1:左区域 2:右区域 3:中心区域
+            //纵向滑动阶梯起始坐标
+            var e_y_stage = 0f
+            //执行锁(只能执行一次的触发点使用)
+            var execute_lock = false
+            var execute_lock_addon = false
+            //</editor-fold desc="点击事件">
+            //播放区域点击事件
+            val gestureDetectorPlayArea = GestureDetector (
+                this@PlayerActivityNeo,
+                object : GestureDetector.SimpleOnGestureListener() {
+                    override fun onDoubleTap(e: MotionEvent): Boolean {
+                        //控制播放
+                        if (player?.isPlaying == true) {
+                            pausePlay()
+                            stop_S_Area_PassiveControl()
+                            notice("暂停播放", 1000)
                             updateButtonState()
-                        }
-                    }
-                    //确保播放区域在普通位置
-                    ensure_moveArea_place()
+                        } else {
+                            if (PlayerSingleton.get_state_playEnd()) {
+                                PlayerSingleton.remove_state_playEnd()
 
-                    return true
-                }
-                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                    if (ACTION_POINTER_DOWN) {
+                                continuePlay()
+                                notice("开始重播", 1000)
+                            } else {
+                                continuePlay()
+                                notice("继续播放", 1000)
+                                updateButtonState()
+                            }
+                        }
+                        //确保播放区域在普通位置
+                        ensure_moveArea_place()
+
                         return true
                     }
-                    //触发控件显示变更
-                    changeBackgroundColor()
-                    //确保播放区域在普通位置
-                    ensure_moveArea_place()
+                    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                        if (touchFingerCount == 2) {
+                            return true
+                        }
+                        //触发控件显示变更
+                        changeBackgroundColor()
+                        //确保播放区域在普通位置
+                        ensure_moveArea_place()
 
-                    return true
-                }
-                override fun onLongPress(e: MotionEvent) {
-                    if (ACTION_POINTER_DOWN) return
-                    if (player?.isPlaying == false) {
-                        return
+                        return true
                     }
-                    currentSpeed = player?.playbackParameters?.speed ?: 1.0f
-                    player?.setPlaybackSpeed(currentSpeed * 2.0f)
-                    notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
-                    setControllerInvisibleNoAnimation()
-                    state_playView_longPress = true
-                    ToolVibrate.vibrate()
-                    super.onLongPress(e)
-                }
-                override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float):Boolean {
-                    when (touchArea){
-                        //左侧区域(控制亮度)(消费距离间隔,不使用执行锁)
-                        1 -> {
-                            //计算阶梯坐标差值
-                            val gap = (e2.rawY - e_y_stage)
-                            consoleLog("gap:$gap")
-                            //执行亮度修改
-                            when {
-                                gap < -10 -> {
-                                    //刷新参照值
-                                    e_y_stage = e2.rawY
-                                    //计算目标亮度(拿缓存计算)
-                                    val target = (viewModel.brightManager_current_brightness + 0.01f).toBigDecimal().setScale(2, RoundingMode.HALF_UP).toFloat()
-                                    if (target in 0.0..1.0) {
-                                        //打包为 windowInfo 并应用给系统
-                                        val windowInfo = window.attributes
-                                        windowInfo.screenBrightness = target
-                                        window.attributes = windowInfo
-                                        //同步写回缓存
-                                        viewModel.brightManager_current_brightness = target
+                    override fun onLongPress(e: MotionEvent) {
+                        if (touchFingerCount == 2) return
+                        if (player?.isPlaying == false) {
+                            return
+                        }
+                        currentSpeed = player?.playbackParameters?.speed ?: 1.0f
+                        player?.setPlaybackSpeed(currentSpeed * 2.0f)
+                        notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
+                        setControllerInvisibleNoAnimation()
+                        state_playView_longPress = true
+                        ToolVibrate.vibrate()
+                        super.onLongPress(e)
+                    }
+                    override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float):Boolean {
 
-                                        ToolVibrate.vibrate()
-                                        notice("亮度 +1 (${(target * 100).toInt()}/100)", 1000)
-                                    }else{
-                                        ToolVibrate.vibrate()
-                                        notice("亮度已到上限", 1000)
+                        when (touchArea){
+                            //左侧区域(控制亮度)(消费距离间隔,不使用执行锁)
+                            1 -> {
+                                //计算阶梯坐标差值
+                                val gap = (e2.rawY - e_y_stage)
+                                consoleLog("gap:$gap")
+                                //执行亮度修改
+                                when {
+                                    gap < -10 -> {
+                                        //刷新参照值
+                                        e_y_stage = e2.rawY
+                                        //计算目标亮度(拿缓存计算)
+                                        val target = (viewModel.brightManager_current_brightness + 0.01f).toBigDecimal().setScale(2, RoundingMode.HALF_UP).toFloat()
+                                        if (target in 0.0..1.0) {
+                                            //打包为 windowInfo 并应用给系统
+                                            val windowInfo = window.attributes
+                                            windowInfo.screenBrightness = target
+                                            window.attributes = windowInfo
+                                            //同步写回缓存
+                                            viewModel.brightManager_current_brightness = target
+
+                                            ToolVibrate.vibrate()
+                                            notice("亮度 +1 (${(target * 100).toInt()}/100)", 1000)
+                                        }else{
+                                            ToolVibrate.vibrate()
+                                            notice("亮度已到上限", 1000)
+                                        }
                                     }
-                                }
-                                gap > 10 -> {
-                                    //刷新参照值
-                                    e_y_stage = e2.rawY
-                                    //计算目标亮度(拿缓存计算)
-                                    val target = (viewModel.brightManager_current_brightness - 0.01f).toBigDecimal().setScale(2, RoundingMode.HALF_UP).toFloat()
-                                    if (target in 0.0..1.0) {
-                                        //打包为 windowInfo 并应用给系统
-                                        val windowInfo = window.attributes
-                                        windowInfo.screenBrightness = target
-                                        window.attributes = windowInfo
-                                        //同步写回缓存
-                                        viewModel.brightManager_current_brightness = target
+                                    gap > 10 -> {
+                                        //刷新参照值
+                                        e_y_stage = e2.rawY
+                                        //计算目标亮度(拿缓存计算)
+                                        val target = (viewModel.brightManager_current_brightness - 0.01f).toBigDecimal().setScale(2, RoundingMode.HALF_UP).toFloat()
+                                        if (target in 0.0..1.0) {
+                                            //打包为 windowInfo 并应用给系统
+                                            val windowInfo = window.attributes
+                                            windowInfo.screenBrightness = target
+                                            window.attributes = windowInfo
+                                            //同步写回缓存
+                                            viewModel.brightManager_current_brightness = target
 
-                                        ToolVibrate.vibrate()
-                                        notice("亮度 -1 (${(target * 100).toInt()}/100)", 1000)
-                                    }else{
+                                            ToolVibrate.vibrate()
+                                            notice("亮度 -1 (${(target * 100).toInt()}/100)", 1000)
+                                        }else{
 
-                                        ToolVibrate.vibrate()
-                                        notice("亮度已到下限", 1000)
+                                            ToolVibrate.vibrate()
+                                            notice("亮度已到下限", 1000)
+                                        }
                                     }
                                 }
                             }
-                        }
-                        //右侧区域(控制音量)(消费距离间隔,不使用执行锁)
-                        2 -> {
-                            //计算阶梯坐标差值
-                            val gap = (e2.rawY - e_y_stage)
-                            //执行音量修改
-                            when {
-                                gap > viewModel.volumeManager_changeStep -> {
-                                    //刷新参照值
-                                    e_y_stage = e2.rawY
-                                    //计算目标音量
-                                    val volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) - 1
-                                    //决定是否应用
-                                    if (volume >= 0) {
-                                        //执行音量应用
-                                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0)
+                            //右侧区域(控制音量)(消费距离间隔,不使用执行锁)
+                            2 -> {
+                                //计算阶梯坐标差值
+                                val gap = (e2.rawY - e_y_stage)
+                                //执行音量修改
+                                when {
+                                    gap > viewModel.volumeManager_changeStep -> {
+                                        //刷新参照值
+                                        e_y_stage = e2.rawY
+                                        //计算目标音量
+                                        val volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) - 1
+                                        //决定是否应用
+                                        if (volume >= 0) {
+                                            //执行音量应用
+                                            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0)
 
-                                        ToolVibrate.vibrate()
-                                        notice("音量 -1 ($volume/$volumeManager_maxVolume)", 1000)
-                                    }else{
+                                            ToolVibrate.vibrate()
+                                            notice("音量 -1 ($volume/$volumeManager_maxVolume)", 1000)
+                                        }else{
 
-                                        ToolVibrate.vibrate()
-                                        notice("音量已到最低", 1000)
+                                            ToolVibrate.vibrate()
+                                            notice("音量已到最低", 1000)
+                                        }
                                     }
-                                }
-                                gap < -viewModel.volumeManager_changeStep -> {
-                                    //刷新参照值
-                                    e_y_stage = e2.rawY
-                                    //计算目标音量
-                                    val volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + 1
-                                    //执行音量设置
-                                    if (volume <= volumeManager_maxVolume){
-                                        if (SystemListener.get_state_headset_on()){
-                                            if (volume <= (volumeManager_maxVolume * 0.6).toInt()) {
+                                    gap < -viewModel.volumeManager_changeStep -> {
+                                        //刷新参照值
+                                        e_y_stage = e2.rawY
+                                        //计算目标音量
+                                        val volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + 1
+                                        //执行音量设置
+                                        if (volume <= volumeManager_maxVolume){
+                                            if (SystemListener.get_state_headset_on()){
+                                                if (volume <= (volumeManager_maxVolume * 0.6).toInt()) {
+                                                    //执行音量应用
+                                                    audioManager.setStreamVolume(
+                                                        AudioManager.STREAM_MUSIC,
+                                                        volume,
+                                                        0
+                                                    )
+
+                                                    ToolVibrate.vibrate()
+                                                    notice("音量 +1 ($volume/$volumeManager_maxVolume)", 1000)
+                                                }else{
+
+                                                    ToolVibrate.vibrate()
+                                                    notice("佩戴耳机时,音量最高为${(volumeManager_maxVolume * 0.6).toInt()},使用音量键继续增大", 1000)
+                                                }
+                                            }else{
                                                 //执行音量应用
                                                 audioManager.setStreamVolume(
                                                     AudioManager.STREAM_MUSIC,
@@ -2473,231 +2516,258 @@ class PlayerActivityNeo: AppCompatActivity() {
 
                                                 ToolVibrate.vibrate()
                                                 notice("音量 +1 ($volume/$volumeManager_maxVolume)", 1000)
-                                            }else{
-
-                                                ToolVibrate.vibrate()
-                                                notice("佩戴耳机时,音量最高为${(volumeManager_maxVolume * 0.6).toInt()},使用音量键继续增大", 1000)
                                             }
                                         }else{
-                                            //执行音量应用
-                                            audioManager.setStreamVolume(
-                                                AudioManager.STREAM_MUSIC,
-                                                volume,
-                                                0
-                                            )
 
                                             ToolVibrate.vibrate()
-                                            notice("音量 +1 ($volume/$volumeManager_maxVolume)", 1000)
+                                            notice("音量已到最高", 1000)
                                         }
-                                    }else{
-
-                                        ToolVibrate.vibrate()
-                                        notice("音量已到最高", 1000)
                                     }
                                 }
                             }
-                        }
-                        //中间区域(扩展退出和扩展面板弹出)(消费总距离,需要使用执行锁)
-                        3 -> {
-                            //计算阶梯坐标差值
-                            val gap = (e2.rawY - e_y_stage)
+                            //中间区域(扩展退出和扩展面板弹出)(消费总距离,需要使用执行锁)
+                            3 -> {
+                                //计算阶梯坐标差值
+                                val gap = (e2.rawY - e_y_stage)
 
-                            //判断操作
-                            when {
-                                //下滑退出
-                                gap > viewModel.value_scrollDownExitDistance -> {
-                                    //刷新参照值
-                                    e_y_stage = e2.rawY
-
-
-                                    //执行退出活动或者关闭弹出面板
-                                    ToolVibrate.vibrate()
-                                    if (checkDialogFragmentOpen()){
-                                        closeAllDialogFragments()
-                                        //打开执行锁
-                                        execute_lock = true
-                                    }else{
+                                //判断操作
+                                when {
+                                    //下滑退出
+                                    gap > 0 -> {
                                         if (execute_lock) return false
 
-                                        exitActivity()
+                                        //关闭多余任务
+                                        onScrollExitAnimStart()
+                                        //移动视图区域
+                                        root.translationY = gap
+
+                                        when {
+                                            gap < viewModel.value_scrollDownExitDistance -> {
+                                                //标记为需要恢复顶部
+                                                scroll_result = 2
+                                            }
+                                            gap >= viewModel.value_scrollDownExitDistance -> {
+                                                if (!execute_lock_addon){
+                                                    execute_lock_addon = true
+                                                    ToolVibrate.vibrate()
+                                                }
+
+                                                //标记为需要退出
+                                                scroll_result = 1
+                                            }
+                                        }
+
+
                                     }
+                                    //上滑打开扩展面板
+                                    gap < -viewModel.value_scrollDownExitDistance -> {
+                                        //判断是否需要执行
+                                        if (execute_lock) return false
 
+                                        //刷新参照值
+                                        e_y_stage = e2.rawY
+                                        //打开执行锁
+                                        execute_lock = true
 
+                                        //执行打开扩展面板
+                                        ToolVibrate.vibrate()
+                                        startMoreButtonFragment()
+
+                                    }
                                 }
-                                //上滑打开扩展面板
-                                gap < -viewModel.value_scrollDownExitDistance -> {
-                                    //判断是否需要执行
-                                    if (execute_lock) return false
 
-                                    //刷新参照值
-                                    e_y_stage = e2.rawY
-                                    //打开执行锁
-                                    execute_lock = true
+                            }
+                        }
 
-                                    //执行打开扩展面板
-                                    ToolVibrate.vibrate()
-                                    startMoreButtonFragment()
+                        return super.onScroll(e1, e2, distanceX, distanceY)
+                    }
+                })
+            val playerTouchPad = findViewById<View>(R.id.playerTouchPad)
+            playerTouchPad.setOnTouchListener { _, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        //重置所有状态
+                        fun reset(){
+                            //关闭执行锁
+                            execute_lock = false
+                            //记录手指计数
+                            touchFingerCount = 1
+                            //重置执行锁
+                            execute_lock = false
+                            execute_lock_addon = false
 
-                                }
+                        }
+                        reset()
+
+
+                        //记录1指初始坐标
+                        finger1x = event.x
+                        finger1y = event.y
+
+                        //屏蔽纵向误触区域
+                        if (finger1y < display_screen_height_pixels * 0.05 || finger1y > display_screen_height_pixels * 0.9){
+                            return@setOnTouchListener false
+                        }
+
+
+                        //记录纵向阶梯起始坐标
+                        e_y_stage = event.y
+
+
+                        //判断点击区域
+                        touchArea = when {
+                            (finger1x < display_screen_width_pixels * 0.2) -> {
+                                1
                             }
 
-                        }
-                    }
+                            (finger1x > display_screen_width_pixels * 0.8) -> {
+                                2
+                            }
 
-                    return super.onScroll(e1, e2, distanceX, distanceY)
-                }
-            })
-        val playerTouchPad = findViewById<View>(R.id.playerTouchPad)
-        playerTouchPad.setOnTouchListener { _, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    //重置所有状态
-                    fun reset(){
-                        //关闭执行锁
-                        execute_lock = false
-
-                        //清除双指状态
-                        ACTION_POINTER_DOWN = false
-                        touchState_two_fingers = false
-
-                    }
-                    reset()
-
-
-                    //记录1指初始坐标
-                    finger1x = event.x
-                    finger1y = event.y
-
-                    //屏蔽纵向误触区域
-                    if (finger1y < display_screen_height_pixels * 0.2 || finger1y > display_screen_height_pixels * 0.95){
-                        return@setOnTouchListener false
-                    }
-
-
-                    //记录纵向阶梯起始坐标
-                    e_y_stage = event.y
-
-
-                    //判断点击区域
-                    touchArea = when {
-                        (finger1x < display_screen_width_pixels * 0.2) -> {
-                            1
+                            else -> {
+                                3
+                            }
                         }
 
-                        (finger1x > display_screen_width_pixels * 0.8) -> {
-                            2
-                        }
 
-                        else -> {
-                            3
-                        }
+                        //传递
+                        gestureDetectorPlayArea.onTouchEvent(event)
                     }
+                    MotionEvent.ACTION_UP -> {
+                        //重置所有状态
+                        fun reset(){
+                            //重置手指计数
+                            touchFingerCount = 0
+                            //重置点击区域标记
+                            touchArea = 0
+                            //重置执行锁
+                            execute_lock = false
+                            execute_lock_addon = false
 
-
-                    //传递
-                    gestureDetectorPlayArea.onTouchEvent(event)
-                }
-                MotionEvent.ACTION_UP -> {
-                    //重置所有状态
-                    fun reset(){
-                        //重置部分状态
-                        touchState_two_fingers = false
-                        touchArea = 0
-
-                        center0x = playerView.pivotX
-                        center0y = playerView.pivotY
-                        playerView.pivotX = center0x
-                        playerView.pivotY = center0y
-                        originalScale = definiteScale
-                    }
-                    reset()
-
-                    //长按
-                    if (state_playView_longPress) {
-                        state_playView_longPress = false
-                        player?.setPlaybackSpeed(currentSpeed)
-
-
-                        val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
-                        NoticeCard.visibility = View.GONE
-                    }
-
-
-                    gestureDetectorPlayArea.onTouchEvent(event)
-                }
-                MotionEvent.ACTION_POINTER_DOWN -> {
-                    //记录手指2的坐标
-                    ACTION_POINTER_DOWN = true
-
-                    val ptrIndex = event.actionIndex
-
-                    finger2x = event.getX(ptrIndex)
-                    finger2y = event.getY(ptrIndex)
-                    if (event.pointerCount == 2){
-                        //notice("双指缩放可缩放播放区域", 2000)
-                        //更改标志位
-                        touchState_two_fingers = true
-                        //计算缩放中心点:只算一次
-                        if (!center0pivoted){
-                            center0x = (finger1x + finger2x) / 2
-                            center0y = (finger1y + finger2y) / 2
+                            center0x = playerView.pivotX
+                            center0y = playerView.pivotY
                             playerView.pivotX = center0x
                             playerView.pivotY = center0y
-                            center0pivoted = true
+                            originalScale = definiteScale
                         }
-                        center1x = (finger1x + finger2x) / 2
-                        center1y = (finger1y + finger2y) / 2
-                        //计算初始双指距离
-                        originalDistance = hypot(finger1x - finger2x, finger1y - finger2y)
-                    }
-                }
-                MotionEvent.ACTION_POINTER_UP -> {
-                    if (event.pointerCount == 2){
-                        touchState_two_fingers = false
-                    }
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    //双指在滑动
-                    if (touchState_two_fingers){
-                        finger1x = event.getX(0)
-                        finger1y = event.getY(0)
-                        finger2x = event.getX(1)
-                        finger2y = event.getY(1)
+                        reset()
 
-                        //平移
-                        center2x = (finger1x + finger2x) / 2
-                        center2y = (finger1y + finger2y) / 2
-                        val centerGapX = center2x - center1x
-                        val centerGapY = center2y - center1y
-                        if ( playerView.scaleX <= 1){
-                            playerView.pivotX = (center0x + centerGapX)
-                            playerView.pivotY = (center0y + centerGapY)
-                        }else{
-                            playerView.pivotX = (center0x - centerGapX)
-                            playerView.pivotY = (center0y - centerGapY)
+                        //长按
+                        if (state_playView_longPress) {
+                            state_playView_longPress = false
+                            player?.setPlaybackSpeed(currentSpeed)
+
+
+                            val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
+                            NoticeCard.visibility = View.GONE
+                        }
+                        //滚动结果
+                        when (scroll_result){
+                            1 -> {
+                                custom_finish()
+
+                            }
+                            2 -> {
+                                root.animate()
+                                    .translationY(0f)
+                                    .setInterpolator(DecelerateInterpolator())
+                                    .withEndAction { onScrollExitAnimTraceEnd() }
+                                    .duration = 300
+                            }
                         }
 
 
-                        //缩放
-                        val distance = hypot(finger1x - finger2x, finger1y - finger2y)
-                        distanceGap = (distance - originalDistance)
-                        scale = 4.0.pow(distanceGap / 400.0)
-                        definiteScale =  originalScale * scale.toFloat()
-                        playerView.scaleX = definiteScale
-                        playerView.scaleY = definiteScale
-
+                        gestureDetectorPlayArea.onTouchEvent(event)
                     }
-                    //单指在滑动
-                    else{
-                        if (!ACTION_POINTER_DOWN){
-                            gestureDetectorPlayArea.onTouchEvent(event)
+                    MotionEvent.ACTION_POINTER_DOWN -> {
+                        //记录多指计数
+                        touchFingerCount = 2
+
+                        val ptrIndex = event.actionIndex
+
+                        finger2x = event.getX(ptrIndex)
+                        finger2y = event.getY(ptrIndex)
+                        if (event.pointerCount == 2){
+                            //计算缩放中心点:只算一次
+                            if (!center0pivoted){
+                                center0x = (finger1x + finger2x) / 2
+                                center0y = (finger1y + finger2y) / 2
+                                playerView.pivotX = center0x
+                                playerView.pivotY = center0y
+                                center0pivoted = true
+                            }
+                            center1x = (finger1x + finger2x) / 2
+                            center1y = (finger1y + finger2y) / 2
+                            //计算初始双指距离
+                            originalDistance = hypot(finger1x - finger2x, finger1y - finger2y)
                         }
                     }
+                    MotionEvent.ACTION_POINTER_UP -> {
+                        if (event.pointerCount == 2){
+                            touchFingerCount = 1
+                        }
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        when (touchFingerCount){
+                            1 -> {
+                                gestureDetectorPlayArea.onTouchEvent(event)
+                            }
+                            2 -> {
+                                finger1x = event.getX(0)
+                                finger1y = event.getY(0)
+                                finger2x = event.getX(1)
+                                finger2y = event.getY(1)
+
+                                //平移
+                                center2x = (finger1x + finger2x) / 2
+                                center2y = (finger1y + finger2y) / 2
+                                val centerGapX = center2x - center1x
+                                val centerGapY = center2y - center1y
+                                if ( playerView.scaleX <= 1){
+                                    playerView.pivotX = (center0x + centerGapX)
+                                    playerView.pivotY = (center0y + centerGapY)
+                                }else{
+                                    playerView.pivotX = (center0x - centerGapX)
+                                    playerView.pivotY = (center0y - centerGapY)
+                                }
+
+
+                                //缩放
+                                val distance = hypot(finger1x - finger2x, finger1y - finger2y)
+                                distanceGap = (distance - originalDistance)
+                                scale = 4.0.pow(distanceGap / 400.0)
+                                definiteScale =  originalScale * scale.toFloat()
+                                playerView.scaleX = definiteScale
+                                playerView.scaleY = definiteScale
+
+                            }
+                        }
+
+                    }
                 }
+                onTouchEvent(event)
             }
-            onTouchEvent(event)
         }
+
     }
+    //
+    private fun onScrollExitAnimStart(){
+        //关闭所有任务
+        stopVideoTimeSync()
+        stopVideoSmartScroll()
+        stopVideoSeek()
+        stop_S_Area_PassiveControl()
+        scroller.stopScroll()
+    }
+    private fun onScrollExitAnimTraceEnd(){
+        //重开所有任务
+        startVideoTimeSync()
+        start_S_Area_PassiveControl()
+        //平滑滚动进度条
+        syncScrollTask_Core_smoothSlowly_Compute(-1L,true)
+
+    }
+
     //刷新时间显示窗口
     private fun updateTimeStampWindow() {
         //触发密度控制
@@ -2959,6 +3029,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     @Suppress("SameParameterValue")
     private fun continuePlay(need_requestFocus: Boolean = true) {
+
         //调用继续播放(确保活动内唯一调用)
         PlayerSingleton.continuePlay(need_requestFocus)
 
@@ -2969,7 +3040,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     //界面控件
     private lateinit var controller_bottom_bar : LinearLayout //底部按钮区域
-    private lateinit var rootConstraint : ConstraintLayout //根约束布局
+    private lateinit var root : CardView //根布局
     private lateinit var controllerLayer : ConstraintLayout //控件层
     private lateinit var controller_top_bar : LinearLayout //顶部按钮区域
     private lateinit var controller_timer_current : TextView //当前时间
@@ -3736,7 +3807,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private fun updateScreenParameters() {
         //获取状态栏高度
         if (DeviceInfo.statusBarHeight == 0){
-            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.rootConstraint)) { _, insets ->
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { _, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
                 DeviceInfo.statusBarHeight = systemBars.top
@@ -3827,7 +3898,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             exitButton.setOnClickListener {
                 ToolVibrate.vibrate()
 
-                finish()
+                custom_finish()
             }
             openListButton.setOnClickListener {
                 ToolVibrate.vibrate()
@@ -4160,19 +4231,27 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     private var task_timeStampSync_Runnable = object : Runnable {
         override fun run() {
+
             timeStampSync_Core()
 
-            task_timeStampSync_Handler.postDelayed(this, 1000)
+            task_timeStampSync_Handler.postDelayed(this, 500)
         }
     }
     private var timeStampSync_cache_currentPosition = 0L
     private fun startVideoTimeSync() {
+        if (task_timeStamp_update_Running) return
+        task_timeStamp_update_Running = true
+
         task_timeStampSync_Handler.post(task_timeStampSync_Runnable)
     }
     private fun stopVideoTimeSync() {
+        if (!task_timeStamp_update_Running) return
+        task_timeStamp_update_Running = false
+
         task_timeStampSync_Handler.removeCallbacks(task_timeStampSync_Runnable)
     }
     private var value_timeStamp_updateGapMs = 0L //时间戳刷新间隔
+    private var task_timeStamp_update_Running = false
     //Runnable-3:视频滚动寻帧-倍速假寻帧方案
     private val task_smartScrollLoop_Handler = Handler(Looper.getMainLooper())
     private var task_smartScrollLoop_Runnable = object : Runnable {
