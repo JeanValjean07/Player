@@ -41,6 +41,7 @@ import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.ErrorRecovery
+import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.MediaType
@@ -314,7 +315,7 @@ object PlayerSingleton {
         //首次Ready
         singleItemState_firstReady_reached = false
         //参数是否已经应用
-        singleItemState_singleParamsApplied = false
+        singleItemState_singleParamsApplied = true
         //自动播放是否已执行
         singleItemState_autoPlayExecuted = false
 
@@ -476,11 +477,16 @@ object PlayerSingleton {
         //先判断是否是正在播放的媒体(约定交给外层判断)
         //Moved
 
-        //保存上个媒体的需要保存的东西
-        //TODO
+        //保存上个媒体的需要保存的东西(次数信息包还未发生替换)
+        withContext(Dispatchers.Main){
+            val old_media_pack = old_media_pack(
+                old_media_id = PlayerInfoCenter.GET_Media_URI_S_FP() ,
+                old_media_progress = _player?.currentPosition ?: -1L,
+                old_media_duration = _player?.duration ?: -1L
+            )
+            saveLastMediaInfo(old_media_pack)
+        }
 
-        //移除上个媒体(感觉不应该在此流程里移除,副作用太多)
-        //Cancelled
 
         //解码新媒体信息(包含检查是否需要解码:对比当前数据包的URI键是否和新URI一致,无需解码时直接拿到数据包)
         var MediaItemForPlay = MediaItemForPlay()
@@ -523,7 +529,7 @@ object PlayerSingleton {
             return ActivityResultConnector.OBRTV_Engine_TypeNotSupport
         }
 
-        //暂停播放
+        //暂停播放并移除上一个媒体(仅在所有判断通过,决定执行设置时才执行)(若不移除可能在新媒体开始瞬间听到残留旧内容)
         withContext(Dispatchers.Main) {
             pausePlay()
             clearMediaItem(real_clear = false)
@@ -588,7 +594,8 @@ object PlayerSingleton {
         writeToRecord(context)
 
         //读取单个媒体播放设置(由MediaDataBaseMaster读取并传回)
-
+        val unique_ID = PlayerInfoCenter.GET_Media_URI_S_FP()
+        MediaDataBaseMaster.fetchMediaItemPack(unique_ID,context)
 
         //恢复倍速
         setPlaySpeed(1f)
@@ -608,26 +615,23 @@ object PlayerSingleton {
     }
 
     //保存上个媒体的需保存内容
-    private fun saveLastMediaInfo(oldInfoPack: MediaItemForPlay){
-        /*
-        //获取当前媒体ID数据
-        val DataBaseID = oldInfoPack.MediaInfo_DataBaseID ?: ""
-        val mediaDuration = oldInfoPack.MediaInfo_Duration
-        val currentPosition = _player?.currentPosition ?: 0L
+    data class old_media_pack(
+        val old_media_id: String,
+        val old_media_progress: Long,
+        val old_media_duration: Long
+    )
+    private fun saveLastMediaInfo(old_media_pack: old_media_pack){
+        //判断有效性
+        if (old_media_pack.old_media_duration <= 0) return
+        if (old_media_pack.old_media_progress <= 0) return
 
-        //保存播放进度
-        if(currentPosition in 0..mediaDuration){
-            //使用MediaDataBaseMaster承担保存任务
-            MediaDataBaseMaster.saveProgress(
-                itemID = DataBaseID,
-                currentPosition = currentPosition,
-                duration = mediaDuration,
+        //使用MediaDataBaseMaster承担保存任务
+        MediaDataBaseMaster.saveProgress(
+                uniqueID_URI_S_FP = old_media_pack.old_media_id,
+                currentPosition_o = old_media_pack.old_media_progress,
+                duration = old_media_pack.old_media_duration,
                 context = context
             )
-        }
-
-         */
-
 
     }
 
@@ -871,16 +875,21 @@ object PlayerSingleton {
 
     //播放状态
     private var singleItemState_firstReady_reached = false            //视频是否首次Ready
-    private var singleItemState_singleParamsApplied = false             //单个媒体参数是否已经应用
+    private var singleItemState_singleParamsApplied = true           //单个媒体参数是否已经应用(仅在需要恢复时才手动置为false)
     var singleItemState_autoPlayExecuted = true             //自动播放是否已执行(仅在playWhenReady为false时开启此项)
     //播放状态-已准备好
     private fun playState_Ready(){
+        //确保写入状态
         singleItemState_firstReady_reached = true
+
         //本次是否需要应用独立的项参数
-        if (mark_needApplyPara){ ApplyParameters()}
+        if (!singleItemState_singleParamsApplied) {
+            singleItemState_singleParamsApplied = true
+            ApplyParameters()
+        }
+
 
     }
-    private var mark_needApplyPara = false
     //播放状态-当前媒体结束
     private fun playState_End(){
         //若开启了本次播放完成后关闭功能
@@ -947,8 +956,9 @@ object PlayerSingleton {
     private fun ApplyParameters(){
         //视频已经Ready,立即应用参数
         if (singleItemState_firstReady_reached){
+            //consoleLog("ApplyParameters()  立即应用")
             //执行后关闭标记
-            mark_needApplyPara = false
+            singleItemState_singleParamsApplied = true
             //先解包
             val para_saveProgress = itemParaPack?.PREFS_SaveProgress ?: false
             val state_lastPosition = itemParaPack?.State_LastPosition ?: 0L
@@ -960,7 +970,8 @@ object PlayerSingleton {
             }
 
         }else{
-            mark_needApplyPara = true
+            //consoleLog("ApplyParameters()  等待后应用")
+            singleItemState_singleParamsApplied = false
         }
     }
     private fun ApplyParametersCore(lastPosition: Long){
@@ -969,9 +980,14 @@ object PlayerSingleton {
     private var itemParaPack: MediaItemDataClass? = null
     //接收MediaDataBaseMaster发回的完整参数包
     fun receiveParameters(itemPara: MediaItemDataClass){
+        //缓存数据包
         itemParaPack = itemPara
+        //收到
+        singleItemState_singleParamsApplied = false
 
-        ApplyParameters()
+        //consoleLog("receiveParameters: save?:${itemPara.PREFS_SaveProgress} last:${itemPara.State_LastPosition}")
+
+        if (itemPara.PREFS_SaveProgress) ApplyParameters()
     }
 
 

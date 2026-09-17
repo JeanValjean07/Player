@@ -191,7 +191,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             //播放区域移动动画
             playerViewModel.PRF_Cache_EnablePlayAreaMove = SettingsCenter.GET_PREFS_EnablePlayAreaMoveAnim()
-            //播放区域移动动画距离计算(或许可以更持久化储存)
+            //播放区域移动动画距离计算
             if (playerViewModel.PRF_Cache_EnablePlayAreaMove){
                 if (playerViewModel.PRF_Cache_EnablePlayAreaMove_Distance == 0f){
                     val displayMetrics = context.resources.displayMetrics
@@ -230,7 +230,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             playerViewModel.PREFS_LinkScroll = SettingsCenter.GET_PREFS_EnableLinkScroll()
             playerViewModel.PREFS_TapJump = SettingsCenter.GET_PREFS_EnableTapJump()
 
-            //下滑距离(50dp转px)
+            //下滑距离(dp转px)
             playerViewModel.value_scrollDownExitDistance = dp2px(50f)
 
             //视频寻帧间隔
@@ -378,6 +378,7 @@ class PlayerActivityNeo: AppCompatActivity() {
 
 
     //注册
+    @SuppressLint("ClickableViewAccessibility")
     private fun register() {
         //注册控制按钮
         lifecycleScope.launch(Dispatchers.Main) {
@@ -422,6 +423,8 @@ class PlayerActivityNeo: AppCompatActivity() {
                         playerViewModel.playEnd = false
                         continuePlay()
                         notice("开始重播", 2000)
+                        //平滑滚动到进度条起始位置
+                        syncScrollTask_Core_smoothSlowly_Compute(0, true)
                         updateButtonState()
                     } else {
                         continuePlay()
@@ -1809,7 +1812,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         originalVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-        volumeChangeGap = 750/maxVolume
+        volumeChangeGap = 750 / maxVolume
         if (originalVolume == 0 && !playerViewModel.NOTICED_VolumeIsZero) {
             playerViewModel.NOTICED_VolumeIsZero = true
             notice("当前未开启声音", 1000)
@@ -2272,8 +2275,8 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     //注册播放区域手势
-    private var singleTap = false
-    private var longPress = false
+    private var state_playView_singleTap = false
+    private var state_playView_longPress = false
     @SuppressLint("ClickableViewAccessibility")
     private fun registerGesture() {
         //播放区域点击事件
@@ -2302,10 +2305,12 @@ class PlayerActivityNeo: AppCompatActivity() {
         var touchState_need_exit_vibrated = false
         var touchState_scroll_vibrated = false
         var touchCenterDistance = 0f
-        var touchLeft = false
-        var touchRight = false
-        var touchCenter = false
+        //滑动距离
         var scrollDistance = 0
+        //点击区域
+        var touchArea = 0   //1:左区域 2:右区域 3:中心区域
+        //纵向滑动阶梯起始坐标
+        var e_y_stage = 0f
         //</editor-fold desc="点击事件">
         //播放区域点击事件
         val gestureDetectorPlayArea = GestureDetector(
@@ -2354,157 +2359,147 @@ class PlayerActivityNeo: AppCompatActivity() {
                     player?.setPlaybackSpeed(currentSpeed * 2.0f)
                     notice("倍速播放中(${currentSpeed * 2.0f}x)", 114514)
                     setControllerInvisibleNoAnimation()
-                    longPress = true
+                    state_playView_longPress = true
                     ToolVibrate().vibrate(this@PlayerActivityNeo)
                     super.onLongPress(e)
                 }
                 override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float):Boolean {
-                    if (touchLeft) {
-                        //点击区域功能提示:仅一次
-                        if (!touchState_left_noticed) {
-                            //notice("继续上下滑动可调整亮度", 1000)
-                            touchState_left_noticed = true
-                        }
-                        //累积滑动距离
-                        scrollDistance += distanceY.toInt()
-                        val windowInfo = window.attributes
-                        //开始亮度修改
-                        playerViewModel.BrightnessChanged = true
-                        var newBrightness: Float
-                        //上滑
-                        if (scrollDistance > 50) {
-                            newBrightness = (playerViewModel.BrightnessValue + 0.01f).toBigDecimal()
-                                .setScale(2, RoundingMode.HALF_UP).toFloat()
-                            if (newBrightness in 0.0..1.0) {
-                                windowInfo.screenBrightness = newBrightness
-                                window.attributes = windowInfo
-                                playerViewModel.BrightnessValue = newBrightness
-                                notice("亮度 +1 (${(newBrightness * 100).toInt()}/100)", 1000)
-                            } else {
-                                notice("亮度已到上限", 1000)
-                                if (!touchState_scroll_vibrated) {
-                                    touchState_scroll_vibrated = true
-                                    ToolVibrate().vibrate(this@PlayerActivityNeo)
+                    when (touchArea){
+                        1 -> {
+                            //累积滑动距离
+                            scrollDistance += distanceY.toInt()
+                            val windowInfo = window.attributes
+                            //开始亮度修改
+                            playerViewModel.BrightnessChanged = true
+                            var newBrightness: Float
+                            //上滑
+                            if (scrollDistance > 50) {
+                                newBrightness = (playerViewModel.BrightnessValue + 0.01f).toBigDecimal()
+                                    .setScale(2, RoundingMode.HALF_UP).toFloat()
+                                if (newBrightness in 0.0..1.0) {
+                                    windowInfo.screenBrightness = newBrightness
+                                    window.attributes = windowInfo
+                                    playerViewModel.BrightnessValue = newBrightness
+                                    notice("亮度 +1 (${(newBrightness * 100).toInt()}/100)", 1000)
+                                } else {
+                                    notice("亮度已到上限", 1000)
+                                    if (!touchState_scroll_vibrated) {
+                                        touchState_scroll_vibrated = true
+                                        ToolVibrate().vibrate(this@PlayerActivityNeo)
+                                    }
                                 }
                             }
-                        }
-                        //下滑
-                        else if (scrollDistance < -50) {
-                            newBrightness = (playerViewModel.BrightnessValue - 0.01f).toBigDecimal()
-                                .setScale(2, RoundingMode.HALF_UP).toFloat()
-                            if (newBrightness in 0.0..1.0) {
-                                windowInfo.screenBrightness = newBrightness
-                                window.attributes = windowInfo
-                                playerViewModel.BrightnessValue = newBrightness
-                                notice("亮度 -1 (${(newBrightness * 100).toInt()}/100)", 1000)
-                            } else {
-                                if (!touchState_scroll_vibrated) {
-                                    touchState_scroll_vibrated = true
-                                    ToolVibrate().vibrate(this@PlayerActivityNeo)
+                            //下滑
+                            else if (scrollDistance < -50) {
+                                newBrightness = (playerViewModel.BrightnessValue - 0.01f).toBigDecimal()
+                                    .setScale(2, RoundingMode.HALF_UP).toFloat()
+                                if (newBrightness in 0.0..1.0) {
+                                    windowInfo.screenBrightness = newBrightness
+                                    window.attributes = windowInfo
+                                    playerViewModel.BrightnessValue = newBrightness
+                                    notice("亮度 -1 (${(newBrightness * 100).toInt()}/100)", 1000)
+                                } else {
+                                    if (!touchState_scroll_vibrated) {
+                                        touchState_scroll_vibrated = true
+                                        ToolVibrate().vibrate(this@PlayerActivityNeo)
+                                    }
+                                    notice("亮度已到下限", 1000)
                                 }
-                                notice("亮度已到下限", 1000)
+                            }
+                            //数值越界重置
+                            if (scrollDistance > 50 || scrollDistance < -50) {
+                                scrollDistance = 0
                             }
                         }
-                        //数值越界重置
-                        if (scrollDistance > 50 || scrollDistance < -50) {
-                            scrollDistance = 0
-                        }
-                    }
-                    if (touchRight) {
-                        //点击区域功能提示:仅一次
-                        if (!touchState_right_noticed) {
-                            //notice("继续上下滑动可调整音量", 1000)
-                            touchState_right_noticed = true
-                        }
-                        //累积滑动距离
-                        scrollDistance += distanceY.toInt()
-                        //快速下滑紧急静音
-                        if (scrollDistance < -150) {
-                            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
-                            notice("快速静音", 2000)
-                        }
-                        //普通音量修改
-                        if (scrollDistance > volumeChangeGap) {
-                            var currentVolume =
-                                audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                            currentVolume += 1
-                            if (currentVolume <= maxVolume) {
-                                if (state_HeadSetInserted) {
-                                    if (currentVolume <= (maxVolume * 0.6).toInt()) {
+                        2 -> {
+                            //计算阶梯坐标差值
+                            val gap = (e2.rawY - e_y_stage)
+                            //普通音量修改
+                            when {
+                                gap > 50 -> {
+                                    //刷新参照值
+                                    e_y_stage = e2.rawY
+                                    //计算目标音量
+                                    val volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) - 1
+                                    //决定是否应用
+                                    if (volume >= 0) {
                                         audioManager.setStreamVolume(
                                             AudioManager.STREAM_MUSIC,
-                                            currentVolume,
+                                            volume,
                                             0
                                         )
-                                        notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
+                                        notice("音量 -1 ($volume/$maxVolume)", 1000)
                                     } else {
                                         if (!touchState_scroll_vibrated) {
                                             touchState_scroll_vibrated = true
                                             ToolVibrate().vibrate(this@PlayerActivityNeo)
                                         }
-                                        notice(
-                                            "佩戴耳机时,音量不能超过${(maxVolume * 0.6).toInt()},除非使用音量键调整",
-                                            1000
-                                        )
+                                        notice("音量已到最低", 1000)
                                     }
-                                } else {
-                                    audioManager.setStreamVolume(
-                                        AudioManager.STREAM_MUSIC,
-                                        currentVolume,
-                                        0
-                                    )
-                                    notice("音量 +1 ($currentVolume/$maxVolume)", 1000)
                                 }
-                            } else {
-                                if (!touchState_scroll_vibrated) {
-                                    touchState_scroll_vibrated = true
+                                gap < -50 -> {
+                                    //刷新参照值
+                                    e_y_stage = e2.rawY
+                                    //计算目标音量
+                                    val volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + 1
+                                    if (volume <= maxVolume) {
+                                        if (state_HeadSetInserted) {
+                                            if (volume <= (maxVolume * 0.6).toInt()) {
+                                                audioManager.setStreamVolume(
+                                                    AudioManager.STREAM_MUSIC,
+                                                    volume,
+                                                    0
+                                                )
+                                                notice("音量 +1 ($volume/$maxVolume)", 1000)
+                                            } else {
+                                                if (!touchState_scroll_vibrated) {
+                                                    touchState_scroll_vibrated = true
+                                                    ToolVibrate().vibrate(this@PlayerActivityNeo)
+                                                }
+                                                notice(
+                                                    "佩戴耳机时,音量最高为${(maxVolume * 0.6).toInt()},使用音量键继续增大",
+                                                    1000
+                                                )
+                                            }
+                                        } else {
+                                            audioManager.setStreamVolume(
+                                                AudioManager.STREAM_MUSIC,
+                                                volume,
+                                                0
+                                            )
+                                            notice("音量 +1 ($volume/$maxVolume)", 1000)
+                                        }
+                                    } else {
+                                        if (!touchState_scroll_vibrated) {
+                                            touchState_scroll_vibrated = true
+                                            ToolVibrate().vibrate(this@PlayerActivityNeo)
+                                        }
+                                        notice("音量已到最高", 1000)
+                                    }
+                                }
+                            }
+                        }
+                        3 -> {
+                            touchCenterDistance += distanceY
+                            if (touchCenterDistance < -playerViewModel.value_scrollDownExitDistance) {
+                                touchState_need_exit = true
+                                //振动:仅一次
+                                if (!touchState_need_exit_vibrated) {
+                                    touchState_need_exit_vibrated = true
                                     ToolVibrate().vibrate(this@PlayerActivityNeo)
                                 }
-                                notice("音量已到最高", 1000)
-                            }
-                        } else if (scrollDistance < -volumeChangeGap) {
-                            var currentVolume =
-                                audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                            currentVolume -= 1
-                            if (currentVolume >= 0) {
-                                audioManager.setStreamVolume(
-                                    AudioManager.STREAM_MUSIC,
-                                    currentVolume,
-                                    0
-                                )
-                                notice("音量 -1 ($currentVolume/$maxVolume)", 1000)
                             } else {
-                                if (!touchState_scroll_vibrated) {
-                                    touchState_scroll_vibrated = true
-                                    ToolVibrate().vibrate(this@PlayerActivityNeo)
-                                }
-                                notice("音量已到最低", 1000)
+                                touchState_need_exit = false
                             }
                         }
-                        //数值越界置位
-                        if (scrollDistance > 50 || scrollDistance < -50) {
-                            scrollDistance = 0
-                        }
                     }
-                    if (touchCenter) {
-                        touchCenterDistance += distanceY
-                        if (touchCenterDistance < -playerViewModel.value_scrollDownExitDistance) {
-                            touchState_need_exit = true
-                            //振动:仅一次
-                            if (!touchState_need_exit_vibrated) {
-                                touchState_need_exit_vibrated = true
-                                ToolVibrate().vibrate(this@PlayerActivityNeo)
-                            }
-                        } else {
-                            touchState_need_exit = false
-                        }
-                    }
+
                     return super.onScroll(e1, e2, distanceX, distanceY)
                 }
             })
         val playerTouchPad = findViewById<View>(R.id.playerTouchPad)
         playerTouchPad.setOnTouchListener { _, event ->
-            when (event.actionMasked){
+            when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     //清除双指状态
                     ACTION_POINTER_DOWN = false
@@ -2525,18 +2520,25 @@ class PlayerActivityNeo: AppCompatActivity() {
                         return@setOnTouchListener false
                     }
 
+
+                    //记录纵向阶梯起始坐标
+                    e_y_stage = event.y
+
+
                     //判断点击区域
-                    if (finger1x < display_screen_width_pixels * 0.2) {
-                        touchLeft = true
+                    when {
+                        (finger1x < display_screen_width_pixels * 0.2) -> {
+                            touchArea = 1
+                        }
+                        (finger1x > display_screen_width_pixels * 0.8) -> {
+                            touchArea = 2
+                            state_HeadSetInserted = SystemListener.getState_isHeadsetPlugged(context)
+                        }
+                        else -> {
+                            touchArea = 3
+                        }
                     }
-                    else if(finger1x > display_screen_width_pixels * 0.8){
-                        state_HeadSetInserted = SystemListener.getState_isHeadsetPlugged(this@PlayerActivityNeo)
-                        touchRight = true
-                    }
-                    else{
-                        touchCenter = true
-                        touchCenterDistance = 0f
-                    }
+
 
                     //传递
                     gestureDetectorPlayArea.onTouchEvent(event)
@@ -2544,9 +2546,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                 MotionEvent.ACTION_UP -> {
                     //重置部分状态
                     touchState_two_fingers = false
-                    touchLeft = false
-                    touchRight = false
-                    touchCenter = false
+                    touchArea = 0
                     //重置部分数值
                     scrollDistance = 0
                     center0x = playerView.pivotX
@@ -2555,8 +2555,8 @@ class PlayerActivityNeo: AppCompatActivity() {
                     playerView.pivotY = center0y
                     originalScale = definiteScale
                     //事件处理:长按
-                    if (longPress) {
-                        longPress = false
+                    if (state_playView_longPress) {
+                        state_playView_longPress = false
                         player?.setPlaybackSpeed(currentSpeed)
 
 
@@ -2699,25 +2699,30 @@ class PlayerActivityNeo: AppCompatActivity() {
     //跑完一个完整滚动事件
     private fun onScrollOnceComplete() {
         //consoleLog("一个滚动事件完整跑完 ${System.currentTimeMillis()}", 1000)
-        //清除playEnd状态
-        playerViewModel.playEnd = false
-        PlayerSingleton.cancelState_PlayEnd()
+
 
         //清理状态
         clearScrollerState()
 
 
-        //恢复播放状态
+        //判断是否继续播放或保持暂停
         if (playState_scroller_wasPlaying) continuePlay()
 
 
-        //重置为寻找关键帧
-        setSeekParameter_useSync(1)
+        //恢复音量
+        if (PlayerSingleton.get_engine_volume() == 0f) PlayerSingleton.rec_engine_volume()
+        if (originalVolume != 0) {
+            setSeekParameter_useSync(1)
+            //清除playEnd状态
+            playerViewModel.playEnd = false
+            PlayerSingleton.cancelState_PlayEnd()
+
+        }
 
     }
 
     //seekParameters管理
-    private var seekParameter_useSync = -1 //0 = 使用精确帧 ,1 = 使用同步帧
+    private var seekParameter_useSync = -1 // 0 = 使用精确帧 , 1 = 使用同步帧
     private fun setSeekParameter_useSync(target: Int,force:Boolean=false) {
         if (force){
             when (target){
@@ -2803,16 +2808,9 @@ class PlayerActivityNeo: AppCompatActivity() {
         //检验来源
         when(Mark_playerReadyFrom){
             Mark_playerReadyFrom_MidSectionSeek -> {
-                //consoleLog("Mark_playerReadyFrom_NormalSeek")
-
-                //记录处理次数
-                //processed_seek_count++
-                //consoleLog("processed_seek_count : $processed_seek_count")
 
                 //修改状态
-                consoleLog("555555555555")
                 isSeekReady = true
-
             }
             Mark_playerReadyFrom_TailSeek -> {
                 //一个滚动事件完整跑完
@@ -2822,9 +2820,9 @@ class PlayerActivityNeo: AppCompatActivity() {
                 isSeekReady = true
             }
             Mark_playerReadyFrom_SingleTapSeek -> {
-                //consoleLog("Mark_playerReadyFrom_SingleTap")
-
+                //
                 syncScrollTask_Core_Compute()
+
                 //恢复播放状态
                 if (playState_singleTap_wasPlaying) continuePlay()
 
@@ -3114,7 +3112,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                 object : GestureDetector.SimpleOnGestureListener() {
                     @SuppressLint("SetTextI18n")
                     override fun onSingleTapUp(e: MotionEvent): Boolean {
-                        singleTap = true
+                        state_playView_singleTap = true
                         //进入条件
                         if (!playerViewModel.PREFS_TapJump) {
                             if (playerViewModel.PREFS_LinkScroll) {
@@ -3924,8 +3922,6 @@ class PlayerActivityNeo: AppCompatActivity() {
         window.attributes.preferredRefreshRate = maxRefreshRate
     }
     //seekTo 统一入口
-    private var count = 0
-
     private var isSeekReady = true
     private fun seekTo_Core(pos: Long, mark: String) {
         if (isSeekReady){
@@ -3935,8 +3931,6 @@ class PlayerActivityNeo: AppCompatActivity() {
             pausePlay()
 
             //发起Seek
-            consoleLog("seekTo_Core $count")
-            count++
             Mark_playerReadyFrom = mark
             player?.seekTo(pos)
         }

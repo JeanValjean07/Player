@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
+import com.suming.player.FuncionalPack.MediaDataBaseMaster
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.FuncionalPack.SystemListener
 import com.suming.player.PlayerImplements.EngineSettings
@@ -24,6 +25,8 @@ class Application : Application() {
         SystemListener.setContext(this)
         //4.设置中心
         SettingsCenter.setContext(this)
+        //
+        MediaDataBaseMaster.setContext(this)
 
         //测试中的项
         //1.可切换引擎系统设置管理中心
