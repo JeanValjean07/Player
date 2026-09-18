@@ -225,6 +225,8 @@ class PlayerActivityNeo: AppCompatActivity() {
             }
             //竖屏时也开启自动隐藏控件
             viewModel.PRF_Cache_EnableAutoHideController_whenPortrait = SettingsCenter.GET_PRF_EnableAutoHideController_whenPortrait()
+            //是否禁用播放区域上下滑动手势
+            viewModel.PRF_Cache_DisableViewFollowing = SettingsCenter.GET_PREFS_Video_DisableViewFollowing()
 
             //读取进度条配置(已不再支持为每个视频单独配置,但暂未从数据库移除数据)
             viewModel.PREFS_AlwaysSeek = SettingsCenter.GET_PREFS_EnableAlwaysSeek()
@@ -1937,7 +1939,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             playerView.animate()
                 .translationY(0f)
                 .setInterpolator(DecelerateInterpolator(3f))
-                .setDuration(700)
+                .setDuration(500)
                 .start()
 
         }
@@ -1962,7 +1964,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             playerView.animate()
                 .translationY(-(moveDistance))
                 .setInterpolator(interpolator)
-                .setDuration(300)
+                .setDuration(500)
                 .start()
 
         }
@@ -2362,6 +2364,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             var execute_lock = false
             var execute_lock_addon = false
             var execute_lock_addon_filter = false
+            var execute_lock_addon_scroll_end_trigger = false
             //</editor-fold desc="点击事件">
             //播放区域点击事件
             val gestureDetectorPlayArea = GestureDetector (
@@ -2545,18 +2548,9 @@ class PlayerActivityNeo: AppCompatActivity() {
                                     //下滑退出
                                     gap > 0 -> {
                                         if (execute_lock) return false
-                                        if (!execute_lock_addon_filter) {
-                                            execute_lock_addon_filter = true
-                                            //刷新参照值
-                                            e_y_stage = e2.rawY
-                                            return false
-                                        }
 
                                         //关闭多余任务
                                         onScrollExitAnimStart()
-
-                                        //移动视图区域
-                                        root_secondary.translationY = gap
 
 
                                         when {
@@ -2572,6 +2566,8 @@ class PlayerActivityNeo: AppCompatActivity() {
 
                                                 //标记为需要退出
                                                 scroll_result = 1
+
+                                                execute_lock_addon_scroll_end_trigger = true
 
                                                 root_secondary.animate()
                                                     .translationY(2500f)
@@ -2590,15 +2586,6 @@ class PlayerActivityNeo: AppCompatActivity() {
                                     gap < -0 -> {
                                         //判断是否需要执行
                                         if (execute_lock) return false
-                                        if (!execute_lock_addon_filter) {
-                                            execute_lock_addon_filter = true
-                                            //刷新参照值
-                                            e_y_stage = e2.rawY
-                                            return false
-                                        }
-
-                                        //移动视图区域
-                                        playerView.translationY = gap
 
 
                                         when {
@@ -2609,6 +2596,8 @@ class PlayerActivityNeo: AppCompatActivity() {
                                             gap <= -viewModel.value_scrollDownExitDistance -> {
                                                 //打开执行锁
                                                 execute_lock = true
+                                                execute_lock_addon_scroll_end_trigger = true
+
 
                                                 //标记为不需要恢复播放区域位置
                                                 scroll_result = if (isLandscape) {
@@ -2655,6 +2644,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             execute_lock = false
                             execute_lock_addon = false
                             execute_lock_addon_filter = false
+                            execute_lock_addon_scroll_end_trigger = false
 
                         }
                         reset()
@@ -2704,6 +2694,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             execute_lock = false
                             execute_lock_addon = false
                             execute_lock_addon_filter = false
+                            execute_lock_addon_scroll_end_trigger = false
 
                             center0x = playerView.pivotX
                             center0y = playerView.pivotY
@@ -2722,6 +2713,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             val NoticeCard = findViewById<CardView>(R.id.noticeCapsule)
                             NoticeCard.visibility = View.GONE
                         }
+
                         //滚动结果
                         when (scroll_result){
                             1 -> {
@@ -2733,7 +2725,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                                     .translationY(0f)
                                     .setInterpolator(DecelerateInterpolator())
                                     .withEndAction { onScrollExitAnimTraceEnd() }
-                                    .duration = 300
+                                    .duration = 150
                             }
                             3 -> {
                                 playerView.animate()
@@ -2775,8 +2767,40 @@ class PlayerActivityNeo: AppCompatActivity() {
                         }
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        when (touchFingerCount){
+                        when (touchFingerCount) {
                             1 -> {
+                                //处理上下拖动
+                                if (!execute_lock_addon_scroll_end_trigger && touchArea == 3){
+                                    //计算移动量
+                                    val moveY = event.rawY - finger1y
+                                    consoleLog("moveY: $moveY")
+                                    if (moveY.absoluteValue >= 10){
+                                        when {
+                                            //下滑
+                                            moveY > 0 -> {
+                                                //移动视图区域
+                                                if (!viewModel.PRF_Cache_DisableViewFollowing) {
+                                                    root_secondary.translationY = moveY - 10
+                                                }
+
+                                            }
+                                            //上滑
+                                            moveY < 0 -> {
+                                                //移动视图区域
+                                                if (!viewModel.PRF_Cache_DisableViewFollowing) {
+                                                    playerView.translationY = moveY + 10
+                                                }
+
+
+                                            }
+                                        }
+                                    }
+
+
+                                }
+
+
+                                //gestureDetector精度似乎不够
                                 gestureDetectorPlayArea.onTouchEvent(event)
                             }
                             2 -> {

@@ -142,7 +142,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     //Main Thread Functions
     @SuppressLint("ClickableViewAccessibility")
-    private fun register(view: View){
+    private fun register(view: View) {
         lifecycleScope.launch(Dispatchers.Main) {
             //循环模式选单
             val ButtonCardLoopMode = view.findViewById<CardView>(R.id.ButtonCardLoopMode)
@@ -228,7 +228,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                                 if (deltaY < 0){
                                     return@setOnTouchListener false
                                 }
-                                if (deltaY >= 400f){
+                                if (deltaY >= 300f){
                                     if (!deltaY_ReachPadding){
                                         deltaY_ReachPadding = true
                                         ToolVibrate.vibrate()
@@ -238,7 +238,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                                 return@setOnTouchListener true
                             }
                             MotionEvent.ACTION_UP -> {
-                                if (deltaY >= 400f){
+                                if (deltaY >= 300f){
                                     dismiss()
                                 }else{
                                     RootCard.animate()
@@ -844,11 +844,11 @@ class PlayerFragmentMoreButton: DialogFragment() {
     }
 
     //发布事件回Activity  Fragment -> Activity  fragment_request_key_more_button_reverse
-    private fun returnFragment(event: String){
+    private fun returnFragment(event: String) {
         val result = bundleOf(FragmentConnector.receive_key to event)
         setFragmentResult(FragmentConnector.fragment_request_key_more_button_reverse, result)
     }
-    private fun returnFragment(event: String,extra: String){
+    private fun returnFragment(event: String,extra: String) {
         val result = bundleOf(FragmentConnector.receive_key to event,FragmentConnector.extra_key to extra)
         setFragmentResult(FragmentConnector.fragment_request_key_more_button_reverse, result)
     }

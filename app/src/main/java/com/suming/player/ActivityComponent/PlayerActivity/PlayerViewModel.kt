@@ -72,6 +72,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     var PRF_Cache_SyncFrame_Dynamic: Boolean = true
     //是否竖屏时也开启自动隐藏控件
     var PRF_Cache_EnableAutoHideController_whenPortrait: Boolean = false
+    //是否禁用播放区域上下滑动手势
+    var PRF_Cache_DisableViewFollowing: Boolean = true
 
     //进度条相关
     var PREFS_AlwaysSeek: Boolean = false

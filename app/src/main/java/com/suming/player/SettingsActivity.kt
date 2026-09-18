@@ -570,12 +570,12 @@ class SettingsActivity: AppCompatActivity() {
                 ToolVibrate.vibrate()
                 SettingsCenter.SET_PREFS_EnablePlayAreaMoveAnim(isChecked)
             }
-            //禁用更多操作面板下滑手势
-            val switch_DisableFragmentGesture = findViewById<SwitchCompat>(R.id.DisableFragmentGesture)
-            switch_DisableFragmentGesture.isChecked = SettingsCenter.GET_PREFS_DisableFragmentGesture()
-            switch_DisableFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
+            //禁用播放区域上下滑动手势
+            val SC_DisableViewFollowing = findViewById<SwitchCompat>(R.id.SC_DisableViewMoving)
+            SC_DisableViewFollowing.isChecked = SettingsCenter.GET_PREFS_Video_DisableViewFollowing()
+            SC_DisableViewFollowing.setOnCheckedChangeListener { _, isChecked ->
                 ToolVibrate.vibrate()
-                SettingsCenter.SET_PREFS_DisableFragmentGesture(isChecked)
+                SettingsCenter.SET_PREFS_Video_DisableViewFollowing(isChecked)
             }
             //始终使用深色播放页面
             val switch_AlwaysUseDarkTheme = findViewById<SwitchCompat>(R.id.AlwaysUseDarkTheme)
@@ -812,6 +812,13 @@ class SettingsActivity: AppCompatActivity() {
                     switch_EnablePlayAreaMoveAnim.isChecked = SettingsCenter.GET_PREFS_EnablePlayAreaMoveAnim()
                 }
 
+            }
+            //禁用更多操作面板下滑手势
+            val switch_DisableFragmentGesture = findViewById<SwitchCompat>(R.id.DisableFragmentGesture)
+            switch_DisableFragmentGesture.isChecked = SettingsCenter.GET_PREFS_DisableFragmentGesture()
+            switch_DisableFragmentGesture.setOnCheckedChangeListener { _, isChecked ->
+                ToolVibrate.vibrate()
+                SettingsCenter.SET_PREFS_DisableFragmentGesture(isChecked)
             }
             //设置MiniView底部抬高高度
             val TB_SetMiniViewBottomPadding = findViewById<TextView>(R.id.TextButton_SetMiniViewBottomPadding)

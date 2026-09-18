@@ -796,7 +796,7 @@
                             android:text="开启时，在播放页内打开选项或列表面板时，播放区域将跟随移动以保持可见。若移动过程压力过大可考虑关闭。"
                             android:textSize="12sp" />
                     </LinearLayout>
-                    <!--  开关:关闭卡片下滑手势  -->
+                    <!--  开关:关闭上下滑动反馈动画  -->
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -811,7 +811,7 @@
                                 android:layout_height="match_parent"
                                 android:gravity="center"
                                 android:layout_weight="0"
-                                android:text="不使用更多操作面板的下滑手势"
+                                android:text="关闭上下滑动反馈动画"
                                 android:textColor="@color/HeadText"
                                 android:textSize="14sp" />
                             <View
@@ -819,7 +819,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1" />
                             <androidx.appcompat.widget.SwitchCompat
-                                android:id="@+id/DisableFragmentGesture"
+                                android:id="@+id/SC_DisableViewMoving"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:layout_weight="0"
@@ -830,7 +830,7 @@
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="若下滑过程出现卡顿，可考虑关闭。"
+                            android:text="正在优化性能，故默认关闭此动画。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  开关:始终使用深色播放界面  -->
@@ -1764,6 +1764,43 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="将所有弹出式面板显示为全屏，适合小屏幕设备使用。"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                    <!--  开关：关闭面板下拉关闭手势  -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="25dp"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:layout_weight="0"
+                                android:text="关闭面板下拉关闭手势"
+                                android:textColor="@color/HeadText"
+                                android:textSize="14sp" />
+                            <View
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+                            <androidx.appcompat.widget.SwitchCompat
+                                android:id="@+id/DisableFragmentGesture"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_weight="0"
+                                app:thumbTint="@color/SC_ThumbColor"
+                                app:trackTint="@color/SC_TrackColor" />
+                        </LinearLayout>
+                        <!-- 提示文本 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="若下滑过程出现卡顿，可考虑关闭。"
                             android:textSize="12sp" />
                     </LinearLayout>
                     <!--  设置MiniView底部抬高高度  -->

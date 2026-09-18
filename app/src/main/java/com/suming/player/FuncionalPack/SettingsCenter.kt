@@ -778,28 +778,28 @@ object SettingsCenter {
 
         return PREFS_Video_EnableOrientationListener == 1
     }
-    //关闭更多操作面板下滑手势
-    private var PREFS_Video_DisableFragmentGesture = -1
-    const val PREFS_Video_DisableFragmentGesture_Name = "PREFS_Video_DisableFragmentGesture"
-    fun SET_PREFS_DisableFragmentGesture(enable: Boolean){
+    //关闭播放区域上下滑动手势
+    private var PREFS_Video_DisableViewFollowing = -1
+    const val PREFS_Video_DisableViewFollowing_Name = "PREFS_Video_DisableViewFollowing"
+    fun SET_PREFS_Video_DisableViewFollowing(enable: Boolean){
         OpenPandora_PlayVideoPage()
 
-        PREFS_Video_DisableFragmentGesture = if (enable) 1 else 0
-        Pandora_PlayVideoPage?.edit { putInt(PREFS_Video_DisableFragmentGesture_Name, if (enable) 1 else 0) }
+        PREFS_Video_DisableViewFollowing = if (enable) 1 else 0
+        Pandora_PlayVideoPage?.edit { putInt(PREFS_Video_DisableViewFollowing_Name, if (enable) 1 else 0) }
     }
-    fun GET_PREFS_DisableFragmentGesture(): Boolean {
+    fun GET_PREFS_Video_DisableViewFollowing(): Boolean {
         OpenPandora_PlayVideoPage()
 
         //确保配置项已被读取过
-        if (PREFS_Video_DisableFragmentGesture == -1) {
-            PREFS_Video_DisableFragmentGesture = Pandora_PlayVideoPage?.getInt(PREFS_Video_DisableFragmentGesture_Name, -1) ?: -1
-            if (PREFS_Video_DisableFragmentGesture == -1) {
-                PREFS_Video_DisableFragmentGesture = 0
-                Pandora_PlayVideoPage?.edit { putInt(PREFS_Video_DisableFragmentGesture_Name, 0) }
+        if (PREFS_Video_DisableViewFollowing == -1) {
+            PREFS_Video_DisableViewFollowing = Pandora_PlayVideoPage?.getInt(PREFS_Video_DisableViewFollowing_Name, -1) ?: -1
+            if (PREFS_Video_DisableViewFollowing == -1) {
+                PREFS_Video_DisableViewFollowing = 1
+                Pandora_PlayVideoPage?.edit { putInt(PREFS_Video_DisableViewFollowing_Name, 1) }
             }
         }
 
-        return PREFS_Video_DisableFragmentGesture == 1
+        return PREFS_Video_DisableViewFollowing == 1
     }
     //退出时确保是竖屏(默认设置区分设备dpi)
     private var PRF_Video_SwitchPortrait_whenExit = -1
@@ -1253,6 +1253,7 @@ object SettingsCenter {
             Pandora_Other = context.getSharedPreferences(Pandora_Other_Name, 0)
         }
     }
+    //交互部分
     //使用全屏面板
     private var PRF_Other_UseFullScreenFragment = -1
     const val PRF_UseFullScreenFragment_Name = "PRF_Other_UseFullScreenFragment"
@@ -1277,7 +1278,63 @@ object SettingsCenter {
         PRF_Other_UseFullScreenFragment = if (enable) 1 else 0
         Pandora_Other?.edit { putInt(PRF_UseFullScreenFragment_Name, PRF_Other_UseFullScreenFragment) }
     }
+    //关闭面板下滑手势
+    private var PREFS_Video_DisableFragmentGesture = -1
+    const val PREFS_Video_DisableFragmentGesture_Name = "PREFS_Video_DisableFragmentGesture"
+    fun SET_PREFS_DisableFragmentGesture(enable: Boolean){
+        OpenPandora_Other()
+
+        PREFS_Video_DisableFragmentGesture = if (enable) 1 else 0
+        Pandora_Other?.edit { putInt(PREFS_Video_DisableFragmentGesture_Name, if (enable) 1 else 0) }
+    }
+    fun GET_PREFS_DisableFragmentGesture(): Boolean {
+        OpenPandora_Other()
+
+        //确保配置项已被读取过
+        if (PREFS_Video_DisableFragmentGesture == -1) {
+            PREFS_Video_DisableFragmentGesture = Pandora_Other?.getInt(PREFS_Video_DisableFragmentGesture_Name, -1) ?: -1
+            if (PREFS_Video_DisableFragmentGesture == -1) {
+                PREFS_Video_DisableFragmentGesture = 0
+                Pandora_Other?.edit { putInt(PREFS_Video_DisableFragmentGesture_Name, 0) }
+            }
+        }
+
+        return PREFS_Video_DisableFragmentGesture == 1
+    }
+
     //</editor-fold>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
