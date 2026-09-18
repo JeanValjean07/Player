@@ -412,15 +412,21 @@ class PlayerActivityNeo: AppCompatActivity() {
                     notice("暂停", 1000)
                     updateButtonState()
                 }else{
+                    //暂停滚动
                     scroller.stopScroll()
+                    //判断是否需要重播
                     if (PlayerSingleton.get_state_playEnd()) {
-                        PlayerSingleton.remove_state_playEnd()
+                        //PlayerSingleton.remove_state_playEnd() 不消耗状态
+                        //寻回起始位置
+                        player?.seekTo(0L)
+                        //发起重播
                         continuePlay()
-                        notice("开始重播", 2000)
                         //平滑滚动到进度条起始位置
                         syncScrollTask_Core_smoothSlowly_Compute(0, true)
-                        updateButtonState()
-                    } else {
+                        notice("开始重播", 2000)
+
+                    }else{
+                        //普通继续播放
                         continuePlay()
                         notice("继续播放", 2000)
                     }
@@ -2345,7 +2351,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             var finger2y = 0f
 
             //滑动结果标记
-            var scroll_result = 0   // 1:退出活动 2:恢复顶部
+            var scroll_result = 0   // 1:退出活动 2:恢复顶部 3:恢复播放区域
 
 
             //点击区域
@@ -2355,6 +2361,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             //执行锁(只能执行一次的触发点使用)
             var execute_lock = false
             var execute_lock_addon = false
+            var execute_lock_addon_filter = false
             //</editor-fold desc="点击事件">
             //播放区域点击事件
             val gestureDetectorPlayArea = GestureDetector (
@@ -2369,8 +2376,9 @@ class PlayerActivityNeo: AppCompatActivity() {
                             updateButtonState()
                         } else {
                             if (PlayerSingleton.get_state_playEnd()) {
-                                PlayerSingleton.remove_state_playEnd()
-
+                                //PlayerSingleton.remove_state_playEnd() 不消耗状态
+                                //寻回起始位置
+                                player?.seekTo(0L)
                                 continuePlay()
                                 notice("开始重播", 1000)
                             } else {
@@ -2537,11 +2545,16 @@ class PlayerActivityNeo: AppCompatActivity() {
                                     //下滑退出
                                     gap > 0 -> {
                                         if (execute_lock) return false
+                                        if (!execute_lock_addon_filter) {
+                                            execute_lock_addon_filter = true
+                                            //刷新参照值
+                                            e_y_stage = e2.rawY
+                                            return false
+                                        }
 
                                         //关闭多余任务
                                         onScrollExitAnimStart()
 
-                                        notice("继续下拉可关闭",1000)
                                         //移动视图区域
                                         root_secondary.translationY = gap
 
@@ -2560,6 +2573,11 @@ class PlayerActivityNeo: AppCompatActivity() {
                                                 //标记为需要退出
                                                 scroll_result = 1
 
+                                                root_secondary.animate()
+                                                    .translationY(2500f)
+                                                    .setInterpolator(AccelerateInterpolator())
+                                                    .duration = 200
+
                                                 //直接退出
                                                 custom_finish()
 
@@ -2569,18 +2587,52 @@ class PlayerActivityNeo: AppCompatActivity() {
 
                                     }
                                     //上滑打开扩展面板
-                                    gap < -viewModel.value_scrollDownExitDistance -> {
+                                    gap < -0 -> {
                                         //判断是否需要执行
                                         if (execute_lock) return false
+                                        if (!execute_lock_addon_filter) {
+                                            execute_lock_addon_filter = true
+                                            //刷新参照值
+                                            e_y_stage = e2.rawY
+                                            return false
+                                        }
 
-                                        //刷新参照值
-                                        e_y_stage = e2.rawY
-                                        //打开执行锁
-                                        execute_lock = true
+                                        //移动视图区域
+                                        playerView.translationY = gap
 
-                                        //执行打开扩展面板
-                                        ToolVibrate.vibrate()
-                                        startMoreButtonFragment()
+
+                                        when {
+                                            gap > -viewModel.value_scrollDownExitDistance -> {
+                                                //标记为需要恢复播放区域位置
+                                                scroll_result = 3
+                                            }
+                                            gap <= -viewModel.value_scrollDownExitDistance -> {
+                                                //打开执行锁
+                                                execute_lock = true
+
+                                                //标记为不需要恢复播放区域位置
+                                                scroll_result = if (isLandscape) {
+                                                    playerView.animate()
+                                                        .translationY(0f)
+                                                        .setInterpolator(DecelerateInterpolator())
+                                                        .duration = 300
+
+
+                                                    3
+                                                } else {
+
+                                                    0
+                                                }
+
+
+                                                //执行打开扩展面板
+                                                ToolVibrate.vibrate()
+                                                startMoreButtonFragment()
+
+                                            }
+                                        }
+
+
 
                                     }
                                 }
@@ -2597,13 +2649,12 @@ class PlayerActivityNeo: AppCompatActivity() {
                     MotionEvent.ACTION_DOWN -> {
                         //重置所有状态
                         fun reset(){
-                            //关闭执行锁
-                            execute_lock = false
                             //记录手指计数
                             touchFingerCount = 1
                             //重置执行锁
                             execute_lock = false
                             execute_lock_addon = false
+                            execute_lock_addon_filter = false
 
                         }
                         reset()
@@ -2652,6 +2703,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             //重置执行锁
                             execute_lock = false
                             execute_lock_addon = false
+                            execute_lock_addon_filter = false
 
                             center0x = playerView.pivotX
                             center0y = playerView.pivotY
@@ -2681,6 +2733,12 @@ class PlayerActivityNeo: AppCompatActivity() {
                                     .translationY(0f)
                                     .setInterpolator(DecelerateInterpolator())
                                     .withEndAction { onScrollExitAnimTraceEnd() }
+                                    .duration = 300
+                            }
+                            3 -> {
+                                playerView.animate()
+                                    .translationY(0f)
+                                    .setInterpolator(DecelerateInterpolator())
                                     .duration = 300
                             }
                         }
@@ -2831,26 +2889,19 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     //跑完一个完整滚动事件
     private fun onScrollOnceComplete() {
-        //consoleLog("一个滚动事件完整跑完 ${System.currentTimeMillis()}", 1000)
-
-
         //清理状态
         clearScrollerState()
-
 
         //判断是否继续播放或保持暂停
         if (playState_scroller_wasPlaying) continuePlay()
 
-
         //恢复音量
-        if (PlayerSingleton.get_engine_volume() == 0f) PlayerSingleton.rec_engine_volume()
+        if (PlayerSingleton.get_engine_volume_actual() == 0f) PlayerSingleton.rec_engine_volume()
 
         //重置寻帧偏好
         setSeekParameter_useSync(1)
         //清除playEnd状态
         PlayerSingleton.remove_state_playEnd()
-
-
 
     }
 
@@ -4174,7 +4225,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         if (player?.isPlaying != true) return
         //
         if (ScrollerHelper.singleFrame_durationMs <= 0L) return
-        //进入锁
+        //重复锁
         if (task_syncScrollerPosition_Running) return
         task_syncScrollerPosition_Running = true
 
@@ -4213,12 +4264,11 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
     }
     private fun startSeekBarSync() {
-        //禁入条件
         //未显示控件层
         if (!viewModel.state_controllerShowing) return
         //操作中
         if (scrollerDesire_Active) return
-        //进入锁
+        //重复锁
         if (task_syncSeekBarPosition_Running) return
         task_syncSeekBarPosition_Running = true
 
@@ -4253,8 +4303,14 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     private var timeStampSync_cache_currentPosition = 0L
     private fun startVideoTimeSync() {
+        //未显示控件层
+        if (!viewModel.state_controllerShowing) return
+        //未在播放状态
+        if (player?.isPlaying != true) return
+        //重复锁
         if (task_timeStamp_update_Running) return
         task_timeStamp_update_Running = true
+
 
         task_timeStampSync_Handler.post(task_timeStampSync_Runnable)
     }
@@ -4368,6 +4424,8 @@ class PlayerActivityNeo: AppCompatActivity() {
     }
     private var smartScrollLoop_last_speed = 0f
     private fun startVideoSmartScroll() {
+        if (!scrollerDesire_Active) return
+        //重复锁
         if (smartScrollRunnableRunning) return
         smartScrollRunnableRunning = true
 
@@ -4479,6 +4537,8 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var value_seekVideo_runnableGapMs = 0L
     private var task_standardSeekLoop_Running = false
     private fun startVideoSeek() {
+        if (!scrollerDesire_Active) return
+        //重复锁
         if (task_standardSeekLoop_Running) return
         task_standardSeekLoop_Running = true
 

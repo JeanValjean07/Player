@@ -31,7 +31,7 @@ class CircleButton @JvmOverloads constructor(
     private val context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-):View(context, attrs, defStyleAttr){
+):View(context, attrs, defStyleAttr) {
     //画笔
     private var mainPaint: Paint? = null
     private var shadowPaint: Paint? = null
@@ -150,6 +150,7 @@ class CircleButton @JvmOverloads constructor(
             iconRectBottom
         )
 
+
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -237,6 +238,7 @@ class CircleButton @JvmOverloads constructor(
             iconBitmap = drawableToBitmap(drawable, size, size)
         } else {
             iconBitmap = null
+
         }
         invalidate()
     }

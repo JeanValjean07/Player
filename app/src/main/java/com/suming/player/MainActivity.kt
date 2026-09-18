@@ -91,7 +91,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@Suppress("/NewApi","/unused")
+@Suppress("NewApi","/unused")
 @OptIn(UnstableApi::class)
 class MainActivity: AppCompatActivity() {
 
@@ -107,7 +107,13 @@ class MainActivity: AppCompatActivity() {
     //ctx
     private val context = this@MainActivity
     //是否有窗口焦点
-    private var isWindowFocused = false
+    private var isWindowFocused = true
+
+    @Suppress("NewApi")
+    private fun vibrate(){
+        ToolVibrate.vibrate()
+    }
+
 
 
 
@@ -307,7 +313,7 @@ class MainActivity: AppCompatActivity() {
         FragmentVideoStoreSetting.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_video_store_setting)
     }
     //注册界面控件
-    private fun register(){
+    private fun register() {
         lifecycleScope.launch (Dispatchers.Main) {
             delay(300)
 
@@ -346,13 +352,13 @@ class MainActivity: AppCompatActivity() {
             //提示卡点击时关闭
             val NoticeCard = findViewById<CardView>(R.id.noticeCard)
             NoticeCard.setOnClickListener {
-                ToolVibrate.vibrate()
+                vibrate()
                 NoticeCard.visibility = View.GONE
             }
             //按钮：安卓媒体库设置
             val ButtonMediaStoreSetting = findViewById<ImageButton>(R.id.ButtonMediaStoreSetting)
             ButtonMediaStoreSetting.setOnClickListener {
-                ToolVibrate.vibrate()
+                vibrate()
                 ListRecyclerView_Video.stopScroll()
                 ListRecyclerView_Music.stopScroll()
                 //
@@ -367,18 +373,18 @@ class MainActivity: AppCompatActivity() {
             }
             //页签按钮
             ButtonCardMusic.setOnClickListener {
-                ToolVibrate.vibrate()
+                vibrate()
                 //显示音乐列表
                 showMusicList()
             }
             ButtonCardVideo.setOnClickListener {
-                ToolVibrate.vibrate()
+                vibrate()
                 //显示视频列表
                 showVideoList()
 
             }
             ButtonCardGallery.setOnClickListener {
-                ToolVibrate.vibrate()
+                vibrate()
                 //需要重做为单独的页面
                 showCustomToast("陈列架功能暂未开放",3)
             }
@@ -691,14 +697,14 @@ class MainActivity: AppCompatActivity() {
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         R.id.MenuAction_use_mini_view_play -> {
-                            ToolVibrate.vibrate()
+                            vibrate()
 
                             startMiniViewPlay(mediaItem.URI_S_FP.toUri())
 
                             true
                         }
                         R.id.MenuAction_use_whole_play_page -> {
-                            ToolVibrate.vibrate()
+                            vibrate()
 
                             startVideoPlayer(mediaItem.URI_S_FP.toUri(), mediaItem.file_path)
 
@@ -748,12 +754,12 @@ class MainActivity: AppCompatActivity() {
         main_music_list_adapter = RecyclerAdapterMusic(
             context = this,
             onItemClick = { uri ->
-                ToolVibrate.vibrate()
+
                 //
                 onAudioItemClick(uri)
             },
             onOptionsClick = { _, _ ->
-                ToolVibrate.vibrate()
+
 
             },
         )
@@ -980,10 +986,11 @@ class MainActivity: AppCompatActivity() {
         PlayingCard_TextMediaArtist = findViewById(R.id.PlayingCard_MediaArtist)
         PlayingCard_ButtonPlay = findViewById(R.id.PlayingCard_ButtonPlay)
         PlayingCard_ButtonList = findViewById(R.id.PlayingCard_ButtonList)
+        miniView_background = findViewById(R.id.miniView_background)
         //点击事件设定
         //播放/暂停按钮
         PlayingCard_ButtonPlay.setOnClickListener {
-            ToolVibrate.vibrate()
+            vibrate()
 
             PlayingCard_TextMediaName.isSelected = true
             PlayingCard_TextMediaArtist.isSelected = true
@@ -1012,7 +1019,7 @@ class MainActivity: AppCompatActivity() {
         }
         //播放列表按钮
         PlayingCard_ButtonList.setOnClickListener {
-            ToolVibrate.vibrate()
+            vibrate()
             //防止快速点击
             if (System.currentTimeMillis() - lock_clickMillisLock < 800) {
                 return@setOnClickListener
@@ -1026,12 +1033,12 @@ class MainActivity: AppCompatActivity() {
         }
         //艺术图按钮+容器:均打开播放页
         PlayingCard_Artwork.setOnClickListener {
-            ToolVibrate.vibrate()
+            vibrate()
 
             onPlayingCard_EnterClick()
         }
-        PlayingCard_InfoContainer.setOnClickListener {
-            ToolVibrate.vibrate()
+        miniView_background.setOnClickListener {
+            vibrate()
 
             onPlayingCard_EnterClick()
 
@@ -1300,6 +1307,7 @@ class MainActivity: AppCompatActivity() {
     private var PlayingCard_Artwork_Video: PlayerView ? = null
     private lateinit var PlayingCard_ButtonPlay: ImageButton
     private lateinit var PlayingCard_ButtonList: ImageButton
+    private lateinit var miniView_background: LinearLayout
 
 
     //检查是否有媒体正在在播放并获取链接
@@ -1677,6 +1685,9 @@ class MainActivity: AppCompatActivity() {
         if (System.currentTimeMillis() - lock_clickMillisLock < 800) return
         lock_clickMillisLock = System.currentTimeMillis()
 
+        //提前取消焦点
+        isWindowFocused = false
+
         //检查使用的页面类型
         val screening_type = SettingsCenter.GET_PRF_Video_Screening_Type()
         when{
@@ -1736,6 +1747,8 @@ class MainActivity: AppCompatActivity() {
         if (System.currentTimeMillis() - lock_clickMillisLock < 800) return
         lock_clickMillisLock = System.currentTimeMillis()
 
+        //提前取消焦点
+        isWindowFocused = false
 
         //构建intent
         val intent = Intent(this, MusicPlayerActivity::class.java)
@@ -1754,8 +1767,6 @@ class MainActivity: AppCompatActivity() {
 
         //启动活动
         startActivity(intent, options.toBundle())
-
-        //setMediaItem(uri, true)
 
     }
     private fun startPlayerFromMiniView(uri: Uri, file_path: String) {

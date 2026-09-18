@@ -941,13 +941,18 @@ object PlayerSingleton {
 
 
     //内部期望音量缓存
-    private var engine_volume = 1f
-    fun get_engine_volume(): Float{
-        return engine_volume
+    private var engine_volume_desire = 1f
+    fun get_engine_volume_desire(): Float{
+
+        return engine_volume_desire
+    }
+    fun get_engine_volume_actual(): Float{
+
+        return _player?.volume ?: 0f
     }
     fun rec_engine_volume(){
 
-        _player?.volume = engine_volume
+        _player?.volume = engine_volume_desire
     }
     fun disable_engine_volume(){
         _player?.volume = 0f

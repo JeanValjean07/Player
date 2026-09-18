@@ -463,6 +463,7 @@
             >
             <!-- 背景区域 -->
             <LinearLayout
+                android:id="@+id/miniView_background"
                 android:layout_width="0dp"
                 android:layout_height="70dp"
                 android:background="@color/MainColorPack_ContentCardBackground"
