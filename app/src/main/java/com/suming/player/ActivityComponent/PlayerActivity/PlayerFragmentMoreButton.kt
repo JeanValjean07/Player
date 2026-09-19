@@ -228,17 +228,19 @@ class PlayerFragmentMoreButton: DialogFragment() {
                                 if (deltaY < 0){
                                     return@setOnTouchListener false
                                 }
-                                if (deltaY >= 300f){
+                                if (deltaY >= viewModel.value_scrollDownExitDistance){
                                     if (!deltaY_ReachPadding){
                                         deltaY_ReachPadding = true
+                                        //暂时改为直接退出
                                         ToolVibrate.vibrate()
+                                        dismiss()
                                     }
                                 }
                                 RootCard.translationY = RootCardOriginY + deltaY
                                 return@setOnTouchListener true
                             }
                             MotionEvent.ACTION_UP -> {
-                                if (deltaY >= 300f){
+                                if (deltaY >= viewModel.value_scrollDownExitDistance){
                                     dismiss()
                                 }else{
                                     RootCard.animate()

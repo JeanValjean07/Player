@@ -40,6 +40,8 @@ import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
+import android.view.animation.LinearInterpolator
+import android.view.animation.PathInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
@@ -494,7 +496,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         //监听系统手势
         registerOnBackPressListener()
         //注册播放区域手势操作
-        registerGesture()
+        registerGestureLayer()
 
     }
     //主业务线
@@ -1259,7 +1261,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         playerView.pivotY = 0f
 
         //重新注册手势
-        registerGesture()
+        registerGestureLayer()
 
     }
 
@@ -1964,7 +1966,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             playerView.animate()
                 .translationY(-(moveDistance))
                 .setInterpolator(interpolator)
-                .setDuration(500)
+                .setDuration(450)
                 .start()
 
         }
@@ -2325,7 +2327,7 @@ class PlayerActivityNeo: AppCompatActivity() {
     private var state_playView_singleTap = false
     private var state_playView_longPress = false
     @SuppressLint("ClickableViewAccessibility")
-    private fun registerGesture() {
+    private fun registerGestureLayer() {
         lifecycleScope.launch(Dispatchers.Main) {
 
             delay(500)
@@ -2366,10 +2368,10 @@ class PlayerActivityNeo: AppCompatActivity() {
             var execute_lock_addon_filter = false
             var execute_lock_addon_scroll_end_trigger = false
             //</editor-fold desc="点击事件">
+            //播放区域
+            val gestureLayer = findViewById<View>(R.id.playerTouchPad)
             //播放区域点击事件
-            val gestureDetectorPlayArea = GestureDetector (
-                this@PlayerActivityNeo,
-                object : GestureDetector.SimpleOnGestureListener() {
+            val gestureDetectorPlayArea = GestureDetector(context,object:GestureDetector.SimpleOnGestureListener() {
                     override fun onDoubleTap(e: MotionEvent): Boolean {
                         //控制播放
                         if (player?.isPlaying == true) {
@@ -2552,7 +2554,6 @@ class PlayerActivityNeo: AppCompatActivity() {
                                         //关闭多余任务
                                         onScrollExitAnimStart()
 
-
                                         when {
                                             gap < viewModel.value_scrollDownExitDistance -> {
                                                 //标记为需要恢复顶部
@@ -2569,10 +2570,15 @@ class PlayerActivityNeo: AppCompatActivity() {
 
                                                 execute_lock_addon_scroll_end_trigger = true
 
+                                                /*
                                                 root_secondary.animate()
                                                     .translationY(2500f)
-                                                    .setInterpolator(AccelerateInterpolator())
-                                                    .duration = 200
+                                                    .alpha(0f)
+                                                    .setInterpolator(LinearInterpolator())
+                                                    .duration = 100
+
+                                                 */
+
 
                                                 //直接退出
                                                 custom_finish()
@@ -2580,13 +2586,11 @@ class PlayerActivityNeo: AppCompatActivity() {
                                             }
                                         }
 
-
                                     }
                                     //上滑打开扩展面板
                                     gap < -0 -> {
                                         //判断是否需要执行
                                         if (execute_lock) return false
-
 
                                         when {
                                             gap > -viewModel.value_scrollDownExitDistance -> {
@@ -2621,8 +2625,6 @@ class PlayerActivityNeo: AppCompatActivity() {
                                             }
                                         }
 
-
-
                                     }
                                 }
 
@@ -2631,9 +2633,8 @@ class PlayerActivityNeo: AppCompatActivity() {
 
                         return super.onScroll(e1, e2, distanceX, distanceY)
                     }
-                })
-            val playerTouchPad = findViewById<View>(R.id.playerTouchPad)
-            playerTouchPad.setOnTouchListener { _, event ->
+                } )
+            gestureLayer.setOnTouchListener { _, event ->
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         //重置所有状态
@@ -2714,24 +2715,42 @@ class PlayerActivityNeo: AppCompatActivity() {
                             NoticeCard.visibility = View.GONE
                         }
 
+                        fun root_secondary_scroll_back(){
+                            root_secondary.animate()
+                                .translationY(0f)
+                                .setInterpolator(DecelerateInterpolator())
+                                .withEndAction { onScrollExitAnimTraceEnd() }
+                                .duration = 150
+                        }
+                        fun playerView_scroll_back(){
+                            playerView.animate()
+                                .translationY(0f)
+                                .setInterpolator(DecelerateInterpolator())
+                                .duration = 300
+                        }
+                        fun check_view_position(){
+                            if (playerView.translationY != 0f){
+                                playerView_scroll_back()
+                            }
+                            if (root_secondary.translationY != 0f){
+                                root_secondary_scroll_back()
+                            }
+                        }
                         //滚动结果
                         when (scroll_result){
+                            0 -> {
+                                //未触发滚动时做保底检查
+                                //check_view_position()
+                            }
                             1 -> {
                                 custom_finish()
 
                             }
                             2 -> {
-                                root_secondary.animate()
-                                    .translationY(0f)
-                                    .setInterpolator(DecelerateInterpolator())
-                                    .withEndAction { onScrollExitAnimTraceEnd() }
-                                    .duration = 150
+                                root_secondary_scroll_back()
                             }
                             3 -> {
-                                playerView.animate()
-                                    .translationY(0f)
-                                    .setInterpolator(DecelerateInterpolator())
-                                    .duration = 300
+                                playerView_scroll_back()
                             }
                         }
 
@@ -2769,39 +2788,45 @@ class PlayerActivityNeo: AppCompatActivity() {
                     MotionEvent.ACTION_MOVE -> {
                         when (touchFingerCount) {
                             1 -> {
-                                //处理上下拖动
-                                if (!execute_lock_addon_scroll_end_trigger && touchArea == 3){
-                                    //计算移动量
-                                    val moveY = event.rawY - finger1y
-                                    consoleLog("moveY: $moveY")
-                                    if (moveY.absoluteValue >= 10){
-                                        when {
-                                            //下滑
-                                            moveY > 0 -> {
-                                                //移动视图区域
-                                                if (!viewModel.PRF_Cache_DisableViewFollowing) {
-                                                    root_secondary.translationY = moveY - 10
+                                if (!state_playView_longPress){
+                                    //处理上下拖动
+                                    if (!execute_lock_addon_scroll_end_trigger && touchArea == 3){
+                                        //计算移动量
+                                        val moveY = event.rawY - finger1y
+
+                                        if (moveY.absoluteValue >= 30){
+                                            when {
+                                                //下滑
+                                                moveY > 0 -> {
+                                                    //移动视图区域
+                                                    if (!viewModel.PRF_Cache_DisableViewFollowing) {
+                                                        root_secondary.translationY = (moveY - 30) * 3
+                                                    }else{
+                                                        //notice("继续下拉关闭播放页",300)
+                                                    }
+
                                                 }
+                                                //上滑
+                                                moveY < 0 -> {
+                                                    //移动视图区域
+                                                    if (!viewModel.PRF_Cache_DisableViewFollowing) {
+                                                        playerView.translationY = moveY + 30
+                                                    }else{
+                                                       // notice("继续上滑打开选项面板",300)
+                                                    }
 
-                                            }
-                                            //上滑
-                                            moveY < 0 -> {
-                                                //移动视图区域
-                                                if (!viewModel.PRF_Cache_DisableViewFollowing) {
-                                                    playerView.translationY = moveY + 10
+
                                                 }
-
-
                                             }
                                         }
-                                    }
 
+                                    }
 
                                 }
 
-
                                 //gestureDetector精度似乎不够
                                 gestureDetectorPlayArea.onTouchEvent(event)
+
                             }
                             2 -> {
                                 finger1x = event.getX(0)
