@@ -2370,6 +2370,10 @@ class PlayerActivityNeo: AppCompatActivity() {
             var execute_lock_addon = false
             var execute_lock_addon_filter = false
             var execute_lock_addon_scroll_end_trigger = false
+            //单指意图判定
+            var singleFingerIntent = 0   //1长按 2滑动
+            //双指锁
+            var execute_lock_doubleFinger = false
             //</editor-fold desc="点击事件">
             //播放区域
             val gestureLayer = findViewById<View>(R.id.playerTouchPad)
@@ -2425,7 +2429,10 @@ class PlayerActivityNeo: AppCompatActivity() {
                         super.onLongPress(e)
                     }
                     override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float):Boolean {
+                        //双指锁
+                        if (execute_lock_doubleFinger) return false
 
+                        //单指意图判定
                         when (touchArea){
                             //左侧区域(控制亮度)(消费距离间隔,不使用执行锁)
                             1 -> {
@@ -2546,7 +2553,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             //中间区域(扩展退出和扩展面板弹出)(消费总距离,需要使用执行锁)
                             3 -> {
                                 //计算阶梯坐标差值
-                                val gap = (e2.rawY - e_y_stage)
+                                val gap = (e2.y - e_y_stage)
 
                                 //判断操作
                                 when {
@@ -2649,6 +2656,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             execute_lock_addon = false
                             execute_lock_addon_filter = false
                             execute_lock_addon_scroll_end_trigger = false
+                            execute_lock_doubleFinger = false
 
                         }
                         reset()
@@ -2699,6 +2707,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                             execute_lock_addon = false
                             execute_lock_addon_filter = false
                             execute_lock_addon_scroll_end_trigger = false
+                            execute_lock_doubleFinger = false
 
                             center0x = playerView.pivotX
                             center0y = playerView.pivotY
@@ -2755,6 +2764,8 @@ class PlayerActivityNeo: AppCompatActivity() {
                     MotionEvent.ACTION_POINTER_DOWN -> {
                         //记录多指计数
                         touchFingerCount = 2
+                        //开启双指锁
+                        execute_lock_doubleFinger = true
 
                         val ptrIndex = event.actionIndex
 
@@ -2783,41 +2794,46 @@ class PlayerActivityNeo: AppCompatActivity() {
                     MotionEvent.ACTION_MOVE -> {
                         when (touchFingerCount) {
                             1 -> {
-                                if (!state_playView_longPress){
-                                    //处理上下拖动
-                                    if (!execute_lock_addon_scroll_end_trigger && touchArea == 3){
-                                        //计算移动量
-                                        val moveY = event.rawY - finger1y
+                                //已触发双指时拦截
+                                if (!execute_lock_doubleFinger){
+                                    if (!state_playView_longPress){
+                                        //处理上下拖动
+                                        if (!execute_lock_addon_scroll_end_trigger && touchArea == 3){
+                                            //计算移动量
+                                            val moveY = event.y - finger1y
+                                            consoleLog("event.y: ${event.y}, finger1y: $finger1y, moveY: $moveY")
 
-                                        if (moveY.absoluteValue >= 30){
-                                            when {
-                                                //下滑
-                                                moveY > 0 -> {
-                                                    //移动视图区域
-                                                    if (!viewModel.PRF_Cache_DisableViewFollowing) {
-                                                        root_secondary.translationY = (moveY - 30) * 3
-                                                    }else{
-                                                        //notice("继续下拉关闭播放页",300)
+                                            if (moveY.absoluteValue >= 30){
+                                                when {
+                                                    //下滑
+                                                    moveY > 0 -> {
+                                                        //移动视图区域
+                                                        if (!viewModel.PRF_Cache_DisableViewFollowing) {
+                                                            root_secondary.translationY = (moveY - 30) * 3
+                                                        }else{
+                                                            //notice("继续下拉关闭播放页",300)
+                                                        }
+
                                                     }
+                                                    //上滑
+                                                    moveY < 0 -> {
+                                                        //移动视图区域
+                                                        if (!viewModel.PRF_Cache_DisableViewFollowing) {
+                                                            playerView.translationY = moveY + 30
+                                                        }else{
+                                                            // notice("继续上滑打开选项面板",300)
+                                                        }
 
-                                                }
-                                                //上滑
-                                                moveY < 0 -> {
-                                                    //移动视图区域
-                                                    if (!viewModel.PRF_Cache_DisableViewFollowing) {
-                                                        playerView.translationY = moveY + 30
-                                                    }else{
-                                                       // notice("继续上滑打开选项面板",300)
+
                                                     }
-
-
                                                 }
                                             }
+
                                         }
 
                                     }
-
                                 }
+
 
                                 //gestureDetector精度似乎不够
                                 gestureDetectorPlayArea.onTouchEvent(event)
