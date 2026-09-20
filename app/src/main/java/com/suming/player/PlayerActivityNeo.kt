@@ -2718,23 +2718,15 @@ class PlayerActivityNeo: AppCompatActivity() {
                         fun root_secondary_scroll_back(){
                             root_secondary.animate()
                                 .translationY(0f)
-                                .setInterpolator(DecelerateInterpolator())
+                                .setInterpolator( DecelerateInterpolator(2f) )
                                 .withEndAction { onScrollExitAnimTraceEnd() }
-                                .duration = 150
+                                .duration = 300
                         }
                         fun playerView_scroll_back(){
                             playerView.animate()
                                 .translationY(0f)
-                                .setInterpolator(DecelerateInterpolator())
+                                .setInterpolator( DecelerateInterpolator(2f) )
                                 .duration = 300
-                        }
-                        fun check_view_position(){
-                            if (playerView.translationY != 0f){
-                                playerView_scroll_back()
-                            }
-                            if (root_secondary.translationY != 0f){
-                                root_secondary_scroll_back()
-                            }
                         }
                         //滚动结果
                         when (scroll_result){
