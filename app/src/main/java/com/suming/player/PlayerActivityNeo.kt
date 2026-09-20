@@ -724,8 +724,11 @@ class PlayerActivityNeo: AppCompatActivity() {
                     }
                     //回到视频起始
                     FragmentConnector.fragment_more_button_back_to_start -> {
+                        //回到视频起始
                         player?.seekTo(0)
                         player?.play()
+                        //取消playEnd标志
+                        PlayerSingleton.remove_state_playEnd()
 
                         //平滑滚动到进度条起始位置
                         syncScrollTask_Core_smoothSlowly_Compute(0, true)
@@ -2920,6 +2923,8 @@ class PlayerActivityNeo: AppCompatActivity() {
         //记录原播放状态
         playState_singleTap_wasPlaying = player?.isPlaying ?: false
 
+        //取消playEnd标志
+        PlayerSingleton.remove_state_playEnd()
         //发送跳转命令
         seekTo_Core(seekToMs, Mark_playerReadyFrom_SingleTapSeek)
         //平滑滚动到目标位置
