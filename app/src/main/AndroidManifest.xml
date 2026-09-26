@@ -48,7 +48,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
         android:hardwareAccelerated="true"
-        android:theme="@style/Theme.SpeedSpy"
+        android:theme="@style/BASIC_ACTIVITY"
         tools:replace="android:allowBackup"
         android:enableOnBackInvokedCallback="false"
         tools:ignore="UnusedAttribute">
@@ -57,7 +57,7 @@
 
         <!-- 主页 -->
         <activity android:name=".MainActivity"
-            android:theme="@style/THEME_BASIC"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:hardwareAccelerated="true"
             android:label="播放器"
             android:launchMode="singleTop"
@@ -75,7 +75,7 @@
 
         <!-- 隐私权限面板 -->
         <activity android:name=".PrivacyPermissionActivity"
-            android:theme="@style/THEME_BASIC"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:hardwareAccelerated="true"
             android:label="隐私和权限"
             android:exported="true"
@@ -122,7 +122,7 @@
 
         <!-- EntranceActivity -->
         <activity android:name=".EntranceActivity"
-            android:theme="@style/theme_general"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:label="播放器"
             android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|screenLayout"
@@ -177,7 +177,7 @@
 
         <!-- 设置 -->
         <activity android:name=".SettingsActivity"
-            android:theme="@style/THEME_FULL_SCREEN"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:screenOrientation="unspecified"
             android:label="设置"
             android:enableOnBackInvokedCallback="true"
@@ -185,7 +185,7 @@
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
         <!-- 指南和帮助 -->
         <activity android:name=".GuidanceActivity"
-            android:theme="@style/THEME_BASIC"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:screenOrientation="unspecified"
             android:label="指南和帮助"
             android:enableOnBackInvokedCallback="true"
@@ -194,7 +194,7 @@
 
         <!-- 设备信息 -->
         <activity android:name=".DeviceInfoActivity"
-            android:theme="@style/THEME_BASIC"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
             android:screenOrientation="unspecified"
             android:label="设备信息"
             android:enableOnBackInvokedCallback="true"
@@ -226,6 +226,14 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- OSS (新版无法指定主题) -->
+        <!--
+        <activity android:name="com.google.android.gms.oss.licenses.v2.OssLicensesMenuActivity"
+            android:exported="true"
+            />
+            OSS (新版无法指定主题) -->
+
         <!-- 播放控制广播接收器 -->
         <!--
         <receiver android:name=".PlayerActionReceiver"

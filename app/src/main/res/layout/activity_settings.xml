@@ -1943,11 +1943,28 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="100dp"
                 android:clickable="true"
                 android:text="撤回隐私政策同意"
                 android:textColor="@color/Text2"
                 android:textSize="12sp" />
+            <!--  超链接样式:开源许可  -->
+            <TextView
+                android:id="@+id/openSourceLicense"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_gravity="center"
+                android:clickable="true"
+                android:text="开放源代码许可"
+                android:textColor="@color/Text2"
+                android:textSize="12sp" />
+
+            <!--  底部占位  -->
+            <Space
+                android:layout_height="300dp"
+                android:layout_width="match_parent"
+                />
 
 
         </LinearLayout>

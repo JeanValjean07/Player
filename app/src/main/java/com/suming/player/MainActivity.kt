@@ -157,14 +157,14 @@ class MainActivity: AppCompatActivity() {
 
     }
 
-    override fun onNewIntent(newIntent: Intent?) {
-        super.onNewIntent(newIntent)
-        if (newIntent?.action != null){
-            when (newIntent.action) {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.action != null){
+            when (intent.action) {
                 //常规重复调用(来自EntranceActivity)
                 IntentRepo.ACTION_ENTRANCE_REQUEST -> {
                     //收到EntranceActivity委托的新 intent
-                    val URI_S_FP = newIntent.getStringExtra(IntentRepo.URI) ?: Undefined
+                    val URI_S_FP = intent.getStringExtra(IntentRepo.URI) ?: Undefined
                     if (URI_S_FP != Undefined) {
                         //启动播放(检查是否已在播放此媒体项)
                         val ongoing_URI_S_FP = PlayerSingleton.get_engine_ongoing_URI().second.toString()

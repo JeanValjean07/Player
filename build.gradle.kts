@@ -1,16 +1,32 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
 plugins {
+
+    //basic advanced (compose,room,oss)
+    alias(libs.plugins.compose.compiler) apply false
+    alias(libs.plugins.jetbrainsCompose) apply false
+    //basic traditional (kotlin,agp,ksp)
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
-    //Compose
-    alias(libs.plugins.compose.compiler) apply false
-    //ksp
-    id("com.google.devtools.ksp") version "2.3.2" apply false
+    alias(libs.plugins.ksp) apply false
 
 }
 
 buildscript {
+    repositories {
+        maven { url = uri("https://maven.aliyun.com/repository/releases") }
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/central") }
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://mirrors.cloud.tencent.com/maven/") }
+        maven { url = uri("https://mirrors.huaweicloud.com/repository/maven/") }
+        google()
+        mavenCentral()
+    }
+
     dependencies {
 
     }
+
+
 }

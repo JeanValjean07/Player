@@ -38,7 +38,7 @@ abstract class MediaStoreDataBase : RoomDatabase() {
                     MediaStoreDataBase::class.java,
                     "MediaStoreDB.db"
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(false)
                     .build().also { INSTANCE = it }
             }
     }

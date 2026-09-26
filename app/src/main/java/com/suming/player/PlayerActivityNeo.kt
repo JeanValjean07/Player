@@ -257,15 +257,15 @@ class PlayerActivityNeo: AppCompatActivity() {
 
     }
 
-    override fun onNewIntent(newIntent: Intent?) {
-        super.onNewIntent(newIntent)
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
         consoleLog("onNewIntent")
-        if (newIntent?.action != null){
-            when (newIntent.action) {
+        if (intent.action != null){
+            when (intent.action) {
                 //系统面板：分享
                 Intent.ACTION_SEND -> {
                     //获取原始链接
-                    val (URI, file_path) = detectOriginalInfo_fromIntent(newIntent)
+                    val (URI, file_path) = detectOriginalInfo_fromIntent(intent)
                     val currentUri = PlayerSingleton.get_engine_ongoing_URI().second
                     //判断是否是同一个视频
                     if (URI == currentUri){
@@ -279,7 +279,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                 }
                 //系统面板：选择其他应用打开
                 Intent.ACTION_VIEW -> {
-                    val (URI, file_path) = detectOriginalInfo_fromIntent(newIntent)
+                    val (URI, file_path) = detectOriginalInfo_fromIntent(intent)
                     val currentUri = PlayerSingleton.get_engine_ongoing_URI()
                     consoleLog("currentUri: $currentUri, URI: $URI")
                     //判断是否是同一个视频
@@ -296,7 +296,7 @@ class PlayerActivityNeo: AppCompatActivity() {
                 //常规重复调用(来自EntranceActivity)
                 IntentRepo.ACTION_NEW_INTENT -> {
                     consoleLog("onNewIntent ACTION_NEW_INTENT")
-                    val (URI, file_path) = detectOriginalInfo_fromIntent(newIntent)
+                    val (URI, file_path) = detectOriginalInfo_fromIntent(intent)
                     val ongoing_URI = PlayerSingleton.get_engine_ongoing_URI().second
                     consoleLog("onNewIntent -新的数据: URI:$URI, ongoing_URI:$ongoing_URI")
                     //判断是否是同一个视频

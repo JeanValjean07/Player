@@ -1,30 +1,21 @@
 plugins {
+    //basic advanced (compose,room,oss)
+    //alias(libs.plugins.oss.licenses)
+    //basic traditional
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-
-    //Compose
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.ksp)
 
-    //ksp
-    id("com.google.devtools.ksp")
 
 
 }
 
+@Suppress("DEPRECATION")
 android {
     namespace = "com.suming.player"
+    //编译sdk
     compileSdk = 37
-
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-        }
-    }
-
-    buildFeatures {
-        viewBinding = true
-        compose = true
-    }
 
     defaultConfig {
         applicationId = "com.suming.player"
@@ -35,11 +26,17 @@ android {
         versionCode = 26091801
         versionName = "3.7.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk{
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("x86_64")
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -47,17 +44,41 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+    packaging{
+        jniLibs{
+            useLegacyPackaging = true
+        }
+        dex{
+            useLegacyPackaging = true
+        }
+        resources{
+            excludes.add("META-INF/DEPENDENCIES")
+            excludes.add("fonts/**")
+        }
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    buildFeatures {
+        compose = true
+        viewBinding = true
+        aidl = true
+    }
+
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
 }
 
 dependencies {
 
 
-    implementation(libs.androidx.compose.ui.graphics)
     //ExoPlayer Media3
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
@@ -68,70 +89,51 @@ dependencies {
     //Exoplayer 音频解码器
 
 
+    //OkHttp
+    implementation("com.squareup.okhttp3:okhttp:5.5.0")
 
 
-
-
-    //Compose
-    implementation(platform("androidx.compose:compose-bom:2026.08.00"))
-    implementation("androidx.compose.runtime:runtime")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-core:1.7.8")
-    implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling")
+    //basic advanced (compose,room,oss,bybom,datastore)
+    implementation(platform(libs.compose.bom))
     implementation(libs.androidx.compose.remote.creation.core)
     implementation(libs.androidx.compose.foundation.foundation.layout)
-
-    //Room
-    implementation("androidx.room:room-runtime:2.8.4")
-    implementation("androidx.room:room-ktx:2.8.4")
     implementation(libs.androidx.library)
     implementation(libs.foundation.layout)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.core.animation)
-
-    //ksp
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.material)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.activity.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
     ksp("androidx.room:room-compiler:2.8.4")
+    implementation(libs.play.services.oss.licenses)
 
-    //RxJava RxKotlin RxAndroid (已停用)
-    //implementation("io.reactivex.rxjava3:rxjava:3.1.12")
-    //implementation("io.reactivex.rxjava3:rxkotlin:3.0.1")
-    //implementation("io.reactivex.rxjava3:rxandroid:3.0.2")
-
-    //LocalBroadcastManager (已废弃)
-    //implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
-
-    //Gson (暂未使用)
-    //implementation("com.google.code.gson:gson:2.14.0")
-
-    //图片加载库 (暂未使用:手搓方案还没到性能瓶颈,不使用库)
-    //Glide
-    //implementation("com.github.bumptech.glide:glide:5.0.9")
-    //annotationProcessor("com.github.bumptech.glide:compiler:5.0.9")
-    //coil
-    //implementation("io.coil-kt:coil:2.7.0")
-
-    //OkHttp
-    implementation("com.squareup.okhttp3:okhttp:5.5.0")
-
-    //Core
+    //basic traditional (kotlin,agp,ksp)
     implementation("androidx.fragment:fragment-ktx:1.9.0")
-
-    //Basic Core
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
     implementation(libs.androidx.paging.common)
     implementation(libs.androidx.leanback.paging)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.runtime.saved.instance.state)
     implementation(libs.androidx.tools.core)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.lifecycle.service)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.ui.android)
+    implementation(libs.androidx.material3.android)
+    implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.runtime)
+    implementation(libs.androidx.foundation.layout)
+
 }

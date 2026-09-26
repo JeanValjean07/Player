@@ -8,7 +8,6 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -56,7 +55,6 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.FuncionalPack.SettingsHelper
-import com.suming.player.PlayerSingleton
 import com.suming.player.ViewWidget.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -226,19 +224,21 @@ class SettingsActivity: AppCompatActivity() {
 
 
             }
-
-
-            //不再使用
-            /*
             //超链接：开放源代码许可
             val openSourceLicense = findViewById<TextView>(R.id.openSourceLicense)
             openSourceLicense.paint.isUnderlineText = true
             openSourceLicense.invalidate()
             openSourceLicense.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
+                //
+                //@Suppress("DEPRECATION")
+                //startActivity(Intent(context, com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java))
 
 
             }
+
+
+            /*
             //超链接：设备信息
             val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
             DeviceInfoPage.paint.isUnderlineText = true
