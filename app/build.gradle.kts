@@ -1,6 +1,6 @@
 plugins {
     //basic advanced (compose,room,oss)
-
+    //alias(libs.plugins.oss.licenses)
     //basic traditional
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -79,6 +79,7 @@ kotlin {
 dependencies {
 
 
+
     //ExoPlayer Media3
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
@@ -88,46 +89,40 @@ dependencies {
     implementation(libs.okhttp)
 
 
-
-    //basic advanced (compose,room,oss,bybom,datastore)
-    implementation(platform(libs.compose.bom))
-    ksp(libs.room.compiler)
-    implementation(libs.androidx.compose.remote.creation.core)
-    implementation(libs.androidx.compose.foundation.foundation.layout)
-    implementation(libs.androidx.library)
-    implementation(libs.androidx.datastore.core)
-    implementation(libs.androidx.core.animation)
+    //compose
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.ui)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
-    implementation(libs.compose.material.icons.extended)
-    implementation(libs.compose.ui)
-    implementation(libs.compose.material)
-    implementation(libs.compose.ui.tooling.preview)
-    implementation(libs.activity.compose)
-    implementation(libs.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.compose.connect.activity)   //activity的compose支持
+    implementation(libs.compose.connect.viewmodel)   //viewmodel的compose支持
+    implementation(platform(libs.compose.bom))   //自动版本匹配
+    implementation(libs.compose.extended.icons)   //图标扩展
+    //room
+    ksp(libs.room.compiler)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-
-
-    //basic traditional (kotlin,agp,ksp)
-    implementation(libs.fragment.ktx)
-    implementation(libs.androidx.paging.common)
-    implementation(libs.androidx.leanback.paging)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.runtime.saved.instance.state)
-    implementation(libs.androidx.tools.core)
+    //recyclerView
+    implementation(libs.androidx.paging.support.recycler.view)  //recyclerView的分页支持
+    //paging
+    implementation(libs.androidx.paging.core)  //分页核心库
+    //lifeCycle
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.lifecycle.service)
+    //datastore
+    implementation(libs.androidx.datastore.core)
+    //databinding
+    implementation(libs.androidx.databinding.runtime)
+    implementation(libs.androidx.databinding.core)
+    //fragment core (原则上自行选出)
+    implementation(libs.fragment.core.ktx)
+    //android core (原则上自行选出)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.ui.android)
-    implementation(libs.androidx.material3.android)
-    implementation(libs.androidx.compose.material)
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.runtime)
+    implementation(libs.androidx.core.activity)
+    implementation(libs.androidx.core.appcompat)
+    implementation(libs.androidx.core.view.constraint)
+    implementation(libs.androidx.core.view.animation)
+    implementation(libs.androidx.core.view.material)
+
 
 }

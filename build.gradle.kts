@@ -1,10 +1,7 @@
 
 plugins {
-
-    //basic advanced (compose,room,oss)
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.jetbrainsCompose) apply false
-    //basic traditional (kotlin,agp,ksp)
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.ksp) apply false

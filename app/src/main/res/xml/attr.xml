@@ -1,6 +1,6 @@
 <resources>
     <declare-styleable name="PlayerView">
-        <attr name="surface_type" format="string" />
+        <string-array name="surface_type" format="string" />
     </declare-styleable>
 
 
