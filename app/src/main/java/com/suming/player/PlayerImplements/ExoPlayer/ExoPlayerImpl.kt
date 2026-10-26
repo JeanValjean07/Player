@@ -14,6 +14,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DecoderReuseEvaluation
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.SeekParameters
@@ -25,7 +26,7 @@ import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.PlayerImplements.PlayerCallBack
 import com.suming.player.PlayerImplements.PlayerInterface
 import com.suming.player.R
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
+
 
 @UnstableApi
 class ExoPlayerImpl(context: Context) : PlayerInterface {
@@ -56,10 +57,11 @@ class ExoPlayerImpl(context: Context) : PlayerInterface {
 
     }
     private fun get_RendererFactory(context: Context): RenderersFactory = _rendererFactory ?: synchronized(this) {
-        _rendererFactory ?: NextRenderersFactory(context)
-            //允许解码器回退
-            .setEnableDecoderFallback(true)
-            .also { _rendererFactory = it }
+        _rendererFactory ?: synchronized(this) {
+            _rendererFactory ?: DefaultRenderersFactory(context)
+                .setEnableDecoderFallback(true)
+                .also { _rendererFactory = it }
+        }
     }
     private fun release_trackSelector(){
         //_trackSelector?.release()  //不知道为什么这一行执行会崩溃说线程错误

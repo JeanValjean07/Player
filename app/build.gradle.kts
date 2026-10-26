@@ -1,6 +1,6 @@
 plugins {
     //basic advanced (compose,room,oss)
-    //alias(libs.plugins.oss.licenses)
+
     //basic traditional
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -84,21 +84,17 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.transformer)
-    //Exoplayer ffmpeg  https://github.com/anilbeesetti
-    implementation("io.github.anilbeesetti:nextlib-media3ext:1.10.0-0.12.1")
-    //Exoplayer 音频解码器
-
-
     //OkHttp
-    implementation("com.squareup.okhttp3:okhttp:5.5.0")
+    implementation(libs.okhttp)
+
 
 
     //basic advanced (compose,room,oss,bybom,datastore)
     implementation(platform(libs.compose.bom))
+    ksp(libs.room.compiler)
     implementation(libs.androidx.compose.remote.creation.core)
     implementation(libs.androidx.compose.foundation.foundation.layout)
     implementation(libs.androidx.library)
-    implementation(libs.foundation.layout)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.core.animation)
     implementation(libs.compose.foundation)
@@ -112,11 +108,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    ksp("androidx.room:room-compiler:2.8.4")
-    implementation(libs.play.services.oss.licenses)
+
 
     //basic traditional (kotlin,agp,ksp)
-    implementation("androidx.fragment:fragment-ktx:1.9.0")
+    implementation(libs.fragment.ktx)
     implementation(libs.androidx.paging.common)
     implementation(libs.androidx.leanback.paging)
     implementation(libs.androidx.material3)
@@ -134,6 +129,5 @@ dependencies {
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.runtime)
-    implementation(libs.androidx.foundation.layout)
 
 }

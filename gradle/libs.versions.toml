@@ -1,7 +1,8 @@
 [versions]
-#addon  #ExoPlayer
+#addon
 media3 = "1.11.1"
 remoteCreationCore = "1.0.0-alpha20"
+okhttp = "5.5.1"
 #basic advanced (compose,room,oss)
 composeBom = "2026.09.00"
 activityCompose = "1.13.0"
@@ -9,10 +10,10 @@ lifecycleViewmodelCompose = "2.11.0"
 room = "2.8.5"
 play-services-oss-licenses = "17.5.2"
 #basic traditional (kotlin,agp,ksp)
-ksp = "2.3.2"
+ksp = "2.3.6"
 kotlin = "2.4.20"
 compose-plugin = "1.12.1"
-agp = "9.2.1"
+agp = "9.4.0"
 coreKtx = "1.19.1"
 appcompat = "1.8.0"
 material = "1.14.0"
@@ -35,21 +36,24 @@ lifecycleService = "2.11.0"
 library = "3.2.0-alpha11"
 datastoreCore = "1.2.1"
 coreAnimation = "1.0.0"
+fragment = "1.9.0"
 
 
 
 
 [libraries]
-#addon #ExoPlayer
+#addon
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
 androidx-media3-transformer = { group = "androidx.media3", name = "media3-transformer", version.ref = "media3" }
 androidx-compose-remote-creation-core = { group = "androidx.compose.remote", name = "remote-creation-core", version.ref = "remoteCreationCore" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 #basic advanced (compose,room,oss)
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
 play-services-oss-licenses = { group = "com.google.android.gms", name = "play-services-oss-licenses", version.ref = "play-services-oss-licenses" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
@@ -71,7 +75,6 @@ androidx-material3-android = { group = "androidx.compose.material3", name = "mat
 androidx-compose-material = { group = "androidx.wear.compose", name = "compose-material", version.ref = "composeMaterial" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
-androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-paging-common = { group = "androidx.paging", name = "paging-common", version.ref = "pagingCommon" }
 androidx-leanback-paging = { group = "androidx.leanback", name = "leanback-paging", version.ref = "leanbackPaging" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
@@ -80,7 +83,7 @@ androidx-tools-core = { group = "androidx.privacysandbox.tools", name = "tools-c
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
 androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
 androidx-library = { group = "androidx.databinding", name = "library", version.ref = "library" }
-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
 androidx-compose-foundation-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-core-animation = { group = "androidx.core", name = "core-animation", version.ref = "coreAnimation" }
