@@ -20,8 +20,8 @@ android {
         maxSdk = 37
         //noinspection OldTargetApi
         targetSdk = 36
-        versionCode = 26091801
-        versionName = "3.7.5"
+        versionCode = 26102701
+        versionName = "3.7.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk{
@@ -111,8 +111,6 @@ dependencies {
     //databinding
     implementation(libs.androidx.databinding.runtime)
     implementation(libs.androidx.databinding.core)
-    //fragment core (原则上自行选出)
-    implementation(libs.fragment.core.ktx)
     //android core (原则上自行选出)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.activity)
@@ -120,6 +118,7 @@ dependencies {
     implementation(libs.androidx.core.view.constraint)
     implementation(libs.androidx.core.view.animation)
     implementation(libs.androidx.core.view.material)
+    implementation(libs.fragment.core.ktx)
 
 
 }

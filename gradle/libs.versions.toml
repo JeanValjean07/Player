@@ -23,8 +23,6 @@ datastoreCore = "1.3.0"
 #databinding versions
 databinding-runtime = "9.4.1"
 databinding-common = "9.4.1"
-#core fragment versions
-fragment-core-ktx = "1.9.1"
 #core android versions
 androidx-core-ktx = "1.19.1"
 androidx-core-appcompat = "1.8.0"
@@ -32,6 +30,7 @@ androidx-core-view-material = "1.14.0"
 androidx-core-activity = "1.13.0"
 androidx-core-view-constraint = "2.2.2"
 androidx-core-view-animation = "1.0.0"
+fragment-core-ktx = "1.9.1"
 
 #KSP Special Sign
 ksp = "2.3.6"
