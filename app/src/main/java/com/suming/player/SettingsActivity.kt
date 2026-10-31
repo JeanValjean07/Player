@@ -43,7 +43,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
-import com.suming.player.ActivityComponent.OssPage.OssLicensePage
+import com.suming.player.ActivityComponent.OSS_LICENSE.OssLicensePage
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
@@ -232,9 +232,7 @@ class SettingsActivity: AppCompatActivity() {
             openSourceLicense.invalidate()
             openSourceLicense.setOnClickListener {
                 ToolVibrate.vibrate()
-                //
-                //@Suppress("DEPRECATION")
-                //startActivity(Intent(context, com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java))
+                //启动OSS页面
                 startActivity(Intent(context, OssLicensePage::class.java))
 
             }
@@ -1038,7 +1036,7 @@ class SettingsActivity: AppCompatActivity() {
                 result.onSuccess { file ->
                     progressText.text = "下载完成"
 
-                    delay(500)
+                    delay(500.milliseconds)
 
                     //发起安装
                     installApk(file)
@@ -1385,7 +1383,7 @@ class SettingsActivity: AppCompatActivity() {
         dialog.show()
         //自动弹出键盘程序
         CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
+            delay(300.milliseconds)
             EditText.requestFocus()
             @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
@@ -1534,7 +1532,7 @@ class SettingsActivity: AppCompatActivity() {
         dialog.show()
         //自动弹出键盘程序
         CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
+            delay(300.milliseconds)
             EditText.requestFocus()
             @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
@@ -1640,7 +1638,7 @@ class SettingsActivity: AppCompatActivity() {
         dialog.show()
         //自动弹出键盘程序
         CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
+            delay(300.milliseconds)
             EditText.requestFocus()
             @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
@@ -1757,7 +1755,7 @@ class SettingsActivity: AppCompatActivity() {
         dialog.show()
         //自动弹出键盘程序
         CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
+            delay(300.milliseconds)
             EditText.requestFocus()
             @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
@@ -1879,7 +1877,7 @@ class SettingsActivity: AppCompatActivity() {
         dialog.show()
         //自动弹出键盘程序
         CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
+            delay(300.milliseconds)
             EditText.requestFocus()
             @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
@@ -1982,7 +1980,7 @@ class SettingsActivity: AppCompatActivity() {
         dialog.show()
         //自动弹出键盘程序
         CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
+            delay(300.milliseconds)
             EditText.requestFocus()
             @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)

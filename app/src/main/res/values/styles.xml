@@ -2,7 +2,7 @@
 
 
 
-    <!-- 播放页主题(背景透明) -->
+    <!-- 背景透明 -->
     <style name="theme_transparent_background" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:fitsSystemWindows">false</item>
@@ -12,14 +12,14 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:backgroundDimEnabled">false</item>
     </style>
-    <!-- 常规页面主题 -->
+
+
+    <!-- 常规页面 -->
     <style name="theme_general" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:fitsSystemWindows">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
-    <!-- 全屏边到边主题 -->
-    <style name="THEME_FULL_SCREEN" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/color_primary</item>
+        <item name="colorPrimaryVariant">@color/color_primary_variant</item>
+        <item name="colorSecondary">@color/color_secondary</item>
+        <item name="android:windowBackground">@color/window_background</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:fitsSystemWindows">false</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
@@ -27,20 +27,7 @@
 
 
 
-    <!-- 可通用部分(到处复制) -->
-    <!-- Activity主题 -->
-    <!-- 基础Activity主题-保留顶栏 -->
-    <style name="BASIC_ACTIVITY" parent="Theme.Material3.DayNight">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:fitsSystemWindows">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
-    <!-- 基础Activity主题-移除顶栏 -->
-    <style name="BASIC_ACTIVITY_NO_BAR" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:fitsSystemWindows">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
+
 
     <!-- fragment基础主题 -->
     <style name="FullScreenDialog" parent="Theme.AppCompat.Light.Dialog">
@@ -62,13 +49,7 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
-    <!-- oss页面主题 (新版已不支持) -->
-    <style name="OSS_Google" parent="Theme.Material3.DayNight">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:ignore="NewApi">true</item>
-        <item name="android:fitsSystemWindows">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
+
 
 </resources>
 

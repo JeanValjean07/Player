@@ -8,11 +8,9 @@
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:ignore="PhotoAndVideoPolicy" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
-    <!-- 12及以下 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="AllFilesAccessPolicy,ScopedStorage" />
-
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
@@ -23,19 +21,8 @@
     <uses-permission android:name="android.permission.REORDER_TASKS"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.DOWNLOAD_FILES" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:ignore="RequestInstallPackagesPolicy" />
 
 
-
-    <!-- 废弃权限
-    //1.QUERY_ALL_PACKAGES 会被拒绝上架,必须在queries中指定要查询的包名
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore=",PackageVisibilityPolicy" />
-     -->
-
-    <queries>
-        <package android:name="com.google.android.gms" /> <!-- MicroG (跟gms一样的) -->
-
-    </queries>
 
 
     <application
@@ -48,7 +35,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
         android:hardwareAccelerated="true"
-        android:theme="@style/BASIC_ACTIVITY"
+        android:theme="@style/theme_general"
         tools:replace="android:allowBackup"
         android:enableOnBackInvokedCallback="false"
         tools:ignore="UnusedAttribute">
@@ -57,7 +44,7 @@
 
         <!-- 主页 -->
         <activity android:name=".MainActivity"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:hardwareAccelerated="true"
             android:label="播放器"
             android:launchMode="singleTop"
@@ -75,7 +62,7 @@
 
         <!-- 隐私权限面板 -->
         <activity android:name=".PrivacyPermissionActivity"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:hardwareAccelerated="true"
             android:label="隐私和权限"
             android:exported="true"
@@ -122,7 +109,7 @@
 
         <!-- EntranceActivity -->
         <activity android:name=".EntranceActivity"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:label="播放器"
             android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|screenLayout"
@@ -177,7 +164,7 @@
 
         <!-- 设置 -->
         <activity android:name=".SettingsActivity"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:screenOrientation="unspecified"
             android:label="设置"
             android:enableOnBackInvokedCallback="true"
@@ -185,7 +172,7 @@
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
         <!-- 指南和帮助 -->
         <activity android:name=".GuidanceActivity"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:screenOrientation="unspecified"
             android:label="指南和帮助"
             android:enableOnBackInvokedCallback="true"
@@ -194,7 +181,7 @@
 
         <!-- 设备信息 -->
         <activity android:name=".DeviceInfoActivity"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:theme="@style/theme_general"
             android:screenOrientation="unspecified"
             android:label="设备信息"
             android:enableOnBackInvokedCallback="true"
@@ -227,31 +214,17 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- OSS (新版无法指定主题) -->
-        <!--
-        <activity android:name="com.google.android.gms.oss.licenses.v2.OssLicensesMenuActivity"
-            android:exported="true"
-            />
-            OSS (新版无法指定主题) -->
+
         <!-- AboutLibraries -->
-        <activity android:name=".ActivityComponent.OssPage.OssLicensePage"
-            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+        <activity android:name=".ActivityComponent.OSS_LICENSE.OssLicensePage"
+            android:theme="@style/theme_general"
             android:screenOrientation="unspecified"
             android:label="开源许可证"
             android:enableOnBackInvokedCallback="true"
             android:exported="true"
             tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
 
-        <!-- 播放控制广播接收器 -->
-        <!--
-        <receiver android:name=".PlayerActionReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="PLAYER_PLAY"/>
-                <action android:name="PLAYER_PAUSE"/>
-            </intent-filter>
-        </receiver>
-         -->
+
         <!-- 媒体会话操作接收器(没用) -->
         <receiver
             android:name="androidx.media3.session.MediaButtonReceiver"

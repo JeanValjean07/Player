@@ -163,4 +163,13 @@
     <color name="Black">#FF000000</color>
     <color name="NullColor">#00000000</color>
 
+    <!-- 全局底色 -->
+    <color name="window_background">#FFFFFFFF</color>
+    <!-- 全局主题色 -->
+    <color name="color_primary">#FFD1C4E9</color>
+    <color name="color_primary_variant">#FFB39DDB</color>
+    <color name="color_secondary">#FFEDE7F6</color>
+
+
+
 </resources>

@@ -52,23 +52,47 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
     var ColorPack: ColorScheme
     //颜色指定
     val LightColorScheme = lightColorScheme(
-        //全局底色
+        //活动底色/全局底色  (与colors.xml中的全局底色保持一致)
+        background = Color(0xFFFFFFFF),
+        //组件底色  (与活动底色/全局底色保持一致)
         surface = Color(0xFFFFFFFF),
+
+        //一级和二级文字
+        onPrimary = Color.Red,
+        onSecondary = Color.Blue,
+        onSurface = Color.Yellow,
+        onSurfaceVariant = Color.Green,
+        onTertiary = Color.Cyan,
+        onPrimaryContainer = Color.Red,
+
+
         //一级和二级文字
         primary = Color(0xFF000000),
         secondary = Color(0xFF313131),
-        //活动底色
-        background = Color(0xFFFFFFFF),
+
         onBackground = Color(0xFFFFFFFF),
     )
     val DarkColorScheme = darkColorScheme(
-        //全局底色
-        surface = Color(0xFF000000),
+        //活动底色/全局底色  (与colors.xml中的全局底色保持一致)
+        background = Color(0xFF111111),
+        //组件底色  (与活动底色/全局底色保持一致)
+        surface = Color(0xFF111111),
+
+        //一级和二级文字
+        onPrimary = Color.Red,
+        onSecondary = Color.Blue,
+        onSurface = Color.Yellow,
+        onSurfaceVariant = Color.Green,
+        onTertiary = Color.Cyan,
+        tertiaryContainer = Color.Red,
+        onErrorContainer = Color.Red,
+
+
+
         //一级和二级文字
         primary = Color(0xFFFFFFFF),
         secondary = Color(0xFFF6F6F6),
-        //活动底色
-        background = Color(0xFF000000),
+
         onBackground = Color(0xFF212121),
     )
 
@@ -210,7 +234,7 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
     //顶部渐变区  v1
     @Composable
     fun BRUSH_AREA_TOP_c_v1(
-        modifier: Modifier = Modifier,color: Color = ColorPack.surface,
+        modifier: Modifier = Modifier,color: Color = ColorPack.background,
         statusBarHeight_Dp: Dp = ADVANCED_TOP_BAR_default_statusBar_height_Dp,content_Height_Dp: Dp = ADVANCED_TOP_BAR_content_height_Dp
     ) {
         Column {
@@ -253,7 +277,7 @@ class ComposeElementBundle (isDarkMode_o: Boolean) {
     //顶部渐变区  v2
     @Composable
     fun BRUSH_AREA_TOP_c_v2(
-        modifier: Modifier = Modifier,color: Color = ColorPack.surface,
+        modifier: Modifier = Modifier,color: Color = ColorPack.background,
         statusBarHeight_Dp: Dp = ADVANCED_TOP_BAR_default_statusBar_height_Dp,content_Height_Dp: Dp = ADVANCED_TOP_BAR_content_height_Dp
     ) {
         Column {
