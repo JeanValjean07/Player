@@ -6,6 +6,9 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.ksp) apply false
 
+    //AboutLibraries
+    id("com.mikepenz.aboutlibraries.plugin.android") version "15.3.0" apply false
+
 }
 
 buildscript {

@@ -37,7 +37,7 @@ import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.R
 import com.suming.player.FuncionalPack.SettingsCenter
-import com.suming.player.ViewWidget.CircleButton
+import com.suming.player.UI_SEG_View.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

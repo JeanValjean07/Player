@@ -31,7 +31,7 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:orientation="horizontal">
-            <com.suming.player.ViewWidget.CircleButton
+            <com.suming.player.UI_SEG_View.CircleButton
                 android:id="@+id/AppBarButton_Exit"
                 android:layout_width="50dp"
                 android:layout_height="50dp"

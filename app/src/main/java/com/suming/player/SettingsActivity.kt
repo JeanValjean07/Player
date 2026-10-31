@@ -43,6 +43,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
+import com.suming.player.ActivityComponent.OssPage.OssLicensePage
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
@@ -55,7 +56,7 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.FuncionalPack.SettingsHelper
-import com.suming.player.ViewWidget.CircleButton
+import com.suming.player.UI_SEG_View.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -69,6 +70,7 @@ import java.io.File
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("/unused","NewApi")
 @SuppressLint("InflateParams", "SetTextI18n")
@@ -111,12 +113,12 @@ class SettingsActivity: AppCompatActivity() {
     }
 
 
-    //注册
+    //注册事件
     private fun register(){
         lifecycleScope.launch(Dispatchers.Main) {
             //显示版本
             lifecycleScope.launch(Dispatchers.IO) {
-                delay(500)
+                delay(500.milliseconds)
                 //获取App版本号
                 if (AppVersion == null){
                     AppVersion = packageManager.getPackageInfo(packageName, 0).versionName
@@ -233,23 +235,18 @@ class SettingsActivity: AppCompatActivity() {
                 //
                 //@Suppress("DEPRECATION")
                 //startActivity(Intent(context, com.google.android.gms.oss.licenses.OssLicensesMenuActivity::class.java))
-
+                startActivity(Intent(context, OssLicensePage::class.java))
 
             }
-
-
-            /*
             //超链接：设备信息
             val DeviceInfoPage = findViewById<TextView>(R.id.DeviceInfoPage)
             DeviceInfoPage.paint.isUnderlineText = true
             DeviceInfoPage.invalidate()
             DeviceInfoPage.setOnClickListener {
-                ToolVibrate().vibrate(context)
+                ToolVibrate.vibrate()
+
                 startActivity(Intent(context, DeviceInfoActivity::class.java))
             }
-
-             */
-
 
 
         }
@@ -267,7 +264,7 @@ class SettingsActivity: AppCompatActivity() {
     private fun registerSettings(){
         lifecycleScope.launch(Dispatchers.Main) {
 
-            delay(20)
+            delay(20.milliseconds)
 
             //🥯通用设置
             //<editor-fold desc="////🥯通用设置">
@@ -518,7 +515,7 @@ class SettingsActivity: AppCompatActivity() {
                 dialog.show()
                 //自动弹出键盘程序
                 CoroutineScope(Dispatchers.Main).launch {
-                    delay(300)
+                    delay(300.milliseconds)
                     EditText.requestFocus()
                     @Suppress("DEPRECATION")
                     imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)

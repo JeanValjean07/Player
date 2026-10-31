@@ -25,7 +25,7 @@ import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
-import com.suming.player.ViewWidget.CircleButton
+import com.suming.player.UI_SEG_View.CircleButton
 
 @SuppressLint("NewApi")
 class PrivacyPermissionActivity: AppCompatActivity() {

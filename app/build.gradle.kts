@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
 
+    //AboutLibraries
+    id("com.mikepenz.aboutlibraries.plugin.android")
 
 
 }
@@ -20,8 +22,8 @@ android {
         maxSdk = 37
         //noinspection OldTargetApi
         targetSdk = 36
-        versionCode = 26102701
-        versionName = "3.7.6"
+        versionCode = 26103101
+        versionName = "3.7.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk{
@@ -75,6 +77,9 @@ kotlin {
 
 dependencies {
 
+    //AboutLibraries  (执行 ./gradlew :app:prepareLibraryDefinitionsDebug 生成到 build/generated/aboutLibraries/ 复制到res/raw )
+    implementation("com.mikepenz:aboutlibraries-compose-m3:15.3.0")
+
 
 
     //ExoPlayer Media3
@@ -91,6 +96,8 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.foundation)
     implementation(libs.compose.connect.activity)   //activity的compose支持
     implementation(libs.compose.connect.viewmodel)   //viewmodel的compose支持
     implementation(platform(libs.compose.bom))   //自动版本匹配

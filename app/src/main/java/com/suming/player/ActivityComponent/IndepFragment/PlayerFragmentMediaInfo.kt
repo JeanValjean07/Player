@@ -32,6 +32,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
@@ -80,11 +81,13 @@ import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.R
 import com.suming.player.FuncionalPack.SettingsCenter
+import com.suming.player.UI_SEG_Compose.ComposeElementBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 @UnstableApi
 @Suppress("NewApi","unused")
@@ -95,6 +98,8 @@ class PlayerFragmentMediaInfo: DialogFragment() {
         }
     }
 
+    //ComposeElementBundle
+    private lateinit var ComposeElementBundle: ComposeElementBundle
 
     //信息变量
     private var file_path = ""
@@ -302,7 +307,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
 
     private fun mainBusiness(){
         lifecycleScope.launch(Dispatchers.IO){
-            delay(700)
+            delay(700.milliseconds)
             //读取信息
             val MediaInfoPack = PlayerInfoCenter.GET_Media_FullMediaInfoPack()
             if (MediaInfoPack == null){
@@ -390,182 +395,80 @@ class PlayerFragmentMediaInfo: DialogFragment() {
 
     @Composable
     fun ComposeRoot() {
-        //在root中取颜色模式
-        isDarkMode = isSystemInDarkTheme()
-        ColorPack = if (isDarkMode) DarkColorScheme else LightColorScheme
+        //初始化颜色模式
+        val isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        //初始化组件仓库
+        ComposeElementBundle = ComposeElementBundle(isDarkMode)
+
+
         //使用Box作为根布局
         Box(modifier = Modifier
             .fillMaxSize()
-            .background(ColorPack.surface)
-        ) {
-            //顶部栏高度值
-            var topBarHeight by remember { mutableIntStateOf(300) }
-            val topPaddingDp = with(LocalDensity.current) {
-                topBarHeight.toDp()
-            }
+            .background(ComposeElementBundle.ColorPack.surface)
+        ){
 
-
-            //最底层
-
+            //缓存总高度值
+            var topBarHeight_Px by remember { mutableIntStateOf(300) }
+            val topBarHeight_Dp = with(LocalDensity.current) { topBarHeight_Px.toDp() }
 
             //内容层
-            ContentRoot(topPaddingDp)
+            ContentRoot(topBarHeight_Dp)
 
             //最顶层
-            BrushArea()
-            AdvancedTopBar(onHeightMeasured = { height ->
-                //更新内边距
-                topBarHeight = height
-            })
+            ComposeElementBundle.ADVANCED_TOP_BAR_c_v1_single(
+                onHeightMeasured = { height -> topBarHeight_Px = height },
+                modifier = Modifier,
+                statusBarHeight_Dp = 0.dp,
+                content = { ADVANCED_TOP_BAR_CONTENT() },
+            )
         }
     }
     private lateinit var ComposeRoot: ComposeView
     private val forceUpdate = mutableIntStateOf(0)
-    @OptIn(ExperimentalMaterial3Api::class)
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-    @Composable
-    fun AdvancedTopBar(onHeightMeasured: (height: Int) -> Unit) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .onGloballyPositioned { coordinates ->
-                    onHeightMeasured(coordinates.size.height)
+    @Composable //标题内容compose
+    fun ADVANCED_TOP_BAR_CONTENT(){
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            //退出按钮
+            ComposeElementBundle.CIRCLE_BUTTON_c_v1(
+                onClick = {
+                    ToolVibrate.vibrate()
+                    dismiss()
                 },
-            color = Color.Transparent,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ){
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(59.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    //左侧
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        //关闭按钮
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate.vibrate()
-                                dismiss() },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(start = 10.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Close,
-                                contentDescription = "关闭",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                        //标题文本
-                        Text(
-                            text = "媒体信息",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = ColorPack.primary,
-                            modifier = Modifier.padding(start = 0.dp)
-                        )
-                    }
-                    //右侧
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        //锁
-                        CircleButton(
-                            onClick = {
-                                ToolVibrate.vibrate()
-
-                                 },
-                            backgroundColor = ColorPack.background.copy(alpha = 0.99f),
-                            size = 40.dp,
-                            border = BorderStroke(
-                                width = 0.5.dp,
-                                color = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            modifier = Modifier.padding(end = 10.dp)
-                        ) {
-                            Icon(
-                                Icons.Filled.Lock,
-                                contentDescription = "锁定页面",
-                                modifier = Modifier.background(Color.Transparent),
-                                tint = ColorPack.secondary
-                            )
-                        }
-                    }
-                }
+                backgroundColor = ComposeElementBundle.ColorPack.background.copy(alpha = 0.99f),
+                size = 40.dp,
+                border = BorderStroke(
+                    width = 0.5.dp,
+                    color = Color.Gray.copy(alpha = 0.1f)
+                ),
+                modifier = Modifier.padding(start = 15.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "关闭",
+                    modifier = Modifier.background(Color.Transparent),
+                    tint = ComposeElementBundle.ColorPack.secondary
+                )
             }
+            //页面标题
+            Text(
+                text = "媒体信息",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = ComposeElementBundle.ColorPack.primary,
+                modifier = Modifier.padding(start = 0.dp)
+            )
         }
-    }
-    @Composable
-    fun CircleButton(onClick: () -> Unit,
-                     modifier: Modifier = Modifier,
-                     size: Dp = 30.dp,
-                     backgroundColor: Color = ColorPack.primary,
-                     gradient: Brush? = null,
-                     border: BorderStroke? = null,
-                     elevation: Dp = 3.dp,
-                     enabled: Boolean = true,
-                     content: @Composable () -> Unit ) {
-        val backgroundModifier = when {
-            gradient != null -> Modifier.background(gradient)
-            else -> Modifier.background(backgroundColor)
-        }
-        Box(
-            modifier = modifier
-                .size(size)
-                .shadow(
-                    elevation = elevation,
-                    shape = CircleShape,
-                    clip = false,
-                    spotColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f),
-                    ambientColor = androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.4f)
-                )
-                .then(if (border != null) Modifier.border(border, CircleShape) else Modifier)
-                .clip(CircleShape)
-                .then(backgroundModifier)
-                .clickable(
-                    enabled = enabled,
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(
-                        bounded = true,
-                        color = Color.Gray
-                    )
-                ) { onClick() },
-            contentAlignment = Alignment.Center,
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            content()
+
         }
     }
-    @Composable
-    fun BrushArea(modifier: Modifier = Modifier, height: Dp = 90.dp) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(height)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            ColorPack.surface.copy(alpha = 0.90f),
-                            ColorPack.surface.copy(alpha = 0.0f)
-                        ),
-                    )
-                )
-        )
-    }
-    @Composable
+    @Composable //内容层
     fun ContentRoot(topBarHeight: Dp) {
         Column(
             modifier = Modifier
@@ -578,7 +481,7 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             }
         }
     }
-    @Composable
+    @Composable //信息卡片
     fun Info(){
         Card(
             modifier = Modifier
@@ -593,63 +496,59 @@ class PlayerFragmentMediaInfo: DialogFragment() {
                 width = 0.5.dp,
                 color = Color.Gray.copy(alpha = 0.1f)
             ),
-            colors = CardDefaults.cardColors(containerColor = ColorPack.background)
+            colors = CardDefaults.cardColors(containerColor = ComposeElementBundle.ColorPack.background)
         ){
             Column(
                 modifier = Modifier.padding(horizontal = 15.dp, vertical = 15.dp).fillMaxWidth()
             ) {
 
-                    Text(text = "视频分辨率：$videoWidth x $videoHeight", color = ColorPack.secondary)
+                    Text(text = "视频分辨率：$videoWidth x $videoHeight", color = ComposeElementBundle.ColorPack.secondary)
                     Text(text = "\n")
-                    Text(text = "视频时长：${videoDuration.toLong() / 1000} 秒丨${FormatTime_withChar(videoDuration.toLong())}", color = ColorPack.secondary)
+                    Text(text = "视频时长：${videoDuration.toLong() / 1000} 秒丨${FormatTime_withChar(videoDuration.toLong())}", color = ComposeElementBundle.ColorPack.secondary)
                     Text(text = "\n")
                     //采集帧率
                     if (Fps_capture_MediaMetadataRetriever != 0f){
-                        Text(text =  "采集帧率：$Fps_capture_MediaMetadataRetriever FPS", color = ColorPack.secondary )
+                        Text(text =  "采集帧率：$Fps_capture_MediaMetadataRetriever FPS", color = ComposeElementBundle.ColorPack.secondary )
                         Text(text = "\n")
                     }
                     //视频实际帧率
-                    Text(text =  "实际帧率(轨道计算)：$Fps_real_int_MediaExtractor FPS" , color = ColorPack.secondary)
+                    Text(text =  "实际帧率(轨道计算)：$Fps_real_int_MediaExtractor FPS" , color = ComposeElementBundle.ColorPack.secondary)
                     Text(text = "\n")
-                    Text(text =  "实际帧率(播放器回报)：$Fps_real_float_ExoEngin FPS" , color = ColorPack.secondary)
+                    Text(text =  "实际帧率(播放器回报)：$Fps_real_float_ExoEngin FPS" , color = ComposeElementBundle.ColorPack.secondary)
                     Text(text = "\n")
-                    Text(text = "视频编码：$videoMimeType", color = ColorPack.secondary)
+                    Text(text = "视频编码：$videoMimeType", color = ComposeElementBundle.ColorPack.secondary)
                     Text(text = "\n")
-                    Text(text = "视频码率：${videoBitrate.toLong() / 1000} kbps", color = ColorPack.secondary)
+                    Text(text = "视频码率：${videoBitrate.toLong() / 1000} kbps", color = ComposeElementBundle.ColorPack.secondary)
                     Text(text = "\n")
-                    Text(text = "视频文件名：$videoFileName", color = ColorPack.secondary)
+                    Text(text = "视频文件名：$videoFileName", color = ComposeElementBundle.ColorPack.secondary)
                     Text(text = "\n")
                     //视频标题
                     if (videoTitle.isBlank()) {
-                        Text(text = "视频标题：未写入此条元数据", color = ColorPack.secondary)
+                        Text(text = "视频标题：未写入此条元数据", color = ComposeElementBundle.ColorPack.secondary)
                     } else {
-                        Text(text = "视频标题：$videoTitle", color = ColorPack.secondary)
+                        Text(text = "视频标题：$videoTitle", color = ComposeElementBundle.ColorPack.secondary)
                     }
                     Text(text = "\n")
                     //视频艺术家
                     if (videoArtist.isBlank()) {
-                        Text(text = "视频艺术家：未写入此条元数据", color = ColorPack.secondary)
+                        Text(text = "视频艺术家：未写入此条元数据", color = ComposeElementBundle.ColorPack.secondary)
                     } else {
-                        Text(text = "视频艺术家：$videoArtist", color = ColorPack.secondary)
+                        Text(text = "视频艺术家：$videoArtist", color = ComposeElementBundle.ColorPack.secondary)
                     }
                     Text(text = "\n")
                     //视频日期
                     if (videoDate == "19040101T000000.000Z") {
-                        Text(text = "视频日期：未写入此条元数据", color = ColorPack.secondary)
+                        Text(text = "视频日期：未写入此条元数据", color = ComposeElementBundle.ColorPack.secondary)
                     } else {
-                        Text(text = "视频日期：$videoDate",color = ColorPack.secondary)
+                        Text(text = "视频日期：$videoDate",color = ComposeElementBundle.ColorPack.secondary)
                     }
 
             }
         }
 
     }
-    //自定义阴影
-    @Suppress("DEPRECATION")
-    fun Modifier.uniformShadow(
-        blurRadius: Float = 15f,
-        shadowColor: Color = Color.Black.copy(alpha = 0.1f)
-    ) = this.drawBehind {
+    @Suppress("DEPRECATION") //自定义阴影
+    fun Modifier.uniformShadow(blurRadius: Float = 15f, shadowColor: Color = Color.Black.copy(alpha = 0.1f)) = this.drawBehind {
         drawIntoCanvas { canvas ->
             val paint = Paint().apply {
                 color = shadowColor
@@ -670,28 +569,6 @@ class PlayerFragmentMediaInfo: DialogFragment() {
             )
         }
     }
-    //composable颜色配置
-    private var isDarkMode: Boolean = false
-    private lateinit var ColorPack: ColorScheme
-    private val LightColorScheme = lightColorScheme(
-        //全局底色
-        surface = Color(0xFFFFFFFF),
-        //一级和二级文字
-        primary = Color(0xFF000000),
-        secondary = Color(0xFF313131),
-        //卡片底色
-        background = Color(0xFFFFFFFF),
-
-        )
-    private val DarkColorScheme = darkColorScheme(
-        //全局底色
-        surface = Color(0xFF181818),
-        //一级和二级文字
-        primary = Color(0xFFFFFFFF),
-        secondary = Color(0xFFF6F6F6),
-        //卡片底色
-        background = Color(0xFF121212),
-    )
 
 
 

@@ -65,7 +65,7 @@ import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.SystemListener
 import com.suming.player.FuncionalPack.SettingsCenter
-import com.suming.player.ViewWidget.CircleButton
+import com.suming.player.UI_SEG_View.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

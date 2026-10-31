@@ -32,7 +32,7 @@
             android:layout_height="60dp"
             android:orientation="horizontal">
 
-            <com.suming.player.ViewWidget.CircleButton
+            <com.suming.player.UI_SEG_View.CircleButton
                 android:id="@+id/buttonExit"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
@@ -1925,16 +1925,23 @@
             </androidx.cardview.widget.CardView>
 
 
+            <!--  间隔占位  -->
+            <Space
+                android:layout_height="100dp"
+                android:layout_width="match_parent"
+                />
+
+
             <!--  超链接样式:设备信息  -->
             <TextView
                 android:id="@+id/DeviceInfoPage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="30dp"
+                android:layout_marginTop="5dp"
                 android:clickable="true"
                 android:text="设备信息"
-                android:visibility="gone"
+                android:visibility="visible"
                 android:textColor="@color/Text2"
                 android:textSize="12sp" />
             <!--  超链接样式:撤回隐私同意  -->
@@ -1943,7 +1950,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="100dp"
+                android:layout_marginTop="5dp"
                 android:clickable="true"
                 android:text="撤回隐私政策同意"
                 android:textColor="@color/Text2"
@@ -1960,9 +1967,10 @@
                 android:textColor="@color/Text2"
                 android:textSize="12sp" />
 
-            <!--  底部占位  -->
+
+            <!--  间隔占位  -->
             <Space
-                android:layout_height="300dp"
+                android:layout_height="100dp"
                 android:layout_width="match_parent"
                 />
 

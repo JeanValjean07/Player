@@ -68,7 +68,7 @@
 
 
         <!-- 横滑按钮区 -->
-        <com.suming.player.ViewWidget.HorizontalScrollArea
+        <com.suming.player.UI_SEG_View.HorizontalScrollArea
             android:layout_width="0dp"
             android:layout_height="30dp"
             app:layout_constraintStart_toEndOf="@+id/ivThumbCard"
@@ -169,7 +169,7 @@
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 
-        </com.suming.player.ViewWidget.HorizontalScrollArea>
+        </com.suming.player.UI_SEG_View.HorizontalScrollArea>
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

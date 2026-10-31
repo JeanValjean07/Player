@@ -459,7 +459,7 @@
             android:layout_height="50dp"
             android:orientation="horizontal">
             <!-- 按钮：退出 -->
-            <com.suming.player.ViewWidget.CircleButton
+            <com.suming.player.UI_SEG_View.CircleButton
                 android:id="@+id/ButtonExit"
                 android:layout_width="50dp"
                 android:layout_height="50dp"

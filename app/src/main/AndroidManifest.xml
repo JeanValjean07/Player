@@ -233,6 +233,14 @@
             android:exported="true"
             />
             OSS (新版无法指定主题) -->
+        <!-- AboutLibraries -->
+        <activity android:name=".ActivityComponent.OssPage.OssLicensePage"
+            android:theme="@style/BASIC_ACTIVITY_NO_BAR"
+            android:screenOrientation="unspecified"
+            android:label="开源许可证"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="true"
+            tools:ignore="DiscouragedApi,LockedOrientationActivity"/>
 
         <!-- 播放控制广播接收器 -->
         <!--

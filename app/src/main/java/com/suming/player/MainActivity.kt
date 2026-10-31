@@ -80,7 +80,7 @@ import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SearchHelper
 import com.suming.player.FuncionalPack.SettingsCenter
-import com.suming.player.ViewWidget.CircleButton
+import com.suming.player.UI_SEG_View.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -90,6 +90,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("NewApi","/unused")
 @OptIn(UnstableApi::class)
@@ -141,7 +142,7 @@ class MainActivity: AppCompatActivity() {
 
         //发起列表读取(8秒后才开始)
         lifecycleScope.launch(Dispatchers.IO) {
-            delay(8000)
+            delay(8000.milliseconds)
             ListManagerHelper.GET_AudioList_fromDataBase()
             ListManagerHelper.GET_VideoList_fromDataBase()
         }
@@ -265,7 +266,7 @@ class MainActivity: AppCompatActivity() {
     //注册Fragment监听器
     private fun registerFragment(){
         lifecycleScope.launch (Dispatchers.Main) {
-            delay(500)
+            delay(500.milliseconds)
             //视频媒体库设置返回值
             supportFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_video_store_setting, this@MainActivity) { _, bundle ->
                 val ReceiveKey = bundle.getString(FragmentConnector.receive_key)
@@ -315,7 +316,7 @@ class MainActivity: AppCompatActivity() {
     //注册界面控件
     private fun register() {
         lifecycleScope.launch (Dispatchers.Main) {
-            delay(300)
+            delay(300.milliseconds)
 
             //按钮：指南
             val Button_Guidance = findViewById<CircleButton>(R.id.Button_Guidance)
@@ -415,7 +416,7 @@ class MainActivity: AppCompatActivity() {
                     if (savedInstanceState == null) {
                         //首次启动
 
-                        delay(200)
+                        delay(200.milliseconds)
 
                         //检查启动来源是否EntranceActivity委托
                         val action = intent.action ?: Undefined
@@ -838,7 +839,7 @@ class MainActivity: AppCompatActivity() {
         dialog.show()
         //自动弹出键盘程序
         CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
+            delay(300.milliseconds)
             EditText.requestFocus()
             @Suppress("DEPRECATION")
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
@@ -1182,7 +1183,7 @@ class MainActivity: AppCompatActivity() {
                 var cardWidth = PlayingCard_Artwork.width
                 //确保获取到正确的宽高(待添加退避措施)
                 do {
-                    delay(10)
+                    delay(10.milliseconds)
                     cardHeight = PlayingCard_Artwork.height
                     cardWidth = PlayingCard_Artwork.width
                 } while (cardWidth == 0)

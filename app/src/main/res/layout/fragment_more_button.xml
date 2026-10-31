@@ -50,7 +50,7 @@
                     android:clickable="true"
                     android:orientation="horizontal">
                     <!-- 按钮：退出 -->
-                    <com.suming.player.ViewWidget.CircleButton
+                    <com.suming.player.UI_SEG_View.CircleButton
                         android:id="@+id/buttonExit"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
@@ -78,7 +78,7 @@
 
 
                     <!-- 横滑按钮区 -->
-                    <com.suming.player.ViewWidget.HorizontalScrollArea
+                    <com.suming.player.UI_SEG_View.HorizontalScrollArea
                         android:layout_width="0dp"
                         android:layout_height="35dp"
                         android:layout_gravity="center|end"
@@ -143,7 +143,7 @@
                                 android:src="@drawable/ic_more_button_lock_off"
                                 tools:ignore="ContentDescription" />
                         </LinearLayout>
-                    </com.suming.player.ViewWidget.HorizontalScrollArea>
+                    </com.suming.player.UI_SEG_View.HorizontalScrollArea>
 
                 </LinearLayout>
             </FrameLayout>

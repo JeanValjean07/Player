@@ -1,4 +1,4 @@
-package com.suming.player.ViewWidget
+package com.suming.player.UI_SEG_View
 
 import android.annotation.SuppressLint
 import android.content.Context

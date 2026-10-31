@@ -78,7 +78,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
             <!-- 悬浮返回键 -->
-            <com.suming.player.ViewWidget.CircleButton
+            <com.suming.player.UI_SEG_View.CircleButton
                 android:id="@+id/TopBarArea_ButtonExit"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
@@ -99,7 +99,7 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"/>
             <!-- 按钮：更多选项 -->
-            <com.suming.player.ViewWidget.CircleButton
+            <com.suming.player.UI_SEG_View.CircleButton
                 android:id="@+id/TopBarArea_ButtonMoreOptions"
                 android:layout_width="50dp"
                 android:layout_height="50dp"

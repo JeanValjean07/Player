@@ -1,4 +1,4 @@
-package com.suming.player.ViewWidget
+package com.suming.player.UI_SEG_View
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -11,8 +11,6 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
-import android.os.Handler
-import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
@@ -32,6 +30,7 @@ class CircleButton @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ):View(context, attrs, defStyleAttr) {
+
     //画笔
     private var mainPaint: Paint? = null
     private var shadowPaint: Paint? = null

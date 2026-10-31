@@ -258,7 +258,7 @@
                             android:layout_weight="1"/>
 
                         <!-- 搜索按钮 -->
-                        <com.suming.player.ViewWidget.CircleButton
+                        <com.suming.player.UI_SEG_View.CircleButton
                             android:id="@+id/Button_Search"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
@@ -272,7 +272,7 @@
                             app:shadowOffset="4dp"
                             app:shadowRadius="8dp" />
                         <!-- 指南按钮 -->
-                        <com.suming.player.ViewWidget.CircleButton
+                        <com.suming.player.UI_SEG_View.CircleButton
                             android:id="@+id/Button_Guidance"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
@@ -286,7 +286,7 @@
                             app:shadowOffset="4dp"
                             app:shadowRadius="8dp" />
                         <!-- 设置按钮 -->
-                        <com.suming.player.ViewWidget.CircleButton
+                        <com.suming.player.UI_SEG_View.CircleButton
                             android:id="@+id/Button_Options"
                             android:layout_width="40dp"
                             android:layout_height="40dp"

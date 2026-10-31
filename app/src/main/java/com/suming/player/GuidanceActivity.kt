@@ -28,7 +28,7 @@ import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.FuncionalPack.Animations
 import com.suming.player.FuncionalPack.DeviceInfo
-import com.suming.player.ViewWidget.CircleButton
+import com.suming.player.UI_SEG_View.CircleButton
 
 @Suppress("NewApi")
 class GuidanceActivity: AppCompatActivity() {
