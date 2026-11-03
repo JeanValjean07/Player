@@ -57,19 +57,34 @@ object ArtworkCapturer {
 
 
     // timeUs: Long 微秒时间 / option: 截取策略 / needCheckDark: 是否检查黑屏 / needCompress: 是否需要压缩优化图片
-    suspend fun captureFrameInVideo( context: Context,
-        uri: Uri,
-        videoDurationUs: Long,
-        timeUs: Long,
-        option: Int,
-        needCheckDark: Boolean = false,
-        needCompress: Boolean = false ): Bitmap? {
+    suspend fun captureFrameInVideo(
+        context: Context, uri: Uri, videoDurationUs: Long, timeUs: Long, option: Int,
+        needCheckDark: Boolean = false, needCompress: Boolean = false
+    ): Bitmap? {
         return mutex_video.withLock {
             try {
                 //检查是否需要替换数据源
                 if (uri.toString() != current_video_uriString) {
                     initRetrieverVideo(context, uri)
                 }
+
+                //获取内嵌封面信息
+                val embeddedBytes = retriever_video.embeddedPicture
+                if (embeddedBytes != null) {
+                    val embeddedBitmap = BitmapFactory.decodeByteArray(embeddedBytes, 0, embeddedBytes.size)
+                    if (embeddedBitmap != null) {
+                        // 如果内嵌封面也需要压缩/裁剪，复用原有逻辑
+                        var result = embeddedBitmap
+                        if (needCompress) {
+                            result = processCenterCropForVideo(result)
+                            if (result !== embeddedBitmap) {
+                                embeddedBitmap.recycle()
+                            }
+                        }
+                        return@withLock result
+                    }
+                }
+
 
                 //截取帧
                 var bitmap = retriever_video.getFrameAtTime(timeUs, option)

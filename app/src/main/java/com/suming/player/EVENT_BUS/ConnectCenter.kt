@@ -1,4 +1,4 @@
-package com.suming.player.FuncionalPack
+package com.suming.player.EVENT_BUS
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,11 +11,11 @@ object ConnectCenter {
     const val connector_event_cover_frame_update = "connector_event_cover_frame_update"
     private var coverFrameUpdateEvent_targetFilePath: String = ""
     private var coverFrameUpdateEvent_targetMediaId: Long = 0
-    fun setCoverFrameUpdateEvent_targetFileInfo(filePath: String, mediaId: Long){
+    fun setCoverFrameUpdateEvent_targetFileInfo11111(filePath: String, mediaId: Long){
         coverFrameUpdateEvent_targetFilePath = filePath
         coverFrameUpdateEvent_targetMediaId = mediaId
     }
-    fun getCoverFrameUpdateEvent_targetFileInfo(): Pair<String, Long>{
+    fun getCoverFrameUpdateEvent_targetFileInfo11111(): Pair<String, Long>{
         val cache = Pair(coverFrameUpdateEvent_targetFilePath, coverFrameUpdateEvent_targetMediaId)
 
         coverFrameUpdateEvent_targetFilePath = ""

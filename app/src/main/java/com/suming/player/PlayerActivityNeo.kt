@@ -88,12 +88,15 @@ import com.suming.player.ActivityComponent.PlayerActivity.S_Area_Helper
 import com.suming.player.ActivityComponent.PlayerActivity.SmoothScroller
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.EVENT_BUS.AppEvent
+import com.suming.player.EVENT_BUS.AppEventList
 import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkCapturer
 import com.suming.player.FuncionalPack.ArtworkFrameManager
-import com.suming.player.FuncionalPack.ConnectCenter
+import com.suming.player.EVENT_BUS.ConnectCenter
+import com.suming.player.EVENT_BUS.EventBus_Embedded
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.FrameExtractor
@@ -122,6 +125,7 @@ import kotlin.math.absoluteValue
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.time.Duration.Companion.milliseconds
 
 @UnstableApi
 @Suppress("NewApi","/unused")
@@ -634,7 +638,7 @@ class PlayerActivityNeo: AppCompatActivity() {
         }
         //自动弹出键盘
         CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
+            delay(300.milliseconds)
             EditText.setSelection(Editable.length)
             EditText.requestFocus()
             imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
@@ -2071,7 +2075,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             val file_path = PlayerInfoCenter.GET_Media_FilePath()
 
             //发布完成消息
-            updateCoverFrame_publishMessage(file_path, media_api_id)
+            updateCoverFrame_publishMessage(media_api_id)
 
             showCustomToast("截取封面完成", 3)
 
@@ -2117,14 +2121,19 @@ class PlayerActivityNeo: AppCompatActivity() {
         val file_path = PlayerInfoCenter.GET_Media_FilePath()
 
         //发布完成消息
-        updateCoverFrame_publishMessage(file_path, media_api_id)
+        updateCoverFrame_publishMessage(media_api_id)
 
 
         showCustomToast("已完成", 3)
     }
-    private fun updateCoverFrame_publishMessage(file_path:String, media_api_id: Long) {
-        ConnectCenter.setCoverFrameUpdateEvent_targetFileInfo(file_path, media_api_id)
-        ConnectCenter.setState_connector(ConnectCenter.connector_event_cover_frame_update)
+    private fun updateCoverFrame_publishMessage(media_api_id: Long) {
+        //发布完成消息
+        EventBus_Embedded.emit(AppEvent(
+            event = AppEventList.app_event_c_cover_frame_updated,
+            eventSlotLong = media_api_id,
+            eventSlotInt = 1,
+        ))
+
     }
     private fun deleteCustomCover() {
         //获取当前视频ID
@@ -2143,7 +2152,7 @@ class PlayerActivityNeo: AppCompatActivity() {
             withContext(Dispatchers.Main){
                 if (success){
                     //刷新封面
-                    updateCoverFrame_publishMessage(file_path, NUM_ID)
+                    updateCoverFrame_publishMessage(NUM_ID)
 
                     showCustomToast("删除成功", 3)
                 }else{

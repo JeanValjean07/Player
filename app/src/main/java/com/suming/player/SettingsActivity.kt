@@ -49,6 +49,9 @@ import com.suming.player.AddonTools.showCustomToast
 import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
 import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.ReleaseInfo
+import com.suming.player.EVENT_BUS.AppEvent
+import com.suming.player.EVENT_BUS.AppEventList
+import com.suming.player.EVENT_BUS.EventBus_Embedded
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.DownloadManager
@@ -56,6 +59,8 @@ import com.suming.player.FuncionalPack.MediaRecordManager
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.FuncionalPack.SettingsHelper
+import com.suming.player.UI_SEG_FUNCTION.UI_FUNCTION
+import com.suming.player.UI_SEG_FUNCTION.ValidationResult
 import com.suming.player.UI_SEG_View.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,6 +84,8 @@ class SettingsActivity: AppCompatActivity() {
 
     //context
     private val context: Context = this@SettingsActivity
+    //UI_FUNCTION
+    val UI_FUNCTION = UI_FUNCTION()
 
     @SuppressLint("SetTextI18n", "QueryPermissionsNeeded", "UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -476,7 +483,7 @@ class SettingsActivity: AppCompatActivity() {
                 val dialog = Dialog(context).apply {
                     window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
                 }
-                val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
+                val dialogView = LayoutInflater.from(context).inflate(R.layout.base_dialog_input_v1_value_single, null)
                 dialog.setContentView(dialogView)
                 val title: TextView = dialogView.findViewById(R.id.dialog_title)
                 val Description: TextView = dialogView.findViewById(R.id.dialog_description)
@@ -1342,7 +1349,7 @@ class SettingsActivity: AppCompatActivity() {
         val dialog = Dialog(context).apply {
             window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         }
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.base_dialog_input_v1_value_single, null)
         dialog.setContentView(dialogView)
 
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
@@ -1492,7 +1499,7 @@ class SettingsActivity: AppCompatActivity() {
         val dialog = Dialog(context).apply {
             window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         }
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.base_dialog_input_v1_value_single, null)
         dialog.setContentView(dialogView)
 
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
@@ -1594,7 +1601,7 @@ class SettingsActivity: AppCompatActivity() {
         val dialog = Dialog(context).apply {
             window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         }
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.base_dialog_input_v1_value_single, null)
         dialog.setContentView(dialogView)
 
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
@@ -1716,7 +1723,7 @@ class SettingsActivity: AppCompatActivity() {
         val dialog = Dialog(context).apply {
             window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         }
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.base_dialog_input_v1_value_single, null)
         dialog.setContentView(dialogView)
 
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
@@ -1833,55 +1840,27 @@ class SettingsActivity: AppCompatActivity() {
 
     }
     private fun set_audio_syncSeekBar_updateMs_input() {
-        val dialog = Dialog(context).apply {
-            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-        }
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
-        dialog.setContentView(dialogView)
-
-        val title: TextView = dialogView.findViewById(R.id.dialog_title)
-        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
-        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-        val Button: Button = dialogView.findViewById(R.id.dialog_button)
-        title.text = "自定义进度条更新间隔"
-        Description.text = "仅控制进度条自主滚动时的更新间隔"
-        EditText.hint = "以毫秒为单位"
-        Button.text = "确定"
-
-        val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        Button.setOnClickListener {
-            val input = EditText.text.toString().toLongOrNull()
-            if (input == null) {
-                showCustomToast("未输入内容", 3)
-
-                return@setOnClickListener
+        UI_FUNCTION.show_number_input_Dialog_v1_v2 (
+            context = context,
+            ui_title = "自定义进度条更新间隔",
+            ui_description = "仅控制进度条自主滚动时的更新间隔",
+            ui_hint = "以毫秒为单位",
+            ui_button_text = "确定",
+            validate = { inputValue ->
+                when {
+                    inputValue < 0L -> ValidationResult.Reject("时间更新间隔不能小于0")
+                    inputValue > 3000L -> ValidationResult.Reject("时间更新间隔不能大于3秒")
+                    else -> ValidationResult.Ok
+                }
+            },
+            onValid = { inputValue ->
+                //执行设置写入
+                choose_audio_syncSeekBar_updateMs_Core(inputValue.toLong())
+            },
+            onReject = { message ->
+                showCustomToast(message, 3)
             }
-            if (input < 0L) {
-                showCustomToast("时间更新间隔不能小于0", 3)
-
-                return@setOnClickListener
-            }
-            if (input > 3000){
-                showCustomToast("时间更新间隔不能大于3秒", 3)
-
-                return@setOnClickListener
-            }
-
-            //输入检查完成
-            choose_audio_syncSeekBar_updateMs_Core(input)
-
-
-            dialog.dismiss()
-
-        }
-        dialog.show()
-        //自动弹出键盘程序
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(300.milliseconds)
-            EditText.requestFocus()
-            @Suppress("DEPRECATION")
-            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-        }
+        )
     }
     private fun update_audio_syncSeekBar_updateMS_Text() {
         val ButtonText_audioSeekBar_updateMs = findViewById<TextView>(R.id.ButtonText_audioSeekBar_updateMs)
@@ -1932,59 +1911,36 @@ class SettingsActivity: AppCompatActivity() {
     }
     //MiniView底部抬高高度设置
     private fun setMiniViewBottomPadding(){
-        val dialog = Dialog(context).apply { window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable()) }
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_value, null)
-        dialog.setContentView(dialogView)
-
-        val current_height = SettingsCenter.get_value_MiniView_BottomPadding_Dp()
-
-        val title: TextView = dialogView.findViewById(R.id.dialog_title)
-        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
-        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-        val Button: Button = dialogView.findViewById(R.id.dialog_button)
-        title.text = "设置MiniView底部抬高高度"
-        Description.text = "以Dp为单位"
-        EditText.hint = "当前为 ${current_height}"
-        Button.text = "确定"
-
-        val imm = context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        Button.setOnClickListener {
-            val input_value = EditText.text.toString().toIntOrNull()
-            //未输入时拒绝
-            if (input_value == null) {
-                showCustomToast("未输入内容", 3)
-                dialog.dismiss()
-                return@setOnClickListener
+        //读取当前高度
+        val current_height_Dp = SettingsCenter.get_value_MiniView_BottomPadding_Dp()
+        //显示弹窗
+        UI_FUNCTION.show_number_input_Dialog_v1_v2 (
+            context = context,
+            ui_title = "设置MiniView底部抬高高度",
+            ui_description = "应设置在 0 Dp 到 50 Dp 之间",
+            ui_hint = "当前为 $current_height_Dp Dp",
+            ui_button_text = "确定",
+            validate = { v ->
+                when {
+                    v < 0 -> ValidationResult.Reject("高度不能小于0")
+                    v > 50 -> ValidationResult.Reject("高度不能大于 50 Dp")
+                    else -> ValidationResult.Ok
+                }
+            },
+            onValid = { inputValue ->
+                //执行设置写入
+                SettingsCenter.set_value_MiniView_BottomPadding_Dp(inputValue)
+                //发布设置高度消息
+                EventBus_Embedded.emit(AppEvent(
+                    event = AppEventList.app_event_c_miniview_padding_updated,
+                    eventSlotInt = inputValue,
+                ))
+            },
+            onReject = { message ->
+                showCustomToast(message, 3)
             }
-            //负值时拒绝
-            if (input_value < 0) {
-                showCustomToast("不支持此高度值", 3)
-                dialog.dismiss()
-                return@setOnClickListener
-            }
-            //大于100时拒绝
-            if (input_value > 100) {
-                showCustomToast("不支持高于100 Dp", 3)
-                dialog.dismiss()
-                return@setOnClickListener
-            }
+        )
 
-
-            //执行设置写入
-            SettingsCenter.set_value_MiniView_BottomPadding_Dp(input_value)
-
-
-            dialog.dismiss()
-
-        }
-        dialog.show()
-        //自动弹出键盘程序
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(300.milliseconds)
-            EditText.requestFocus()
-            @Suppress("DEPRECATION")
-            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-        }
     }
     //</editor-fold>
 

@@ -990,7 +990,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         val dialog = Dialog(requireContext()).apply {
             window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         }
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_input_value, null)
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.base_dialog_input_v1_value_single, null)
         dialog.setContentView(dialogView)
         val title: TextView = dialogView.findViewById(R.id.dialog_title)
         val Description: TextView = dialogView.findViewById(R.id.dialog_description)

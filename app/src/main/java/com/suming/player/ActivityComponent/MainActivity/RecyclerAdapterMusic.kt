@@ -15,6 +15,7 @@ import androidx.core.net.toUri
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
 import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
 import com.suming.player.FuncionalPack.Animations
@@ -43,6 +44,18 @@ class RecyclerAdapterMusic(
             override fun areContentsTheSame(oldItem: MediaItemFullForAudio, newItem: MediaItemFullForAudio): Boolean {
                 return oldItem == newItem
             }
+        }
+    }
+
+    //振动
+    @Suppress("NewApi")
+    private fun vibrate() {
+        ToolVibrate.vibrate()
+    }
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "RecyclerAdapterMusic: $msg")
         }
     }
 
@@ -98,13 +111,16 @@ class RecyclerAdapterMusic(
         holder.itemFrameJob?.cancel()
         holder.itemFrameJob = coroutine_loadArtwork.launch { loadArtworkFrame(item, holder) }
         //点击事件设定
-        holder.itemName.setOnClickListener{
-            holder.itemName.isSelected = true
-        }
         holder.itemHandle.setOnClickListener {
+            vibrate()
+            //
+            holder.itemName.isSelected = true
+            //
             onItemClick(item.URI_S_FP.toUri())
         }
         holder.ButtonOptions.setOnClickListener {
+            vibrate()
+            //
             onOptionsClick(item, it)
         }
     }
@@ -178,11 +194,6 @@ class RecyclerAdapterMusic(
 
 
 
-    //日志
-    private fun consoleLog(msg: String, mark: Boolean = true) {
-        if (mark) {
-            Log.d("SuMing", "RecyclerAdapterMusic: $msg")
-        }
-    }
+
 
 }

@@ -6,7 +6,6 @@ import android.app.Dialog
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.content.res.Configuration
-import android.content.res.Resources
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -69,7 +68,10 @@ import com.suming.player.FuncPack_ListManager.ListManagerFragment
 import com.suming.player.FuncPack_ListManager.ListManagerHelper
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
-import com.suming.player.FuncionalPack.ConnectCenter
+import com.suming.player.BASE_TOOL_BUNDLE.BASE_TOOL_BUNDLE
+import com.suming.player.BASE_TOOL_BUNDLE.BASE_TOOL_BUNDLE_SPECIFIC
+import com.suming.player.EVENT_BUS.AppEventList
+import com.suming.player.EVENT_BUS.EventBus_Embedded
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.IntentRepo
@@ -81,6 +83,7 @@ import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SearchHelper
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.UI_SEG_View.CircleButton
+import com.suming.player.UI_SEG_View.UI_VIEW_Value
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -109,11 +112,20 @@ class MainActivity: AppCompatActivity() {
     private val context = this@MainActivity
     //是否有窗口焦点
     private var isWindowFocused = true
-
+    //振动
     @Suppress("NewApi")
-    private fun vibrate(){
+    private fun vibrate() {
         ToolVibrate.vibrate()
     }
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "MainActivity: $msg")
+        }
+    }
+    //BASE_TOOL_BUNDLE
+    private val BASE_TOOL_BUNDLE = BASE_TOOL_BUNDLE()
+    private val BASE_TOOL_BUNDLE_SPECIFIC = BASE_TOOL_BUNDLE_SPECIFIC()
 
 
 
@@ -687,7 +699,7 @@ class MainActivity: AppCompatActivity() {
                 onVideoItemClick(uri, file_path)
             },
             onClick_Duration = { item ->
-                notice("视频时长:${FormatTime_withChar(item.media_durationMs)}", 2000)
+                notice("视频时长:${BASE_TOOL_BUNDLE_SPECIFIC.FormatTime_withChar(item.media_durationMs)}", 2000)
             },
             onClick_tvFormat = { item ->
                 notice("视频格式:${item.media_format}  (${item.media_api_NUM_ID})", 3000)
@@ -1615,22 +1627,44 @@ class MainActivity: AppCompatActivity() {
                 }
             }
         }
-        //杂项事件汇总
+
+        //AppEvent
         lifecycleScope.launch {
-            //观察杂项连接器变更
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                ConnectCenter.state_connector.collect { state ->
-                    if (state.isEmpty()) return@collect
+            repeatOnLifecycle(Lifecycle.State.CREATED) {
+                EventBus_Embedded.events.collect { event ->
+                    if (event.event.isEmpty()) return@collect
 
-                    //更新封面帧
-                    if (state.contains(ConnectCenter.connector_event_cover_frame_update)){
-                        val (targetFilePath, targetMediaId) = ConnectCenter.getCoverFrameUpdateEvent_targetFileInfo()
+                    when (event.event) {
+                        AppEventList.app_event_c_cover_frame_updated -> {
+                            //直接从event里根据约定的信息规则拿信息
 
-                        //consoleLog("更新封面帧: $targetFilePath, $targetMediaId")
+                            //拿到媒体类型
+                            val mediaType = if (event.eventSlotInt == 1) MediaType.Video else if (event.eventSlotInt == 2) MediaType.Audio else Undefined
+                            //拿到媒体ID
+                            val mediaId = event.eventSlotLong
 
-                        main_video_list_adapter.updateCoverForItem(targetFilePath, targetMediaId)
+                            when (mediaType) {
+                                MediaType.Video -> {
+                                    main_video_list_adapter.updateCoverForItem(mediaId)
+                                }
 
-                        ConnectCenter.clear_connector()
+                                MediaType.Audio -> {
+                                    //音频换封面暂未实现
+                                    //main_music_list_adapter.updateCoverForItem(mediaType, mediaId)
+                                }
+                            }
+
+                        }
+
+                        //更新封面帧
+                        AppEventList.app_event_c_miniview_padding_updated -> {
+                            //拿到新的高度值
+                            val newHeight = event.eventSlotInt
+
+                            //设置底部抬高高度
+                            set_mini_view_bottom_padding(newHeight)
+
+                        }
                     }
                 }
             }
@@ -1826,32 +1860,34 @@ class MainActivity: AppCompatActivity() {
         //获取屏幕信息
         getDisplayInfo()
         //设置底部抬高高度
+        set_mini_view_bottom_padding()
+
+    }
+    private fun set_mini_view_bottom_padding(height_Dp: Int = -1) {
         miniView_bottom_padding.post{
             //获取目标高度
-            val target_height_Dp = SettingsCenter.get_value_MiniView_BottomPadding_Dp()
-            var target_height_Px = target_height_Dp.dpToPx()
+            val target_height_Dp = if (height_Dp != -1){
 
-            //目标高度为0时跳过
-            if (target_height_Px == 0) return@post
+                height_Dp
+            }else{
+
+                SettingsCenter.get_value_MiniView_BottomPadding_Dp()
+            }
 
             //检查数值范围
-            if (target_height_Dp !in 1..101){
-                target_height_Px = 5.dpToPx()
-            }
+            if (target_height_Dp in 0..50){
+                val target_height_Px = BASE_TOOL_BUNDLE.dpToPx(target_height_Dp.toFloat())
 
-            //应用高度
-            /*
-            val params_miniView_bottom_padding = miniView_bottom_padding.layoutParams
-            params_miniView_bottom_padding.height = target_height_Px
-            miniView_bottom_padding.layoutParams = params_miniView_bottom_padding
-            miniView_bottom_padding.requestLayout()
-
-             */
-            miniView_bottom_padding.updateLayoutParams {
-                height = target_height_Px
+                //应用高度
+                miniView_bottom_padding.updateLayoutParams {
+                    height = target_height_Px
+                }
+                miniView_bottom_padding.requestLayout()
+            }else{
+                //重置为默认值
+                SettingsCenter.set_value_MiniView_BottomPadding_Dp(0)
             }
         }
-
 
     }
     private var display_screen_height_pixels: Int = 0
@@ -2003,8 +2039,10 @@ class MainActivity: AppCompatActivity() {
 
 
             //设置列表内边距
-            ListRecyclerView_Video.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 600)
-            ListRecyclerView_Music.setPadding(DeviceInfo.statusBarHeight, 300, DeviceInfo.statusBarHeight, 600)
+            val LIST_BOTTOM_ELEV_HEIGHT_PX = BASE_TOOL_BUNDLE.dpToPx(UI_VIEW_Value.LIST_BOTTOM_ELEV_HEIGHT_DP.value)
+            val LIST_TOP_ELEV_HEIGHT_PX = BASE_TOOL_BUNDLE.dpToPx(UI_VIEW_Value.LIST_TOP_ELEV_HEIGHT_DP.value)
+            ListRecyclerView_Video.setPadding(DeviceInfo.statusBarHeight, LIST_TOP_ELEV_HEIGHT_PX,  DeviceInfo.statusBarHeight, LIST_BOTTOM_ELEV_HEIGHT_PX)
+            ListRecyclerView_Music.setPadding(DeviceInfo.statusBarHeight, LIST_TOP_ELEV_HEIGHT_PX,  DeviceInfo.statusBarHeight, LIST_BOTTOM_ELEV_HEIGHT_PX)
             ListRecyclerView_Video.requestLayout()
             ListRecyclerView_Music.requestLayout()
 
@@ -2033,8 +2071,10 @@ class MainActivity: AppCompatActivity() {
                 //consoleLog(" 界面重组 compose: targetTopPadding:$targetTopPadding,  statusBarHeight:${DeviceInfo.statusBarHeight}  ")
 
                 //设置列表内边距
-                ListRecyclerView_Video.setPadding(0, targetTopPadding, 0, 600)
-                ListRecyclerView_Music.setPadding(0, targetTopPadding, 0, 600)
+                val LIST_BOTTOM_ELEV_HEIGHT_PX = BASE_TOOL_BUNDLE.dpToPx(UI_VIEW_Value.LIST_BOTTOM_ELEV_HEIGHT_DP.value)
+                val LIST_TOP_ELEV_HEIGHT_PX = BASE_TOOL_BUNDLE.dpToPx(UI_VIEW_Value.LIST_TOP_ELEV_HEIGHT_DP.value)
+                ListRecyclerView_Video.setPadding(0, targetTopPadding, 0, LIST_BOTTOM_ELEV_HEIGHT_PX)
+                ListRecyclerView_Music.setPadding(0, targetTopPadding, 0, LIST_BOTTOM_ELEV_HEIGHT_PX)
                 ListRecyclerView_Video.requestLayout()
                 ListRecyclerView_Music.requestLayout()
 
@@ -2044,10 +2084,8 @@ class MainActivity: AppCompatActivity() {
         }
 
     }
-    @Suppress("unused")
-    private fun Int.dpToPx(): Int {
-        return (this * Resources.getSystem().displayMetrics.density).toInt()
-    }
+
+
 
     //显示短胶囊通知
     private var showNoticeJob: Job? = null
@@ -2058,26 +2096,14 @@ class MainActivity: AppCompatActivity() {
             val noticeCard = findViewById<CardView>(R.id.noticeCard)
             noticeCard.visibility = View.VISIBLE
             notice.text = text
-            delay(duration)
+            delay(duration.milliseconds)
             noticeCard.visibility = View.GONE
         }
     }
     private fun notice(text: String, duration: Long) {
         showNoticeJob(text, duration)
     }
-    //格式化时间
-    @SuppressLint("DefaultLocale")
-    private fun FormatTime_withChar(milliseconds: Long): String {
-        val totalSeconds = milliseconds / 1000
-        val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        val seconds = totalSeconds % 60
-        return if (hours == 0L){
-            String.format("%02d分%02d秒",  minutes, seconds)
-        }else{
-            String.format("%02d时%02d分%02d秒",  hours, minutes, seconds)
-        }
-    }
+
     //检查权限
     @SuppressLint( "NewApi")
     private fun checkPermissionAndVersion(): Boolean {
@@ -2086,11 +2112,6 @@ class MainActivity: AppCompatActivity() {
 
         return isStoragePermissionValid
     }
-    //日志
-    private fun consoleLog(msg: String, mark: Boolean = true) {
-        if (mark) {
-            Log.d("SuMing", "MainActivity: $msg")
-        }
-    }
+
 
 }
