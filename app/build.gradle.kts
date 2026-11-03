@@ -17,7 +17,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.suming.player"
+        applicationId = "com.suming.playeh"
         minSdk = 26
         maxSdk = 37
         //noinspection OldTargetApi

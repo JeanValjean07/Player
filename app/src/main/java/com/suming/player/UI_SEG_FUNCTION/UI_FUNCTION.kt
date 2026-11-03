@@ -5,17 +5,23 @@ import android.app.Dialog
 import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
 import android.graphics.Color
+import android.os.Build
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.annotation.MenuRes
+import androidx.annotation.RequiresApi
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.R
-import com.suming.player.SettingsActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -23,6 +29,13 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 class UI_FUNCTION {
+
+    //实现振动
+    private fun vibrate(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ToolVibrate.vibrate()
+        }
+    }
 
 
     //v1_v1: 页面风格v1，检查参数v1
@@ -122,6 +135,37 @@ class UI_FUNCTION {
 
 
 
+    //显示弹出菜单
+    fun show_popup_Menu_v1_v1_base_xml(
+        context: Context,
+        anchor:View, @MenuRes menuRes:Int,
+        onSelect: (MenuItem) -> Boolean
+    ) {
+
+        val popup = PopupMenu(context, anchor)
+        popup.menuInflater.inflate(menuRes, popup.menu)
+        popup.setOnMenuItemClickListener { item ->
+            onSelect(item)
+        }
+        popup.show()
+
+    }
+    //显示弹出菜单
+    fun show_popup_Menu_v1_v2_base_dynamic_add(
+        anchor: View,
+        options: List<Pair<String, () -> Unit>>
+    ) {
+        val popup = PopupMenu(anchor.context, anchor)
+        options.forEachIndexed { i, (label, _) ->
+            popup.menu.add(Menu.NONE, i, i, label)
+        }
+        popup.setOnMenuItemClickListener { item ->
+            vibrate()
+            options[item.itemId].second()
+            true
+        }
+        popup.show()
+    }
 
 
 
