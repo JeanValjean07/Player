@@ -50,10 +50,10 @@
             android:hint=""
             android:gravity="start"
             android:textSize="14sp"
-            android:inputType="numberDecimal"
-            android:maxLength="5"
+            android:inputType=""
             android:maxLines="1"
-            tools:ignore="Autofill" />
+            tools:ignore="Autofill,LabelFor"
+            />
         <!-- 单一操作按钮 -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/dialog_button"

@@ -1,4 +1,4 @@
-package com.suming.player.FuncPack_ListManager
+package com.suming.player.FuncPack_ListManager.Adapter
 
 import android.annotation.SuppressLint
 import android.content.Context

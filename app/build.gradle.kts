@@ -17,12 +17,12 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.suming.playeh"
+        applicationId = "com.suming.player"
         minSdk = 26
         maxSdk = 37
         //noinspection OldTargetApi
         targetSdk = 36
-        versionCode = 26110401
+        versionCode = 26110501
         versionName = "3.7.8"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -87,6 +87,7 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.transformer)
+    implementation(libs.androidx.window)
     //OkHttp
     implementation(libs.okhttp)
 

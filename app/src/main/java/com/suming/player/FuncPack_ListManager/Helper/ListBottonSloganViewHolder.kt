@@ -1,4 +1,4 @@
-package com.suming.player.FuncPack_ListManager
+package com.suming.player.FuncPack_ListManager.Helper
 
 import android.view.LayoutInflater
 import android.view.View

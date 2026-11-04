@@ -16,7 +16,6 @@ import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
@@ -44,6 +43,11 @@ import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
 import com.suming.player.DataPack.DataBaseStateConnector
 import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
 import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
+import com.suming.player.FuncPack_ListManager.Helper.LinearDecelerateSnapHelper
+import com.suming.player.FuncPack_ListManager.Inner_Fragment.InnerFragment_Audio
+import com.suming.player.FuncPack_ListManager.Inner_Fragment.InnerFragment_CustomList
+import com.suming.player.FuncPack_ListManager.Inner_Fragment.InnerFragment_HistoryList
+import com.suming.player.FuncPack_ListManager.Inner_Fragment.InnerFragment_Video
 import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
@@ -53,6 +57,7 @@ import com.suming.player.FuncionalPack.MediaType
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.PlayerImplements.PlayerHolder
+import com.suming.player.UI_SEG_FUNCTION.UI_FUNCTION
 import com.suming.player.UI_SEG_View.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -70,13 +75,25 @@ class ListManagerFragment: DialogFragment() {
                 )
             }
     }
-
     //空字段
     private val Undefined = ""
-    //ctx
-    private lateinit var context: Context
+    //实现context获取
+    private fun get_ctx(): Context {
+        return requireContext()
+    }
     //MediaInfoRetriever
     val MediaInfoRetriever = MediaInfoRetriever()
+    //UI_FUNCTION
+    val UI_FUNCTION = UI_FUNCTION()
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "ListManagerFragment: $msg")
+        }
+    }
+
+
+
 
 
     override fun onStart() {
@@ -87,8 +104,6 @@ class ListManagerFragment: DialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //获得上下文
-        context = requireContext()
         //设置样式
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
     }
@@ -170,7 +185,6 @@ class ListManagerFragment: DialogFragment() {
 
 
 
-    //Main Thread Functions
     private fun register(view: View){
         lifecycleScope.launch(Dispatchers.Main) {
             //按钮：退出
@@ -240,7 +254,6 @@ class ListManagerFragment: DialogFragment() {
 
         }
     }
-
     //启动ViewPager
     private fun registerViewPager(){
         lifecycleScope.launch(Dispatchers.Main) {
@@ -303,7 +316,7 @@ class ListManagerFragment: DialogFragment() {
             }
 
             //修改横滑动画
-            val snapHelper = LinearDecelerateSnapHelper(context)
+            val snapHelper = LinearDecelerateSnapHelper(get_ctx())
             val recyclerView = ViewPager.getChildAt(0) as RecyclerView
             recyclerView.onFlingListener = null
             snapHelper.attachToRecyclerView(recyclerView)
@@ -420,7 +433,7 @@ class ListManagerFragment: DialogFragment() {
     private fun onPlayNewItemRequest(URI_S_FP: String){
         //consoleLog("收到请求播放新的媒体项: $URI_S_FP")
         //检查文件是否存在可读
-        val success = MediaInfoRetriever.isUriReadable(context,URI_S_FP)
+        val success = MediaInfoRetriever.isUriReadable(get_ctx(),URI_S_FP)
         //consoleLog("isUriReadable: $success")
         if (success){
             if (URI_S_FP == PlayerSingleton.get_engine_ongoing_URI().second.toString()){
@@ -438,13 +451,13 @@ class ListManagerFragment: DialogFragment() {
                     withContext(Dispatchers.Main){
                         when(result){
                             ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
-                                context.showCustomToast("文件似乎已经不存在",3)
+                                get_ctx().showCustomToast("文件似乎已经不存在",3)
                             }
                             ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
-                                context.showCustomToast("设置过于频繁",3)
+                                get_ctx().showCustomToast("设置过于频繁",3)
                             }
                             ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
-                                context.showCustomToast("不支持的格式",3)
+                                get_ctx().showCustomToast("不支持的格式",3)
                             }
                         }
                     }
@@ -452,7 +465,7 @@ class ListManagerFragment: DialogFragment() {
 
             }
         }else{
-            context.showCustomToast("文件似乎已经不存在",3)
+            get_ctx().showCustomToast("文件似乎已经不存在",3)
             //触发主动刷新
             startLoadBySystem()
         }
@@ -602,69 +615,32 @@ class ListManagerFragment: DialogFragment() {
 
     //显示更多操作菜单
     private fun showMoreOptMenu(anchor: CircleButton) {
-        val popup = PopupMenu(requireContext(), anchor)
-        popup.menuInflater.inflate(
-            R.menu.popup_menu_list_more_opt,
-            popup.menu
-        )
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.opt_next_media -> {
-                    ToolVibrate.vibrate()
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+            "下一曲"   to { ListManagerHelper.MediaSessionCall_switchNextMedia() },
+            "上一曲"  to { ListManagerHelper.MediaSessionCall_switchPreviousMedia() },
+            "停止播放"  to {
+                //清除播放项
+                stopPlaying()
+                //执行关闭面板
+                customDismiss()
+            },
+            "停止播放并清除记录"  to {
+                //清除播放记录
+                stopPlaying(true)
+                //执行关闭面板
+                customDismiss()
+            },
+            "关闭播放器"  to {
+                //关闭播放器
+                closePlayer()
+            },
+            "关闭测试版播放器"  to {
+                //关闭可插拔播放器
+                val IPlayer = PlayerHolder.get_ins_refresh(requireContext())
+                IPlayer.release()
 
-                    ListManagerHelper.MediaSessionCall_switchNextMedia()
-
-                    true
-
-                }
-                R.id.opt_previous_media -> {
-                    ToolVibrate.vibrate()
-
-                    ListManagerHelper.MediaSessionCall_switchPreviousMedia()
-
-                    true
-                }
-                R.id.opt_clear -> {
-                    ToolVibrate.vibrate()
-
-                    //清除播放项
-                    stopPlaying()
-
-                    customDismiss()
-
-                    true
-                }
-                R.id.opt_clear_record -> {
-                    ToolVibrate.vibrate()
-
-                    //清除播放记录
-                    stopPlaying(true)
-
-                    //关闭
-                    customDismiss()
-
-                    true
-                }
-                R.id.opt_player_closed -> {
-                    ToolVibrate.vibrate()
-                    //
-                    closePlayer()
-
-                    true
-                }
-                R.id.opt_player_closed_pro -> {
-                    ToolVibrate.vibrate()
-                    //
-                    val IPlayer = PlayerHolder.get_ins_refresh(requireContext())
-                    IPlayer.release()
-
-
-                    true
-                }
-                else -> true
-            }
-        }
-        popup.show()
+            },
+        ))
     }
 
     //停止播放(可选清除记录)
@@ -704,11 +680,11 @@ class ListManagerFragment: DialogFragment() {
         //检查是否需要读取系统视频
         lifecycleScope.launch(Dispatchers.IO) {
             //检查本地数据库是否已有视频数据
-            if (VideoRepo(context).isEmpty()){
+            if (VideoRepo(get_ctx()).isEmpty()){
                 //通知状态变更
                 DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
 
-                val mediaReader = VideoSysApiQuerier(context, context.contentResolver)
+                val mediaReader = VideoSysApiQuerier(get_ctx(), get_ctx().contentResolver)
                 mediaReader.readAndSaveAllVideos()
 
             }
@@ -721,11 +697,11 @@ class ListManagerFragment: DialogFragment() {
         //检查是否需要读取系统音乐
         lifecycleScope.launch(Dispatchers.IO) {
             //检查本地数据库是否已有音乐数据
-            if (AudioRepo(context).isEmpty()){
+            if (AudioRepo(get_ctx()).isEmpty()){
                 //通知状态变更
                 DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
 
-                val mediaReader = AudioSysApiQuerier(context, context.contentResolver)
+                val mediaReader = AudioSysApiQuerier(get_ctx(), get_ctx().contentResolver)
                 mediaReader.readAndSaveAllMusics()
 
             }
@@ -866,47 +842,12 @@ class ListManagerFragment: DialogFragment() {
     }
     //选择当前播放列表
     private fun startCurrentPlayingListMenu(anchor: View){
-        val popup = PopupMenu(requireContext(), anchor)
-        popup.menuInflater.inflate(R.menu.activity_play_list_popup_current_play_list, popup.menu)
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                //选择自定义列表
-                R.id.list_custom -> {
-                    ToolVibrate.vibrate()
-
-                    setCurrentPlayingList(ListManagerHelper.ListMark_Custom)
-
-                    true
-                }
-                //选择历史播放列表
-                R.id.list_history -> {
-                    ToolVibrate.vibrate()
-
-                    setCurrentPlayingList(ListManagerHelper.ListMark_History)
-
-                    true
-                }
-                //选择视频列表
-                R.id.list_video_live -> {
-                    ToolVibrate.vibrate()
-
-                    setCurrentPlayingList(ListManagerHelper.ListMark_Video)
-
-                    true
-                }
-                //选择音乐列表
-                R.id.list_music_live -> {
-                    ToolVibrate.vibrate()
-
-                    setCurrentPlayingList(ListManagerHelper.ListMark_Audio)
-
-                    true
-                }
-                //其他
-                else -> true
-            }
-        }
-        popup.show()
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(),anchor, listOf(
+            "自定义列表"   to { setCurrentPlayingList(ListManagerHelper.ListMark_Custom) },
+            "历史播放列表"  to { setCurrentPlayingList(ListManagerHelper.ListMark_History) },
+            "视频"  to { setCurrentPlayingList(ListManagerHelper.ListMark_Video) },
+            "音乐"  to { setCurrentPlayingList(ListManagerHelper.ListMark_Audio) },
+        ))
     }
 
 
@@ -938,13 +879,13 @@ class ListManagerFragment: DialogFragment() {
 
             when(target){
                 MediaType.Video -> {
-                    val videoReader = VideoSysApiQuerier(context, context.contentResolver)
+                    val videoReader = VideoSysApiQuerier(get_ctx(), get_ctx().contentResolver)
                     videoReader.readAndSaveAllVideos()
 
                 }
 
                 MediaType.Audio -> {
-                    val musicReader = AudioSysApiQuerier(context, context.contentResolver)
+                    val musicReader = AudioSysApiQuerier(get_ctx(), get_ctx().contentResolver)
                     musicReader.readAndSaveAllMusics()
 
                 }
@@ -957,7 +898,7 @@ class ListManagerFragment: DialogFragment() {
 
     //关闭播放器
     private fun closePlayer(){
-        AlertDialog.Builder(context)
+        AlertDialog.Builder(get_ctx())
             .setTitle("确定关闭播放器吗?")
             .setMessage("正在播放的媒体会立即停止")
             .setPositiveButton("确认") { dialog, _ ->
@@ -1012,42 +953,18 @@ class ListManagerFragment: DialogFragment() {
 
 
     //循环模式
-    private fun startLoopModeMenu(anchor: View){
-        val popup = PopupMenu(requireContext(), anchor)
-        popup.menuInflater.inflate(R.menu.activity_player_popup_loop_mode, popup.menu)
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-
-                R.id.LoopMode_ONE -> {
-                    ToolVibrate.vibrate()
-
-                    chooseLoopMode(ListManagerHelper.LOOP_MODE_ONE)
-
-                    true
-                }
-
-                R.id.LoopMode_ALL -> {
-                    ToolVibrate.vibrate()
-
-                    chooseLoopMode(ListManagerHelper.LOOP_MODE_ALL)
-
-                    true
-                }
-
-                R.id.LoopMode_OFF -> {
-                    ToolVibrate.vibrate()
-
-                    chooseLoopMode(ListManagerHelper.LOOP_MODE_OFF)
-
-                    true
-                }
-
-                else -> true
-            }
-        }
-        popup.show()
+    private fun startLoopModeMenu(anchor: View) {
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+            "单集循环"   to {
+                chooseLoopMode(ListManagerHelper.LOOP_MODE_ONE)
+                //设为单集循环时,必要时可自动开始
+                PlayerSingleton.checkPlayEndAndRePlay()
+            },
+            "列表循环"  to { chooseLoopMode(ListManagerHelper.LOOP_MODE_ALL) },
+            "播完暂停"  to { chooseLoopMode(ListManagerHelper.LOOP_MODE_OFF) },
+        ))
     }
-    private fun chooseLoopMode(loopMode: String){
+    private fun chooseLoopMode(loopMode: String) {
         //设置循环模式
         when (loopMode) {
             ListManagerHelper.LOOP_MODE_ONE -> {
@@ -1066,7 +983,7 @@ class ListManagerFragment: DialogFragment() {
         updateLoopModeText()
 
     }
-    private fun updateLoopModeText(){
+    private fun updateLoopModeText() {
         val currentLoopMode = ListManagerHelper.getLoopMode()
         val ButtonTextLoopMode = view?.findViewById<TextView>(R.id.ButtonTextLoopMode)
         ButtonTextLoopMode?.text = when (currentLoopMode) {
@@ -1256,13 +1173,6 @@ class ListManagerFragment: DialogFragment() {
         }
     }
 
-    //日志
-    @Suppress("unused")
-    private fun consoleLog(msg: String, mark: Boolean = true) {
-        if (mark) {
-            Log.d("SuMing", "ListManagerFragment: $msg")
-        }
-    }
 
 }
 

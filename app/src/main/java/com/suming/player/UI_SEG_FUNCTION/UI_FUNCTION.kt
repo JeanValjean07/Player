@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Context.INPUT_METHOD_SERVICE
 import android.graphics.Color
 import android.os.Build
+import android.text.InputFilter
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -15,7 +17,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.annotation.MenuRes
-import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
@@ -81,10 +82,70 @@ class UI_FUNCTION {
     fun show_number_input_Dialog_v1_v2(
         context: Context,
         ui_title: String, ui_description: String, ui_hint: String, ui_button_text: String,
+        inputType: Int,
         //调用方自己的规则
         validate: (Int) -> ValidationResult,
         //校验通过后的副作用
         onValid: (Int) -> Unit,
+        //校验不通过后的副作用
+        onReject: (String) -> Unit,
+    ) {
+        //创建弹窗
+        val dialog = Dialog(context).apply { window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable()) }
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.base_dialog_input_v1_value_single, null)
+        dialog.setContentView(dialogView)
+        //修改视图
+        val titleView: TextView = dialogView.findViewById(R.id.dialog_title)
+        val descView: TextView = dialogView.findViewById(R.id.dialog_description)
+        val editText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val button: Button = dialogView.findViewById(R.id.dialog_button)
+        titleView.text = ui_title
+        descView.text = ui_description
+        editText.hint = ui_hint
+        editText.inputType = inputType
+        button.text = ui_button_text
+        //
+        button.setOnClickListener {
+            //基础非空校验
+            val inputValue = editText.text.toString().toIntOrNull()
+            if (inputValue == null) {
+                onReject("未输入任何内容")
+                return@setOnClickListener
+            }
+            //交给调用方校验数值
+            val result = validate(inputValue)
+            when (result) {
+                is ValidationResult.Ok -> {
+                    //回调校验通过并关闭弹窗
+                    onValid(inputValue)
+                    dialog.dismiss()
+                }
+                is ValidationResult.Reject -> {
+                    //回调校验不通过并显示提示
+                    onReject(result.message)
+                }
+            }
+        }
+
+
+        dialog.show()
+
+        //自动弹出输入法
+        editText.requestFocus()
+        WindowCompat.getInsetsController(dialog.window!!, editText).show(WindowInsetsCompat.Type.ime())
+
+    }
+
+    //v1_v3: 页面风格v1，检查参数v3
+    @SuppressLint("InflateParams")
+    fun show_number_input_Dialog_v1_v3(
+        context: Context,
+        ui_title: String, ui_description: String, ui_hint: String, ui_button_text: String,
+        inputType: Int,
+        //调用方自己的规则
+        validate: (String) -> ValidationResult,
+        //校验通过后的副作用
+        onValid: (String) -> Unit,
         //校验不通过后的副作用
         onReject: (String) -> Unit,
     ){
@@ -101,20 +162,74 @@ class UI_FUNCTION {
         descView.text = ui_description
         editText.hint = ui_hint
         button.text = ui_button_text
+        editText.inputType = inputType
+        editText.filters = editText.filters.filterNot { it is InputFilter.LengthFilter }.toTypedArray() //移除字数限制
         //
         button.setOnClickListener {
             //基础非空校验
-            val inputValue = editText.text.toString().toIntOrNull()
-            if (inputValue == null) {
-                onReject("未输入任何内容")
-                return@setOnClickListener
-            }
+            val inputValue = editText.text.toString()
             //交给调用方校验数值
             val result = validate(inputValue)
             when (result) {
                 is ValidationResult.Ok -> {
                     //回调校验通过并关闭弹窗
                     onValid(inputValue)
+                    dialog.dismiss()
+                }
+                is ValidationResult.Reject -> {
+                    //回调校验不通过并显示提示
+                    onReject(result.message)
+                }
+            }
+        }
+
+
+        dialog.show()
+
+        //自动弹出输入法
+        editText.requestFocus()
+        WindowCompat.getInsetsController(dialog.window!!, editText).show(WindowInsetsCompat.Type.ime())
+
+    }
+
+    //v1_v3: 页面风格v1，检查参数v3
+    @SuppressLint("InflateParams")
+    fun show_number_input_Dialog_v1_v4(
+        context: Context,
+        ui_title: String, ui_description: String, ui_hint: String, ui_button_text: String,
+        inputType: Int,
+        //调用方自己的规则
+        validate: (Float) -> ValidationResult,
+        //校验通过后的副作用
+        onValid: (Float) -> Unit,
+        //校验不通过后的副作用
+        onReject: (String) -> Unit,
+    ){
+        //创建弹窗
+        val dialog = Dialog(context).apply { window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable()) }
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.base_dialog_input_v1_value_single, null)
+        dialog.setContentView(dialogView)
+        //修改视图
+        val titleView: TextView = dialogView.findViewById(R.id.dialog_title)
+        val descView: TextView = dialogView.findViewById(R.id.dialog_description)
+        val editText: EditText = dialogView.findViewById(R.id.dialog_input)
+        val button: Button = dialogView.findViewById(R.id.dialog_button)
+        titleView.text = ui_title
+        descView.text = ui_description
+        editText.hint = ui_hint
+        button.text = ui_button_text
+        editText.inputType = inputType
+        editText.filters = editText.filters.filterNot { it is InputFilter.LengthFilter }.toTypedArray() //移除字数限制
+        //
+        button.setOnClickListener {
+            //基础非空校验
+            val inputValue = editText.text.toString().toFloatOrNull()
+            //交给调用方校验数值
+            val result = validate(inputValue ?: 0.0f)
+            when (result) {
+                is ValidationResult.Ok -> {
+                    //回调校验通过并关闭弹窗
+                    onValid(inputValue ?: 0.0f)
                     dialog.dismiss()
                 }
                 is ValidationResult.Reject -> {
@@ -156,6 +271,24 @@ class UI_FUNCTION {
         options: List<Pair<String, () -> Unit>>
     ) {
         val popup = PopupMenu(anchor.context, anchor)
+        options.forEachIndexed { i, (label, _) ->
+            popup.menu.add(Menu.NONE, i, i, label)
+        }
+        popup.setOnMenuItemClickListener { item ->
+            vibrate()
+            options[item.itemId].second()
+            true
+        }
+        popup.show()
+    }
+
+    //显示弹出菜单
+    fun show_popup_Menu_v1_v3_base_dynamic_add(
+        context: Context,
+        anchor: View,
+        options: List<Pair<String, () -> Unit>>
+    ) {
+        val popup = PopupMenu(context, anchor)
         options.forEachIndexed { i, (label, _) ->
             popup.menu.add(Menu.NONE, i, i, label)
         }

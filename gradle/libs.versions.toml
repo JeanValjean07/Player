@@ -42,6 +42,7 @@ kotlin = "2.4.21"
 
 #AGP Special Sign
 agp = "9.5.0"
+window = "1.5.1"
 
 
 
@@ -91,6 +92,7 @@ androidx-core-activity = { group = "androidx.activity", name = "activity", versi
 androidx-core-view-animation = { group = "androidx.core", name = "core-animation", version.ref = "androidx-core-view-animation" }
 androidx-core-view-constraint = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "androidx-core-view-constraint" }
 androidx-core-view-material = { group = "com.google.android.material", name = "material", version.ref = "androidx-core-view-material" }
+androidx-window = { group = "androidx.window", name = "window", version.ref = "window" }
 
 
 

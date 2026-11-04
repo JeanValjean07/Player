@@ -13,6 +13,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -746,6 +747,7 @@ class SettingsActivity: AppCompatActivity() {
             ui_title = "设置媒体变更冷却时长",
             ui_description = "用于压力测试和检测",
             ui_hint = "以毫秒为单位",
+            inputType = InputType.TYPE_CLASS_NUMBER,
             ui_button_text = "确定",
             validate = { v ->
                 when {
@@ -776,29 +778,11 @@ class SettingsActivity: AppCompatActivity() {
     //<editor-fold desc="////视频播放页设置函数">
     //播放页样式 Type string  screening_type_ORO
     private fun choose_screening_type_Menu(anchor:View) {
-        UI_FUNCTION.show_popup_Menu_v1_v1_base_xml(context, anchor, R.menu.activity_settings_popup_player_type) { item ->
-            when (item.itemId) {
-                R.id.type_oro -> {
-                    vibrate()
-
-                    choose_screening_type(SettingsCenter.screening_type_ORO)
-                    true
-                }
-                R.id.type_neo -> {
-                    vibrate()
-
-                    choose_screening_type(SettingsCenter.screening_type_NEO)
-                    true
-                }
-                R.id.type_test -> {
-                    vibrate()
-
-                    choose_screening_type(SettingsCenter.screening_type_TEST)
-                    true
-                }
-                else -> true
-            }
-        }
+        UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add (anchor, listOf(
+            "经典 (具备传统进度条)"   to { choose_screening_type(SettingsCenter.screening_type_ORO) },
+            "新晋 (具备缩略图进度条)"  to { choose_screening_type(SettingsCenter.screening_type_NEO) },
+            "测试版 (需要单独关闭)"  to { choose_screening_type(SettingsCenter.screening_type_TEST) },
+        ))
     }
     private fun choose_screening_type(screening_type: Int) {
         //执行设置播放页样式
@@ -831,27 +815,11 @@ class SettingsActivity: AppCompatActivity() {
     }
     //寻帧时关键帧偏好
     private fun choose_video_syncFramePrefs_Menu(anchor:View) {
-        UI_FUNCTION.show_popup_Menu_v1_v1_base_xml(context, anchor, R.menu.popup_menu_sync_frame_prefs) { item ->
-            when (item.itemId) {
-                R.id.always_use_sync -> {
-                    vibrate()
-                    choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_AlwaysSync)
-                    true
-                }
-                R.id.always_use_exact -> {
-                    vibrate()
-                    choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_AlwaysExact)
-                    true
-                }
-                R.id.use_dynamic -> {
-                    vibrate()
-                    choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_Dynamic)
-                    true
-                }
-                else -> true
-            }
-        }
-
+        UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add (anchor, listOf(
+            "一律使用关键帧"   to { choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_AlwaysSync) },
+            "一律使用精确帧"  to { choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_AlwaysExact) },
+            "自动切换"  to { choose_video_syncFramePrefs_Core(SettingsCenter.SYNC_FRAME_PREFS_Dynamic) },
+        ))
     }
     private fun choose_video_syncFramePrefs_Core(value: String) {
         //写入设置
@@ -873,37 +841,13 @@ class SettingsActivity: AppCompatActivity() {
     }
     //视频播放页 连续寻帧间隔 value
     private fun choose_Video_generalSeek_updateMs_Menu(anchor:View) {
-        UI_FUNCTION.show_popup_Menu_v1_v1_base_xml(context, anchor, R.menu.popup_menu_video_general_seek_millis) { item ->
-            when (item.itemId) {
-                R.id.menu_item_120hz -> {
-                    vibrate()
-                    choose_Video_generalSeek_updateMs_Core(8)
-                    true
-                }
-                R.id.menu_item_60hz -> {
-                    vibrate()
-                    choose_Video_generalSeek_updateMs_Core(16)
-                    true
-                }
-                R.id.menu_item_30hz -> {
-                    vibrate()
-                    choose_Video_generalSeek_updateMs_Core(33)
-                    true
-                }
-                R.id.menu_item_15hz -> {
-                    vibrate()
-                    choose_Video_generalSeek_updateMs_Core(66)
-                    true
-                }
-                R.id.menu_item_Input -> {
-                    vibrate()
-                    set_video_generalSeek_updateMs_input()
-                    true
-                }
-                else -> true
-            }
-        }
-
+        UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add (anchor, listOf(
+            "120 Hz"   to { choose_Video_generalSeek_updateMs_Core(8) },
+            "60 Hz"  to { choose_Video_generalSeek_updateMs_Core(16) },
+            "30 Hz"  to { choose_Video_generalSeek_updateMs_Core(33) },
+            "15 Hz  (66 Ms)"  to { choose_Video_generalSeek_updateMs_Core(66) },
+            "自定义"  to { set_video_generalSeek_updateMs_input() },
+        ))
     }
     private fun choose_Video_generalSeek_updateMs_Core(value: Long) {
         //执行函数
@@ -957,6 +901,7 @@ class SettingsActivity: AppCompatActivity() {
             ui_description = "间隔过低时，设备温度和功耗将大幅上升",
             ui_hint = "以毫秒为单位",
             ui_button_text = "确定",
+            inputType = InputType.TYPE_CLASS_NUMBER,
             validate = { inputValue ->
                 when {
                     inputValue < 0L -> ValidationResult.Reject("连续寻帧间隔不得为负")
@@ -999,41 +944,14 @@ class SettingsActivity: AppCompatActivity() {
     }
     //视频页 时间戳/时间窗口 刷新间隔 value
     private fun choose_Video_timeStamp_updateMs_Menu(anchor:View) {
-        UI_FUNCTION.show_popup_Menu_v1_v1_base_xml(context, anchor, R.menu.activity_settings_popup_timer_update_gap) { item ->
-            when (item.itemId) {
-                R.id.menu_item_120hz -> {
-                    vibrate()
-                    choose_Video_timeStamp_updateMs_Core(8L)
-                    true
-                }
-                R.id.menu_item_90hz -> {
-                    vibrate()
-                    choose_Video_timeStamp_updateMs_Core(12L)
-                    true
-                }
-                R.id.menu_item_60hz -> {
-                    vibrate()
-                    choose_Video_timeStamp_updateMs_Core(16L)
-                    true
-                }
-                R.id.menu_item_30hz -> {
-                    vibrate()
-                    choose_Video_timeStamp_updateMs_Core(33L)
-                    true
-                }
-                R.id.menu_item_15hz -> {
-                    vibrate()
-                    choose_Video_timeStamp_updateMs_Core(66L)
-                    true
-                }
-                R.id.menu_item_Input -> {
-                    vibrate()
-                    set_video_timerStamp_updateMs_input()
-                    true
-                }
-                else -> true
-            }
-        }
+        UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add (anchor, listOf(
+            "120 Hz"   to { choose_Video_timeStamp_updateMs_Core(8L) },
+            "90 Hz"  to { choose_Video_timeStamp_updateMs_Core(12L) },
+            "60 Hz"  to { choose_Video_timeStamp_updateMs_Core(16L) },
+            "30 Hz"  to { choose_Video_timeStamp_updateMs_Core(33L) },
+            "15 Hz"  to { choose_Video_timeStamp_updateMs_Core(66L) },
+            "自定义"  to { set_video_timerStamp_updateMs_input() },
+        ))
     }
     private fun choose_Video_timeStamp_updateMs_Core(value: Long) {
         fun execute(){
@@ -1073,6 +991,7 @@ class SettingsActivity: AppCompatActivity() {
             ui_description = "仅控制进度条滚动时的时间戳更新间隔",
             ui_hint = "以毫秒为单位",
             ui_button_text = "确定",
+            inputType = InputType.TYPE_CLASS_NUMBER,
             validate = { inputValue ->
                 when {
                     inputValue <= 0L -> ValidationResult.Reject("请设置更高的值")
@@ -1103,26 +1022,11 @@ class SettingsActivity: AppCompatActivity() {
     }
     //视频页 SCROLLER 刷新间隔 value
     private fun choose_Video_scroller_updateMs_Menu(anchor:View) {
-        UI_FUNCTION.show_popup_Menu_v1_v1_base_xml(context, anchor, R.menu.popup_menu_video_scroller_update_millis) { item ->
-            when (item.itemId) {
-                R.id.menu_item_30hz -> {
-                    vibrate()
-                    choose_Video_scroller_updateMs_Core(33L)
-                    true
-                }
-                R.id.menu_item_15hz -> {
-                    vibrate()
-                    choose_Video_scroller_updateMs_Core(66L)
-                    true
-                }
-                R.id.menu_item_Input -> {
-                    vibrate()
-                    set_video_scroller_updateMs_input()
-                    true
-                }
-                else -> true
-            }
-        }
+        UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add (anchor, listOf(
+            "30 Hz"   to { choose_Video_scroller_updateMs_Core(33L) },
+            "15 Hz  (66 Ms)"  to { choose_Video_scroller_updateMs_Core(66L) },
+            "自定义"  to { set_video_scroller_updateMs_input() },
+        ))
 
     }
     private fun choose_Video_scroller_updateMs_Core(gap: Long) {
@@ -1143,6 +1047,7 @@ class SettingsActivity: AppCompatActivity() {
             ui_description = "仅控制进度条自主滚动时的更新间隔",
             ui_hint = "以毫秒为单位",
             ui_button_text = "确定",
+            inputType = InputType.TYPE_CLASS_NUMBER,
             validate = { inputValue ->
                 when {
                     inputValue < 0L -> ValidationResult.Reject("更新间隔不得为负")
@@ -1183,7 +1088,6 @@ class SettingsActivity: AppCompatActivity() {
             "手动输入" to { set_video_syncSeekBar_updateMs_input() },
             "自适应"   to { choose_video_syncSeekBar_updateMs_Core(3001L) },
         ))
-
     }
     private fun choose_video_syncSeekBar_updateMs_Core(gap: Long) {
         fun execute(){
@@ -1203,6 +1107,7 @@ class SettingsActivity: AppCompatActivity() {
             ui_description = "仅控制进度条自主滚动时的更新间隔",
             ui_hint = "以毫秒为单位",
             ui_button_text = "确定",
+            inputType = InputType.TYPE_CLASS_NUMBER,
             validate = { inputValue ->
                 when {
                     inputValue < 0L -> ValidationResult.Reject("时间更新间隔不能小于0")
@@ -1236,17 +1141,14 @@ class SettingsActivity: AppCompatActivity() {
     //<editor-fold desc="////音乐播放页设置函数">
     //音乐页SeekBar刷新间隔
     private fun choose_audio_syncSeekBar_updateMs_Menu(anchor:View) {
-        UI_FUNCTION.show_popup_Menu_v1_v1_base_xml(context, anchor, R.menu.popup_menu_video_seekbar_update_millis) { item ->
-            when (item.itemId) {
-                R.id.menu_item_10ms   -> { choose_audio_syncSeekBar_updateMs_Core(10L);  true }
-                R.id.menu_item_100ms  -> { choose_audio_syncSeekBar_updateMs_Core(100L); true }
-                R.id.menu_item_500ms  -> { choose_audio_syncSeekBar_updateMs_Core(500L); true }
-                R.id.menu_item_1000ms -> { choose_audio_syncSeekBar_updateMs_Core(1000L); true }
-                R.id.menu_item_Input  -> { set_audio_syncSeekBar_updateMs_input(); true }
-                R.id.menu_item_Adapt  -> { choose_audio_syncSeekBar_updateMs_Core(3001L); true }
-                else -> true
-            }
-        }
+        UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add (anchor, listOf(
+            "10 毫秒"   to { choose_audio_syncSeekBar_updateMs_Core(10L) },
+            "100 毫秒"  to { choose_audio_syncSeekBar_updateMs_Core(100L) },
+            "500 毫秒"  to { choose_audio_syncSeekBar_updateMs_Core(500L) },
+            "1 秒" to { choose_audio_syncSeekBar_updateMs_Core(1000L) },
+            "自定义" to { set_audio_syncSeekBar_updateMs_input() },
+            "自适应"   to { choose_audio_syncSeekBar_updateMs_Core(3001L) },
+        ))
     }
     private fun choose_audio_syncSeekBar_updateMs_Core(gap: Long) {
         fun execute(){
@@ -1266,6 +1168,7 @@ class SettingsActivity: AppCompatActivity() {
             ui_description = "仅控制进度条自主滚动时的更新间隔",
             ui_hint = "以毫秒为单位",
             ui_button_text = "确定",
+            inputType = InputType.TYPE_CLASS_NUMBER,
             validate = { inputValue ->
                 when {
                     inputValue < 0L -> ValidationResult.Reject("时间更新间隔不能小于0")
@@ -1300,30 +1203,15 @@ class SettingsActivity: AppCompatActivity() {
     //交互相关设置
     //<editor-fold desc="////交互相关设置函数">
     //振动模式
-    private fun chooseVibrateMode_Menu(anchor:View){
-        UI_FUNCTION.show_popup_Menu_v1_v1_base_xml(context, anchor, R.menu.popup_menu_interactive_vibrate_mode) { item ->
-            when (item.itemId) {
-                R.id.item_NoVibrate -> {
-                    chooseVibrateMode(0); true
-                }
-                R.id.item_EFFECT_CLICK -> {
-                    chooseVibrateMode(1); true
-                }
-                R.id.item_EFFECT_TICK -> {
-                    chooseVibrateMode(2); true
-                }
-                R.id.item_EFFECT_DOUBLE_CLICK -> {
-                    chooseVibrateMode(3); true
-                }
-                R.id.item_EFFECT_HEAVY_CLICK -> {
-                    chooseVibrateMode(4); true
-                }
-                R.id.item_100Ms -> {
-                    chooseVibrateMode(5); true
-                }
-                else -> true
-            }
-        }
+    private fun chooseVibrateMode_Menu(anchor:View) {
+        UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add(anchor, listOf(
+            "关闭振动"   to { chooseVibrateMode(0) },
+            "EFFECT_CLICK"  to { chooseVibrateMode(1) },
+            "EFFECT_TICK"  to { chooseVibrateMode(2) },
+            "EFFECT_DOUBLE_CLICK" to { chooseVibrateMode(3) },
+            "EFFECT_HEAVY_CLICK" to { chooseVibrateMode(4) },
+            "100Ms默认振动 (OPPO专用)"   to { chooseVibrateMode(5) },
+        ))
     }
     private fun chooseVibrateMode(mode: Int) {
         //振动模式表
@@ -1366,6 +1254,7 @@ class SettingsActivity: AppCompatActivity() {
             ui_description = "应设置在 0 Dp 到 50 Dp 之间",
             ui_hint = "当前为 $current_height_Dp Dp",
             ui_button_text = "确定",
+            inputType = InputType.TYPE_CLASS_NUMBER,
             validate = { v ->
                 when {
                     v < 0 -> ValidationResult.Reject("高度不能小于0")
@@ -1392,66 +1281,33 @@ class SettingsActivity: AppCompatActivity() {
 
     //删除缩略图缓存
     private fun chooseDeleteFrameItem(anchor: View) {
-        UI_FUNCTION.show_popup_Menu_v1_v1_base_xml(context, anchor, R.menu.popup_menu_setting_delete_frame) { item ->
-            when (item.itemId) {
-                R.id.delete_all -> {
-                    vibrate()
-
-                    deleteArtworkFrameCache(
-                        context = context,
-                        deleteVideo = true,
-                        deleteAudio = true
-                    )
-
-                    true
-                }
-                R.id.delete_video -> {
-                    vibrate()
-
-                    deleteArtworkFrameCache(
-                        context = context,
-                        deleteVideo = true,
-                        deleteAudio = false
-                    )
-
-                    true
-                }
-                R.id.delete_audio -> {
-                    vibrate()
-
-                    deleteArtworkFrameCache(
-                        context = context,
-                        deleteVideo = false,
-                        deleteAudio = true
-                    )
-
-                    true
-                }
-                R.id.delete_video_custom -> {
-                    vibrate()
-
-                    deleteCustomFrameCache(
-                        context = context,
-                        deleteVideo = true,
-                        deleteAudio = false
-                    )
-
-                    true
-                }
-                R.id.delete_audio_custom -> {
-                    vibrate()
-
-                    deleteCustomFrameCache(
-                        context = context,
-                        deleteVideo = false,
-                        deleteAudio = true
-                    )
-
-                    true
-                }
-                else -> true
-            }
-        }
+        UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add (anchor, listOf(
+            "删除所有默认缩略图"   to { deleteArtworkFrameCache(
+                context = context,
+                deleteVideo = true,
+                deleteAudio = true
+            ) },
+            "删除视频默认缩略图"  to { deleteArtworkFrameCache(
+                context = context,
+                deleteVideo = true,
+                deleteAudio = false
+            ) },
+            "删除音频默认专辑图"  to { deleteArtworkFrameCache(
+                context = context,
+                deleteVideo = false,
+                deleteAudio = true
+            ) },
+            "删除自定义视频缩略图"  to { deleteCustomFrameCache(
+                context = context,
+                deleteVideo = true,
+                deleteAudio = false
+            ) },
+            "删除自定义音频专辑图"  to { deleteCustomFrameCache(
+                context = context,
+                deleteVideo = false,
+                deleteAudio = true
+            ) },
+        ))
     }
     private fun deleteArtworkFrameCache(context: Context, deleteVideo:Boolean = false, deleteAudio:Boolean = false) {
         AlertDialog.Builder(context)
@@ -1522,33 +1378,18 @@ class SettingsActivity: AppCompatActivity() {
     }
     //删除媒体数据缓存
     private fun chooseDeleteDB(anchor: View) {
-        UI_FUNCTION.show_popup_Menu_v1_v1_base_xml(context, anchor, R.menu.popup_menu_setting_delete_db) { item ->
-            when (item.itemId) {
-                R.id.delete_video -> {
-                    vibrate()
-
-                    deleteDB(
-                        context = context,
-                        deleteVideo = true,
-                        deleteAudio = false
-                    )
-
-                    true
-                }
-                R.id.delete_audio -> {
-                    vibrate()
-
-                    deleteDB(
-                        context = context,
-                        deleteVideo = false,
-                        deleteAudio = true
-                    )
-
-                    true
-                }
-                else -> true
-            }
-        }
+        UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add (anchor, listOf(
+            "删除视频数据缓存"   to { deleteDB(
+                context = context,
+                deleteVideo = true,
+                deleteAudio = false
+            ) },
+            "删除音频数据缓存"  to { deleteDB(
+                context = context,
+                deleteVideo = false,
+                deleteAudio = true
+            ) },
+        ))
     }
     private fun deleteDB(context: Context, deleteVideo:Boolean = false, deleteAudio:Boolean = false) {
         AlertDialog.Builder(context)

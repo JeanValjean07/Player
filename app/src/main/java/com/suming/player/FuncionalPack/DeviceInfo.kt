@@ -15,7 +15,7 @@ object DeviceInfo {
 
 
     //状态栏高度
-    var statusBarHeight : Int = 0
+    var statusBarHeight : Int = -1
 
 
 

@@ -35,13 +35,14 @@ import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.R
 import com.suming.player.FuncionalPack.SettingsCenter
+import com.suming.player.UI_SEG_FUNCTION.UI_FUNCTION
 import com.suming.player.UI_SEG_View.CircleButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @UnstableApi
 @Suppress("unused")
-@SuppressLint("NewApi")
+@SuppressLint("NewApi","SetTextI18n")
 class FragmentVideoStoreSetting: DialogFragment() {
     companion object {
         fun newInstance():
@@ -54,6 +55,8 @@ class FragmentVideoStoreSetting: DialogFragment() {
     private val Undefined = ""
     //
     private lateinit var context : Context
+    //UI_FUNCTION
+    val UI_FUNCTION = UI_FUNCTION()
 
 
 
@@ -347,6 +350,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
                     }
                     false
                 }
+
             }
             //默认播放行为
             updateText_DefaultPlayMode()
@@ -364,7 +368,8 @@ class FragmentVideoStoreSetting: DialogFragment() {
 
     //Functions
     //弹出默认播放行为选择菜单
-    private fun startMenu_DefaultPlayMode(anchor: View){
+    private lateinit var ButtonChangeDefaultPlayMode : TextView
+    private fun startMenu_DefaultPlayMode(anchor: View) {
         val popup = PopupMenu(requireContext(), anchor)
         popup.menuInflater.inflate(R.menu.popup_menu_mss_default_play_mode, popup.menu)
         popup.setOnMenuItemClickListener { item ->
@@ -396,8 +401,7 @@ class FragmentVideoStoreSetting: DialogFragment() {
         }
         popup.show()
     }
-    @SuppressLint("SetTextI18n")
-    private fun updateText_DefaultPlayMode(){
+    private fun updateText_DefaultPlayMode() {
         //读取当前默认播放行为
         val defaultPlayBehavior = SettingsCenter.GET_PRF_DefaultPlayBehavior()
         when (defaultPlayBehavior) {
@@ -409,7 +413,10 @@ class FragmentVideoStoreSetting: DialogFragment() {
             }
         }
     }
-    private lateinit var ButtonChangeDefaultPlayMode : TextView
+    //默认页签选择菜单
+
+
+
     //发送Fragment返回值
     private fun setFragmentResult(event: String){
         val result = bundleOf(FragmentConnector.receive_key to event)

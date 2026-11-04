@@ -1,43 +1,43 @@
-package com.suming.player.FuncPack_ListManager
+package com.suming.player.FuncPack_ListManager.Source
 
 import android.content.Context
 import androidx.media3.common.util.UnstableApi
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
-import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForAudio
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
+import com.suming.player.DataPack.DataClassForStorage.MediaItemFullForVideo
 
 @UnstableApi
 @Suppress("unused")
-class Recycler_PagingSource_Audio(
+class Recycler_PagingSource_Video(
     private val context: Context,
-) : PagingSource<Int, MediaItemFullForAudio>() {
+) : PagingSource<Int, MediaItemFullForVideo>() {
 
-    override fun getRefreshKey(state: PagingState<Int, MediaItemFullForAudio>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, MediaItemFullForVideo>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
                 ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
         }
     }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItemFullForAudio> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, MediaItemFullForVideo> {
         try {
             val page = params.key ?: 0
             val limit = params.loadSize
             //读取数据库
-            val musicStoreRepo = AudioRepo.get(context)
-            val totalCount = musicStoreRepo.getTotalMusicCount()
+            val mediaStoreRepo = VideoRepo.get(context)
+            val totalCount = mediaStoreRepo.getTotalCount()
             //排序字段
             var sortOrder: String
             var sortOrientation: String
 
             //按页获取数据
-            val musicStoreSettings = musicStoreRepo.getMusicsPagedByOrder(page, limit, "info_title DESC")
+            val mediaStoreSettings = mediaStoreRepo.getVideosPagedByOrder(page, limit, "info_title DESC")
 
             //合成MediaItem
-            val musicItems = musicStoreSettings
+            val mediaItems = mediaStoreSettings
                 .map { setting ->
-                    MediaItemFullForAudio(
+                    MediaItemFullForVideo(
                         media_api_SPECIFIC_ID = setting.media_api_SPECIFIC_ID,
                         media_api_NUM_ID = setting.media_api_NUM_ID,
                         media_api_dateAdded = setting.media_api_dateAdded,
@@ -51,16 +51,17 @@ class Recycler_PagingSource_Audio(
                         media_durationMs = setting.media_durationMs,
                         media_format = setting.media_format,
                         //-----------------------------------
-                        media_audio_bitrate = setting.media_audio_bitrate,
-                        media_audio_album = setting.media_audio_album,
-                        media_audio_albumId = setting.media_audio_albumId,
+                        media_video_resolution = setting.media_video_resolution,
+                        media_video_bitrate = setting.media_video_bitrate,
                     )
                 }
-                //计算下页键
-            val nextKey = if ((page * limit) + musicItems.size < totalCount) page + 1 else null
+
+
+            //计算下页键
+            val nextKey = if ((page * limit) + mediaItems.size < totalCount) page + 1 else null
 
             return LoadResult.Page(
-                data = musicItems,
+                data = mediaItems,
                 prevKey = if (page == 0) null else page - 1,
                 nextKey = nextKey
             )
@@ -71,3 +72,5 @@ class Recycler_PagingSource_Audio(
     }
 
 }
+
+

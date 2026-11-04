@@ -1,5 +1,6 @@
-package com.suming.player.FuncPack_ListManager
+package com.suming.player.FuncPack_ListManager.Inner_Fragment
 
+import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -10,27 +11,26 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.OptIn
 import androidx.annotation.RequiresApi
-import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
-import androidx.paging.LoadState
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.suming.player.R
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.FuncPack_ListManager.ListManagerHelper
+import com.suming.player.FuncPack_ListManager.Adapter.Recycler_Adaptor_CustomList
+import com.suming.player.UI_SEG_FUNCTION.UI_FUNCTION
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @UnstableApi
 //@Suppress("unused")
 @RequiresApi(Build.VERSION_CODES.Q)
-class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page){
+class InnerFragment_HistoryList: Fragment(R.layout.fragment_play_list_custom_page){
     companion object {
         fun newInstance(): InnerFragment_CustomList {
             return InnerFragment_CustomList().apply{
@@ -38,9 +38,12 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
             }
         }
     }
-    //当前页签(固定值)
-    private val flag_currentPage = ListManagerHelper.ListMark_Custom
-
+    //当前页签
+    private val flag_currentPage = ListManagerHelper.ListMark_History
+    //实现context获取
+    private fun get_ctx(): Context{
+        return requireContext()
+    }
 
 
 
@@ -60,7 +63,7 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
 
 
         //启动recyclerView
-        startRecyclerView(view)
+        //startRecyclerView(view)
 
 
 
@@ -115,7 +118,7 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
                 //清空自定义列表
                 //TODO
                 //刷新适配器
-                recyclerView_custom_list_adapter?.refresh()
+                recyclerView_history_list_adapter?.refresh()
             }
             //按钮：总项数
             val ButtonItemCount = view.findViewById<CardView>(R.id.ButtonItemCount)
@@ -124,11 +127,10 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
                 //未加载完成前拒绝访问
                 if (!state_adapter_load_complete) return@setOnClickListener
                 //显示列表中项数
-                val itemCount = recyclerView_custom_list_adapter?.itemCount
+                val itemCount = recyclerView_history_list_adapter?.itemCount
                 if (itemCount == 0) {
                     requireContext().showCustomToast("目前还没有媒体，可在其他列表中添加",2)
-                }
-                else{
+                } else {
                     requireContext().showCustomToast("包含${itemCount}个媒体",2)
                 }
 
@@ -139,14 +141,14 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
             ButtonUpdate.setOnClickListener {
                 ToolVibrate.vibrate()
 
-                recyclerView_custom_list_adapter?.refresh()
+                recyclerView_history_list_adapter?.refresh()
 
             }
         }
     }
     //启动recyclerView
     private lateinit var recyclerView: RecyclerView
-    private var recyclerView_custom_list_adapter: Recycler_Adaptor_CustomList? = null
+    private var recyclerView_history_list_adapter: Recycler_Adaptor_CustomList? = null
     private var state_adapter_load_complete = false
     private fun startRecyclerView(view: View){
         //初始化recyclerView
@@ -154,26 +156,25 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
         //设置管理器
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         //合成适配器
-        recyclerView_custom_list_adapter = Recycler_Adaptor_CustomList(
+        recyclerView_history_list_adapter = Recycler_Adaptor_CustomList(
             requireContext(),
             onDeleteClick = { uriNumOnly -> onDeleteClick(uriNumOnly) },
             onPlayClick = { uri -> onPlayClick(uri) },
         )
         //设置适配器
-        recyclerView.adapter = recyclerView_custom_list_adapter
+        recyclerView.adapter = recyclerView_history_list_adapter
         //分页加载数据
         /*
         lifecycleScope.launch(Dispatchers.IO) {
-            //分页加载
             val pager = Pager(PagingConfig(pageSize = 20)) {
                 Recycler_PagingSource_CustomList(requireContext())
             }
             pager.flow.collect { pagingData ->
-                recyclerView_custom_list_adapter?.submitData(pagingData)
+                recyclerView_history_list_adapter?.submitData(pagingData)
             }
         }
         //添加加载状态监听器
-        recyclerView_custom_list_adapter?.addLoadStateListener { loadState ->
+        recyclerView_history_list_adapter?.addLoadStateListener { loadState ->
             when (loadState.refresh) {
                 is LoadState.Loading -> {
                     showLoadingNotice()
@@ -192,7 +193,7 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
     //Fragment通信
     //注册接收父Fragment返回值
     private fun registerFragmentResultListener(){
-        parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_custom, this){ _, bundle ->
+        parentFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_history, this){ _, bundle ->
             val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
             when(key){
                 //回滚到顶部
@@ -208,7 +209,8 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
     }
     //发送Fragment结果
     private fun sendFragmentResult(key: String){
-        parentFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_custom,
+        parentFragmentManager.setFragmentResult(
+            ListManagerHelper.fragment_request_key_history,
             bundleOf(ListManagerHelper.event_key_general to key)
         )
     }
@@ -216,43 +218,25 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
     //页面获得焦点
     private fun onFragmentFocused(){
         updateCurrentListStateText()
-        recyclerView_custom_list_adapter?.refresh()
+        recyclerView_history_list_adapter?.refresh()
     }
 
     //页签设置选单
     private fun startPageSettingMenu(anchor: View){
-        val popup = PopupMenu(requireContext(), anchor)
-        popup.menuInflater.inflate(R.menu.activity_play_list_popup_page_setting, popup.menu)
-        val menuItem_default_page = popup.menu.findItem(R.id.setting_set_as_default_show_list)
+        //获取当前默认页签
         val acquiescePage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
-        if (flag_currentPage == acquiescePage){
-            menuItem_default_page.title = "取消设为默认显示页签"
+        val menu_item_name = if (flag_currentPage == acquiescePage){
+            "取消设为默认显示页签"
         }else{
-            menuItem_default_page.title = "设为默认显示页签"
+            "设为默认显示页签"
         }
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                //设为当前播放列表
-                R.id.setting_set_as_current_list -> {
-                    ToolVibrate.vibrate()
 
-                    setAs_currentPlayingList()
-
-                    true
-                }
-                //设置默认显示列表
-                R.id.setting_set_as_default_show_list -> {
-                    ToolVibrate.vibrate()
-
-                    setAs_AcquiesceShowingPage()
-
-                    true
-                }
-
-                else -> true
-            }
-        }
-        popup.show()
+        val UI_FUNCTION = UI_FUNCTION()
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+            "设为当前播放列表"   to { setAs_currentPlayingList() },
+            menu_item_name  to {  setAs_AcquiesceShowingPage()
+            },
+        ))
     }
 
 
@@ -268,7 +252,7 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
 
 
 
-        recyclerView_custom_list_adapter?.refresh()
+        recyclerView_history_list_adapter?.refresh()
     }
 
 
@@ -314,13 +298,17 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
     private lateinit var ButtonSetAsCurrentListText: TextView
     private lateinit var ButtonSetAsCurrentListIcon: ImageView
     private fun updateCurrentListStateText(){
-        //判断是否是当前播放页签
+        //判断是否是当前播放列表
         if (ListManagerHelper.GET_STE_CurrentPlayingListMark() == flag_currentPage){
-            ButtonSetAsCurrentListText.text = "已设为当前播放列表"
-            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
+            if (ButtonSetAsCurrentListText.text != ListManagerHelper.string_already_set_playing_list){
+                ButtonSetAsCurrentListText.text = ListManagerHelper.string_already_set_playing_list
+                ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_play_list_checkmark)
+            }
         }else{
-            ButtonSetAsCurrentListText.text = "设为当前播放列表"
-            ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_general_add)
+            if (ButtonSetAsCurrentListText.text != ListManagerHelper.string_set_as_playing_list){
+                ButtonSetAsCurrentListText.text = ListManagerHelper.string_set_as_playing_list
+                ButtonSetAsCurrentListIcon.setImageResource(R.drawable.ic_general_add)
+            }
         }
     }
     //加载状态提示
@@ -339,7 +327,7 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
         //刷新状态
         state_adapter_load_complete = true
         //更新总项数文字
-        val itemCount = recyclerView_custom_list_adapter?.itemCount ?: 0
+        val itemCount = recyclerView_history_list_adapter?.itemCount ?: 0
         showItemCount(itemCount)
         if (itemCount == 0) {
             showEmptyNotice()
@@ -360,7 +348,7 @@ class InnerFragment_CustomList:Fragment(R.layout.fragment_play_list_custom_page)
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
-            Log.d("SuMing", "InnerFragment_CustomList: $msg")
+            Log.d("SuMing", "InnerFragment_HistoryList: $msg")
         }
     }
 

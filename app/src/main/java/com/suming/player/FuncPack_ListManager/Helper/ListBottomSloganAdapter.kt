@@ -1,4 +1,4 @@
-package com.suming.player.FuncPack_ListManager
+package com.suming.player.FuncPack_ListManager.Helper
 
 import android.view.ViewGroup
 import androidx.paging.LoadState
@@ -7,7 +7,7 @@ import androidx.paging.LoadStateAdapter
 class ListBottomSloganAdapter(private val retry: () -> Unit):LoadStateAdapter<ListBottonSloganViewHolder>() {
 
 
-    override fun onCreateViewHolder(parent: ViewGroup, loadState: LoadState):ListBottonSloganViewHolder{
+    override fun onCreateViewHolder(parent: ViewGroup, loadState: LoadState): ListBottonSloganViewHolder {
 
         return ListBottonSloganViewHolder(parent, retry)
     }

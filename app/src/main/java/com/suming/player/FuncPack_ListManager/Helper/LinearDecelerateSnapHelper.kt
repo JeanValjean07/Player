@@ -1,4 +1,4 @@
-package com.suming.player.FuncPack_ListManager
+package com.suming.player.FuncPack_ListManager.Helper
 
 import android.content.Context
 import android.util.Log
@@ -10,7 +10,8 @@ import androidx.recyclerview.widget.SnapHelper
 import kotlin.math.abs
 import kotlin.math.sqrt
 
-class LinearDecelerateSnapHelper(private val context: Context, private val isHorizontal: Boolean = true):SnapHelper() {
+class LinearDecelerateSnapHelper(private val context: Context, private val isHorizontal: Boolean = true):
+    SnapHelper() {
 
     companion object {
         //速度阈值:低于此值视为无滑动意图

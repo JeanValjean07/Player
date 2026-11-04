@@ -33,7 +33,7 @@ import kotlinx.coroutines.withContext
 class RecyclerAdapterMusic(
     private val context: Context,
     private val onItemClick: (Uri) -> Unit,
-    private val onOptionsClick: (MediaItemFullForAudio, View) -> Unit,
+    private val onOptionsClick: (MediaItemFullForAudio, ViewHolder) -> Unit,
 ): PagingDataAdapter<MediaItemFullForAudio, RecyclerAdapterMusic.ViewHolder>(DiffUtil) {
     companion object {
         //比较器
@@ -121,7 +121,7 @@ class RecyclerAdapterMusic(
         holder.ButtonOptions.setOnClickListener {
             vibrate()
             //
-            onOptionsClick(item, it)
+            onOptionsClick(item, holder)
         }
     }
 

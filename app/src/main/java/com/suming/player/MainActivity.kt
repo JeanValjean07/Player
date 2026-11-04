@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -70,8 +71,10 @@ import com.suming.player.FuncionalPack.ActivityResultConnector
 import com.suming.player.FuncionalPack.ArtworkFrameManager
 import com.suming.player.BASE_TOOL_BUNDLE.BASE_TOOL_BUNDLE
 import com.suming.player.BASE_TOOL_BUNDLE.BASE_TOOL_BUNDLE_SPECIFIC
+import com.suming.player.EVENT_BUS.AppEvent
 import com.suming.player.EVENT_BUS.AppEventList
 import com.suming.player.EVENT_BUS.EventBus_Embedded
+import com.suming.player.FuncPack_ListManager.ListManagerFragment_v2
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.IntentRepo
@@ -82,6 +85,8 @@ import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.PrivacyPermissionHelper
 import com.suming.player.FuncionalPack.SearchHelper
 import com.suming.player.FuncionalPack.SettingsCenter
+import com.suming.player.UI_SEG_FUNCTION.UI_FUNCTION
+import com.suming.player.UI_SEG_FUNCTION.ValidationResult
 import com.suming.player.UI_SEG_View.CircleButton
 import com.suming.player.UI_SEG_View.UI_VIEW_Value
 import kotlinx.coroutines.CoroutineScope
@@ -693,7 +698,7 @@ class MainActivity: AppCompatActivity() {
         //设置列表布局管理器
         ListRecyclerView_Video.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         //注册点击事件
-        main_video_list_adapter = RecyclerAdapterVideo(
+        main_video_list_adapter = RecyclerAdapterVideo (
             context = this,
             onItemClick = { uri, file_path ->
                 onVideoItemClick(uri, file_path)
@@ -705,28 +710,11 @@ class MainActivity: AppCompatActivity() {
                 notice("视频格式:${item.media_format}  (${item.media_api_NUM_ID})", 3000)
             },
             onClick_Options = { mediaItem, holder ->
-                val popup = PopupMenu(holder.itemView.context, holder.tvOption)
-                popup.menuInflater.inflate(R.menu.popup_menu_main_item_v_options, popup.menu)
-                popup.setOnMenuItemClickListener { item ->
-                    when (item.itemId) {
-                        R.id.MenuAction_use_mini_view_play -> {
-                            vibrate()
-
-                            startMiniViewPlay(mediaItem.URI_S_FP.toUri())
-
-                            true
-                        }
-                        R.id.MenuAction_use_whole_play_page -> {
-                            vibrate()
-
-                            startVideoPlayer(mediaItem.URI_S_FP.toUri(), mediaItem.file_path)
-
-                            true
-                        }
-                        else -> false
-                    }
-                }
-                popup.show()
+                val UI_FUNCTION = UI_FUNCTION()
+                UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add(holder.tvOption, listOf(
+                    "在MiniView中播放"   to {  startMiniViewPlay(mediaItem.URI_S_FP.toUri()) },
+                    "在播放页播放"  to { startVideoPlayer(mediaItem.URI_S_FP.toUri(), mediaItem.file_path) },
+                ))
             },
         )
         //设置adapter
@@ -764,16 +752,23 @@ class MainActivity: AppCompatActivity() {
         //设置列表布局管理器
         ListRecyclerView_Music.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         //注册点击事件
-        main_music_list_adapter = RecyclerAdapterMusic(
+        main_music_list_adapter = RecyclerAdapterMusic (
             context = this,
             onItemClick = { uri ->
 
                 //
                 onAudioItemClick(uri)
             },
-            onOptionsClick = { _, _ ->
-
-
+            onOptionsClick = { mediaItem, holder ->
+                val UI_FUNCTION = UI_FUNCTION()
+                UI_FUNCTION.show_popup_Menu_v1_v2_base_dynamic_add(holder.ButtonOptions, listOf(
+                    "查看格式"   to {
+                        notice("音乐格式:${mediaItem.media_format}  (${mediaItem.media_api_NUM_ID})", 2000)
+                    },
+                    "查看时长"  to {
+                        notice("音乐时长:${BASE_TOOL_BUNDLE_SPECIFIC.FormatTime_withChar(mediaItem.media_durationMs)}", 2000)
+                    },
+                ))
             },
         )
         //设置adapter
@@ -803,59 +798,45 @@ class MainActivity: AppCompatActivity() {
     //搜索功能demo
     @SuppressLint("InflateParams")
     private fun startSearchQueryBox(){
-        //创建对话框
-        val dialog = Dialog(context).apply {
-            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-        }
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_string, null)
-        dialog.setContentView(dialogView)
-        val title: TextView = dialogView.findViewById(R.id.dialog_title)
-        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
-        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-        val Button: Button = dialogView.findViewById(R.id.dialog_button)
-
         //读取当前所在页签
         val list_mark = mainViewModel.state_current_tab
         val list_video = SettingsCenter.tab_mark_video
         val list_audio = SettingsCenter.tab_mark_music
-
-        if (list_mark != list_video && list_mark != list_audio){
+        if (list_mark != list_video && list_mark != list_audio) {
             showCustomToast("无法进行搜索")
 
-            dialog.dismiss()
             return
         }
-
-        title.text = if (list_mark == list_video){
-            "在视频列表中搜索"
-        }else{
-            "在音乐列表中搜索"
-        }
-        Description.text = "输入要搜索的字段"
-        EditText.hint = if (list_mark == list_video){
-            SearchHelper.search_string_video
-        }else{
-            SearchHelper.search_string_audio
-        }
-        Button.text = "确定"
-
-        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        Button.setOnClickListener {
-            val input = EditText.text.toString()
-
-
-            postSearch(input)
-
-            dialog.dismiss()
-        }
-        dialog.show()
-        //自动弹出键盘程序
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(300.milliseconds)
-            EditText.requestFocus()
-            @Suppress("DEPRECATION")
-            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-        }
+        //
+        val UI_FUNCTION = UI_FUNCTION()
+        UI_FUNCTION.show_number_input_Dialog_v1_v3 (
+            context = context,
+            ui_title = if (list_mark == list_video){
+                "在视频列表中搜索"
+            }else{
+                "在音乐列表中搜索"
+            },
+            ui_description = "输入要搜索的字段,留空即为显示全部",
+            ui_hint = if (list_mark == list_video){
+                SearchHelper.search_string_video
+            }else{
+                SearchHelper.search_string_audio
+            },
+            ui_button_text = "确定",
+            inputType = InputType.TYPE_CLASS_TEXT,
+            validate = {
+                when {
+                    else -> ValidationResult.Ok
+                }
+            },
+            onValid = { input ->
+                //执行搜索
+                postSearch(input)
+            },
+            onReject = { message ->
+                showCustomToast(message, 3)
+            }
+        )
     }
     private fun postSearch(input: String){
         //读取当前所在页签
@@ -1820,7 +1801,7 @@ class MainActivity: AppCompatActivity() {
 
     //启动播放列表Fragment面板
     private fun startPlayListFragment() {
-        ListManagerFragment.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
+        ListManagerFragment_v2.newInstance().show(supportFragmentManager, FragmentConnector.fragment_tag_play_list)
     }
 
     //显示重组

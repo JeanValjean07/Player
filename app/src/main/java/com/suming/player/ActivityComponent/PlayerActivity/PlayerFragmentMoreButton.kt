@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -45,11 +46,18 @@ import com.suming.player.R
 import com.suming.player.FuncionalPack.SettingsCenter
 import com.suming.player.AddonTools.ToolVibrate
 import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.EVENT_BUS.AppEvent
+import com.suming.player.EVENT_BUS.AppEventList
+import com.suming.player.EVENT_BUS.EventBus_Embedded
 import com.suming.player.FuncionalPack.DeviceInfo
 import com.suming.player.FuncionalPack.FragmentConnector
 import com.suming.player.FuncionalPack.MediaDataBaseMaster
+import com.suming.player.FuncionalPack.MediaInfoRetriever
 import com.suming.player.FuncionalPack.PlayerInfoCenter
 import com.suming.player.FuncionalPack.SystemListener
+import com.suming.player.PlayerImplements.PlayerHolder
+import com.suming.player.UI_SEG_FUNCTION.UI_FUNCTION
+import com.suming.player.UI_SEG_FUNCTION.ValidationResult
 import com.suming.player.UI_SEG_View.CircleButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +74,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
             bundleOf()
         }
     }
-
     //日志
     private fun consoleLog(msg: String, mark: Boolean = true) {
         if (mark) {
@@ -77,8 +84,12 @@ class PlayerFragmentMoreButton: DialogFragment() {
     private val viewModel: PlayerViewModel by activityViewModels()
     //空字段
     private val Undefined = ""
-    //
-    private lateinit var context : Context
+    //实现context获取
+    private fun get_ctx(): Context {
+        return requireContext()
+    }
+    //UI_FUNCTION
+    val UI_FUNCTION = UI_FUNCTION()
 
 
 
@@ -92,11 +103,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
         super.onCreate(savedInstanceState)
         //
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
-        //
-        context = requireContext()
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?):View{
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?):View {
         //获得view
         val view = inflater.inflate(R.layout.fragment_more_button, container, false)
 
@@ -120,6 +129,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //发布开启事件
         returnFragment(FragmentConnector.fragment_event_open)
     }
+
     override fun onPause() {
         super.onPause()
         //发布关闭事件
@@ -394,7 +404,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     dismiss()
 
                 }else{
-                    context.showCustomToast("未在播放,无法操作", 3)
+                    get_ctx().showCustomToast("未在播放,无法操作", 3)
                 }
 
             }
@@ -416,7 +426,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     returnFragment(FragmentConnector.fragment_more_button_back_to_start)
                     dismiss()
                 }else{
-                    context.showCustomToast("未在播放,无法操作", 3)
+                    get_ctx().showCustomToast("未在播放,无法操作", 3)
                 }
 
             }
@@ -433,7 +443,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     returnFragment(FragmentConnector.fragment_more_button_start_pip_window)
                     dismiss()
                 }else{
-                    context.showCustomToast("未在播放,无法操作", 3)
+                    get_ctx().showCustomToast("未在播放,无法操作", 3)
                 }
             }
             //更新封面
@@ -447,7 +457,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     //更新封面
                     updateCoverFrame(ButtonUpdateCover)
                 }else{
-                    context.showCustomToast("未在播放,无法操作", 3)
+                    get_ctx().showCustomToast("未在播放,无法操作", 3)
                 }
             }
             //提取所有帧
@@ -482,7 +492,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     returnFragment(FragmentConnector.fragment_more_button_open_video_info)
                     dismiss()
                 }else{
-                    context.showCustomToast("未在播放,无法操作", 3)
+                    get_ctx().showCustomToast("未在播放,无法操作", 3)
                 }
 
             }
@@ -499,7 +509,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                     dismiss()
 
                 }else{
-                    context.showCustomToast("未在播放,无法操作", 3)
+                    get_ctx().showCustomToast("未在播放,无法操作", 3)
                 }
 
             }
@@ -508,7 +518,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ButtonEqualizer.setOnClickListener {
                 ToolVibrate.vibrate()
 
-                context.showCustomToast("暂不开放此功能", 3)
+                get_ctx().showCustomToast("暂不开放此功能", 3)
 
             }
             //清除当前进度条缩略图
@@ -540,7 +550,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
                         .show()
 
                 }else{
-                    context.showCustomToast("未在播放,无法操作", 3)
+                    get_ctx().showCustomToast("未在播放,无法操作", 3)
                 }
 
 
@@ -577,7 +587,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
                     return@setOnClickListener
                 }else{
-                    context.showCustomToast("未在播放,无法操作", 3)
+                    get_ctx().showCustomToast("未在播放,无法操作", 3)
                 }
 
             }
@@ -667,67 +677,56 @@ class PlayerFragmentMoreButton: DialogFragment() {
                 update_BTT_SeekMode()
                 //弹出菜单选择
                 fun popupMenu_SeekMode(anchor: View){
-                    val popup = PopupMenu(requireContext(), anchor)
-                    popup.menuInflater.inflate(R.menu.popup_menu_video_seek_mode, popup.menu)
-                    popup.setOnMenuItemClickListener { item ->
-                        when (item.itemId) {
-                            R.id.enable_always_seek -> {
+                    UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+                        "常规寻帧"   to {
+                            //修改viewModel的值
+                            viewModel.PREFS_AlwaysSeek = true
+                            //写入设置
+                            SettingsCenter.SET_PREFS_EnableAlwaysSeek(true)
+                            //刷新显示文字
+                            update_BTT_SeekMode()
 
-                                //修改viewModel的值
-                                viewModel.PREFS_AlwaysSeek = true
-                                //写入设置
-                                SettingsCenter.SET_PREFS_EnableAlwaysSeek(true)
-                                //刷新显示文字
-                                update_BTT_SeekMode()
+                            //发回消息
+                            returnFragment(FragmentConnector.fragment_more_button_updated_seek_mode)
+                            //关闭面板
+                            customDismiss()
+                        },
+                        "倍速模拟"   to {
+                            val text = "此功能涉及音频连续实时变速，在低性能设备上可能出现异常" +
+                                    "\n\n为了避免问题，为音量自动恢复的时机引入了延时"
 
-                                //发回消息
-                                returnFragment(FragmentConnector.fragment_more_button_updated_seek_mode)
-                                //关闭面板
-                                customDismiss()
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("开启倍速模拟寻帧")
+                                .setMessage(text)
+                                .setPositiveButton("确认开启") { dialog, _ ->
+                                    ToolVibrate.vibrate()
+                                    //确认开启
+                                    //修改viewModel的值
+                                    viewModel.PREFS_AlwaysSeek = false
+                                    //写入设置
+                                    SettingsCenter.SET_PREFS_EnableAlwaysSeek(false)
+                                    //刷新显示文字
+                                    update_BTT_SeekMode()
 
-                                true
-                            }
-                            R.id.disable_always_seek -> {
+                                    //发回消息
+                                    returnFragment(FragmentConnector.fragment_more_button_updated_seek_mode)
+                                    //关闭面板
+                                    customDismiss()
 
-                                val text = "此功能涉及音频连续实时变速，在低性能设备上可能出现异常" +
-                                        "\n\n为了避免问题，为音量自动恢复的时机引入了延时"
+                                    dialog.dismiss()
+                                }
+                                .setNegativeButton("取消") { dialog, _ ->
+                                    ToolVibrate.vibrate()
 
-                                AlertDialog.Builder(requireContext())
-                                    .setTitle("开启倍速模拟寻帧")
-                                    .setMessage(text)
-                                    .setPositiveButton("确认开启") { dialog, _ ->
-                                        ToolVibrate.vibrate()
-                                        //确认开启
-                                        //修改viewModel的值
-                                        viewModel.PREFS_AlwaysSeek = false
-                                        //写入设置
-                                        SettingsCenter.SET_PREFS_EnableAlwaysSeek(false)
-                                        //刷新显示文字
-                                        update_BTT_SeekMode()
+                                    customDismiss()
 
-                                        //发回消息
-                                        returnFragment(FragmentConnector.fragment_more_button_updated_seek_mode)
-                                        //关闭面板
-                                        customDismiss()
+                                    dialog.dismiss()
+                                }
+                                .setCancelable(true)
+                                .show()
+                        },
+                    ))
 
-                                        dialog.dismiss()
-                                    }
-                                    .setNegativeButton("取消") { dialog, _ ->
-                                        ToolVibrate.vibrate()
-
-                                        customDismiss()
-
-                                        dialog.dismiss()
-                                    }
-                                    .setCancelable(true)
-                                    .show()
-
-                                true
-                            }
-                            else -> true
-                        }
-                    }
-                    popup.show()
                 }
                 //设置点击事件
                 BTC_SeekMode.setOnClickListener {
@@ -845,6 +844,9 @@ class PlayerFragmentMoreButton: DialogFragment() {
         }
     }
 
+
+
+
     //发布事件回Activity  Fragment -> Activity  fragment_request_key_more_button_reverse
     private fun returnFragment(event: String) {
         val result = bundleOf(FragmentConnector.receive_key to event)
@@ -859,7 +861,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
 
     //获取当前媒体类型和NUM_ID
-    private fun GET_MediaType_and_NUM_ID(): Pair<String, Long>{
+    private fun GET_MediaType_and_NUM_ID(): Pair<String, Long> {
         val MediaType = PlayerInfoCenter.GET_Media_SPECIFIC_TYPE()
         val NUM_ID = PlayerInfoCenter.GET_Media_NUM_ID()
 
@@ -875,60 +877,38 @@ class PlayerFragmentMoreButton: DialogFragment() {
 
     //更新封面选单
     private fun updateCoverFrame(anchor: TextView){
-        val popup = PopupMenu(requireContext(), anchor)
-        popup.menuInflater.inflate(R.menu.activity_player_popup_change_cover, popup.menu)
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                //更新封面-截取视频当前帧
-                R.id.item_useCurrentFrame -> {
-                    ToolVibrate.vibrate()
-                    returnFragment(FragmentConnector.fragment_more_button_update_cover_frame,FragmentConnector.update_cover_frame_use_current_frame)
-                    dismiss();true
-                }
-                //更新封面-使用默认封面
-                R.id.item_useDefaultCover -> {
-                    ToolVibrate.vibrate()
-                    returnFragment(FragmentConnector.fragment_more_button_update_cover_frame,FragmentConnector.update_cover_frame_use_default_frame)
-                    dismiss();true
-                }
-                //更新封面-选择本地图片
-                R.id.item_pickFromLocal -> {
-                    ToolVibrate.vibrate()
-                    returnFragment(FragmentConnector.fragment_more_button_update_cover_frame,FragmentConnector.update_cover_frame_pick_local_frame)
-                    dismiss();true
-                }
-                else -> true
-            }
-        }
-        popup.show()
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+            "截取视频当前帧"   to {
+                returnFragment(
+                    FragmentConnector.fragment_more_button_update_cover_frame,
+                    FragmentConnector.update_cover_frame_use_current_frame
+                )
+            },
+            "使用默认封面"  to {
+                returnFragment(
+                    FragmentConnector.fragment_more_button_update_cover_frame,
+                    FragmentConnector.update_cover_frame_use_default_frame
+                )
+            },
+            "选择本地图片"  to {
+                returnFragment(
+                    FragmentConnector.fragment_more_button_update_cover_frame,
+                    FragmentConnector.update_cover_frame_pick_local_frame
+                )
+            },
+        ))
     }
     //循环模式选单
     private fun chooseLoopMode(anchor: CardView){
-        val popup = PopupMenu(requireContext(), anchor)
-        popup.menuInflater.inflate(R.menu.activity_player_popup_loop_mode, popup.menu)
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.LoopMode_ONE -> {
-                    chooseLoopMode("ONE")
-                    //设为单集循环时,必要时可自动开始
-                    PlayerSingleton.checkPlayEndAndRePlay()
-
-                    true
-                }
-                R.id.LoopMode_ALL -> {
-                    chooseLoopMode("ALL")
-
-                    true
-                }
-                R.id.LoopMode_OFF -> {
-                    chooseLoopMode("OFF")
-
-                    true
-                }
-                else -> true
-            }
-        }
-        popup.show()
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+            "单集循环"   to {
+                chooseLoopMode(ListManagerHelper.LOOP_MODE_ONE)
+                //设为单集循环时,必要时可自动开始
+                PlayerSingleton.checkPlayEndAndRePlay()
+            },
+            "列表循环"  to { chooseLoopMode(ListManagerHelper.LOOP_MODE_ALL) },
+            "播完暂停"  to { chooseLoopMode(ListManagerHelper.LOOP_MODE_OFF) },
+        ))
     }
     private fun chooseLoopMode(loopMode: String){
         ToolVibrate.vibrate()
@@ -954,31 +934,17 @@ class PlayerFragmentMoreButton: DialogFragment() {
     }
     //倍速管理选单
     private fun choosePlaySpeed(anchor: CardView){
-        val popup = PopupMenu(requireContext(), anchor)
-        popup.menuInflater.inflate(R.menu.activity_player_popup_video_speed, popup.menu)
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.MenuAction_0_5 -> {
-                    choosePlaySpeed(0.5f); true
-                }
-                R.id.MenuAction_1_0 -> {
-                    choosePlaySpeed(1.0f); true
-                }
-                R.id.MenuAction_1_5 -> {
-                    choosePlaySpeed(1.5f); true
-                }
-                R.id.MenuAction_2_0 -> {
-                    choosePlaySpeed(2.0f); true
-                }
-                R.id.MenuAction_Input -> {
-                    setSpeedByInput(); true
-                }
-                else -> true
-            }
-        }
-        popup.show()
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+            "0.5"   to { choosePlaySpeed(0.5f) },
+            "1.0"   to { choosePlaySpeed(1.0f) },
+            "1.5"   to { choosePlaySpeed(1.5f) },
+            "2.0"   to { choosePlaySpeed(2.0f) },
+            "自定义"  to {
+                setSpeedByInput()
+            },
+        ))
     }
-    private fun choosePlaySpeed(speed: Float){
+    private fun choosePlaySpeed(speed: Float) {
         ToolVibrate.vibrate()
         //设置倍速
         PlayerSingleton.setPlaySpeed(speed)
@@ -986,54 +952,36 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //刷新显示文本
         updatePlaySpeedText()
     }
-    private fun setSpeedByInput(){
-        val dialog = Dialog(requireContext()).apply {
-            window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-        }
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.base_dialog_input_v1_value_single, null)
-        dialog.setContentView(dialogView)
-        val title: TextView = dialogView.findViewById(R.id.dialog_title)
-        val Description: TextView = dialogView.findViewById(R.id.dialog_description)
-        val EditText: EditText = dialogView.findViewById(R.id.dialog_input)
-        val Button: Button = dialogView.findViewById(R.id.dialog_button)
-        //修改提示文本
-        title.text = "自定义倍速"
-        Description.text = "输入您的自定义倍速,最大允许数值为5.0"
-        EditText.hint = ""
-        Button.text = "确定"
-        //设置点击事件
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        Button.setOnClickListener {
-            val userInput = EditText.text.toString()
-            if (userInput.isEmpty()){
-                requireContext().showCustomToast("未输入内容", 3)
-            }
-            else {
-                val inputValue = userInput.toFloat()
-                if(inputValue > 0.0 && inputValue <= 5.0){
-                    //向播放器发起设置倍速
-                    PlayerSingleton.setPlaySpeed(inputValue)
-
-                    //刷新显示文本
-                    updatePlaySpeedText()
-
-                    requireContext().showCustomToast("已将倍速设置为$inputValue", 3)
+    private fun setSpeedByInput() {
+        UI_FUNCTION.show_number_input_Dialog_v1_v4 (
+            context = get_ctx(),
+            ui_title = "自定义倍速",
+            ui_description = "输入您的自定义倍速,最大允许数值为5.0",
+            ui_hint = "",
+            ui_button_text = "确定",
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED,
+            validate = { v ->
+                when {
+                    v <= 0 -> ValidationResult.Reject("倍速不能小于0")
+                    v > 5.0 -> ValidationResult.Reject("倍速不能大于 5.0")
+                    else -> ValidationResult.Ok
                 }
-                else {
-                    requireContext().showCustomToast("不允许该值", 3)
-                }
+            },
+            onValid = { inputValue ->
+                if (inputValue == 0.0f) return@show_number_input_Dialog_v1_v4
+                //向播放器发起设置倍速
+                PlayerSingleton.setPlaySpeed(inputValue)
+                //刷新显示文本
+                updatePlaySpeedText()
+                requireContext().showCustomToast("已将倍速设置为$inputValue", 3)
+            },
+            onReject = { message ->
+                requireContext().showCustomToast(message, 3)
             }
-            dialog.dismiss()
-        }
-        dialog.show()
-        //自动弹出键盘
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
-            EditText.requestFocus()
-            imm.showSoftInput(EditText, InputMethodManager.SHOW_IMPLICIT)
-        }
+        )
+
     }
-    private fun updatePlaySpeedText(){
+    private fun updatePlaySpeedText() {
         val ButtonTextPlaySpeed = view?.findViewById<TextView>(R.id.ButtonTextPlaySpeed)
 
         val (_, originalSpeed) = PlayerSingleton.getPlaySpeed()
@@ -1043,34 +991,16 @@ class PlayerFragmentMoreButton: DialogFragment() {
     }
     //自动关闭倒计时选单
     private fun chooseAutoShut(anchor: CardView){
-        val popup = PopupMenu(requireContext(), anchor)
-        popup.menuInflater.inflate(R.menu.activity_player_popup_timer_shut_down, popup.menu)
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.MenuAction_0 -> {
-                    chooseCountDownDuration(0); true
-                }
-                R.id.MenuAction_15 -> {
-                    chooseCountDownDuration(15); true
-                }
-                R.id.MenuAction_30 -> {
-                    chooseCountDownDuration(30); true
-                }
-                R.id.MenuAction_60 -> {
-                    chooseCountDownDuration(60); true
-                }
-                R.id.MenuAction_90 -> {
-                    chooseCountDownDuration(90); true
-                }
-                R.id.MenuAction_Input -> {
-                    setShutDownTimeByInput(); true
-                }
-                else -> true
-            }
-        }
-        popup.show()
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+            "关闭"   to { chooseCountDownDuration(0) },
+            "15分钟"   to { chooseCountDownDuration(15) },
+            "30分钟"   to { chooseCountDownDuration(30) },
+            "1小时"   to { chooseCountDownDuration(60) },
+            "1小时30分钟"  to { chooseCountDownDuration(90) },
+            "自定义"  to { setShutDownTimeByInput() },
+        ))
     }
-    private fun chooseCountDownDuration(countDownDuration_Min: Int){
+    private fun chooseCountDownDuration(countDownDuration_Min: Int) {
         ToolVibrate.vibrate()
         //设置自动关闭倒计时
         PlayerSingleton.set_timer_autoShut(countDownDuration_Min)
@@ -1078,7 +1008,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
         //刷新显示文本
         updateAutoShutText()
     }
-    private fun updateAutoShutText(){
+    private fun updateAutoShutText()  {
         val ButtonTextAutoShut = view?.findViewById<TextView>(R.id.ButtonTextAutoShut)
 
         val shutDownMoment = PlayerSingleton.get_timer_autoShut()
@@ -1091,7 +1021,7 @@ class PlayerFragmentMoreButton: DialogFragment() {
             ButtonTextAutoShut?.text = "将在${shutDownMoment}关闭"
         }
     }
-    private fun setShutDownTimeByInput(){
+    private fun setShutDownTimeByInput() {
         val dialog = Dialog(requireContext()).apply {
             window?.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
         }
@@ -1109,7 +1039,6 @@ class PlayerFragmentMoreButton: DialogFragment() {
         EditTextMinute.hint = ""
         Button.text = "确定"
         //设置点击事件
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         Button.setOnClickListener {
             val hourInput = EditTextHour.text.toString().toIntOrNull()
             val minuteInput = EditTextMinute.text.toString().toIntOrNull()
@@ -1154,12 +1083,10 @@ class PlayerFragmentMoreButton: DialogFragment() {
             dialog.dismiss()
         }
         dialog.show()
+
         //自动弹出键盘
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(300)
-            EditTextHour.requestFocus()
-            imm.showSoftInput(EditTextHour, InputMethodManager.SHOW_IMPLICIT)
-        }
+        EditTextMinute.requestFocus()
+        WindowCompat.getInsetsController(dialog.window!!, EditTextMinute).show(WindowInsetsCompat.Type.ime())
     }
 
     //设置面板高度与位置

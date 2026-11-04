@@ -1,0 +1,974 @@
+package com.suming.player.FuncPack_ListManager
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.res.ColorStateList
+import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.widget.HorizontalScrollView
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
+import androidx.core.os.bundleOf
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.ListFragment
+import androidx.fragment.app.setFragmentResult
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.util.UnstableApi
+import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
+import com.suming.player.PlayerSingleton
+import com.suming.player.R
+import com.suming.player.AddonTools.ToolVibrate
+import com.suming.player.AddonTools.showCustomToast
+import com.suming.player.BASE_ACTIVITY.BASE_DIALOG_FRAGMENT_v1
+import com.suming.player.DataPack.DataBaseMediaStore.Audio.AudioRepo
+import com.suming.player.DataPack.DataBaseMediaStore.Video.VideoRepo
+import com.suming.player.DataPack.DataBaseStateConnector
+import com.suming.player.DataPack.DataLoader.AudioSysApiQuerier
+import com.suming.player.DataPack.DataLoader.VideoSysApiQuerier
+import com.suming.player.FuncPack_ListManager.Helper.LinearDecelerateSnapHelper
+import com.suming.player.FuncPack_ListManager.Inner_Fragment.InnerFragment_Audio
+import com.suming.player.FuncPack_ListManager.Inner_Fragment.InnerFragment_CustomList
+import com.suming.player.FuncPack_ListManager.Inner_Fragment.InnerFragment_HistoryList
+import com.suming.player.FuncPack_ListManager.Inner_Fragment.InnerFragment_Video
+import com.suming.player.FuncionalPack.ActivityResultConnector
+import com.suming.player.FuncionalPack.FragmentConnector
+import com.suming.player.FuncionalPack.MediaInfoRetriever
+import com.suming.player.FuncionalPack.MediaRecordManager
+import com.suming.player.FuncionalPack.MediaType
+import com.suming.player.FuncionalPack.PlayerInfoCenter
+import com.suming.player.PlayerImplements.PlayerHolder
+import com.suming.player.UI_SEG_FUNCTION.UI_FUNCTION
+import com.suming.player.UI_SEG_View.CircleButton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+@UnstableApi
+@SuppressLint("ComposableNaming","NewApi")
+@Suppress("/unused")
+class ListManagerFragment_v2 : BASE_DIALOG_FRAGMENT_v1(
+    contentLayoutId = R.layout.fragment_play_list_inner,
+    Fragment_ID = "",
+) {
+    companion object {
+        fun newInstance(): ListManagerFragment_v2 =
+            ListManagerFragment_v2().apply {
+                arguments = bundleOf(
+
+                )
+            }
+    }
+    //空字段
+    private val Undefined = ""
+    //实现context获取
+    private fun get_ctx(): Context {
+        return requireContext()
+    }
+    //MediaInfoRetriever
+    val MediaInfoRetriever = MediaInfoRetriever()
+    //UI_FUNCTION
+    val UI_FUNCTION = UI_FUNCTION()
+    //日志
+    private fun consoleLog(msg: String, mark: Boolean = true) {
+        if (mark) {
+            Log.d("SuMing", "ListManagerFragment: $msg")
+        }
+    }
+
+
+
+
+
+
+    @SuppressLint("UseGetLayoutInflater", "InflateParams", "ClickableViewAccessibility", "SuspiciousIndentation")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+
+        consoleLog("onViewCreated")
+
+        //注册界面控件
+        register(view)
+
+        //注册当前播放项观察者
+        startMediaItemObserver()
+
+        //启动ViewPager
+        registerViewPager()
+
+        //更新当前播放列表指示图标
+        updateIcon_currentPlayingList()
+
+
+        //注册来自 子Fragment 的消息监听
+        register_C_Fragment_Listener()
+        //注册来自 Activity 的消息监听
+        register_Activity_Listener()
+
+        setupEventObserver()
+
+
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        //发布开启事件
+        return_FragmentResult_toActivity(FragmentConnector.fragment_event_open)
+    }
+    override fun onPause() {
+        super.onPause()
+        //发布关闭事件
+        return_FragmentResult_toActivity(FragmentConnector.fragment_event_close)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        //移除ViewPager监听
+        stopViewPagerListener()
+
+    }
+
+    override fun initViewInstance(view: View) {
+        super.initViewInstance(view)
+
+
+        //初始化全局元素
+        ButtonCard_Area = view.findViewById(R.id.TabScrollView)
+        ButtonCard_customList = view.findViewById(R.id.ButtonCard_CustomList)
+        ButtonCard_historyList = view.findViewById(R.id.ButtonCard_HistoryList)
+        ButtonCard_videoList = view.findViewById(R.id.ButtonCardVideo)
+        ButtonCard_musicList = view.findViewById(R.id.ButtonCardMusic)
+
+        ViewPager = view.findViewById(R.id.ViewPager)
+
+        ButtonIcon_currentPlayList = view.findViewById(R.id.ButtonCurrentListIcon)
+
+    }
+
+
+
+
+
+
+
+    private fun register(view: View){
+        lifecycleScope.launch(Dispatchers.Main) {
+            //按钮：退出
+            val buttonExit = view.findViewById<CircleButton>(R.id.buttonExit)
+            buttonExit.setOnClickListener {
+                dismiss()
+            }
+            //按钮：点击空白区域退出
+            val topArea = view.findViewById<View>(R.id.out_area)
+            topArea.setOnClickListener {
+                dismiss()
+            }
+            //更多按钮
+            val ButtonMoreOpt = view.findViewById<CircleButton>(R.id.ButtonMore)
+            ButtonMoreOpt.setOnClickListener {
+                showMoreOptMenu(ButtonMoreOpt)
+            }
+
+            //按钮：锁定页面
+            val ButtonLock = view.findViewById<CircleButton>(R.id.ButtonLock)
+            ButtonLock.setOnClickListener {
+                lockPage = !lockPage
+                if (lockPage){
+                    ButtonLock.setIconDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_more_button_lock_on))
+                }
+                else{
+                    ButtonLock.setIconDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_more_button_lock_off))
+                }
+            }
+
+
+            //选单-循环模式
+            updateLoopModeText()
+            val ButtonCardLoopMode = view.findViewById<CardView>(R.id.ButtonCardLoopMode)
+            ButtonCardLoopMode.setOnClickListener {
+                ToolVibrate.vibrate()
+
+                startLoopModeMenu(ButtonCardLoopMode)
+            }
+
+            //选单-当前播放列表
+            val ButtonCurrentList = view.findViewById<CardView>(R.id.ButtonCurrentList)
+            ButtonCurrentList.setOnClickListener {
+                ToolVibrate.vibrate()
+
+                startCurrentPlayingListMenu(ButtonCurrentList)
+            }
+
+
+            //横滑页签按钮
+            ButtonCard_customList.setOnClickListener {
+                ToolVibrate.vibrate()
+                switchToCustomPageByButton()
+            }
+            ButtonCard_historyList.setOnClickListener {
+                ToolVibrate.vibrate()
+                switchToHistoryPageByButton()
+            }
+            ButtonCard_videoList.setOnClickListener {
+                ToolVibrate.vibrate()
+                switchToVideoPageByButton()
+            }
+            ButtonCard_musicList.setOnClickListener {
+                ToolVibrate.vibrate()
+                switchToAudioPageByButton()
+            }
+
+        }
+    }
+    //启动ViewPager
+    private fun registerViewPager(){
+        lifecycleScope.launch(Dispatchers.Main) {
+
+            //delay(500)
+
+            //启动viewPager
+            viewPagerAdapter = ViewPagerAdapter(this@ListManagerFragment_v2)
+            ViewPager.adapter = viewPagerAdapter
+            //开启页面监听器
+            startViewPagerListener()
+            //设置ViewPager缓存页面数量
+            ViewPager.offscreenPageLimit = 3
+            //默认显示列表
+            val smoothScroll = false
+            ViewPager.post {
+                if (viewPagerAdapter.itemCount > 0){
+                    val acquiesceShowPage = ListManagerHelper.GET_PRFR_AcquiesceShowingPage()
+                    //使用上一次停留的页签
+                    if (acquiesceShowPage == ListManagerHelper.ListMark_UseLast){
+                        val LastShowingListMark = ListManagerHelper.GET_STE_LastShowingListMark()
+                        when(LastShowingListMark){
+                            ListManagerHelper.ListMark_Custom -> {
+                                ViewPager.setCurrentItem(0, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_History -> {
+                                ViewPager.setCurrentItem(1, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_Video -> {
+                                ViewPager.setCurrentItem(2, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_Audio -> {
+                                ViewPager.setCurrentItem(3, smoothScroll)
+                            }
+                            else -> {
+                                ViewPager.setCurrentItem(0, smoothScroll)
+                            }
+                        }
+                    }else{
+                        //使用固定默认页签
+                        when(acquiesceShowPage){
+                            ListManagerHelper.ListMark_Custom -> {
+                                ViewPager.setCurrentItem(0, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_History -> {
+                                ViewPager.setCurrentItem(1, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_Video -> {
+                                ViewPager.setCurrentItem(2, smoothScroll)
+                            }
+                            ListManagerHelper.ListMark_Audio -> {
+                                ViewPager.setCurrentItem(3, smoothScroll)
+                            }
+                            else -> {
+                                ViewPager.setCurrentItem(0, smoothScroll)
+                            }
+                        }
+                    }
+                }
+            }
+
+            //修改横滑动画
+            val snapHelper = LinearDecelerateSnapHelper(get_ctx())
+            val recyclerView = ViewPager.getChildAt(0) as RecyclerView
+            recyclerView.onFlingListener = null
+            snapHelper.attachToRecyclerView(recyclerView)
+
+        }
+
+    }
+
+
+
+    //viewPager
+    private lateinit var ViewPager: ViewPager2
+    private lateinit var viewPagerAdapter: ViewPagerAdapter
+    private class ViewPagerAdapter(innerFragment: Fragment):FragmentStateAdapter(innerFragment){
+        //getItemCount
+        override fun getItemCount(): Int = 4
+        //createFragment
+        override fun createFragment(position: Int): Fragment =
+            when (position) {
+                0 -> InnerFragment_CustomList()
+
+                1 -> InnerFragment_HistoryList()
+
+                2 -> InnerFragment_Video()
+
+                3 -> InnerFragment_Audio()
+
+                else -> ListFragment()
+            }
+
+
+    }
+    //viewPager页面切换监听器
+    private var ViewPagerListener = object : ViewPager2.OnPageChangeCallback() {
+        override fun onPageSelected(position: Int) {
+            //记录当前显示页签
+            saveListMark(position)
+            //滚动到当前显示页签
+            scrolledToPage(position)
+        }
+        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+
+        }
+        override fun onPageScrollStateChanged(state: Int) {
+
+        }
+
+    }
+    private var state_viewPagerListener_started = false
+    private fun startViewPagerListener(){
+        if (state_viewPagerListener_started){ return }
+        ViewPager.registerOnPageChangeCallback(ViewPagerListener)
+        state_viewPagerListener_started = true
+    }
+    private fun stopViewPagerListener(){
+        if (!state_viewPagerListener_started){ return }
+        ViewPager.unregisterOnPageChangeCallback(ViewPagerListener)
+        state_viewPagerListener_started = false
+    }
+    //viewPager页签对应
+    private val viewPagerPageMarkMapNum = mapOf(
+        0 to ListManagerHelper.ListMark_Custom,
+        1 to ListManagerHelper.ListMark_History,
+        2 to ListManagerHelper.ListMark_Video,
+        3 to ListManagerHelper.ListMark_Audio,
+    )
+    private val viewPagerPageMarkMapString = mapOf(
+        ListManagerHelper.ListMark_Custom to 0,
+        ListManagerHelper.ListMark_History to 1,
+        ListManagerHelper.ListMark_Video to 2,
+        ListManagerHelper.ListMark_Audio to 3,
+    )
+    private val viewPager_PageMarkMap_MediaType = mapOf(
+        0 to Undefined,
+        1 to Undefined,
+        2 to MediaType.Video,
+        3 to MediaType.Audio,
+    )
+
+
+
+    //观察当前播放状态
+    private var MediaItemObserverRunning = false
+    private fun startMediaItemObserver() {
+        if (MediaItemObserverRunning) return
+        MediaItemObserverRunning = true
+
+        //观察正在播放的媒体项变更
+        lifecycleScope.launch {
+            //观察正在播放的媒体项变更
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                PlayerInfoCenter.observableMediaItem.collect { _ ->
+                    //发送到 子Fragment (两个页面一起更新)
+                    send_C_Fragment_Event(2, ListManagerHelper.event_detail_general_media_item_update)
+                    send_C_Fragment_Event(3, ListManagerHelper.event_detail_general_media_item_update)
+
+                }
+            }
+        }
+        //观察播放状态变更
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                PlayerInfoCenter.observableIsPlaying.collect { _ ->
+                    //发送到 子Fragment (两个页面一起更新)
+                    send_C_Fragment_Event(2, ListManagerHelper.event_detail_general_media_state_update)
+                    send_C_Fragment_Event(3, ListManagerHelper.event_detail_general_media_state_update)
+
+                }
+            }
+        }
+    }
+
+    //播放请求统一处理
+    private fun onPlayNewItemRequest(URI_S_FP: String){
+        //consoleLog("收到请求播放新的媒体项: $URI_S_FP")
+        //检查文件是否存在可读
+        val success = MediaInfoRetriever.isUriReadable(get_ctx(),URI_S_FP)
+        //consoleLog("isUriReadable: $success")
+        if (success){
+            if (URI_S_FP == PlayerSingleton.get_engine_ongoing_URI().second.toString()){
+                if (PlayerInfoCenter.observableIsPlaying.value){
+                    PlayerSingleton.pausePlay()
+                }else{
+                    PlayerSingleton.continuePlay(true)
+                }
+            }else{
+                //确保播放器已经启动
+                PlayerSingleton.init_player_get_ref()
+                //设置播放项
+                lifecycleScope.launch (Dispatchers.IO){
+                    val result = PlayerSingleton.setMediaItem(URI_UP = URI_S_FP.toUri(),playWhenReady = true)
+                    withContext(Dispatchers.Main){
+                        when(result){
+                            ActivityResultConnector.OBRTV_Engine_RetrieveFailed -> {
+                                get_ctx().showCustomToast("文件似乎已经不存在",3)
+                            }
+                            ActivityResultConnector.OBRTV_Engine_SoFrequent -> {
+                                get_ctx().showCustomToast("设置过于频繁",3)
+                            }
+                            ActivityResultConnector.OBRTV_Engine_TypeNotSupport -> {
+                                get_ctx().showCustomToast("不支持的格式",3)
+                            }
+                        }
+                    }
+                }
+
+            }
+        }else{
+            get_ctx().showCustomToast("文件似乎已经不存在",3)
+            //触发主动刷新
+            startLoadBySystem()
+        }
+    }
+
+    //删除点击事件
+    private fun onDeleteClick(uriNumOnly: Long)  {
+
+    }
+    //添加到自定义列表点击事件
+    private fun onAddToListClick() {
+
+    }
+
+
+
+    //注册 子Fragment 返回消息监听  子Fragment -> 父Fragment  reverse
+    private fun register_C_Fragment_Listener(){
+        //自定义列表
+        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_custom_reverse, this){ _, bundle ->
+            val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            when(key){
+                //刷新当前播放列表指示图标
+                ListManagerHelper.event_detail_general_update_currentPlayingList_icon -> {
+                    updateIcon_currentPlayingList()
+                }
+
+            }
+        }
+        //历史列表
+        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_history_reverse, this){ _, bundle ->
+            val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            when(key){
+                //刷新当前播放列表指示图标
+                ListManagerHelper.event_detail_general_update_currentPlayingList_icon -> {
+                    updateIcon_currentPlayingList()
+                }
+
+
+            }
+        }
+        //视频列表
+        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_video_reverse, this){ _, bundle ->
+            val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: Undefined
+            when(key){
+                //刷新当前播放列表指示图标
+                ListManagerHelper.event_detail_general_update_currentPlayingList_icon -> {
+                    updateIcon_currentPlayingList()
+                }
+                //播放新的媒体项
+                ListManagerHelper.event_detail_general_play_new_item -> {
+                    onPlayNewItemRequest(extra)
+                }
+
+
+            }
+        }
+        //音乐列表
+        childFragmentManager.setFragmentResultListener(ListManagerHelper.fragment_request_key_audio_reverse, this){ _, bundle ->
+            val key = bundle.getString(ListManagerHelper.event_key_general) ?: return@setFragmentResultListener
+            val extra = bundle.getString(ListManagerHelper.event_key_extra) ?: Undefined
+            when(key){
+                //刷新当前播放列表指示图标
+                ListManagerHelper.event_detail_general_update_currentPlayingList_icon -> {
+                    updateIcon_currentPlayingList()
+                }
+                //播放新的媒体项
+                ListManagerHelper.event_detail_general_play_new_item -> {
+                    onPlayNewItemRequest(extra)
+                }
+
+            }
+        }
+
+    }
+    //向 子Fragment 传递事件  父Fragment -> 子Fragment  no_reverse
+    private fun send_C_Fragment_Event(targetList: Any, data: String, extra: String = Undefined) {
+        //合成position
+        val position = if (targetList is String){
+            viewPagerPageMarkMapString[targetList] ?: return
+        }else targetList as? Int ?: return
+
+        //发布消息
+        when(position){
+            0 -> {
+                //自定义列表
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_custom, Bundle().apply {
+                    putString(ListManagerHelper.event_key_general, data)
+                    putString(ListManagerHelper.event_key_extra, extra)
+                })
+            }
+            1 -> {
+                //历史列表
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_history, Bundle().apply {
+                    putString(ListManagerHelper.event_key_general, data)
+                    putString(ListManagerHelper.event_key_extra, extra)
+                })
+            }
+            2 -> {
+                //视频列表
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_video, Bundle().apply {
+                    putString(ListManagerHelper.event_key_general, data)
+                    putString(ListManagerHelper.event_key_extra, extra)
+                })
+            }
+            3 -> {
+                //音乐列表
+                childFragmentManager.setFragmentResult(ListManagerHelper.fragment_request_key_audio, Bundle().apply {
+                    putString(ListManagerHelper.event_key_general, data)
+                    putString(ListManagerHelper.event_key_extra, extra)
+                })
+            }
+            else -> {
+                return
+            }
+        }
+    }
+
+    //注册来自 Activity 的消息监听
+    private fun register_Activity_Listener(){
+        parentFragmentManager.setFragmentResultListener(FragmentConnector.fragment_request_key_play_list, this){ _, bundle ->
+            val key = bundle.getString(FragmentConnector.receive_key) ?: return@setFragmentResultListener
+            when(key){
+                //刷新RecyclerView Adapter (已使用场景:1.外部刷新完成,通知内部刷新)
+                ListManagerHelper.event_video_list_refresh -> {
+                    send_C_Fragment_Event(2, ListManagerHelper.event_video_list_refresh)
+                    send_C_Fragment_Event(3, ListManagerHelper.event_audio_list_refresh)
+                }
+
+            }
+        }
+    }
+    //发布事件回 Activity   fragment_request_key_play_list_reverse   Fragment -> Activity
+    private fun return_FragmentResult_toActivity(event: String){
+        val result = Bundle().apply { putString(FragmentConnector.receive_key, event) }
+        setFragmentResult(FragmentConnector.fragment_request_key_play_list_reverse, result)
+    }
+    private fun return_FragmentResult_toActivity(event: String,extra: String){
+        val result = Bundle().apply {
+            putString(FragmentConnector.receive_key, event)
+            putString(FragmentConnector.extra_key, extra)
+        }
+        setFragmentResult(FragmentConnector.fragment_request_key_play_list_reverse, result)
+    }
+
+
+    //显示更多操作菜单
+    private fun showMoreOptMenu(anchor: CircleButton) {
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+            "下一曲"   to { ListManagerHelper.MediaSessionCall_switchNextMedia() },
+            "上一曲"  to { ListManagerHelper.MediaSessionCall_switchPreviousMedia() },
+            "停止播放"  to {
+                //清除播放项
+                stopPlaying()
+                //执行关闭面板
+                con_dismiss()
+            },
+            "停止播放并清除记录"  to {
+                //清除播放记录
+                stopPlaying(true)
+                //执行关闭面板
+                con_dismiss()
+            },
+            "关闭播放器"  to {
+                //关闭播放器
+                closePlayer()
+            },
+            "关闭测试版播放器"  to {
+                //关闭可插拔播放器
+                val IPlayer = PlayerHolder.get_ins_refresh(requireContext())
+                IPlayer.release()
+
+            },
+        ))
+    }
+
+    //停止播放(可选清除记录)
+    private fun stopPlaying(clearRecord: Boolean = false){
+        //停止播放(仅清除项但播放器在线)
+        PlayerSingleton.clearMediaItem()
+        //清除播放记录
+        if (clearRecord) {
+            //清除播放记录
+            val MediaRecordManager = MediaRecordManager()
+            MediaRecordManager.clear_MediaInfo(requireContext())
+        }
+    }
+
+    //页签焦点
+    private fun scrolledToPage(position: Int){
+        when(position){
+            0 -> onFocusPage_Custom()
+            1 -> onFocusPage_History()
+            2 -> onFocusPage_Video()
+            3 -> onFocusPage_Audio()
+        }
+    }
+    //页签聚焦操作
+    private fun onFocusPage_Custom(){
+        updateCardPosition(0)
+        updateCardColor(0)
+    }
+    private fun onFocusPage_History(){
+        updateCardPosition(1)
+        updateCardColor(1)
+    }
+    private fun onFocusPage_Video(){
+        updateCardPosition(2)
+        updateCardColor(2)
+        //触发读取(//TODO 放在这里可能导致IO频次太多)
+        //检查是否需要读取系统视频
+        lifecycleScope.launch(Dispatchers.IO) {
+            //检查本地数据库是否已有视频数据
+            if (VideoRepo(get_ctx()).isEmpty()){
+                //通知状态变更
+                DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
+
+                val mediaReader = VideoSysApiQuerier(get_ctx(), get_ctx().contentResolver)
+                mediaReader.readAndSaveAllVideos()
+
+            }
+        }
+    }
+    private fun onFocusPage_Audio(){
+        updateCardPosition(3)
+        updateCardColor(3)
+        //触发读取(//TODO 放在这里可能导致IO频次太多)
+        //检查是否需要读取系统音乐
+        lifecycleScope.launch(Dispatchers.IO) {
+            //检查本地数据库是否已有音乐数据
+            if (AudioRepo(get_ctx()).isEmpty()){
+                //通知状态变更
+                DataBaseStateConnector.setState_queryDisk(DataBaseStateConnector.state_queryDisk_start)
+
+                val mediaReader = AudioSysApiQuerier(get_ctx(), get_ctx().contentResolver)
+                mediaReader.readAndSaveAllMusics()
+
+            }
+        }
+    }
+    //页签点击切换
+    private lateinit var ButtonCard_Area: HorizontalScrollView
+    private lateinit var ButtonCard_customList: CardView
+    private lateinit var ButtonCard_historyList: CardView
+    private lateinit var ButtonCard_videoList: CardView
+    private lateinit var ButtonCard_musicList: CardView
+    private fun switchToCustomPageByButton(){
+        //已在此页时回到顶部
+        if (ViewPager.currentItem == 0){
+            //发送到 子Fragment
+            send_C_Fragment_Event(0, ListManagerHelper.event_detail_general_goto_list_top)
+            return
+        }
+        //切换到自定义页签
+        ViewPager.currentItem = 0
+    }
+    private fun switchToHistoryPageByButton(){
+        //已在此页时回到顶部
+        if (ViewPager.currentItem == 1){
+            //发送到 子Fragment
+            send_C_Fragment_Event(1, ListManagerHelper.event_detail_general_goto_list_top)
+            return
+        }
+        //切换到视频页签
+        ViewPager.currentItem = 1
+    }
+    private fun switchToVideoPageByButton(){
+        //已在此页时回到顶部
+        if (ViewPager.currentItem == 2){
+            //发送到 子Fragment
+            send_C_Fragment_Event(2, ListManagerHelper.event_detail_general_goto_list_top)
+            return
+        }
+        //切换到视频页签
+        ViewPager.currentItem = 2
+    }
+    private fun switchToAudioPageByButton(){
+        //已在此页时回到顶部
+        if (ViewPager.currentItem == 3){
+            //发送到 子Fragment
+            send_C_Fragment_Event(3, ListManagerHelper.event_detail_general_goto_list_top)
+            return
+        }
+        //切换到音乐页签
+        ViewPager.currentItem = 3
+    }
+    //页签样式/位置更新
+    private fun updateCardColor(position: Int){
+        when(position){
+            0 -> {
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_ON))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+            }
+            1 -> {
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_ON))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+            }
+            2 -> {
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_ON))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+            }
+            3 -> {
+                ButtonCard_customList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_historyList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_videoList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_OFF))
+                ButtonCard_musicList.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.SecondaryColorPack_CardButtonBackground_state_ON))
+            }
+        }
+    }
+    private fun updateCardPosition(position: Int){
+        when (position) {
+            0 -> {
+                ButtonCard_Area.smoothScrollTo(0, 0)
+            }
+            1 -> {
+                val left = ButtonCard_historyList.left
+                ButtonCard_Area.smoothScrollTo(left, 0)
+            }
+            2 -> {
+                val left = ButtonCard_videoList.left
+                ButtonCard_Area.smoothScrollTo(left, 0)
+            }
+            3 -> {
+                val left = ButtonCard_musicList.left
+                ButtonCard_Area.smoothScrollTo(left, 0)
+            }
+        }
+    }
+
+
+    //更新当前播放列表卡片指示图标
+    private lateinit var ButtonIcon_currentPlayList: ImageView
+    private fun updateIcon_currentPlayingList(){
+        val currentPlayList = ListManagerHelper.GET_STE_CurrentPlayingListMark()
+        when (currentPlayList) {
+            ListManagerHelper.ListMark_Custom -> {
+                ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_play_list_custom_list)
+            }
+            ListManagerHelper.ListMark_History -> {
+                //ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_main_fragment_history_icon)
+            }
+            ListManagerHelper.ListMark_Video -> {
+                ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_main_fragment_video_icon)
+            }
+            ListManagerHelper.ListMark_Audio -> {
+                ButtonIcon_currentPlayList.setImageResource(R.drawable.ic_main_fragment_music_icon)
+            }
+        }
+    }
+    //设置当前播放列表
+    private fun setCurrentPlayingList(targetList: String){
+        //设置当前播放列表
+        val success = ListManagerHelper.SET_STE_CurrentPlayingListMark(targetList)
+
+        //通知子Fragment更新
+        val currentPage = ViewPager.currentItem
+        send_C_Fragment_Event(currentPage, ListManagerHelper.event_detail_general_update_list_state)
+
+        //更新当前播放列表指示图标
+        updateIcon_currentPlayingList()
+        //更新当前播放列表图标
+        if (success){
+            requireContext().showCustomToast("设置成功",2)
+        }else{
+            requireContext().showCustomToast("设置失败",2)
+        }
+    }
+    //选择当前播放列表
+    private fun startCurrentPlayingListMenu(anchor: View){
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(),anchor, listOf(
+            "自定义列表"   to { setCurrentPlayingList(ListManagerHelper.ListMark_Custom) },
+            "历史播放列表"  to { setCurrentPlayingList(ListManagerHelper.ListMark_History) },
+            "视频"  to { setCurrentPlayingList(ListManagerHelper.ListMark_Video) },
+            "音乐"  to { setCurrentPlayingList(ListManagerHelper.ListMark_Audio) },
+        ))
+    }
+
+
+    //保存本次切换至的页签
+    private var saveListMark_avoidFirst = false
+    private fun saveListMark(targetListNum: Int){
+        if (!saveListMark_avoidFirst) {
+            saveListMark_avoidFirst = true
+            return
+        }
+
+        //consoleLog("targetListNum: $targetListNum")
+        val targetListString = viewPagerPageMarkMapNum[targetListNum] ?: return
+        //consoleLog("targetListString: $targetListString")
+
+        ListManagerHelper.TURNTO_List(targetListString)
+    }
+
+    //发起数据库重读本机
+    private fun startLoadBySystem(target_o:String=Undefined){
+        lifecycleScope.launch(Dispatchers.IO){
+            val target = if (target_o == Undefined){
+                val current_index = ViewPager.currentItem
+                viewPager_PageMarkMap_MediaType[current_index]
+
+            }else{
+                target_o
+            }
+
+            when(target){
+                MediaType.Video -> {
+                    val videoReader = VideoSysApiQuerier(get_ctx(), get_ctx().contentResolver)
+                    videoReader.readAndSaveAllVideos()
+
+                }
+
+                MediaType.Audio -> {
+                    val musicReader = AudioSysApiQuerier(get_ctx(), get_ctx().contentResolver)
+                    musicReader.readAndSaveAllMusics()
+
+                }
+
+            }
+
+        }
+    }
+
+
+    //关闭播放器
+    private fun closePlayer(){
+        AlertDialog.Builder(get_ctx())
+            .setTitle("确定关闭播放器吗?")
+            .setMessage("正在播放的媒体会立即停止")
+            .setPositiveButton("确认") { dialog, _ ->
+                ToolVibrate.vibrate()
+                PlayerSingleton.stopPlayEngineBundle()
+                dialog.dismiss()
+
+                con_dismiss()
+
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                ToolVibrate.vibrate()
+
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+
+    }
+
+    //事件观察器
+    private fun setupEventObserver() {
+        //视频列表加载状态
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                DataBaseStateConnector.state_queryDisk_Video_state.collect { state ->
+                    if (state == DataBaseStateConnector.state_queryDisk_idle) return@collect
+                    when (state) {
+                        DataBaseStateConnector.state_queryDisk_success -> {
+                            //通知视频列表刷新
+                            send_C_Fragment_Event(ListManagerHelper.ListMark_Video, ListManagerHelper.event_video_list_refresh)
+                        }
+                    }
+                }
+            }
+        }
+        //音频列表加载状态
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                DataBaseStateConnector.state_queryDisk_Music_state.collect { state ->
+                    if (state == DataBaseStateConnector.state_queryDisk_idle) return@collect
+                    when (state) {
+                        DataBaseStateConnector.state_queryDisk_success -> {
+                            //通知音乐列表刷新
+                            send_C_Fragment_Event(ListManagerHelper.ListMark_Audio, ListManagerHelper.event_audio_list_refresh)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    //循环模式
+    private fun startLoopModeMenu(anchor: View) {
+        UI_FUNCTION.show_popup_Menu_v1_v3_base_dynamic_add (get_ctx(), anchor, listOf(
+            "单集循环"   to {
+                chooseLoopMode(ListManagerHelper.LOOP_MODE_ONE)
+                //设为单集循环时,必要时可自动开始
+                PlayerSingleton.checkPlayEndAndRePlay()
+            },
+            "列表循环"  to { chooseLoopMode(ListManagerHelper.LOOP_MODE_ALL) },
+            "播完暂停"  to { chooseLoopMode(ListManagerHelper.LOOP_MODE_OFF) },
+        ))
+    }
+    private fun chooseLoopMode(loopMode: String) {
+        //设置循环模式
+        when (loopMode) {
+            ListManagerHelper.LOOP_MODE_ONE -> {
+                ListManagerHelper.setLoopMode(loopMode)
+                //设为单集循环时,必要时可自动开始
+                PlayerSingleton.checkPlayEndAndRePlay()
+            }
+            ListManagerHelper.LOOP_MODE_OFF -> {
+                ListManagerHelper.setLoopMode(loopMode)
+            }
+            ListManagerHelper.LOOP_MODE_ALL -> {
+                ListManagerHelper.setLoopMode(loopMode)
+            }
+        }
+        //刷新显示文本
+        updateLoopModeText()
+
+    }
+    private fun updateLoopModeText() {
+        val currentLoopMode = ListManagerHelper.getLoopMode()
+        val ButtonTextLoopMode = view?.findViewById<TextView>(R.id.ButtonTextLoopMode)
+        ButtonTextLoopMode?.text = when (currentLoopMode) {
+            "ONE" -> "单集循环"
+            "ALL" -> "列表循环"
+            "OFF" -> "播完暂停"
+            else -> "未知模式"
+        }
+    }
+
+
+
+}
+
